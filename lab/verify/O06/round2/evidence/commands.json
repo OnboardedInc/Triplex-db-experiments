@@ -1,0 +1,175 @@
+{
+  "sourceHead": "9272ac56fc0bce4b9a2807e49197161b282ec131",
+  "reviewedBuilder": "823f454a607d045616d274b4bcb978459d66fcb2",
+  "commands": [
+    {
+      "label": "probes",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2_run.py",
+        "probes"
+      ],
+      "environment": {},
+      "started": "2026-11-09T00:49:18.045813+00:00",
+      "finished": "2026-11-09T00:49:18.145104+00:00",
+      "exit": 0,
+      "logSha256": "c15b770033506f8dd720449ce1b0bf58a4d42130a094e5a11adadba26248bbba"
+    },
+    {
+      "label": "unit-final",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "lab/oracles/replay/cli.py",
+        "--test"
+      ],
+      "environment": {},
+      "started": "2026-11-09T00:49:18.145313+00:00",
+      "finished": "2026-11-09T00:49:35.311522+00:00",
+      "exit": 1,
+      "logSha256": "4a7868184beecaa48238d392017a0176c793d961215836c885ea89ac778e91a2"
+    },
+    {
+      "label": "fixtures",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "lab/experiments/EXP-O06/fixture_runner.py"
+      ],
+      "environment": {},
+      "started": "2026-11-09T00:49:35.312069+00:00",
+      "finished": "2026-11-09T00:49:35.369520+00:00",
+      "exit": 0,
+      "logSha256": "41a370ed9a6dfd55ed775778f083e911923ef21295a7d2555e441df582e71ffa"
+    },
+    {
+      "label": "selfcheck",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "lab/oracles/replay/cli.py",
+        "--self-check"
+      ],
+      "environment": {},
+      "started": "2026-11-09T00:49:35.369703+00:00",
+      "finished": "2026-11-09T00:49:35.534024+00:00",
+      "exit": 0,
+      "logSha256": "9242389c0cc611decc5c7aae28bd835531cdc9e30af9ed0e47e0862e5d8de1d0"
+    },
+    {
+      "label": "core-baseline-legacy",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2_run.py",
+        "golden",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2/evidence/core-baseline-legacy",
+        "baseline",
+        "legacy"
+      ],
+      "environment": {
+        "O02_LANE": "core"
+      },
+      "started": "2026-11-09T00:49:35.534385+00:00",
+      "finished": "2026-11-09T00:49:41.359364+00:00",
+      "exit": 0,
+      "logSha256": "cdae91c510237def25978c58ac1750828217526ec02bf2746097905b843b6bf2"
+    },
+    {
+      "label": "core-final-legacy",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2_run.py",
+        "golden",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2/evidence/core-final-legacy",
+        "final",
+        "legacy"
+      ],
+      "environment": {
+        "O02_LANE": "core"
+      },
+      "started": "2026-11-09T00:49:41.359613+00:00",
+      "finished": "2026-11-09T00:49:47.182759+00:00",
+      "exit": 0,
+      "logSha256": "cdae91c510237def25978c58ac1750828217526ec02bf2746097905b843b6bf2"
+    },
+    {
+      "label": "core-final-updated",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2_run.py",
+        "golden",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2/evidence/core-final-updated",
+        "final",
+        "updated"
+      ],
+      "environment": {
+        "O02_LANE": "core"
+      },
+      "started": "2026-11-09T00:49:47.182979+00:00",
+      "finished": "2026-11-09T00:49:52.958806+00:00",
+      "exit": 0,
+      "logSha256": "cdae91c510237def25978c58ac1750828217526ec02bf2746097905b843b6bf2"
+    },
+    {
+      "label": "qlever-baseline-legacy",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2_run.py",
+        "golden",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2/evidence/qlever-baseline-legacy",
+        "baseline",
+        "legacy"
+      ],
+      "environment": {
+        "O02_LANE": "qlever"
+      },
+      "started": "2026-11-09T00:49:52.959178+00:00",
+      "finished": "2026-11-09T00:49:58.720601+00:00",
+      "exit": 0,
+      "logSha256": "af492bda3f2879baa6635989762bf5fb9dcc452fc73d77f623569aef83f5b332"
+    },
+    {
+      "label": "qlever-final-legacy",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2_run.py",
+        "golden",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2/evidence/qlever-final-legacy",
+        "final",
+        "legacy"
+      ],
+      "environment": {
+        "O02_LANE": "qlever"
+      },
+      "started": "2026-11-09T00:49:58.720969+00:00",
+      "finished": "2026-11-09T00:50:04.270345+00:00",
+      "exit": 0,
+      "logSha256": "af492bda3f2879baa6635989762bf5fb9dcc452fc73d77f623569aef83f5b332"
+    },
+    {
+      "label": "qlever-final-updated",
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "-I",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2_run.py",
+        "golden",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2/evidence/qlever-final-updated",
+        "final",
+        "updated"
+      ],
+      "environment": {
+        "O02_LANE": "qlever"
+      },
+      "started": "2026-11-09T00:50:04.270670+00:00",
+      "finished": "2026-11-09T00:50:09.948274+00:00",
+      "exit": 0,
+      "logSha256": "af492bda3f2879baa6635989762bf5fb9dcc452fc73d77f623569aef83f5b332"
+    }
+  ]
+}

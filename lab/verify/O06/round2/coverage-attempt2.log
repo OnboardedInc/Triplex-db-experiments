@@ -1,0 +1,201 @@
+baseline 0
+Q70E-unfiltered-prefixes 0
+Q70H-compare-page-bodies 0
+Q70I-choose-ambiguous-journal 0
+Q70I-ignore-journal-scope 0
+Q70K-default-nonjournal-scope 0
+Q70L-ignore-entity-scope-key 0
+{
+  "scope": "diagnostic in-memory wrong implementations; never production source changes",
+  "sourceUnchanged": true,
+  "baseline": {
+    "mutation": "baseline",
+    "run": 398,
+    "failures": [
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-INFLIGHT-PREFIXES')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-CURSOR-ERASURE-PREFIX')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70A')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70B')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70C')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70D')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70E')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70F')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70G')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70H')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70I')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70J')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70K')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70L')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70M')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70N')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70O')",
+      "lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped"
+    ],
+    "errors": [],
+    "witnessChanged": false
+  },
+  "mutations": [
+    {
+      "mutation": "Q70E-unfiltered-prefixes",
+      "run": 398,
+      "failures": [
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-INFLIGHT-PREFIXES')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-CURSOR-ERASURE-PREFIX')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70A')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70B')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70C')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70D')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70E')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70F')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70G')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70H')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70I')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70J')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70K')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70L')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70M')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70N')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70O')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped"
+      ],
+      "errors": [],
+      "witnessChanged": true,
+      "sameSuiteFailuresAsBaseline": true
+    },
+    {
+      "mutation": "Q70H-compare-page-bodies",
+      "run": 398,
+      "failures": [
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-INFLIGHT-PREFIXES')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-CURSOR-ERASURE-PREFIX')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70A')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70B')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70C')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70D')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70E')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70F')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70G')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70H')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70I')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70J')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70K')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70L')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70M')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70N')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70O')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped"
+      ],
+      "errors": [],
+      "witnessChanged": true,
+      "sameSuiteFailuresAsBaseline": true
+    },
+    {
+      "mutation": "Q70I-choose-ambiguous-journal",
+      "run": 398,
+      "failures": [
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-INFLIGHT-PREFIXES')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-CURSOR-ERASURE-PREFIX')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70A')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70B')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70C')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70D')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70E')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70F')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70G')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70H')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70I')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70J')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70K')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70L')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70M')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70N')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70O')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped"
+      ],
+      "errors": [],
+      "witnessChanged": true,
+      "sameSuiteFailuresAsBaseline": true
+    },
+    {
+      "mutation": "Q70I-ignore-journal-scope",
+      "run": 398,
+      "failures": [
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-INFLIGHT-PREFIXES')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-CURSOR-ERASURE-PREFIX')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70A')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70B')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70C')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70D')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70E')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70F')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70G')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70H')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70I')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70J')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70K')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70L')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70M')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70N')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70O')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped"
+      ],
+      "errors": [],
+      "witnessChanged": false,
+      "sameSuiteFailuresAsBaseline": true
+    },
+    {
+      "mutation": "Q70K-default-nonjournal-scope",
+      "run": 398,
+      "failures": [
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-INFLIGHT-PREFIXES')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-CURSOR-ERASURE-PREFIX')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70A')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70B')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70C')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70D')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70E')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70F')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70G')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70H')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70I')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70J')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70K')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70L')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70M')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70N')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70O')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped"
+      ],
+      "errors": [],
+      "witnessChanged": true,
+      "sameSuiteFailuresAsBaseline": true
+    },
+    {
+      "mutation": "Q70L-ignore-entity-scope-key",
+      "run": 398,
+      "failures": [
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-INFLIGHT-PREFIXES')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='ER-CURSOR-ERASURE-PREFIX')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70A')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70B')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70C')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70D')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70E')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70F')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70G')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70H')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70I')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70J')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70K')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70L')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70M')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70N')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test (erasureCase='CONTRACT-Q70O')",
+        "lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped"
+      ],
+      "errors": [],
+      "witnessChanged": true,
+      "sameSuiteFailuresAsBaseline": true
+    }
+  ]
+}

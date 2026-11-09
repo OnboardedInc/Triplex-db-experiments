@@ -1,0 +1,228 @@
+probes 0
+unit-final 1
+fixtures 0
+selfcheck 0
+core-baseline-legacy 0
+core-final-legacy 0
+core-final-updated 0
+qlever-baseline-legacy 0
+qlever-final-legacy 0
+qlever-final-updated 0
+{
+  "sourceInputsUnchanged": true,
+  "comparisons": [
+    {
+      "lane": "core",
+      "legacyItems": 341,
+      "legacyEqual": true,
+      "otherItems": 331,
+      "otherEqual": true,
+      "replacement": [
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q1",
+          "verdict": "AGREE",
+          "rawContractAgrees": true,
+          "snapshotContractAgrees": false
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q2",
+          "verdict": "AGREE",
+          "oracle": [],
+          "golden": []
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q3",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q4",
+          "verdict": "AGREE",
+          "oracle": {
+            "values": [
+              "y"
+            ],
+            "cut": {
+              "scope": "fresh",
+              "position": 2,
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          },
+          "golden": {
+            "results": [
+              {
+                "?v": "y"
+              }
+            ],
+            "basis": {
+              "scope": "<fresh scope>",
+              "recordedPosition": "$pos:D2",
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          }
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D2",
+          "verdict": "AGREE"
+        }
+      ],
+      "legacyCounts": {
+        "AGREE": 317,
+        "NOT-MODELED": 3,
+        "AGREE-RULED": 19,
+        "VECTOR-BUG": 2
+      }
+    },
+    {
+      "lane": "qlever",
+      "legacyItems": 341,
+      "legacyEqual": true,
+      "otherItems": 331,
+      "otherEqual": true,
+      "replacement": [
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q1",
+          "verdict": "AGREE",
+          "rawContractAgrees": true,
+          "snapshotContractAgrees": false
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q2",
+          "verdict": "AGREE",
+          "oracle": [],
+          "golden": []
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q3",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q4",
+          "verdict": "AGREE",
+          "oracle": {
+            "values": [
+              "y"
+            ],
+            "cut": {
+              "scope": "fresh",
+              "position": 2,
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          },
+          "golden": {
+            "results": [
+              {
+                "?v": "y"
+              }
+            ],
+            "basis": {
+              "scope": "<fresh scope>",
+              "recordedPosition": "$pos:D2",
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          }
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D2",
+          "verdict": "AGREE"
+        }
+      ],
+      "legacyCounts": {
+        "AGREE": 298,
+        "NOT-MODELED": 3,
+        "AGREE-RULED": 18,
+        "CONVERTER-ERROR": 1,
+        "DISAGREE": 19,
+        "VECTOR-BUG": 2
+      }
+    }
+  ],
+  "probeSpecMismatches": [],
+  "unitFailureHeaders": [
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='ER-INFLIGHT-PREFIXES')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='ER-CURSOR-ERASURE-PREFIX')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70A')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70B')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70C')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70D')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70E')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70F')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70G')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70H')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70I')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70J')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70K')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70L')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70M')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70N')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70O')",
+    "test_oracle_error_table_has_no_row_the_contract_dropped (lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped)"
+  ],
+  "unitSummary": [
+    "Ran 398 tests in 17.035s",
+    "FAILED (failures=18)"
+  ]
+}

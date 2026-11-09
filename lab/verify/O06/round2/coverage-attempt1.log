@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/verify/O06/round2_coverage.py", line 16, in <module>
+    from lab.oracles.replay.tests.helpers import evaluate,case,result,assert_op,i64,marker
+ImportError: cannot import name 'marker' from 'lab.oracles.replay.tests.helpers' (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/oracles/replay/tests/helpers.py)

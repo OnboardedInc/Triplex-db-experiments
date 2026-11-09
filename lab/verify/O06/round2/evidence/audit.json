@@ -1,0 +1,3486 @@
+{
+  "sourceInputsUnchanged": true,
+  "comparisons": [
+    {
+      "lane": "core",
+      "legacyItems": 341,
+      "legacyEqual": true,
+      "otherItems": 331,
+      "otherEqual": true,
+      "replacement": [
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q1",
+          "verdict": "AGREE",
+          "rawContractAgrees": true,
+          "snapshotContractAgrees": false
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q2",
+          "verdict": "AGREE",
+          "oracle": [],
+          "golden": []
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q3",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q4",
+          "verdict": "AGREE",
+          "oracle": {
+            "values": [
+              "y"
+            ],
+            "cut": {
+              "scope": "fresh",
+              "position": 2,
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          },
+          "golden": {
+            "results": [
+              {
+                "?v": "y"
+              }
+            ],
+            "basis": {
+              "scope": "<fresh scope>",
+              "recordedPosition": "$pos:D2",
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          }
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D2",
+          "verdict": "AGREE"
+        }
+      ],
+      "legacyCounts": {
+        "AGREE": 317,
+        "NOT-MODELED": 3,
+        "AGREE-RULED": 19,
+        "VECTOR-BUG": 2
+      }
+    },
+    {
+      "lane": "qlever",
+      "legacyItems": 341,
+      "legacyEqual": true,
+      "otherItems": 331,
+      "otherEqual": true,
+      "replacement": [
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q1",
+          "verdict": "AGREE",
+          "rawContractAgrees": true,
+          "snapshotContractAgrees": false
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q2",
+          "verdict": "AGREE",
+          "oracle": [],
+          "golden": []
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q3",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q4",
+          "verdict": "AGREE",
+          "oracle": {
+            "values": [
+              "y"
+            ],
+            "cut": {
+              "scope": "fresh",
+              "position": 2,
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          },
+          "golden": {
+            "results": [
+              {
+                "?v": "y"
+              }
+            ],
+            "basis": {
+              "scope": "<fresh scope>",
+              "recordedPosition": "$pos:D2",
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          }
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D2",
+          "verdict": "AGREE"
+        }
+      ],
+      "legacyCounts": {
+        "AGREE": 298,
+        "NOT-MODELED": 3,
+        "AGREE-RULED": 18,
+        "CONVERTER-ERROR": 1,
+        "DISAGREE": 19,
+        "VECTOR-BUG": 2
+      }
+    }
+  ],
+  "boundOutputs": [
+    {
+      "path": "core-baseline-legacy/runs/C5-02.pass1.expected.json",
+      "outputSha256": "3b00bcefcdae03619ab76a263b5fcb68db282eb38cd94111ba939fbe8f7b5cdf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-05.pass1.expected.json",
+      "outputSha256": "0adb3d5f601fbcec071817c66a6a433936783be183a44c252b066cf1c0ccca1d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-03.pass1.expected.json",
+      "outputSha256": "9d1303eded3eb44cbf6a45e3a7e322faf9ccdc43add3f91ed557943b7b300865",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-04.pass1.expected.json",
+      "outputSha256": "ff170f0856923a5a5d808cca6c7bfe62c22f9d669a6306a7197066b9b556ab4b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G10-CUR-01.expected.json",
+      "outputSha256": "97961eda826e6193ad916617446a7af1b1a6d81d8f5bd688608fea2830268a32",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-06.pass1.expected.json",
+      "outputSha256": "dd5be5e23e4769f3e3d4a00ba917ef5af7aef1ac78e46738d3ee708aad86ad13",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-01.pass1.expected.json",
+      "outputSha256": "899473b673301ef0523168ee69b1d11ed0d636923aca66320d6cd3645f074ac3",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-08.expected.json",
+      "outputSha256": "669f0840e7f1dae4a46c6cb5203a5b89f09034894f5c8c2c298b680a5c9a2cf0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-07.pass1.expected.json",
+      "outputSha256": "0499eddf0c52d9a73a6dadee320006d0042b88f102ce3effe1619f3f2f47f8a2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-09.expected.json",
+      "outputSha256": "4f26c99ba406dbcb47dea8a1e60d4c7f169a2811cce54ce7ad8b768a32f31e66",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-01.pass1.expected.json",
+      "outputSha256": "f1264a27762dff1511d80dbeee9e0e4ded95d4fdd69b3fad458fd59b79aa622e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-06.pass1.expected.json",
+      "outputSha256": "76169a1869caa60ec200275d9b5554ff0f6d09953f3aba7a2e701a76e272757e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-09.expected.json",
+      "outputSha256": "ce3405733553731165092e5eee054d7e2f9f9bf43880eea22c6db05c2c423639",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-05.pass1.expected.json",
+      "outputSha256": "aee2182f586cf1e791dd5c61061e0b759512a18b8704b29dcc84623bbb925882",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-HO-03.expected.json",
+      "outputSha256": "7fb792607386aca56ef8b081a7759088bdb7011d1028c7f41bf2e9aba000e752",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-02.pass1.expected.json",
+      "outputSha256": "8e018e35fee6d98de40978b62db904df16543f7ce1948570151e8bdbe3d8684c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-04.pass1.expected.json",
+      "outputSha256": "779ec7973ede5e18bea8bfaec555e5350697fd1dd343fff49642d4e539f632ea",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-03.pass1.expected.json",
+      "outputSha256": "0c4653c39f048deb40e78fd40b2b15d70bd5235974d07f451ff91142cb8b9a4e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-CUT-01.expected.json",
+      "outputSha256": "c0fe502bcd7fad60646d419c372f10a352ac3fecec8b5372af2ce9403816a758",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-09.pass1.expected.json",
+      "outputSha256": "c537cb2ae3d0a6eccda96f594f2b3b437f3367ea67918fc27292c73ceb0dbe95",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "2d755d8326139108dd7abf1803e811012cd5bd1d459e6957db2fef5827c70885",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-08.pass1.expected.json",
+      "outputSha256": "86679a8f4e3ac3574116ef70be165919d80546cba6c281b5858ba0bf198bbc3d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-03.expected.json",
+      "outputSha256": "77f8213f8cef41ba2e41887ea97fc6eb604a37f5062b822f9af9ba81989f57a9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-01.expected.json",
+      "outputSha256": "3ab58eb361adb1a1d8868c15b1a792bf081cedb752894c161c78f8dc4fb29241",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-05.expected.json",
+      "outputSha256": "e79fd2b43009b2df5a1705ac27360deda5e047a3c81dde50c452a3d788997198",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-03.expected.json",
+      "outputSha256": "401e624833c24ca61c1b253ebb0bfb30ed13287da8eb59c705b6b92d98227477",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-07.expected.json",
+      "outputSha256": "04d53c356b039cde1b9296489cd06118ff293bd20149731aa0f8eee5e8aa0738",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-07.expected.json",
+      "outputSha256": "31184f81b7e4721048062d6bb44b0348971ac46325dd699354bbee6294d97dfb",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-10.expected.json",
+      "outputSha256": "e90904b76c14c8ea64555651a236cdc8f519ceca31067c560075a326d408ae5a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/Q8F-02.expected.json",
+      "outputSha256": "505017c6c24b4960edadabfdfcba23c54a7c124c472c3447f61b7f51630300cb",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-01.expected.json",
+      "outputSha256": "fcf401ee6bc35710f2bbfcc2781d7620dd8f8eab38f36252afe0a584b1866711",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-05.expected.json",
+      "outputSha256": "200474f6f19bd1d56202b7af9309fc160dacb4b10ce2545b5275e424de2bfc58",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/Q8F-05.expected.json",
+      "outputSha256": "2aecd6319f0ef0b1c9ea921ce1d806a5b72f48229be2698b31840c6bc5f39565",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-02.expected.json",
+      "outputSha256": "7a6cb749a155064323dceff3c14999db4e65f687f1d1fbfedd8981ff0b107421",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-06.expected.json",
+      "outputSha256": "7e82cd4f3dae9d3c03bcdcd0ddfa3b3efed0c79073607b6f1ccea1128a26b060",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-04.expected.json",
+      "outputSha256": "a0e7cbc5d0e59b5aa6bc74c0cb6620c46f871009a77d906e557435684b664bad",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-02.expected.json",
+      "outputSha256": "faf31edd4e58ed2011a62e3d6813163dcddadee93b0cb2cb306ca7a021cd740e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-06.expected.json",
+      "outputSha256": "9e0dd4fdcb6b489a7e7940981c1218cb1652da307799e9be2e7b57fa9caf8cb6",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/Q8F-01.expected.json",
+      "outputSha256": "ffe5533f81fc67f29fe6805d7383815fbc4b9b86417577adaa300db9bf89d6cc",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-13.expected.json",
+      "outputSha256": "7b6f7531f33541963da4ada5edca9c63a40f7d4bd01ace9feb8785be05df12b4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-04.expected.json",
+      "outputSha256": "c02ed48e73a3b57884c22567ac991dbbb146307c41786846b2e5615624f395eb",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-CUT-02.expected.json",
+      "outputSha256": "226e7b5e3e2658b8827a41fb9a30581cbbe3d5b5b99feecab28bb9bbc8949bff",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "5039b0d2b4327fd0878b1109c40f9b07ced47e68014deefb7a7f1edfc34306a2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "256d0d1a662af64cb4dc7d786472047c8d0b17537d915b2b22e5c27c612b7c4d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-05.expected.json",
+      "outputSha256": "6705bb30353601ba6299d9846fc5b3e61a8d5508f116b8ccf808ea6f05822faf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-03.expected.json",
+      "outputSha256": "a20fb6a02bba739d2d680198887176358d7fc6b7d5a19ff910d6bca22e0111b9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-07.expected.json",
+      "outputSha256": "dbcc06531ec9aa9d684d1483dc48443f36d214e1f7ea05c01ffb98f42eb8585e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-12.expected.json",
+      "outputSha256": "40bb56e95e631b808852b676a0d365f85b62801c9183be4697b6e91b30234b37",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "35868dcb24ab7cb60e0aee1fd1a75441651d0259614d05d833428c3d597e27ce",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-05.expected.json",
+      "outputSha256": "cb61972b14cff1006ba03b3666d403c3de2e7108a13c89def426a93b8b06feb5",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/Q8F-04.expected.json",
+      "outputSha256": "dfb5104e35cd63c3e756cc03f31130712256ee7639d830782ff31ea8066e09bf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "ad0dccaee58205c8aa8d1c9c054cca81d50c845cb3345862596802cfe5d5c2a8",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-03.expected.json",
+      "outputSha256": "1fe5f101485d3beb70c9da096886be11bae3ed3288b6f7160f7f3d1782896770",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-01.expected.json",
+      "outputSha256": "a4daa8283159bda84db8ee0401954d90e9615681185ced40018ba7449f8600f5",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-01.expected.json",
+      "outputSha256": "eb0b7dcdb487767cdae4918828367a69947cddbbf6c599e6557b506ecad0f232",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "552e7970b31f355d28edfdd229cecdabad17ea19069f3a3e44ae78e41217da84",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "3c3953a19a36c596de84c24a0ad7acfd45d78d2cf7672e3ad5b8e99f6c48626e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "b80be242860f23978b2183ba3674f7e3f510e47847a439ff2a9baed7e2e3cd3b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "cbf08225b4b270a30ca32bf777bf56fdeb894c940dc6d850c8a5b12d84b6d428",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "8b42ee79149db1d9d2636a4353ac3e79b20e56847e58d2aab923586882278e9d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "e2ffae756bb37279a8aab0a5c6dcfd16c25e60e1394d31f5ba53430c02e9ba13",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "4ebe867258c9e0cf156ac14183648e3705a2f99bfb05e2ba5fbb110f7bc2ce91",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "50b199b79b1cc74faa26da2e7ed0ff5da28ad5cb94b5f10fe3816b15d6b51556",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "964c343e304e034c84bd794088254a34f0e54603715a79c3cf8e06edf9ecf6f0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "ebb74a1e64d9f23c4d9827d17140136336bd9d16872247bf4504ebb1c391832b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/Q8F-03.expected.json",
+      "outputSha256": "faa7e153c905b43cd6f2ef1d6bfecb93e29d32d9074ce4c7bba0f1f89034fa99",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-04.expected.json",
+      "outputSha256": "c450e749e8d90a15964fc4f000526f22a49f9d28ec4c6c123270ce20fc403894",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-06.expected.json",
+      "outputSha256": "ee311c89ae5666445b9b5a793d776159e3a816c5a1f52b6e7a56fb61ce2862f3",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "c49a6eddc7066f13c967727c5acb50b1d98c7396ccc598cb2992e7ae9a0ac316",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-06.expected.json",
+      "outputSha256": "275b240518eca56b03e2d66bc9e972723f24bedff8b3b6fb1d8494775448d8cd",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "95e0b2c3262ed4eb96598cdb20bc32955049029d1fa78f0b493731a1066856b8",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-02.expected.json",
+      "outputSha256": "5d2f13ea0e45b7de1dd8fd5796c84708d8e72bf79537f034f2ad58e58351f28e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C6-04.expected.json",
+      "outputSha256": "0ea00f597dd97b9329caac0c744336decc5095f073346d41c09a066b969feea1",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "bf5c4c1240fb249ed2884d74ea303c6f037561b4e81fdeb88bdaebb5fb5b7a95",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "28fe6a61d8adb0645ad3c32ed948ac6b7b58ac761812336e632325b6c594ac07",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-02.expected.json",
+      "outputSha256": "805bc06d3298dec01a9d867aef4dda40310994b041fd2ee60cc43bd1792cad42",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G5-SUM-08.expected.json",
+      "outputSha256": "7f49771f93eff659918adf760238a01604a73ef928871a50b9e6609eae32a393",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/C5-08.expected.json",
+      "outputSha256": "3d2b90d71944b44cae054805c74e748e6bef2979f298f304db9924c8d00861a9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "a4ad7441240759fbee26cb7e8418960b77ea7e4d0bf468aeb937c568bf8ae028",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G1-I64-02.expected.json",
+      "outputSha256": "5b83291b49670e039935036d0b39d78d4b5d022449aeecaf19bb0c0b55b17193",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "7968f9471a59b8728ce000d64b37dbe2c333fc9b922fd7a63656b0a80a7432fb",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "9aaaf3c13606cb410d9fddeb97063d4d4507665692b2a956cf8db5c96db21f7d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-HO-02.expected.json",
+      "outputSha256": "7721052adf14e23780832ba95c6d9128def7d366d729112846710d3d22368c16",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G1-I64-01.expected.json",
+      "outputSha256": "dd60f3b7ba7a6ff0cc289706e6841ed93603454a29f5c253cfdaaa30be63b686",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "94fc55f3d42c1c92e4c5be33afe52f117ee1cda412a1f82a7114809042d662a9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-HO-01.expected.json",
+      "outputSha256": "78adeb3cb003f99be96f6ba85f32025480545207e15563cde63e604412458839",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-baseline-legacy/runs/G9-CUT-02.pass1.expected.json",
+      "outputSha256": "16706f0128dbe6bf52cef25f5bcf48f638618d5a5a29d7d89a7a402e0beebbd1",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-02.pass1.expected.json",
+      "outputSha256": "bc423d47838138ebfc72ecdb23031099b9dbf1926057646e2a0d8e6e41dccb31",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-05.pass1.expected.json",
+      "outputSha256": "5c0afc5985330c20e2666268958c4d66caf99404dfa27e946d5e617ed8876d12",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-03.pass1.expected.json",
+      "outputSha256": "9e09ef512dcdc99371130d3cd7ade28714dfe7d3ef43f21b096caedc14c9c0f3",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-04.pass1.expected.json",
+      "outputSha256": "01fde81c2d60b5397ba626fe2cf7aa1c9d172a9402b9720c6dc5fe865b29b5e9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G10-CUR-01.expected.json",
+      "outputSha256": "9bc3d8ddc6c4f7c374cba1a79aeba57cf4e32a81f5a20d72704b51814b6e3131",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-06.pass1.expected.json",
+      "outputSha256": "6308e993fd928dbafe3fbbfe305f300d86a775bcb229d037782a2a99dca59d3e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-01.pass1.expected.json",
+      "outputSha256": "531606f4f53a500897c6e4e28fc1383184b2f77b93ad029c2a9c59858f9c9d51",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-08.expected.json",
+      "outputSha256": "6098bc11a7cca21d20bb48df227c0298c7da951b2976c32448874ff05508aefd",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-07.pass1.expected.json",
+      "outputSha256": "7075b42b9fba674c52e240fb8ff0ee3ba274f862e5ca456fc8e2f02d41b9ca7f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-09.expected.json",
+      "outputSha256": "309a2270246eebd852af157d4923d6009b896065a0037cd9d048af801dd9fa8c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-01.pass1.expected.json",
+      "outputSha256": "d988f8c0aace8e19a021557029f852ee51c3e4ad81404a2ae4596b70934b2dae",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-06.pass1.expected.json",
+      "outputSha256": "05a42a54e6bd9513bcb8d7fddc798a620f1ed7458aa1275a03d008f6f62ce69b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-09.expected.json",
+      "outputSha256": "85f54f6ffad8034a6fc7dd0b7dfff2ed43ac2595486666487beacaa0183f8526",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-05.pass1.expected.json",
+      "outputSha256": "27cd0e18b0e1563b6eff7af4b2ed1531308f0a577283374f62424223b1704f90",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-HO-03.expected.json",
+      "outputSha256": "23959d4038d64e7749a9133ed11d07924cd1ebf4143e7ca62d6dd45edf17da40",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-02.pass1.expected.json",
+      "outputSha256": "c38706529a0767ffca7081a6e5cb366de3524e81d80f3065ccf77c7409171811",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-04.pass1.expected.json",
+      "outputSha256": "3516476c985338c975b42e471740ca97034f201dd8725af25716fe48364c9cd5",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-03.pass1.expected.json",
+      "outputSha256": "46c1786c7b04e3ee3eb284ff5108ae70e068fc6bf599cd82310526f1c0e7e065",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-CUT-01.expected.json",
+      "outputSha256": "933046f1eed773b0662e2af5702c8422778c25452d0148807cdeae505c72bec2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-09.pass1.expected.json",
+      "outputSha256": "70b077d15911c335bf5627721b32b740b2c60049d5b77ddc489f71408886216b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "7741f96fa9a1ce9e17d1ede202cbda2b05eb7c87e6f5e5a91dff4e193c604dee",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-08.pass1.expected.json",
+      "outputSha256": "d9ce1dc203288c141b53a437a9d60964d7ff4f3f1d471e8e308a640c5f075ef9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-03.expected.json",
+      "outputSha256": "228a8fcdb542eb962f1cc996331117828599c29b95ad858289140050a12ea629",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-01.expected.json",
+      "outputSha256": "d99df6db4911436d6a0bc0b4a5ff8df2660335bbea60012d10f6d2d63fec8556",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-05.expected.json",
+      "outputSha256": "edb616bc875dd8a1a4e96e89621b9254421f5480418aa2ae09778540e410122a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-03.expected.json",
+      "outputSha256": "17ac1d67c307362e4e6f8aa54aff4d2948852048b90480954a3f1aea59c0d873",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-07.expected.json",
+      "outputSha256": "9a2460e03605e464a84cbc2b2a4334de8c2b318738a6e212463291698bf6e7dd",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-07.expected.json",
+      "outputSha256": "aa0754a8f794a76d9f6f877ab685bf39cd56c9a6d55def05ff6520cbdd4fb9e2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-10.expected.json",
+      "outputSha256": "e92bb1dbbf2c0065a01e4263beec429f34c63e2990bdd16cd95d3c815a7757c2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/Q8F-02.expected.json",
+      "outputSha256": "b6ff3a290e4b230bb59ca8d1d3a77316de91bec29db0bb813010c3fa1cadebcc",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-01.expected.json",
+      "outputSha256": "2ea0dcebdc760a4c80e3e1ea521bd1fd4dac8a7fda0dfcd10b6ca8551c442828",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-05.expected.json",
+      "outputSha256": "db3a254d19255d927eea4a27ebe800906b2906f9d14e87cd5dd967021cb5cbd0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/Q8F-05.expected.json",
+      "outputSha256": "d9077a12aad0a8cbf269c274a7230f8cc055aabbe7c4d550171a6a15241aee19",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-02.expected.json",
+      "outputSha256": "e074c8b790b6bed0c51787fd9098c2b00c76d1d01aba51d5986c060fc1ea6349",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-06.expected.json",
+      "outputSha256": "b6508c6e5868ad6358f1660d6981b991d9a5248df7fd107580019457cf8df17d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-04.expected.json",
+      "outputSha256": "ef788a4bd8200394b6d3445f91509d16918ba406cedd735dfbeb628d0628cf17",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-02.expected.json",
+      "outputSha256": "e27325c7bbd771aa1e46d76326b4e16e20300c47d897d93158e6c82a23252324",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-06.expected.json",
+      "outputSha256": "e94176c2464e4d49495f2c7b474c349536ae8e342e6fec90bebe3ab366f469b8",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/Q8F-01.expected.json",
+      "outputSha256": "9e67c8a79df5bdf5d62fc0d84eb88768d1dc7431c5cd60bb6d2279019fdd7720",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-13.expected.json",
+      "outputSha256": "13f0bb3bffe998da6928ff63e3227c54162554e99b3d5a8a8696e4de0680e278",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-04.expected.json",
+      "outputSha256": "b75f9b59bc4ae555e05def5e6f1380a39be1939158e450881a7c7f82d1884b34",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-CUT-02.expected.json",
+      "outputSha256": "175512b58341b6ee01fc7af5a3d87c59e080124cb67d893b801271ea35eb1515",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "09a2b888c0dffcbd72e74700f389a373f49931c61d77b33f699187b1d8361ddf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "17a17569102382ffafa2512d62d68ab963b719e89677a897e450d1d3c5ff9ddd",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-05.expected.json",
+      "outputSha256": "a9a3d287107d77804e4287fd6795424770bf7155e058980360a7d824d977cf50",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-03.expected.json",
+      "outputSha256": "2d15b30c0be82e86ae1a9bdc9915f332c353a9b20b5e963749e868e62e40e100",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-07.expected.json",
+      "outputSha256": "69930a55be0c508df2bfb59a9c2c60268a6d1ae55f9ad3cd4dff164e9ab1ecc4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-12.expected.json",
+      "outputSha256": "74421b34c829b377c699b22aca82a2889730d802320762e8f1d27f919fde150d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "1df3df9fb967fb96db1c8374983b6be3f8d5c7fcec83c7c84220090e57690d9b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-05.expected.json",
+      "outputSha256": "4d12612e2142c2cf638cb81b5e320b53738dc7192c467c85fa9ce89ec55d5271",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/Q8F-04.expected.json",
+      "outputSha256": "62d3ce062aeb39fc711d41a561ddcf5619703977a2bfb69bd685877ef163eefd",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "89ebf7a06e08a9c8347947560cf0a335e323793c9071eb2ec5cef860c76dbd01",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-03.expected.json",
+      "outputSha256": "55f8d29294efa48ff3db857a50dff52e3622b219e5f3c15a39aeb69b4412454b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-01.expected.json",
+      "outputSha256": "9aa0d96237b9599db15892fff8c3c5e1a756c68518e17358a28029583669deef",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-01.expected.json",
+      "outputSha256": "1e90ba02f5ed0e4355616b9223872d2314382505bffd2e9912125912a9692a1f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "b70cfbf1bf85bdbb47e1f1aa53d4e2c56f4048c8ca5574c016e41d068c84b27e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "9f74407ec011f1d51763f90df410bf0226c1774f1f91137eb1e2392878b0fb6a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "33ab3feda4c656660e2201f21c7609b2517629f0f6f89777c9f8ac18775be040",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "4f14b0c3a6affe5a8d4b0c912e1cacf598dff04c70aa5945491132618f64c82b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "0f7baed90adbaaa37d98ca391af9b65ebd76cd63db139c901bf58f4378351c0c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "9a75d90cbcc5680ce93f2c32e507612be9ecd795532f41724807b4402eee4227",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "d954fa6a2e40e5f996dff6287b2fe2bb5ab13fbfaf61f74dca276da0e91a1ff9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "3406f5da0a56fcef6e635097b7acc11e55cad822f20b3086d51d8cece07e4f48",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "1eaaab19cc32a40ba07ca1716e44034c935f8f160195cf057206d0c8322fabff",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "a914dea976a7e66a64d83c9b18b8f6b192170dd711a309ad652c186a30c8074a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/Q8F-03.expected.json",
+      "outputSha256": "ed22f0508ba13e3df572604bc33bb422fbeba964808c2b69e5d150832d91f9dc",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-04.expected.json",
+      "outputSha256": "a9dbe421078c9084c12d3a95198968be3b1da657f0b0696971359448edcab0ea",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-06.expected.json",
+      "outputSha256": "f994ff5169de1933afce016e58418cc3eb162e526db8f1df24d4f2818df22adf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "6162b176feb1e5d69f289a4ef7b31e0363afdea3475479457aed6f38e7f30739",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-06.expected.json",
+      "outputSha256": "66f9b18753d12378fb6b5895632834c7bfc32b02eec95507b76d490ada05e810",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "8a3f1fcc02eab1d5a50f8ebbe080f34fe75a5c1ebdae547b3084b745db86c5ee",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-02.expected.json",
+      "outputSha256": "9d7cd922046e9a9d5df385cf45886f9e836f529330f2aa8a7c64b6a06f1068d9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C6-04.expected.json",
+      "outputSha256": "7c47ce7c9df86cc1fc60e228840b2d91268a59d1272156a8766545f830840e64",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "fb8b8452ac73dfef4b8f1b76575cf90a6c60645a6416c59ca06cc87d6505d223",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "7c2390c8e43519adf08745dd6ca54eebb6d0b6e0a52521f631fda64a41f0899b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-02.expected.json",
+      "outputSha256": "101aae303af5ee03cc77c7db5b418691f10f7c873c866bf111e5171c9be6fcee",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G5-SUM-08.expected.json",
+      "outputSha256": "d380b67e4b3a2d41b45dd40fcfd18e90f2af9ba5b899f9ae37c8358ef331250c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/C5-08.expected.json",
+      "outputSha256": "7c79f14ab53ce3b170f8c77e6bea0a0e034f310de9e859fa662f3fdef556872d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "3c2812133602c71cf9fa98ed95373c0d048ac5d17dc2a6e242b6308b9847c404",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G1-I64-02.expected.json",
+      "outputSha256": "5d8f07dfceb06e427197268b34c692e8aa2db270a6ab890199c6d63a32b3ed52",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "c15f1a140a1fd324631eea7c4bdc20dfc4832f7e5251a27b5d1bee06f3954bb7",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "27e15e2d4b4ac842e7077556052f0f27022e703f8b7e5297d21407684b1516d2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-HO-02.expected.json",
+      "outputSha256": "b24af026204e65541bc297a72db629294632103f86e479a4853c0b09e123ae3e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G1-I64-01.expected.json",
+      "outputSha256": "681692625e05b577cd5c9e31b04144753b5c561c5824597782680b9dde412739",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "0add5ec42103ba417be5ba82b37df9f69bc25b8dd0bf18e309f9d86fe01ba195",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-HO-01.expected.json",
+      "outputSha256": "e6f410c93fdc4bf8f1d1b293bddd39b4e8e9155e0c4765e43afe040917c87c7c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-legacy/runs/G9-CUT-02.pass1.expected.json",
+      "outputSha256": "2eff784a1a0c39230b2e5eb198f36f3500d190a4e205bb3496012f135772fb36",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-02.pass1.expected.json",
+      "outputSha256": "bc423d47838138ebfc72ecdb23031099b9dbf1926057646e2a0d8e6e41dccb31",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-05.pass1.expected.json",
+      "outputSha256": "5c0afc5985330c20e2666268958c4d66caf99404dfa27e946d5e617ed8876d12",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-03.pass1.expected.json",
+      "outputSha256": "9e09ef512dcdc99371130d3cd7ade28714dfe7d3ef43f21b096caedc14c9c0f3",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-04.pass1.expected.json",
+      "outputSha256": "01fde81c2d60b5397ba626fe2cf7aa1c9d172a9402b9720c6dc5fe865b29b5e9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G10-CUR-01.expected.json",
+      "outputSha256": "9bc3d8ddc6c4f7c374cba1a79aeba57cf4e32a81f5a20d72704b51814b6e3131",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-06.pass1.expected.json",
+      "outputSha256": "6308e993fd928dbafe3fbbfe305f300d86a775bcb229d037782a2a99dca59d3e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-01.pass1.expected.json",
+      "outputSha256": "531606f4f53a500897c6e4e28fc1383184b2f77b93ad029c2a9c59858f9c9d51",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-08.expected.json",
+      "outputSha256": "6098bc11a7cca21d20bb48df227c0298c7da951b2976c32448874ff05508aefd",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-07.pass1.expected.json",
+      "outputSha256": "7075b42b9fba674c52e240fb8ff0ee3ba274f862e5ca456fc8e2f02d41b9ca7f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-09.expected.json",
+      "outputSha256": "309a2270246eebd852af157d4923d6009b896065a0037cd9d048af801dd9fa8c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-01.pass1.expected.json",
+      "outputSha256": "d988f8c0aace8e19a021557029f852ee51c3e4ad81404a2ae4596b70934b2dae",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-06.pass1.expected.json",
+      "outputSha256": "05a42a54e6bd9513bcb8d7fddc798a620f1ed7458aa1275a03d008f6f62ce69b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-09.expected.json",
+      "outputSha256": "85f54f6ffad8034a6fc7dd0b7dfff2ed43ac2595486666487beacaa0183f8526",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-CUT-02b.pass1.expected.json",
+      "outputSha256": "28d980d5e269703d535dae0b841659c989759ff2c2fe2c81c5f795c371a3e5d2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-05.pass1.expected.json",
+      "outputSha256": "27cd0e18b0e1563b6eff7af4b2ed1531308f0a577283374f62424223b1704f90",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-HO-03.expected.json",
+      "outputSha256": "23959d4038d64e7749a9133ed11d07924cd1ebf4143e7ca62d6dd45edf17da40",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-02.pass1.expected.json",
+      "outputSha256": "c38706529a0767ffca7081a6e5cb366de3524e81d80f3065ccf77c7409171811",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-04.pass1.expected.json",
+      "outputSha256": "3516476c985338c975b42e471740ca97034f201dd8725af25716fe48364c9cd5",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-03.pass1.expected.json",
+      "outputSha256": "46c1786c7b04e3ee3eb284ff5108ae70e068fc6bf599cd82310526f1c0e7e065",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-CUT-01.expected.json",
+      "outputSha256": "933046f1eed773b0662e2af5702c8422778c25452d0148807cdeae505c72bec2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-09.pass1.expected.json",
+      "outputSha256": "70b077d15911c335bf5627721b32b740b2c60049d5b77ddc489f71408886216b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "7741f96fa9a1ce9e17d1ede202cbda2b05eb7c87e6f5e5a91dff4e193c604dee",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-08.pass1.expected.json",
+      "outputSha256": "d9ce1dc203288c141b53a437a9d60964d7ff4f3f1d471e8e308a640c5f075ef9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-03.expected.json",
+      "outputSha256": "228a8fcdb542eb962f1cc996331117828599c29b95ad858289140050a12ea629",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-01.expected.json",
+      "outputSha256": "d99df6db4911436d6a0bc0b4a5ff8df2660335bbea60012d10f6d2d63fec8556",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-05.expected.json",
+      "outputSha256": "edb616bc875dd8a1a4e96e89621b9254421f5480418aa2ae09778540e410122a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-03.expected.json",
+      "outputSha256": "17ac1d67c307362e4e6f8aa54aff4d2948852048b90480954a3f1aea59c0d873",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-07.expected.json",
+      "outputSha256": "9a2460e03605e464a84cbc2b2a4334de8c2b318738a6e212463291698bf6e7dd",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-07.expected.json",
+      "outputSha256": "aa0754a8f794a76d9f6f877ab685bf39cd56c9a6d55def05ff6520cbdd4fb9e2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-10.expected.json",
+      "outputSha256": "e92bb1dbbf2c0065a01e4263beec429f34c63e2990bdd16cd95d3c815a7757c2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/Q8F-02.expected.json",
+      "outputSha256": "b6ff3a290e4b230bb59ca8d1d3a77316de91bec29db0bb813010c3fa1cadebcc",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-01.expected.json",
+      "outputSha256": "2ea0dcebdc760a4c80e3e1ea521bd1fd4dac8a7fda0dfcd10b6ca8551c442828",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-05.expected.json",
+      "outputSha256": "db3a254d19255d927eea4a27ebe800906b2906f9d14e87cd5dd967021cb5cbd0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/Q8F-05.expected.json",
+      "outputSha256": "d9077a12aad0a8cbf269c274a7230f8cc055aabbe7c4d550171a6a15241aee19",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-02.expected.json",
+      "outputSha256": "e074c8b790b6bed0c51787fd9098c2b00c76d1d01aba51d5986c060fc1ea6349",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-06.expected.json",
+      "outputSha256": "b6508c6e5868ad6358f1660d6981b991d9a5248df7fd107580019457cf8df17d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-04.expected.json",
+      "outputSha256": "ef788a4bd8200394b6d3445f91509d16918ba406cedd735dfbeb628d0628cf17",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-02.expected.json",
+      "outputSha256": "e27325c7bbd771aa1e46d76326b4e16e20300c47d897d93158e6c82a23252324",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-06.expected.json",
+      "outputSha256": "e94176c2464e4d49495f2c7b474c349536ae8e342e6fec90bebe3ab366f469b8",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/Q8F-01.expected.json",
+      "outputSha256": "9e67c8a79df5bdf5d62fc0d84eb88768d1dc7431c5cd60bb6d2279019fdd7720",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-13.expected.json",
+      "outputSha256": "13f0bb3bffe998da6928ff63e3227c54162554e99b3d5a8a8696e4de0680e278",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-04.expected.json",
+      "outputSha256": "b75f9b59bc4ae555e05def5e6f1380a39be1939158e450881a7c7f82d1884b34",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "09a2b888c0dffcbd72e74700f389a373f49931c61d77b33f699187b1d8361ddf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "17a17569102382ffafa2512d62d68ab963b719e89677a897e450d1d3c5ff9ddd",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-05.expected.json",
+      "outputSha256": "a9a3d287107d77804e4287fd6795424770bf7155e058980360a7d824d977cf50",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-03.expected.json",
+      "outputSha256": "2d15b30c0be82e86ae1a9bdc9915f332c353a9b20b5e963749e868e62e40e100",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-07.expected.json",
+      "outputSha256": "69930a55be0c508df2bfb59a9c2c60268a6d1ae55f9ad3cd4dff164e9ab1ecc4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-12.expected.json",
+      "outputSha256": "74421b34c829b377c699b22aca82a2889730d802320762e8f1d27f919fde150d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "1df3df9fb967fb96db1c8374983b6be3f8d5c7fcec83c7c84220090e57690d9b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-05.expected.json",
+      "outputSha256": "4d12612e2142c2cf638cb81b5e320b53738dc7192c467c85fa9ce89ec55d5271",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/Q8F-04.expected.json",
+      "outputSha256": "62d3ce062aeb39fc711d41a561ddcf5619703977a2bfb69bd685877ef163eefd",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "89ebf7a06e08a9c8347947560cf0a335e323793c9071eb2ec5cef860c76dbd01",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-03.expected.json",
+      "outputSha256": "55f8d29294efa48ff3db857a50dff52e3622b219e5f3c15a39aeb69b4412454b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-01.expected.json",
+      "outputSha256": "9aa0d96237b9599db15892fff8c3c5e1a756c68518e17358a28029583669deef",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-01.expected.json",
+      "outputSha256": "1e90ba02f5ed0e4355616b9223872d2314382505bffd2e9912125912a9692a1f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "b70cfbf1bf85bdbb47e1f1aa53d4e2c56f4048c8ca5574c016e41d068c84b27e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "9f74407ec011f1d51763f90df410bf0226c1774f1f91137eb1e2392878b0fb6a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "33ab3feda4c656660e2201f21c7609b2517629f0f6f89777c9f8ac18775be040",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "4f14b0c3a6affe5a8d4b0c912e1cacf598dff04c70aa5945491132618f64c82b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "0f7baed90adbaaa37d98ca391af9b65ebd76cd63db139c901bf58f4378351c0c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "9a75d90cbcc5680ce93f2c32e507612be9ecd795532f41724807b4402eee4227",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "d954fa6a2e40e5f996dff6287b2fe2bb5ab13fbfaf61f74dca276da0e91a1ff9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "3406f5da0a56fcef6e635097b7acc11e55cad822f20b3086d51d8cece07e4f48",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "1eaaab19cc32a40ba07ca1716e44034c935f8f160195cf057206d0c8322fabff",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "a914dea976a7e66a64d83c9b18b8f6b192170dd711a309ad652c186a30c8074a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/Q8F-03.expected.json",
+      "outputSha256": "ed22f0508ba13e3df572604bc33bb422fbeba964808c2b69e5d150832d91f9dc",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-04.expected.json",
+      "outputSha256": "a9dbe421078c9084c12d3a95198968be3b1da657f0b0696971359448edcab0ea",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-06.expected.json",
+      "outputSha256": "f994ff5169de1933afce016e58418cc3eb162e526db8f1df24d4f2818df22adf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "6162b176feb1e5d69f289a4ef7b31e0363afdea3475479457aed6f38e7f30739",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-06.expected.json",
+      "outputSha256": "66f9b18753d12378fb6b5895632834c7bfc32b02eec95507b76d490ada05e810",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "8a3f1fcc02eab1d5a50f8ebbe080f34fe75a5c1ebdae547b3084b745db86c5ee",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-02.expected.json",
+      "outputSha256": "9d7cd922046e9a9d5df385cf45886f9e836f529330f2aa8a7c64b6a06f1068d9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C6-04.expected.json",
+      "outputSha256": "7c47ce7c9df86cc1fc60e228840b2d91268a59d1272156a8766545f830840e64",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "fb8b8452ac73dfef4b8f1b76575cf90a6c60645a6416c59ca06cc87d6505d223",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "7c2390c8e43519adf08745dd6ca54eebb6d0b6e0a52521f631fda64a41f0899b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-02.expected.json",
+      "outputSha256": "101aae303af5ee03cc77c7db5b418691f10f7c873c866bf111e5171c9be6fcee",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G5-SUM-08.expected.json",
+      "outputSha256": "d380b67e4b3a2d41b45dd40fcfd18e90f2af9ba5b899f9ae37c8358ef331250c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/C5-08.expected.json",
+      "outputSha256": "7c79f14ab53ce3b170f8c77e6bea0a0e034f310de9e859fa662f3fdef556872d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "3c2812133602c71cf9fa98ed95373c0d048ac5d17dc2a6e242b6308b9847c404",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G1-I64-02.expected.json",
+      "outputSha256": "5d8f07dfceb06e427197268b34c692e8aa2db270a6ab890199c6d63a32b3ed52",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "c15f1a140a1fd324631eea7c4bdc20dfc4832f7e5251a27b5d1bee06f3954bb7",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "27e15e2d4b4ac842e7077556052f0f27022e703f8b7e5297d21407684b1516d2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-HO-02.expected.json",
+      "outputSha256": "b24af026204e65541bc297a72db629294632103f86e479a4853c0b09e123ae3e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G1-I64-01.expected.json",
+      "outputSha256": "681692625e05b577cd5c9e31b04144753b5c561c5824597782680b9dde412739",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "0add5ec42103ba417be5ba82b37df9f69bc25b8dd0bf18e309f9d86fe01ba195",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-HO-01.expected.json",
+      "outputSha256": "e6f410c93fdc4bf8f1d1b293bddd39b4e8e9155e0c4765e43afe040917c87c7c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "core-final-updated/runs/G9-CUT-02b.expected.json",
+      "outputSha256": "c4c34cbfad86beaffea765dcb9daeb02158e12eba5c5942f1ee20a757a109aa5",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-02.pass1.expected.json",
+      "outputSha256": "1ac759101f84572319d200b543ad0eaa9d531ae82a5322729acc6ec5be75f82d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-05.pass1.expected.json",
+      "outputSha256": "b7c63f00883315393e6787e91169d3fd1b3f8e327d88223e7e6afcdb01277132",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-03.pass1.expected.json",
+      "outputSha256": "fecdfa283dd97c15ac8ba50af9255255435d9c878bc4f0616fad655312f83b56",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-04.pass1.expected.json",
+      "outputSha256": "407e258c9ab4e4e76c9a5ee71c9f1ee4d073d56a006cce4918e61fb37d16735f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G10-CUR-01.expected.json",
+      "outputSha256": "c802622be79af50ad0c8254cf81012438ba97c4cf7fc74f777879ab8b2159d8e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-06.pass1.expected.json",
+      "outputSha256": "94da4049616c3f7275000eb4dfc677b03e83e6566fdf452a9dcf4975530ee7dc",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-01.pass1.expected.json",
+      "outputSha256": "d3257eaac2c7d39e6b4c09d0b7d4d86f075ea617b9794a72a3f52420bd91ecf9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-08.expected.json",
+      "outputSha256": "8501890161f6858647d8023f732f3ddfc3104d7a42a58ebb21bcfa1e9d0a4c7e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-07.pass1.expected.json",
+      "outputSha256": "ce90e6284754e34ab68e4b3ffc48932a0940b11036509f41115dff5735203356",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-09.expected.json",
+      "outputSha256": "71ad4af6db981a91bb82470431bbcebeefa06e1c728794cf236b0a19020fda32",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-01.pass1.expected.json",
+      "outputSha256": "9e5fd3f75b13e6bf94efea2b8a7a96f4d0e50698f574eb5659ed57777a573fba",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-06.pass1.expected.json",
+      "outputSha256": "fe57af5f985130732daaf205438f4cedc0c93833bff230908ca193ec84b7c63e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-09.expected.json",
+      "outputSha256": "b5c6c071a42496b7b6e5be68443dc0654e383cd65077d94933b39a8591359b62",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-05.pass1.expected.json",
+      "outputSha256": "f947d86e6866af41187fff90a7da78ef312c406966a087a9aeddabcd6040df8e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-HO-03.expected.json",
+      "outputSha256": "bf317f07118ec792b12a373ffb0bbc9abf4c5763dacf65cf014a7b1a85548ffe",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-02.pass1.expected.json",
+      "outputSha256": "625e018a2dda9cfeb516e9c27524c4549022a78ecc470446bd45dfe202c5dd63",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-04.pass1.expected.json",
+      "outputSha256": "6849c0659789fe5d07e37bac1c47fbbcfb0563377668678be5f500827ca6a430",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-03.pass1.expected.json",
+      "outputSha256": "e4a926a16f3273a0b38df745c60cd8294f699d8be2f15e53cec579aa44fc592a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-CUT-01.expected.json",
+      "outputSha256": "ed79b4e90337064d1c2ded2d5cffcf34fb8b18f73745b6ac59bbadd56cbc9d62",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-09.pass1.expected.json",
+      "outputSha256": "c62f2c43f2183318a604692c6527942d9d33807bdb5e1bf62e7f78bc31357e38",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "94f6ca0be10d1e64b79c9af3011e1053216110c92dec30659bf02b59410326ba",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-08.pass1.expected.json",
+      "outputSha256": "fac087818be5e0fb6100b20096e6c9c37415b93f6ff6d9d9404e495d39c310fe",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-03.expected.json",
+      "outputSha256": "161afdfdf84cd837e43991f4dfab942b1b6f48c32af012f383329f861ea42c2b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-01.expected.json",
+      "outputSha256": "d4cd01e93e5a3a08b4dd292490a209a9bca9abf82101a58e9c7118afec8894d5",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-05.expected.json",
+      "outputSha256": "16a65a0354a2d04c1ea34e807cb503cdf6d1f6868bb5657c613ef8908bd965c4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-03.expected.json",
+      "outputSha256": "23b72150795d4f0956726bf69794519f32f95d7899edb6f61321fc31a0af81f8",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-07.expected.json",
+      "outputSha256": "3983861bf855b5fa9cdfd34efa297a08ab4fab7d6df0fb3a096d91c34a9d0a28",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-07.expected.json",
+      "outputSha256": "b466e94157d7722541d9ca2fb1e1dbd10123496ebfe6ef66016cb2d505c71c1e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-10.expected.json",
+      "outputSha256": "81cf4740151bf9eb7a792a5f72b33d83a62322434a0b5818938bdb8e94349045",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/Q8F-02.expected.json",
+      "outputSha256": "afa08a1cf0e4dc9a8ea732646254fad7ba860daa65fac79d6d9288edf2f56422",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-01.expected.json",
+      "outputSha256": "03efdfa3d80c18e43b3cfc3b194fbb9740f778f2da34e225c23825b2cd51376e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-05.expected.json",
+      "outputSha256": "ca7497741624fdf50a66120721519285bb006f2b43d84c86d19b63df241bd10c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/Q8F-05.expected.json",
+      "outputSha256": "3e3c0960c664b48b246a0d77a734c6ab4db32fdbbbc0be8fcdf95ae6f6a4abad",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-02.expected.json",
+      "outputSha256": "035b2aea2515a5aa7eb5c9764c65cf45b447857ff339109fdd64914ecbd5b168",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-06.expected.json",
+      "outputSha256": "142fd87d454512a641a21718e05958c5130c42a908670a03236f7381d97ec129",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-04.expected.json",
+      "outputSha256": "a3340c4ed7d3506e2f6cf3ad5e78b236138a86503f0dc9e05933dd37efdf75a0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-02.expected.json",
+      "outputSha256": "d8f6dd3343cc2331f5a6c53b38de92fb0b179af8339ce81f8fb7e7aa1400728e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-06.expected.json",
+      "outputSha256": "23c56d525b9b92ad8c1601c6edcd143e69f02423f8f871fb66bf9f83c2d0a224",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/Q8F-01.expected.json",
+      "outputSha256": "d56ad2aa9ce543fb5cc21019e201e51c52e6211b54e45a05605925d893c6eb01",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-13.expected.json",
+      "outputSha256": "4e4e8edc0c502d0be6fef7ed9af7d2597b3f143734c4a3a57eed7273f8c6a36f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-04.expected.json",
+      "outputSha256": "a6799cbdbb97c9aff4affe4c252d9a0c0d2229c7de92575cf01ad2597ed0fc40",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-CUT-02.expected.json",
+      "outputSha256": "726489efb65c322166da7ba3f1a1d733a0815a095610e98ea2b4ce007e30a8c6",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "f2de78597af043286372aaea2bbfc4e6bdaa005b7a1f06ec48b99c52a859855d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "288912ae1bdf49f9bc7dc56be9cda3fb2a31b6e788c99fa6525c5a20fa5cd30c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-05.expected.json",
+      "outputSha256": "d2516a81bbb2cf35aa0e64fa1a729e4d79b0838a11242cc4f1718c64e2bf865d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-03.expected.json",
+      "outputSha256": "a2e86d4a96477123fcf381600362113f93a86c14798dc17045b809b2b419569b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-07.expected.json",
+      "outputSha256": "71d91196ea3c381d08ee8bffd2ae47cbf969a7eedea20fc9c2f7fa5044bba0c2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-12.expected.json",
+      "outputSha256": "73d2e604b8c37c253d329bf1f5e2d315dd08d954b57e3b76c170980ebaa4fa54",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "df67190ca80d315e072896e2019e06bd607b616952752476095509b42a93145c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-05.expected.json",
+      "outputSha256": "66747368069562685b759cac7cfb6a59cd8f2525785c121cfedcd33b396da9bb",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/Q8F-04.expected.json",
+      "outputSha256": "9a6913d48cd8a35446b7e0ddc46dc62c1ea8220cce974f52bb083eaa1f3b5842",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "fd93aa51243518b47b7e16db26242bd0e06329017a184c200788ce9ec6202bb7",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-03.expected.json",
+      "outputSha256": "111eb56714c233494d1532dbb54dfd413e1938c8711195f3329a0b71a83cff7f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-01.expected.json",
+      "outputSha256": "40929f403adfca58ca39fecbe176abd43fb18eeaad02c817ee7701c6c97e974f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-01.expected.json",
+      "outputSha256": "da72e00d74d79161a8e08edcfe12ec8a8c2f289e70d582f871949c3c14c75d41",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "c158fd8abd6a9935b0b8cd594ff188d2d9a093200fbcd2ea2b841ae96c8ba0ba",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "b5772d8bb8215049217fd3efdd8c9e05aa2eb6fa11dad868fd554619452bf046",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "bb41a436c8278cbc4398c458ea25bb17ef04a71996afc12f2afba1a00566437e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "fd94d5eeda1734dd3a6fdcdc57d5601f21445fc90ecbc506eb44c42df1d37cdd",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "445446853a4ebcef40d4790ced8282b73b4b6e4767ba3a11ffbe375601dde356",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "8fdcac61626815d09c3da8a60b6fb25db0b4a8baf8198520e291854e7e8728e3",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "ced6f7e0f214c9cade66a6db734c961d67c4f992fd367ca4baa710d772878536",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "e5c275a3a74b657c5bb1fdf6ca14c538cd09a37fc882de524cf7de4a79cef037",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "8cb75c769a0bc8771c2bedd4bce997175fe3d7bf9de9139e3a8a85e3c3805d20",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "961146810a16f2b35bcdc08ccef75012550e1f9d8a65096828cc12995b44d719",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/Q8F-03.expected.json",
+      "outputSha256": "afabf9dd9e3c8871632d29d61db71364b0e364f4cea56c53d2ddf2fe370ca623",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-04.expected.json",
+      "outputSha256": "6b8537873252696915b68708726986aa06c31df61f970052b2966384f8a03b8a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-06.expected.json",
+      "outputSha256": "c92948a5e9abe316ad85c8ba7f0b7ce5517350bf161138d5125d9f361acf6a1a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "c51f747253be15d9db800187aaa294aea7ddf2a84886d01d1b175bf68625d919",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-06.expected.json",
+      "outputSha256": "c39c6a337153d47eb717819d5a69dc612455d7e73b71eb537d41641e3ca3ef4c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "e2a75a1060ffce98184ef0972d8f389cc750465c22afa2a2ba8a199762e14cd0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-02.expected.json",
+      "outputSha256": "37a94e2372fe7b64052ff2dbf704c3ebc427dc938233b459d802e2b0f6afddd9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C6-04.expected.json",
+      "outputSha256": "16d0b05d9a6451a4b58931531c487fc97bbba615f772bc24aa46b3dbecaa6b0b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "c7405718582221caac10e034d671eaf31db9bcdf0449c072213d81e7d05d3b03",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "941b90ec998e92fcad588704753387eadfd0788abf729b471193133eae178209",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-02.expected.json",
+      "outputSha256": "22fb378cae016e652df28c4546ea796ea7e9bfcd6a62b5fff8bddbabf9b6cc28",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G5-SUM-08.expected.json",
+      "outputSha256": "cc378963f6d4a93aa7ae0006ea9571005ffd9827490a1df39ac0aff33014b411",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/C5-08.expected.json",
+      "outputSha256": "a58923c2c1ab88806c52d9a408a861086f934b7f732a6eada6a8178e97ff35c7",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "e790d22c1918febcf6e27511b4cafb5d8f3bac187f690fc36a041ba3fe8984c7",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G1-I64-02.expected.json",
+      "outputSha256": "ea20dc89ab568b95f0198c47cbe4d5be5634aa71681bd000781d5f9374a84ced",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "be18ef1a00ff12443ce105e226b7ebdbbc9d98a98ed534ac9aea3080c42cf337",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "2fefd0a2a220ee0abe6c3812d09f4fa38e29e46f6b2cac9682512a0d5403d8e4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-HO-02.expected.json",
+      "outputSha256": "ee4ff89c7f6cb55b2092381d931d14e08254e8fd8d11f1c73e12e34d2078cbb5",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G1-I64-01.expected.json",
+      "outputSha256": "dfe53f7cf36324c5364e53a4cd04e2f0096910729deef072c98defd9e1610f23",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "09612ab7f4b4ec18714ad51f3709758c98bda4599d8d0a724ae145750d1c51ad",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-HO-01.expected.json",
+      "outputSha256": "429716240cde9ef846a787ee5f69172b2044ea327837e60786b49de079825055",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-baseline-legacy/runs/G9-CUT-02.pass1.expected.json",
+      "outputSha256": "287ed8efc07e1b6ec60420dc5385c7ed4cc4902062848165bd5979d94f3f621f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-02.pass1.expected.json",
+      "outputSha256": "5b0fd227090ec95cc7338eef032e9a8841a47ee689e42635be829840b1cd0cdc",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-05.pass1.expected.json",
+      "outputSha256": "c023aac4aedaf7037debbc42b540d22b2d7199fa59a9f4efd6cc0836e843d51b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-03.pass1.expected.json",
+      "outputSha256": "7862407b4c185ed1281e18d11996a80408fbd925654f18a49e5e9865feecdaaa",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-04.pass1.expected.json",
+      "outputSha256": "c0e78ce18cb4a00ef87798c4f02bb27506c8308f13b8a03d65bf910884ddac23",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G10-CUR-01.expected.json",
+      "outputSha256": "0b258d0a6d66daf6cde05a69d49fea93e5fe82070a5222a27328966f0da6441a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-06.pass1.expected.json",
+      "outputSha256": "8b4961ced62c7d0d4a0d85e242a5dd5bcbec6dd8b2b4126dd4a0b8fde4ddcee4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-01.pass1.expected.json",
+      "outputSha256": "a3c3c1b266774cd6555fb23f1f3a4e87ae4b8979946c37d2d4489a66ef6070c3",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-08.expected.json",
+      "outputSha256": "2f42f198e19f1a810823ab643f901c3bae69801fb0092c246a63c069d00b0c7c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-07.pass1.expected.json",
+      "outputSha256": "d3bcc1610b73a12665a123f9bb280c43f75b171b953e0e022eb998adab6ff123",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-09.expected.json",
+      "outputSha256": "f7e7c87bcc5916b2bfa97f81d874e1be59356d6f7fb6ee39e895628bc21669f5",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-01.pass1.expected.json",
+      "outputSha256": "8b5c38335995e30d0eeb90fda189f799bb0553a9eadc5e6cecdee7e49e0db939",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-06.pass1.expected.json",
+      "outputSha256": "3a3912dadecfaae3e6a19d232ba26f51fa40c1b0045c7d17870b5fada98f6208",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-09.expected.json",
+      "outputSha256": "1839d3520cb2e6ea5f6032daabca886dae0f601eb65c43fad8eeb26a53c9947e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-05.pass1.expected.json",
+      "outputSha256": "acc6c9c9b0b2d367635dcf4d5f913f69469b9c4fc9fe6208a51e660764efb16b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-HO-03.expected.json",
+      "outputSha256": "418c7d8a37edc56f2632a3379ea1df469be31d3abb7956b0aff3d3167186118f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-02.pass1.expected.json",
+      "outputSha256": "95dad6112bae977c1a4dd274683098172a2702a197a746228b25d820fb679207",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-04.pass1.expected.json",
+      "outputSha256": "38ff958e5f4e5b602b3c5e06dac4ae213f4c5e1680b8bc5b97129c57a897bd37",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-03.pass1.expected.json",
+      "outputSha256": "4a913b5b96647b4672cce81dd4adbf0985a9001f669a9bf677fc553cec7cee95",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-CUT-01.expected.json",
+      "outputSha256": "8ad11e6cacc1effcfc17348d44b6aa9864b12084d228f075c7dc1be5a74c7bf0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-09.pass1.expected.json",
+      "outputSha256": "a7c372bfcacd0b1c4525bc4fbdd9a936412d14f91444ce4dff0a9d18ff86b75d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "a2aed69f3ae342219109da43b5087ccb2292e7005d8258116194f975125289e4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-08.pass1.expected.json",
+      "outputSha256": "1a0cbdc68462565234b96f08e273a111a63f193b587e2cc01196ceb67fa21a8b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-03.expected.json",
+      "outputSha256": "7eea7e100a297740033fc37be4ef88c98e6c3772b679b8cf4f422caa606827ef",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-01.expected.json",
+      "outputSha256": "89d0bf0e58e367d36c4c22b0c843132d34fad651e14ad7ec0abe44752caedf59",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-05.expected.json",
+      "outputSha256": "110a0713a765e72afa21f01157daaa201d5b60edc6c6edf34a7caea572da9b9e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-03.expected.json",
+      "outputSha256": "047464818d52600629953f41008c7b6842fa149152d029e5f9a162aa38c58a4b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-07.expected.json",
+      "outputSha256": "c10ed36840da139632774557172eb68394662b9841db6e07fb801aece3b1d807",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-07.expected.json",
+      "outputSha256": "1313c94dac1fff5b75b65f3a6ea9813ace374d05bf2ed03197cad0c01001e7fe",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-10.expected.json",
+      "outputSha256": "56272c45e0460a55b75b376f7485d2571d8f1b5b6cbec4dc64593c8898b398e7",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/Q8F-02.expected.json",
+      "outputSha256": "cd61744564480718ef9d09bddb6a7538af6826a9506f79b3caa8dd91fcfcabe0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-01.expected.json",
+      "outputSha256": "b8cab73bcf162b46421151b23bc12a4b64695f5bf157da7def11a20a8c76db31",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-05.expected.json",
+      "outputSha256": "d5405036576b2e8f28ae930d6b6cf2af3d4981d564c7dfc81224547a87a09e83",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/Q8F-05.expected.json",
+      "outputSha256": "f9bfd7088b796beb8d6023dd42c6b8ac7cc75b2aa2da2f62af7fbbf01e2fab53",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-02.expected.json",
+      "outputSha256": "530ecc40fa708290a79dd4a49af6cb0ff0c7859afaf313b575b05ff5fd813780",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-06.expected.json",
+      "outputSha256": "cfa4a9c8f04b3496531cbfae7ea97379dcf7f9d8fb14287f0d5e89fb8d6c854b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-04.expected.json",
+      "outputSha256": "bd198be75a1d95deb07196aa52f8144f6ace3b2215db182d53295c94a63cea80",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-02.expected.json",
+      "outputSha256": "058957828c5493077a27d0750d0359c287f557e9cd793a1846f1774697408f8a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-06.expected.json",
+      "outputSha256": "f3d61665900400b721011c76b954e1d0cd39595fb13ca24121b9db22988bddc8",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/Q8F-01.expected.json",
+      "outputSha256": "954a3578aab95052018396c708089aa0735d4e0268fdfa81313a96085b67b948",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-13.expected.json",
+      "outputSha256": "68cad46a8e02fd582455b6a068347270af24ee2f2159f72b9d62a6ccf9818221",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-04.expected.json",
+      "outputSha256": "44174644e494da08a5cf501541a47661b80675d276a03aacc07a374390ffaa8c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-CUT-02.expected.json",
+      "outputSha256": "f52c106b8a03016981650e363f3e7ea7ad06b3c75b8c4cfc3d1d34d1d4d5bb05",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "86a4f6b47c4fcd2f123fcd4a7cfa081a9b8cf98d16b1ba833f9305a3b53a5462",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "a9538ce0632933e2eda543f1ca14aefacb2cb66364e3615196a5c07baaaae8cf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-05.expected.json",
+      "outputSha256": "b7657dd86e057b880878cdf215bda77753114162a05ba80d46cb604ec92dd180",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-03.expected.json",
+      "outputSha256": "bbc282aa30650bce8b6b4e72e74553594197e1522e570fe4d0f8d0447fd89181",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-07.expected.json",
+      "outputSha256": "faf14243ed8e08eb27440814fdbd53bc0b3c976d1a7941a73289a8b7d75bc2d0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-12.expected.json",
+      "outputSha256": "8e92b97fe730d24e06d539b47d6245f7da9197779d6f4c5826defdd05d9e0bb2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "321634ebec800b80b6be06d90224d15fbca4c477d42aa7ab960ff6bd01cd4d27",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-05.expected.json",
+      "outputSha256": "6402a8ba9995b6865e39dbc2d277985ae001c21a6a3d63b2d50114a5fcab3bf4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/Q8F-04.expected.json",
+      "outputSha256": "598fff68e7417dec1696ae6c3039706bb6fcf48c6fa9e85ae410117a3f56f942",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "87fdde53dff194be3c44a8df6ecfd09983fac97df2b0bb87d2282558e5c16a5e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-03.expected.json",
+      "outputSha256": "4e4487bf5571636b884a8b3fee809906ebd007cc60febf5f29c23e4f3f1da9fe",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-01.expected.json",
+      "outputSha256": "39cbc08aea6546b8b883644d6bdd000226b933870d0447e33c364a8b8175bc61",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-01.expected.json",
+      "outputSha256": "45c59c3567f2e41c6f6b3ce9b42a801499d7b423f30979c80ab1da3ddfe19bc8",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "816380846d56e2126eae8fde4ce763ea8b6fbb64b4dccadc80e29ad73d4f0552",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "9ab757b273c7dd58e501d7450f920b0f620bb24890afb818a0db85b93f50d30d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "b46d89f7a45ae5d6534c4e7912ef0f14beeaf801b0be154dac61603bab0b0e66",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "dca81c40b047a2b49540c6c065ed62dda8cc1b13d5d1cc5d6b151d96cd14157f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "d6e20af59806174ab831311401d3405331a25887db808c833bcca43603153cf3",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "9df683a83c3e8805e0b11080882e5ef1fd026f09e6d249e8e855715b14f30fe0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "6d63d965954dcdec317db24d019475c323c3a1f56ef456e46980895433164383",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "13395ea843cb0892eb1e534c8a5afe5c19908d38feea190511755c75c40c2bdf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "e309dd64faf696abd6170331383f7f17e1ce8c99463c1eeec3f7f7f391213dd8",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "733e0aed23f718584d78b62451c3bf7fa34d75004a42850aee8ce86823dd0ab9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/Q8F-03.expected.json",
+      "outputSha256": "85b86c569d86828fbecf1f7c3e0c37ce525693e4181a7b8b3dccc62f2a9077b3",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-04.expected.json",
+      "outputSha256": "bf32e94e6682ac074156dd6a9cdce44e4566f9ae684543e086569a1e7a5e8ab9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-06.expected.json",
+      "outputSha256": "075ced4d3b6819616f8d4b456d1c888bb6b095b7a61430b1dbde69e108d7a19e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "423f53b60904aed3bd5fafb77879e8767b9bac9ff89a26e97dc7f70a6c00eaf9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-06.expected.json",
+      "outputSha256": "32fdfbf4b85d4c9c192a2877cfce786c4d169a6c1d84d88d47c934637253c940",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "910b88be281a317475256b5882fa77004449d0da6de3114e1bfa063305fd4bd4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-02.expected.json",
+      "outputSha256": "a0eac4ac84dd8419ce6cbc7bb8c5f47202244d70bd7b3f4dc15e648b1ece4228",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C6-04.expected.json",
+      "outputSha256": "dadc94e4c072705680d99f7e7d5ffa7ed242544cc122831cdcf87265922ad640",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "d1121f3e88a7268e47f2131a2b86e9bb72e8cdd33dd2b9969eff51aff4fd548d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "1f4db821562bb8fd4c442b6a234d56f6df8bde45b4f9beebab308de314be76c1",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-02.expected.json",
+      "outputSha256": "fdd37f85f073bd56df630d1c0311023adaa01fcee3cda396bfa9b34e4c506fde",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G5-SUM-08.expected.json",
+      "outputSha256": "179d34ff68d2c8819b4e73b69213d3f6a76cd022074ef32cbbf29d11176b994d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/C5-08.expected.json",
+      "outputSha256": "daacb24121c8ca6f8e5f17ebe3fbb381d499ae6d6ff3603dcd555a5421fc81cf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "bac77cd8d4c5d9ba8af2df2620037471218a6f931e073407e6f720d6d2ed8367",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G1-I64-02.expected.json",
+      "outputSha256": "7ed83cd14d7a854663ecebeb73fba18814ea6f8c95670db7642311e8d4112c49",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "7cb6b89f317e052d8ee1d25d849bb807fe730eda2aba4b5179af2c8630855d60",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "db63ce693b762586c42cc97719960aff0a2bfd579a8afe1d34c1ba5c06f929d9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-HO-02.expected.json",
+      "outputSha256": "e7505ce3503c98b3a7a107be489f3ebdf3fdd8fdb58becc12b9ea29554fd6928",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G1-I64-01.expected.json",
+      "outputSha256": "eb21046c9fbcc3e07098c41d76ba267caaecbbb159ef5f4510f78cc509e7546b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "e7a02bf7373672f6bb4d29748d6ffb8f4406e643dbc6a8a651b8039590f1396d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-HO-01.expected.json",
+      "outputSha256": "51c2c6f3bc229250f6bc51189782a270146cee5fa553b861d9b7ed43ae186115",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-legacy/runs/G9-CUT-02.pass1.expected.json",
+      "outputSha256": "d148edfcdc767d9d1779dfd27722324fcb1f8c22eb6dedae3b44c3b9a5700443",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-02.pass1.expected.json",
+      "outputSha256": "5b0fd227090ec95cc7338eef032e9a8841a47ee689e42635be829840b1cd0cdc",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-05.pass1.expected.json",
+      "outputSha256": "c023aac4aedaf7037debbc42b540d22b2d7199fa59a9f4efd6cc0836e843d51b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-03.pass1.expected.json",
+      "outputSha256": "7862407b4c185ed1281e18d11996a80408fbd925654f18a49e5e9865feecdaaa",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-04.pass1.expected.json",
+      "outputSha256": "c0e78ce18cb4a00ef87798c4f02bb27506c8308f13b8a03d65bf910884ddac23",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G10-CUR-01.expected.json",
+      "outputSha256": "0b258d0a6d66daf6cde05a69d49fea93e5fe82070a5222a27328966f0da6441a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-06.pass1.expected.json",
+      "outputSha256": "8b4961ced62c7d0d4a0d85e242a5dd5bcbec6dd8b2b4126dd4a0b8fde4ddcee4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-01.pass1.expected.json",
+      "outputSha256": "a3c3c1b266774cd6555fb23f1f3a4e87ae4b8979946c37d2d4489a66ef6070c3",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-08.expected.json",
+      "outputSha256": "2f42f198e19f1a810823ab643f901c3bae69801fb0092c246a63c069d00b0c7c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-07.pass1.expected.json",
+      "outputSha256": "d3bcc1610b73a12665a123f9bb280c43f75b171b953e0e022eb998adab6ff123",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-09.expected.json",
+      "outputSha256": "f7e7c87bcc5916b2bfa97f81d874e1be59356d6f7fb6ee39e895628bc21669f5",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-01.pass1.expected.json",
+      "outputSha256": "8b5c38335995e30d0eeb90fda189f799bb0553a9eadc5e6cecdee7e49e0db939",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-06.pass1.expected.json",
+      "outputSha256": "3a3912dadecfaae3e6a19d232ba26f51fa40c1b0045c7d17870b5fada98f6208",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-09.expected.json",
+      "outputSha256": "1839d3520cb2e6ea5f6032daabca886dae0f601eb65c43fad8eeb26a53c9947e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-CUT-02b.pass1.expected.json",
+      "outputSha256": "3d7e21f1ff0c4cb028aee609da6fb0c03adf718c31c6667b2237f10a9b54a9f7",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-05.pass1.expected.json",
+      "outputSha256": "acc6c9c9b0b2d367635dcf4d5f913f69469b9c4fc9fe6208a51e660764efb16b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-HO-03.expected.json",
+      "outputSha256": "418c7d8a37edc56f2632a3379ea1df469be31d3abb7956b0aff3d3167186118f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-02.pass1.expected.json",
+      "outputSha256": "95dad6112bae977c1a4dd274683098172a2702a197a746228b25d820fb679207",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-04.pass1.expected.json",
+      "outputSha256": "38ff958e5f4e5b602b3c5e06dac4ae213f4c5e1680b8bc5b97129c57a897bd37",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-03.pass1.expected.json",
+      "outputSha256": "4a913b5b96647b4672cce81dd4adbf0985a9001f669a9bf677fc553cec7cee95",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-CUT-01.expected.json",
+      "outputSha256": "8ad11e6cacc1effcfc17348d44b6aa9864b12084d228f075c7dc1be5a74c7bf0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-09.pass1.expected.json",
+      "outputSha256": "a7c372bfcacd0b1c4525bc4fbdd9a936412d14f91444ce4dff0a9d18ff86b75d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "a2aed69f3ae342219109da43b5087ccb2292e7005d8258116194f975125289e4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-08.pass1.expected.json",
+      "outputSha256": "1a0cbdc68462565234b96f08e273a111a63f193b587e2cc01196ceb67fa21a8b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-03.expected.json",
+      "outputSha256": "7eea7e100a297740033fc37be4ef88c98e6c3772b679b8cf4f422caa606827ef",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-01.expected.json",
+      "outputSha256": "89d0bf0e58e367d36c4c22b0c843132d34fad651e14ad7ec0abe44752caedf59",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-05.expected.json",
+      "outputSha256": "110a0713a765e72afa21f01157daaa201d5b60edc6c6edf34a7caea572da9b9e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-03.expected.json",
+      "outputSha256": "047464818d52600629953f41008c7b6842fa149152d029e5f9a162aa38c58a4b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-07.expected.json",
+      "outputSha256": "c10ed36840da139632774557172eb68394662b9841db6e07fb801aece3b1d807",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-07.expected.json",
+      "outputSha256": "1313c94dac1fff5b75b65f3a6ea9813ace374d05bf2ed03197cad0c01001e7fe",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-10.expected.json",
+      "outputSha256": "56272c45e0460a55b75b376f7485d2571d8f1b5b6cbec4dc64593c8898b398e7",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/Q8F-02.expected.json",
+      "outputSha256": "cd61744564480718ef9d09bddb6a7538af6826a9506f79b3caa8dd91fcfcabe0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-01.expected.json",
+      "outputSha256": "b8cab73bcf162b46421151b23bc12a4b64695f5bf157da7def11a20a8c76db31",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-05.expected.json",
+      "outputSha256": "d5405036576b2e8f28ae930d6b6cf2af3d4981d564c7dfc81224547a87a09e83",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/Q8F-05.expected.json",
+      "outputSha256": "f9bfd7088b796beb8d6023dd42c6b8ac7cc75b2aa2da2f62af7fbbf01e2fab53",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-02.expected.json",
+      "outputSha256": "530ecc40fa708290a79dd4a49af6cb0ff0c7859afaf313b575b05ff5fd813780",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-06.expected.json",
+      "outputSha256": "cfa4a9c8f04b3496531cbfae7ea97379dcf7f9d8fb14287f0d5e89fb8d6c854b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-04.expected.json",
+      "outputSha256": "bd198be75a1d95deb07196aa52f8144f6ace3b2215db182d53295c94a63cea80",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-02.expected.json",
+      "outputSha256": "058957828c5493077a27d0750d0359c287f557e9cd793a1846f1774697408f8a",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-06.expected.json",
+      "outputSha256": "f3d61665900400b721011c76b954e1d0cd39595fb13ca24121b9db22988bddc8",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/Q8F-01.expected.json",
+      "outputSha256": "954a3578aab95052018396c708089aa0735d4e0268fdfa81313a96085b67b948",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-13.expected.json",
+      "outputSha256": "68cad46a8e02fd582455b6a068347270af24ee2f2159f72b9d62a6ccf9818221",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-04.expected.json",
+      "outputSha256": "44174644e494da08a5cf501541a47661b80675d276a03aacc07a374390ffaa8c",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "86a4f6b47c4fcd2f123fcd4a7cfa081a9b8cf98d16b1ba833f9305a3b53a5462",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "a9538ce0632933e2eda543f1ca14aefacb2cb66364e3615196a5c07baaaae8cf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-05.expected.json",
+      "outputSha256": "b7657dd86e057b880878cdf215bda77753114162a05ba80d46cb604ec92dd180",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-03.expected.json",
+      "outputSha256": "bbc282aa30650bce8b6b4e72e74553594197e1522e570fe4d0f8d0447fd89181",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-07.expected.json",
+      "outputSha256": "faf14243ed8e08eb27440814fdbd53bc0b3c976d1a7941a73289a8b7d75bc2d0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-12.expected.json",
+      "outputSha256": "8e92b97fe730d24e06d539b47d6245f7da9197779d6f4c5826defdd05d9e0bb2",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "321634ebec800b80b6be06d90224d15fbca4c477d42aa7ab960ff6bd01cd4d27",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-05.expected.json",
+      "outputSha256": "6402a8ba9995b6865e39dbc2d277985ae001c21a6a3d63b2d50114a5fcab3bf4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/Q8F-04.expected.json",
+      "outputSha256": "598fff68e7417dec1696ae6c3039706bb6fcf48c6fa9e85ae410117a3f56f942",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "87fdde53dff194be3c44a8df6ecfd09983fac97df2b0bb87d2282558e5c16a5e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-03.expected.json",
+      "outputSha256": "4e4487bf5571636b884a8b3fee809906ebd007cc60febf5f29c23e4f3f1da9fe",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-01.expected.json",
+      "outputSha256": "39cbc08aea6546b8b883644d6bdd000226b933870d0447e33c364a8b8175bc61",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-01.expected.json",
+      "outputSha256": "45c59c3567f2e41c6f6b3ce9b42a801499d7b423f30979c80ab1da3ddfe19bc8",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "816380846d56e2126eae8fde4ce763ea8b6fbb64b4dccadc80e29ad73d4f0552",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "9ab757b273c7dd58e501d7450f920b0f620bb24890afb818a0db85b93f50d30d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "b46d89f7a45ae5d6534c4e7912ef0f14beeaf801b0be154dac61603bab0b0e66",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "dca81c40b047a2b49540c6c065ed62dda8cc1b13d5d1cc5d6b151d96cd14157f",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "d6e20af59806174ab831311401d3405331a25887db808c833bcca43603153cf3",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "9df683a83c3e8805e0b11080882e5ef1fd026f09e6d249e8e855715b14f30fe0",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "6d63d965954dcdec317db24d019475c323c3a1f56ef456e46980895433164383",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "13395ea843cb0892eb1e534c8a5afe5c19908d38feea190511755c75c40c2bdf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "e309dd64faf696abd6170331383f7f17e1ce8c99463c1eeec3f7f7f391213dd8",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "733e0aed23f718584d78b62451c3bf7fa34d75004a42850aee8ce86823dd0ab9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/Q8F-03.expected.json",
+      "outputSha256": "85b86c569d86828fbecf1f7c3e0c37ce525693e4181a7b8b3dccc62f2a9077b3",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-04.expected.json",
+      "outputSha256": "bf32e94e6682ac074156dd6a9cdce44e4566f9ae684543e086569a1e7a5e8ab9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-06.expected.json",
+      "outputSha256": "075ced4d3b6819616f8d4b456d1c888bb6b095b7a61430b1dbde69e108d7a19e",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "423f53b60904aed3bd5fafb77879e8767b9bac9ff89a26e97dc7f70a6c00eaf9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-06.expected.json",
+      "outputSha256": "32fdfbf4b85d4c9c192a2877cfce786c4d169a6c1d84d88d47c934637253c940",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "910b88be281a317475256b5882fa77004449d0da6de3114e1bfa063305fd4bd4",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-02.expected.json",
+      "outputSha256": "a0eac4ac84dd8419ce6cbc7bb8c5f47202244d70bd7b3f4dc15e648b1ece4228",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C6-04.expected.json",
+      "outputSha256": "dadc94e4c072705680d99f7e7d5ffa7ed242544cc122831cdcf87265922ad640",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "d1121f3e88a7268e47f2131a2b86e9bb72e8cdd33dd2b9969eff51aff4fd548d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "1f4db821562bb8fd4c442b6a234d56f6df8bde45b4f9beebab308de314be76c1",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-02.expected.json",
+      "outputSha256": "fdd37f85f073bd56df630d1c0311023adaa01fcee3cda396bfa9b34e4c506fde",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G5-SUM-08.expected.json",
+      "outputSha256": "179d34ff68d2c8819b4e73b69213d3f6a76cd022074ef32cbbf29d11176b994d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/C5-08.expected.json",
+      "outputSha256": "daacb24121c8ca6f8e5f17ebe3fbb381d499ae6d6ff3603dcd555a5421fc81cf",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "bac77cd8d4c5d9ba8af2df2620037471218a6f931e073407e6f720d6d2ed8367",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G1-I64-02.expected.json",
+      "outputSha256": "7ed83cd14d7a854663ecebeb73fba18814ea6f8c95670db7642311e8d4112c49",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "7cb6b89f317e052d8ee1d25d849bb807fe730eda2aba4b5179af2c8630855d60",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "db63ce693b762586c42cc97719960aff0a2bfd579a8afe1d34c1ba5c06f929d9",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-HO-02.expected.json",
+      "outputSha256": "e7505ce3503c98b3a7a107be489f3ebdf3fdd8fdb58becc12b9ea29554fd6928",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G1-I64-01.expected.json",
+      "outputSha256": "eb21046c9fbcc3e07098c41d76ba267caaecbbb159ef5f4510f78cc509e7546b",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "e7a02bf7373672f6bb4d29748d6ffb8f4406e643dbc6a8a651b8039590f1396d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-HO-01.expected.json",
+      "outputSha256": "51c2c6f3bc229250f6bc51189782a270146cee5fa553b861d9b7ed43ae186115",
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "path": "qlever-final-updated/runs/G9-CUT-02b.expected.json",
+      "outputSha256": "20e3b6ad24e276175d846cd19e0e98ba9a070dd602d4730f144479b595b3450d",
+      "caseMatches": true,
+      "runtimeMatches": true
+    }
+  ],
+  "probeBindings": [
+    {
+      "id": "correct-clock-driven",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "staging-clock-tie",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "decreasing-stamp",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "wrong-reference-increasing",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "staged-clock-mismatch",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "non-microsecond-stamp",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "engine-clock-valid",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "engine-clock-tie",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "engine-clock-backward",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "replay-true",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "replay-false",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "interior-true",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "interior-false",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "published-watermark",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "pending-refusal",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "pending-with-explicit-p",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "idle-future-refusal",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "large-future-refusal",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "staged-valid-time-and-journal",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "cross-ordinal-journal-own-instant",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "resolved-receipt-false",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    },
+    {
+      "id": "resolved-receipt-true",
+      "sameOriginalBytes": true,
+      "caseMatches": true,
+      "runtimeMatches": true
+    }
+  ],
+  "probeSpecMismatches": [],
+  "unitFailureHeaders": [
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='ER-INFLIGHT-PREFIXES')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='ER-CURSOR-ERASURE-PREFIX')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70A')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70B')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70C')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70D')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70E')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70F')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70G')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70H')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70I')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70J')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70K')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70L')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70M')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70N')",
+    "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70O')",
+    "test_oracle_error_table_has_no_row_the_contract_dropped (lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped)"
+  ],
+  "unitSummary": [
+    "Ran 398 tests in 17.035s",
+    "FAILED (failures=18)"
+  ]
+}
