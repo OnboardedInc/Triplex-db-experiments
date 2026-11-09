@@ -1,0 +1,12 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/testkit
+
+
+ Test Files  4 passed (4)
+      Tests  92 passed (92)
+   Start at  21:29:27
+   Duration  99.32s (tests 99%, import 1%)
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.

@@ -1,0 +1,14 @@
+offline-final-source core build: exit 0
+offline-final-source core types: exit 0
+offline-final-source core tests: exit 0
+offline-final-source core runtime-types: exit 0
+offline-final-source core entity-types: exit 0
+offline-final-source testkit build: exit 0
+offline-final-source testkit types: exit 0
+offline-final-source testkit tests: exit 0
+offline-final-source xtdb build: exit 0
+offline-final-source xtdb types: exit 0
+offline-final-source xtdb tests: exit 0
+offline-final-source qlever build: exit 0
+offline-final-source qlever types: exit 0
+offline-final-source qlever tests: exit 0

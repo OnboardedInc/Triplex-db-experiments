@@ -1,0 +1,94 @@
+{
+  "head": "1853b0288f33c173556393fc63a576bbf774b48d",
+  "startedSource": {
+    "packages/core/src/errors/index.ts": "8d50896035f9b15654612c1ac8930bb688a284ed98e9b39e744b1672729e3e9c",
+    "packages/core/src/storage/RecordStamp.ts": "58b8ad1f7bc88f443b71f4ae3b845871148419c51a42174b467d2e33362d243a",
+    "packages/xtdb/src/XtdbStorageAdapter.ts": "4e7bab27d4fd47a2b461b1478638c5c7424c621e09ccae5c87d6f96c92fc7e17",
+    "packages/xtdb/src/RecordCut.ts": "c6294fd8cd52e673eed1b932ad970e4a43a1fcc90bfb1d34b2c08bc47d424c3b",
+    "packages/qlever/src/QleverStorageAdapter.ts": "fed2f10d1b42c3e89199ad3591481a10152f61df4121dfa7dbb448b61ad08b39",
+    "packages/qlever/src/RecordCut.ts": "dcbda9f1dc9cbfd8b51b01befe73b76d35f5caa25d81aee68c6c5b866f9347fd",
+    "packages/testkit/dist/record-time-schedules.js": "a2cb6a5aea91f4f1d9d3d3fe6c0616a535e670c9dc56e64083dd988439796105",
+    "packages/core/dist/errors/index.js": "e8c553ccc945bb0ae49d4d1b24feac62bbab9c42b2443b47884c22c6f4bda03f",
+    "lab/experiments/EXP-RT01/live-probes.ts": "ec8414473e0a856a35bf90d6e6da1c16e6f7e5e856ba4630c7dc5a4d69234691"
+  },
+  "endedSource": {
+    "packages/core/src/errors/index.ts": "8d50896035f9b15654612c1ac8930bb688a284ed98e9b39e744b1672729e3e9c",
+    "packages/core/src/storage/RecordStamp.ts": "58b8ad1f7bc88f443b71f4ae3b845871148419c51a42174b467d2e33362d243a",
+    "packages/xtdb/src/XtdbStorageAdapter.ts": "4e7bab27d4fd47a2b461b1478638c5c7424c621e09ccae5c87d6f96c92fc7e17",
+    "packages/xtdb/src/RecordCut.ts": "c6294fd8cd52e673eed1b932ad970e4a43a1fcc90bfb1d34b2c08bc47d424c3b",
+    "packages/qlever/src/QleverStorageAdapter.ts": "fed2f10d1b42c3e89199ad3591481a10152f61df4121dfa7dbb448b61ad08b39",
+    "packages/qlever/src/RecordCut.ts": "dcbda9f1dc9cbfd8b51b01befe73b76d35f5caa25d81aee68c6c5b866f9347fd",
+    "packages/testkit/dist/record-time-schedules.js": "a2cb6a5aea91f4f1d9d3d3fe6c0616a535e670c9dc56e64083dd988439796105",
+    "packages/core/dist/errors/index.js": "e8c553ccc945bb0ae49d4d1b24feac62bbab9c42b2443b47884c22c6f4bda03f",
+    "lab/experiments/EXP-RT01/live-probes.ts": "ec8414473e0a856a35bf90d6e6da1c16e6f7e5e856ba4630c7dc5a4d69234691"
+  },
+  "sourceUnchanged": true,
+  "observations": [
+    {
+      "kind": "mixed-comparison",
+      "scope": "rt01:probe:e8689044-b650-46e2-a3c6-d3f8a9bb09f3",
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "cut": 100000.0005,
+      "expected": [
+        100000
+      ],
+      "sql": "SELECT recorded_at FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND entity_id = 'mixed' AND recorded_at <= ?",
+      "xtql": "XTQL ('(fn [triplex_param_1 triplex_param_2] (-> (from :tx_assertions {:for-valid-time :all-time :bind [scope_key entity_id recorded_at]}) (where (= scope_key triplex_param_1) (= entity_id \"mixed\") (<= recorded_at triplex_param_2)) (return recorded_at)))', $1, $2)",
+      "sqlRows": [
+        {
+          "recorded_at": 100000
+        }
+      ],
+      "xtqlRows": [
+        {
+          "recorded_at": 100000
+        }
+      ]
+    },
+    {
+      "kind": "mixed-comparison",
+      "scope": "rt01:probe:e8689044-b650-46e2-a3c6-d3f8a9bb09f3",
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "cut": 100000.001,
+      "expected": [
+        100000,
+        100000.001
+      ],
+      "sql": "SELECT recorded_at FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND entity_id = 'mixed' AND recorded_at <= ?",
+      "xtql": "XTQL ('(fn [triplex_param_1 triplex_param_2] (-> (from :tx_assertions {:for-valid-time :all-time :bind [scope_key entity_id recorded_at]}) (where (= scope_key triplex_param_1) (= entity_id \"mixed\") (<= recorded_at triplex_param_2)) (return recorded_at)))', $1, $2)",
+      "sqlRows": [
+        {
+          "recorded_at": 100000.001
+        },
+        {
+          "recorded_at": 100000
+        }
+      ],
+      "xtqlRows": [
+        {
+          "recorded_at": 100000.001
+        },
+        {
+          "recorded_at": 100000
+        }
+      ]
+    },
+    {
+      "kind": "legacy-refusal",
+      "lane": "xtdb",
+      "scope": "rt01:legacy:e41b6519-71bb-4278-a550-5238364eccd2",
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "refusal": {
+        "version": 2,
+        "name": "record-stamp",
+        "message": "Scope predates decided record stamps; re-seed",
+        "_tag": "MigrationError"
+      },
+      "writesAfterSeed": 0
+    },
+    {
+      "lane": "qlever",
+      "error": "Error: QLever HTTP 400: {\"exception\":\"Invalid SPARQL query: Unexpected end of input: missing '}' at '<EOF>'\",\"metadata\":{\"line\":1,\"positionInLine\":160,\"startIndex\":160,\"stopIndex\":159},\"query\":\"INSERT DATA { GRAPH <urn:triplex:scope:cnQwMTpsZWdhY3k6Zjc2MmUwZTgtNzJkYy00MjExLWI0ODYtNjA4MGYzMGQ3NDFm> { <urn:triplex:meta> <urn:triplex:field:position> \\\"1\\\" }\",\"resultsize\":0,\"status\":\"ERROR\",\"time\":{\"computeResult\":2,\"total\":2}}"
+    }
+  ]
+}

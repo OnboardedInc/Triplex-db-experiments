@@ -1,0 +1,82 @@
+{
+  "observedAt": "2026-11-09T02:58:16.834Z",
+  "host": "unix:///Users/sam/.colima/triplex2/docker.sock",
+  "engines": [
+    {
+      "lane": "xtdb",
+      "name": "tx2-xtdb-dev",
+      "id": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "image": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "status": "running",
+      "memoryCap": 3221225472,
+      "cpuCap": 2000000000,
+      "mounts": [
+        {
+          "Type": "volume",
+          "Name": "tx2-xtdb-dev-data",
+          "Destination": "/var/lib/xtdb",
+          "RW": true
+        },
+        {
+          "Type": "bind",
+          "Destination": "/etc/xtdb/config.yaml",
+          "RW": false
+        }
+      ],
+      "labels": {
+        "org.opencontainers.image.created": "2026-10-21T15:18:32.333Z",
+        "org.opencontainers.image.description": "An immutable SQL database for application development, time-travel reporting and data compliance. Developed by @juxt",
+        "org.opencontainers.image.licenses": "MPL-2.0",
+        "org.opencontainers.image.revision": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+        "org.opencontainers.image.source": "https://github.com/xtdb/xtdb",
+        "org.opencontainers.image.title": "xtdb",
+        "org.opencontainers.image.url": "https://github.com/xtdb/xtdb",
+        "org.opencontainers.image.version": "2.2.0",
+        "tx2.config-sha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac",
+        "tx2.holder": "worktree:/Users/sam/projects/triplex-db-2",
+        "tx2.lane": "xtdb",
+        "tx2.managed-by": "lab/bin/engine.mjs",
+        "tx2.slot": "dev",
+        "usage": "For custom logging: --volume .:/config --env JDK_JAVA_OPTIONS='-Dlog4j2.configurationFile=/config/log4j2.xml'"
+      }
+    },
+    {
+      "lane": "qlever",
+      "name": "tx2-qlever-dev",
+      "id": "a809fb6cb3ba858da2984c65fcea810bce9833627c930c7070e33e6e39a3f826",
+      "image": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "status": "running",
+      "memoryCap": 3758096384,
+      "cpuCap": 2000000000,
+      "mounts": [
+        {
+          "Type": "volume",
+          "Name": "tx2-qlever-dev-data",
+          "Destination": "/data",
+          "RW": true
+        },
+        {
+          "Type": "bind",
+          "Destination": "/config/start.sh",
+          "RW": false
+        }
+      ],
+      "labels": {
+        "maintainer": "Hannah Bast <bast@cs.uni-freiburg.de>",
+        "org.opencontainers.image.created": "2026-08-13T10:19:18.263Z",
+        "org.opencontainers.image.description": "Graph database implementing the RDF and SPARQL standards. Very fast and scales to more than a trillion triples on a single commodity machine",
+        "org.opencontainers.image.licenses": "Apache-2.0",
+        "org.opencontainers.image.revision": "6c5861a6526d7d7ae77735d09339ee0825f0c001",
+        "org.opencontainers.image.source": "https://github.com/ad-freiburg/qlever",
+        "org.opencontainers.image.title": "qlever",
+        "org.opencontainers.image.url": "https://github.com/ad-freiburg/qlever",
+        "org.opencontainers.image.version": "0.6.0",
+        "tx2.config-sha256": "c10589d0cdd0e69b45bed28702540377efa735a7f511dbedd82b4de42bd342e6",
+        "tx2.holder": "EXP-000",
+        "tx2.lane": "qlever",
+        "tx2.managed-by": "lab/bin/engine.mjs",
+        "tx2.slot": "dev"
+      }
+    }
+  ]
+}

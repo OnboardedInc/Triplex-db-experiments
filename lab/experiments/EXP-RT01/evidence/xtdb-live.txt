@@ -1,0 +1,48 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/xtdb
+
+ ❯ test/record-time.test.ts (3 tests | 2 failed) 49ms
+   ❯ EXP-RT01 XTDB A0 (2)
+     × T1-T12 serialized schedules (a0; T8 deferred-only N/A) 33ms
+     × T1-T12 serialized schedules (compact; T8 deferred-only N/A) 14ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/record-time.test.ts > EXP-RT01 XTDB A0 > T1-T12 serialized schedules (a0; T8 deferred-only N/A)
+ FAIL  test/record-time.test.ts > EXP-RT01 XTDB A0 > T1-T12 serialized schedules (compact; T8 deferred-only N/A)
+xtdb-baseline: Cannot initialize XTDB tables
+ ❯ catch src/XtdbStorageAdapter.ts:752:15
+    750|           cause instanceof MigrationError
+    751|             ? cause
+    752|             : new MigrationError({
+       |               ^
+    753|                 version: 1,
+    754|                 name: "xtdb-baseline",
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42
+ ❯ ~effect/Utils/internal ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14
+ ❯ PrimitiveImpl.~effect/Effect/args ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23
+ ❯ PrimitiveImpl.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+Caused by: PostgresError: Errors planning SQL statement:
+  - Column not found: stamp
+ ❯ ErrorResponse ../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js:815:30
+ ❯ handle ../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js:489:6
+ ❯ Socket.data ../../node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js:324:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { severity: 'ERROR', severity_local: 'ERROR', code: '08P01', detail: '{"category":"incorrect","code":"xtdb/sql-error","message":"Errors planning SQL statement:\n  - Column not found: stamp","data":{"errors":[{"chain":["stamp"]}]}}', query: 'SELECT position, stamp FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1', parameters: [ 'rt01:4f5060c6-3ad8-45f5-acad-d52f203c1f4c' ], args: [ { value: 'rt01:4f5060c6-3ad8-45f5-acad-d52f203c1f4c', type: 25, array: undefined, constructor: 'Function<Parameter>', then: 'Function<then>', catch: 'Function<catch>', finally: 'Function<finally>' } ], types: [ 25 ] }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  20:59:45
+   Duration  544ms (import 52%, transform 36%, tests 11%, worker 1%)
+

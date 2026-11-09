@@ -1,0 +1,42 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/xtdb
+
+ ❯ test/record-time-offline.test.ts (4 tests | 2 failed) 4318ms
+   × offline actual XTDB A0 protocol T1-T12 (a0; deferred T8 N/A) 2185ms
+   × offline actual XTDB A0 protocol T1-T12 (compact; deferred T8 N/A) 2127ms
+
+ Test Files  1 failed | 10 passed | 8 skipped (19)
+      Tests  2 failed | 68 passed | 91 skipped (161)
+   Start at  22:33:03
+   Duration  9.98s (tests 62%, import 35%, transform 3%)
+
+     Import  154 modules were evaluated 206 times · 2.99s total, 35% of tracked time
+             ~755ms faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/record-time-offline.test.ts > offline actual XTDB A0 protocol T1-T12 (a0; deferred T8 N/A)
+ FAIL  test/record-time-offline.test.ts > offline actual XTDB A0 protocol T1-T12 (compact; deferred T8 N/A)
+Error: future first page pinned the pre-publication head
+ ❯ require ../testkit/src/record-time-schedules.ts:27:41
+     25|
+     26| const require = (condition: boolean, message: string) =>
+     27|   condition ? Effect.void : Effect.fail(new Error(message));
+       |                                         ^
+     28| /** Concrete A0 schedules. Each invocation owns a fresh scope and adap…
+     29| export const makeA0RecordTimeSuite = (
+ ❯ ../testkit/src/record-time-schedules.ts:180:14
+ ❯ IteratorImpl.~effect/Effect/successCont ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1421:28
+ ❯ ExitPrimitive.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/core.ts:565:30
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ Array.<anonymous> ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+

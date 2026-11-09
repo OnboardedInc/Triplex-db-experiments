@@ -1,0 +1,33 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/xtdb
+
+ ❯ test/record-time.test.ts (3 tests | 2 failed) 480010ms
+   ❯ EXP-RT01 XTDB A0 (2)
+     × T1-T12 serialized schedules (a0; T8 deferred-only N/A) 240004ms
+     × T1-T12 serialized schedules (compact; T8 deferred-only N/A) 240003ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/record-time.test.ts > EXP-RT01 XTDB A0 > T1-T12 serialized schedules (a0; T8 deferred-only N/A)
+ FAIL  test/record-time.test.ts > EXP-RT01 XTDB A0 > T1-T12 serialized schedules (compact; T8 deferred-only N/A)
+Error: Test timed out in 240000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/record-time.test.ts:16:5
+     14| it("refuses an XTDB legacy scope before decided writes", async () => {
+     15|   const client = { query: async () => [{ position: 1 }] } as unknown a…
+     16|   await expect(readXtdbCut(client, "legacy")).rejects.toMatchObject({ …
+       |     ^
+     17| });
+     18| describe.skipIf(process.env["XTDB_INTEGRATION"] !== "1")("EXP-RT01 XTD…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  21:00:49
+   Duration  480.61s (tests 100%)
+

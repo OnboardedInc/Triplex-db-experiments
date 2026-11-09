@@ -1,0 +1,116 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/xtdb
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 actor due-work ranges preserve numeric aliases, visibility, ordering, and limits
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 Datalog reads are bounded by default and cursors traverse the complete snapshot
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 historical cursor pages intersect recorded time and the commit snapshot
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 recursive relations support cursor pagination and optional total counts
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 assert then get and match return the fact
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 same-value facts in one batch keep distinct identities
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog query finds asserted facts
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog projections preserve scalar types without guessing from text
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog deduplicates flattened scalar families before grouping and pagination
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog constant projections retain their scalar values through pagination
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog pattern constants use flattened scalar identity in filters
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog value joins compare every scalar family
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog equality predicates compare numeric values as numbers
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog equality keeps identity bindings string-typed
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 ordered Datalog predicates accept only numeric scalar families
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog reverse lookup matches an explicitly typed ref constant
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog joins a variable bound from a ref in value position
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog supports multi-hop joins over ref edges
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog recursive rules compute the same transitive closure
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog rule patterns unify repeated variables
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog aggregations group, filter, and order consistently
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog having preserves typed group and aggregate equality
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog aggregates preserve duplicate rows and define empty and distinct results
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog conjunctions establish bindings independent of clause order
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog rejects invalid and unbound queries with backend-neutral typed errors
+RT01 G2 a0 wrapped filters preserve scalar types and SQL null semantics
+
+ ❯ test/record-time.test.ts (5 tests | 1 failed | 4 skipped) 197732ms
+   × G2 all 44 shared conformance cases on both A0 encodings (88) 197731ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+Error: XTDB Datalog execution failed: TimeoutError: The operation was aborted due to timeout
+ ❯ failure src/XtdbQueryExecutor.ts:31:7
+     29|   cause instanceof UnboundVariableError
+     30|     ? cause
+     31|     : new ReadError({ message: `XTDB Datalog execution failed: ${Strin…
+       |       ^
+     32|
+     33| const numeric = (value: unknown): number | null => {
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42
+ ❯ ~effect/Utils/internal ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14
+ ❯ PrimitiveImpl.~effect/Effect/args ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23
+ ❯ PrimitiveImpl.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+Caused by: TimeoutError: The operation was aborted due to timeout
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 23, INDEX_SIZE_ERR: 1, DOMSTRING_SIZE_ERR: 2, HIERARCHY_REQUEST_ERR: 3, WRONG_DOCUMENT_ERR: 4, INVALID_CHARACTER_ERR: 5, NO_DATA_ALLOWED_ERR: 6, NO_MODIFICATION_ALLOWED_ERR: 7, NOT_FOUND_ERR: 8, NOT_SUPPORTED_ERR: 9, INUSE_ATTRIBUTE_ERR: 10, INVALID_STATE_ERR: 11, SYNTAX_ERR: 12, INVALID_MODIFICATION_ERR: 13, NAMESPACE_ERR: 14, INVALID_ACCESS_ERR: 15, VALIDATION_ERR: 16, TYPE_MISMATCH_ERR: 17, SECURITY_ERR: 18, NETWORK_ERR: 19, ABORT_ERR: 20, URL_MISMATCH_ERR: 21, QUOTA_EXCEEDED_ERR: 22, TIMEOUT_ERR: 23, INVALID_NODE_TYPE_ERR: 24, DATA_CLONE_ERR: 25 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  21:17:39
+   Duration  198.24s (tests 100%)
+

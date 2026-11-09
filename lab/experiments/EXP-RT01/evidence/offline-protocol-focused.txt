@@ -1,0 +1,50 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/xtdb
+
+ ❯ test/record-time-offline.test.ts (3 tests | 2 failed) 24ms
+   × offline actual XTDB A0 protocol T1-T12 (a0; deferred T8 N/A) 13ms
+   × offline actual XTDB A0 protocol T1-T12 (compact; deferred T8 N/A) 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/record-time-offline.test.ts > offline actual XTDB A0 protocol T1-T12 (a0; deferred T8 N/A)
+ FAIL  test/record-time-offline.test.ts > offline actual XTDB A0 protocol T1-T12 (compact; deferred T8 N/A)
+Error: XTDB read failed
+ ❯ catch src/XtdbStorageAdapter.ts:162:46
+    160|       try: thunk,
+    161|       catch: (cause) =>
+    162|         cause instanceof ReadError ? cause : new ReadError({ message: …
+       |                                              ^
+    163|     });
+    164|   const currentCut = () => read((signal) => readXtdbCut(client, scopeK…
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42
+ ❯ ~effect/Utils/internal ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14
+ ❯ PrimitiveImpl.~effect/Effect/args ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23
+ ❯ PrimitiveImpl.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+Caused by: Error: Unconsumed offline SQL parameters: SELECT id, entity_id, attribute, value_type, value_string, value_number, value_boolean, value_datetime, value_json, recorded_at, recorded_position, valid_from, valid_to, created_by, retracted_at, retracted_position, retract_tx_id, entity_type, schema_version, tx_id FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND entity_id IN (?) AND recorded_position <= ? AND recorded_at <= ? AND (retracted_at IS NULL OR retracted_position > ? OR retracted_at > ?) AND valid_from <= ? AND (valid_to IS NULL OR valid_to > ?)
+ ❯ Object.query test/fixtures/record-time-client.ts:84:42
+ ❯ src/XtdbStorageAdapter.ts:227:24
+ ❯ MixedScheduler.<anonymous> ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:7
+ ❯ AsyncImpl.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:802:38
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  21:19:37
+   Duration  706ms (import 53%, transform 42%, tests 4%, worker 1%)
+

@@ -1,0 +1,8 @@
+{
+  "commit": "59e07afb7a25dfb22bca60f8d769b74651aa835a",
+  "files": {
+    "packages/core/src/store/TriplesLive.ts": "1fc030c442179a937f544b865983b45b577c124aa3b338528823f93dc828a36c",
+    "packages/core/src/store/transactionMetadata.ts": "f47e28bb7e5683a1348b8689471fc84de3ebcb8986ed1f6d65198399179055fa",
+    "packages/xtdb/src/XtdbStorageAdapter.ts": "5a9b4d63a8754e974c4a270610880f3c5199a525354255ff6bf0b9c9a2d6a58e"
+  }
+}

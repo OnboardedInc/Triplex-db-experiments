@@ -1,0 +1,65 @@
+[
+  {
+    "name": "changed-pack-page-final",
+    "command": "/Users/sam/.hermes/node/bin/node",
+    "args": [
+      "lab/experiments/EXP-RT01/pack-changed.mjs"
+    ],
+    "started": "2026-11-09T03:36:14.773Z",
+    "ended": "2026-11-09T03:36:20.319Z",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "name": "latency-page-final",
+    "command": "/Users/sam/.hermes/node/bin/node",
+    "args": [
+      "lab/experiments/EXP-RT01/run-microbench.mjs",
+      "--adapter"
+    ],
+    "started": "2026-11-09T03:36:20.320Z",
+    "ended": "2026-11-09T03:36:25.862Z",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "name": "probes-page-final",
+    "command": "/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.bin/tsx",
+    "args": [
+      "lab/experiments/EXP-RT01/live-probes.ts"
+    ],
+    "started": "2026-11-09T03:36:25.862Z",
+    "ended": "2026-11-09T03:36:32.685Z",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "name": "declarations-page-final",
+    "command": "/Users/sam/.hermes/node/bin/node",
+    "args": [
+      "lab/experiments/EXP-RT01/declaration-diff.mjs",
+      "page-final"
+    ],
+    "started": "2026-11-09T03:36:32.685Z",
+    "ended": "2026-11-09T03:36:35.398Z",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "name": "contract-page-final",
+    "command": "python3",
+    "args": [
+      "lab/acceptance/build_contract.py",
+      "--verify"
+    ],
+    "started": "2026-11-09T03:36:35.398Z",
+    "ended": "2026-11-09T03:36:36.041Z",
+    "exit": 1,
+    "signal": null,
+    "error": null
+  }
+]

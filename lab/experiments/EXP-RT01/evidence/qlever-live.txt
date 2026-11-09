@@ -1,0 +1,53 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever
+
+ ❯ test/record-time.test.ts (3 tests | 2 failed) 62004ms
+   ❯ EXP-RT01 QLever A0 (2)
+     × T1-T12 serialized schedules (a0; T8 deferred-only N/A) 30950ms
+     × T1-T12 serialized schedules (compact; T8 deferred-only N/A) 31051ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/record-time.test.ts > EXP-RT01 QLever A0 > T1-T12 serialized schedules (a0; T8 deferred-only N/A)
+WriteError: Transaction outcome is unknown; resolve operation 855b5499-f0dc-430e-891a-474b7615a384 before retrying
+ ❯ try src/QleverStorageAdapter.ts:282:15
+    280|                   message: "QLever source changed during callback stag…
+    281|                 });
+    282|               throw new WriteError({
+       |               ^
+    283|                 message: "QLever conditional transaction rejected an a…
+    284|               });
+
+Caused by: TimeoutError: The operation was aborted due to timeout
+ ❯ request src/QleverClient.ts:85:24
+ ❯ Object.query src/QleverClient.ts:121:23
+ ❯ try src/QleverStorageAdapter.ts:257:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 23, INDEX_SIZE_ERR: 1, DOMSTRING_SIZE_ERR: 2, HIERARCHY_REQUEST_ERR: 3, WRONG_DOCUMENT_ERR: 4, INVALID_CHARACTER_ERR: 5, NO_DATA_ALLOWED_ERR: 6, NO_MODIFICATION_ALLOWED_ERR: 7, NOT_FOUND_ERR: 8, NOT_SUPPORTED_ERR: 9, INUSE_ATTRIBUTE_ERR: 10, INVALID_STATE_ERR: 11, SYNTAX_ERR: 12, INVALID_MODIFICATION_ERR: 13, NAMESPACE_ERR: 14, INVALID_ACCESS_ERR: 15, VALIDATION_ERR: 16, TYPE_MISMATCH_ERR: 17, SECURITY_ERR: 18, NETWORK_ERR: 19, ABORT_ERR: 20, URL_MISMATCH_ERR: 21, QUOTA_EXCEEDED_ERR: 22, TIMEOUT_ERR: 23, INVALID_NODE_TYPE_ERR: 24, DATA_CLONE_ERR: 25 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/record-time.test.ts > EXP-RT01 QLever A0 > T1-T12 serialized schedules (compact; T8 deferred-only N/A)
+WriteError: Transaction outcome is unknown; resolve operation 9631ad04-9c0d-451c-8b17-d7b5b5049357 before retrying
+ ❯ try src/QleverStorageAdapter.ts:282:15
+    280|                   message: "QLever source changed during callback stag…
+    281|                 });
+    282|               throw new WriteError({
+       |               ^
+    283|                 message: "QLever conditional transaction rejected an a…
+    284|               });
+
+Caused by: TimeoutError: The operation was aborted due to timeout
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 23, INDEX_SIZE_ERR: 1, DOMSTRING_SIZE_ERR: 2, HIERARCHY_REQUEST_ERR: 3, WRONG_DOCUMENT_ERR: 4, INVALID_CHARACTER_ERR: 5, NO_DATA_ALLOWED_ERR: 6, NO_MODIFICATION_ALLOWED_ERR: 7, NOT_FOUND_ERR: 8, NOT_SUPPORTED_ERR: 9, INUSE_ATTRIBUTE_ERR: 10, INVALID_STATE_ERR: 11, SYNTAX_ERR: 12, INVALID_MODIFICATION_ERR: 13, NAMESPACE_ERR: 14, INVALID_ACCESS_ERR: 15, VALIDATION_ERR: 16, TYPE_MISMATCH_ERR: 17, SECURITY_ERR: 18, NETWORK_ERR: 19, ABORT_ERR: 20, URL_MISMATCH_ERR: 21, QUOTA_EXCEEDED_ERR: 22, TIMEOUT_ERR: 23, INVALID_NODE_TYPE_ERR: 24, DATA_CLONE_ERR: 25 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  20:59:46
+   Duration  62.43s (tests 99%)
+

@@ -1,0 +1,46 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/tsdown.config.ts 
+ℹ entry: src/AggregateAnswers.ts, src/FamilyDomainDistinct.ts, src/FamilyDomainMask.ts, src/FamilyDomains.ts, src/Operations.ts, src/PersistedScalarSource.ts, src/QleverClient.ts, src/QleverQueryExecutor.ts, src/QleverStorageAdapter.ts, src/ReadOnlyClient.ts, src/RecordCut.ts, src/ScalarSource.ts, src/TemporalQueries.ts, src/compiler.ts, src/index.ts, src/rdf.ts, src/recursion.ts, src/native/BasisRelations.ts, src/native/NativeContext.ts, src/native/NativeQueries.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/compiler.js                   34.30 kB │ gzip:  9.25 kB
+ℹ dist/QleverStorageAdapter.js       20.49 kB │ gzip:  5.67 kB
+ℹ dist/QleverQueryExecutor.js        14.22 kB │ gzip:  3.77 kB
+ℹ dist/rdf.js                        10.74 kB │ gzip:  3.52 kB
+ℹ dist/native/BasisRelations.js       7.95 kB │ gzip:  3.14 kB
+ℹ dist/TemporalQueries.js             7.48 kB │ gzip:  2.56 kB
+ℹ dist/native/NativeQueries.js        6.37 kB │ gzip:  2.14 kB
+ℹ dist/recursion.js                   6.18 kB │ gzip:  2.53 kB
+ℹ dist/native/NativeContext.js        5.65 kB │ gzip:  1.91 kB
+ℹ dist/AggregateAnswers.js            4.25 kB │ gzip:  1.62 kB
+ℹ dist/QleverClient.js                3.55 kB │ gzip:  1.46 kB
+ℹ dist/index.js                       2.85 kB │ gzip:  1.02 kB
+ℹ dist/RecordCut.js                   2.39 kB │ gzip:  1.03 kB
+ℹ dist/PersistedScalarSource.js       2.21 kB │ gzip:  0.79 kB
+ℹ dist/FamilyDomainMask.js            1.92 kB │ gzip:  0.84 kB
+ℹ dist/Operations.js                  1.57 kB │ gzip:  0.73 kB
+ℹ dist/ReadOnlyClient.js              1.42 kB │ gzip:  0.75 kB
+ℹ dist/FamilyDomainDistinct.js        1.29 kB │ gzip:  0.64 kB
+ℹ dist/FamilyDomains.js               0.01 kB │ gzip:  0.03 kB
+ℹ dist/ScalarSource.js                0.01 kB │ gzip:  0.03 kB
+ℹ dist/compiler.js.map               70.41 kB │ gzip: 18.42 kB
+ℹ dist/QleverStorageAdapter.js.map   40.05 kB │ gzip: 10.77 kB
+ℹ dist/QleverQueryExecutor.js.map    28.37 kB │ gzip:  7.15 kB
+ℹ dist/rdf.js.map                    18.66 kB │ gzip:  5.66 kB
+ℹ dist/native/BasisRelations.js.map  15.69 kB │ gzip:  5.51 kB
+ℹ dist/TemporalQueries.js.map        14.18 kB │ gzip:  4.48 kB
+ℹ dist/native/NativeQueries.js.map   13.75 kB │ gzip:  4.35 kB
+ℹ dist/recursion.js.map              11.46 kB │ gzip:  4.16 kB
+ℹ dist/native/NativeContext.js.map   10.88 kB │ gzip:  3.37 kB
+ℹ dist/AggregateAnswers.js.map        8.48 kB │ gzip:  2.99 kB
+ℹ dist/QleverClient.js.map            7.43 kB │ gzip:  2.74 kB
+ℹ dist/index.js.map                   6.17 kB │ gzip:  2.11 kB
+ℹ dist/RecordCut.js.map               4.49 kB │ gzip:  1.75 kB
+ℹ dist/PersistedScalarSource.js.map   3.85 kB │ gzip:  1.31 kB
+ℹ dist/FamilyDomainMask.js.map        3.35 kB │ gzip:  1.38 kB
+ℹ dist/Operations.js.map              2.96 kB │ gzip:  1.21 kB
+ℹ dist/FamilyDomainDistinct.js.map    2.34 kB │ gzip:  1.05 kB
+ℹ dist/ReadOnlyClient.js.map          1.85 kB │ gzip:  0.95 kB
+ℹ 38 files, total: 399.20 kB
+✔ Build complete in 64ms

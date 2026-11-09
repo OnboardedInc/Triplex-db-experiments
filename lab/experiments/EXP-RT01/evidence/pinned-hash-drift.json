@@ -1,0 +1,20 @@
+[
+  {
+    "contractLocation": "/oracleFilesPinned/O-TESTKIT/0",
+    "path": "packages/testkit/src/index.ts",
+    "pinned": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+    "current": "6ee36f8cb5c0c4eea26ad9d3e60043f2a828fddff4761c66ee06abb0bc1c9e7a"
+  },
+  {
+    "contractLocation": "/caseSets/CS-U44/pinnedSourceFiles/0",
+    "path": "packages/testkit/src/index.ts",
+    "pinned": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+    "current": "6ee36f8cb5c0c4eea26ad9d3e60043f2a828fddff4761c66ee06abb0bc1c9e7a"
+  },
+  {
+    "contractLocation": "/caseSourcesPinned/CS-U44/0",
+    "path": "packages/testkit/src/index.ts",
+    "pinned": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+    "current": "6ee36f8cb5c0c4eea26ad9d3e60043f2a828fddff4761c66ee06abb0bc1c9e7a"
+  }
+]

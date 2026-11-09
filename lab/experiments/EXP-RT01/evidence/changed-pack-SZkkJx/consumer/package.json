@@ -1,0 +1,10 @@
+{
+  "name": "record-time-public-consumer",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "effect": "4.0.3",
+    "@triplex-build/triplex": "file:/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/evidence/changed-pack-SZkkJx/tarballs/triplex-build-triplex-0.2.0.tgz",
+    "@triplex-build/triplex-testkit": "file:/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/evidence/changed-pack-SZkkJx/tarballs/triplex-build-triplex-testkit-0.2.0.tgz"
+  }
+}

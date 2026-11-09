@@ -1,0 +1,20 @@
+
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@triplex-build/triplex' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/microbench.ts
+Did you mean to import "file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/index.js"?
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:314:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:985:11)
+    at nextResolve (node:internal/modules/esm/hooks:748:28)
+    at resolveBase (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794189424531:2:3212)
+    at resolveDirectory (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794189424531:2:3584)
+    at resolveTsPaths (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794189424531:2:4073)
+    at resolve (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794189424531:2:4447)
+    at nextResolve (node:internal/modules/esm/hooks:748:28) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v22.23.2

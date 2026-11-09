@@ -1,0 +1,30 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/http/tsdown.config.ts 
+ℹ entry: src/Authorization.ts, src/ConfigApi.ts, src/EntityCodec.ts, src/EntityHttp.ts, src/EntityHttpApi.ts, src/EntityHttpHandlers.ts, src/EntityStore.ts, src/Errors.ts, src/HandlerCache.ts, src/VersionResolver.ts, src/index.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/EntityHttpHandlers.js          13.92 kB │ gzip: 3.60 kB
+ℹ dist/EntityStore.js                  5.46 kB │ gzip: 1.61 kB
+ℹ dist/EntityHttpApi.js                4.83 kB │ gzip: 1.36 kB
+ℹ dist/ConfigApi.js                    4.03 kB │ gzip: 1.39 kB
+ℹ dist/EntityHttp.js                   2.36 kB │ gzip: 0.98 kB
+ℹ dist/VersionResolver.js              1.52 kB │ gzip: 0.66 kB
+ℹ dist/EntityCodec.js                  1.42 kB │ gzip: 0.55 kB
+ℹ dist/index.js                        1.33 kB │ gzip: 0.35 kB
+ℹ dist/Errors.js                       1.32 kB │ gzip: 0.35 kB
+ℹ dist/HandlerCache.js                 1.28 kB │ gzip: 0.63 kB
+ℹ dist/Authorization.js                0.45 kB │ gzip: 0.27 kB
+ℹ dist/EntityHttpHandlers.js.map      26.76 kB │ gzip: 6.59 kB
+ℹ dist/EntityStore.js.map             12.21 kB │ gzip: 3.13 kB
+ℹ dist/EntityHttpApi.js.map            9.10 kB │ gzip: 2.38 kB
+ℹ dist/ConfigApi.js.map                9.03 kB │ gzip: 2.86 kB
+ℹ dist/EntityHttp.js.map               4.51 kB │ gzip: 1.65 kB
+ℹ dist/VersionResolver.js.map          3.15 kB │ gzip: 1.15 kB
+ℹ dist/Errors.js.map                   2.86 kB │ gzip: 0.65 kB
+ℹ dist/EntityCodec.js.map              2.57 kB │ gzip: 0.98 kB
+ℹ dist/HandlerCache.js.map             2.53 kB │ gzip: 1.05 kB
+ℹ dist/Authorization.js.map            1.81 kB │ gzip: 0.75 kB
+ℹ dist/_virtual/_rolldown/runtime.js   0.35 kB │ gzip: 0.25 kB
+ℹ 22 files, total: 112.79 kB
+✔ Build complete in 20ms

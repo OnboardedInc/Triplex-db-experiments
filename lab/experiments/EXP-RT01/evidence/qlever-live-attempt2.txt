@@ -1,0 +1,122 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever
+
+stderr | test/record-time.test.ts > EXP-RT01 QLever A0 > T1-T12 serialized schedules (a0; T8 deferred-only N/A)
+RT01 update rejected DOMException [TimeoutError]: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:15157:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at runNextTicks (node:internal/process/task_queues:68:3)
+    at processTimers (node:internal/timers:518:9)
+    at request (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverClient.ts:85:24)
+    at Object.update (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/test/record-time.test.ts:22:26)
+    at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverStorageAdapter.ts:255:11)
+
+stderr | test/record-time.test.ts > EXP-RT01 QLever A0 > T1-T12 serialized schedules (compact; T8 deferred-only N/A)
+RT01 update rejected DOMException [TimeoutError]: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:15157:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at request (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverClient.ts:85:24)
+    at Object.update (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/test/record-time.test.ts:22:26)
+    at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverStorageAdapter.ts:255:11)
+
+stderr | test/record-time.test.ts > EXP-RT01 QLever A0 > T1-T12 serialized schedules (compact; T8 deferred-only N/A)
+RT01 update rejected DOMException [TimeoutError]: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:15157:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at runNextTicks (node:internal/process/task_queues:68:3)
+    at processTimers (node:internal/timers:518:9)
+    at request (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverClient.ts:85:24)
+    at Object.update (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/test/record-time.test.ts:22:26)
+    at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverStorageAdapter.ts:255:11)
+
+stderr | test/record-time.test.ts > EXP-RT01 QLever A0 > T1-T12 serialized schedules (compact; T8 deferred-only N/A)
+RT01 update rejected DOMException [TimeoutError]: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:15157:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at runNextTicks (node:internal/process/task_queues:68:3)
+    at listOnTimeout (node:internal/timers:547:9)
+    at processTimers (node:internal/timers:521:7)
+    at request (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverClient.ts:85:24)
+    at Object.update (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/test/record-time.test.ts:22:26)
+    at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverStorageAdapter.ts:255:11)
+
+stderr | test/record-time.test.ts > EXP-RT01 QLever A0 > T1-T12 serialized schedules (compact; T8 deferred-only N/A)
+RT01 update rejected DOMException [TimeoutError]: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:15157:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at runNextTicks (node:internal/process/task_queues:68:3)
+    at processTimers (node:internal/timers:518:9)
+    at request (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverClient.ts:85:24)
+    at Object.update (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/test/record-time.test.ts:22:26)
+    at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverStorageAdapter.ts:255:11)
+
+stderr | test/record-time.test.ts > EXP-RT01 QLever A0 > T1-T12 serialized schedules (compact; T8 deferred-only N/A)
+RT01 update rejected DOMException [TimeoutError]: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:15157:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at request (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverClient.ts:85:24)
+    at Object.update (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/test/record-time.test.ts:22:26)
+    at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverStorageAdapter.ts:255:11)
+
+stderr | test/record-time.test.ts > EXP-RT01 QLever A0 > T1-T12 serialized schedules (compact; T8 deferred-only N/A)
+RT01 update rejected DOMException [TimeoutError]: The operation was aborted due to timeout
+    at node:internal/deps/undici/undici:15157:13
+    at processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at request (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverClient.ts:85:24)
+    at Object.update (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/test/record-time.test.ts:22:26)
+    at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever/src/QleverStorageAdapter.ts:255:11)
+
+ ❯ test/record-time.test.ts (3 tests | 2 failed) 219565ms
+   ❯ EXP-RT01 QLever A0 (2)
+     × T1-T12 serialized schedules (a0; T8 deferred-only N/A) 106792ms
+     × T1-T12 serialized schedules (compact; T8 deferred-only N/A) 112768ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/record-time.test.ts > EXP-RT01 QLever A0 > T1-T12 serialized schedules (a0; T8 deferred-only N/A)
+WriteError: Transaction outcome is unknown; resolve operation 18c21920-f29b-4fa7-99c3-def7643f3ec1 before retrying
+ ❯ try src/QleverStorageAdapter.ts:293:15
+    291|           await new Promise((resolve) => setTimeout(resolve, 25));
+    292|         } while (true);
+    293|         throw new TransactionOutcomeUnknown({
+       |               ^
+    294|           operationId,
+    295|           attemptId,
+
+Caused by: TimeoutError: The operation was aborted due to timeout
+ ❯ request src/QleverClient.ts:85:24
+ ❯ Object.query src/QleverClient.ts:121:23
+ ❯ try src/QleverStorageAdapter.ts:262:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 23, INDEX_SIZE_ERR: 1, DOMSTRING_SIZE_ERR: 2, HIERARCHY_REQUEST_ERR: 3, WRONG_DOCUMENT_ERR: 4, INVALID_CHARACTER_ERR: 5, NO_DATA_ALLOWED_ERR: 6, NO_MODIFICATION_ALLOWED_ERR: 7, NOT_FOUND_ERR: 8, NOT_SUPPORTED_ERR: 9, INUSE_ATTRIBUTE_ERR: 10, INVALID_STATE_ERR: 11, SYNTAX_ERR: 12, INVALID_MODIFICATION_ERR: 13, NAMESPACE_ERR: 14, INVALID_ACCESS_ERR: 15, VALIDATION_ERR: 16, TYPE_MISMATCH_ERR: 17, SECURITY_ERR: 18, NETWORK_ERR: 19, ABORT_ERR: 20, URL_MISMATCH_ERR: 21, QUOTA_EXCEEDED_ERR: 22, TIMEOUT_ERR: 23, INVALID_NODE_TYPE_ERR: 24, DATA_CLONE_ERR: 25 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  test/record-time.test.ts > EXP-RT01 QLever A0 > T1-T12 serialized schedules (compact; T8 deferred-only N/A)
+WriteError: Transaction outcome is unknown; resolve operation 1eca1c27-3f0e-47d1-9a86-a807107d28cf before retrying
+ ❯ try src/QleverStorageAdapter.ts:293:15
+    291|           await new Promise((resolve) => setTimeout(resolve, 25));
+    292|         } while (true);
+    293|         throw new TransactionOutcomeUnknown({
+       |               ^
+    294|           operationId,
+    295|           attemptId,
+
+Caused by: TimeoutError: The operation was aborted due to timeout
+ ❯ request src/QleverClient.ts:85:24
+ ❯ Object.query src/QleverClient.ts:121:23
+ ❯ try src/QleverStorageAdapter.ts:262:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 23, INDEX_SIZE_ERR: 1, DOMSTRING_SIZE_ERR: 2, HIERARCHY_REQUEST_ERR: 3, WRONG_DOCUMENT_ERR: 4, INVALID_CHARACTER_ERR: 5, NO_DATA_ALLOWED_ERR: 6, NO_MODIFICATION_ALLOWED_ERR: 7, NOT_FOUND_ERR: 8, NOT_SUPPORTED_ERR: 9, INUSE_ATTRIBUTE_ERR: 10, INVALID_STATE_ERR: 11, SYNTAX_ERR: 12, INVALID_MODIFICATION_ERR: 13, NAMESPACE_ERR: 14, INVALID_ACCESS_ERR: 15, VALIDATION_ERR: 16, TYPE_MISMATCH_ERR: 17, SECURITY_ERR: 18, NETWORK_ERR: 19, ABORT_ERR: 20, URL_MISMATCH_ERR: 21, QUOTA_EXCEEDED_ERR: 22, TIMEOUT_ERR: 23, INVALID_NODE_TYPE_ERR: 24, DATA_CLONE_ERR: 25 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 1 passed (3)
+   Start at  21:04:22
+   Duration  220.04s (tests 100%)
+

@@ -1,0 +1,19 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/postgres/tsdown.config.ts 
+ℹ entry: src/PgTriples.ts, src/PostgresqlAdapter.ts, src/PostgresqlBackend.ts, src/PostgresqlLayer.ts, src/dialect.ts, src/index.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/PostgresqlAdapter.js      15.96 kB │ gzip: 3.74 kB
+ℹ dist/PostgresqlBackend.js       7.28 kB │ gzip: 2.38 kB
+ℹ dist/PostgresqlLayer.js         2.52 kB │ gzip: 0.83 kB
+ℹ dist/PgTriples.js               2.50 kB │ gzip: 0.91 kB
+ℹ dist/index.js                   1.01 kB │ gzip: 0.23 kB
+ℹ dist/dialect.js                 0.59 kB │ gzip: 0.39 kB
+ℹ dist/PostgresqlAdapter.js.map  33.82 kB │ gzip: 7.27 kB
+ℹ dist/PostgresqlBackend.js.map  14.05 kB │ gzip: 4.07 kB
+ℹ dist/PgTriples.js.map           4.81 kB │ gzip: 1.77 kB
+ℹ dist/PostgresqlLayer.js.map     4.25 kB │ gzip: 1.29 kB
+ℹ dist/dialect.js.map             1.08 kB │ gzip: 0.63 kB
+ℹ 11 files, total: 87.87 kB
+✔ Build complete in 17ms

@@ -1,0 +1,33 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core
+
+ ❯ test/kv/layers/KvTriples.test.ts (10 tests | 1 failed) 45ms
+   ❯ KvTriples (merged service) (10)
+     × transact writes ordered provenance datoms 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/kv/layers/KvTriples.test.ts > KvTriples (merged service) > transact writes ordered provenance datoms
+AssertionError: expected [ ':_tx/actor', ':_tx/change', …(2) ] to include ':_tx/instant'
+ ❯ test/kv/layers/KvTriples.test.ts:66:19
+     64|     );
+     65|
+     66|     expect(attrs).toContain(":_tx/instant");
+       |                   ^
+     67|     expect(attrs).toContain(":_tx/position");
+     68|     expect(attrs).toContain(":_tx/actor");
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 57 passed (58)
+      Tests  1 failed | 852 passed (853)
+   Start at  20:49:56
+   Duration  4.19s (import 52%, tests 29%, transform 18%, worker 1%)
+
+    Isolate  58 workers spawned · ~96ms startup each (spawn + environment, per file)
+             at least ~412ms faster with isolate: false — reuses workers across files instead of one per file
+

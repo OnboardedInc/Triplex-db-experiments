@@ -1,0 +1,78 @@
+[
+  {
+    "name": "unit-terminal",
+    "command": "/Users/sam/.hermes/node/bin/node",
+    "args": [
+      "lab/experiments/EXP-RT01/run-gates.mjs",
+      "offline-final-source"
+    ],
+    "started": "2026-11-09T03:17:46.227Z",
+    "ended": "2026-11-09T03:19:47.457Z",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "name": "changed-pack",
+    "command": "/Users/sam/.hermes/node/bin/node",
+    "args": [
+      "lab/experiments/EXP-RT01/pack-changed.mjs"
+    ],
+    "started": "2026-11-09T03:19:47.458Z",
+    "ended": "2026-11-09T03:19:53.122Z",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "name": "latency-terminal",
+    "command": "/Users/sam/.hermes/node/bin/node",
+    "args": [
+      "lab/experiments/EXP-RT01/run-microbench.mjs",
+      "--adapter"
+    ],
+    "started": "2026-11-09T03:19:53.122Z",
+    "ended": "2026-11-09T03:19:58.803Z",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "name": "probes-terminal",
+    "command": "/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.bin/tsx",
+    "args": [
+      "lab/experiments/EXP-RT01/live-probes.ts"
+    ],
+    "started": "2026-11-09T03:19:58.803Z",
+    "ended": "2026-11-09T03:20:03.819Z",
+    "exit": 1,
+    "signal": null,
+    "error": null
+  },
+  {
+    "name": "declarations-terminal",
+    "command": "/Users/sam/.hermes/node/bin/node",
+    "args": [
+      "lab/experiments/EXP-RT01/declaration-diff.mjs",
+      "terminal"
+    ],
+    "started": "2026-11-09T03:20:03.819Z",
+    "ended": "2026-11-09T03:20:06.560Z",
+    "exit": 0,
+    "signal": null,
+    "error": null
+  },
+  {
+    "name": "contract-terminal",
+    "command": "python3",
+    "args": [
+      "lab/acceptance/build_contract.py",
+      "--verify"
+    ],
+    "started": "2026-11-09T03:20:06.560Z",
+    "ended": "2026-11-09T03:20:07.120Z",
+    "exit": 1,
+    "signal": null,
+    "error": null
+  }
+]

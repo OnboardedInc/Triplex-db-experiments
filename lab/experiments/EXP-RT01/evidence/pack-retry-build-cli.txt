@@ -1,0 +1,16 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/cli/tsdown.config.ts 
+ℹ entry: src/cli.ts, src/index.ts, src/operations.ts, src/program.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ Granting execute permission to dist/cli.js
+ℹ dist/program.js         19.85 kB │ gzip: 4.91 kB
+ℹ dist/operations.js      11.46 kB │ gzip: 2.88 kB
+ℹ dist/cli.js              0.42 kB │ gzip: 0.28 kB
+ℹ dist/index.js            0.17 kB │ gzip: 0.12 kB
+ℹ dist/program.js.map     36.08 kB │ gzip: 8.42 kB
+ℹ dist/operations.js.map  26.53 kB │ gzip: 5.89 kB
+ℹ dist/cli.js.map          0.58 kB │ gzip: 0.38 kB
+ℹ 7 files, total: 95.09 kB
+✔ Build complete in 16ms

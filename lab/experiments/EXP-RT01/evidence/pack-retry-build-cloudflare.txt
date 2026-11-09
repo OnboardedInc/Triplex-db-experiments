@@ -1,0 +1,23 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/cloudflare/tsdown.config.ts 
+ℹ entry: src/CloudflareTriples.ts, src/adapter-support.ts, src/index.ts, src/migrations.ts, src/schema.ts, src/storage/CloudflareAdapter.ts, src/storage/index.ts, src/services/CloudflareDatabaseManager.ts, src/services/index.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/storage/CloudflareAdapter.js               15.73 kB │ gzip: 3.85 kB
+ℹ dist/schema.js                                   3.45 kB │ gzip: 0.96 kB
+ℹ dist/services/CloudflareDatabaseManager.js       2.43 kB │ gzip: 0.91 kB
+ℹ dist/adapter-support.js                          1.74 kB │ gzip: 0.60 kB
+ℹ dist/CloudflareTriples.js                        1.25 kB │ gzip: 0.59 kB
+ℹ dist/index.js                                    0.83 kB │ gzip: 0.29 kB
+ℹ dist/migrations.js                               0.81 kB │ gzip: 0.38 kB
+ℹ dist/services/index.js                           0.19 kB │ gzip: 0.10 kB
+ℹ dist/storage/index.js                            0.15 kB │ gzip: 0.08 kB
+ℹ dist/storage/CloudflareAdapter.js.map           31.24 kB │ gzip: 7.17 kB
+ℹ dist/services/CloudflareDatabaseManager.js.map   5.50 kB │ gzip: 1.70 kB
+ℹ dist/schema.js.map                               3.92 kB │ gzip: 1.09 kB
+ℹ dist/adapter-support.js.map                      3.07 kB │ gzip: 0.98 kB
+ℹ dist/CloudflareTriples.js.map                    2.61 kB │ gzip: 1.19 kB
+ℹ dist/migrations.js.map                           1.29 kB │ gzip: 0.55 kB
+ℹ 15 files, total: 74.22 kB
+✔ Build complete in 17ms

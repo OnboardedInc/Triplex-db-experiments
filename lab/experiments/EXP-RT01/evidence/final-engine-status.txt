@@ -1,0 +1,18 @@
+slot        port  cap            state            ready  mem       holder                                           
+xtdb-dev    5470  3.00 GiB/2cpu  running/healthy  READY  2.63 GiB  worktree:/Users/sam/projects/triplex-db-2 EXP-000
+xtdb-s1     5471  3.50 GiB/2cpu  -                -      -         -                                                
+xtdb-s2     5472  3.50 GiB/2cpu  -                -      -         -                                                
+xtdb-s3     5473  3.50 GiB/2cpu  -                -      -         -                                                
+qlever-dev  7070  3.50 GiB/2cpu  running/healthy  READY  1.50 GiB  EXP-000                                          
+qlever-s1   7071  3.50 GiB/2cpu  -                -      -         -                                                
+qlever-s2   7072  3.50 GiB/2cpu  -                -      -         -                                                
+qlever-s3   7073  3.50 GiB/2cpu  -                -      -         -                                                
+
+pool: 6.56 GiB of 11.00 GiB reserved; disk 25.41 GiB used + 9.00 GiB forecast of 50.00 GiB
+  reservation tx2-xtdb-dev 3.00 GiB 2cpu state=running holder=EXP-W01
+  reservation tx2-qlever-dev 3.50 GiB 2cpu state=running holder=EXP-000
+  reservation tx2-g03-5f8cb86ff94b8a15-seed-92d02c 64 MiB 1cpu state=starting holder=CX-G03-r3-claim-831be414
+  retained volume tx2-qlever-dev-data 0 MiB holder=worktree:/Users/sam/projects/triplex-db-2 note=retained by engine down (default)
+  retained volume tx2-xtdb-s2-data 3.87 GiB holder=EXP-P4 note=CX-P4: inherited 10k measurement completed; retain volume, release exclusive slot
+  retained volume tx2-g03-r2store-store-b2b3e6e8cdfb ? holder=CX-G03 note=EXP-G03 round 2 immutable Linux qualification store retained for orchestrator scale window; receipt lab/experiments/EXP-G03/round2/store.json; remove through engine.mjs after window
+  retained volume tx2-datomic-dev-data 1.40 GiB holder=EXP-DA01 note=retained by engine down (default)

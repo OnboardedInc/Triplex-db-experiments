@@ -1,0 +1,43 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/testkit/tsdown.config.ts 
+ℹ entry: src/index.ts, src/offline-route-fixtures.ts, src/record-time-conformance.ts, src/record-time-determinism.ts, src/record-time-schedules.ts, src/route-coverage.ts, src/route-equivalence.ts, src/route-history-grammar.ts, src/route.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ Cleaning 34 files
+ℹ dist/index.js                           87.72 kB │ gzip: 16.19 kB
+ℹ dist/route-equivalence.js               22.87 kB │ gzip:  6.59 kB
+ℹ dist/route-coverage.js                   8.55 kB │ gzip:  2.61 kB
+ℹ dist/record-time-conformance.js          6.71 kB │ gzip:  2.15 kB
+ℹ dist/record-time-schedules.js            6.06 kB │ gzip:  2.11 kB
+ℹ dist/offline-route-fixtures.js           5.71 kB │ gzip:  2.15 kB
+ℹ dist/route-history-grammar.js            5.20 kB │ gzip:  1.67 kB
+ℹ dist/route.js                            1.12 kB │ gzip:  0.34 kB
+ℹ dist/record-time-determinism.js          0.79 kB │ gzip:  0.47 kB
+ℹ dist/index.js.map                      157.49 kB │ gzip: 27.49 kB
+ℹ dist/route-equivalence.js.map           50.44 kB │ gzip: 13.40 kB
+ℹ dist/route-coverage.js.map              16.56 kB │ gzip:  4.76 kB
+ℹ dist/record-time-conformance.js.map     13.31 kB │ gzip:  3.79 kB
+ℹ dist/record-time-schedules.js.map       11.45 kB │ gzip:  3.69 kB
+ℹ dist/offline-route-fixtures.js.map      10.46 kB │ gzip:  3.68 kB
+ℹ dist/route-history-grammar.js.map       10.38 kB │ gzip:  3.24 kB
+ℹ dist/route-equivalence.d.ts.map          4.19 kB │ gzip:  1.13 kB
+ℹ dist/record-time-determinism.js.map      1.39 kB │ gzip:  0.72 kB
+ℹ dist/index.d.ts.map                      0.83 kB │ gzip:  0.34 kB
+ℹ dist/record-time-conformance.d.ts.map    0.58 kB │ gzip:  0.26 kB
+ℹ dist/record-time-determinism.d.ts.map    0.35 kB │ gzip:  0.19 kB
+ℹ dist/route-coverage.d.ts.map             0.32 kB │ gzip:  0.18 kB
+ℹ dist/record-time-schedules.d.ts.map      0.28 kB │ gzip:  0.19 kB
+ℹ dist/offline-route-fixtures.d.ts.map     0.23 kB │ gzip:  0.18 kB
+ℹ dist/route-history-grammar.d.ts.map      0.16 kB │ gzip:  0.14 kB
+ℹ dist/route-equivalence.d.ts              8.77 kB │ gzip:  2.35 kB
+ℹ dist/route-coverage.d.ts                 3.65 kB │ gzip:  0.83 kB
+ℹ dist/index.d.ts                          2.66 kB │ gzip:  0.96 kB
+ℹ dist/route.d.ts                          1.84 kB │ gzip:  0.45 kB
+ℹ dist/record-time-conformance.d.ts        1.29 kB │ gzip:  0.52 kB
+ℹ dist/offline-route-fixtures.d.ts         1.26 kB │ gzip:  0.66 kB
+ℹ dist/record-time-schedules.d.ts          1.15 kB │ gzip:  0.52 kB
+ℹ dist/record-time-determinism.d.ts        0.88 kB │ gzip:  0.41 kB
+ℹ dist/route-history-grammar.d.ts          0.29 kB │ gzip:  0.20 kB
+ℹ 34 files, total: 444.94 kB
+✔ Build complete in 1240ms

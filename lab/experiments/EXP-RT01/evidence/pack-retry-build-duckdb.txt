@@ -1,0 +1,30 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/duckdb/tsdown.config.ts 
+ℹ entry: src/DuckDBClient.ts, src/SqlStrategy.ts, src/TemporalQueries.ts, src/TypeDomains.ts, src/effect-storage.ts, src/index.ts, src/query-executor-adapter.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/effect-storage.js               7.93 kB │ gzip:  2.37 kB
+ℹ dist/TemporalQueries.js              6.61 kB │ gzip:  2.50 kB
+ℹ dist/query-executor-adapter.js       5.54 kB │ gzip:  1.90 kB
+ℹ dist/TypeDomains.js                  4.67 kB │ gzip:  1.74 kB
+ℹ dist/DuckDBClient.js                 4.48 kB │ gzip:  1.63 kB
+ℹ dist/index.js                        1.32 kB │ gzip:  0.61 kB
+ℹ dist/SqlStrategy.js                  0.57 kB │ gzip:  0.39 kB
+ℹ dist/native-duckdb-port.js.map      63.87 kB │ gzip: 17.44 kB
+ℹ dist/public-backend.js.map          49.71 kB │ gzip: 13.60 kB
+ℹ dist/native-duckdb-port.js          35.15 kB │ gzip:  9.71 kB
+ℹ dist/public-backend.js              26.66 kB │ gzip:  7.91 kB
+ℹ dist/effect-storage.js.map          17.59 kB │ gzip:  4.93 kB
+ℹ dist/transaction-owner.js.map       15.97 kB │ gzip:  4.87 kB
+ℹ dist/query-result-boundary.js.map   15.22 kB │ gzip:  4.27 kB
+ℹ dist/TemporalQueries.js.map         13.10 kB │ gzip:  4.24 kB
+ℹ dist/query-executor-adapter.js.map  11.21 kB │ gzip:  3.53 kB
+ℹ dist/DuckDBClient.js.map             9.79 kB │ gzip:  3.48 kB
+ℹ dist/TypeDomains.js.map              8.85 kB │ gzip:  2.94 kB
+ℹ dist/transaction-owner.js            8.64 kB │ gzip:  2.71 kB
+ℹ dist/query-result-boundary.js        8.30 kB │ gzip:  2.42 kB
+ℹ dist/index.js.map                    2.07 kB │ gzip:  0.91 kB
+ℹ dist/SqlStrategy.js.map              0.94 kB │ gzip:  0.56 kB
+ℹ 22 files, total: 318.20 kB
+✔ Build complete in 27ms

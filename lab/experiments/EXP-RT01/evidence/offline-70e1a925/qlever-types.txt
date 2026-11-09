@@ -1,0 +1,132 @@
+src/AggregateAnswers.ts(1,64): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+src/AggregateAnswers.ts(2,38): error TS2307: Cannot find module '@triplex-build/triplex/internal' or its corresponding type declarations.
+src/AggregateAnswers.ts(3,35): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/AggregateAnswers.ts(105,22): error TS7006: Parameter 'value' implicitly has an 'any' type.
+src/AggregateAnswers.ts(106,19): error TS7006: Parameter 'variable' implicitly has an 'any' type.
+src/AggregateAnswers.ts(112,22): error TS7006: Parameter 'spec' implicitly has an 'any' type.
+src/AggregateAnswers.ts(112,28): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/compiler.ts(1,25): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/compiler.ts(8,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/compiler.ts(14,8): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+src/compiler.ts(15,38): error TS2307: Cannot find module '@triplex-build/triplex/internal' or its corresponding type declarations.
+src/compiler.ts(179,24): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/compiler.ts(185,49): error TS7031: Binding element 'name' implicitly has an 'any' type.
+src/compiler.ts(242,11): error TS7031: Binding element 'op' implicitly has an 'any' type.
+src/compiler.ts(242,15): error TS7031: Binding element 'source' implicitly has an 'any' type.
+src/compiler.ts(815,35): error TS7031: Binding element 'op' implicitly has an 'any' type.
+src/compiler.ts(815,41): error TS7031: Binding element 'target' implicitly has an 'any' type.
+src/compiler.ts(848,44): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/compiler.ts(932,42): error TS7006: Parameter 'name' implicitly has an 'any' type.
+src/compiler.ts(960,19): error TS7006: Parameter 'spec' implicitly has an 'any' type.
+src/compiler.ts(960,25): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/compiler.ts(961,59): error TS7006: Parameter 'previous' implicitly has an 'any' type.
+src/compiler.ts(961,69): error TS7006: Parameter 'i' implicitly has an 'any' type.
+src/index.ts(9,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/native/BasisRelations.ts(8,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/native/NativeContext.ts(1,31): error TS2307: Cannot find module '@triplex-build/triplex/config' or its corresponding type declarations.
+src/native/NativeContext.ts(2,25): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/native/NativeContext.ts(3,58): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/native/NativeContext.ts(42,4): error TS2366: Function lacks ending return statement and return type does not include 'undefined'.
+src/native/NativeQueries.ts(4,31): error TS2307: Cannot find module '@triplex-build/triplex/config' or its corresponding type declarations.
+src/native/NativeQueries.ts(18,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/native/NativeQueries.ts(105,5): error TS2375: Type 'Effect<{ rawRows?: SparqlBinding[]; rows: any; basis: any; trace: { language: string; query: string; parameters: any[]; basis: any; mappingId: string; contractId: any; elapsedMs: number; steps: NativeQueryStep[]; }; }, any, unknown>' is not assignable to type 'Effect<NativeReadResult, ReadError, never>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type 'unknown' is not assignable to type 'never'.
+src/Operations.ts(1,27): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/Operations.ts(3,27): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/PersistedScalarSource.ts(1,25): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/QleverQueryExecutor.ts(14,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/QleverQueryExecutor.ts(15,49): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+src/QleverQueryExecutor.ts(16,38): error TS2307: Cannot find module '@triplex-build/triplex/internal' or its corresponding type declarations.
+src/QleverQueryExecutor.ts(81,6): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(83,39): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(86,39): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(87,38): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(90,40): error TS7031: Binding element 'op' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(166,46): error TS7031: Binding element 'op' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(201,37): error TS7006: Parameter 'n' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(201,40): error TS7006: Parameter 'rule' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(398,37): error TS7031: Binding element 'op' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(436,15): error TS7006: Parameter 'query' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(436,37): error TS7006: Parameter 'basis' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(437,19): error TS7006: Parameter 'query' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(437,41): error TS7006: Parameter 'basis' implicitly has an 'any' type.
+src/QleverQueryExecutor.ts(437,48): error TS7006: Parameter 'cursor' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(2,47): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/QleverStorageAdapter.ts(5,63): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/QleverStorageAdapter.ts(15,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/QleverStorageAdapter.ts(282,55): error TS2554: Expected 0 arguments, but got 1.
+src/QleverStorageAdapter.ts(347,49): error TS2554: Expected 0 arguments, but got 1.
+src/QleverStorageAdapter.ts(412,52): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(412,59): error TS7006: Parameter 'txId' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(412,65): error TS7006: Parameter 'timestamp' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(412,76): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(412,80): error TS7006: Parameter 'position' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(443,5): error TS2353: Object literal may only specify known properties, and 'supportedValueTypes' does not exist in type 'QleverStorageAdapterService'.
+src/QleverStorageAdapter.ts(465,19): error TS7006: Parameter 'stagedAt' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(488,20): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(488,24): error TS7006: Parameter 'txId' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(488,30): error TS7006: Parameter 'timestamp' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(515,19): error TS7006: Parameter 'inputs' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(515,27): error TS7006: Parameter 'txId' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(515,33): error TS7006: Parameter 'timestamp' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(515,44): error TS7006: Parameter 'ids' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(515,49): error TS7006: Parameter 'position' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(521,15): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(521,19): error TS7006: Parameter 'timestamp' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(521,30): error TS7006: Parameter 'txId' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(521,36): error TS7006: Parameter 'position' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(542,15): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(543,19): error TS7006: Parameter 'entityId' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(543,29): error TS7006: Parameter 'basis' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(544,21): error TS7006: Parameter 'ids' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(544,26): error TS7006: Parameter 'basis' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(547,52): error TS2345: Argument of type 'unknown[]' is not assignable to parameter of type 'readonly string[]'.
+  Type 'unknown' is not assignable to type 'string'.
+src/QleverStorageAdapter.ts(554,13): error TS7006: Parameter 'pattern' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(554,22): error TS7006: Parameter 'basis' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(555,15): error TS7006: Parameter 'entityId' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(556,23): error TS7006: Parameter 'attributes' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(556,35): error TS7006: Parameter 'requested' implicitly has an 'any' type.
+src/QleverStorageAdapter.ts(569,167): error TS2345: Argument of type '(value: string) => string' is not assignable to parameter of type '(value: unknown, index: number, array: unknown[]) => string'.
+  Types of parameters 'value' and 'value' are incompatible.
+    Type 'unknown' is not assignable to type 'string'.
+src/rdf.ts(1,43): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/rdf.ts(2,32): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/RecordCut.ts(9,8): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/RecordCut.ts(75,18): error TS7006: Parameter 'stamp' implicitly has an 'any' type.
+src/RecordCut.ts(75,25): error TS7006: Parameter 'ms' implicitly has an 'any' type.
+src/recursion.ts(1,60): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/recursion.ts(8,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/recursion.ts(9,35): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+src/recursion.ts(49,38): error TS7031: Binding element 'name' implicitly has an 'any' type.
+src/recursion.ts(89,38): error TS7031: Binding element 'name' implicitly has an 'any' type.
+src/recursion.ts(137,39): error TS7006: Parameter 'rule' implicitly has an 'any' type.
+src/recursion.ts(138,43): error TS7006: Parameter 'rule' implicitly has an 'any' type.
+src/recursion.ts(139,23): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/recursion.ts(139,53): error TS2345: Argument of type 'Set<unknown>' is not assignable to parameter of type 'ReadonlySet<string>'.
+  Types of property 'forEach' are incompatible.
+    Type '(callbackfn: (value: unknown, value2: unknown, set: Set<unknown>) => void, thisArg?: any) => void' is not assignable to type '(callbackfn: (value: string, value2: string, set: ReadonlySet<string>) => void, thisArg?: any) => void'.
+      Types of parameters 'callbackfn' and 'callbackfn' are incompatible.
+        Types of parameters 'value' and 'value' are incompatible.
+          Type 'unknown' is not assignable to type 'string'.
+src/recursion.ts(141,51): error TS7006: Parameter 'rule' implicitly has an 'any' type.
+src/recursion.ts(143,44): error TS7006: Parameter 'rule' implicitly has an 'any' type.
+src/recursion.ts(148,42): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/recursion.ts(148,73): error TS2345: Argument of type 'Set<unknown>' is not assignable to parameter of type 'ReadonlySet<string>'.
+  Types of property 'forEach' are incompatible.
+    Type '(callbackfn: (value: unknown, value2: unknown, set: Set<unknown>) => void, thisArg?: any) => void' is not assignable to type '(callbackfn: (value: string, value2: string, set: ReadonlySet<string>) => void, thisArg?: any) => void'.
+      Types of parameters 'callbackfn' and 'callbackfn' are incompatible.
+        Types of parameters 'value' and 'value' are incompatible.
+          Type 'unknown' is not assignable to type 'string'.
+src/recursion.ts(149,36): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/recursion.ts(149,66): error TS2345: Argument of type 'Set<unknown>' is not assignable to parameter of type 'ReadonlySet<string>'.
+  Types of property 'forEach' are incompatible.
+    Type '(callbackfn: (value: unknown, value2: unknown, set: Set<unknown>) => void, thisArg?: any) => void' is not assignable to type '(callbackfn: (value: string, value2: string, set: ReadonlySet<string>) => void, thisArg?: any) => void'.
+      Types of parameters 'callbackfn' and 'callbackfn' are incompatible.
+        Types of parameters 'value' and 'value' are incompatible.
+          Type 'unknown' is not assignable to type 'string'.
+src/recursion.ts(168,19): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/TemporalQueries.ts(4,65): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+src/TemporalQueries.ts(11,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/TemporalQueries.ts(171,26): error TS18046: 'result' is of type 'unknown'.
+src/TemporalQueries.ts(176,34): error TS18046: 'result' is of type 'unknown'.

@@ -1,0 +1,15 @@
+{
+  "kind": "owned-client-stop",
+  "reason": "Superseded CAS shape and row validation source; retain diagnostic T1/T2 success and incomplete T3, do not qualify the attempt",
+  "verifiedChain": [
+    44217,
+    9315,
+    9316,
+    9427
+  ],
+  "signal": "SIGTERM",
+  "targetPid": 9427,
+  "sendExitCode": 0,
+  "engineLifecycleChanged": false,
+  "goneReadback": "pending"
+}

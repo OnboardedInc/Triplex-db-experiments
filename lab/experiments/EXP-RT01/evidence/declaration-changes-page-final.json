@@ -1,0 +1,16 @@
+{
+  "baseline": "59e07afb7a25dfb22bca60f8d769b74651aa835a",
+  "changes": [
+    "EntityPage.d.ts",
+    "Pagination.d.ts",
+    "errors/index.d.ts",
+    "index.d.ts",
+    "internal.d.ts",
+    "runtime/index.d.ts",
+    "storage/StorageAdapter.d.ts",
+    "store/Triples.d.ts",
+    "store/TriplesLive.d.ts",
+    "store/transactionMetadata.d.ts",
+    "storage/RecordStamp.d.ts"
+  ]
+}

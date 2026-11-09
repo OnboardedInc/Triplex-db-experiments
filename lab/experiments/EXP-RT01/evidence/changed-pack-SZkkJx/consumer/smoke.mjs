@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import { Effect } from 'effect';
+import { ReadError, BasisNotAvailable, instantOf, nextStamp } from '@triplex-build/triplex';
+import { makeControllableRecordClock } from '@triplex-build/triplex-testkit';
+import { decideRouteCommit } from '@triplex-build/triplex-testkit/route';
+assert.equal(instantOf(nextStamp(1000000,1000)),1000.001);
+assert.equal(ReadError.name,'ReadError');
+assert.equal(new ReadError({message:'normal'})._tag,'ReadError');
+const basis = new BasisNotAvailable({axis:'recordedAt',required:2,observed:1,waitedMs:0,surface:'consumer',message:'future'});
+assert.equal(await Effect.runPromise(Effect.fail(basis).pipe(Effect.catchTag('BasisNotAvailable',error=>Effect.succeed(error.axis)))),'recordedAt');
+const clock = makeControllableRecordClock(1); clock.set(2); assert.equal(clock.get(),2);
+assert.equal(decideRouteCommit({position:1,stagedAt:1000,writes:[]},undefined).instant,1000);
+console.log('public packed exports and tagged failures checked');

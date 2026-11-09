@@ -1,0 +1,154 @@
+src/codecs.ts(6,8): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/codecs.ts(7,46): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/ConstraintValidation.ts(1,45): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/ConstraintValidation.ts(3,32): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/index.ts(9,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/MaintainedQueries.ts(5,35): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+src/MaintainedQueries.ts(6,65): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/MaintainedQueries.ts(35,18): error TS2339: Property 'columnMap' does not exist on type 'XtdbCompiledQuery'.
+src/MaintainedQueries.ts(36,30): error TS2339: Property 'valueColumnMap' does not exist on type 'XtdbCompiledQuery'.
+src/MaintainedQueries.ts(160,14): error TS7006: Parameter 'variable' implicitly has an 'any' type.
+src/MaintainedQueries.ts(163,37): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/MaintainedQueries.ts(165,17): error TS7006: Parameter 'variable' implicitly has an 'any' type.
+src/MaintainedQueries.ts(168,32): error TS2339: Property 'valueColumnMap' does not exist on type 'XtdbCompiledQuery'.
+src/MaintainedQueries.ts(177,27): error TS2339: Property 'integerColumns' does not exist on type 'XtdbCompiledQuery'.
+src/MaintainedQueries.ts(233,23): error TS2339: Property 'integerColumns' does not exist on type 'XtdbCompiledQuery'.
+src/MaintainedQueries.ts(274,42): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/MaintainedQueries.ts(275,22): error TS2339: Property 'params' does not exist on type 'XtdbCompiledQuery'.
+src/MaintainedQueries.ts(309,56): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/MaintainedQueries.ts(310,22): error TS2339: Property 'params' does not exist on type 'XtdbCompiledQuery'.
+src/MaintainedQueries.ts(323,39): error TS2339: Property 'params' does not exist on type 'XtdbCompiledQuery'.
+src/MaintainedQueries.ts(338,143): error TS2339: Property 'integerColumns' does not exist on type 'XtdbCompiledQuery'.
+src/MaintainedQueries.ts(339,78): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/native/NativeQueries.ts(17,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/native/NativeQueries.ts(54,5): error TS2375: Type 'Effect<{ rawRows?: Record<string, unknown>[]; rows: any; basis: any; trace: { language: "xtql" | "xtdb-sql"; query: string; parameters: unknown[]; basis: any; mappingId: string; contractId: any; elapsedMs: number; steps: NativeQueryStep[]; }; }, any, unknown>' is not assignable to type 'Effect<NativeReadResult, ReadError, never>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type 'unknown' is not assignable to type 'never'.
+src/native/Reachability.ts(10,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/native/Sources.ts(1,58): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/native/Sources.ts(2,25): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/Operations.ts(1,27): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/Operations.ts(3,27): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/query/compiler.ts(9,8): error TS2307: Cannot find module '@triplex-build/triplex/internal' or its corresponding type declarations.
+src/query/compiler.ts(10,49): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+src/query/compiler.ts(30,22): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/query/compiler.ts(31,16): error TS7006: Parameter 'expression' implicitly has an 'any' type.
+src/query/compiler.ts(32,20): error TS7006: Parameter 'value' implicitly has an 'any' type.
+src/query/compiler.ts(33,23): error TS7006: Parameter 'value' implicitly has an 'any' type.
+src/query/compiler.ts(34,17): error TS7006: Parameter 'limit' implicitly has an 'any' type.
+src/query/compiler.ts(34,24): error TS7006: Parameter 'offset' implicitly has an 'any' type.
+src/query/compiler.ts(186,35): error TS2345: Argument of type 'unknown[]' is not assignable to parameter of type 'readonly string[]'.
+  Type 'unknown' is not assignable to type 'string'.
+src/query/compiler.ts(186,68): error TS7031: Binding element 'name' implicitly has an 'any' type.
+src/query/domains.ts(1,35): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+src/query/domains.ts(2,60): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/query/domains.ts(74,62): error TS7006: Parameter 'computation' implicitly has an 'any' type.
+src/query/domains.ts(90,6): error TS7006: Parameter 'term' implicitly has an 'any' type.
+src/query/domains.ts(100,8): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/query/domains.ts(107,8): error TS7006: Parameter 'field' implicitly has an 'any' type.
+src/query/domains.ts(117,8): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/query/domains.ts(121,24): error TS7006: Parameter 'term' implicitly has an 'any' type.
+src/query/domains.ts(138,30): error TS2339: Property 'valueColumnMap' does not exist on type 'XtdbCompiledQuery'.
+src/query/domains.ts(140,27): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/query/domains.ts(141,64): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/query/domains.ts(144,72): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/query/domains.ts(145,77): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/query/domains.ts(146,66): error TS2339: Property 'params' does not exist on type 'XtdbCompiledQuery'.
+src/query/domains.ts(148,24): error TS2339: Property 'params' does not exist on type 'XtdbCompiledQuery'.
+src/query/domains.ts(169,11): error TS7031: Binding element 'left' implicitly has an 'any' type.
+src/query/domains.ts(169,17): error TS7031: Binding element 'right' implicitly has an 'any' type.
+src/query/domains.ts(181,8): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/query/domains.ts(183,22): error TS7006: Parameter 'term' implicitly has an 'any' type.
+src/query/domains.ts(185,12): error TS7006: Parameter 'term' implicitly has an 'any' type.
+src/query/overlay.ts(1,32): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/query/recursion.ts(1,35): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+src/query/recursion.ts(8,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/query/recursion.ts(41,38): error TS7031: Binding element 'name' implicitly has an 'any' type.
+src/query/recursion.ts(143,38): error TS7031: Binding element 'name' implicitly has an 'any' type.
+src/query/recursion.ts(161,39): error TS7006: Parameter 'rule' implicitly has an 'any' type.
+src/query/recursion.ts(162,43): error TS7006: Parameter 'rule' implicitly has an 'any' type.
+src/query/recursion.ts(163,23): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/query/recursion.ts(163,53): error TS2345: Argument of type 'Set<unknown>' is not assignable to parameter of type 'Set<string>'.
+  Type 'unknown' is not assignable to type 'string'.
+src/query/recursion.ts(165,51): error TS7006: Parameter 'rule' implicitly has an 'any' type.
+src/query/recursion.ts(167,44): error TS7006: Parameter 'rule' implicitly has an 'any' type.
+src/query/recursion.ts(177,42): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/query/recursion.ts(177,73): error TS2345: Argument of type 'Set<unknown>' is not assignable to parameter of type 'Set<string>'.
+  Type 'unknown' is not assignable to type 'string'.
+src/query/recursion.ts(178,36): error TS7006: Parameter 'clause' implicitly has an 'any' type.
+src/query/recursion.ts(178,66): error TS2345: Argument of type 'Set<unknown>' is not assignable to parameter of type 'Set<string>'.
+  Type 'unknown' is not assignable to type 'string'.
+src/query/recursion.ts(200,19): error TS2345: Argument of type 'unknown' is not assignable to parameter of type 'string'.
+src/RecordCut.ts(10,8): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/RecordCut.ts(93,18): error TS7006: Parameter 'stamp' implicitly has an 'any' type.
+src/RecordCut.ts(93,25): error TS7006: Parameter 'ms' implicitly has an 'any' type.
+src/TemporalQueries.ts(4,35): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+src/TemporalQueries.ts(10,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/TemporalQueries.ts(131,55): error TS7006: Parameter 'field' implicitly has an 'any' type.
+src/TemporalQueries.ts(196,39): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/TemporalQueries.ts(196,53): error TS2339: Property 'params' does not exist on type 'XtdbCompiledQuery'.
+src/TemporalQueries.ts(199,26): error TS2339: Property 'columnMap' does not exist on type 'XtdbCompiledQuery'.
+src/TemporalQueries.ts(200,38): error TS2339: Property 'valueColumnMap' does not exist on type 'XtdbCompiledQuery'.
+src/TransactionContext.ts(2,32): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/XtdbQueryExecutor.ts(16,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/XtdbQueryExecutor.ts(17,25): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/XtdbQueryExecutor.ts(18,38): error TS2307: Cannot find module '@triplex-build/triplex/internal' or its corresponding type declarations.
+src/XtdbQueryExecutor.ts(20,49): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+src/XtdbQueryExecutor.ts(55,45): error TS2339: Property 'columnMap' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(56,18): error TS2339: Property 'constantColumns' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(57,35): error TS2339: Property 'constantColumns' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(60,18): error TS2339: Property 'integerColumns' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(64,30): error TS2339: Property 'valueColumnMap' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(87,22): error TS2339: Property 'numericColumns' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(109,38): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(109,60): error TS2339: Property 'params' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(208,22): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(208,55): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(209,52): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(209,66): error TS2339: Property 'params' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(234,39): error TS2339: Property 'metrics' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(238,44): error TS2339: Property 'sql' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(239,38): error TS2339: Property 'params' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(251,15): error TS7006: Parameter 'query' implicitly has an 'any' type.
+src/XtdbQueryExecutor.ts(251,37): error TS7006: Parameter 'basis' implicitly has an 'any' type.
+src/XtdbQueryExecutor.ts(252,19): error TS7006: Parameter 'query' implicitly has an 'any' type.
+src/XtdbQueryExecutor.ts(252,41): error TS7006: Parameter 'basis' implicitly has an 'any' type.
+src/XtdbQueryExecutor.ts(252,48): error TS7006: Parameter 'cursorValues' implicitly has an 'any' type.
+src/XtdbQueryExecutor.ts(254,15): error TS7006: Parameter 'query' implicitly has an 'any' type.
+src/XtdbQueryExecutor.ts(263,31): error TS2339: Property 'metrics' does not exist on type 'XtdbCompiledQuery'.
+src/XtdbQueryExecutor.ts(268,19): error TS7006: Parameter 'query' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(2,47): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/XtdbStorageAdapter.ts(5,63): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/XtdbStorageAdapter.ts(16,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/XtdbStorageAdapter.ts(395,51): error TS2554: Expected 0 arguments, but got 1.
+src/XtdbStorageAdapter.ts(484,47): error TS2554: Expected 0 arguments, but got 1.
+src/XtdbStorageAdapter.ts(554,52): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(554,59): error TS7006: Parameter 'txId' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(554,65): error TS7006: Parameter 'timestamp' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(554,76): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(554,80): error TS7006: Parameter 'position' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(597,27): error TS7006: Parameter 'input' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(614,19): error TS7006: Parameter 'stagedAt' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(639,20): error TS7006: Parameter 'commandId' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(639,31): error TS7006: Parameter 'txId' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(639,37): error TS7006: Parameter 'timestamp' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(665,19): error TS7006: Parameter 'inputs' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(665,27): error TS7006: Parameter 'txId' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(665,33): error TS7006: Parameter 'timestamp' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(665,44): error TS7006: Parameter 'ids' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(665,49): error TS7006: Parameter 'position' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(671,15): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(671,19): error TS7006: Parameter 'timestamp' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(671,30): error TS7006: Parameter 'txId' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(671,36): error TS7006: Parameter 'position' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(692,15): error TS7006: Parameter 'id' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(693,19): error TS7006: Parameter 'entityId' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(693,29): error TS7006: Parameter 'basis' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(694,21): error TS7006: Parameter 'entityIds' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(694,32): error TS7006: Parameter 'basis' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(698,52): error TS2345: Argument of type 'unknown[]' is not assignable to parameter of type 'readonly string[]'.
+  Type 'unknown' is not assignable to type 'string'.
+src/XtdbStorageAdapter.ts(707,13): error TS7006: Parameter 'pattern' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(707,22): error TS7006: Parameter 'basis' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(708,15): error TS7006: Parameter 'entityId' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(709,23): error TS7006: Parameter 'attributes' implicitly has an 'any' type.
+src/XtdbStorageAdapter.ts(709,35): error TS7006: Parameter 'requested' implicitly has an 'any' type.

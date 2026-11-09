@@ -1,0 +1,41 @@
+{
+  "observedAt": "2026-11-09T03:37:45.533Z",
+  "head": "cc54c3c61bc5984802bfe9c563bd885d8b53294b",
+  "processes": [
+    {
+      "pid": 3977,
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "pid": 35477,
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "pid": 9427,
+      "exit": 1,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "scratch": [
+    {
+      "file": "/tmp/rt01-record-cut-template",
+      "existed": true,
+      "existsAfter": false
+    },
+    {
+      "file": "/tmp/rt01-core-microbench-template",
+      "existed": true,
+      "existsAfter": false
+    }
+  ],
+  "availableBytes": 15635939328,
+  "oracleAndAcceptanceDiff": "",
+  "residualOwnedTemporaryFiles": [],
+  "microbenchLockExists": false,
+  "retention": "Retain failures, raw probes, source snapshots, tarballs, consumers and ignored local dependency caches; no engine lifecycle or backend cleanup"
+}

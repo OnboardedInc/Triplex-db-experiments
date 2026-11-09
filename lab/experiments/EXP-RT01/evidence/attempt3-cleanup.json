@@ -1,0 +1,28 @@
+{
+  "kind": "owned-client-stop",
+  "reason": "Attempt loaded pre-fix XTDB setup with an unbounded wait before the first T1 progress marker; newer clients now use bounded query and submission deadlines.",
+  "verifiedChain": [
+    "74041 heavy CX-RT01-live-final",
+    "3867 attempt3 shell",
+    "3868 vitest record-time.test.ts",
+    "3977 rt01 Vitest fork worker"
+  ],
+  "signal": "SIGTERM",
+  "targetPid": 3977,
+  "sendExitCode": 0,
+  "engineLifecycleChanged": false,
+  "goneReadback": "ps -p 3977 returned exit 1 and no process",
+  "qleverStop": {
+    "verifiedChain": [
+      74041,
+      3867,
+      35427,
+      35477
+    ],
+    "targetPid": 35477,
+    "signal": "SIGTERM",
+    "sendExitCode": 0,
+    "reason": "Incomplete earlier live attempt retired while bounded verification queues; no semantic outcome adopted",
+    "goneReadback": "pending"
+  }
+}

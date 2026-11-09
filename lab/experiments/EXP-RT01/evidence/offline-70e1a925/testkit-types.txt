@@ -1,0 +1,106 @@
+src/index.ts(28,8): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/index.ts(29,36): error TS2307: Cannot find module '@triplex-build/triplex/operational' or its corresponding type declarations.
+src/index.ts(30,29): error TS2307: Cannot find module '@triplex-build/triplex/derivation' or its corresponding type declarations.
+src/index.ts(31,33): error TS2307: Cannot find module '@triplex-build/triplex/config' or its corresponding type declarations.
+src/index.ts(40,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/index.ts(149,12): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(149,17): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/index.ts(160,21): error TS7006: Parameter 'fact' implicitly has an 'any' type.
+src/index.ts(163,21): error TS7006: Parameter 'fact' implicitly has an 'any' type.
+src/index.ts(168,39): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(168,44): error TS7006: Parameter 'index' implicitly has an 'any' type.
+src/index.ts(176,45): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(199,46): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(397,34): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/index.ts(614,45): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(644,34): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(707,34): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(746,43): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(751,45): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(844,37): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(871,36): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(903,36): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(941,15): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(1012,38): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(1040,44): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(1056,15): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(1100,37): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(1307,37): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(1616,32): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(1638,33): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(1668,49): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(1713,46): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(1714,48): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(1745,49): error TS7006: Parameter 'tr' implicitly has an 'any' type.
+src/index.ts(1816,49): error TS7006: Parameter 'change' implicitly has an 'any' type.
+src/index.ts(1817,48): error TS7006: Parameter 'change' implicitly has an 'any' type.
+src/index.ts(1883,34): error TS18046: 'result' is of type 'unknown'.
+src/index.ts(1886,15): error TS18046: 'result' is of type 'unknown'.
+src/index.ts(1886,43): error TS18046: 'result' is of type 'unknown'.
+src/index.ts(1955,14): error TS7006: Parameter 'change' implicitly has an 'any' type.
+src/index.ts(1961,14): error TS7006: Parameter 'change' implicitly has an 'any' type.
+src/index.ts(2053,44): error TS7006: Parameter 'violation' implicitly has an 'any' type.
+src/index.ts(2139,14): error TS7006: Parameter 'violation' implicitly has an 'any' type.
+src/index.ts(2176,34): error TS18046: 'result' is of type 'unknown'.
+src/index.ts(2179,15): error TS18046: 'result' is of type 'unknown'.
+src/index.ts(2179,43): error TS18046: 'result' is of type 'unknown'.
+src/index.ts(2369,29): error TS7031: Binding element 'entityType' implicitly has an 'any' type.
+src/index.ts(2369,41): error TS7031: Binding element 'subject' implicitly has an 'any' type.
+src/index.ts(2369,50): error TS7031: Binding element 'code' implicitly has an 'any' type.
+src/index.ts(2387,36): error TS7031: Binding element 'subject' implicitly has an 'any' type.
+src/index.ts(2441,28): error TS2488: Type 'never' must have a '[Symbol.iterator]()' method that returns an iterator.
+src/index.ts(2442,9): error TS2345: Argument of type 'unknown[]' is not assignable to parameter of type 'Iterable<Effect<any, any, any>> | Record<string, Effect<any, any, any>>'.
+  Type 'unknown[]' is not assignable to type 'Record<string, Effect<any, any, any>>'.
+    Index signature for type 'string' is missing in type 'unknown[]'.
+src/index.ts(2442,24): error TS2345: Argument of type '({ position: nextPosition }: { position: any; }) => any' is not assignable to parameter of type '((value: never, index: number, array: never[]) => any) & ((value: unknown, index: number, array: unknown[]) => any)'.
+  Type '({ position: nextPosition }: { position: any; }) => any' is not assignable to type '(value: unknown, index: number, array: unknown[]) => any'.
+    Types of parameters '__0' and 'value' are incompatible.
+      Type 'unknown' is not assignable to type '{ position: any; }'.
+src/index.ts(2457,23): error TS7006: Parameter 'result' implicitly has an 'any' type.
+src/index.ts(2459,14): error TS7006: Parameter 'result' implicitly has an 'any' type.
+src/index.ts(2477,42): error TS18046: 'candidate' is of type 'unknown'.
+src/index.ts(2624,42): error TS7006: Parameter 'triple' implicitly has an 'any' type.
+src/index.ts(2773,37): error TS7006: Parameter 'r' implicitly has an 'any' type.
+src/index.ts(2821,28): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/index.ts(2838,29): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/offline-route-fixtures.ts(1,32): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/record-time-conformance.ts(2,69): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/record-time-conformance.ts(3,30): error TS2307: Cannot find module '@triplex-build/triplex/internal' or its corresponding type declarations.
+src/record-time-conformance.ts(86,34): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/record-time-conformance.ts(92,20): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/record-time-conformance.ts(105,11): error TS2375: Type 'Effect<void, unknown, unknown>' is not assignable to type 'Effect<void, unknown, never>' with 'exactOptionalPropertyTypes: true'. Consider adding 'undefined' to the types of the target's properties.
+  Type 'unknown' is not assignable to type 'never'.
+src/record-time-conformance.ts(107,38): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/record-time-conformance.ts(123,43): error TS7006: Parameter 'row' implicitly has an 'any' type.
+src/record-time-conformance.ts(129,61): error TS7006: Parameter 'change' implicitly has an 'any' type.
+src/record-time-conformance.ts(221,35): error TS7006: Parameter 'f' implicitly has an 'any' type.
+src/record-time-determinism.ts(2,43): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/record-time-schedules.ts(10,8): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/record-time-schedules.ts(20,8): error TS2307: Cannot find module '@triplex-build/triplex/internal' or its corresponding type declarations.
+src/record-time-schedules.ts(39,23): error TS7006: Parameter 'effect' implicitly has an 'any' type.
+src/record-time-schedules.ts(39,31): error TS7006: Parameter 'options' implicitly has an 'any' type.
+src/record-time-schedules.ts(78,7): error TS18046: 't' is of type 'unknown'.
+src/record-time-schedules.ts(106,35): error TS18046: 'b' is of type 'unknown'.
+src/record-time-schedules.ts(113,22): error TS18046: 'a' is of type 'unknown'.
+src/record-time-schedules.ts(113,34): error TS18046: 'b' is of type 'unknown'.
+src/record-time-schedules.ts(122,53): error TS18046: 'b' is of type 'unknown'.
+src/record-time-schedules.ts(123,32): error TS7006: Parameter 'entity' implicitly has an 'any' type.
+src/record-time-schedules.ts(124,26): error TS7006: Parameter 'triple' implicitly has an 'any' type.
+src/record-time-schedules.ts(153,23): error TS18046: 'r' is of type 'unknown'.
+src/record-time-schedules.ts(153,61): error TS18046: 'r' is of type 'unknown'.
+src/record-time-schedules.ts(153,81): error TS18046: 'r' is of type 'unknown'.
+src/record-time-schedules.ts(154,40): error TS18046: 'r' is of type 'unknown'.
+src/record-time-schedules.ts(157,74): error TS18046: 'r' is of type 'unknown'.
+src/record-time-schedules.ts(164,78): error TS18046: 'r' is of type 'unknown'.
+src/record-time-schedules.ts(167,17): error TS18046: 'r' is of type 'unknown'.
+src/record-time-schedules.ts(170,22): error TS18046: 'next' is of type 'unknown'.
+src/record-time-schedules.ts(171,9): error TS18046: 'rows' is of type 'unknown'.
+src/record-time-schedules.ts(183,24): error TS18046: 'r' is of type 'unknown'.
+src/record-time-schedules.ts(184,11): error TS18046: 'r' is of type 'unknown'.
+src/route-coverage.ts(2,24): error TS2307: Cannot find module '@triplex-build/triplex/content' or its corresponding type declarations.
+src/route-equivalence.ts(1,47): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+src/route-equivalence.ts(4,24): error TS2307: Cannot find module '@triplex-build/triplex/content' or its corresponding type declarations.
+src/route-equivalence.ts(5,32): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+src/route-equivalence.ts(728,29): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/route-history-grammar.ts(16,32): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.

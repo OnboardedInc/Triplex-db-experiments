@@ -1,0 +1,234 @@
+--- /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/.baseline-declarations/packages/core/dist/EntityPage.d.ts	2026-11-08 21:41:13
++++ /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/EntityPage.d.ts	2026-11-08 21:34:41
+@@ -26,6 +26,7 @@
+   readonly request: EntityPageRequest;
+   readonly now: number;
+   readonly recordedPosition: number;
++  readonly headRecordedAt?: number;
+   readonly scope: string;
+ }) => PreparedEntityPage;
+ declare const encodeEntityPageCursor: (prepared: PreparedEntityPage, after: string) => EntityPageCursor;
+--- /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/.baseline-declarations/packages/core/dist/Pagination.d.ts	2026-11-08 21:41:13
++++ /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/Pagination.d.ts	2026-11-08 21:34:41
+@@ -40,6 +40,7 @@
+   readonly basis?: TemporalBasis;
+   readonly now: number;
+   readonly recordedPosition: number;
++  readonly headRecordedAt?: number;
+   readonly scope: string;
+ }) => PreparedPagination;
+ declare const finishPagination: (prepared: PreparedPagination, result: WrappedQueryResult) => WrappedQueryResult;
+--- /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/.baseline-declarations/packages/core/dist/errors/index.d.ts	2026-11-08 21:41:13
++++ /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/errors/index.d.ts	2026-11-08 21:34:41
+@@ -1,6 +1,7 @@
+ import { EntityId, TransactionId, TripleId } from "../Branded.js";
+ import { ViolationAt } from "../Constraint.js";
+ import { DatabaseAlreadyExists, DatabaseNotFound, InternalError } from "../Error.js";
++import { Data } from "effect";
+ import * as _$effect_Types0 from "effect/Types";
+ import * as _$effect_Cause0 from "effect/Cause";
+ 
+@@ -94,13 +95,12 @@
+   readonly violations: readonly ViolationAt[];
+   readonly message: string;
+ }> {}
+-declare const ReadError_base: new <A extends Record<string, any> = {}>(args: _$effect_Types0.VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P] }>) => _$effect_Cause0.YieldableError & {
+-  readonly _tag: "ReadError";
+-} & Readonly<A>;
+-declare class ReadError extends ReadError_base<{
++declare class ReadError extends Data.Error<{
+   readonly message: string;
+   readonly cause?: unknown;
+-}> {}
++}> {
++  readonly _tag: "ReadError" | "BasisNotAvailable";
++}
+ declare const EntityNotFoundError_base: new <A extends Record<string, any> = {}>(args: _$effect_Types0.VoidIfEmpty<{ readonly [P in keyof A as P extends "_tag" ? never : P]: A[P] }>) => _$effect_Cause0.YieldableError & {
+   readonly _tag: "EntityNotFoundError";
+ } & Readonly<A>;
+@@ -219,6 +219,24 @@
+ type DatalogQueryError = DatalogError | UnboundVariableError | InvalidPredicateError | DatalogValidationError;
+ type DatalogErrorUnion = DatalogQueryError | PaginationCursorError;
+ type TripleStoreError = WriteErrorUnion | ReadErrorUnion | QueryErrorUnion | ParseErrorUnion | DatalogErrorUnion | ValidationError | MigrationError;
++/** A named cut has not become available on this read surface. */
++declare class BasisNotAvailable extends ReadError {
++  readonly _tag: "BasisNotAvailable";
++  readonly axis: "recordedPosition" | "recordedAt";
++  readonly required: number;
++  readonly observed: number;
++  readonly waitedMs: number;
++  readonly surface: string;
++  readonly reason = "record-time-not-reached";
++  constructor(input: {
++    axis: "recordedPosition" | "recordedAt";
++    required: number;
++    observed: number;
++    waitedMs: number;
++    surface: string;
++    message: string;
++  });
++}
+ //#endregion
+-export { CommandAlreadyCommittedError, ConstraintViolationError, DatabaseAlreadyExists, DatabaseNotFound, DatalogError, DatalogErrorUnion, DatalogQueryError, DatalogValidationError, DuplicateTripleError, EntityNotFoundError, InternalError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, MigrationError, PaginationCursorError, ParseError, ParseErrorUnion, QueryError, QueryErrorUnion, ReadError, ReadErrorUnion, TransactionConflictError, TransactionError, TransactionOutcomeUnknown, TripleNotFoundError, TripleStoreError, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, WriteError, WriteErrorUnion };
++export { BasisNotAvailable, CommandAlreadyCommittedError, ConstraintViolationError, DatabaseAlreadyExists, DatabaseNotFound, DatalogError, DatalogErrorUnion, DatalogQueryError, DatalogValidationError, DuplicateTripleError, EntityNotFoundError, InternalError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, MigrationError, PaginationCursorError, ParseError, ParseErrorUnion, QueryError, QueryErrorUnion, ReadError, ReadErrorUnion, TransactionConflictError, TransactionError, TransactionOutcomeUnknown, TripleNotFoundError, TripleStoreError, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, WriteError, WriteErrorUnion };
+ //# sourceMappingURL=index.d.ts.map
+\ No newline at end of file
+--- /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/.baseline-declarations/packages/core/dist/index.d.ts	2026-11-08 21:41:13
++++ /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/index.d.ts	2026-11-08 21:34:41
+@@ -5,7 +5,7 @@
+ import { ReadBasis, ResolvedTemporalBasis, TemporalBasis, resolveTemporalBasis, validateTemporalInstant } from "./Temporal.js";
+ import { EntityPageCursor, EntityPageRequest, EntityPageSnapshot } from "./EntityPage.js";
+ import { DatabaseAlreadyExists, DatabaseNotFound, InternalError } from "./Error.js";
+-import { CommandAlreadyCommittedError, ConstraintViolationError, DatalogError, DatalogErrorUnion, DatalogQueryError, DatalogValidationError, DuplicateTripleError, EntityNotFoundError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, MigrationError, PaginationCursorError, ParseError, ParseErrorUnion, QueryError, QueryErrorUnion, ReadError, ReadErrorUnion, TransactionConflictError, TransactionError, TransactionOutcomeUnknown, TripleNotFoundError, TripleStoreError, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, WriteError, WriteErrorUnion } from "./errors/index.js";
++import { BasisNotAvailable, CommandAlreadyCommittedError, ConstraintViolationError, DatalogError, DatalogErrorUnion, DatalogQueryError, DatalogValidationError, DuplicateTripleError, EntityNotFoundError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, MigrationError, PaginationCursorError, ParseError, ParseErrorUnion, QueryError, QueryErrorUnion, ReadError, ReadErrorUnion, TransactionConflictError, TransactionError, TransactionOutcomeUnknown, TripleNotFoundError, TripleStoreError, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, WriteError, WriteErrorUnion } from "./errors/index.js";
+ import { AggregateOp, AggregateSpec, Clause, Constant, DatalogAttribute, DatalogQuery, HavingClause, NotClause, OrAlternative, OrClause, OrderBySpec, PatternClause, PredicateClause, PredicateOp, Rule, RuleApplication, Term, Variable, WrappedQuery, WrapperFilter, WrapperFilterOp, isAttribute, isNotClause, isOrClause, isPatternClause, isPredicateClause, isRuleApplication, isTypedConstant, isVariable as isVariable$1, normalizeOrAlternatives } from "./datalog/schema.js";
+ import { Context, QueryResult } from "./datalog/types.js";
+ import { DEFAULT_QUERY_PAGE_SIZE, MAX_QUERY_PAGE_SIZE, PaginationCursor } from "./Pagination.js";
+@@ -19,4 +19,5 @@
+ import { SnapshotError, SnapshotService, SnapshotServiceShape } from "./snapshots/SnapshotService.js";
+ import { ClearResult, Database, DatabaseManager, DatabaseManagerService } from "./store/DatabaseManager.js";
+ import { KvTriples } from "./kv/layers/KvTriplesLive.js";
+-export { type AffectedSubscriptions, AggregateOp, AggregateSpec, AssertTripleRequest, Attribute, Binding, BlobValue, BooleanValue, Clause, type ClearResult, CommandAlreadyCommittedError, Constant, Constraint_d_exports as Constraint, ConstraintViolationError, type Context, DEFAULT_QUERY_PAGE_SIZE, type Database, DatabaseAlreadyExists, DatabaseId, DatabaseManager, type DatabaseManagerService, DatabaseNotFound, DatalogAttribute, DatalogError, DatalogErrorUnion, DatalogQuery, DatalogQueryError, type DatalogQueryValidationError, DatalogValidationError, DateTimeValue, type DependencyState, DuplicateTripleError, type EntityDiff, EntityId, EntityNotFoundError, type EntityPage, type EntityPageCursor, type EntityPageRequest, type EntityPageSnapshot, type EntitySnapshot, EntityStatePrecondition, type EntityTransactionPage, type EntityTransactionPageRequest, type ExplainResult, HavingClause, Int64Decimal, IntegerValue, InternalError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, JsonValue, KvTriples, MAX_INTEGER, MAX_QUERY_PAGE_SIZE, MIN_INTEGER, MigrationError, NotClause, NumberValue, OrAlternative, OrClause, OrderBySpec, type PagedQueryOptions, type PagedQueryResponse, type PaginationCursor, PaginationCursorError, ParseError, ParseErrorUnion, Pattern, PatternClause, PredicateClause, PredicateOp, QueryAsOfRequest, QueryError, QueryErrorUnion, type QueryOptions, QueryRequest, type QueryResponse, type QueryResult, ReadBasis, ReadError, ReadErrorUnion, RefValue, ResolvedTemporalBasis, RetractResponse, Rule, RuleApplication, type SnapshotAttributeMap, SnapshotError, SnapshotService, type SnapshotServiceShape, type SnapshotValue, StringValue, type Subscription, SubscriptionManager, SubscriptionManagerLive, type SubscriptionManagerService, type SyncAttachedQuery, type SyncConnection, type SyncHubMessageHooks, TemporalBasis, Term, TopicFilteredSyncHub, TransactAssertOp, TransactOp, TransactRequest, TransactResponse, TransactRetractOp, TransactRetractPatternOp, type TransactionChange, TransactionConflictError, TransactionError, TransactionId, type TransactionMeta, TransactionOutcomeUnknown, type TransactionPage, type TransactionPageRequest, TransactionPrecondition, type TransactionRecord, type TransactionResult, Triple, TripleId, TripleInput, TripleLivePrecondition, TripleNotFoundError, TripleResponse, TripleRow, TripleStoreError, TripleValue, Triples, type TriplesService, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, ValueType, Variable, WrappedQuery, WrapperFilter, WrapperFilterOp, WriteError, WriteErrorUnion, blob, boolean, datetime, decode, integer, isAttribute, isNotClause, isOrClause, isPatternClause, isVariable as isPatternVariable, isPredicateClause, isRuleApplication, isTypedConstant, isVariable$1 as isVariable, json, makeSubscriptionManager, normalizeOrAlternatives, number, queryToPattern, ref, resolveTemporalBasis, string, unsafe, v, validateTemporalInstant, variable };
+\ No newline at end of file
++import { CommitStamp, RecordCut, STAMP_PLACEHOLDER, bindCommit, gateRecordedAt, instantOf, nextStamp, stampCut, stampOf } from "./storage/RecordStamp.js";
++export { type AffectedSubscriptions, AggregateOp, AggregateSpec, AssertTripleRequest, Attribute, BasisNotAvailable, Binding, BlobValue, BooleanValue, Clause, type ClearResult, CommandAlreadyCommittedError, CommitStamp, Constant, Constraint_d_exports as Constraint, ConstraintViolationError, type Context, DEFAULT_QUERY_PAGE_SIZE, type Database, DatabaseAlreadyExists, DatabaseId, DatabaseManager, type DatabaseManagerService, DatabaseNotFound, DatalogAttribute, DatalogError, DatalogErrorUnion, DatalogQuery, DatalogQueryError, type DatalogQueryValidationError, DatalogValidationError, DateTimeValue, type DependencyState, DuplicateTripleError, type EntityDiff, EntityId, EntityNotFoundError, type EntityPage, type EntityPageCursor, type EntityPageRequest, type EntityPageSnapshot, type EntitySnapshot, EntityStatePrecondition, type EntityTransactionPage, type EntityTransactionPageRequest, type ExplainResult, HavingClause, Int64Decimal, IntegerValue, InternalError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, JsonValue, KvTriples, MAX_INTEGER, MAX_QUERY_PAGE_SIZE, MIN_INTEGER, MigrationError, NotClause, NumberValue, OrAlternative, OrClause, OrderBySpec, type PagedQueryOptions, type PagedQueryResponse, type PaginationCursor, PaginationCursorError, ParseError, ParseErrorUnion, Pattern, PatternClause, PredicateClause, PredicateOp, QueryAsOfRequest, QueryError, QueryErrorUnion, type QueryOptions, QueryRequest, type QueryResponse, type QueryResult, ReadBasis, ReadError, ReadErrorUnion, RecordCut, RefValue, ResolvedTemporalBasis, RetractResponse, Rule, RuleApplication, STAMP_PLACEHOLDER, type SnapshotAttributeMap, SnapshotError, SnapshotService, type SnapshotServiceShape, type SnapshotValue, StringValue, type Subscription, SubscriptionManager, SubscriptionManagerLive, type SubscriptionManagerService, type SyncAttachedQuery, type SyncConnection, type SyncHubMessageHooks, TemporalBasis, Term, TopicFilteredSyncHub, TransactAssertOp, TransactOp, TransactRequest, TransactResponse, TransactRetractOp, TransactRetractPatternOp, type TransactionChange, TransactionConflictError, TransactionError, TransactionId, type TransactionMeta, TransactionOutcomeUnknown, type TransactionPage, type TransactionPageRequest, TransactionPrecondition, type TransactionRecord, type TransactionResult, Triple, TripleId, TripleInput, TripleLivePrecondition, TripleNotFoundError, TripleResponse, TripleRow, TripleStoreError, TripleValue, Triples, type TriplesService, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, ValueType, Variable, WrappedQuery, WrapperFilter, WrapperFilterOp, WriteError, WriteErrorUnion, bindCommit, blob, boolean, datetime, decode, gateRecordedAt, instantOf, integer, isAttribute, isNotClause, isOrClause, isPatternClause, isVariable as isPatternVariable, isPredicateClause, isRuleApplication, isTypedConstant, isVariable$1 as isVariable, json, makeSubscriptionManager, nextStamp, normalizeOrAlternatives, number, queryToPattern, ref, resolveTemporalBasis, stampCut, stampOf, string, unsafe, v, validateTemporalInstant, variable };
+\ No newline at end of file
+--- /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/.baseline-declarations/packages/core/dist/internal.d.ts	2026-11-08 21:41:13
++++ /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/internal.d.ts	2026-11-08 21:34:41
+@@ -5,7 +5,7 @@
+ import { ReadBasis, ResolvedTemporalBasis, TemporalBasis, resolveTemporalBasis, validateTemporalInstant } from "./Temporal.js";
+ import { EntityPageCursor, EntityPageRequest, EntityPageSnapshot } from "./EntityPage.js";
+ import { DatabaseAlreadyExists, DatabaseNotFound, InternalError } from "./Error.js";
+-import { CommandAlreadyCommittedError, ConstraintViolationError, DatalogError, DatalogErrorUnion, DatalogQueryError, DatalogValidationError, DuplicateTripleError, EntityNotFoundError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, MigrationError, PaginationCursorError, ParseError, ParseErrorUnion, QueryError, QueryErrorUnion, ReadError, ReadErrorUnion, TransactionConflictError, TransactionError, TransactionOutcomeUnknown, TripleNotFoundError, TripleStoreError, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, WriteError, WriteErrorUnion } from "./errors/index.js";
++import { BasisNotAvailable, CommandAlreadyCommittedError, ConstraintViolationError, DatalogError, DatalogErrorUnion, DatalogQueryError, DatalogValidationError, DuplicateTripleError, EntityNotFoundError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, MigrationError, PaginationCursorError, ParseError, ParseErrorUnion, QueryError, QueryErrorUnion, ReadError, ReadErrorUnion, TransactionConflictError, TransactionError, TransactionOutcomeUnknown, TripleNotFoundError, TripleStoreError, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, WriteError, WriteErrorUnion } from "./errors/index.js";
+ import { AggregateOp, AggregateSpec, Clause, Constant, DatalogAttribute, DatalogQuery, HavingClause, NotClause, OrAlternative, OrClause, OrderBySpec, PatternClause, PredicateClause, PredicateOp, Rule, RuleApplication, Term, Variable, WrappedQuery, WrapperFilter, WrapperFilterOp, isAttribute, isNotClause, isOrClause, isPatternClause, isPredicateClause, isRuleApplication, isTypedConstant, isVariable as isVariable$1, normalizeOrAlternatives } from "./datalog/schema.js";
+ import { Context, QueryResult as QueryResult$1 } from "./datalog/types.js";
+ import { QueryContext, QueryDebugInfo, QueryExecutor, QueryExecutorService, QueryMetrics, QueryPlan, WrappedQueryResult as WrappedQueryResult$1 } from "./storage/QueryExecutor.js";
+@@ -28,6 +28,7 @@
+ import { DeterministicIdGeneratorLive, DeterministicRuntimeClockLive, DeterministicRuntimeOptions, DeterministicRuntimeServicesLive, IdGenerator, IdGeneratorLive, IdGeneratorService, RuntimeClock, RuntimeClockLive, RuntimeClockService, RuntimeServicesLive } from "./store/RuntimeServices.js";
+ import { DeterministicTripleStoreRuntimeLive, DeterministicTripleStoreRuntimeOptions, TripleStoreRuntime, TripleStoreRuntimeFromServicesLive, TripleStoreRuntimeLayer, TripleStoreRuntimeLive, TripleStoreRuntimeService, getTripleStoreRuntime, makeTripleStoreRuntimeLayer } from "./store/TripleStoreRuntime.js";
+ import { KvTriples, KvTriplesLive } from "./kv/layers/KvTriplesLive.js";
++import { CommitStamp, RecordCut, STAMP_PLACEHOLDER, bindCommit, gateRecordedAt, instantOf, nextStamp, stampCut, stampOf } from "./storage/RecordStamp.js";
+ import { QueryPattern, TransactionInfo } from "./storage/types.js";
+ import { SqlStorageAdapterService, StorageAdapter, StorageAdapterService } from "./storage/StorageAdapter.js";
+ import { SystemPrefixes, TxAttributes, generateId, generateTransactionId } from "./utils/id.js";
+@@ -49,4 +50,4 @@
+ import { bindDatom, constantToTripleValue, executePattern, patternToScanPattern, tripleValueToConstant } from "./kv/datalog/pattern.js";
+ import { evaluatePredicate, filterByPredicate, resolveTerm } from "./kv/datalog/predicate.js";
+ import { QueryResult, WrappedQueryResult, executeQuery, executeWrappedQuery } from "./kv/datalog/executor.js";
+-export { AEVT_PREFIX, AVET_PREFIX, AffectedSubscriptions, AggregateOp, AggregateSpec, AssertTripleRequest, Attribute, Binding, BlobValue, BooleanValue, CapabilityError, ChangeEmitter, type ChangeEmitterService, type ChangeEvent, Clause, ClearResult, CommandAlreadyCommittedError, type CompiledQuery, type CompiledWrappedQuery, Constant, Constraint_d_exports as Constraint, ConstraintViolationError, Context, CurrentDialect, DEFAULT_QUERY_PAGE_SIZE, Database, type DatabaseAccessEntry, DatabaseAlreadyExists, DatabaseId, DatabaseManager, DatabaseManagerService, DatabaseNotFound, DatabaseRegistry, type DatabaseRegistryService, DatalogAttribute, DatalogError, DatalogErrorUnion, DatalogQuery, DatalogQueryError, type DatalogQueryValidationError, DatalogValidationError, DateTimeValue, Datom, DependencyState, DeterministicIdGeneratorLive, DeterministicRuntimeClockLive, type DeterministicRuntimeOptions, DeterministicRuntimeServicesLive, DeterministicTripleStoreRuntimeLive, type DeterministicTripleStoreRuntimeOptions, DuplicateTripleError, EAVT_PREFIX, EMPTY_ENTITY_HASH, EntityDiff, EntityId, EntityNotFoundError, EntityPage, EntityPageCursor, EntityPageRequest, EntityPageSnapshot, EntitySnapshot, EntityStatePrecondition, EntityTransactionPage, EntityTransactionPageRequest, ExplainResult, HavingClause, INDEX_PREFIX, IdGenerator, IdGeneratorLive, type IdGeneratorService, InMemoryKvBackendLive, IndexChoice, IndexName, Int64Decimal, IntegerValue, InternalError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, JsonValue, KvBackend, type KvBackendService, type KvEntry, type QueryResult as KvQueryResult, type KvTransaction, KvTripleStore, KvTriples, KvTriplesLive, type WrappedQueryResult as KvWrappedQueryResult, MAX_INTEGER, MAX_QUERY_PAGE_SIZE, META_PREFIX, MIN_INTEGER, MigrationError, NoopChangeEmitter, NoopChangeEmitterLive, NotClause, NumberValue, OrAlternative, OrClause, OrderBySpec, PagedQueryOptions, PagedQueryResponse, PaginationCursor, PaginationCursorError, type PaginationValue, type ParamCollector, ParseError, ParseErrorUnion, Pattern, PatternClause, PatternShape, PredicateClause, PredicateOp, type PreparedPagination, QueryAsOfRequest, type QueryContext, type QueryDebugInfo, QueryError, QueryErrorUnion, QueryExecutor, type QueryMetrics as QueryExecutorMetrics, type QueryExecutorService, type QueryMetrics$1 as QueryMetrics, QueryOptions, type QueryPattern, type QueryPlan, QueryRequest, QueryResponse, QueryResult$1 as QueryResult, type RangeOptions, ReadBasis, ReadError, ReadErrorUnion, RefValue, type Relation, ResolvedTemporalBasis, RetractResponse, Rule, RuleApplication, RuntimeClock, RuntimeClockLive, type RuntimeClockService, RuntimeServicesLive, ScanPattern, SnapshotAttributeMap, SnapshotError, SnapshotService, SnapshotServiceLive, SnapshotServiceShape, SnapshotValue, SnapshotWriter, SnapshotWriterLive, type SnapshotWriterShape, type SqlDialect, type SqlStorageAdapterService, SqliteDialect, StorageAdapter, type StorageAdapterService, type StoreCapability, StringValue, Subscription, SubscriptionManager, SubscriptionManagerLive, SubscriptionManagerService, SyncAttachedQuery, SyncConnection, SyncHubMessageHooks, SystemPrefixes, TAG_BLOB, TAG_BOOLEAN, TAG_DATETIME, TAG_JSON, TAG_MAX, TAG_NULL, TAG_NUMBER, TAG_REF, TAG_STRING, TemporalBasis, Term, TopicFilteredSyncHub, TransactAssertOp, TransactOp, TransactRequest, TransactResponse, TransactRetractOp, TransactRetractPatternOp, TransactionChange, TransactionConflictError, TransactionError, TransactionId, type TransactionInfo, TransactionMeta, TransactionOutcomeUnknown, TransactionPage, TransactionPageRequest, TransactionPrecondition, TransactionRecord, TransactionResult, Triple, type TripleChange, TripleId, TripleInput, TripleLivePrecondition, TripleNotFoundError, TripleResponse, TripleRow, TripleStoreError, TripleStoreRuntime, TripleStoreRuntimeFromServicesLive, TripleStoreRuntimeLayer, TripleStoreRuntimeLive, type TripleStoreRuntimeService, TripleValue, Triples, TriplesLive, TriplesService, TuplePart, TxAttributes, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, VAET_PREFIX, ValidationError, ValueType, Variable, WrappedQuery, type WrappedQueryResult$1 as WrappedQueryResult, WrapperFilter, WrapperFilterOp, WriteError, WriteErrorUnion, type WriteEventCallback, aevtKey, assertDatalogQuery, assertWrappedQuery, avetKey, bindDatom, blob, boolean, canonicalize, compare, compile, compileToSql, compileWithRules, compileWithRulesToSql, compileWrapped, composeStore, concat, constantToTripleValue, createKvTripleStore, createParamCollector, datetime, decode, decodeTuple, describeCapabilities, diffAttributes, eavtKey, emptyContext, encodeTuple, executeQuery as executeKvQuery, executeWrappedQuery as executeKvWrappedQuery, executePattern, filterByPredicate, finishPagination, fromHex, generateId, generateTransactionId, getTripleStoreRuntime, hashCanonical, increment, integer, isAttribute, isNotClause, isOrClause, isPatternClause, isVariable as isPatternVariable, isPredicateClause, isRuleApplication, isTypedConstant, isVariable$1 as isVariable, json, evaluatePredicate as kvEvaluatePredicate, resolveTerm as kvResolveTerm, makeChangeEmissionCapability, makeEntitySnapshotsCapability, makeSubscriptionManager, makeTestKvBackend, makeTripleStoreRuntimeLayer, makeWriteInterceptors, metaKey, normalizeOrAlternatives, normalizePaginationOrder, number, patternToScan, patternToScanPattern, prefixRange, preparePagination, queryToPattern, ref, resolveTemporalBasis, selectIndex, startsWith, string, tBlob, tBoolean, tDatetime, tJson, tMax, tNull, tNumber, tRef, tString, toHex, tripleValueToConstant, tripleValueToSnapshotValue, triplesToAttributeMap, unsafe, v, vaetKey, validateDatalogQuery, validateDependencies, validateTemporalInstant, validateWrappedQuery, valueToTuplePart, variable };
+\ No newline at end of file
++export { AEVT_PREFIX, AVET_PREFIX, AffectedSubscriptions, AggregateOp, AggregateSpec, AssertTripleRequest, Attribute, BasisNotAvailable, Binding, BlobValue, BooleanValue, CapabilityError, ChangeEmitter, type ChangeEmitterService, type ChangeEvent, Clause, ClearResult, CommandAlreadyCommittedError, CommitStamp, type CompiledQuery, type CompiledWrappedQuery, Constant, Constraint_d_exports as Constraint, ConstraintViolationError, Context, CurrentDialect, DEFAULT_QUERY_PAGE_SIZE, Database, type DatabaseAccessEntry, DatabaseAlreadyExists, DatabaseId, DatabaseManager, DatabaseManagerService, DatabaseNotFound, DatabaseRegistry, type DatabaseRegistryService, DatalogAttribute, DatalogError, DatalogErrorUnion, DatalogQuery, DatalogQueryError, type DatalogQueryValidationError, DatalogValidationError, DateTimeValue, Datom, DependencyState, DeterministicIdGeneratorLive, DeterministicRuntimeClockLive, type DeterministicRuntimeOptions, DeterministicRuntimeServicesLive, DeterministicTripleStoreRuntimeLive, type DeterministicTripleStoreRuntimeOptions, DuplicateTripleError, EAVT_PREFIX, EMPTY_ENTITY_HASH, EntityDiff, EntityId, EntityNotFoundError, EntityPage, EntityPageCursor, EntityPageRequest, EntityPageSnapshot, EntitySnapshot, EntityStatePrecondition, EntityTransactionPage, EntityTransactionPageRequest, ExplainResult, HavingClause, INDEX_PREFIX, IdGenerator, IdGeneratorLive, type IdGeneratorService, InMemoryKvBackendLive, IndexChoice, IndexName, Int64Decimal, IntegerValue, InternalError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, JsonValue, KvBackend, type KvBackendService, type KvEntry, type QueryResult as KvQueryResult, type KvTransaction, KvTripleStore, KvTriples, KvTriplesLive, type WrappedQueryResult as KvWrappedQueryResult, MAX_INTEGER, MAX_QUERY_PAGE_SIZE, META_PREFIX, MIN_INTEGER, MigrationError, NoopChangeEmitter, NoopChangeEmitterLive, NotClause, NumberValue, OrAlternative, OrClause, OrderBySpec, PagedQueryOptions, PagedQueryResponse, PaginationCursor, PaginationCursorError, type PaginationValue, type ParamCollector, ParseError, ParseErrorUnion, Pattern, PatternClause, PatternShape, PredicateClause, PredicateOp, type PreparedPagination, QueryAsOfRequest, type QueryContext, type QueryDebugInfo, QueryError, QueryErrorUnion, QueryExecutor, type QueryMetrics as QueryExecutorMetrics, type QueryExecutorService, type QueryMetrics$1 as QueryMetrics, QueryOptions, type QueryPattern, type QueryPlan, QueryRequest, QueryResponse, QueryResult$1 as QueryResult, type RangeOptions, ReadBasis, ReadError, ReadErrorUnion, RecordCut, RefValue, type Relation, ResolvedTemporalBasis, RetractResponse, Rule, RuleApplication, RuntimeClock, RuntimeClockLive, type RuntimeClockService, RuntimeServicesLive, STAMP_PLACEHOLDER, ScanPattern, SnapshotAttributeMap, SnapshotError, SnapshotService, SnapshotServiceLive, SnapshotServiceShape, SnapshotValue, SnapshotWriter, SnapshotWriterLive, type SnapshotWriterShape, type SqlDialect, type SqlStorageAdapterService, SqliteDialect, StorageAdapter, type StorageAdapterService, type StoreCapability, StringValue, Subscription, SubscriptionManager, SubscriptionManagerLive, SubscriptionManagerService, SyncAttachedQuery, SyncConnection, SyncHubMessageHooks, SystemPrefixes, TAG_BLOB, TAG_BOOLEAN, TAG_DATETIME, TAG_JSON, TAG_MAX, TAG_NULL, TAG_NUMBER, TAG_REF, TAG_STRING, TemporalBasis, Term, TopicFilteredSyncHub, TransactAssertOp, TransactOp, TransactRequest, TransactResponse, TransactRetractOp, TransactRetractPatternOp, TransactionChange, TransactionConflictError, TransactionError, TransactionId, type TransactionInfo, TransactionMeta, TransactionOutcomeUnknown, TransactionPage, TransactionPageRequest, TransactionPrecondition, TransactionRecord, TransactionResult, Triple, type TripleChange, TripleId, TripleInput, TripleLivePrecondition, TripleNotFoundError, TripleResponse, TripleRow, TripleStoreError, TripleStoreRuntime, TripleStoreRuntimeFromServicesLive, TripleStoreRuntimeLayer, TripleStoreRuntimeLive, type TripleStoreRuntimeService, TripleValue, Triples, TriplesLive, TriplesService, TuplePart, TxAttributes, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, VAET_PREFIX, ValidationError, ValueType, Variable, WrappedQuery, type WrappedQueryResult$1 as WrappedQueryResult, WrapperFilter, WrapperFilterOp, WriteError, WriteErrorUnion, type WriteEventCallback, aevtKey, assertDatalogQuery, assertWrappedQuery, avetKey, bindCommit, bindDatom, blob, boolean, canonicalize, compare, compile, compileToSql, compileWithRules, compileWithRulesToSql, compileWrapped, composeStore, concat, constantToTripleValue, createKvTripleStore, createParamCollector, datetime, decode, decodeTuple, describeCapabilities, diffAttributes, eavtKey, emptyContext, encodeTuple, executeQuery as executeKvQuery, executeWrappedQuery as executeKvWrappedQuery, executePattern, filterByPredicate, finishPagination, fromHex, gateRecordedAt, generateId, generateTransactionId, getTripleStoreRuntime, hashCanonical, increment, instantOf, integer, isAttribute, isNotClause, isOrClause, isPatternClause, isVariable as isPatternVariable, isPredicateClause, isRuleApplication, isTypedConstant, isVariable$1 as isVariable, json, evaluatePredicate as kvEvaluatePredicate, resolveTerm as kvResolveTerm, makeChangeEmissionCapability, makeEntitySnapshotsCapability, makeSubscriptionManager, makeTestKvBackend, makeTripleStoreRuntimeLayer, makeWriteInterceptors, metaKey, nextStamp, normalizeOrAlternatives, normalizePaginationOrder, number, patternToScan, patternToScanPattern, prefixRange, preparePagination, queryToPattern, ref, resolveTemporalBasis, selectIndex, stampCut, stampOf, startsWith, string, tBlob, tBoolean, tDatetime, tJson, tMax, tNull, tNumber, tRef, tString, toHex, tripleValueToConstant, tripleValueToSnapshotValue, triplesToAttributeMap, unsafe, v, vaetKey, validateDatalogQuery, validateDependencies, validateTemporalInstant, validateWrappedQuery, valueToTuplePart, variable };
+\ No newline at end of file
+--- /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/.baseline-declarations/packages/core/dist/runtime/index.d.ts	2026-11-08 21:41:13
++++ /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/runtime/index.d.ts	2026-11-08 21:34:41
+@@ -1,7 +1,7 @@
+ import { TripleInput, TripleRow } from "../Triple.js";
+ import { ReadBasis } from "../Temporal.js";
+ import { DatabaseAlreadyExists, DatabaseNotFound, InternalError } from "../Error.js";
+-import { CommandAlreadyCommittedError, ConstraintViolationError, DatalogError, DatalogErrorUnion, DatalogQueryError, DatalogValidationError, DuplicateTripleError, EntityNotFoundError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, MigrationError, PaginationCursorError, ParseError, ParseErrorUnion, QueryError, QueryErrorUnion, ReadError, ReadErrorUnion, TransactionConflictError, TransactionError, TransactionOutcomeUnknown, TripleNotFoundError, TripleStoreError, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, WriteError, WriteErrorUnion } from "../errors/index.js";
++import { BasisNotAvailable, CommandAlreadyCommittedError, ConstraintViolationError, DatalogError, DatalogErrorUnion, DatalogQueryError, DatalogValidationError, DuplicateTripleError, EntityNotFoundError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, MigrationError, PaginationCursorError, ParseError, ParseErrorUnion, QueryError, QueryErrorUnion, ReadError, ReadErrorUnion, TransactionConflictError, TransactionError, TransactionOutcomeUnknown, TripleNotFoundError, TripleStoreError, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, WriteError, WriteErrorUnion } from "../errors/index.js";
+ import { QueryContext, QueryDebugInfo, QueryExecutor, QueryExecutorService, QueryMetrics, QueryPlan, WrappedQueryResult } from "../storage/QueryExecutor.js";
+ import { assertDatalogQuery, assertWrappedQuery } from "../datalog/validation.js";
+ import { ChangeEmitter, ChangeEmitterService, ChangeEvent, NoopChangeEmitter, NoopChangeEmitterLive, TripleChange } from "../store/ChangeEmitter.js";
+@@ -9,6 +9,7 @@
+ import { SnapshotError, SnapshotService, SnapshotServiceShape, SnapshotWriter, SnapshotWriterShape } from "../snapshots/SnapshotService.js";
+ import { KvBackend, KvBackendService, KvEntry, KvTransaction, RangeOptions } from "../kv/kv/KvBackend.js";
+ import { TripleStoreRuntime, TripleStoreRuntimeService } from "../store/TripleStoreRuntime.js";
++import { CommitStamp, RecordCut, STAMP_PLACEHOLDER, bindCommit, gateRecordedAt, instantOf, nextStamp, stampCut, stampOf } from "../storage/RecordStamp.js";
+ import { QueryPattern } from "../storage/types.js";
+ import { StorageAdapter, StorageAdapterService } from "../storage/StorageAdapter.js";
+ import { CapabilityError, StoreCapability } from "../store/StoreCapability.js";
+@@ -17,4 +18,4 @@
+ import { NativeQueryContract, NativeQueryStep, NativeQueryTrace, NativeReadBasis, NativeReadOptions, NativeReadResult, decodeNativeParameters, decodeNativeRows, hydrateNativeValue, nativeAttributeKey, nativeEvidenceValue, nativeQueryContractId, resolveNativeReadBasis } from "../native/NativeQuery.js";
+ import { Capabilities, CapabilitySet, changeEmission, entitySnapshots } from "./Capabilities.js";
+ import { Runtime, RuntimeDefinition, RuntimeOptions } from "./Runtime.js";
+-export { Capabilities, CapabilityError, type CapabilitySet, ChangeEmitter, type ChangeEmitterService, type ChangeEvent, CommandAlreadyCommittedError, ConstraintViolationError, DatabaseAlreadyExists, type DatabaseIdentity, DatabaseNotFound, DatabaseScope, DatalogError, DatalogErrorUnion, DatalogQueryError, DatalogValidationError, DuplicateTripleError, type EntityDiff, EntityNotFoundError, type EntitySnapshot, FRONTIER_DEFAULTS, type FrontierBudgets, type FrontierClosure, type FrontierClosureInput, type FrontierEdge, type FrontierRoundStats, InternalError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, KvBackend, type KvBackendService, type KvEntry, type KvTransaction, MigrationError, type NativeQueryContract, type NativeQueryStep, type NativeQueryTrace, type NativeReadBasis, type NativeReadOptions, type NativeReadResult, NoopChangeEmitter, NoopChangeEmitterLive, PaginationCursorError, ParseError, ParseErrorUnion, type QueryContext, type QueryDebugInfo, QueryError, QueryErrorUnion, QueryExecutor, type QueryExecutorService, type QueryMetrics, type QueryPattern, type QueryPlan, type RangeOptions, type ReadBasis, ReadError, ReadErrorUnion, RecursionBudgetExceeded, type RecursionBudgetKind, type RuleStep, type RuleTail, Runtime, type RuntimeDefinition, type RuntimeOptions, SnapshotError, SnapshotService, type SnapshotServiceShape, SnapshotWriter, type SnapshotWriterShape, StorageAdapter, type StorageAdapterService, type StoreCapability, TransactionConflictError, TransactionError, TransactionOutcomeUnknown, type TripleChange, type TripleInput, TripleNotFoundError, type TripleRow, TripleStoreError, TripleStoreRuntime, type TripleStoreRuntimeService, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, type WrappedQueryResult, WriteError, WriteErrorUnion, assertDatalogQuery, assertWrappedQuery, changeEmission, closurePairs, countSimplePaths, decodeNativeParameters, decodeNativeRows, entitySnapshots, frontierClosure, hydrateNativeValue, memoryEdges, nativeAttributeKey, nativeEvidenceValue, nativeQueryContractId, reachFrom, resolveFrontierBudgets, resolveNativeReadBasis, ruleClosure };
+\ No newline at end of file
++export { BasisNotAvailable, Capabilities, CapabilityError, type CapabilitySet, ChangeEmitter, type ChangeEmitterService, type ChangeEvent, CommandAlreadyCommittedError, CommitStamp, ConstraintViolationError, DatabaseAlreadyExists, type DatabaseIdentity, DatabaseNotFound, DatabaseScope, DatalogError, DatalogErrorUnion, DatalogQueryError, DatalogValidationError, DuplicateTripleError, type EntityDiff, EntityNotFoundError, type EntitySnapshot, FRONTIER_DEFAULTS, type FrontierBudgets, type FrontierClosure, type FrontierClosureInput, type FrontierEdge, type FrontierRoundStats, InternalError, InvalidPatternError, InvalidPredicateError, InvalidTripleError, KvBackend, type KvBackendService, type KvEntry, type KvTransaction, MigrationError, type NativeQueryContract, type NativeQueryStep, type NativeQueryTrace, type NativeReadBasis, type NativeReadOptions, type NativeReadResult, NoopChangeEmitter, NoopChangeEmitterLive, PaginationCursorError, ParseError, ParseErrorUnion, type QueryContext, type QueryDebugInfo, QueryError, QueryErrorUnion, QueryExecutor, type QueryExecutorService, type QueryMetrics, type QueryPattern, type QueryPlan, type RangeOptions, type ReadBasis, ReadError, ReadErrorUnion, RecordCut, RecursionBudgetExceeded, type RecursionBudgetKind, type RuleStep, type RuleTail, Runtime, type RuntimeDefinition, type RuntimeOptions, STAMP_PLACEHOLDER, SnapshotError, SnapshotService, type SnapshotServiceShape, SnapshotWriter, type SnapshotWriterShape, StorageAdapter, type StorageAdapterService, type StoreCapability, TransactionConflictError, TransactionError, TransactionOutcomeUnknown, type TripleChange, type TripleInput, TripleNotFoundError, type TripleRow, TripleStoreError, TripleStoreRuntime, type TripleStoreRuntimeService, UnboundVariableError, UndefinedVariableError, UnexpectedTokenError, UnsupportedValueTypeError, ValidationError, type WrappedQueryResult, WriteError, WriteErrorUnion, assertDatalogQuery, assertWrappedQuery, bindCommit, changeEmission, closurePairs, countSimplePaths, decodeNativeParameters, decodeNativeRows, entitySnapshots, frontierClosure, gateRecordedAt, hydrateNativeValue, instantOf, memoryEdges, nativeAttributeKey, nativeEvidenceValue, nativeQueryContractId, nextStamp, reachFrom, resolveFrontierBudgets, resolveNativeReadBasis, ruleClosure, stampCut, stampOf };
+\ No newline at end of file
+--- /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/.baseline-declarations/packages/core/dist/snapshots/SnapshotServiceLive.d.ts	2026-11-08 21:41:13
++++ /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/snapshots/SnapshotServiceLive.d.ts	2026-11-08 21:34:41
+@@ -4,7 +4,7 @@
+ import { Layer } from "effect";
+ 
+ //#region src/snapshots/SnapshotServiceLive.d.ts
+-declare const SnapshotWriterLive: Layer.Layer<SnapshotWriter, SnapshotError, Triples | StorageAdapter>;
++declare const SnapshotWriterLive: Layer.Layer<SnapshotWriter, SnapshotError, StorageAdapter | Triples>;
+ declare const SnapshotServiceLive: Layer.Layer<SnapshotService, SnapshotError, StorageAdapter>;
+ //#endregion
+ export { SnapshotServiceLive, SnapshotWriterLive };
+--- /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/.baseline-declarations/packages/core/dist/storage/StorageAdapter.d.ts	2026-11-08 21:41:13
++++ /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/storage/StorageAdapter.d.ts	2026-11-08 21:34:41
+@@ -4,6 +4,7 @@
+ import { ResolvedTemporalBasis } from "../Temporal.js";
+ import { MigrationError, ReadError, WriteError } from "../errors/index.js";
+ import { DependencyState } from "../store/Triples.js";
++import { CommitStamp, RecordCut } from "./RecordStamp.js";
+ import { QueryPattern } from "./types.js";
+ import { Context, Effect } from "effect";
+ 
+@@ -12,6 +13,9 @@
+  * StorageAdapterService - Backend-agnostic storage primitives
+  */
+ interface StorageAdapterService {
++  readonly recordTime?: "decided";
++  readonly commitStamp?: (stagedAt: number) => Effect.Effect<CommitStamp, WriteError>;
++  readonly currentCut?: () => Effect.Effect<RecordCut, ReadError>;
+   /** Omitted adapters retain the original seven-family contract. */
+   readonly supportedValueTypes?: readonly ValueType[];
+   /** Optional server-side equivalent of Constraint.newlyViolated. Undefined requests the portable fallback. */
+--- /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/.baseline-declarations/packages/core/dist/store/Triples.d.ts	2026-11-08 21:41:13
++++ /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/store/Triples.d.ts	2026-11-08 21:34:41
+@@ -17,7 +17,9 @@
+ interface TransactionResult {
+   readonly txId: TransactionId;
+   readonly position: number;
++  /** Decided epoch-millisecond record instant on decided adapters. */
+   readonly instant: number;
++  readonly stagedAt: number;
+   readonly triples: readonly Triple[];
+   readonly retracted: number;
+ }
+--- /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/.baseline-declarations/packages/core/dist/store/transactionMetadata.d.ts	2026-11-08 21:41:13
++++ /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/store/transactionMetadata.d.ts	2026-11-08 21:34:41
+@@ -4,8 +4,8 @@
+ import * as _$effect_Brand0 from "effect/Brand";
+ 
+ //#region src/store/transactionMetadata.d.ts
+-declare const transactionChangeFromTriple: (op: "assert" | "retract", triple: Triple, transactionId: TransactionId, transactionInstant: number) => TransactionChange;
+-declare const metadataInputs: (txId: TransactionId, position: number, instant: number, meta: TransactionMeta | undefined, changes: readonly TransactionChange[]) => readonly TripleInput[];
++declare const transactionChangeFromTriple: (op: "assert" | "retract", triple: Triple, transactionId: TransactionId, transactionInstant: number, journalV2?: boolean) => TransactionChange;
++declare const metadataInputs: (txId: TransactionId, position: number, stagedAt: number, meta: TransactionMeta | undefined, changes: readonly TransactionChange[]) => readonly TripleInput[];
+ declare const transactionRecordFromTriples: (txId: TransactionId, triples: readonly Triple[]) => TransactionRecord | null;
+ declare const transactionRecordsFromTriples: (triples: readonly Triple[]) => readonly TransactionRecord[];
+ declare const livePreconditionIds: (meta?: TransactionMeta) => ReadonlySet<string>;
+NEW storage/RecordStamp.d.ts
+//#region src/storage/RecordStamp.d.ts
+interface RecordCut {
+  readonly position: number;
+  readonly recordedAt: number;
+}
+interface CommitStamp {
+  readonly instant: number;
+  readonly decided: boolean;
+}
+declare const STAMP_PLACEHOLDER: number;
+declare const instantOf: (stamp: number) => number;
+declare const stampOf: (instant: number) => number;
+declare const stampCut: (instant: number) => number;
+declare const nextStamp: (previous: number, clock: number) => number;
+declare const gateRecordedAt: (input: {
+  readonly recordedAt: number;
+  readonly readCut: () => Promise<RecordCut>;
+  readonly awaitCut: (stamp: number, deadlineMs: number) => Promise<RecordCut>;
+  readonly deadlineMs: number;
+  readonly surface: string;
+}) => Promise<RecordCut>;
+declare const bindCommit: <A>(value: A, commit: {
+  readonly positions: ReadonlyMap<number, number>;
+  readonly instant: number;
+}) => A;
+//#endregion
+export { CommitStamp, RecordCut, STAMP_PLACEHOLDER, bindCommit, gateRecordedAt, instantOf, nextStamp, stampCut, stampOf };
+//# sourceMappingURL=RecordStamp.d.ts.map

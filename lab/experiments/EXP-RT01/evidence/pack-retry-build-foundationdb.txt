@@ -1,0 +1,15 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/foundationdb/tsdown.config.ts 
+ℹ entry: src/FdbKvBackend.ts, src/FdbSubscriptions.ts, src/FdbTriples.ts, src/index.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/FdbKvBackend.js          14.28 kB │ gzip: 4.58 kB
+ℹ dist/FdbSubscriptions.js       7.24 kB │ gzip: 2.26 kB
+ℹ dist/index.js                  0.99 kB │ gzip: 0.26 kB
+ℹ dist/FdbTriples.js             0.79 kB │ gzip: 0.44 kB
+ℹ dist/FdbKvBackend.js.map      33.60 kB │ gzip: 9.66 kB
+ℹ dist/FdbSubscriptions.js.map  16.07 kB │ gzip: 4.67 kB
+ℹ dist/FdbTriples.js.map         1.23 kB │ gzip: 0.63 kB
+ℹ 7 files, total: 74.19 kB
+✔ Build complete in 17ms

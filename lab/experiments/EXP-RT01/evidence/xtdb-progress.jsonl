@@ -1,0 +1,20 @@
+{"time":"2026-11-09T02:19:42.917Z","commitEncoding":"a0","scope":"rt01:36bd827c-9c0c-441e-96d3-fa1710a7f16a","message":"start T1 delayed decision and pagination preserve a served cut"}
+{"time":"2026-11-09T02:19:42.918Z","commitEncoding":"a0","scope":"rt01:36bd827c-9c0c-441e-96d3-fa1710a7f16a","message":"T1 seed"}
+{"time":"2026-11-09T02:19:44.329Z","commitEncoding":"a0","scope":"rt01:36bd827c-9c0c-441e-96d3-fa1710a7f16a","message":"T1 await staged A"}
+{"time":"2026-11-09T02:19:44.340Z","commitEncoding":"a0","scope":"rt01:36bd827c-9c0c-441e-96d3-fa1710a7f16a","message":"T1 B write"}
+{"time":"2026-11-09T02:19:45.324Z","commitEncoding":"a0","scope":"rt01:36bd827c-9c0c-441e-96d3-fa1710a7f16a","message":"T1 pinned read"}
+{"time":"2026-11-09T02:19:49.392Z","commitEncoding":"a0","scope":"rt01:36bd827c-9c0c-441e-96d3-fa1710a7f16a","message":"T1 release A"}
+{"time":"2026-11-09T02:19:54.574Z","commitEncoding":"a0","scope":"rt01:36bd827c-9c0c-441e-96d3-fa1710a7f16a","message":"completed T1 delayed decision and pagination preserve a served cut"}
+{"time":"2026-11-09T02:19:54.574Z","commitEncoding":"a0","scope":"rt01:36bd827c-9c0c-441e-96d3-fa1710a7f16a","message":"start T2 same-millisecond commits are distinct and exclude later writes"}
+{"time":"2026-11-09T02:20:00.553Z","commitEncoding":"a0","scope":"rt01:36bd827c-9c0c-441e-96d3-fa1710a7f16a","message":"completed T2 same-millisecond commits are distinct and exclude later writes"}
+{"time":"2026-11-09T02:20:00.554Z","commitEncoding":"a0","scope":"rt01:36bd827c-9c0c-441e-96d3-fa1710a7f16a","message":"start T3 concurrent receipts and readback carry the exact decided instant"}
+{"time":"2026-11-09T02:29:43.083Z","commitEncoding":"compact","scope":"rt01:4553c565-ac63-4bd4-a23c-3d405ee7374e","message":"start T1 delayed decision and pagination preserve a served cut"}
+{"time":"2026-11-09T02:29:43.084Z","commitEncoding":"compact","scope":"rt01:4553c565-ac63-4bd4-a23c-3d405ee7374e","message":"T1 seed"}
+{"time":"2026-11-09T02:29:54.053Z","commitEncoding":"compact","scope":"rt01:4553c565-ac63-4bd4-a23c-3d405ee7374e","message":"T1 await staged A"}
+{"time":"2026-11-09T02:29:54.141Z","commitEncoding":"compact","scope":"rt01:4553c565-ac63-4bd4-a23c-3d405ee7374e","message":"T1 B write"}
+{"time":"2026-11-09T02:29:59.382Z","commitEncoding":"compact","scope":"rt01:4553c565-ac63-4bd4-a23c-3d405ee7374e","message":"T1 pinned read"}
+{"time":"2026-11-09T02:30:24.417Z","commitEncoding":"compact","scope":"rt01:4553c565-ac63-4bd4-a23c-3d405ee7374e","message":"T1 release A"}
+{"time":"2026-11-09T02:31:09.911Z","commitEncoding":"compact","scope":"rt01:4553c565-ac63-4bd4-a23c-3d405ee7374e","message":"completed T1 delayed decision and pagination preserve a served cut"}
+{"time":"2026-11-09T02:31:09.912Z","commitEncoding":"compact","scope":"rt01:4553c565-ac63-4bd4-a23c-3d405ee7374e","message":"start T2 same-millisecond commits are distinct and exclude later writes"}
+{"time":"2026-11-09T02:31:41.159Z","commitEncoding":"compact","scope":"rt01:4553c565-ac63-4bd4-a23c-3d405ee7374e","message":"completed T2 same-millisecond commits are distinct and exclude later writes"}
+{"time":"2026-11-09T02:31:41.159Z","commitEncoding":"compact","scope":"rt01:4553c565-ac63-4bd4-a23c-3d405ee7374e","message":"start T3 concurrent receipts and readback carry the exact decided instant"}

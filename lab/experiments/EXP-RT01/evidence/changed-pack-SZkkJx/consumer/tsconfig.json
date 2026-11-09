@@ -1,0 +1,1 @@
+{"compilerOptions":{"target":"ESNext","module":"NodeNext","moduleResolution":"NodeNext","strict":true,"noEmit":true,"types":[],"lib":["ESNext","DOM"]},"include":["types.ts"]}

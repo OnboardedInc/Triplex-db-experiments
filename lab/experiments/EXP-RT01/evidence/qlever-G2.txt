@@ -1,0 +1,68 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/qlever
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 actor due-work ranges preserve numeric aliases, visibility, ordering, and limits
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 Datalog reads are bounded by default and cursors traverse the complete snapshot
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 historical cursor pages intersect recorded time and the commit snapshot
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 recursive relations support cursor pagination and optional total counts
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 assert then get and match return the fact
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 same-value facts in one batch keep distinct identities
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog query finds asserted facts
+
+stdout | test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+RT01 G2 a0 datalog projections preserve scalar types without guessing from text
+
+ ❯ test/record-time.test.ts (5 tests | 1 failed | 4 skipped) 362257ms
+   × G2 all 44 shared conformance cases on both A0 encodings (88) 362256ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/record-time.test.ts > G2 all 44 shared conformance cases on both A0 encodings (88)
+Error: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout
+ ❯ fail src/QleverQueryExecutor.ts:53:7
+     51|   cause instanceof ReadError || cause instanceof DatalogValidationErro…
+     52|     ? cause
+     53|     : new ReadError({ message: `QLever Datalog execution failed: ${Str…
+       |       ^
+     54| const safeCount = (value: string | undefined): number => {
+     55|   const result = Number(value ?? 0);
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42
+ ❯ ~effect/Utils/internal ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14
+ ❯ PrimitiveImpl.~effect/Effect/args ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23
+ ❯ PrimitiveImpl.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+Caused by: TimeoutError: The operation was aborted due to timeout
+ ❯ request src/QleverClient.ts:85:24
+ ❯ Object.query src/QleverClient.ts:121:23
+ ❯ try src/QleverQueryExecutor.ts:324:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 23, INDEX_SIZE_ERR: 1, DOMSTRING_SIZE_ERR: 2, HIERARCHY_REQUEST_ERR: 3, WRONG_DOCUMENT_ERR: 4, INVALID_CHARACTER_ERR: 5, NO_DATA_ALLOWED_ERR: 6, NO_MODIFICATION_ALLOWED_ERR: 7, NOT_FOUND_ERR: 8, NOT_SUPPORTED_ERR: 9, INUSE_ATTRIBUTE_ERR: 10, INVALID_STATE_ERR: 11, SYNTAX_ERR: 12, INVALID_MODIFICATION_ERR: 13, NAMESPACE_ERR: 14, INVALID_ACCESS_ERR: 15, VALIDATION_ERR: 16, TYPE_MISMATCH_ERR: 17, SECURITY_ERR: 18, NETWORK_ERR: 19, ABORT_ERR: 20, URL_MISMATCH_ERR: 21, QUOTA_EXCEEDED_ERR: 22, TIMEOUT_ERR: 23, INVALID_NODE_TYPE_ERR: 24, DATA_CLONE_ERR: 25 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 skipped (5)
+   Start at  21:20:58
+   Duration  362.82s (tests 100%)
+

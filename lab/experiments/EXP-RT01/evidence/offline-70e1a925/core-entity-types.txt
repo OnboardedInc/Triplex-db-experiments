@@ -1,0 +1,2 @@
+src/errors/index.ts(104,7): error TS4023: Exported variable 'NormalReadError' has or is using name 'NodeInspectSymbol' from external module "/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Inspectable" but cannot be named.
+src/errors/index.ts(109,14): error TS4023: Exported variable 'ReadError' has or is using name 'NodeInspectSymbol' from external module "/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Inspectable" but cannot be named.

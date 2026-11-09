@@ -1,0 +1,5295 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/testkit
+
+ ❯ test/route-equivalence-review.test.mjs (19 tests | 7 failed) 2379ms
+   × CX-VRQ01 planted fault: drop-same-ms-tie 6ms
+   × CX-VRQ01 planted fault: future-old-data 1ms
+   × CX-VRQ01 planted fault: empty-ineligible 1ms
+   × CX-VRQ01 F1: correction-ignoring route fails the default generated gate 2100ms
+   × CX-VRQ01 F3 / Q89i: existing-row retirement preserves snapshot bytes and separately compares raw lifetime 1ms
+   × Q89a / D-C1 stays known-failing after Q89i metadata repair 3ms
+   × Q89i: raw-history answers cannot conceal unavailable snapshot reads 1ms
+ ❯ test/route-equivalence-round3.test.ts (12 tests | 1 failed) 31379ms
+   × round3: retired stores cannot omit policies/cuts or silently decline purge execution 5609ms
+ ❯ test/route-equivalence.test.ts (15 tests | 1 failed) 49153ms
+   ❯ EXP-RQ01 route-equivalence gate (offline only) (15)
+     × D-C1 decision order staged-stamps: immutable T cut with a negative control 3ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/route-equivalence-review.test.mjs > CX-VRQ01 planted fault: drop-same-ms-tie
+AssertionError: drop-same-ms-tie: clean control must pass
+
+5 !== 0
+
+
+- Expected
++ Received
+
+- 0
++ 5
+
+ ❯ test/route-equivalence-review.test.mjs:179:12
+    177|       scope,
+    178|     });
+    179|     assert.equal(clean.violations.length, 0, `${mode}: clean control m…
+       |            ^
+    180|     const broken = await runRouteEquivalence({
+    181|       fixture: modelFixture(mode),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/9]⎯
+
+ FAIL  test/route-equivalence-review.test.mjs > CX-VRQ01 planted fault: future-old-data
+AssertionError: future-old-data: clean control must pass
+
+1 !== 0
+
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ test/route-equivalence-review.test.mjs:179:12
+    177|       scope,
+    178|     });
+    179|     assert.equal(clean.violations.length, 0, `${mode}: clean control m…
+       |            ^
+    180|     const broken = await runRouteEquivalence({
+    181|       fixture: modelFixture(mode),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/9]⎯
+
+ FAIL  test/route-equivalence-review.test.mjs > CX-VRQ01 planted fault: empty-ineligible
+AssertionError: empty-ineligible: clean control must pass
+
+1 !== 0
+
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ test/route-equivalence-review.test.mjs:179:12
+    177|       scope,
+    178|     });
+    179|     assert.equal(clean.violations.length, 0, `${mode}: clean control m…
+       |            ^
+    180|     const broken = await runRouteEquivalence({
+    181|       fixture: modelFixture(mode),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/9]⎯
+
+ FAIL  test/route-equivalence-review.test.mjs > CX-VRQ01 F1: correction-ignoring route fails the default generated gate
+AssertionError: expected [ { rule: 'HE-7', …(4) }, …(415) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 999.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 999.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1000,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1000,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 999.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 999.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1002,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1002,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1003,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1003,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1004,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1004,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1004.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1004.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1004.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1004.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.002,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.002,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.003,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.003,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1007.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1007.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1008,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1008,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1007.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1007.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1009,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1009,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1010,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1010,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1011,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1011,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1012,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1012,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1012.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1012.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1012.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1012.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.002,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.002,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.003,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.003,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1015.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1015.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1016,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1016,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1015.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1015.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1017,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1017,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1018,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1018,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1020.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1020.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1020.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1020.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1020.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1020.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": -30,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": -30,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": -30,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": -30,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": 50,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": 50,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": 50,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 11265,
++         "validAt": 50,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": -30,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": -30,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": -30,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": -30,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": 50,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": 50,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": 50,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 37888,
++         "validAt": 50,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": -30,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": -30,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": -30,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": -30,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": 50,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": 50,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": 50,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "recordedPosition": 14336,
++         "validAt": 50,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": -30,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": -30,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": -30,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": -30,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": 50,
++       },
++     },
++     "route": "control",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": 50,
++       },
++     },
++     "route": "control",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Ineligible route answered",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": 50,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-3",
++   },
++   {
++     "detail": "Answer differs from offline replay",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "recordedPosition": 39937,
++         "validAt": 50,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-1",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 999.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 999.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1000,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1000,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 999.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 999.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1000.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1001.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1002,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1002,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1002.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1003,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1003,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1003.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1004,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1004,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1004.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1004.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1004.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1004.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.002,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.002,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1005.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.003,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.003,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1006.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1007.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1007.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1008,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1008,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1007.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1007.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1008.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1009,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1009,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1009.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1010,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1010,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1010.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1011,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1011,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1011.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1012,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1012,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1012.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1012.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1012.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1012.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.002,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.002,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.502,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1013.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.003,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.003,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1014.503,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1015.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1015.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1016,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1016,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1015.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1015.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1016.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1017,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1017,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1017.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1018,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1018,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1018.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1019,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1019,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.5,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.001,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1019.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1020.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1020.501,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++ ]
+
+ ❯ test/route-equivalence-review.test.mjs:247:28
+    245|   const history = generateRouteHistory(42);
+    246|   const clean = await runRouteEquivalence({ fixture: modelFixture(), h…
+    247|   expect(clean.violations).toEqual([]);
+       |                            ^
+    248|   const broken = await runRouteEquivalence({
+    249|     fixture: modelFixture("ignore-real-valid-edit"),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/9]⎯
+
+ FAIL  test/route-equivalence-review.test.mjs > CX-VRQ01 F3 / Q89i: existing-row retirement preserves snapshot bytes and separately compares raw lifetime
+AssertionError: expected [ { rule: 'HE-7', …(4) }, …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1000,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "initial",
++     "request": {
++       "basis": {
++         "recordedAt": 1000,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1000,
++         "validAt": 2000,
++       },
++     },
++     "route": "control",
++     "rule": "HE-7",
++   },
++   {
++     "detail": "Basis echo differs from request",
++     "phase": "append",
++     "request": {
++       "basis": {
++         "recordedAt": 1000,
++         "validAt": 2000,
++       },
++     },
++     "route": "injected",
++     "rule": "HE-7",
++   },
++ ]
+
+ ❯ test/route-equivalence-review.test.mjs:315:31
+    313|       scope: { shapes: ["P", "T", "TP", "H"] },
+    314|     });
+    315|     expect(result.violations).toEqual([]);
+       |                               ^
+    316|     expect(new Set(result.observations.map((o) => o.contract))).toEqua…
+    317|   }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/9]⎯
+
+ FAIL  test/route-equivalence-review.test.mjs > Q89a / D-C1 stays known-failing after Q89i metadata repair
+AssertionError: The expression evaluated to a falsy value:
+
+  (result.violations.length > 0 && result.violations.every((v) => v.rule === "HE-5"))
+
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/route-equivalence-review.test.mjs:388:3
+    386|     ...options,
+    387|   });
+    388|   assert(result.violations.length > 0 && result.violations.every((v) =…
+       |   ^
+    389|   await assert.rejects(() =>
+    390|     makeRouteEquivalenceCases({ fixture: makeOfflineRouteFixture("qlev…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/9]⎯
+
+ FAIL  test/route-equivalence-review.test.mjs > Q89i: raw-history answers cannot conceal unavailable snapshot reads
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/route-equivalence-review.test.mjs:464:89
+    462|   const result = await runRouteEquivalence(options);
+    463|   expect(result.violations.length).toBeGreaterThan(0);
+    464|   expect(result.violations.every((v) => v.rule === "HE-4" && v.route =…
+       |                                                                                         ^
+    465|   await expect(makeRouteEquivalenceCases(options)[0].run()).rejects.to…
+    466| });
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/9]⎯
+
+ FAIL  test/route-equivalence-round3.test.ts > round3: retired stores cannot omit policies/cuts or silently decline purge execution
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/route-equivalence-round3.test.ts:225:1
+    223|   expect(measureRouteCoverage(options.history).complete).toBe(false);
+    224| });
+    225| it("round3: retired stores cannot omit policies/cuts or silently decli…
+       | ^
+    226|   const options = customOptions();
+    227|   const source = boundaryFixture();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/9]⎯
+
+ FAIL  test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > D-C1 decision order staged-stamps: immutable T cut with a negative control
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ test/route-equivalence.test.ts:148:66
+    146|       if (mode === "decided") expect(result.violations).toEqual([]);
+    147|       else {
+    148|         expect(result.violations.some((v) => v.rule === "HE-5")).toBe(…
+       |                                                                  ^
+    149|         expect(result.violations.some((v) => v.rule === "HE-8")).toBe(…
+    150|       }
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/9]⎯
+
+
+ Test Files  3 failed | 1 passed (4)
+      Tests  9 failed | 83 passed (92)
+   Start at  20:49:29
+   Duration  49.78s (tests 97%, transform 2%, import 1%)
+

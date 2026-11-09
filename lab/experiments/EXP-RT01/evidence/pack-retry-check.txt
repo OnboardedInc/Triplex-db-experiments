@@ -1,0 +1,12 @@
+Package verification artifacts retained at /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/evidence/pack/triplex-pack-3E9iE9
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/scripts/check-packages.mjs:79
+        throw new Error(`${tarball} is missing ${required}`);
+              ^
+
+Error: /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/evidence/pack/triplex-pack-3E9iE9/tarballs/triplex-build-triplex-cli-0.1.1.tgz is missing package/dist/index.d.ts
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/scripts/check-packages.mjs:79:15
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2

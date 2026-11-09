@@ -1,0 +1,19 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/sqlite/tsdown.config.ts 
+ℹ entry: src/SqliteAdapter.ts, src/SqliteBackend.ts, src/SqliteLayer.ts, src/SqliteTriples.ts, src/dialect.ts, src/index.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/SqliteAdapter.js      17.25 kB │ gzip: 4.20 kB
+ℹ dist/SqliteBackend.js       3.85 kB │ gzip: 1.25 kB
+ℹ dist/SqliteTriples.js       1.59 kB │ gzip: 0.66 kB
+ℹ dist/SqliteLayer.js         1.21 kB │ gzip: 0.52 kB
+ℹ dist/dialect.js             0.63 kB │ gzip: 0.40 kB
+ℹ dist/index.js               0.60 kB │ gzip: 0.18 kB
+ℹ dist/SqliteAdapter.js.map  37.49 kB │ gzip: 8.24 kB
+ℹ dist/SqliteBackend.js.map   8.20 kB │ gzip: 2.29 kB
+ℹ dist/SqliteTriples.js.map   2.57 kB │ gzip: 1.08 kB
+ℹ dist/SqliteLayer.js.map     2.23 kB │ gzip: 0.94 kB
+ℹ dist/dialect.js.map         1.18 kB │ gzip: 0.65 kB
+ℹ 11 files, total: 76.80 kB
+✔ Build complete in 16ms

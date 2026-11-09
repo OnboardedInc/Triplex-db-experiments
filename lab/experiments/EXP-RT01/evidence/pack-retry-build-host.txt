@@ -1,0 +1,21 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/host/tsdown.config.ts 
+ℹ entry: src/Identity.ts, src/InMemoryTenantRegistry.ts, src/Lifecycle.ts, src/Protocol.ts, src/Routing.ts, src/Services.ts, src/index.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/Protocol.js                    4.67 kB │ gzip: 1.41 kB
+ℹ dist/Lifecycle.js                   2.16 kB │ gzip: 0.80 kB
+ℹ dist/Identity.js                    1.62 kB │ gzip: 0.64 kB
+ℹ dist/index.js                       1.61 kB │ gzip: 0.45 kB
+ℹ dist/InMemoryTenantRegistry.js      1.23 kB │ gzip: 0.57 kB
+ℹ dist/Services.js                    1.17 kB │ gzip: 0.37 kB
+ℹ dist/Routing.js                     0.90 kB │ gzip: 0.46 kB
+ℹ dist/Protocol.js.map                9.37 kB │ gzip: 2.63 kB
+ℹ dist/Lifecycle.js.map               4.05 kB │ gzip: 1.35 kB
+ℹ dist/Services.js.map                3.98 kB │ gzip: 1.03 kB
+ℹ dist/Identity.js.map                2.78 kB │ gzip: 1.02 kB
+ℹ dist/InMemoryTenantRegistry.js.map  2.07 kB │ gzip: 0.92 kB
+ℹ dist/Routing.js.map                 1.63 kB │ gzip: 0.73 kB
+ℹ 13 files, total: 37.25 kB
+✔ Build complete in 16ms

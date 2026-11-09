@@ -1,0 +1,15 @@
+node:internal/fs/promises:955
+  const result = await PromisePrototypeThen(
+                 ^
+
+Error: ENOENT: no such file or directory, scandir '/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/storage'
+    at async Object.readdir (node:internal/fs/promises:955:18)
+    at async snapshot (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/run-microbench.mjs:30:22)
+    at async file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/run-microbench.mjs:84:17 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'scandir',
+  path: '/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/core/dist/storage'
+}
+
+Node.js v22.23.2
