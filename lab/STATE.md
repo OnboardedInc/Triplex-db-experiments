@@ -183,3 +183,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   Unpark for EXP-DA04 after the window.
 - Housekeeping rule: when a branch merges or its verdict is recorded, archive untracked and ignored files of its builder and reviewer
   worktrees to /Users/sam/Claude/Projects/triplex-db-2/worktree-archive/ and git worktree remove them. Host disk 15 GiB free after 38 removals.
+- Note: agents whose worktree was archived and removed (CX-INT-XCJ, CX-X02-R3, CX-VX02-3, CX-VDA01, CX-VSQL01-2, CX-J01-R2, CX-VJ01-2,
+  CX-VC8-3 and the older ones in worktree-archive/INDEX.txt) cannot be resumed (codex needs its launch cwd); follow-up work on those
+  branches uses a fresh launch with a new worktree. CX-XRUN replaces CX-INT-XCJ for the XTDB exclusive reruns.
