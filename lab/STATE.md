@@ -529,3 +529,10 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   offline model. F5 medium: the stage-10 terminal write happens before the retention guard, so an I/O error there lets box.close() delete
   the evidence volumes. F6 low: a JSON `null` control envelope throws in the stream callback instead of failing through the rejection path.
   F7 low: partial control streams are re-encoded before the "raw" export. No candidate-caused bypass shown. Next (CLI): G03 round 7d fixes.
+- 2026-11-09 EXP-P4N round 1 (Sonnet; exp/P4N-current-path, report saved by the orchestrator): row path (a)+(e) = 726-736 pulls/CPU-s at
+  c=1 and c=4 (bootstrap lower bounds 685-743), 0.66x of 1,100; text 0.573x; port reuse kept (interval 0.92-0.95, fails the every-round
+  rule in 5 of 16 c=1 rounds: judgement call), GC levers not kept. The thread-CPU probe shows the host was never below load 4, but an idle
+  host would add about 10%, so a GREEN window is not needed to say the row path misses. Gates: O-REPLAY 100k zero mismatches, RQ01,
+  mutants, REAL and at+vfOffset bit-exact, P2 guard p99 ratio 1.004 [0.987, 1.034] with a resolvable A/A band (first sound P2 guard
+  result). Per the stop rule (c') is next (estimated hit floor 590-650 us, clears 1,100, probably not 1,320); if built, ask Sam whether
+  its derived-cache bytes count toward G9.
