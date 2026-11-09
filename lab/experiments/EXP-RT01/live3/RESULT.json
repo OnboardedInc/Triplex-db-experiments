@@ -1,0 +1,73 @@
+{
+  "result": "NOT_RUN_DISK_FORECAST",
+  "at": "2026-11-09T08:32:15.722Z",
+  "sourceHead": "37ae44a9a1fa4a8ef153c5118ee9aed03be86a8b",
+  "sources": [
+    {
+      "path": "lab/experiments/EXP-RT01/round6/RUNBOOK.md",
+      "sha256": "563a9f28a9651afbb1780891fc852332ee45e351ae504d73a7d9a5cbf8634991"
+    },
+    {
+      "path": "lab/experiments/EXP-RT01/round6/g6.mjs",
+      "sha256": "060a30a384413b75ecb5c37c080d76f51f68f227bc24096971b14f56d18d7302"
+    }
+  ],
+  "commands": {
+    "sourceHead": {
+      "cmd": "git",
+      "args": [
+        "rev-parse",
+        "HEAD"
+      ],
+      "started": "2026-11-09T08:32:12.470Z",
+      "ended": "2026-11-09T08:32:12.500Z",
+      "exit": 0,
+      "stdout": "37ae44a9a1fa4a8ef153c5118ee9aed03be86a8b\n"
+    },
+    "status": {
+      "cmd": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "lab/bin/engine.mjs",
+        "status"
+      ],
+      "started": "2026-11-09T08:32:12.500Z",
+      "ended": "2026-11-09T08:32:15.698Z",
+      "exit": 0,
+      "stdout": "slot         port  cap            state            ready  mem       holder                                           \nxtdb-dev     5470  3.00 GiB/2cpu  running/healthy  READY  2.65 GiB  worktree:/Users/sam/projects/triplex-db-2 EXP-000\nxtdb-s1      5471  3.50 GiB/2cpu  -                -      -         -                                                \nxtdb-s2      5472  3.50 GiB/2cpu  -                -      -         -                                                \nxtdb-s3      5473  3.50 GiB/2cpu  -                -      -         -                                                \nqlever-dev   7070  3.50 GiB/2cpu  running/healthy  READY  1.51 GiB  EXP-000                                          \nqlever-s1    7071  3.50 GiB/2cpu  -                -      -         -                                                \nqlever-s2    7072  3.50 GiB/2cpu  -                -      -         -                                                \nqlever-s3    7073  3.50 GiB/2cpu  -                -      -         -                                                \ndatomic-dev  8470  2.75 GiB/2cpu  -                -      -         -                                                \ndatomic-s1   8471  3.50 GiB/3cpu  -                -      -         -                                                \ndatomic-s2   8472  3.50 GiB/3cpu  -                -      -         -                                                \ndatomic-s3   8473  3.50 GiB/3cpu  -                -      -         -                                                \n\npool: 6.50 GiB of 11.00 GiB reserved; disk 25.93 GiB used + 8.00 GiB forecast of 50.00 GiB\n  reservation tx2-xtdb-dev 3.00 GiB 2cpu state=running holder=EXP-W01\n  reservation tx2-qlever-dev 3.50 GiB 2cpu state=running holder=EXP-000\n  retained volume tx2-qlever-dev-data 0 MiB holder=worktree:/Users/sam/projects/triplex-db-2 note=retained by engine down (default)\n  retained volume tx2-xtdb-s2-data 3.87 GiB holder=EXP-P4 note=CX-P4: inherited 10k measurement completed; retain volume, release exclusive slot\n  retained volume tx2-g03-r2store-store-b2b3e6e8cdfb ? holder=CX-G03 note=EXP-G03 round 2 immutable Linux qualification store retained for orchestrator scale window; receipt lab/experiments/EXP-G03/round2/store.json; remove through engine.mjs after window\n  retained volume tx2-datomic-dev-data 1.40 GiB holder=EXP-DA01 note=retained by engine down (default)\n"
+    },
+    "context": {
+      "cmd": "docker",
+      "args": [
+        "context",
+        "show"
+      ],
+      "started": "2026-11-09T08:32:15.698Z",
+      "ended": "2026-11-09T08:32:15.715Z",
+      "exit": 0,
+      "stdout": "default\n"
+    },
+    "disk": {
+      "cmd": "df",
+      "args": [
+        "-k",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01"
+      ],
+      "started": "2026-11-09T08:32:15.715Z",
+      "ended": "2026-11-09T08:32:15.721Z",
+      "exit": 0,
+      "stdout": "Filesystem   1024-blocks      Used Available Capacity  iused    ifree %iused  Mounted on\n/dev/disk3s5   482797652 376234504   9912420    98% 12797569 99124200   11%   /System/Volumes/Data\n"
+    }
+  },
+  "freeBytes": 10150318080,
+  "guardBytes": 5368709120,
+  "forecastGrowthBytes": 5368709120,
+  "requiredFreeBytesExclusive": 10737418240,
+  "shortfallToThresholdBytes": 587100160,
+  "exclusiveReservations": [],
+  "poolSha256": "82806865ebfa758ad52e3d5a82b631c24df8d1d0119cbce630bfa665f45eb90c",
+  "acquired": false,
+  "lifecycleCommands": [],
+  "gatesRun": [],
+  "cleanup": "No resource acquired; no release, removal, fstrim or context mutation performed.",
+  "qualification": "No G2/G6, A/A rule, native row counts or no-regression result granted."
+}

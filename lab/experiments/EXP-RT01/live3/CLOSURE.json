@@ -1,0 +1,56 @@
+{
+  "receiptSha256": "1268997ab159ec31fd2d11f1544867b84a56183ccb717b2ff3c5c2f917b1ebd6",
+  "commands": [
+    {
+      "name": "trim",
+      "cmd": "colima",
+      "args": [
+        "ssh",
+        "-p",
+        "triplex2",
+        "--",
+        "sudo",
+        "fstrim",
+        "-av"
+      ],
+      "started": "2026-11-09T08:32:43.588Z",
+      "ended": "2026-11-09T08:32:44.553Z",
+      "exit": 0,
+      "error": null,
+      "stdout": "/mnt/lima-colima-triplex2: 699.6 MiB (733577216 bytes) trimmed on /dev/vdb1\n/boot/efi: 91.1 MiB (95547904 bytes) trimmed on /dev/vda15\n/boot: 0 B (0 bytes) trimmed on /dev/vda16\n/: 218 MiB (228544512 bytes) trimmed on /dev/vda1\n",
+      "stderr": "time=\"2026-11-09T03:32:44-05:00\" level=warning msg=\"failed to detect whether running under rosetta, assuming false\" error=\"failed to read sysctl \\\"sysctl.proc_translated\\\": operation not permitted\"\n"
+    },
+    {
+      "name": "restore-context",
+      "cmd": "docker",
+      "args": [
+        "context",
+        "use",
+        "colima"
+      ],
+      "started": "2026-11-09T08:32:44.553Z",
+      "ended": "2026-11-09T08:32:44.641Z",
+      "exit": 0,
+      "error": null,
+      "stdout": "colima\n",
+      "stderr": "Current context is now \"colima\"\nWarning: DOCKER_HOST environment variable overrides the active context. To use \"colima\", either set the global --context flag, or unset DOCKER_HOST environment variable.\n"
+    },
+    {
+      "name": "final-context",
+      "cmd": "docker",
+      "args": [
+        "context",
+        "show"
+      ],
+      "started": "2026-11-09T08:32:44.641Z",
+      "ended": "2026-11-09T08:32:44.661Z",
+      "exit": 0,
+      "error": null,
+      "stdout": "default\n",
+      "stderr": ""
+    }
+  ],
+  "resourcesAcquired": false,
+  "noRetry": true,
+  "gateResult": "NOT_RUN_DISK_FORECAST"
+}

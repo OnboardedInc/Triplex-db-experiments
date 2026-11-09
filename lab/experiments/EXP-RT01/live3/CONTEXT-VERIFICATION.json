@@ -1,0 +1,7 @@
+{
+  "at": "2026-11-09T08:33:02.274Z",
+  "configuredContext": "colima",
+  "DOCKER_HOST": "unix:///Users/sam/.colima/triplex2/docker.sock",
+  "priorCheck": "close.mjs exited 1: docker context show reports default under DOCKER_HOST despite successful context use colima; no command was retried",
+  "method": "read only currentContext field from Docker config; no other config fields retained"
+}
