@@ -9,6 +9,7 @@ import {REPO,ENGINE_DIR,LOCKS,atomicJson,defaultHolder,docker,dockerStats,inspec
 import {harden,pinImage,remove,reserve,vmAvailable,waitFile} from './vm-observer.mjs';
 import {BPFTRACE_VERSION,COMPILE_FLAGS,COMPILE_PLACEHOLDER_ARGS,REQUIRED_HELPER_NAMES,clockPrimitiveVerdict,sha256Hex} from './clock-proof.mjs';
 import {deriveHelperIds as deriveBtfHelperIds,parseBtfEnums} from './btf-helpers.mjs';
+import {abbaAnalysis} from './abba.mjs';
 export {BPFTRACE_VERSION,COMPILE_FLAGS,FORBIDDEN_CLOCK_TOKENS,HELPER_ALLOW_LIST,clockPrimitiveVerdict,forbiddenClockTokens,extractSections,parseCallLine,parseCompiledHelpers,sourceHelperNeeds,sourceProbes,sourceTimeSites} from './clock-proof.mjs';
 export {deriveBtfHelperIds,parseBtfEnums};
 
@@ -288,14 +289,17 @@ async function witnessSession(ctx,plan){
  const {config,holder,python,bpftrace,out,nonce}=ctx,{mode}=plan,tag=`${nonce}-${mode}`,volume=`tx2-sw-${tag}-data`,witnessVolume=`tx2-sw-${tag}-witness`,dir=path.join(out,plan.dirName??mode);fs.mkdirSync(dir,{recursive:true});
  const control=path.join(dir,'writer');fs.mkdirSync(control);const names={witness:`tx2-sw-witness-${tag}`,writer:`tx2-sw-writer-${tag}`,neighbor:`tx2-sw-neighbor-${tag}`};const made=[],volumes=[],result={mode};
  try{
-  for(const v of [volume,witnessVolume]){docker(['volume','create','--label',`tx2.holder=${holder}`,'--label',`tx2.run=${tag}`,v]);volumes.push(v);}
+  for(const v of (plan.noWitness?[volume]:[volume,witnessVolume])){docker(['volume','create','--label',`tx2.holder=${holder}`,'--label',`tx2.run=${tag}`,v]);volumes.push(v);}
   const store=await makeStoreDir(config,holder,python,volume);result.dir=store;
+  // [EXP-OBS01-R16] Why: the ABBA writer-p99 comparison (A arms) runs the same writer container on the same kind of fresh volume with no witness at all. Rejected: a witness that is attached but filtered out (it would still cost the tracepoints).
+  if(!plan.noWitness){
   await reserve(config,names.witness,holder,5);made.push(names.witness);
   docker(witnessCreateArgs({name:names.witness,holder,image:bpftrace,cpu:5,volume:witnessVolume,dirs:[store]}));
   const profile=verifyWitnessProfile(inspect(names.witness),{volume:witnessVolume});result.profileViolations=profile;if(profile.length)fail('REFUSED','witness profile: '+profile.join('; '));
   docker(['start',names.witness]);
   for(let i=0;i<200;i++){const first=docker(['cp',names.witness+':/witness/trace.txt','-'],{allowFail:true});if(first&&first.includes('SW1|B|'))break;if(i===199||!inspect(names.witness)?.State.Running)fail('REFUSED','witness did not attach (TRACE-INCOMPLETE): '+(run(['docker','-H',SOCK,'logs',names.witness]).stderr??''));await sleep(100);}
   result.attachedWallMs=Date.now();
+  }
   if(plan.withNeighbor){await reserve(config,names.neighbor,holder,3);made.push(names.neighbor);docker(harden(names.neighbor,holder,python,3,['--cgroupns','host'],['python3','-B','-c','import os,time\nwhile True:\n os.sync();time.sleep(.01)']));docker(['start',names.neighbor]);}
   const mounts=['--cgroupns','host','--user','10001:10001','-v',volume+':/data','-v',SRC+':/code:ro','-v',control+':/control'];
   await reserve(config,names.writer,holder,4);made.push(names.writer);
@@ -306,18 +310,21 @@ async function witnessSession(ctx,plan){
   for(let i=0;i<(plan.readers?.containers??0);i++){const name=`tx2-sw-reader-${tag}-${i}`;await reserve(config,name,holder,'2,3');made.push(name);readers.push(name);
    docker(harden(name,holder,python,'2,3',mounts,['python3','-B','/code/vm_w3_load.py','reader','--dir','/data/store','--control','/control','--seconds',String(plan.seconds),'--threads',String(plan.readers.threads),'--tag',String(i)]));docker(['start',name]);}
   for(let i=0;i<readers.length;i++)await waitFile(path.join(control,'reader-ready-'+i),readers[i]);
-  const sampler=plan.sample?await plan.sample(ctx,names.witness,dir):null;
+  const sampler=plan.sample&&!plan.noWitness?await plan.sample(ctx,names.witness,dir):null;
   const stats=[];let polling=null;if(plan.sampleStats)polling=setInterval(()=>{const row=dockerStats().find(r=>r.name===names.witness);if(row)stats.push(row.cpuPercent);},15000);
   fs.writeFileSync(path.join(control,'go'),'go');await waitFile(path.join(control,plan.done??'ops.json'),names.writer,(plan.seconds??180)*1000+180000);
   if(polling)clearInterval(polling);result.witnessCpuPercent=stats.length?{samples:stats.length,mean:stats.reduce((a,b)=>a+b,0)/stats.length,max:Math.max(...stats)}:null;
   if(sampler)result.cost=await sampler.finish();
   for(const n of [names.writer,...(plan.withNeighbor?[names.neighbor]:[]),...readers])docker(['kill','--signal','KILL',n]);
+  if(!plan.noWitness){
   if(plan.captureWitness)result.witnessCgroup=witnessCgroupFacts(names.witness);      // while the witness still runs: memory.peak dies with the cgroup
   docker(['kill','--signal','INT',names.witness]);for(let i=0;i<1200&&inspect(names.witness)?.State.Running;i++)await sleep(100);
   if(inspect(names.witness)?.State.Running)fail('REFUSED','witness did not detach');
   docker(['cp',names.witness+':/witness/trace.txt',path.join(dir,'trace.txt')]);fs.writeFileSync(path.join(dir,'stderr.txt'),run(['docker','-H',SOCK,'logs',names.witness]).stderr??'');
+  }
   for(const f of plan.copy??['ops.json','wal.bin','main.bin'])fs.copyFileSync(path.join(control,f),path.join(dir,f));
-  if(plan.judge!==false){const judged=py(judgeScript,dir,String(result.writerCgroupId));result.judge={status:judged.status,stdout:judged.stdout.trim(),stderr:judged.stderr.trim()};result.pass=judged.status===0;}
+  if(plan.noWitness){result.pass=true;}
+  else if(plan.judge!==false){const judged=py(judgeScript,dir,String(result.writerCgroupId));result.judge={status:judged.status,stdout:judged.stdout.trim(),stderr:judged.stderr.trim()};result.pass=judged.status===0;}
   else{const checked=py(judgeScript,'stream-check',path.join(dir,'trace.txt'),path.join(dir,'stderr.txt'));result.streamCheck={status:checked.status,stdout:checked.stdout.trim(),stderr:checked.stderr.trim()};result.pass=checked.status===0;}
  }finally{
   for(const name of made.reverse())await remove(name,holder);
@@ -450,6 +457,39 @@ async function windowW3(ctx,options){
   claim:'zero lost events over the load (per-CPU sequence check, not bpftrace stderr); witness container mean CPU under 0.1 core'};
 }
 
+/**
+ * [EXP-OBS01-R16] ABBA: writer commit latency with the witness off (A) and on (B), under Q104a (see abba.mjs). Each arm is a fresh volume and a fresh writer container (vm_fixture.py, the round 6
+ * broker-shaped ten-row FULL commit, CPU 4); B arms also have the witness attached first on CPU 5 and must show zero lost events (stream check). The schedule interleaves A/A rounds
+ * (A1 A2) with ABBA rounds (A1 B1 B2 A2) so load drift reaches every kind of arm. Reported, not gated (R48 9.1 W2): `pass` is true when every arm completed and every B arm's trace is complete.
+ * options: abba-commits (default 2000, at least 1000), abba-rounds (ABBA rounds, default 3), aa-rounds (default 3).
+ * Rejected: A arms with a witness attached but filtered (they would still pay the tracepoint cost); one long arm per kind (no drift control).
+ */
+async function windowABBA(ctx,options){
+ const count=Number(options['abba-commits']??2000),rounds=Number(options['abba-rounds']??3),aaRounds=Number(options['aa-rounds']??3);
+ if(!Number.isInteger(count)||count<1000||!Number.isInteger(rounds)||rounds<1||!Number.isInteger(aaRounds)||aaRounds<0)fail('USAGE','--abba-commits must be an integer of at least 1000 (Q104a); --abba-rounds and --aa-rounds positive integers');
+ const writerArgv=['python3','-B','/code/vm_fixture.py','--path','/data/store/broker.db','--control','/control','--samples',String(count)];
+ const plan=[];
+ for(let r=1;r<=Math.max(rounds,aaRounds);r++){
+  if(r<=aaRounds)plan.push({label:`aa${r}-1`,kind:'A'},{label:`aa${r}-2`,kind:'A'});
+  if(r<=rounds)plan.push({label:`ab${r}-A1`,kind:'A'},{label:`ab${r}-B1`,kind:'B'},{label:`ab${r}-B2`,kind:'B'},{label:`ab${r}-A2`,kind:'A'});
+ }
+ const got={},arms=[];
+ for(const step of plan){
+  const session=await witnessSession(ctx,{mode:'abba-'+step.label,dirName:'abba/'+step.label,noWitness:step.kind==='A',judge:false,writerArgv,done:'samples.json',copy:['samples.json'],seconds:60});
+  const document=JSON.parse(fs.readFileSync(path.join(ctx.out,'abba',step.label,'samples.json'),'utf8'));
+  if(document.samplesNs.length!==count)fail('REFUSED','arm '+step.label+' produced '+document.samplesNs.length+' samples, not '+count);
+  got[step.label]=document.samplesNs;arms.push({label:step.label,kind:step.kind,n:count,pass:session.pass,streamCheck:session.streamCheck??null});
+ }
+ const rows={aa:[],ab:[]};
+ for(let r=1;r<=aaRounds;r++)rows.aa.push({a1:got[`aa${r}-1`],a2:got[`aa${r}-2`]});
+ for(let r=1;r<=rounds;r++)rows.ab.push({a:[got[`ab${r}-A1`],got[`ab${r}-A2`]],b:[got[`ab${r}-B1`],got[`ab${r}-B2`]]});
+ const analysis=abbaAnalysis(rows,{});
+ return {window:'ABBA',commitsPerArm:count,abbaRounds:rounds,aaRounds,order:plan.map(s=>s.label),arms,analysis,pass:arms.every(a=>a.pass),
+  claim:'writer commit latency with the witness off and on, judged under Q104a (>= 1,000 commits per arm, >= 3 A/A rounds, block bootstrap); the verdict (analysis.verdict) is a report, never a gate (R48 9.1 W2)'};
+}
+
+async function windowW4(){fail('REFUSED','W4 is not implemented yet');}
+
 /** engine.mjs witness-vm-status | witness-vm-probe --out DIR --image PYTHON_DIGEST --bpftrace-image BPFTRACE_DIGEST [--windows W0,W1,W2,W3] */
 export async function witnessCommand(config,command,options){
  if(command==='witness-vm-status'){console.log(JSON.stringify(witnessPreflight(config)));return;}
@@ -463,7 +503,7 @@ export async function witnessCommand(config,command,options){
  try{python=pinImage(options.image);bpftrace=pinImage(options['bpftrace-image']);}
  catch(error){atomicJson(path.join(out,'RESULT.json'),{status:'NOT-RUN',reason:'a required digest-pinned image is not present in the triplex2 VM (pulls need approval): '+error.message,check});console.log(JSON.stringify({out,status:'NOT-RUN',reason:error.message}));return;}
  const nonce=randomBytes(4).toString('hex'),windows=String(options.windows??'W0,W1,W2').split(',');
- const table={W0:windowW0,W1:windowW1,W2:windowW2,W3:windowW3};if(windows.some(w=>!table[w]))fail('USAGE','windows are W0, W1, W2, W3');
+ const table={W0:windowW0,W1:windowW1,W2:windowW2,W3:windowW3,ABBA:windowABBA,W4:windowW4};if(windows.some(w=>!table[w]))fail('USAGE','windows are W0, W1, W2, W3, W4, ABBA');
  const ctx={config,holder,python,bpftrace,out,nonce},results=[];let failure;
  try{
   for(const w of windows){
