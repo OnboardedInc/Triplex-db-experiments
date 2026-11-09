@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import { runObserved } from './observation-context.mjs';
 import { stripTypeScriptTypes } from 'node:module';
 import { test } from 'node:test';
 import { canonical, digest, blockTrieCoverage, compareFreeze, cloneCertificateHash } from '../../bench/lib/clone.ts';
@@ -57,7 +57,7 @@ async function reverify(variation) {
     process: { stdout: { write: () => {} }, stderr: { write: () => {} } },
     fail: (_code, message) => { throw new Error(message); },
   };
-  const { verify } = vm.runInNewContext(verifySource + ';({verify})', context);
+  const { verify } = runObserved(verifySource + ';({verify})', context);
   let error;
   try { await verify({}, { slot: 's1', ownerFile: 'owner.json', container: 'container' }, {}); }
   catch (caught) { error = caught.message; }
@@ -99,7 +99,7 @@ for (const variation of ['false', 'unreadable', 'clean']) {
     const commands = [], writes = {};
     let error;
     try {
-      vm.runInNewContext(source.slice(source.indexOf('const base =')), {
+      runObserved(source.slice(source.indexOf('const base =')), {
         fs: { writeFileSync: (file, value) => { writes[file] = value; } }, POOL_FILE: () => 'pool', readJson: () => ({}),
         process: { cwd: () => root, env: {}, execPath: 'node' },
         spawnSync: (_exec, args) => { commands.push(args[1]); return { status: 0, stdout: variation === 'unreadable' ? 'bad' : JSON.stringify({ verdict: { ok: variation === 'clean' } }), stderr: '' }; },
@@ -113,7 +113,7 @@ for (const variation of ['false', 'unreadable', 'clean']) {
 }
 test('R3: a current source gauge cannot hide behind an earlier startup log watermark', async () => {
   const expected = { gauges: { latestProcessedMsgId: 200, latestCompletedTxId: 100 }, trie: { sha256: 'trie' }, listing: ['00', '01'] };
-  const { startCheck } = vm.runInNewContext(stripTypeScriptTypes(section(checker, 'async function startCheck', '// ---------------------------------------------------------------- fingerprint')) + ';({startCheck})', {
+  const { startCheck } = runObserved(stripTypeScriptTypes(section(checker, 'async function startCheck', '// ---------------------------------------------------------------- fingerprint')) + ';({startCheck})', {
     Number, canonical, container: 'fixture', DOCKER_HOST: 'offline', sleep: async () => {}, healthz: () => ({ status: 200 }),
     gauges: async () => ({ jobsAvailable: 0, lagMsgId: 0, latestCompletedTxId: 100, latestProcessedMsgId: 201, latestSubmittedMsgId: 201 }),
     liveRows: async () => ({ total: 0 }), tries: async () => expected.trie, blockListing: () => expected.listing,
@@ -126,7 +126,7 @@ test('R3: golden end readings refuse drift after the initial reference check', (
   const gauges = { jobsAvailable: 0, lagMsgId: 0, latestCompletedTxId: 100, latestProcessedMsgId: 200, latestSubmittedMsgId: 200 };
   for (const key of Object.keys(gauges)) {
     const end = { live: { total: 0 }, snapshot: { gauges: { ...gauges, [key]: gauges[key] + 1 }, trie: { sha256: 'trie' }, listing: ['00'] } };
-    assert.throws(() => vm.runInNewContext(condition, {
+    assert.throws(() => runObserved(condition, {
       freeze: { ok: true, c4: { position: 42 } }, manifest: { result: { lastPosition: 42 } }, referenceStop: { verdict: { ok: true } }, timings: { freezeS: 5 }, end,
       settled: { after: { gauges, trie: { sha256: 'trie' }, listing: ['00'] } }, canonicalJson: canonical,
       fail: (_code, message) => { throw new Error(message); },
@@ -137,7 +137,7 @@ test('R3: T6 cannot call a missing fingerprint a changed plan', () => {
   const code = section(engine, "    const args = ['--url', info.endpoint", '\n  } catch (error)');
   for (const stage of ['before', 'after']) {
     const attempt = {}, calls = [];
-    assert.throws(() => vm.runInNewContext(code, {
+    assert.throws(() => runObserved(code, {
       info: {}, opts: { manifest: 'manifest.json' }, path, attempt,
       save: value => Object.assign(attempt, value),
       cloneCheck: ([mode]) => { calls.push(mode); return mode === 'freeze' && ((stage === 'before' && calls.length === 1) || (stage === 'after' && calls.length === 3)) ? { ok: false } : { ok: true, c8: { plan: { sha256: 'plan' } } }; },
@@ -153,7 +153,7 @@ test('R3: invalid or changed current completed-tx gauges refuse on the first pol
     let snapshots = 0, clock = 0;
     const baseGauges = { jobsAvailable: 0, latestCompletedTxId: 100, latestProcessedMsgId: 200, latestSubmittedMsgId: 200, lagMsgId: 0, lastUploadTime: 1 };
     const rows = ['tx_assertions', 'tx_attempts', 'tx_claims', 'tx_meta', 'txs'].map(table => [table, 'l01-rc-b00', 1, 'live', 100, 10]);
-    const { settle } = vm.runInNewContext(stripTypeScriptTypes(section(checker, 'const blockNumber =', 'async function startCheck')) + ';({settle})', {
+    const { settle } = runObserved(stripTypeScriptTypes(section(checker, 'const blockNumber =', 'async function startCheck')) + ';({settle})', {
       Number, digest, blockTrieCoverage, num: v => v == null ? null : Number(v), log: () => {},
       Date: { now: () => clock }, sleep: async ms => { clock += ms; }, opt: (_name, fallback) => fallback, healthz: () => ({ status: 200 }),
       snapshot: async () => ++snapshots === 1 ? { listing: [], blocks: [], gauges: baseGauges, trie: { rows: [], sha256: digest([]) } } : {
@@ -172,7 +172,7 @@ test('R3: clone verification uses fresh post-fingerprint gauges and a final star
   for (const variation of ['clean', 'busy', 'end-changed']) {
     let gaugeCalls = 0, startCalls = 0;
     const record = { key:'key', copy:{treeSha256:'a'.repeat(64)}, manifest: { path: 'manifest.json' }, volume: 'golden', settle: { after: {} }, freeze };
-    const { verify } = vm.runInNewContext(stripTypeScriptTypes(section(checker, 'async function verify()', '\ntry {\n  if (mode')) + ';({verify})', {
+    const { verify } = runObserved(stripTypeScriptTypes(section(checker, 'async function verify()', '\ntry {\n  if (mode')) + ';({verify})', {
       path, REPO: root, url: 'offline', container: 'fixture', Date, compareFreeze,
       opt: name => name === 'golden-record' ? 'golden.json' : name === 'owner' ? 'owner.json' : undefined,
       readJson: file => file.includes('manifest') ? { result: { lastPosition: 42 } } : file.includes('owner') ? { volumeContent: { kind:'clone', key:'key', goldenVolume: 'golden', copy: { creationId:'copy', treeSha256:'a'.repeat(64), c1: { pass: true, expected:'a'.repeat(64), observed:'a'.repeat(64) } } } } : record,

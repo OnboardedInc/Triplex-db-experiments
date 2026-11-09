@@ -1,0 +1,164 @@
+{
+  "at": "2026-11-09T00:40:56.581Z",
+  "head": "1c10c826961f1fcc6278c11b343b6514528ec522",
+  "offlineOnly": true,
+  "hostDisk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 2981467,
+    "bavail": 2981467,
+    "files": 131029441,
+    "ffree": 119258680
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/bin/engine.mjs": "37667fcc292405508199afc80dbc1a0d0ff243050fb6efdbe3cc6f217f0ad2c5",
+    "lab/bin/owner-state.mjs": "485aff6227951888ca339e3c2ac31286786ddd1fd7c1d9e17b759f67b319168b",
+    "lab/bin/xtdb-log.mjs": "2b163f9edcce419c1a0bf3b7be33c0151b22730ddf7c437fe81a2a84f56d5f08",
+    "lab/bench/clone-check.ts": "9d2686059f6766671f4bd1d8b22908eb594e54a3720bd01b435acc521af3783f",
+    "lab/bench/lib/clone.ts": "9bb4f359f64c1ff2e0323d562316db4cf1e99afe9e2d5accce675915fe252772",
+    "lab/bench/lib/bulk.ts": "8ec75c9eee07e6d0aa665cbe809aad06247db55bc9d4c7c4e5b46b80cee1dbee",
+    "lab/experiments/EXP-K01-seed-clone/round2-live.mjs": "8ef4c33f8e2288b5418cdffadd5922f37cb095839bf5792e5c38e158e9e76dde",
+    "lab/verify/K01/freshness.test.mjs": "7e7ec0f90682fb276dbdab441aab3b889b08d45d3a491ed038942eebd017f83d",
+    "lab/verify/K01/round4.test.mjs": "3dfd63d60e4496fa02f60fdc7c15cf98718fe53b3df912f1292bbdd13eb6613c",
+    "lab/verify/K01/tail-fixtures.mjs": "29bec6c80a2330c88e5539e20517f96e5471a6aeb6e691cf22f7cc03fd512abd",
+    "lab/verify/K01/run-round6.mjs": "09a225da4142921d14ff0a9bbbfb10848a1e89bf25ed5a727d3ae914f58907f0",
+    "lab/bin/lib.mjs": "5e2564314423ad4b17343279cceb0603207744353d44a8fd9ad5635b30eea2fe",
+    "lab/bin/observation.ts": "cf7960182e9f7090162db4870178602cb96f8f7717993e2e01dc8e5bbac57d57",
+    "lab/verify/K01/observation-context.mjs": "652f0e8294315e9e0cb3241b249d78bd7ed46d8e6746539bfc72feb7d39fb351",
+    "lab/verify/K01/pass-audit-review.test.mjs": "7dc4985df47101c5f059c5df01e8cd865678116f2cde0fd354b72cac054ebeb9",
+    "lab/verify/K01/round6.test.mjs": "9fe8c464c48251e1f1da2d92def3d2af8428afcaed13d0502f9f9fbd9de27f13",
+    "lab/verify/K01/q83e-review.test.mjs": "2b4006dd7f2f3591cc6fb375fe60346b36f9db0be4bcf6e7e3df9b1867cfd19e",
+    "lab/verify/K01/round5.test.mjs": "de6aa4f7e8f844715d89f2e023fa1982c5b5eba57b7c6beb561232afd7aa18b6",
+    "lab/verify/K01/offline.test.mjs": "6f1b3e99b328bb583dfe3f334ef958a5223a18f139367bc23c20200315f414c6",
+    "lab/verify/K01/round3.test.mjs": "09351450380233a5ed637b435c626a0db6ae339161b0b5d5920378427978840a",
+    "lab/bench/test/clone.test.ts": "4a0fd68fe8c9c4d9582f0f331d156045e9d29252aa4346198d9d24ba4b7e9651"
+  },
+  "runs": [
+    {
+      "label": "baseline",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/clone.test.ts"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1150,
+      "sha256": "cb59ac6db0d863c7efe8b49eba2b56e5dacfcb99cbb51e02f6290acf7f01b198"
+    },
+    {
+      "label": "original-21",
+      "args": [
+        "--test",
+        "lab/verify/K01/offline.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 155,
+      "sha256": "6c2f14b3199cdeb7a290edf8e1c18d065b121606af34ce6f6353f1a464c043c2"
+    },
+    {
+      "label": "round3-23",
+      "args": [
+        "--test",
+        "lab/verify/K01/round3.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 127,
+      "sha256": "e5e058c306b8dde72399468a12a445fb92467ce4113c82e8a3da59801309b268"
+    },
+    {
+      "label": "freshness-14",
+      "args": [
+        "--test",
+        "lab/verify/K01/freshness.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 137,
+      "sha256": "dea4be62acfc9bcdaf5b349ce2330066f3fcd2e400f850653d01cdcf2b048607"
+    },
+    {
+      "label": "round4",
+      "args": [
+        "--test",
+        "lab/verify/K01/round4.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 521,
+      "sha256": "ecb5ba508bca9fc972590dc0ec5d7ea5c58d4503a13de94ef01924da896d7872"
+    },
+    {
+      "label": "reviewer-36",
+      "args": [
+        "--test",
+        "lab/verify/K01/q83e-review.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 395,
+      "sha256": "231e1beed9f71bbd8bba04e2884c4c4aedab951fc09dcb75a6eed5de93a5e71b"
+    },
+    {
+      "label": "round5",
+      "args": [
+        "--test",
+        "lab/verify/K01/round5.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 263,
+      "sha256": "96fb9de12da3fa0db85d18c048a8835a6f0b5ce553ad4da684a7f599cdbe7440"
+    },
+    {
+      "label": "reviewer-13",
+      "args": [
+        "--test",
+        "lab/verify/K01/pass-audit-review.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 3081,
+      "sha256": "6ef7aaf2f23923a5e77d2d32ed6ffcc472f5092559c2e378cfd4d12c8e168d38"
+    },
+    {
+      "label": "round6",
+      "args": [
+        "--test",
+        "lab/verify/K01/round6.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 2038,
+      "sha256": "eb42dadd50382b340c2617dc5ec9940d6bf7459a9455b211aa9dbe9403f4fe1d"
+    },
+    {
+      "label": "types",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1368,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

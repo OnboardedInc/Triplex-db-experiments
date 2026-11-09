@@ -1,0 +1,244 @@
+TAP version 13
+# Subtest: failed observation cannot unwrap (throws)
+ok 1 - failed observation cannot unwrap (throws)
+  ---
+  duration_ms: 2.047625
+  type: 'test'
+  ...
+# Subtest: failed observation cannot unwrap (missing)
+ok 2 - failed observation cannot unwrap (missing)
+  ---
+  duration_ms: 0.196125
+  type: 'test'
+  ...
+# Subtest: failed observation cannot unwrap (partial-number)
+ok 3 - failed observation cannot unwrap (partial-number)
+  ---
+  duration_ms: 0.072583
+  type: 'test'
+  ...
+# Subtest: failed observation cannot unwrap (invalid-hash-bytes)
+ok 4 - failed observation cannot unwrap (invalid-hash-bytes)
+  ---
+  duration_ms: 0.066958
+  type: 'test'
+  ...
+# Subtest: failed observation cannot unwrap (stop-proof)
+ok 5 - failed observation cannot unwrap (stop-proof)
+  ---
+  duration_ms: 0.1825
+  type: 'test'
+  ...
+# Subtest: failed observation cannot unwrap (missing-sql)
+ok 6 - failed observation cannot unwrap (missing-sql)
+  ---
+  duration_ms: 0.080667
+  type: 'test'
+  ...
+# Subtest: failed observation cannot unwrap (bad-sql)
+ok 7 - failed observation cannot unwrap (bad-sql)
+  ---
+  duration_ms: 0.099041
+  type: 'test'
+  ...
+# Subtest: failed observation cannot unwrap (no-parser-value)
+ok 8 - failed observation cannot unwrap (no-parser-value)
+  ---
+  duration_ms: 0.05375
+  type: 'test'
+  ...
+# Subtest: process acquisition refuses exit
+ok 9 - process acquisition refuses exit
+  ---
+  duration_ms: 0.403541
+  type: 'test'
+  ...
+# Subtest: process acquisition refuses signal
+ok 10 - process acquisition refuses signal
+  ---
+  duration_ms: 0.312917
+  type: 'test'
+  ...
+# Subtest: process acquisition refuses error
+ok 11 - process acquisition refuses error
+  ---
+  duration_ms: 0.1115
+  type: 'test'
+  ...
+# Subtest: process acquisition refuses stdout
+ok 12 - process acquisition refuses stdout
+  ---
+  duration_ms: 0.04575
+  type: 'test'
+  ...
+# Subtest: process acquisition refuses stderr
+ok 13 - process acquisition refuses stderr
+  ---
+  duration_ms: 0.035875
+  type: 'test'
+  ...
+# Subtest: process acquisition refuses diagnostic
+ok 14 - process acquisition refuses diagnostic
+  ---
+  duration_ms: 0.036542
+  type: 'test'
+  ...
+# Subtest: async acquisition failure and valid empty results remain distinct
+ok 15 - async acquisition failure and valid empty results remain distinct
+  ---
+  duration_ms: 0.4025
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid request-memory
+ok 16 - resource validation refuses missing/invalid request-memory
+  ---
+  duration_ms: 0.210958
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid request-disk
+ok 17 - resource validation refuses missing/invalid request-disk
+  ---
+  duration_ms: 0.040708
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid reservation-memory
+ok 18 - resource validation refuses missing/invalid reservation-memory
+  ---
+  duration_ms: 0.044583
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid reservation-disk
+ok 19 - resource validation refuses missing/invalid reservation-disk
+  ---
+  duration_ms: 0.037334
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid VM-cap
+ok 20 - resource validation refuses missing/invalid VM-cap
+  ---
+  duration_ms: 0.033792
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid pool-cap
+ok 21 - resource validation refuses missing/invalid pool-cap
+  ---
+  duration_ms: 0.036458
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid external-cap
+ok 22 - resource validation refuses missing/invalid external-cap
+  ---
+  duration_ms: 0.036084
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v 100 10 90 10% /)
+ok 23 - VM disk parser requires complete sane bytes (/dev/v 100 10 90 10% /)
+  ---
+  duration_ms: 0.145792
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v NaN 10 90 10% /)
+ok 24 - VM disk parser requires complete sane bytes (/dev/v NaN 10 90 10% /)
+  ---
+  duration_ms: 0.04225
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v 100 -1 90 10% /)
+ok 25 - VM disk parser requires complete sane bytes (/dev/v 100 -1 90 10% /)
+  ---
+  duration_ms: 0.026167
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v 100 10 100 10% /)
+ok 26 - VM disk parser requires complete sane bytes (/dev/v 100 10 100 10% /)
+  ---
+  duration_ms: 0.027833
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (undefined)
+ok 27 - VM disk parser requires complete sane bytes (undefined)
+  ---
+  duration_ms: 0.026625
+  type: 'test'
+  ...
+# Subtest: listing parser refuses incomplete framing "@@end"
+ok 28 - listing parser refuses incomplete framing "@@end"
+  ---
+  duration_ms: 0.119083
+  type: 'test'
+  ...
+# Subtest: listing parser refuses incomplete framing "@@stat\\n@@end"
+ok 29 - listing parser refuses incomplete framing "@@stat\\n@@end"
+  ---
+  duration_ms: 0.02825
+  type: 'test'
+  ...
+# Subtest: listing parser refuses incomplete framing "@@sha\\n@@stat\\n@@end"
+ok 30 - listing parser refuses incomplete framing "@@sha\\n@@stat\\n@@end"
+  ---
+  duration_ms: 0.026417
+  type: 'test'
+  ...
+# Subtest: listing parser refuses incomplete framing "@@stat\\n@@sha\\n@@end\\nunexpected"
+ok 31 - listing parser refuses incomplete framing "@@stat\\n@@sha\\n@@end\\nunexpected"
+  ---
+  duration_ms: 0.02625
+  type: 'test'
+  ...
+# Subtest: missing stop OOM read is failed proof
+ok 32 - missing stop OOM read is failed proof
+  ---
+  duration_ms: 0.118
+  type: 'test'
+  ...
+# Subtest: real command facade keeps read failures distinct (absent)
+ok 33 - real command facade keeps read failures distinct (absent)
+  ---
+  duration_ms: 298.186083
+  type: 'test'
+  ...
+# Subtest: real command facade keeps read failures distinct (read-failed)
+ok 34 - real command facade keeps read failures distinct (read-failed)
+  ---
+  duration_ms: 230.933625
+  type: 'test'
+  ...
+# Subtest: real command facade keeps read failures distinct (inspect-failed)
+ok 35 - real command facade keeps read failures distinct (inspect-failed)
+  ---
+  duration_ms: 272.186958
+  type: 'test'
+  ...
+# Subtest: real command facade keeps read failures distinct (inspect-malformed)
+ok 36 - real command facade keeps read failures distinct (inspect-malformed)
+  ---
+  duration_ms: 265.947958
+  type: 'test'
+  ...
+# Subtest: real command facade keeps read failures distinct (helper-stderr)
+ok 37 - real command facade keeps read failures distinct (helper-stderr)
+  ---
+  duration_ms: 240.916166
+  type: 'test'
+  ...
+# Subtest: real command facade keeps read failures distinct (legacy-allowFail)
+ok 38 - real command facade keeps read failures distinct (legacy-allowFail)
+  ---
+  duration_ms: 230.407583
+  type: 'test'
+  ...
+# Subtest: listing producer does not hide sort failure
+ok 39 - listing producer does not hide sort failure
+  ---
+  duration_ms: 353.507
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 39
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2007.8835

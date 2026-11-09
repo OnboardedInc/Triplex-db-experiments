@@ -1,0 +1,300 @@
+{
+  "note": "Search aid for manual producer-to-consumer trace; not a proof of exhaustive coverage. Includes shared dependencies and diagnostic flags beyond the builder table.",
+  "matches": [
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 166,
+      "text": "if (!c?.State.Running) return { ok: false, why: `container ${c ? c.State.Status : 'absent'}` };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 170,
+      "text": "if (info.role === 'follower' || health !== 'healthy' || !open) return { ok: health === 'healthy' && open, why: `health=${health} pgwire=${open ? 'open' : 'closed'}` };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 172,
+      "text": "return { ok: started.status === 200, why: `health=${health} pgwire=open started=${started.status ?? 'exec-failed'}${started.status === 200 ? '' : ` ${started.body.slice(0, 120)}`}` };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 177,
+      "text": "return { ok: response.ok, why: `sparql HTTP ${response.status}` };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 178,
+      "text": "} catch (error) { return { ok: false, why: `sparql ${error.cause?.code ?? error.message}` }; }"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 350,
+      "text": "// [EXP-K01-R5] Why: revocation must precede physical teardown, including its pool-lock wait. Rejected: releasing only after removal (an in-flight verifier can publish PASS for the gone container)."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 523,
+      "text": "return { ok: valid && afterBytes >= floorBytes, freeBytes, copyBytes, afterBytes, floorBytes,"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 546,
+      "text": "return { ok: reasons.length === 0, componentLines, stoppedLine: stoppedLine?.trim().slice(0, 300) ?? null, exitCode, oomKilled: !!oomKilled, reasons };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 591,
+      "text": "catch (error) { maintenance = { ok: false, error: error.message, frontiers }; }"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 592,
+      "text": "return { ok: maintenance.ok && canonicalJson(blocks) === canonicalJson(expected.listing), maintenance, sourceTailBase64, tails: tails.trim().split('\\n'), blocks, expected: expected.listing, raw };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 630,
+      "text": "return { changed, added, removed, changedOutsideLogs, storageImmutable: changedOutsideLogs.length === 0 && removed.length === 0 };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 765,
+      "text": "settled.qualified = true; settled.proofStage = 'STOPPED_TAIL_VERIFIED'; settled.tailProof = offline.maintenance;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 829,
+      "text": "copy: { sourceBytes, goldenBytes, files: dst.count, fileBytes: dst.bytes, treeSha256: dst.treeSha256, logSha256: pick('./log/LOG'), replicaLogSha256: pick('./log/REPLICA_LOG'), filesFile: path.relative(REPO, filesFile), filesSha256: sha256File(filesFile), sourceMatches: true },"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 851,
+      "text": "/** One-cut sacrificial copy for R30 T3/T6, never a qualified golden or screening source. */"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 895,
+      "text": "save({ t6PlanChanged: attempt.beforeWrite.c8?.plan?.sha256 !== attempt.afterWrite.c8?.plan?.sha256 });"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 901,
+      "text": "save({ snapshotRemoved: !docker(['volume', 'inspect', volume], { allowFail: true }), removalOutput: removed });"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 909,
+      "text": "// [EXP-K01-R4] Why: persisted flags cannot substitute for the stopped bytes or their current frontier binding. Rejected: trusting qualified:true after the tail or snapshot has changed."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 911,
+      "text": "if (!record.settle?.qualified || !frontiers || canonicalJson(frontiers) !== canonicalJson(after?.frontiers) ||"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 913,
+      "text": "fail('REFUSED', 'golden has no qualified stopped-tail F/M/T evidence');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 962,
+      "text": "copy.c1 = { pass: listing.treeSha256 === record.copy.treeSha256, expected: record.copy.treeSha256, observed: listing.treeSha256, files: listing.count, expectedFiles: record.copy.files };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 984,
+      "text": "process.stderr.write(`[lab] ${info.container} cloned from ${record.volume}: copy ${copy.copyS.toFixed(1)} s, C1 PASS (${copy.files} files), docker run to /healthz/started ${owner.volumeContent.timings.runToStartedS.toFixed(1)} s\\n`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 989,
+      "text": "/** C2-C8 on a cloned slot against its golden's freeze record; the verdict lands in owner.json (the driver requires PASS). */"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 999,
+      "text": "// [EXP-K01-R3] Why: every new verification revokes admission before fallible checks. Rejected: retaining a previous PASS until the new process returns (an exception leaves stale admission usable)."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1016,
+      "text": "if (!['PASS', 'FAIL'].includes(verdict.verdict) || !['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'].every(k => typeof verdict.checks?.[k]?.pass === 'boolean') ||"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1017,
+      "text": "(verdict.verdict === 'PASS' && Object.values(verdict.checks).some(check => check.pass !== true))) throw new Error('incomplete or inconsistent verification verdict');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1038,
+      "text": "// [EXP-K01-R3] Why: only this attempt may replace its readiness, including a failed PASS publication. Rejected: overwriting a newer attempt or resurrecting the historical PASS after an error."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1049,
+      "text": "if (result.verdict !== 'PASS') fail('ENGINE', `${info.container} is not ready: ${Object.entries(result.checks).filter(([, v]) => !v.pass).map(([k]) => k).join(', ')} failed (Q74d)`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1129,
+      "text": "const checks = rows.map(row => ({ ...row, pass: row.status === 'ok' && (TOOLCHECK_EXPECT[row.name]?.(row.output) ?? true) }));"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1131,
+      "text": "const result = { image: config.lanes.xtdb.image, at: now(), pass: missing.length === 0 && checks.every(c => c.pass), missing, checks };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 14,
+      "text": "*         C3-C8 compared with the golden's freeze record. verdict PASS only if all eight pass."
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 106,
+      "text": "return { settled: false, reason: \"initial completed transaction gauge is missing or invalid\", before, phases };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 111,
+      "text": "if (finishBlock.status !== 200) return { settled: false, reason: `finish-block #${phase} failed`, before, phases };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 134,
+      "text": "return { settled: false, reason: `current completed transaction ${g.latestCompletedTxId} differs from frozen seed ${before.gauges.latestCompletedTxId} or is invalid`, before, phases };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 137,
+      "text": "if (!evidence.after) return { settled: false, reason: `finish-block #${phase} evidence did not settle`, before, phases };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 140,
+      "text": "return { settled: true, qualified: false, proofStage: \"AWAITING_STOPPED_TAIL\", frontiers: (previous as any).frontiers, waitedS: (Date.now() - started) / 1000, before, phases, after: previous };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 151,
+      "text": "if (!success(initial) || !identity || !Number.isFinite(Date.parse(identity))) return { ok: false, reason: \"current startup inspect failed or returned invalid identity\", proofReads, polls: [] };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 163,
+      "text": "return { ok: success(out) && success(final) && final.stdout.trim() === identity && started.status === 200 && resume !== null && Number(resume) === expectedMsgId && polls.every(p =>"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 232,
+      "text": "return { ok: errors.length === 0, at: new Date().toISOString(), url, container, scopeKey, c3, c4, c5, c6, c7, c8, timingsMs: timings, errors };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 244,
+      "text": "// [EXP-K01-R5] Why: a current certificate can still contain contradictory hashes. Rejected: recertifying the old C1 PASS bit without comparing its exact pre-start tree evidence."
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 247,
+      "text": "pass: content?.kind === \"clone\" && content.goldenVolume === record.volume && content.key === record.key &&"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 254,
+      "text": "checks[\"C2\"] = { pass: started.status === 200 && alive.status === 200, observed: { started, alive }, expected: { started: 200, alive: 200 } };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 267,
+      "text": "if (!obs.ok) for (const k of [\"C3\", \"C4\", \"C5\", \"C6\", \"C7\", \"C8\"]) if (obs.errors.some((e) => e.startsWith(k.toLowerCase()))) checks[k] = { ...checks[k]!, pass: false, note: `${checks[k]!.note}; error: ${obs.errors.find((e) => e.startsWith(k.toLowerCase()))}` };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 268,
+      "text": "const verdict = Object.values(checks).every((c) => c.pass) ? \"PASS\" : \"FAIL\";"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 41,
+      "text": "export interface Check { pass: boolean; expected?: unknown; observed?: unknown; note?: string; ms?: number }"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 52,
+      "text": "pass: !!freeze.c3 && !!obs.c3 && eq(freeze.c3, obs.c3),"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 57,
+      "text": "pass: positionOk && eq(freeze.c4, obs.c4),"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 61,
+      "text": "out[\"C5\"] = { pass: !!freeze.c5 && !!obs.c5 && eq(freeze.c5, obs.c5), expected: freeze.c5, observed: obs.c5, note: \"history row counts over all system and valid time, distinct tx system times\" };"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 63,
+      "text": "pass: typeof freeze.c6?.sha256 === \"string\" && freeze.c6.sha256.length > 0 && freeze.c6.sha256 === obs.c6?.sha256 && eq(freeze.c6?.liveTables?.rows ?? [], obs.c6?.liveTables?.rows ?? []),"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 69,
+      "text": "out[\"C7\"] = { pass: polls.length >= 3 && polls.every((v) => v === 0), expected: [0, 0, 0], observed: polls, note: \"compactor.jobs.available, three readings 5 s apart\" };"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 71,
+      "text": "pass: typeof freeze.c8?.resultSha256 === \"string\" && freeze.c8.resultSha256.length > 0 && typeof freeze.c8?.plan?.sha256 === \"string\" && freeze.c8.plan.sha256.length > 0 && freeze.c8.resultSha256 === obs.c8?.resultSha256 && freeze.c8.plan.sha256 === obs.c8?.plan?.sha256,"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 21,
+      "text": "seededSubjects: m.result.seededSubjects, complete: m.result.complete, commands: m.result.commands, assertions: m.result.assertions, retractions: 0,"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 33,
+      "text": "*                record that engine.mjs clone writes names a golden of this manifest and a PASS readiness verdict),"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 35,
+      "text": "* A clone of another manifest's golden, or one whose readiness is not PASS, throws: such a run must not start."
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 50,
+      "text": "if (c.readiness?.verdict !== \"PASS\" || c.copy?.c1?.pass !== true || !/^[0-9a-f]{64}$/.test(c.copy?.treeSha256 ?? \"\") || c.copy.c1.expected !== c.copy.treeSha256 || c.copy.c1.observed !== c.copy.treeSha256 || !c.copy.creationId || c.readiness.certificateSha256 !== cloneCertificateHash(c) || c.readiness.verifiedContainerId !== c.containerId || c.readiness.verifiedStartedAt !== c.startedAt)"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 95,
+      "text": "return { ok: true, frontiers: { F, M, T }, sourceTailSha256: sha(bytes), bytes: bytes.length, maintenanceMessages: frames.length - 1, frames };"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 254,
+      "text": "if (others.length === 0 || readOnly) return { ok: true, others, readOnly };"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 256,
+      "text": "ok: false, others, readOnly,"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 286,
+      "text": "return { ok: reasons.length === 0, reasons };"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 339,
+      "text": "return { ok: reasons.length === 0, reasons, memUsed, memAfter, diskForecast, diskAfter, external, holders };"
+    }
+  ]
+}

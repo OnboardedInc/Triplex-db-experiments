@@ -1,0 +1,39 @@
+{
+  "holder": "fixture-holder",
+  "volumeContent": {
+    "kind": "clone",
+    "key": "key",
+    "containerId": "container",
+    "startedAt": "2000-01-01T00:00:00Z",
+    "goldenRecord": "golden.json",
+    "goldenRecordSha256": "golden-hash",
+    "goldenVolume": "golden",
+    "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+    "copy": {
+      "creationId": "copy-id",
+      "treeSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "c1": {
+        "pass": true,
+        "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "observed": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      }
+    },
+    "readiness": {
+      "verdict": "PASS",
+      "attemptId": "s1-1794184580003-2cdfb8edfde88",
+      "at": "2026-11-09T00:36:20.010Z",
+      "checksS": 0.007,
+      "file": "runs/xtdb-clone/s1-1794184580003-2cdfb8edfde88.json",
+      "sha256": "f8a438ce8c38d734c4c62893a0b7c7e7718a7bc894e1b5e15261d2f211c5a0b3",
+      "certificateSha256": "288610b3650ecc63eed0891d3948b69e3f47b00cc4bfffd83176a122918b6952",
+      "verifiedContainerId": "container",
+      "verifiedStartedAt": "2000-01-01T00:00:00Z",
+      "failed": []
+    },
+    "verificationHistory": [
+      {
+        "verdict": "PENDING"
+      }
+    ]
+  }
+}

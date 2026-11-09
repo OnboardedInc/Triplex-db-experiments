@@ -1,0 +1,1622 @@
+{
+  "offlineOnly": true,
+  "mechanism": "Schema-derived framed bytes; actual source functions with injected engine/process responses; real owner-state locks and local owner files for the down interleaving.",
+  "results": [
+    {
+      "name": "valid-tail",
+      "observed": {
+        "cutHex": "030a021000",
+        "maintenanceHex": "03120410061800",
+        "proof": {
+          "ok": true,
+          "frontiers": {
+            "F": 201,
+            "M": 255,
+            "T": 100
+          },
+          "sourceTailSha256": "b5481c2c2f10c2c7511ff0d8603ddb8c9c41c230a2bc02cc524330015d43df9f",
+          "bytes": 82,
+          "maintenanceMessages": 2,
+          "frames": [
+            {
+              "id": 201,
+              "kind": "FlushBlock",
+              "cutIndex": 0,
+              "bytes": 26,
+              "sha256": "c66df3057e8efff3e59ad3c870c5a1eddfe1b62f5a6b93ef70ec61e8fc8e2cc8"
+            },
+            {
+              "id": 227,
+              "kind": "TriesAdded",
+              "bytes": 28,
+              "sha256": "3e55559afc3aa0ac7966cd0842261a596494d82c5160433b69b52d83087ee907"
+            },
+            {
+              "id": 255,
+              "kind": "TriesAdded",
+              "bytes": 28,
+              "sha256": "3e55559afc3aa0ac7966cd0842261a596494d82c5160433b69b52d83087ee907"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Tx-0",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 343,
+          "T": 100
+        },
+        "payloadHex": "0332080a01011a03555443",
+        "error": "non-maintenance Tx in (F,M]"
+      }
+    },
+    {
+      "name": "Tx-1",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 343,
+          "T": 100
+        },
+        "payloadHex": "0332080a01011a03555443",
+        "error": "non-maintenance Tx in (F,M]"
+      }
+    },
+    {
+      "name": "Tx-2",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 343,
+          "T": 100
+        },
+        "payloadHex": "0332080a01011a03555443",
+        "error": "non-maintenance Tx in (F,M]"
+      }
+    },
+    {
+      "name": "Tx-3",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 343,
+          "T": 100
+        },
+        "payloadHex": "0332080a01011a03555443",
+        "error": "non-maintenance Tx in (F,M]"
+      }
+    },
+    {
+      "name": "Tx-4",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 339,
+          "T": 100
+        },
+        "payloadHex": "0332080a01011a03555443",
+        "error": "non-maintenance Tx in (F,M]"
+      }
+    },
+    {
+      "name": "LegacyTx-0",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 334,
+          "T": 100
+        },
+        "payloadHex": "ff01",
+        "error": "non-maintenance Tx in (F,M]"
+      }
+    },
+    {
+      "name": "LegacyTx-1",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 334,
+          "T": 100
+        },
+        "payloadHex": "ff01",
+        "error": "non-maintenance Tx in (F,M]"
+      }
+    },
+    {
+      "name": "LegacyTx-2",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 334,
+          "T": 100
+        },
+        "payloadHex": "ff01",
+        "error": "non-maintenance Tx in (F,M]"
+      }
+    },
+    {
+      "name": "LegacyTx-3",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 334,
+          "T": 100
+        },
+        "payloadHex": "ff01",
+        "error": "non-maintenance Tx in (F,M]"
+      }
+    },
+    {
+      "name": "LegacyTx-4",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 339,
+          "T": 100
+        },
+        "payloadHex": "ff01",
+        "error": "non-maintenance Tx in (F,M]"
+      }
+    },
+    {
+      "name": "AttachDatabase-0",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 353,
+          "T": 100
+        },
+        "payloadHex": "031a120a0674656e616e7412080a00220038005001",
+        "error": "non-maintenance AttachDatabase in (F,M]"
+      }
+    },
+    {
+      "name": "AttachDatabase-1",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 353,
+          "T": 100
+        },
+        "payloadHex": "031a120a0674656e616e7412080a00220038005001",
+        "error": "non-maintenance AttachDatabase in (F,M]"
+      }
+    },
+    {
+      "name": "AttachDatabase-2",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 353,
+          "T": 100
+        },
+        "payloadHex": "031a120a0674656e616e7412080a00220038005001",
+        "error": "non-maintenance AttachDatabase in (F,M]"
+      }
+    },
+    {
+      "name": "AttachDatabase-3",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 353,
+          "T": 100
+        },
+        "payloadHex": "031a120a0674656e616e7412080a00220038005001",
+        "error": "non-maintenance AttachDatabase in (F,M]"
+      }
+    },
+    {
+      "name": "AttachDatabase-4",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 339,
+          "T": 100
+        },
+        "payloadHex": "031a120a0674656e616e7412080a00220038005001",
+        "error": "non-maintenance AttachDatabase in (F,M]"
+      }
+    },
+    {
+      "name": "DetachDatabase-0",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 343,
+          "T": 100
+        },
+        "payloadHex": "0322080a0674656e616e74",
+        "error": "non-maintenance DetachDatabase in (F,M]"
+      }
+    },
+    {
+      "name": "DetachDatabase-1",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 343,
+          "T": 100
+        },
+        "payloadHex": "0322080a0674656e616e74",
+        "error": "non-maintenance DetachDatabase in (F,M]"
+      }
+    },
+    {
+      "name": "DetachDatabase-2",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 343,
+          "T": 100
+        },
+        "payloadHex": "0322080a0674656e616e74",
+        "error": "non-maintenance DetachDatabase in (F,M]"
+      }
+    },
+    {
+      "name": "DetachDatabase-3",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 343,
+          "T": 100
+        },
+        "payloadHex": "0322080a0674656e616e74",
+        "error": "non-maintenance DetachDatabase in (F,M]"
+      }
+    },
+    {
+      "name": "DetachDatabase-4",
+      "observed": {
+        "frontiers": {
+          "F": 201,
+          "M": 339,
+          "T": 100
+        },
+        "payloadHex": "0322080a0674656e616e74",
+        "error": "non-maintenance DetachDatabase in (F,M]"
+      }
+    },
+    {
+      "name": "anchor-empty-body",
+      "observed": {
+        "anchorHex": "030a00",
+        "nativeCodecInference": "FlushBlock has no expected_block_idx presence; SourceMessage.parse returns null",
+        "error": "FlushBlock has no expected_block_idx"
+      }
+    },
+    {
+      "name": "anchor-unknown-field-1",
+      "observed": {
+        "anchorHex": "030a020800",
+        "nativeCodecInference": "FlushBlock has no expected_block_idx presence; SourceMessage.parse returns null",
+        "error": "unknown or duplicate FlushBlock field 1"
+      }
+    },
+    {
+      "name": "anchor-wrong-wire-for-field-2",
+      "observed": {
+        "anchorHex": "030a021200",
+        "nativeCodecInference": "FlushBlock has no expected_block_idx presence; SourceMessage.parse returns null",
+        "error": "invalid FlushBlock field wire type"
+      }
+    },
+    {
+      "name": "invalid-nested-metadata",
+      "observed": {
+        "payloadHex": "03120710060a03220100",
+        "nativeCodecInference": "TrieDetails.trie_metadata contains protobuf field tag zero",
+        "error": "invalid protobuf field"
+      }
+    },
+    {
+      "name": "independent-T-false",
+      "observed": {
+        "settled": true,
+        "qualified": false,
+        "proofStage": "AWAITING_STOPPED_TAIL",
+        "frontiers": {
+          "F": 201,
+          "M": 227,
+          "T": 100
+        },
+        "waitedS": 15,
+        "before": {
+          "listing": [],
+          "blocks": [],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 100,
+            "latestProcessedMsgId": 200,
+            "latestSubmittedMsgId": 200,
+            "lagMsgId": 0,
+            "lastUploadTime": 1
+          },
+          "trie": {
+            "rows": [],
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        },
+        "phases": [
+          {
+            "phase": 1,
+            "target": 0,
+            "finishBlock": {
+              "status": 200
+            },
+            "polls": [
+              {
+                "elapsedS": 5,
+                "listing": [
+                  "00"
+                ],
+                "blocks": [
+                  {
+                    "block_idx": "00",
+                    "tx_id": 100,
+                    "latest_processed_msg_id": 201
+                  }
+                ],
+                "gauges": {
+                  "jobsAvailable": 0,
+                  "latestCompletedTxId": 100,
+                  "latestProcessedMsgId": 227,
+                  "latestSubmittedMsgId": 227,
+                  "lagMsgId": 0,
+                  "lastUploadTime": 2
+                },
+                "trie": {
+                  "rows": [
+                    [
+                      "tx_assertions",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_attempts",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_claims",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_meta",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "txs",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ]
+                  ],
+                  "sha256": "438891ef82321bbb396aa5f797a28b5ace53215d2dfe9a2d021ff3b3ff6ff780"
+                },
+                "requiredTables": [
+                  "tx_assertions",
+                  "tx_attempts",
+                  "tx_claims",
+                  "tx_meta",
+                  "txs"
+                ],
+                "coverage": {
+                  "covered": true,
+                  "tables": [
+                    "tx_assertions",
+                    "tx_attempts",
+                    "tx_claims",
+                    "tx_meta",
+                    "txs"
+                  ],
+                  "missing": []
+                },
+                "ok": true,
+                "streak": 1
+              },
+              {
+                "elapsedS": 10,
+                "listing": [
+                  "00"
+                ],
+                "blocks": [
+                  {
+                    "block_idx": "00",
+                    "tx_id": 100,
+                    "latest_processed_msg_id": 201
+                  }
+                ],
+                "gauges": {
+                  "jobsAvailable": 0,
+                  "latestCompletedTxId": 100,
+                  "latestProcessedMsgId": 227,
+                  "latestSubmittedMsgId": 227,
+                  "lagMsgId": 0,
+                  "lastUploadTime": 2
+                },
+                "trie": {
+                  "rows": [
+                    [
+                      "tx_assertions",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_attempts",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_claims",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_meta",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "txs",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ]
+                  ],
+                  "sha256": "438891ef82321bbb396aa5f797a28b5ace53215d2dfe9a2d021ff3b3ff6ff780"
+                },
+                "requiredTables": [
+                  "tx_assertions",
+                  "tx_attempts",
+                  "tx_claims",
+                  "tx_meta",
+                  "txs"
+                ],
+                "coverage": {
+                  "covered": true,
+                  "tables": [
+                    "tx_assertions",
+                    "tx_attempts",
+                    "tx_claims",
+                    "tx_meta",
+                    "txs"
+                  ],
+                  "missing": []
+                },
+                "ok": true,
+                "streak": 2
+              },
+              {
+                "elapsedS": 15,
+                "listing": [
+                  "00"
+                ],
+                "blocks": [
+                  {
+                    "block_idx": "00",
+                    "tx_id": 100,
+                    "latest_processed_msg_id": 201
+                  }
+                ],
+                "gauges": {
+                  "jobsAvailable": 0,
+                  "latestCompletedTxId": 100,
+                  "latestProcessedMsgId": 227,
+                  "latestSubmittedMsgId": 227,
+                  "lagMsgId": 0,
+                  "lastUploadTime": 2
+                },
+                "trie": {
+                  "rows": [
+                    [
+                      "tx_assertions",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_attempts",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_claims",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_meta",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "txs",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ]
+                  ],
+                  "sha256": "438891ef82321bbb396aa5f797a28b5ace53215d2dfe9a2d021ff3b3ff6ff780"
+                },
+                "requiredTables": [
+                  "tx_assertions",
+                  "tx_attempts",
+                  "tx_claims",
+                  "tx_meta",
+                  "txs"
+                ],
+                "coverage": {
+                  "covered": true,
+                  "tables": [
+                    "tx_assertions",
+                    "tx_attempts",
+                    "tx_claims",
+                    "tx_meta",
+                    "txs"
+                  ],
+                  "missing": []
+                },
+                "ok": true,
+                "streak": 3
+              }
+            ],
+            "after": {
+              "listing": [
+                "00"
+              ],
+              "blocks": [
+                {
+                  "block_idx": "00",
+                  "tx_id": 100,
+                  "latest_processed_msg_id": 201
+                }
+              ],
+              "gauges": {
+                "jobsAvailable": 0,
+                "latestCompletedTxId": 100,
+                "latestProcessedMsgId": 227,
+                "latestSubmittedMsgId": 227,
+                "lagMsgId": 0,
+                "lastUploadTime": 2
+              },
+              "trie": {
+                "rows": [
+                  [
+                    "tx_assertions",
+                    "l01-rc-b00",
+                    1,
+                    "live",
+                    100,
+                    1
+                  ],
+                  [
+                    "tx_attempts",
+                    "l01-rc-b00",
+                    1,
+                    "live",
+                    100,
+                    1
+                  ],
+                  [
+                    "tx_claims",
+                    "l01-rc-b00",
+                    1,
+                    "live",
+                    100,
+                    1
+                  ],
+                  [
+                    "tx_meta",
+                    "l01-rc-b00",
+                    1,
+                    "live",
+                    100,
+                    1
+                  ],
+                  [
+                    "txs",
+                    "l01-rc-b00",
+                    1,
+                    "live",
+                    100,
+                    1
+                  ]
+                ],
+                "sha256": "438891ef82321bbb396aa5f797a28b5ace53215d2dfe9a2d021ff3b3ff6ff780"
+              },
+              "cutIndex": 0,
+              "frontiers": {
+                "F": 201,
+                "M": 227,
+                "T": 100
+              }
+            }
+          }
+        ],
+        "after": {
+          "listing": [
+            "00"
+          ],
+          "blocks": [
+            {
+              "block_idx": "00",
+              "tx_id": 100,
+              "latest_processed_msg_id": 201
+            }
+          ],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 100,
+            "latestProcessedMsgId": 227,
+            "latestSubmittedMsgId": 227,
+            "lagMsgId": 0,
+            "lastUploadTime": 2
+          },
+          "trie": {
+            "rows": [
+              [
+                "tx_assertions",
+                "l01-rc-b00",
+                1,
+                "live",
+                100,
+                1
+              ],
+              [
+                "tx_attempts",
+                "l01-rc-b00",
+                1,
+                "live",
+                100,
+                1
+              ],
+              [
+                "tx_claims",
+                "l01-rc-b00",
+                1,
+                "live",
+                100,
+                1
+              ],
+              [
+                "tx_meta",
+                "l01-rc-b00",
+                1,
+                "live",
+                100,
+                1
+              ],
+              [
+                "txs",
+                "l01-rc-b00",
+                1,
+                "live",
+                100,
+                1
+              ]
+            ],
+            "sha256": "438891ef82321bbb396aa5f797a28b5ace53215d2dfe9a2d021ff3b3ff6ff780"
+          },
+          "cutIndex": 0,
+          "frontiers": {
+            "F": 201,
+            "M": 227,
+            "T": 100
+          }
+        }
+      }
+    },
+    {
+      "name": "independent-T-true",
+      "observed": {
+        "settled": false,
+        "reason": "current completed transaction 101 differs from frozen seed 100 or is invalid",
+        "before": {
+          "listing": [],
+          "blocks": [],
+          "gauges": {
+            "jobsAvailable": 0,
+            "latestCompletedTxId": 100,
+            "latestProcessedMsgId": 200,
+            "latestSubmittedMsgId": 200,
+            "lagMsgId": 0,
+            "lastUploadTime": 1
+          },
+          "trie": {
+            "rows": [],
+            "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+          }
+        },
+        "phases": [
+          {
+            "phase": 1,
+            "target": 0,
+            "finishBlock": {
+              "status": 200
+            },
+            "polls": [
+              {
+                "elapsedS": 5,
+                "listing": [
+                  "00"
+                ],
+                "blocks": [
+                  {
+                    "block_idx": "00",
+                    "tx_id": 100,
+                    "latest_processed_msg_id": 201
+                  }
+                ],
+                "gauges": {
+                  "jobsAvailable": 0,
+                  "latestCompletedTxId": 101,
+                  "latestProcessedMsgId": 227,
+                  "latestSubmittedMsgId": 227,
+                  "lagMsgId": 0,
+                  "lastUploadTime": 2
+                },
+                "trie": {
+                  "rows": [
+                    [
+                      "tx_assertions",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_attempts",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_claims",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "tx_meta",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ],
+                    [
+                      "txs",
+                      "l01-rc-b00",
+                      1,
+                      "live",
+                      100,
+                      1
+                    ]
+                  ],
+                  "sha256": "438891ef82321bbb396aa5f797a28b5ace53215d2dfe9a2d021ff3b3ff6ff780"
+                },
+                "requiredTables": [
+                  "tx_assertions",
+                  "tx_attempts",
+                  "tx_claims",
+                  "tx_meta",
+                  "txs"
+                ],
+                "coverage": {
+                  "covered": true,
+                  "tables": [
+                    "tx_assertions",
+                    "tx_attempts",
+                    "tx_claims",
+                    "tx_meta",
+                    "txs"
+                  ],
+                  "missing": []
+                },
+                "ok": false,
+                "streak": 0
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "C1-clean",
+      "observed": {
+        "owner": {
+          "holder": "fixture-holder",
+          "volumeContent": {
+            "kind": "clone",
+            "key": "key",
+            "containerId": "container",
+            "startedAt": "2000-01-01T00:00:00Z",
+            "goldenRecord": "golden.json",
+            "goldenRecordSha256": "golden-hash",
+            "goldenVolume": "golden",
+            "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "copy": {
+              "creationId": "copy-id",
+              "treeSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "c1": {
+                "pass": true,
+                "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "observed": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            },
+            "readiness": {
+              "verdict": "PENDING"
+            }
+          }
+        },
+        "result": {
+          "format": "tx2-clone-readiness/1",
+          "verdict": "PASS",
+          "at": "2026-11-09T00:42:02.033Z",
+          "container": "container",
+          "url": "offline",
+          "golden": {
+            "volume": "golden",
+            "key": "key",
+            "record": "golden.json"
+          },
+          "checks": {
+            "C1": {
+              "pass": true,
+              "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "observed": {
+                "treeSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "c1": {
+                  "pass": true,
+                  "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "observed": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              },
+              "note": "the golden and this copy's immutable pre-start path/size/mode/owner/content tree SHA-256 must equal both C1 hashes; live appended logs are not rehashed"
+            },
+            "C2": {
+              "pass": true,
+              "observed": {
+                "started": {
+                  "status": 200
+                },
+                "alive": {
+                  "status": 200
+                },
+                "start": {
+                  "ok": true
+                },
+                "finish": {
+                  "ok": true
+                }
+              },
+              "expected": {
+                "started": 200,
+                "alive": 200
+              }
+            },
+            "C3": {
+              "pass": true,
+              "expected": {
+                "tx": 100
+              },
+              "observed": {
+                "tx": 100
+              },
+              "note": "latest completed tx per partition (SHOW LATEST_COMPLETED_TXS) and xt.txs count, min and max system time"
+            },
+            "C4": {
+              "pass": true,
+              "expected": {
+                "position": 42,
+                "manifestPosition": 42
+              },
+              "observed": {
+                "position": 42
+              },
+              "note": "Triplex position (equal to the manifest's last position) and current row counts of the scope"
+            },
+            "C5": {
+              "pass": true,
+              "expected": {
+                "n": 10
+              },
+              "observed": {
+                "n": 10
+              },
+              "note": "history row counts over all system and valid time, distinct tx system times"
+            },
+            "C6": {
+              "pass": true,
+              "expected": {
+                "sha256": "layout",
+                "liveTables": []
+              },
+              "observed": {
+                "sha256": "layout",
+                "liveTables": []
+              },
+              "note": "layout: xt.trie_stats, xt.block_files and xt.live_tables rows"
+            },
+            "C7": {
+              "pass": true,
+              "expected": [
+                0,
+                0,
+                0
+              ],
+              "observed": [
+                0,
+                0,
+                0
+              ],
+              "note": "compactor.jobs.available, three readings 5 s apart"
+            },
+            "C8": {
+              "pass": true,
+              "expected": {
+                "resultSha256": "result",
+                "planSha256": "plan"
+              },
+              "observed": {
+                "resultSha256": "result",
+                "planSha256": "plan"
+              },
+              "note": "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows"
+            }
+          },
+          "fingerprintMs": 0,
+          "timingsMs": {},
+          "errors": [],
+          "note": "C9 (probe latency) and C10 (content digest) are validation E1, not per-clone gates (R26 section 4)"
+        }
+      }
+    },
+    {
+      "name": "C1-different-observed",
+      "observed": {
+        "owner": {
+          "holder": "fixture-holder",
+          "volumeContent": {
+            "kind": "clone",
+            "key": "key",
+            "containerId": "container",
+            "startedAt": "2000-01-01T00:00:00Z",
+            "goldenRecord": "golden.json",
+            "goldenRecordSha256": "golden-hash",
+            "goldenVolume": "golden",
+            "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "copy": {
+              "creationId": "copy-id",
+              "treeSha256": "different-tree",
+              "c1": {
+                "pass": true,
+                "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "observed": "different-tree"
+              }
+            },
+            "readiness": {
+              "verdict": "PENDING"
+            }
+          }
+        },
+        "result": {
+          "format": "tx2-clone-readiness/1",
+          "verdict": "FAIL",
+          "at": "2026-11-09T00:42:02.034Z",
+          "container": "container",
+          "url": "offline",
+          "golden": {
+            "volume": "golden",
+            "key": "key",
+            "record": "golden.json"
+          },
+          "checks": {
+            "C1": {
+              "pass": false,
+              "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "observed": {
+                "treeSha256": "different-tree",
+                "c1": {
+                  "pass": true,
+                  "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                  "observed": "different-tree"
+                }
+              },
+              "note": "the golden and this copy's immutable pre-start path/size/mode/owner/content tree SHA-256 must equal both C1 hashes; live appended logs are not rehashed"
+            },
+            "C2": {
+              "pass": true,
+              "observed": {
+                "started": {
+                  "status": 200
+                },
+                "alive": {
+                  "status": 200
+                },
+                "start": {
+                  "ok": true
+                },
+                "finish": {
+                  "ok": true
+                }
+              },
+              "expected": {
+                "started": 200,
+                "alive": 200
+              }
+            },
+            "C3": {
+              "pass": true,
+              "expected": {
+                "tx": 100
+              },
+              "observed": {
+                "tx": 100
+              },
+              "note": "latest completed tx per partition (SHOW LATEST_COMPLETED_TXS) and xt.txs count, min and max system time"
+            },
+            "C4": {
+              "pass": true,
+              "expected": {
+                "position": 42,
+                "manifestPosition": 42
+              },
+              "observed": {
+                "position": 42
+              },
+              "note": "Triplex position (equal to the manifest's last position) and current row counts of the scope"
+            },
+            "C5": {
+              "pass": true,
+              "expected": {
+                "n": 10
+              },
+              "observed": {
+                "n": 10
+              },
+              "note": "history row counts over all system and valid time, distinct tx system times"
+            },
+            "C6": {
+              "pass": true,
+              "expected": {
+                "sha256": "layout",
+                "liveTables": []
+              },
+              "observed": {
+                "sha256": "layout",
+                "liveTables": []
+              },
+              "note": "layout: xt.trie_stats, xt.block_files and xt.live_tables rows"
+            },
+            "C7": {
+              "pass": true,
+              "expected": [
+                0,
+                0,
+                0
+              ],
+              "observed": [
+                0,
+                0,
+                0
+              ],
+              "note": "compactor.jobs.available, three readings 5 s apart"
+            },
+            "C8": {
+              "pass": true,
+              "expected": {
+                "resultSha256": "result",
+                "planSha256": "plan"
+              },
+              "observed": {
+                "resultSha256": "result",
+                "planSha256": "plan"
+              },
+              "note": "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows"
+            }
+          },
+          "fingerprintMs": 1,
+          "timingsMs": {},
+          "errors": [],
+          "note": "C9 (probe latency) and C10 (content digest) are validation E1, not per-clone gates (R26 section 4)"
+        }
+      }
+    },
+    {
+      "name": "C1-wrong-expected",
+      "observed": {
+        "owner": {
+          "holder": "fixture-holder",
+          "volumeContent": {
+            "kind": "clone",
+            "key": "key",
+            "containerId": "container",
+            "startedAt": "2000-01-01T00:00:00Z",
+            "goldenRecord": "golden.json",
+            "goldenRecordSha256": "golden-hash",
+            "goldenVolume": "golden",
+            "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "copy": {
+              "creationId": "copy-id",
+              "treeSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "c1": {
+                "pass": true,
+                "expected": "another-golden",
+                "observed": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            },
+            "readiness": {
+              "verdict": "PENDING"
+            }
+          }
+        },
+        "result": {
+          "format": "tx2-clone-readiness/1",
+          "verdict": "FAIL",
+          "at": "2026-11-09T00:42:02.034Z",
+          "container": "container",
+          "url": "offline",
+          "golden": {
+            "volume": "golden",
+            "key": "key",
+            "record": "golden.json"
+          },
+          "checks": {
+            "C1": {
+              "pass": false,
+              "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "observed": {
+                "treeSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "c1": {
+                  "pass": true,
+                  "expected": "another-golden",
+                  "observed": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                }
+              },
+              "note": "the golden and this copy's immutable pre-start path/size/mode/owner/content tree SHA-256 must equal both C1 hashes; live appended logs are not rehashed"
+            },
+            "C2": {
+              "pass": true,
+              "observed": {
+                "started": {
+                  "status": 200
+                },
+                "alive": {
+                  "status": 200
+                },
+                "start": {
+                  "ok": true
+                },
+                "finish": {
+                  "ok": true
+                }
+              },
+              "expected": {
+                "started": 200,
+                "alive": 200
+              }
+            },
+            "C3": {
+              "pass": true,
+              "expected": {
+                "tx": 100
+              },
+              "observed": {
+                "tx": 100
+              },
+              "note": "latest completed tx per partition (SHOW LATEST_COMPLETED_TXS) and xt.txs count, min and max system time"
+            },
+            "C4": {
+              "pass": true,
+              "expected": {
+                "position": 42,
+                "manifestPosition": 42
+              },
+              "observed": {
+                "position": 42
+              },
+              "note": "Triplex position (equal to the manifest's last position) and current row counts of the scope"
+            },
+            "C5": {
+              "pass": true,
+              "expected": {
+                "n": 10
+              },
+              "observed": {
+                "n": 10
+              },
+              "note": "history row counts over all system and valid time, distinct tx system times"
+            },
+            "C6": {
+              "pass": true,
+              "expected": {
+                "sha256": "layout",
+                "liveTables": []
+              },
+              "observed": {
+                "sha256": "layout",
+                "liveTables": []
+              },
+              "note": "layout: xt.trie_stats, xt.block_files and xt.live_tables rows"
+            },
+            "C7": {
+              "pass": true,
+              "expected": [
+                0,
+                0,
+                0
+              ],
+              "observed": [
+                0,
+                0,
+                0
+              ],
+              "note": "compactor.jobs.available, three readings 5 s apart"
+            },
+            "C8": {
+              "pass": true,
+              "expected": {
+                "resultSha256": "result",
+                "planSha256": "plan"
+              },
+              "observed": {
+                "resultSha256": "result",
+                "planSha256": "plan"
+              },
+              "note": "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows"
+            }
+          },
+          "fingerprintMs": 0,
+          "timingsMs": {},
+          "errors": [],
+          "note": "C9 (probe latency) and C10 (content digest) are validation E1, not per-clone gates (R26 section 4)"
+        }
+      }
+    },
+    {
+      "name": "C1-missing-hashes",
+      "observed": {
+        "owner": {
+          "holder": "fixture-holder",
+          "volumeContent": {
+            "kind": "clone",
+            "key": "key",
+            "containerId": "container",
+            "startedAt": "2000-01-01T00:00:00Z",
+            "goldenRecord": "golden.json",
+            "goldenRecordSha256": "golden-hash",
+            "goldenVolume": "golden",
+            "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "copy": {
+              "creationId": "copy-id",
+              "c1": {
+                "pass": true
+              }
+            },
+            "readiness": {
+              "verdict": "PENDING"
+            }
+          }
+        },
+        "result": {
+          "format": "tx2-clone-readiness/1",
+          "verdict": "FAIL",
+          "at": "2026-11-09T00:42:02.035Z",
+          "container": "container",
+          "url": "offline",
+          "golden": {
+            "volume": "golden",
+            "key": "key",
+            "record": "golden.json"
+          },
+          "checks": {
+            "C1": {
+              "pass": false,
+              "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "observed": {
+                "c1": {
+                  "pass": true
+                }
+              },
+              "note": "the golden and this copy's immutable pre-start path/size/mode/owner/content tree SHA-256 must equal both C1 hashes; live appended logs are not rehashed"
+            },
+            "C2": {
+              "pass": true,
+              "observed": {
+                "started": {
+                  "status": 200
+                },
+                "alive": {
+                  "status": 200
+                },
+                "start": {
+                  "ok": true
+                },
+                "finish": {
+                  "ok": true
+                }
+              },
+              "expected": {
+                "started": 200,
+                "alive": 200
+              }
+            },
+            "C3": {
+              "pass": true,
+              "expected": {
+                "tx": 100
+              },
+              "observed": {
+                "tx": 100
+              },
+              "note": "latest completed tx per partition (SHOW LATEST_COMPLETED_TXS) and xt.txs count, min and max system time"
+            },
+            "C4": {
+              "pass": true,
+              "expected": {
+                "position": 42,
+                "manifestPosition": 42
+              },
+              "observed": {
+                "position": 42
+              },
+              "note": "Triplex position (equal to the manifest's last position) and current row counts of the scope"
+            },
+            "C5": {
+              "pass": true,
+              "expected": {
+                "n": 10
+              },
+              "observed": {
+                "n": 10
+              },
+              "note": "history row counts over all system and valid time, distinct tx system times"
+            },
+            "C6": {
+              "pass": true,
+              "expected": {
+                "sha256": "layout",
+                "liveTables": []
+              },
+              "observed": {
+                "sha256": "layout",
+                "liveTables": []
+              },
+              "note": "layout: xt.trie_stats, xt.block_files and xt.live_tables rows"
+            },
+            "C7": {
+              "pass": true,
+              "expected": [
+                0,
+                0,
+                0
+              ],
+              "observed": [
+                0,
+                0,
+                0
+              ],
+              "note": "compactor.jobs.available, three readings 5 s apart"
+            },
+            "C8": {
+              "pass": true,
+              "expected": {
+                "resultSha256": "result",
+                "planSha256": "plan"
+              },
+              "observed": {
+                "resultSha256": "result",
+                "planSha256": "plan"
+              },
+              "note": "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows"
+            }
+          },
+          "fingerprintMs": 0,
+          "timingsMs": {},
+          "errors": [],
+          "note": "C9 (probe latency) and C10 (content digest) are validation E1, not per-clone gates (R26 section 4)"
+        }
+      }
+    },
+    {
+      "name": "down-race-false",
+      "observed": {
+        "published": {
+          "holder": "fixture-holder",
+          "volumeContent": {
+            "kind": "clone",
+            "key": "key",
+            "containerId": "container",
+            "startedAt": "2000-01-01T00:00:00Z",
+            "goldenRecord": "golden.json",
+            "goldenRecordSha256": "golden-hash",
+            "goldenVolume": "golden",
+            "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "copy": {
+              "creationId": "copy-id",
+              "treeSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "c1": {
+                "pass": true,
+                "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "observed": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            },
+            "readiness": {
+              "verdict": "PASS",
+              "attemptId": "s1-1794184922037-898d744962c41",
+              "at": "2026-11-09T00:42:02.048Z",
+              "checksS": 0.011,
+              "file": "runs/xtdb-clone/s1-1794184922037-898d744962c41.json",
+              "sha256": "607ec5867dedc22279c12134bffc70673beda2d002406b572ce7613dd9dc7f93",
+              "certificateSha256": "288610b3650ecc63eed0891d3948b69e3f47b00cc4bfffd83176a122918b6952",
+              "verifiedContainerId": "container",
+              "verifiedStartedAt": "2000-01-01T00:00:00Z",
+              "failed": []
+            },
+            "verificationHistory": [
+              {
+                "verdict": "PENDING"
+              }
+            ]
+          }
+        },
+        "admitted": true,
+        "running": true,
+        "containerPresent": true,
+        "events": []
+      }
+    },
+    {
+      "name": "down-race-true",
+      "observed": {
+        "published": {
+          "holder": "fixture-holder",
+          "volumeContent": {
+            "kind": "clone",
+            "key": "key",
+            "containerId": "container",
+            "startedAt": "2000-01-01T00:00:00Z",
+            "goldenRecord": "golden.json",
+            "goldenRecordSha256": "golden-hash",
+            "goldenVolume": "golden",
+            "manifestSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+            "copy": {
+              "creationId": "copy-id",
+              "treeSha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+              "c1": {
+                "pass": true,
+                "expected": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                "observed": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+              }
+            },
+            "readiness": {
+              "verdict": "STALE",
+              "reason": "down requested; current receipt revoked",
+              "at": "2026-11-09T00:42:02.066Z"
+            },
+            "verificationHistory": [
+              {
+                "verdict": "PENDING"
+              },
+              {
+                "verdict": "PENDING",
+                "attemptId": "s1-1794184922052-6e3d4e96bcb7e",
+                "at": "2026-11-09T00:42:02.052Z"
+              }
+            ]
+          },
+          "lifecycle": {
+            "state": "REMOVING",
+            "token": "a7c2a94f-79a7-48e1-82be-9c224fa226e3",
+            "at": "2026-11-09T00:42:02.066Z"
+          }
+        },
+        "admitted": false,
+        "running": false,
+        "containerPresent": false,
+        "events": [
+          "stop -t 30 container",
+          "rm -f container",
+          "ps -a --filter name=^container$ --format {{.ID}}",
+          "volume inspect fixture-volume",
+          "volume ls --filter name=^fixture-volume$ --format {{.Name}}",
+          "slot-released",
+          "down"
+        ],
+        "error": "verification superseded by another slot operation"
+      }
+    },
+    {
+      "name": "cleanup-uuid-true",
+      "observed": {
+        "commands": [
+          [
+            "volume",
+            "inspect",
+            "tx2-golden-xtdb-12345678"
+          ],
+          [
+            "volume",
+            "rm",
+            "tx2-golden-xtdb-12345678"
+          ],
+          [
+            "volume",
+            "ls",
+            "--filter",
+            "name=^tx2-golden-xtdb-12345678$",
+            "--format",
+            "{{.Name}}"
+          ]
+        ]
+      }
+    },
+    {
+      "name": "cleanup-uuid-false",
+      "observed": {
+        "commands": [
+          [
+            "volume",
+            "inspect",
+            "tx2-golden-xtdb-12345678"
+          ]
+        ],
+        "error": "golden does not belong to this creation receipt"
+      }
+    }
+  ]
+}

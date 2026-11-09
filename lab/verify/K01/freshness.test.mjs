@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import { runObserved } from './observation-context.mjs';
 import { stripTypeScriptTypes } from 'node:module';
 import { after, test } from 'node:test';
 import { createHash, randomUUID } from 'node:crypto';
@@ -24,7 +24,7 @@ function section(source, start, end) {
   assert.ok(a >= 0 && b > a);
   return source.slice(a, b);
 }
-const load = (source, name, context) => vm.runInNewContext(stripTypeScriptTypes(source) + `;({${name}})`, context)[name];
+const load = (source, name, context) => runObserved(stripTypeScriptTypes(source) + `;({${name}})`, context)[name];
 
 async function reverify(variation) {
   let owner = { holder: 'review-fixture', volumeContent: {
@@ -118,7 +118,7 @@ for (const stale of ['published-record', 'unpublished-attempt', 'none']) {
     const commands = [], writes = {};
     let error;
     try {
-      await vm.runInNewContext(`(async () => {${runner.slice(runner.indexOf('const root ='))}\n})()`, {
+      await runObserved(`(async () => {${runner.slice(runner.indexOf('const root ='))}\n})()`, {
         Date, path,
         process: { cwd: () => root, execPath: 'node', env: { TX2_K01_ATTEMPT: 'earlier-run' }, stderr: { write: () => {} } },
         POOL_FILE: () => 'pool.json', readJson: () => ({ retainedVolumes: [{ volume: 'tx2-xtdb-s1-data', holder: 'another-owner', note: 'retain' }] }),
@@ -163,7 +163,7 @@ for (const failed of [false, true]) {
     const stopOwner = {holder:'fixture'};
     const stopSlot = load(section(engine, 'async function stopSlot(config, info, opts)', '/**\n * Golden'), 'stopSlot', {
       Date, randomUUID, readOwner: () => ({ holder: 'fixture' }), updateOwner: async (_info, action) => action(stopOwner), requireHeldXtdbSlot: () => {},
-      inspect: () => ({ Id: 'container', Config: { Labels: { 'tx2.managed-by': 'lab/bin/engine.mjs' } }, State: { Running: ++inspections === 1, ExitCode: 143, StartedAt: '2000-01-01T00:00:00Z', FinishedAt: '2000-01-01T00:00:01Z' } }),
+      inspect: () => ({ Id: 'container', Config: { Labels: { 'tx2.managed-by': 'lab/bin/engine.mjs' } }, State: { Running: ++inspections === 1, ExitCode: 143, OOMKilled:false, StartedAt: '2000-01-01T00:00:00Z', FinishedAt: '2000-01-01T00:00:01Z' } }),
       docker: () => '', dockerArgs: args => args,
       spawnSync: () => ({ status: failed ? 1 : 0, stdout: 'Stopping node...\nNode stopped.\n', stderr: failed ? 'log stream failed' : '' }),
       stopVerdict,

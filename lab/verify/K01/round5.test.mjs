@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import { runObserved } from './observation-context.mjs';
 import { test } from 'node:test';
 import { randomUUID } from 'node:crypto';
 import { verifyMaintenanceTail } from '../../bin/xtdb-log.mjs';
@@ -51,13 +51,13 @@ for(const variant of ['same','new-generation','new-operation','new-holder'])test
  const {dir,info}=scratch(),expected={generation:'A',holder:'holder',createdAt:'old',lifecycle:{state:'REMOVING',token:'down-A'}};
  const current=structuredClone(expected);if(variant==='new-generation')current.generation='B';if(variant==='new-operation')current.lifecycle.token='down-B';if(variant==='new-holder')current.holder='other';fs.writeFileSync(info.ownerFile,JSON.stringify(current));
  const context={fs,ownerStateLock,readOwner:()=>JSON.parse(fs.readFileSync(info.ownerFile)),appendEvent:()=>{},fail:(_c,m)=>{throw Error(m);}};
- const release=vm.runInNewContext(section('async function releaseSlot(info, expectedOwner)','/**\n * hooks.prepareVolume')+';releaseSlot',context);
+ const release=runObserved(section('async function releaseSlot(info, expectedOwner)','/**\n * hooks.prepareVolume')+';releaseSlot',context);
  try{if(variant==='same'){await release(info,expected);assert.equal(fs.existsSync(info.ownerFile),false);}else{await assert.rejects(release(info,expected),/generation changed/);assert.deepEqual(JSON.parse(fs.readFileSync(info.ownerFile)),current);}}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 for(const failure of ['remove','absence-read','pool'])test(`failed teardown retains revoked receipts (${failure})`,async()=>{
  const {dir,info}=scratch();fs.writeFileSync(path.join(dir,'manifest.json'),'{}');fs.writeFileSync(info.ownerFile,JSON.stringify({holder:'holder',generation:'A',volumeContent:{kind:'clone',readiness:{verdict:'PASS',attemptId:'old'}}}));let removed=false;
  const context={fs,randomUUID,updateOwner,readOwner:()=>JSON.parse(fs.readFileSync(info.ownerFile)),defaultHolder:()=> 'holder',now:()=>new Date().toISOString(),inspect:()=>({Config:{Labels:{'tx2.managed-by':true}},State:{Running:true}}),docker:a=>{if(a[0]==='rm'){if(failure==='remove')throw Error('remove failed');removed=true;}if(a[0]==='ps'&&failure==='absence-read')throw Error('absence read failed');return '';},withPool:async()=>{throw Error('pool failed');},releaseSlot:()=>{throw Error('released invalid teardown');},fail:(_c,m)=>{throw Error(m);}};
- const down=vm.runInNewContext(section('async function down(config, info, opts)','/**\n * [EXP-X05] Start the slot')+';down',context);
+ const down=runObserved(section('async function down(config, info, opts)','/**\n * [EXP-X05] Start the slot')+';down',context);
  try{await assert.rejects(down({lanes:{xtdb:{}}},info,{}));const owner=JSON.parse(fs.readFileSync(info.ownerFile));assert.equal(owner.lifecycle.state,'REMOVING');assert.equal(owner.volumeContent.readiness.verdict,'STALE');assert.equal(owner.volumeContent.verificationHistory[0].verdict,'PASS');assert.equal(removed,failure!=='remove');assert.throws(()=>seedPathOf({format:'tx2-xtdb-seed/1',lane:'xtdb'},path.join(dir,'manifest.json'),info.ownerFile),/lifecycle revoked/);}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 const { diskFloorVerdict } = await import('../../bin/engine.mjs');
@@ -68,7 +68,7 @@ for(const variation of ['clean','changed','missing'])test(`golden receipt cannot
  const f=maintenanceFixture(),offline={ok:true,sourceTailBase64:f.bytes.toString('base64'),maintenance:verifyMaintenanceTail(f.bytes,f.frontiers,0)};
  const record={format:'golden',key:'key',keyInputs:{seedInputs:{},engine:{}},volume:'golden',creation:{creationId:'old'},manifest:{path:'manifest',sha256:'manifest-hash'},settle:{qualified:true,frontiers:f.frontiers,after:{frontiers:f.frontiers,cutIndex:0,blocks:[{block_idx:'00',tx_id:f.frontiers.T,latest_processed_msg_id:f.frontiers.F}],gauges:{latestCompletedTxId:f.frontiers.T,latestProcessedMsgId:f.frontiers.M,latestSubmittedMsgId:f.frontiers.M}}},offline,referenceOffline:offline};
  if(variation==='missing')delete record.creation;
- const load=vm.runInNewContext(section('function loadGolden(file)','/**\n * Clone')+';loadGolden',{
+ const load=runObserved(section('function loadGolden(file)','/**\n * Clone')+';loadGolden',{
   path,Buffer,readJson:()=>record,canonicalJson:JSON.stringify,verifyMaintenanceTail,GOLDEN_RECORD_FORMAT:'golden',goldenKey:()=>({key:'key'}),REPO:root,fs:{existsSync:()=>true},sha256File:()=> 'manifest-hash',docker:()=>JSON.stringify([{Labels:{'tx2.creation-id':variation==='changed'?'new':'old','tx2.seed-key':'key'}}]),fail:(_c,m)=>{throw Error(m);},
  });
  if(variation==='clean')assert.equal(load('golden.json').record.volume,'golden');else assert.throws(()=>load('golden.json'),/generation/);
@@ -82,11 +82,11 @@ for(const variation of ['clean','failed','superseded'])test(`restart lifecycle c
   if(variation==='superseded')await updateOwner(info,o=>{o.lifecycle={state:'REMOVING',token:'new'};return o;});
   return{why:'ready'};
  },fmtBytes:()=>'',exportsFor:()=>'',process:{stdout:{write:()=>{}},stderr:{write:()=>{}}},fail:(_c,m)=>{throw Error(m);}};
- const up=vm.runInNewContext(section('async function up(config, info, opts, hooks = {})','async function down(config, info, opts)')+';up',context);
+ const up=runObserved(section('async function up(config, info, opts, hooks = {})','async function down(config, info, opts)')+';up',context);
  try{if(variation==='clean')await up({},info,{});else await assert.rejects(up({},info,{}));const owner=read();assert.equal(owner.lifecycle.state,variation==='clean'?'RUNNING':variation==='failed'?'STARTING':'REMOVING');assert.equal(owner.volumeContent.readiness.verdict,'STALE');}finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 for(const variation of ['clean','exit','signal','error'])test(`engine readiness ignores partial successful HTTP text (${variation})`,()=>{
- const healthz=vm.runInNewContext(section('export function healthz(container, route','/**\n * Host-side readiness').replace('export function','function')+';healthz',{
+ const healthz=runObserved(section('export function healthz(container, route','/**\n * Host-side readiness').replace('export function','function')+';healthz',{
   dockerArgs:a=>a,spawnSync:()=>({status:variation==='exit'?1:0,signal:variation==='signal'?'SIGTERM':null,error:variation==='error'?Error('failed'):undefined,stdout:'started',stderr:'HTTP/1.1 200 OK'}),
  });
  assert.equal(healthz('fixture','/healthz/started').status,variation==='clean'?200:null);

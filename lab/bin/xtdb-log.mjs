@@ -69,6 +69,7 @@ function decodeSourceMessage(payload) {
   return { kind, ...(cutIndex === undefined ? {} : { cutIndex: Number(cutIndex) }) };
 }
 export const sourceMessageKind = payload => decodeSourceMessage(payload).kind;
+// [EXP-K01-R6] Why: Missing frontiers are replaced only for destructuring into invalid values that immediately refuse; missing schema tags/types also refuse rather than inventing message content. Rejected: converting a failed observation into successful content.
 export function verifyMaintenanceTail(bytes, frontiers, expectedCutIndex) {
   const { F, M, T } = frontiers ?? {};
   if (![F, M, T].every(v => Number.isSafeInteger(v) && v >= 0) || F > M) throw new Error('invalid F/M/T frontiers');

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import { runObserved } from './observation-context.mjs';
 import { stripTypeScriptTypes } from 'node:module';
 import { after, test } from 'node:test';
 import { blockTrieCoverage, cloneCertificateHash, canonical, compareFreeze, digest, sha256 } from '../../bench/lib/clone.ts';
@@ -22,7 +22,7 @@ const section = (file, start, end) => {
   return text.slice(from, to);
 };
 function load(code, names, context) {
-  return vm.runInNewContext(stripTypeScriptTypes(code) + `\n;({${names.join(',')}})`, context);
+  return runObserved(stripTypeScriptTypes(code) + `\n;({${names.join(',')}})`, context);
 }
 
 const tables = ['tx_assertions', 'tx_attempts', 'tx_claims', 'tx_meta', 'txs'];
@@ -238,7 +238,7 @@ test('F2: the live runner must stop after T1 returns an unclean-stop verdict eve
     },
   };
   let error;
-  try { await vm.runInNewContext(`(async () => {${code}\n})()`, context); } catch (caught) { error = caught.message; }
+  try { await runObserved(`(async () => {${code}\n})()`, context); } catch (caught) { error = caught.message; }
   record('runner-unclean-T1', { commands, error, retainedResults: Object.keys(writes).filter(name => name.endsWith('.result.json')) });
   assert.equal(commands.filter(c => c === 'up').length, 1, 'T1 refusal was ignored and T1-up was entered');
 });

@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import { runObserved } from './observation-context.mjs';
 import { stripTypeScriptTypes } from 'node:module';
 import { after, test } from 'node:test';
 import { createHash, randomUUID } from 'node:crypto';
@@ -21,7 +21,7 @@ function section(source, start, end) {
   assert.ok(a >= 0 && b > a);
   return source.slice(a, b);
 }
-const load = (source, name, context) => vm.runInNewContext(stripTypeScriptTypes(source) + `;({${name}})`, context)[name];
+const load = (source, name, context) => runObserved(stripTypeScriptTypes(source) + `;({${name}})`, context)[name];
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const v = value => {
   let n = BigInt.asUintN(64, BigInt(value)); const bytes = [];

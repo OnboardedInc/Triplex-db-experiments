@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import { runObserved } from './observation-context.mjs';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { after, test } from 'node:test';
@@ -40,10 +40,10 @@ for (const variant of ['removed', 'still-present', 'inspect-failed']) test(`sing
   const context = { fs, path, Date, listingScript, XTDB_UID: '20000:20000', requireHeldXtdbSlot: () => {}, requireRunningSlot: () => {},
     cloneCheck: args => args[0] === 'settle' ? { settled: true, after: {} } : {}, stopSlot: async () => ({ verdict: { ok: true } }), offlineCheck: () => ({ ok: true }), hostDisk: () => ({ freeBytes: 10 * 1024 ** 3 }), volumeBytes: () => 1, diskFloorVerdict,
     now: () => new Date().toISOString(), writeJson: (_file, value) => { receipt = structuredClone(value); },
-    docker: (args, options) => { calls.push({ args, options }); if (args[1] === 'create') { present = true; return 'created'; } if (args[1] === 'rm') { if (variant === 'removed') present = false; return variant === 'removed' ? 'removed' : null; } if (args[1] === 'inspect') return variant === 'inspect-failed' || !present ? null : '[{"Name":"fixture"}]'; throw Error('unexpected docker request'); },
+    docker: (args, options) => { calls.push({ args, options }); if (args[1] === 'create') { present = true; return 'created'; } if (args[1] === 'rm') { if (variant === 'removed') present = false; return variant === 'removed' ? 'removed' : null; } if (args[1] === 'ls') { if (variant === 'inspect-failed') throw Error('volume list read failed'); return present ? 'fixture' : ''; } if (args[1] === 'inspect') return variant === 'inspect-failed' || !present ? null : '[{"Name":"fixture"}]'; throw Error('unexpected docker request'); },
     helper: () => { throw Error('injected copy helper failure after snapshot creation'); }, fail: (_c, m) => { throw Error(m); },
   };
-  const probe = vm.runInNewContext(section('async function oneCutProbe(config, info, opts)', '/** Read and check a golden record') + ';oneCutProbe', context);
+  const probe = runObserved(section('async function oneCutProbe(config, info, opts)', '/** Read and check a golden record') + ';oneCutProbe', context);
   await assert.rejects(probe({}, info, { manifest: path.join(dir, 'manifest.json') }), /injected copy helper failure/);
   observations.push({ kind: 'singlecut-cleanup', variant, present, receipt, calls });
   assert.equal(receipt.snapshotRemoved, !present, 'a failed inspect cannot prove removal');
