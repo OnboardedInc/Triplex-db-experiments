@@ -546,3 +546,4 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 Continuing from lab/HANDOFF-2026-11-09.md section 5 (Sam's /goal). Launched 5 (load limit): Codex reviews CX-VQH1 (QH1 r4),
   CX-VHS01 (HS01 r3), CX-VOBS7 (OBS01 r15 live); Sonnet builders G03 round 7d (F5-F7) and EXP-P5N round 1 (branch exp/P5N-activation).
   Held: the P4N round 1 review, P4N (c'), contract 0.4.1 (needs G03 7c/7d and QH1 r4 accepted), G03 round 8.
+- 2026-11-09 QH1 round 4 review FIX-FIRST (CX-VQH1, verify/QH1 b260bf5d): broker and KV fixes verified (core 859, qlever 257, QH1 29, evaluator 108); F1 remains on the in-scope XTDB, Datomic and non-broker QLever adapters (offline reproductions). QH1 round 5 (same Sonnet builder) adds pullPosition to those three.
