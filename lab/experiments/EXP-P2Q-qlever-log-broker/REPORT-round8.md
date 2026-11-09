@@ -1,10 +1,10 @@
 # EXP-P2Q broker fix round 8 — CX-P2Q-R3
 
-Status: implementation complete; corrected source-bound gates pending. No integration verdict or promotion is claimed by this builder.
+Result: both round-8 findings are fixed. All nine corrected source-bound gates and the separately bound stored-log retirement readback pass. Broker remains default-off; independent integration acceptance is still open.
 
 North star: P1 exact named snapshots and the correctness floor for P2 read-after-commit. Authority: [SCOPE](../../SCOPE.md), [NORTH-STAR](../../NORTH-STAR.md), [TARGETS](../../TARGETS.md), and main-checkout rulings Q89c/Q89i. Read the complete supplied `VERIFY-round8.md`, source-binding/summary evidence and raw F1/F2 reproductions. The reviewer worktree and main checkout remain read-only.
 
-Base: `d14992e16c6a1eed7b3b01a8d9476c9358920597`, branch `exp/P2Q-qlever-log-broker`. Implementation/source head and measured results will be recorded below after the fresh run.
+Base: `d14992e16c6a1eed7b3b01a8d9476c9358920597`, branch `exp/P2Q-qlever-log-broker`. Initial implementation/source head: `edc735d875e4d7361df65eb7bc7ff5baa1e00ea7`. Corrected measured source: `3536d8da7ac33a7fa4ccdeb588edcfe379d60b1f`. The final measured gates below bind that exact source. The final report/evidence commit adds no product or test changes. The independently source-bound retirement reader and cleanup observer are committed with those artifacts.
 
 ## Changes and coverage
 
@@ -33,6 +33,8 @@ Every place introduced or invoked by this round that converts observations into 
 | `run-round8.py` accepted test gate | Requires exit 0, successful fresh Vitest JSON, zero failures, positive passed count, per-case allowed statuses and fixed expected pass/total counts; foundation/core controls allow no skips. Typecheck requires successful `--noEmit` and empty diagnostics. | Attempt directory creation refuses reuse; Vitest start time/result mtime must fall inside this invocation; each gate writes fresh outputs. | Hashes before/after every gate must match; exact heavy-slot path/owner/PID/label/hash must match before/after; receipt retains UUID, head, CWD, commands, inputs/engine URL, logs/result hashes and state directory. Exit 0 alone is insufficient. |
 | `summarize-round8.py` final acceptance summary | Revalidates all gate contents and hashes; independently compares raw before/after strings, exact future error fields and unique case coverage, common-policy invocations and live HTTP failures. Rejects missing, partial or failed cases. | Only the named fresh final attempt is read; receipt UUIDs must agree; gate intervals and per-gate artifacts are checked; preliminary artifacts are excluded from acceptance. | Source/dependency bytes must still match all final receipts; head/slot/UUID consistency and log/Vitest hashes are checked, plus declared case inputs/cuts and qlever-dev endpoint. Evidence manifest hashes all retained artifacts. |
 
+Additional supplemental decision site (audited before its commit): `readback-retirement-round8.py` accepts only after independently checking the stored segment/header/frame CRC chain, the original and later-retired journal position rows, the exact retired tuple and unchanged other fields, and all four full-page comparisons per client. Freshness requires the final retry UUID/state directory, log modification times inside the completed new-live gate, matching unique transaction IDs, and immutable source bytes reread after verification; output-directory reuse is refused. Binding retains copied input logs/hashes, exact source script hash before/after, current source head, input gate/case hashes, and a separately acquired actual heavy-slot owner before/after. This supplements the live test's successful write/drain observations with the actual persisted retirement content. It does not change or reclassify any original gate result.
+
 The report's eventual PASS wording is derived only from those validated final receipts and content readback, with denominators and skips stated. Exploratory unbound runs remain separate observations. No independent reviewer verdict is manufactured here.
 
 ## Gates and evidence
@@ -41,7 +43,39 @@ The report's eventual PASS wording is derived only from those validated final re
 
 Initial source-bound attempt at `edc735d875e4d7361df65eb7bc7ff5baa1e00ea7` is retained in `final/`. Actual tests passed: 802 earlier offline, 42 foundation, 224 package, 28 core, both typechecks, 7 new live and 14 earlier live. One newly authored mock journal control failed because its `tx:2048` identifier was correctly rejected by the real `_tx/[0-9A-Z]{26}` schema; the other 11 new offline cases passed. The initial receipt validator also accidentally enforced zero skips for every test gate, correctly refusing to accept the green suites that intentionally skip live cases offline. All receipts retain these exits/flags and unchanged source/slot proofs; none is relabeled as a final PASS.
 
-Correction: use valid branded fixture IDs, apply the zero-skip condition only to foundation/core and require exact pass/total denominators in every gate. Strengthen the inventory to assert the original required cut as well as common-check invocation. Journal index and receipt loads both bind the same cut, with added live full-byte comparisons after internal retirement of an owned journal metadata row. A Changeset records the core behavior correction; the private QLever package is excluded from its frontmatter. The fresh retry will have its own committed source head, output/state directories and heavy-slot binding. No edits occur during a pin window.
+Correction: use valid branded fixture IDs, apply the zero-skip condition only to foundation/core and require exact pass/total denominators in every gate. Strengthen the inventory to assert the original required cut as well as common-check invocation. Journal index and receipt loads both bind the same cut, with added live full-byte comparisons after internal retirement of an owned journal metadata row. A Changeset records the core behavior correction; the private QLever package is excluded from its frontmatter. The fresh retry uses committed head `3536d8da`, output/state directories distinct from the initial run and its own heavy-slot binding. No edits occur during a pin window.
+
+The corrected full command is:
+
+`env P2Q_ATTEMPT=retry P2Q_HEAVY_LABEL=CX-P2Q-R8-retry node lab/bin/heavy.mjs --label CX-P2Q-R8-retry -- python3 lab/experiments/EXP-P2Q-qlever-log-broker/run-round8.py`
+
+| Gate at `3536d8da` | Result | Receipts/logs under `evidence-round8/retry/` |
+| --- | --- | --- |
+| Existing offline HTTP/cause/code/basis matrices, rounds 4–7 | 802 passed; 14 live cases skipped | `earlier-offline.json`, `.log`, `-vitest.json` |
+| Copied round-8 reproductions and inventory/journal/staged controls | 12 passed; 6 live cases skipped | `new-offline.json`, `.log`, `-vitest.json` |
+| Durability/process/ACK/routing/feed/source-position/A0/native foundations, 60 routing seeds and full model outage scale | **42 passed** | `foundation.json`, `.log`, `-vitest.json` |
+| QLever package, including installed transport-code inventory | **224 passed**, 26 live cases skipped | `package.json`, `.log`, `-vitest.json` |
+| Focused core basis/KV store/query regressions | **28 passed** | `core-focused.json`, `.log`, `-vitest.json` |
+| QLever and core TypeScript | **both exit 0**, empty diagnostics | `qlever-typecheck.json`, `core-typecheck.json`, `.log` |
+| Round-8 real snapshot/journal payload and public future matrix, both clients | **7 passed**, 7 offline cases filtered | `new-live.json`, `.log`, `-vitest.json` |
+| Existing live HTTP outage and captured-basis matrices, both clients/surfaces | **14 passed**, 32 offline cases filtered | `earlier-live.json`, `.log`, `-vitest.json` |
+
+
+Final content readback:
+
+`env P2Q_ATTEMPT=retry python3 lab/experiments/EXP-P2Q-qlever-log-broker/summarize-round8.py`
+
+All nine final receipts have exit 0, accepted content, fresh Vitest/compiler results, unchanged source/dependency preimages and unchanged actual heavy-slot ownership. They share source `3536d8da` and attempt UUID `bce03806-71a9-4952-9550-cef8888b6cac`. Fixed pass/total denominators prevent empty or partial suites from becoming accepted gates. The independent summary rechecks 39 offline and 65 live full-byte snapshot comparisons, 26 public future-cursor/journal refusals with exact fields, four additional real offline journal refusals, all 48 common-policy route checks including the original requested cut, helper query/receipt cut binding and staged-versus-history content, and all 12 real live HTTP outage field sets. The totals are **1,108 offline tests**, **21 live tests**, and **two typechecks**; these are test denominators, not a universal correctness or performance certificate.
+
+Supplemental command:
+
+`node lab/bin/heavy.mjs --label CX-P2Q-R8-retirement-readback -- python3 lab/experiments/EXP-P2Q-qlever-log-broker/readback-retirement-round8.py`
+
+`retry-retirement-readback/readback.json` binds a separate actual heavy-slot owner, this reader's exact script SHA, the completed new-live receipt/hash and case hashes. Its independent CRC32C parser verifies and retains both full input segments. For both clients, the original journal position row is at **2048** with a null retirement tuple; its later version is at retirement position **5120**, and only the three retirement fields change. The old snapshot's full journal bytes are identical after both business writes and internal journal metadata retirement, outside/inside a transaction. This proves the masked retirement actually exists in this attempt's log. The reader source is added with the report and is separately source-bound by its own receipt, rather than claimed as an input executed by the earlier suite runner.
+
+`SUMMARY.json` and `MANIFEST.json` retain the accepted gate/content readback and hashes of every retained evidence file, including the original rejected attempt and exploratory outputs. `cleanup.json` records no remaining matching owned test/heavy/lock processes, no engine lifecycle action, no exclusive engine slot, and roughly **6.7 GB** host free at that capture. Every final gate checked the 5 GiB admission floor. Broker fixture state remains under the recorded attempt-specific `runs/broker/CX-P2Q-R8-*` roots, and both independently checked input segments are copied into evidence. The new live fixtures drop only their own unique graph after closing the broker; earlier HTTP-matrix graphs retain the original test's retention behavior.
+
+Final operational observations/receipt audit: `cleanup-round8.py` checks live process-list content after all jobs have ended, selects this worktree/ID's test/heavy processes and reads all **642** owned lock files: none of their **55** distinct recorded owner PIDs is live. It binds its own exact script hash, source head, input lock-file hashes, process-list digest, supplemental receipt hash and retained state namespace. This read-only observation claims no heavy slot. Manifest verification hashes current file bytes and rejects any mismatch against the just-generated manifest. These are fresh operational/content observations, not engine-health or performance verdicts. No product/test input changes occurred during either source pin window; the separately bound reader and report are outside those executed-input sets.
 
 ## Limits and open questions
 

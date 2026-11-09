@@ -1,0 +1,383 @@
+{
+  "record": {
+    "acks": 620,
+    "violations": [],
+    "atAckChecksFailed": 0,
+    "frames": 35,
+    "maxMembersPerFrame": 64,
+    "framesOver1": 12,
+    "loneFrameSizes": [
+      1
+    ],
+    "loneCommandMs": {
+      "p50": 3.85616600000003,
+      "max": 8.212625000000003
+    },
+    "fsyncMs": {
+      "p50": 2.9784590000000435,
+      "max": 4.291792000000044
+    }
+  },
+  "sample": [
+    {
+      "ev": "fsync-begin",
+      "lsn": 2,
+      "t": 288.04375,
+      "seq": 0
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 2,
+      "t": 291.458792,
+      "seq": 1
+    },
+    {
+      "ev": "watermark",
+      "lsn": 2,
+      "t": 291.632542,
+      "seq": 2
+    },
+    {
+      "ev": "ack",
+      "lsn": 2,
+      "t": 291.762708,
+      "seq": 3
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 3,
+      "t": 293.385292,
+      "seq": 4
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 3,
+      "t": 294.946917,
+      "seq": 5
+    },
+    {
+      "ev": "watermark",
+      "lsn": 3,
+      "t": 294.995458,
+      "seq": 6
+    },
+    {
+      "ev": "ack",
+      "lsn": 3,
+      "t": 295.044208,
+      "seq": 7
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 4,
+      "t": 298.196208,
+      "seq": 8
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 4,
+      "t": 299.738333,
+      "seq": 9
+    },
+    {
+      "ev": "watermark",
+      "lsn": 4,
+      "t": 299.776083,
+      "seq": 10
+    },
+    {
+      "ev": "ack",
+      "lsn": 4,
+      "t": 299.822167,
+      "seq": 11
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 5,
+      "t": 300.935333,
+      "seq": 12
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 5,
+      "t": 303.47275,
+      "seq": 13
+    },
+    {
+      "ev": "watermark",
+      "lsn": 5,
+      "t": 303.520542,
+      "seq": 14
+    },
+    {
+      "ev": "ack",
+      "lsn": 5,
+      "t": 303.580167,
+      "seq": 15
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 6,
+      "t": 304.74875,
+      "seq": 16
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 6,
+      "t": 307.3835,
+      "seq": 17
+    },
+    {
+      "ev": "watermark",
+      "lsn": 6,
+      "t": 307.512917,
+      "seq": 18
+    },
+    {
+      "ev": "ack",
+      "lsn": 6,
+      "t": 307.543208,
+      "seq": 19
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 7,
+      "t": 308.371083,
+      "seq": 20
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 7,
+      "t": 311.461208,
+      "seq": 21
+    },
+    {
+      "ev": "watermark",
+      "lsn": 7,
+      "t": 311.528542,
+      "seq": 22
+    },
+    {
+      "ev": "ack",
+      "lsn": 7,
+      "t": 311.777542,
+      "seq": 23
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 8,
+      "t": 313.139958,
+      "seq": 24
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 8,
+      "t": 316.449,
+      "seq": 25
+    },
+    {
+      "ev": "watermark",
+      "lsn": 8,
+      "t": 316.596333,
+      "seq": 26
+    },
+    {
+      "ev": "ack",
+      "lsn": 8,
+      "t": 316.639042,
+      "seq": 27
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 9,
+      "t": 317.581542,
+      "seq": 28
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 9,
+      "t": 320.403417,
+      "seq": 29
+    },
+    {
+      "ev": "watermark",
+      "lsn": 9,
+      "t": 320.4415,
+      "seq": 30
+    },
+    {
+      "ev": "ack",
+      "lsn": 9,
+      "t": 320.487125,
+      "seq": 31
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 10,
+      "t": 321.908083,
+      "seq": 32
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 10,
+      "t": 325.428958,
+      "seq": 33
+    },
+    {
+      "ev": "watermark",
+      "lsn": 10,
+      "t": 325.461125,
+      "seq": 34
+    },
+    {
+      "ev": "ack",
+      "lsn": 10,
+      "t": 325.559167,
+      "seq": 35
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 11,
+      "t": 326.449458,
+      "seq": 36
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 11,
+      "t": 328.892875,
+      "seq": 37
+    },
+    {
+      "ev": "watermark",
+      "lsn": 11,
+      "t": 328.929208,
+      "seq": 38
+    },
+    {
+      "ev": "ack",
+      "lsn": 11,
+      "t": 328.969167,
+      "seq": 39
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 12,
+      "t": 329.829167,
+      "seq": 40
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 12,
+      "t": 331.525167,
+      "seq": 41
+    },
+    {
+      "ev": "watermark",
+      "lsn": 12,
+      "t": 331.544708,
+      "seq": 42
+    },
+    {
+      "ev": "ack",
+      "lsn": 12,
+      "t": 331.59525,
+      "seq": 43
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 13,
+      "t": 332.432708,
+      "seq": 44
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 13,
+      "t": 335.419792,
+      "seq": 45
+    },
+    {
+      "ev": "watermark",
+      "lsn": 13,
+      "t": 335.443208,
+      "seq": 46
+    },
+    {
+      "ev": "ack",
+      "lsn": 13,
+      "t": 335.464583,
+      "seq": 47
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 14,
+      "t": 336.165292,
+      "seq": 48
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 14,
+      "t": 339.436375,
+      "seq": 49
+    },
+    {
+      "ev": "watermark",
+      "lsn": 14,
+      "t": 339.459,
+      "seq": 50
+    },
+    {
+      "ev": "ack",
+      "lsn": 14,
+      "t": 339.490375,
+      "seq": 51
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 15,
+      "t": 340.164583,
+      "seq": 52
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 15,
+      "t": 341.595958,
+      "seq": 53
+    },
+    {
+      "ev": "watermark",
+      "lsn": 15,
+      "t": 341.607458,
+      "seq": 54
+    },
+    {
+      "ev": "ack",
+      "lsn": 15,
+      "t": 341.621667,
+      "seq": 55
+    },
+    {
+      "ev": "fsync-begin",
+      "lsn": 16,
+      "t": 342.135583,
+      "seq": 56
+    },
+    {
+      "ev": "fsync-end",
+      "lsn": 16,
+      "t": 345.434417,
+      "seq": 57
+    },
+    {
+      "ev": "watermark",
+      "lsn": 16,
+      "t": 345.474792,
+      "seq": 58
+    },
+    {
+      "ev": "ack",
+      "lsn": 16,
+      "t": 345.531917,
+      "seq": 59
+    }
+  ]
+}
