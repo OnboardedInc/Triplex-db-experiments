@@ -319,10 +319,24 @@ try {
   fs.writeFileSync(path.join(out, "position-map.json"), JSON.stringify(positionMap));
   latencies.sort((a, b) => a - b);
   const logical = pageCount * pageSize;
+  const buildsStillMatch = canonical(builds) === canonical(artifactHashes());
+  // [EXP-HS01] Why: a complete seed is distinct from passing the 10k storage bar.
+  // Rejected: exit zero after merely measuring an oversized or incomplete population.
+  const sizeVerdict =
+    N !== 10000
+      ? "DIAGNOSTIC"
+      : status === "SEEDED-CONTENT-VERIFIED" &&
+          buildsStillMatch &&
+          assertions > 0 &&
+          logical <= 1400000000 &&
+          logical / assertions <= 300
+        ? "PASS"
+        : "FAIL";
   const receipt = {
     status,
+    sizeVerdict,
     builds,
-    buildsStillMatch: canonical(builds) === canonical(artifactHashes()),
+    buildsStillMatch,
     readBench,
     error,
     N,
@@ -349,7 +363,7 @@ try {
       .update(fs.readFileSync(path.join(out, "position-map.json")))
       .digest("hex"),
   };
-  if (!receipt.buildsStillMatch) process.exitCode = 1;
+  if (!receipt.buildsStillMatch || sizeVerdict === "FAIL") process.exitCode = 1;
   fs.writeFileSync(path.join(out, "seed-manifest.json"), JSON.stringify(receipt, null, 2));
   console.log(JSON.stringify(receipt));
 }
