@@ -274,3 +274,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   3,100-4,000 but adds 0.91 ms to commit p50: fallback arm only. **EXP-QH1 starts after HS01 lands**, on the compact layout plus the owner
   key, with R46 section 9's gates (decomposition G0, codec G4c, fixed CPU accounting). Rulings Q105a (per-core accounting), Q105b
   (round-tripping doubles on serialized paths) pending. Note for HS01's reviewer: check the codec with Q105b's inputs.
+- 2026-11-09 NSR ACCEPT-OFFLINE (verify/NSR-r4 bd0555df; driver isolation by filesystem layout and Node's permission model; exact output
+  grant; minimal recorded environment). G03 round 5 (the NS runner, R44 B2) started on G03 + NSR 709a18f1. R43 chain now: G03 rounds 5-7,
+  then the G03 slot run, M01 A/A, OBS01 round 6, P3 screening, A0 under PAIR-0, contract 0.4.1, calibration, acceptance.
