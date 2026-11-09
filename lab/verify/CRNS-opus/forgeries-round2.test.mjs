@@ -1,4 +1,4 @@
-import { completeFixture, completeSegment, readerRows } from '../../bin/test/ns-round2-fixture.mjs';
+import { completeFixture, completeSegment, readerRows, frozenFixtureTrace, attachIndependentCrash, historyCalibration, calibration } from '../../bin/test/ns-round2-fixture.mjs';
 // Opus round 2 re-review of recomputeNS at 2cdb3d2f: variants that keep each high finding's intent and dodge its fix,
 // plus attacks the round 2 fixes introduce. Fixture helpers copied from forgeries.test.mjs as committed at 2cdb3d2f.
 // Original header follows. (exp/CRNS-recompute at 2f299bfa). Run: node --test lab/verify/CRNS-opus/
@@ -32,6 +32,7 @@ function seal(raw) {
  * offers: default one per first-seen command, receipt to its first commit, ACK 4 ms after schedule.
  */
 function world({ commits, offers, priorities = ['P3'], mutate } = {}) {
+  const frozen=frozenFixtureTrace('opus');
   commits ??= [0, 1, 2].map(i => ({ cmds: [`c${i}`], subjects: [`s${i}`] }));
   const entries = [], sourceBrackets = [], consumerBrackets = [], txs = [], effects = [], affected = [], deliveries = [];
   const firstCommit = new Map();
@@ -69,10 +70,7 @@ function world({ commits, offers, priorities = ['P3'], mutate } = {}) {
   const trusted = { key: KEY, binding: BINDING, driver: DRIVER, encodingSha256: NS_ENCODING_SHA256, clockDomain: CLOCK, readerLevel: 1, priorities,
     domainAffected: ({ transaction }) => [...new Set(transaction.changes.map(c => c.entity))],
     gradeWindow: () => 'GREEN', verifySource: () => true, commandValid: () => true, ryow: () => true, steadyRate: 100 };
-  completeFixture({raw,trusted});
-  for (const o of raw.events.offers) { const tx = raw.events.source.entries.flatMap(x=>x.transactions).find(tx=>tx.commandIds.includes(o.commandId));
-    const digest=nsCommandSha256(tx.changes.map(c=>({...c,entity:o.subject}))); trusted.commands[o.commandId].changesSha256=digest; o.commandSha256=digest;
-  }
+  completeFixture({raw,trusted},frozen);
   mutate?.(raw.events, trusted);
   return { raw, trusted };
 }
@@ -107,7 +105,7 @@ function ladder({ hopsSecond = false, recoveryIds = true, baseWriterMs = 4 } = {
 const replayRead = read => H(`p@${read.requestedBasis}/hops${read.hops}`);
 // ================================================================== round 2 helpers
 import { completeSegment as seg64, reseal } from '../../bin/test/ns-round2-fixture.mjs';
-const refresh = w => { completeFixture(w); return w; };          // re-derive fixture floors after a planted change
+const refresh = w => { completeFixture(w); return w; }; // refresh retained synthetic bytes only; immutable trace pins persist          // re-derive fixture floors after a planted change
 const offerOf = (w, id) => w.raw.events.offers.find(o => o.commandId === id);
 const accepted = (r, msg) => assert.equal(r.status, 'REFUSED', `${msg}; RECOMPUTED with bars ${JSON.stringify(r.bars.P3)}`);
 function crashCompanion(w, witness) {
@@ -128,21 +126,21 @@ test('C0 round 2 baseline is RECOMPUTED with resume and met', () => {
 });
 
 // ------------------------------------------------------------------ O7/O8 variant: resume witness not bound to the crash
-test('V-O7 crash companion whose 9 witnesses crash at t=0 (before any traffic) and all cite one 1-transaction range is refused', { todo: 'accepted: witness anchors are not tied to crash time, fault point or distinct ranges' }, () => {
+test('V-O7 crash companion whose 9 witnesses crash at t=0 (before any traffic) and all cite one 1-transaction range is refused', () => {
   const w = world();
   crashCompanion(w, (c, e) => ({ beforeTransaction: -1, recoveryTransaction: 0, checkpointOffset: null, recoveryOffset: e.source.entries[0].offset, replay: structuredClone(c.transactions[0].deliveries) }));
   const r = run(w);
-  assert.equal(r.bars.P3.resume, true, 'precondition: resume is granted');
+  assert.equal(r.bars.P3.resume, false);
   accepted(r, 'resume from crashes that hit an idle consumer');
 });
 
 // ------------------------------------------------------------------ O6/O12 variant: readers that do no real work
-test('V-O6 P3 only: 4 reader loops whose every answer is wrong satisfy "lag with readers running"', { todo: 'accepted: E2 correctness runs only when P1/P4/P5 is requested' }, () => {
+test('V-O6 P3 only: 4 reader loops whose every answer is wrong satisfy "lag with readers running"', () => {
   const w = world(); w.trusted.readerLevel = 4; refresh(w);
   for (const r of w.raw.events.reads) { r.answerSha256 = H('garbage'); r.echoedBasis = '999'; }
   accepted(run(w), 'readers answered garbage');
 });
-test('V-O6c P3 only: publication deferred past window end is invisible when the lag minimum is below the in-window count', { todo: 'accepted: minimumSamples.lag is any positive integer; nothing ties it to the scheduled in-window count' }, () => {
+test('V-O6c P3 only: publication deferred past window end is invisible when the lag minimum is below the in-window count', () => {
   const w = world({ commits: [{ cmds: ['c0'], subjects: ['s0'] }, { cmds: ['c1'], subjects: ['s1'] }, { cmds: ['c2'], subjects: ['s2'], sL: 1500, sU: 1501, cL: 1502, cU: 1503 }] });
   const o = offerOf(w, 'c2'); o.ackAtNs = t(BigInt(o.scheduledAtNs) + 1502n * MS); refresh(w);
   w.trusted.minimumSamples.lag = 2;
@@ -155,12 +153,12 @@ test('V-O6c control: same deferral with lag minimum = commit count is refused LA
 });
 
 // ------------------------------------------------------------------ O2 variants
-test('V-O2 an oracle-invalid command (kind invalid) that the candidate commits and ACKs is refused', { todo: 'accepted: nothing refuses an invalid command that publishes' }, () => {
+test('V-O2 an oracle-invalid command (kind invalid) that the candidate commits and ACKs is refused', () => {
   const w = world({ priorities: ['P3', 'P2'] });
   w.trusted.commandValid = o => o.commandId !== 'c1'; offerOf(w, 'c1').kind = 'invalid'; refresh(w);
   accepted(run(w), 'invalid c1 committed');
 });
-test('V-O2b P2: a command published before it was offered (pre-applied frozen trace) gets ~0 ms latency and is refused', { todo: 'accepted: publication before scheduledAtNs is clamped, not refused (queue clamp at the finished<scheduled branch)' }, () => {
+test('V-O2b P2: a command published before it was offered (pre-applied frozen trace) gets ~0 ms latency and is refused', () => {
   const w = world({ priorities: ['P3', 'P2'] });
   const o = offerOf(w, 'c0'), b = w.raw.events.sourceBrackets[0], cb = w.raw.events.consumerBrackets[0];
   const sched = BigInt(o.scheduledAtNs);
@@ -180,7 +178,7 @@ test('V-O3 a kind=duplicate retry answered with a typed error (unique eventId) i
 });
 
 // ------------------------------------------------------------------ O1 variant
-test('V-O1 a duplicate signal offered under a fresh commandId commits twice (same subject, same attribute) and is refused', { todo: 'accepted: one commit per commandId only; logical duplicates need the driver to reuse the id' }, () => {
+test('V-O1 a duplicate signal offered under a fresh commandId commits twice (same subject, same attribute) and is refused', () => {
   const w = world({ priorities: ['P3', 'P2'], commits: [{ cmds: ['c0'], subjects: ['s0'] }, { cmds: ['c1'], subjects: ['s1'] }, { cmds: ['c2'], subjects: ['s2'] }, { cmds: ['c0dup'], subjects: ['s0'] }] });
   offerOf(w, 'c0dup').kind = 'duplicate'; refresh(w);
   accepted(run(w), 'duplicate applied twice');
@@ -193,7 +191,7 @@ test('V-O4 duplicate effect under a whitespace-variant consumer label is refused
 });
 
 // ------------------------------------------------------------------ O5/O17 variant: content matches, per-subject order differs
-test('V-O5/O17 two in-flight commands for one subject commit in reverse of their offer order', { todo: 'accepted: commit order is never compared with offer order per subject (needs a ruling)' }, () => {
+test('V-O5/O17 two in-flight commands for one subject commit in reverse of their offer order', () => {
   const w = world({ commits: [{ cmds: ['c1'], subjects: ['s0'] }, { cmds: ['c0'], subjects: ['s0'] }, { cmds: ['c2'], subjects: ['s2'] }] });
   const c0 = offerOf(w, 'c0'), c1 = offerOf(w, 'c1');
   c0.subject = c1.subject = 's0';
@@ -203,12 +201,11 @@ test('V-O5/O17 two in-flight commands for one subject commit in reverse of their
 });
 
 // ------------------------------------------------------------------ O10 variant: basis form
-test('V-O10 a decimal-string basis against coordinate-object positions gives the oracle an empty prefix', { todo: 'accepted: nsPrefix compares stream "" with the real stream, so every transaction is clipped away' }, () => {
+test('V-O10 a decimal-string basis against coordinate-object positions gives the oracle an empty prefix', () => {
   const pos = { stream: 'feed', epoch: '1', offset: '1', ordinal: '0' };
   const prefix = [{ stream: 'feed', epoch: '1', offset: '1', kind: 'commit', transactions: [{ stamp: 's', positions: [pos], txIds: ['t'], operationId: 'o', commandIds: ['c'], changes: [] }] }];
   const seen = [];
-  nsP1Ladder(ladder(), (read, p) => { seen.push(p.flatMap(x => x.transactions ?? []).length); return replayRead(read); }, prefix);
-  assert.ok(seen.every(n => n === 1), `transactions visible to oracle: ${[...new Set(seen)]}`);
+  assert.throws(()=>nsP1Ladder(ladder(), (read,p)=>{seen.push(p.length);return replayRead(read);},prefix), /BASIS-FORM-MISMATCH/); assert.equal(seen.length,0);
 });
 
 // ------------------------------------------------------------------ O13 variant: stale history answers
@@ -216,25 +213,25 @@ test('V-O13 depth-10 pulls answered with the depth-1 answer are refused P4-HISTO
   const pulls = [];
   for (const depth of [1, 3, 10]) for (let i = 0; i < 1000; i++) pulls.push({ readId: `h${depth}-${i}`, depth, subject: `s${i}`, shape: 'pull-current', requestedBasis: String(depth), echoedBasis: String(depth), sentAtNs: '0', receivedAtNs: t(MS), answerSha256: H('ans@1') });
   const res = [1, 3, 10].map(depth => ({ depth, startNs: '0', endNs: t(2n * MS), ioReadStartBytes: '0', ioReadEndBytes: '100' }));
-  assert.throws(() => nsP4History(pulls, p => H(`ans@${p.requestedBasis}`), [], res), /P4-HISTORY-ANSWER-MISMATCH|answer/i);
+  assert.throws(() => nsP4History(pulls, p => H(`ans@${p.requestedBasis}`), [], res, historyCalibration()), /P4-HISTORY-ANSWER-MISMATCH|answer/i);
 });
 
 // ------------------------------------------------------------------ O29/O14 variants: baseline inflated up to the absolute floor
-test('V-O29 P1: zero-reader writer p99 slowed to 48 ms lets 60 ms at 256 and 1024 readers pass', { todo: 'accepted: the absolute floor equals the P2 bar, so a candidate can inflate its baseline up to 50 ms' }, () => {
+test('V-O29 P1: zero-reader writer p99 slowed to 48 ms lets 60 ms at 256 and 1024 readers pass', () => {
   const w = ladder({ baseWriterMs: 48 });
   for (const x of w) if (x.level !== 0) x.offers[0].ackAtNs = t(BigInt(x.offers[0].scheduledAtNs) + 60n * MS);
-  assert.equal(nsP1Ladder(w, replayRead, []).met, false);
+  assert.equal(nsP1Ladder(w, replayRead, [], calibration(4,'P1',{phase:'steady',traceSegment:'seg',offerScheduleSha256:H('sched')})).met, false);
 });
-test('V-O14 P5: baseline writer slowed to 49 ms lets 73 ms during the sweep pass', { todo: 'accepted: same floor-equals-bar residual for P5' }, () => {
+test('V-O14 P5: baseline writer slowed to 49 ms lets 73 ms during the sweep pass', () => {
   const mk = (id, s0, wms) => seg64({ id, level: 64, phase: 'steady', traceSegment: 'seg', offerScheduleSha256: H('s'), startNs: t(s0), endNs: t(s0 + 1_000_000_000n),
     offers: [{ commandId: 'x', scheduledAtNs: t(s0 + MS), sentAtNs: t(s0 + MS), ackAtNs: t(s0 + MS + BigInt(wms) * MS) }] });
   const baseline = mk('b', 0n, 49), during = mk('d', 5_000_000_000n, 73);
-  const r = nsP5Traffic({ baseline, sweep: during }, { startNs: t(4_000_000_000n), endNs: t(7_000_000_000n) }, () => H('correct'), []);
+  const r = nsP5Traffic({ baseline, sweep: during }, { startNs: t(5_000_000_000n), endNs: t(6_000_000_000n) }, () => H('correct'), [], calibration(4,'P5',{phase:'steady',traceSegment:'seg',offerScheduleSha256:H('s')}));
   assert.equal(r.met, false, JSON.stringify(r));
 });
 
 // ------------------------------------------------------------------ new: crash-only bundle status
-test('NF2 a crash-only bundle evaluated as a primary returns RECOMPUTED with lag null', { todo: 'design: RECOMPUTED no longer implies a judged run; any consumer reading status instead of bars.P3.met mis-grants' }, () => {
+test('NF2 a crash-only bundle evaluated as a primary returns RECOMPUTED with lag null', () => {
   const w = world(); const { bundle, trusted } = w.trusted.crashRun;
   const r = recomputeNS(bundle, trusted);
   assert.equal(r.bars.P3.lag, null);

@@ -1,4 +1,4 @@
-import { completeFixture, completeSegment, historyFixture, readerRows, readsFor } from '../../bin/test/ns-round2-fixture.mjs';
+import { completeFixture, completeSegment, historyFixture, readerRows, readsFor, frozenFixtureTrace, attachIndependentCrash, calibration } from '../../bin/test/ns-round2-fixture.mjs';
 // [CX-VCRNS] Why: reuse the reviewed positive fixture verbatim to isolate reviewer mutations. Original fixture reasoning: R44's planted observations exercise the pure evaluator, without any engine or acceptance change.
 // Rejected: asserting a supplied p99 or a fixture's own PASS flag (neither checks retained event content).
 import { createHmac } from 'node:crypto';
@@ -12,7 +12,8 @@ const h = s => sha256(s);
 const domainCase = JSON.parse(fs.readFileSync(path.join(repo, 'lab/world/W0/cases/C34-affected-state-wage-r1.json'), 'utf8'));
 const key = 'evaluator-only-fixture-key';
 const clone = x => structuredClone(x);
-function fixture() {
+function fixture(options={}) {
+  const frozen=frozenFixtureTrace('builder',options);
   const binding = { attemptId: 'CX-CRNS-fixture', sourceSha256: h('source'), slot: 'offline', inputsSha256: h('inputs') };
   const driver = { imageId: 'sha256:' + h('image'), bundleSha256: h('driver'), generatorSha256: h('trace') };
   const clockDomain = { bootId: 'boot-1', timeNamespace: 'inode-1', clock: 'CLOCK_MONOTONIC' };
@@ -30,7 +31,7 @@ function fixture() {
     window: { startNs: '1000000000', endNs: '3000000000', drainEndNs: '4000000000', bursts: [{ startNs: '2000000000', endNs: '2500000000' }] },
     noise: { grade: 'GREEN', rounds: [{ phase: 'steady', grade: 'GREEN' }] }, crossChecks: [],
   };
-  return completeFixture({ raw: { format: 'ns-events/1', binding, driver, events }, trusted: { binding: clone(binding), driver: clone(driver), clockDomain: clone(clockDomain), key, encodingSha256: NS_ENCODING_SHA256, readerLevel: 256, priorities: ['P3'], gradeWindow: () => 'GREEN', verifySource: () => true, domainAffected: () => domainCase.expected.affected } });
+  return completeFixture({ raw: { format: 'ns-events/1', binding, driver, events }, trusted: { binding: clone(binding), driver: clone(driver), clockDomain: clone(clockDomain), key, encodingSha256: NS_ENCODING_SHA256, readerLevel: 256, priorities: ['P3'], gradeWindow: () => 'GREEN', verifySource: () => true, domainAffected: () => domainCase.expected.affected } }, frozen);
 }
 function sealed(f) {
   const payload = canonText(f.raw);
@@ -83,7 +84,7 @@ export function p4() {
   f.raw.events.historyPulls = [1, 3, 10].flatMap(depth => Array.from({ length: 1000 }, (_, i) => ({ depth, subject: `s${i}`, sentAtNs: '0', receivedAtNs: '1000000', bytesRead: '100' })));
   f.trusted.readerLevel=1; f.raw.events.readers=readerRows(f.raw.events.reads,f.raw.events.window);
   f.raw.events.historyResources=historyFixture(f.raw.events.historyPulls);
-  return f;
+  return attachIndependentCrash(f);
 }
 
 // [CX-VCRNS] Why: isolate time-window membership from the independent simultaneous-loop defect.

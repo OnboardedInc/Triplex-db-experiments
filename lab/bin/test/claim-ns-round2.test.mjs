@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {fixture, run, codes, h, ladder, p4Sequential, refreshWal} from '../../verify/CRNS/fixture.mjs';
 import {canonText, nsP1Ladder, nsP4History, nsP5Traffic, nsFeedEntryBytes} from '../claim.mjs';
-import {completeSegment, readerRows, historyFixture} from './ns-round2-fixture.mjs';
+import {completeSegment, readerRows, historyFixture,attachIndependentCrash,calibration,historyCalibration} from './ns-round2-fixture.mjs';
 const refusedWith=(f,code)=>{const r=run(f);assert.equal(r.status,'REFUSED');assert.ok(codes(r).includes(code),canonText(r));return r;};
 function positiveP1() {
   const f=fixture(),e=f.raw.events; f.trusted.priorities=['P3','P1'];
@@ -15,7 +15,7 @@ function positiveP1() {
   }
   e.readers=readerRows(e.reads,e.window); e.mainSegmentId='L256'; e.ladder=ladder();
   Object.assign(e.ladder.find(w=>w.id===e.mainSegmentId),{startNs:e.window.startNs,endNs:e.window.endNs,reads:structuredClone(e.reads),readers:structuredClone(e.readers)});
-  e.maintenance=[{atNs:'1500000000'}];return f;
+  e.maintenance=[{atNs:'1500000000'}];return attachIndependentCrash(f);
 }
 test('R01/O27 positive P1 has main segment, hot-set and straddle evidence; removing any floor refuses',()=>{
   const f=positiveP1();assert.equal(run(f).status,'RECOMPUTED',canonText(run(f)));
@@ -30,14 +30,14 @@ test('O28 every pinned role must record its clock domain; omitted or duplicated 
 test('O18/O25 broker storage never bypasses the evaluator source decoder or source storage pin',()=>{const f=fixture();f.raw.events.source.storage='broker-frame/2';refusedWith(f,'SOURCE-STORAGE-MISMATCH');const g=fixture();g.trusted.verifySource=()=>false;refusedWith(g,'SOURCE-NOT-VERIFIED');});
 test('O17 a consistently rewritten source+delivery+WAL still mismatches the frozen command digest',()=>{const f=fixture(),e=f.raw.events;e.source.entries[0].transactions[0].changes[0].entity='wrong';e.source.rawHex=Buffer.from(canonText({entries:e.source.entries,commandDigests:e.source.commandDigests})).toString('hex');const digest=h(nsFeedEntryBytes(e.source.entries[0]));e.consumer.deliveries[0].digest=digest;e.consumer.transactions[0].deliveries[0].digest=digest;refreshWal(f);refusedWith(f,'SOURCE-CONTENT-MISMATCH');});
 test('lost ACK is resolved by a later original receipt without copying a receipt onto the original attempt',()=>{
- const f=fixture(),e=f.raw.events,original=e.offers[0];const retry={...original,eventId:'retry',kind:'lost-ACK retry',sentAtNs:'1100000000',scheduledAtNs:'1100000000',ackAtNs:'1101000000',receipt:structuredClone(original.receipt)};
+ const f=fixture({lostAck:true}),e=f.raw.events,original=e.offers[0];const retry={...original,eventId:'retry',kind:'lost-ACK retry',sentAtNs:'1100000000',scheduledAtNs:'1100000000',ackAtNs:'1101000000',receipt:structuredClone(original.receipt)};
  original.kind='lost-ACK';delete original.receipt;delete original.ackAtNs;original.censoredAtNs='1050000000';e.offers.push(retry);
- const r=run(f);assert.equal(r.status,'RECOMPUTED',canonText(r));assert.equal(r.measurements.P2.unaccounted,0);assert.equal(r.measurements.P2.latency['5-10'].p99Ms,101);
+ attachIndependentCrash(f); const r=run(f);assert.equal(r.status,'RECOMPUTED',canonText(r));assert.equal(r.measurements.P2.unaccounted,0);assert.equal(r.measurements.P2.latency['5-10'].p99Ms,101);
  delete retry.receipt;retry.typedError={code:'DUPLICATE'};refusedWith(f,'IDEMPOTENCY-RECEIPT-MISMATCH');
 });
 test('O29 P4 baseline and P5 baseline have absolute latency floors as well as ratios',()=>{
  const pulls=[1,3,10].flatMap(depth=>Array.from({length:1000},(_,i)=>({depth,subject:`s${i}`,sentAtNs:'0',receivedAtNs:'1000000',bytesRead:'100'})));const resources=historyFixture(pulls);
- for(const p of pulls)p.receivedAtNs='100000000';resources.forEach(r=>r.endNs='200000000');assert.equal(nsP4History(pulls,()=>h('correct'),[],resources).met,false);
+ for(const p of pulls)p.receivedAtNs='100000000';resources.forEach(r=>r.endNs='200000000');assert.equal(nsP4History(pulls,()=>h('correct'),[],resources,historyCalibration()).met,false);
  const base=completeSegment({id:'base',level:64,phase:'steady',traceSegment:'s',offerScheduleSha256:h('s'),startNs:'0',endNs:'1000000000',offers:[{scheduledAtNs:'0',ackAtNs:'100000000'}]});
  const during=completeSegment({...base,id:'during',startNs:'1000000000',endNs:'2000000000',offers:[{scheduledAtNs:'1000000000',ackAtNs:'1120000000'}]});
  assert.equal(nsP5Traffic({baseline:base,sweep:during},{startNs:'1000000000',endNs:'2000000000'},()=>h('correct'),[]).met,false);
@@ -63,6 +63,6 @@ test('R02 resolved abort/seal frontiers are legal; only mapped prefix checkpoint
  f.trusted.resolveFrontier=entry=>entry.offset;
  const delivery={offset:'3',digest:h(nsFeedEntryBytes(e.source.entries[2]))};c.deliveries.push(delivery);c.transactions.push({committed:true,frontierBefore:'2',frontierAfter:'3',effects:[],affected:[],deliveries:[delivery],deleted:{effects:[],affected:[],deliveries:[]}});
  e.source.rawHex=Buffer.from(canonText({entries:e.source.entries,commandDigests:e.source.commandDigests})).toString('hex');refreshWal(f);
- assert.equal(run(f).status,'RECOMPUTED',canonText(run(f)));
+ attachIndependentCrash(f);assert.equal(run(f).status,'RECOMPUTED',canonText(run(f)));
  c.transactions.at(-1).frontierAfter='999';refusedWith(f,'NS-P3-ORDER-VIOLATIONS-MAX');
 });

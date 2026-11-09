@@ -1,4 +1,4 @@
-import { completeFixture, completeSegment, historyFixture, readerRows, readsFor } from './ns-round2-fixture.mjs';
+import { completeFixture, completeSegment, historyFixture, readerRows, readsFor, frozenFixtureTrace, attachIndependentCrash, historyCalibration, calibration } from './ns-round2-fixture.mjs';
 // [EXP-CRNS] Why: R44's planted observations exercise the pure evaluator, without any engine or acceptance change.
 // Rejected: asserting a supplied p99 or a fixture's own PASS flag (neither checks retained event content).
 import assert from 'node:assert/strict';
@@ -15,7 +15,8 @@ const h = s => sha256(s);
 const domainCase = JSON.parse(fs.readFileSync(path.join(repo, 'lab/world/W0/cases/C34-affected-state-wage-r1.json'), 'utf8'));
 const key = 'evaluator-only-fixture-key';
 const clone = x => structuredClone(x);
-function fixture() {
+function fixture(options={}) {
+  const frozen=frozenFixtureTrace('builder',options);
   const binding = { attemptId: 'CX-CRNS-fixture', sourceSha256: h('source'), slot: 'offline', inputsSha256: h('inputs') };
   const driver = { imageId: 'sha256:' + h('image'), bundleSha256: h('driver'), generatorSha256: h('trace') };
   const clockDomain = { bootId: 'boot-1', timeNamespace: 'inode-1', clock: 'CLOCK_MONOTONIC' };
@@ -33,7 +34,7 @@ function fixture() {
     window: { startNs: '1000000000', endNs: '3000000000', drainEndNs: '4000000000', bursts: [{ startNs: '2000000000', endNs: '2500000000' }] },
     noise: { grade: 'GREEN', rounds: [{ phase: 'steady', grade: 'GREEN' }] }, crossChecks: [],
   };
-  return completeFixture({ raw: { format: 'ns-events/1', binding, driver, events }, trusted: { binding: clone(binding), driver: clone(driver), clockDomain: clone(clockDomain), key, encodingSha256: NS_ENCODING_SHA256, readerLevel: 256, priorities: ['P3'], gradeWindow: () => 'GREEN', verifySource: () => true, domainAffected: () => domainCase.expected.affected } });
+  return completeFixture({ raw: { format: 'ns-events/1', binding, driver, events }, trusted: { binding: clone(binding), driver: clone(driver), clockDomain: clone(clockDomain), key, encodingSha256: NS_ENCODING_SHA256, readerLevel: 256, priorities: ['P3'], gradeWindow: () => 'GREEN', verifySource: () => true, domainAffected: () => domainCase.expected.affected } }, frozen);
 }
 function sealed(f) {
   const payload = canonText(f.raw);
@@ -95,15 +96,16 @@ test('P3 evaluator runs the real O-DOMAIN child at every committed position', ()
     for (const entry of prefix) for (const tx of entry.transactions ?? []) for (const op of tx.changes) {
       for (const world of input.worlds) if (world.facts.some(f=>f.e===op.entity && f.a===op.attribute)) {
         world.facts=world.facts.filter(f=>!(f.e===op.entity && f.a===op.attribute));
-        world.facts.push({e:op.entity,a:op.attribute,v:frozenValues[tx.commandIds[0]],tx:10});
+        world.facts.push({e:op.entity,a:op.attribute,v:frozenValues[tx.commandIds[0]]??1750,tx:10});
       }
     }
     observedStates.push([prefix.length,input.worlds[0].facts.find(f=>f.e==='jur:ny'&&f.a==='stateMinWageCents').v]);
     input.writes=transaction.changes.map(op=>[op.entity,op.attribute]);
     return JSON.parse(execFileSync('python3', ['-I', '-B', path.join(repo, 'lab/oracles/domain/cli.py'), 'affected', '-'], { input: canonText(input), encoding: 'utf8' })).affected;
   };
+  attachIndependentCrash(f);
   const r = run(f);
-  assert.equal(r.status, 'RECOMPUTED', canonText(r)); assert.equal(calls, 2); assert.deepEqual(observedStates,[[1,1750],[2,1800]]);
+  assert.equal(r.status, 'RECOMPUTED', canonText(r)); assert.equal(calls, 12); assert.deepEqual(observedStates.slice(0,2),[[1,1750],[2,1800]]);
   assert.equal(r.measurements.P3.lag.pooled.p99Ms, 10);
   assert.equal(r.measurements.P3.lag.steady.count, 1);
   assert.equal(r.measurements.P3.lag.burst.count, 1);
@@ -177,11 +179,11 @@ test('F3 variations: broken intermediate chain, invalid chunk HMAC and unwitness
 });
 
 test('P2 full raw bands, publication ACK order, progress and idempotency', () => {
-  const f = fixture(); f.trusted.priorities = ['P3', 'P2'];
+  const f = fixture({extraInvalid:true}); f.trusted.priorities = ['P3', 'P2'];
   f.trusted.ryow = () => true; f.trusted.commandValid = o => !o.typedError; f.trusted.steadyRate = 10;
   f.raw.events.offers[1].sizeBand = '11-25'; f.trusted.commands.invalid = {commandSha256:h('invalid'),valid:false};
   f.raw.events.offers.push({ eventId: 'invalid-offer', kind: 'invalid', commandSha256: h('invalid'), commandId: 'invalid', sizeBand: '26-50', scheduledAtNs: '2500000000', sentAtNs: '2500000000', ackAtNs: '2501000000', typedError: { code: 'OUT-OF-RANGE' } });
-  assert.equal(run(f).status, 'RECOMPUTED', canonText(run(f)));
+  attachIndependentCrash(f); assert.equal(run(f).status, 'RECOMPUTED', canonText(run(f)));
   f.raw.events.offers[0].scheduledAtNs = '990000000';
   assert.equal(run(f).measurements.P2.latency['5-10'].p99Ms, 13);
   f.raw.events.offers[0].ackAtNs = '999000000'; f.raw.events.offers[0].sentAtNs = '990000000';
@@ -198,19 +200,19 @@ test('P1 ladder recomputes matched raw goodput, writer ratios and post-stress re
   const recovery = rawSegment(256); recovery.id='recovery'; recovery.startNs = '2000000000'; recovery.endNs = '3000000000'; recovery.recoveryOf = 'L1024';
   recovery.reads[0].sentAtNs = '2000000000'; recovery.reads[0].receivedAtNs = '2001000000'; recovery.offers[0].scheduledAtNs = '2000000000'; recovery.offers[0].ackAtNs = '2001000000';
   windows.push(recovery); windows.forEach(w => completeSegment(w));
-  assert.equal(nsP1Ladder(windows, () => h('correct'), []).met, true);
+  assert.equal(nsP1Ladder(windows, () => h('correct'), [], calibration()).met, true);
   windows[5].reads[0].answerSha256 = h('wrong');
-  assert.equal(nsP1Ladder(windows, () => h('correct'), []).met, false);
+  assert.equal(nsP1Ladder(windows, () => h('correct'), [], calibration()).met, false);
   windows[5].reads[0].answerSha256 = h('correct'); windows[5].offers[0].ackAtNs = '1002000000';
-  assert.equal(nsP1Ladder(windows, () => h('correct'), []).met, false);
+  assert.equal(nsP1Ladder(windows, () => h('correct'), [], calibration()).met, false);
 });
 
 test('P4 1000 matched subjects compare depth 1/3/10 latency and bytes with exact 1.1 boundary', () => {
   const pulls = [1, 3, 10].flatMap(depth => Array.from({ length: 1000 }, (_, i) => ({ depth, subject: `s${i}`, sentAtNs: '0', receivedAtNs: depth === 1 ? '1000000' : '1100000', bytesRead: depth === 1 ? '100' : '110' })));
   const resources = historyFixture(pulls);
-  assert.equal(nsP4History(pulls, () => h('correct'), [], resources).met, true);
-  resources[2].ioReadEndBytes = '110001'; assert.equal(nsP4History(pulls, () => h('correct'), [], resources).met, false);
-  pulls.pop(); assert.throws(() => nsP4History(pulls, () => h('correct'), [], resources), /unmatched/);
+  assert.equal(nsP4History(pulls, () => h('correct'), [], resources, historyCalibration()).met, true);
+  resources[2].ioReadEndBytes = '110001'; assert.equal(nsP4History(pulls, () => h('correct'), [], resources, historyCalibration()).met, false);
+  pulls.pop(); assert.throws(() => nsP4History(pulls, () => h('correct'), [], resources, historyCalibration()), /unmatched/);
 });
 
 test('P5 raw matched live read and writer ratios; a summary alone cannot satisfy it', () => {
@@ -218,8 +220,8 @@ test('P5 raw matched live read and writer ratios; a summary alone cannot satisfy
   s.sweep.id='sweep'; s.sweep.startNs='2000000000'; s.sweep.endNs='3000000000'; completeSegment(s.sweep);
   s.sweep.offers[0].scheduledAtNs='2000000000'; s.sweep.offers[0].ackAtNs='2001500000';
   const window = {startNs:'2000000000',endNs:'3000000000'};
-  assert.equal(nsP5Traffic(s, window, () => h('correct'), []).met, true);
-  s.sweep.offers[0].ackAtNs = '2001500001'; assert.equal(nsP5Traffic(s, window, () => h('correct'), []).met, false);
+  assert.equal(nsP5Traffic(s, window, () => h('correct'), [], calibration(1,'P5')).met, true);
+  s.sweep.offers[0].ackAtNs = '2001500001'; assert.equal(nsP5Traffic(s, window, () => h('correct'), [], calibration(1,'P5')).met, false);
   assert.equal(nsP5Traffic({ baseline: { p99Ms: 1 }, sweep: { p99Ms: 1 } }).met, false);
 });
 
@@ -232,7 +234,7 @@ test('P5 evaluates every one of 100k subjects at activation basis against evalua
   f.raw.events.sweep = { activationReceipt: { basis: '1',releaseSha256:h('release') },durableBracket:{L:'2999999999',U:'3000000000'}, subjects, outputs: subjects.map(subject => ({ subject })), outbox: [], startNs: '2000000000', endNs: '3000000000' };
   f.raw.events.sweepTraffic = { baseline: completeSegment(rawSegment(64)), sweep: {...rawSegment(64),id:'during-sweep',startNs:'2000000000',endNs:'3000000000'} };
   f.raw.events.sweepTraffic.sweep.offers[0]={scheduledAtNs:'2000000000',ackAtNs:'2001000000'}; completeSegment(f.raw.events.sweepTraffic.sweep);
-  assert.equal(run(f).status, 'RECOMPUTED', canonText(run(f))); assert.equal(calls, 200000);
+  attachIndependentCrash(f); assert.equal(run(f).status, 'RECOMPUTED', canonText(run(f))); assert.equal(calls, 200000);
 });
 
 test('source broker header, payload and CRC chain are checked from bytes', () => {
@@ -251,13 +253,9 @@ test('source broker header, payload and CRC chain are checked from bytes', () =>
 });
 
 test('crash counts remain judged; replay witnesses must be unique and byte exact; lag is unjudged', () => {
-  const f = fixture(), e = f.raw.events;
-  e.faults = ['before-effect', 'after-effect', 'after-checkpoint'].flatMap((point, p) => [0, 1, 2].map(rep => {
-    const events = [{ transition: 'cgroup-gone', t: String(3000000000 + p * 3 + rep) }];
-    return { format: 'fault-witness/1', binding: clone(f.raw.binding), faultPointId: point, events, eventsSha256: h(canonText(events)), beforeTransaction:-1,recoveryTransaction:1,checkpointOffset:'0',recoveryOffset:'2',replay: clone(e.consumer.deliveries) };
-  }));
-  let r = run(f); assert.equal(r.bars.P3.counts, true); assert.equal(r.bars.P3.lag, null); assert.equal(r.bars.P3.resume,true); assert.equal(r.status,'RECOMPUTED');
-  e.faults[1] = clone(e.faults[0]); assert.ok(codes(run(f)).includes('FAULT-WITNESS-INVALID'));
+  const f=fixture(), c=f.trusted.crashRun;
+  const r=recomputeNS(c.bundle,c.trusted);assert.equal(r.status,'CRASH-RECOMPUTED',canonText(r));assert.equal(r.bars.P3.counts,true);assert.equal(r.bars.P3.lag,null);assert.equal(r.bars.P3.resume,true);assert.equal(r.bars.P3.met,false);
+  const bad={raw:JSON.parse(c.bundle.payload),trusted:c.trusted};bad.raw.events.faults[1]=clone(bad.raw.events.faults[0]);assert.ok(codes(run(bad)).includes('FAULT-WITNESS-INVALID'));
 });
 
 test('P4 full current-pull mix and resource counters feed arithmetic; wrong mix is refused', () => {
