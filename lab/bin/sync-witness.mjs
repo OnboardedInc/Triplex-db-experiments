@@ -74,7 +74,11 @@ export function witnessCreateArgs({name,holder,image,cpu,volume,dirs,perfPages=P
  const pair=[dirs[0],dirs[1]??dirs[0]];
  return harden(name,holder,image,cpu,['--cap-add','BPF','--cap-add','PERFMON','--entrypoint','bpftrace','-e','BPFTRACE_PERF_RB_PAGES='+perfPages,'-e','BPFTRACE_MAX_MAP_KEYS='+mapKeys,
   '-v',volume+':/witness','-v','/sys/kernel/btf:/sys/kernel/btf:ro','-v','/sys/kernel/tracing:/sys/kernel/tracing:ro','-v',PROGRAM+':/program/vm_syncwitness.bt:ro'],
-  ['-q','-o','/witness/trace.txt','/program/vm_syncwitness.bt',...pair.flat().map(String)]);
+  // [EXP-OBS01-R15] Why (harness bug, found in the first live W0): bpftrace 0.20.2 fully buffers `-o FILE` output, so the BEGIN record `SW1|B|` stayed in the stdio buffer and the
+  // session's attach wait (20 s polling that record) refused although the program had attached (verified by hand: SIGINT flushed `SW1|B|` and `SW1|Z|`). `-B none` writes each record as it is
+  // produced, which also leaves a readable trace if the witness is killed. Rejected: waiting for the END flush (the attach check would then run after the writer); a longer wait (the buffer is
+  // 4 KiB or more, no deadline is right).
+  ['-q','-B','none','-o','/witness/trace.txt','/program/vm_syncwitness.bt',...pair.flat().map(String)]);
 }
 
 /** Q108a start condition: no exclusive slot is held and the pool/disk guard of vmAvailable holds. Pure over a ledger and the running list. */
@@ -277,7 +281,7 @@ async function witnessSession(ctx,plan){
   docker(witnessCreateArgs({name:names.witness,holder,image:bpftrace,cpu:5,volume:witnessVolume,dirs:[store]}));
   const profile=verifyWitnessProfile(inspect(names.witness),{volume:witnessVolume});result.profileViolations=profile;if(profile.length)fail('REFUSED','witness profile: '+profile.join('; '));
   docker(['start',names.witness]);
-  for(let i=0;i<200;i++){const first=docker(['cp',names.witness+':/witness/trace.txt','-'],{allowFail:true});if(first&&first.includes('SW1|B|'))break;if(i===199||!inspect(names.witness)?.State.Running)fail('REFUSED','witness did not attach (TRACE-INCOMPLETE): '+(docker(['logs',names.witness],{allowFail:true})??''));await sleep(100);}
+  for(let i=0;i<200;i++){const first=docker(['cp',names.witness+':/witness/trace.txt','-'],{allowFail:true});if(first&&first.includes('SW1|B|'))break;if(i===199||!inspect(names.witness)?.State.Running)fail('REFUSED','witness did not attach (TRACE-INCOMPLETE): '+(run(['docker','-H',SOCK,'logs',names.witness]).stderr??''));await sleep(100);}
   result.attachedWallMs=Date.now();
   if(plan.withNeighbor){await reserve(config,names.neighbor,holder,3);made.push(names.neighbor);docker(harden(names.neighbor,holder,python,3,['--cgroupns','host'],['python3','-B','-c','import os,time\nwhile True:\n os.sync();time.sleep(.01)']));docker(['start',names.neighbor]);}
   const mounts=['--cgroupns','host','--user','10001:10001','-v',volume+':/data','-v',SRC+':/code:ro','-v',control+':/control'];
@@ -396,7 +400,11 @@ async function windowW0(ctx){
  const clock=await clockStep(ctx);
  const program=await clockProgramStep(ctx);
  // the real program, real caps, default seccomp; its D<ack checks over 200 FULL commits are also the CLOCK_MONOTONIC bracket against the writer's own clock
- const attach=await witnessSession(ctx,{mode:'full',count:200,dirName:'w0-attach',captureWitness:true});
+ // [EXP-OBS01-R15] Why (harness bug): a refusal here threw away every fact gathered above (the first live W0 lost its kernel facts, the tracepoint attach and the clock step). They are written to
+ // W0-partial.json before the refusal propagates. Rejected: swallowing the refusal (the attach is a gate).
+ let attach;
+ try{attach=await witnessSession(ctx,{mode:'full',count:200,dirName:'w0-attach',captureWitness:true});}
+ catch(error){atomicJson(path.join(ctx.out,'W0-partial.json'),{refused:String(error),facts,listing,tracepointAttach,clock:{status:clock.status,stderr:clock.stderr,unparsed:clock.unparsed,samples:clock.samples},clockProgram:{image:program.image,dumpPath:program.dumpPath,dumpFileSha256:program.dumpFileSha256,enumPath:program.enumPath,exitCodes:program.exitCodes,versionStderr:program.versionStderr,facts:{...program.facts,btf:{...program.facts.btf,bytes:program.facts.btf.bytes.length},compiled:{exitCode:program.facts.compiled.exitCode,signal:program.facts.compiled.signal,timedOut:program.facts.compiled.timedOut,stdoutBytes:program.facts.compiled.stdout.length,stderr:program.facts.compiled.stderr}}}});throw error;}
  const all={facts,listing,tracepointAttach,clock:{status:clock.status,stderr:clock.stderr,unparsed:clock.unparsed},clockProgram:program.facts,attach,
   paranoid:Number.parseInt(facts.perfEventParanoid,10),ext4BtfPresent:facts.ext4BtfPresent,clockSamples:clock.status===0&&!clock.unparsed?clock.samples:null};
  const verdict=judgeW0(all);
@@ -405,8 +413,9 @@ async function windowW0(ctx){
 }
 async function windowW1(ctx){
  const modes=['full','off','normal','full-then-off','ack-early','sync-before-write','sync-other-file','range-only','syncfs','mmap','neighbor-sync'],rows=[];
- for(const mode of modes)rows.push(await witnessSession(ctx,{mode,withNeighbor:mode==='neighbor-sync',dirName:'w1-'+mode}));
- return {window:'W1',modes:rows.map(r=>({mode:r.mode,pass:r.pass,judge:r.judge})),pass:rows.every(r=>r.pass),
+ // [EXP-OBS01-R15] Why: one refused mode must not hide the other ten; a refusal is recorded as a failing row with the exact message. Rejected: stopping at the first refusal.
+ for(const mode of modes){try{rows.push(await witnessSession(ctx,{mode,withNeighbor:mode==='neighbor-sync',dirName:'w1-'+mode}));}catch(error){rows.push({mode,pass:false,refused:String(error)});}}
+ return {window:'W1',modes:rows.map(r=>({mode:r.mode,pass:r.pass,judge:r.judge,refused:r.refused})),pass:rows.every(r=>r.pass),
   note:'sync-before-write expects ACK-BEFORE-DURABLE for commits 1..n-1 and SYNC-MISSING for the last (vm_planted_writer.expected); R48 4.3 lists SYNC-MISSING'};
 }
 async function windowW2(ctx){
@@ -446,14 +455,15 @@ export async function witnessCommand(config,command,options){
  try{
   for(const w of windows){
    if(!vmAvailable(config).available)throw Error('disk fell below 10 GiB or G03 began VM work; stop');
-   results.push(await table[w](ctx,options));
+   // [EXP-OBS01-R15] Why: a refused window is recorded and the next window still runs (each window has its own fresh containers and volumes); the run status stays REFUSED. Rejected: aborting all windows on the first refusal.
+   try{results.push(await table[w](ctx,options));}catch(error){results.push({window:w,pass:false,refused:String(error)});failure??=w+': '+String(error);}
   }
  }catch(error){failure=String(error);}
  finally{
   for(const [argv,file] of [[['colima','ssh','-p','triplex2','--','sudo','fstrim','-av'],'fstrim.json'],[['docker','context','use','default'],'context.json']]){
    const p=spawnSync(argv[0],argv.slice(1),{encoding:'utf8'});atomicJson(path.join(out,file),{status:p.status,stdout:p.stdout,stderr:p.stderr});if(p.status!==0)failure??='cleanup command failed: '+file;}
   const status=failure?'REFUSED':results.every(r=>r.pass)?'PASS':'FAIL';
-  atomicJson(path.join(out,'RESULT.json'),{status,failure,windows:results.map(r=>({window:r.window,pass:r.pass})),python,bpftrace,nonce,claim:'probe windows only; no NS acceptance and no host power-loss durability'});
+  atomicJson(path.join(out,'RESULT.json'),{status,failure,windows:results.map(r=>({window:r.window,pass:r.pass,refused:r.refused})),python,bpftrace,nonce,claim:'probe windows only; no NS acceptance and no host power-loss durability'});
   for(const r of results)atomicJson(path.join(out,r.window+'.json'),r);
   console.log(JSON.stringify({out,status,failure}));if(status!=='PASS')process.exitCode=2;
  }
