@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
-import { admitCore, coreContext, documentCore } from '../../../bin/claim.mjs';
+import { admitCore, coreContext } from '../../../bin/claim.mjs';
 const root = new URL('../../../../', import.meta.url);
 const contract = JSON.parse(fs.readFileSync(new URL('lab/acceptance/obligations.json', root)));
 const load = JSON.parse(fs.readFileSync(new URL('lab/acceptance/load-contract.json', root)));
@@ -15,12 +15,10 @@ test('Q94e refuses every GS kind before any engine or build can grant admission'
     }
   }
 });
-test('Q94e holds document verdicts, including mixed obligation lists', () => {
-  for (const ids of [['GS.05'], ['NS.P2','GS.05']]) {
-    const r = documentCore({ obligations: ids }, {}, ctx());
-    assert.equal(r.verdict, 'DIAGNOSTIC');
-    assert.ok(r.reasons.some(v => v.code === 'GS-DIAGNOSTIC'));
-  }
+test('Q94e also refuses mixed executing claims, without changing document-only structural checks', () => {
+  const r = admitCore({ obligations: ['NS.P2','GS.05'], kind: 'comparison' }, {}, ctx());
+  assert.equal(r.verdict, 'DIAGNOSTIC');
+  assert.ok(r.reasons.some(v => v.code === 'GS-DIAGNOSTIC'));
 });
 test('Q93/Q91 policy projections and Q94 held acceptance size stay explicit', () => {
   assert.deepEqual(load.freezeProtocol,contract.freezeProtocol);

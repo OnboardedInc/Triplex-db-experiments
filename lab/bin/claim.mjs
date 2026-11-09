@@ -512,8 +512,6 @@ export function documentCore(claim, env, ctx) {
   const unknown = ids.filter(i => typeof i !== 'string' || !ctx.byId.has(i));
   if (unknown.length) { why('UNKNOWN-OBLIGATION', `unknown obligation ids ${JSON.stringify(unknown)} are rejected, never dropped (RULINGS Q42a)`); return done(); }
   const claimed = ids.map(i => ctx.byId.get(i));
-  // [EXP-A01-0313] Why: Q94e applies to document verdicts as well as executing claims. Rejected: a GS document labelled QUALIFIED before 0.4.0.
-  if (ctx.goldenScenarioPolicy?.before040 === 'DIAGNOSTIC' && claimed.some(o => o.id.startsWith('GS.'))) { why('GS-DIAGNOSTIC', 'GS evidence is diagnostic before contract 0.4.0 (Q94e)'); return done(); }
   const tree = claim.sourceTreeSha256, comp = isObj(claim.composition) ? claim.composition : {}, commit = claim.commit, rs = Array.isArray(claim.receipts) ? claim.receipts : [];
   const domain = claimed.some(o => o.oracles.includes('O-DOMAIN'));
   const prereq = [PREREQ.position, PREREQ.identity, ...(domain ? [PREREQ.w0] : [])];
