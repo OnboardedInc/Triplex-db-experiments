@@ -6,7 +6,11 @@ import { randomUUID } from "node:crypto";
 import ts from "typescript";
 import { Effect } from "effect";
 import { expect, it } from "vitest";
-import { DatabaseScope, constructSnapshotReads, isConstructedRead } from "@triplex-build/triplex/runtime";
+import {
+  DatabaseScope,
+  constructSnapshotReads,
+  isConstructedRead,
+} from "@triplex-build/triplex/runtime";
 import { makeQleverNativeQueries } from "../../../../packages/qlever/src/native/NativeQueries.js";
 import { graphIri } from "../../../../packages/qlever/src/rdf.js";
 import { ModelReplica, openRt, freshDir, ops, attempt, at, REPO, writeJson } from "./harness.js";
@@ -59,7 +63,13 @@ const inspect = (object: object, exempt: readonly string[]) => {
 it("round9 actual public surfaces have only table-wrapped reads throughout own properties and the whole prototype chain", async () => {
   const scope = DatabaseScope.test(`round9-construction:${randomUUID()}`),
     replica = new ModelReplica(graphIri(scope));
-  const rt = await openRt(freshDir("round9-construction"), scope, replica, { autoApply: false });
+  const rt = await openRt(
+    freshDir("round9-construction"),
+    scope,
+    replica,
+    { autoApply: false },
+    { basisWaitMs: 40 },
+  );
   try {
     await rt.run(rt.triples.transact(ops("s:round9", 1, "first")));
     const native = makeQleverNativeQueries(replica, scope, { awaitBasisMs: 40 });
@@ -92,15 +102,34 @@ it("round9 actual public surfaces have only table-wrapped reads throughout own p
       }
     }
     const original = (await rt.run(rt.adapter.getByEntity("s:round9")))[0]!;
-    const retired = { ...original, retracted_at: Date.now(), retracted_position: rt.broker.head() + 4096, retract_tx_id: "later" };
-    const added = constructSnapshotReads({
-      round9Read: { run: (_basis: ReturnType<typeof at>) => Effect.succeed([retired]), basis: (basis: ReturnType<typeof at>) => basis, rawHistory: false },
-    }, rt.adapter.snapshotReadPolicy!);
+    const retired = {
+      ...original,
+      retracted_at: Date.now(),
+      retracted_position: rt.broker.head() + 4096,
+      retract_tx_id: "later",
+    };
+    const added = constructSnapshotReads(
+      {
+        round9Read: {
+          run: (_basis: ReturnType<typeof at>) => Effect.succeed([retired]),
+          basis: (basis: ReturnType<typeof at>) => basis,
+          rawHistory: false,
+        },
+      },
+      rt.adapter.snapshotReadPolicy!,
+    );
     const failure = await attempt(rt, added.round9Read(at(rt.broker.head() + 4096)));
     expect(failure.ok).toBe(false);
-    expect(failure.error).toMatchObject({ reason: "basis-not-reached", required: rt.broker.head() + 4096, observed: rt.broker.durable().lsn * 1024 + 1023, replica: "the broker's resolved prefix" });
+    expect(failure.error).toMatchObject({
+      reason: "basis-not-reached",
+      required: rt.broker.head() + 4096,
+      observed: rt.broker.durable().lsn * 1024 + 1023,
+      replica: "the broker's resolved prefix",
+    });
     const masked = await rt.run(added.round9Read(at(rt.broker.head())));
-    expect(masked).toEqual([{ ...retired, retracted_at: null, retracted_position: null, retract_tx_id: null }]);
+    expect(masked).toEqual([
+      { ...retired, retracted_at: null, retracted_position: null, retract_tx_id: null },
+    ]);
     expect(retired.retract_tx_id).toBe("later");
     writeJson("round9-construction-policy.json", { failure, retired, masked });
     writeJson("round9-runtime-construction.json", observations);
@@ -135,11 +164,15 @@ it.each(["baseline", "direct", "inherited", "merged"])(
     const read = host.readFile.bind(host);
     host.readFile = (file) => {
       if (file === contract) return source;
-      if (file === implementation && kind !== "baseline")
-        return read(file)!.replace(
-          "      assert: assert_,",
-          "      round9Read: (_basis?: { readonly recordedPosition: number; readonly validAt: number }) => Effect.succeed([]),\n      assert: assert_,",
+      if (file === implementation && kind !== "baseline") {
+        const original = read(file)!;
+        const mutated = original.replace(
+          /^(\s*)assert: assert_,/m,
+          "$1round9Read: (_basis?: { readonly recordedPosition: number; readonly validAt: number }) => Effect.succeed([]),\n$1assert: assert_,",
         );
+        expect(mutated).not.toBe(original);
+        return mutated;
+      }
       return read(file);
     };
     const program = ts.createProgram(parsed.fileNames, parsed.options, host);
@@ -153,12 +186,30 @@ it.each(["baseline", "direct", "inherited", "merged"])(
       .getPropertiesOfType(checker.getTypeAtLocation(declaration))
       .map((symbol) => symbol.name);
     const typeFile = program.getSourceFile(path.join(REPO, "lab/verify/P2Q/types/round9.ts"))!;
+    const implementationSource = program.getSourceFile(implementation)!;
+    expect(implementationSource.text.includes("round9Read:")).toBe(kind !== "baseline");
+    const implementationDiagnostics = program
+      .getSemanticDiagnostics(implementationSource)
+      .map((d) => ts.flattenDiagnosticMessageText(d.messageText, "\n"));
     const diagnostics = program
       .getSemanticDiagnostics(typeFile)
       .map((d) => ts.flattenDiagnosticMessageText(d.messageText, "\n"));
     expect(names.includes("round9Read")).toBe(kind !== "baseline");
-    if (kind === "baseline") expect(diagnostics).toEqual([]);
-    else expect(diagnostics.join("\n")).toContain('"round9Read"');
-    writeJson(`round9-type-${kind}.json`, { kind, field, names, diagnostics, source });
+    if (kind === "baseline") {
+      expect(diagnostics).toEqual([]);
+      expect(implementationDiagnostics).toEqual([]);
+    } else {
+      expect(diagnostics.join("\n")).toContain('"round9Read"');
+      expect(implementationDiagnostics.join("\n")).toContain("round9Read");
+    }
+    writeJson(`round9-type-${kind}.json`, {
+      kind,
+      field,
+      names,
+      diagnostics,
+      implementationDiagnostics,
+      implementationSource: implementationSource.text,
+      source,
+    });
   },
 );

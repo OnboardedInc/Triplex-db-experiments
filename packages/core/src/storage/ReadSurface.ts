@@ -66,9 +66,18 @@ export const constructSnapshotReads = <const T extends Record<string, SnapshotOp
   operations: T,
   policy: SnapshotReadPolicy,
 ): { readonly [K in keyof T]: T[K]["run"] } => {
-  const dispatch = Object.fromEntries(Object.entries(operations).map(([name, operation]) => [
-    name,
-    (...args: any[]) => policy.wrap(Effect.suspend(() => operation.run(...args)), operation.basis(...args), operation.rawHistory),
-  ]));
-  return constructReadSurface(dispatch, (operation, args) => operation(...args)) as { readonly [K in keyof T]: T[K]["run"] };
+  const dispatch = Object.fromEntries(
+    Object.entries(operations).map(([name, operation]) => [
+      name,
+      (...args: any[]) =>
+        policy.wrap(
+          Effect.suspend(() => operation.run(...args)),
+          operation.basis(...args),
+          operation.rawHistory,
+        ),
+    ]),
+  );
+  return constructReadSurface(dispatch, (operation, args) => operation(...args)) as {
+    readonly [K in keyof T]: T[K]["run"];
+  };
 };

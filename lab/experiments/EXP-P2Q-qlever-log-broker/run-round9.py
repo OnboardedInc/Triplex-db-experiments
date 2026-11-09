@@ -41,7 +41,7 @@ tasks = [
  ('qlever-typecheck', ['node_modules/.bin/tsc','--noEmit','-p','lab/verify/P2Q/tsconfig.round9.json'], None),
  ('core-typecheck', ['node_modules/.bin/tsc','--noEmit','-p','packages/core/tsconfig.json'], None),
  ('new-live', verify+['tests/round8-basis.test.ts','tests/round8-pin-page-corrected.test.ts','tests/round8-history.test.ts','-t','round8 live'], 7),
- ('earlier-live', verify+['tests/round4.test.ts','tests/round7-basis.test.ts','-t','round4 live|round7 live'], 14),
+ ('earlier-live', verify+['tests/round4.test.ts','tests/round7-basis.test.ts','tests/live/live.test.ts'], 54),
 ]
 results=[]
 for gate, command, expected in tasks:
@@ -78,7 +78,7 @@ for gate, command, expected in tasks:
         content=content and all(case['status'] in ['passed','pending','skipped','todo'] for case in cases)
         if gate in ['foundation','core-focused']:
             content=content and all(case['status']=='passed' for case in cases)
-        expected_total={'earlier-offline':816,'new-offline':23,'foundation':42,'package':250,'core-focused':28,'new-live':14,'earlier-live':46}[gate]
+        expected_total={'earlier-offline':816,'new-offline':23,'foundation':42,'package':250,'core-focused':28,'new-live':14,'earlier-live':54}[gate]
         content=content and len(cases)==expected_total
         fresh=started <= data['startTime']/1000 <= finished and started <= report.stat().st_mtime <= finished
         record.update(vitestPassed=passed, vitestTotal=len(cases), expectedPassed=expected,

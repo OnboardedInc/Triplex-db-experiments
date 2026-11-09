@@ -31,6 +31,8 @@ for kind in ['baseline','direct','inherited','merged']:
  assert ('round9Read' in data['names'])==(kind!='baseline')
  assert (not data['diagnostics']) if kind=='baseline' else any('round9Read' in d for d in data['diagnostics'])
  assert data['kind']==kind
+ assert ('round9Read:' in data['implementationSource'])==(kind!='baseline')
+ assert (not data['implementationDiagnostics']) if kind=='baseline' else any('round9Read' in d for d in data['implementationDiagnostics'])
 # Every executed original route retains its cut and refuses via the shared sentinel.
 coverage=json.loads((out/'new-offline/round8-policy-coverage.json').read_text())
 assert len(coverage)==48

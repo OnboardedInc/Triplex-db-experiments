@@ -21,6 +21,8 @@ Resolved TypeScript `Omit` coverage checks bind the public interfaces to the con
 
 Every accepted assertion/receipt site uses content, freshness and binding as listed above. The compiler/runtime mutation probes are expected rejections, not product acceptance. The first exploratory focused run had a new fixture using a non-serialized DatabaseScope (one failed, nine passed); corrected fixture retry passed all ten. These exploratory runs are not source-pinned gate receipts. No product acceptance is inferred from them.
 
+The first source-pinned attempt (`final`, source `6c9d6cb7`) completed 802 earlier and 17 new offline cases, then was deliberately stopped during foundations to strengthen the mutation witness. Its compiler-host replacement had not asserted that the implementation was changed. The corrected regression now requires the real added body and a missing-table diagnostic in the actual implementation as well as in the independent type-level test. That strengthened five-case focus passed. The interrupted attempt is retained and is not final gate acceptance. Only its own verified process tree was terminated; no other job or engine was signaled.
+
 ## Validation and evidence
 
 Pending source-pinned gates. New raw output goes to `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P2Q-R3/round9/`; committed index/manifest will locate it. No new bulky raw evidence will enter git.
