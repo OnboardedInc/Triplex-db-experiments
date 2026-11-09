@@ -2006,3 +2006,17 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **The remaining tail:** the p99 sample spent 39.11 ms in scheduling delay; the slowest sample spent 39.17 ms in SQLite's COMMIT with full fsync. The host runs many agents, so part of the tail is host noise. P2B round 3 waits for R42 (placement, fsync durability and cost).
 - **First P2 median under the bar on any lane at 256 readers,** diagnostic only (in memory, no live XTDB).
 - **RT01 round 5 (554bf7d2):** N1 fixed; PIN-CHANGES-0.4.0.md written. RT01 now has xtdb-s1 for live G2 (diagnosing the earlier timeouts first) and G6 with a calibrated A/A window. K01's full live run follows after its offline review.
+
+## 2026-11-09: R42: the P2 floor on this Mac is F_FULLFSYNC (about 4 ms); the tail is main-thread work
+
+- **P2Q's 5.9 ms was feed lag, not commit latency;** its offer-to-ACK was p50 7.1 / p99 32.8 ms with zero readers (n=28). SQLite costs about 1 ms per commit over P2Q's segment log, not 40 ms.
+- **Durability floor:** SQLite WAL with synchronous=FULL and fullfsync=ON measured p50 3.4-4.0 / p99 7.4-8.3 ms on this Mac; without F_FULLFSYNC it is 0.1 ms but not durable to the drive. SQL01 is durable as written (bundled SQLite 3.53.1), but requireFullFsync defaults to false, so a volume without F_FULLFSYNC would silently fall back. No power-loss test exists.
+- **Tail causes on the broker's main thread:** the harness feed consumer's fsyncSync per page, synchronous Atomics.wait RPCs for pin, purge and feed, and overlay reads served on the main thread once the single reader worker saturates.
+- **Round 3 (CX-P2B):** feed consumer off-thread, reads served inside reader workers with a shared watermark, a 4-8 worker pool, asynchronous RPCs, requireFullFsync on by default with a typed refusal. R42 expects p50 about 7 ms and p99 10-25 ms on a quiet host.
+- **Lesson:** compare like with like. Two numbers both called "latency" measured different intervals (feed lag versus offer-to-ACK) and made the SQLite store look 40 ms slower than it is.
+
+## 2026-11-09: K01 round 13 accepted offline; why 437 tests missed a missing import
+
+- **verify/K01 88bce4f0:** ACCEPT-OFFLINE, 511 tests, five retained smoke captures reproduce D and D'. The smoke ledger is diagnostic only and grants nothing.
+- **Why the import was missed:** the tests imported engine.mjs to test its exported helpers but never ran the private golden, fresh and loadGolden branches; importing a module or syntax-checking it does not resolve names inside function bodies that never run, and tsc did not semantically check that JavaScript file. Now an allowJs/checkJs test fails on unbound names, with a negative control.
+- **Lesson:** our own JavaScript tools need the same type checking as the product. Queued: checkJs over every lab/bin and lab/bench file.
