@@ -3,11 +3,17 @@
 # Rejected: counting startup errors as sensitivity.
 set -euo pipefail
 root=$(git rev-parse --show-toplevel)
-evidence=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B2
-stage=$evidence/stage/tx2-dxb2-a1
+base_evidence=/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B2
+prefix=${DX2_PREFIX:-tx2-dxb2-a1}
+[[ "$prefix" =~ ^tx2-dxb2-[a-z0-9-]+$ ]] || exit 2
+stage=$base_evidence/stage/$prefix
+# [DX-B2] Why: reruns retain earlier mutant failures and use only the explicitly owned stack.
+# Rejected: overwriting the first run or hard-coding a removed development container.
+evidence=$base_evidence/mutants-$(date -u +%Y%m%dT%H%M%SZ)-$$
+mkdir -p "$evidence"
 export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
 reload() {
-  docker restart -t 1 tx2-dxb2-a1-gw-w >/dev/null
+  docker restart -t 1 "$prefix-gw-w" >/dev/null
   for ((i=0;i<90;i++)); do
     if curl -fsS http://127.0.0.1:8493/health >/dev/null 2>&1; then return; fi
     sleep 1
@@ -47,3 +53,5 @@ PY
   rg -q 'AssertionError: expected' "$evidence/mutant-$mutant.log"
   echo "$mutant: rejected by answer comparison (exit $code)"
 done
+
+printf "Mutation evidence: %s\n" "$evidence"
