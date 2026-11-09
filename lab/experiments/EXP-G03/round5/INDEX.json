@@ -1,0 +1,40 @@
+{
+  "format": "CX-G03-round5-evidence/1",
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-G03/round5",
+  "manifest": "SHA256SUMS",
+  "files": 1630,
+  "bytes": 425877316,
+  "smokeSource": "42bd3e214d344cff10ef81230af49417c2087acf",
+  "exclusiveSource": "cf07a99903f7a91e0b5ff2508a412bd9c8f79bf8",
+  "status": "DIAGNOSTIC; exclusive 1k layout refused by engine pool",
+  "qualification": false,
+  "index": {
+    "offline": [
+      "offline/ns-policy-final-2.tap",
+      "offline/box-pool-final-2.tap",
+      "offline/contract-verify.txt"
+    ],
+    "smoke": "smoke-6/summary.json",
+    "failedSmokeAttempts": [
+      "smoke-1/terminal.json",
+      "smoke-2/terminal.json",
+      "smoke-3/terminal.json",
+      "smoke-4/terminal.json",
+      "smoke-5/terminal.json"
+    ],
+    "raw": "smoke-6/raw-*/",
+    "replay": "replay.json",
+    "exclusive": "exclusive-2/receipt.json",
+    "failedExclusive": "exclusive-1/receipt.json",
+    "cleanup": [
+      "inventory-final-smoke.json",
+      "inventory-final-exclusive.json",
+      "status-final.txt",
+      "exclusive-2/slot-down.json",
+      "exclusive-2/trim.json",
+      "exclusive-2/context.json"
+    ]
+  },
+  "largeFileCount": 21,
+  "retention": "All raw/key/state/capture files remain durable outside git; candidate containers never mount this directory."
+}

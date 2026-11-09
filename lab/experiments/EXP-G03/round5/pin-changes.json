@@ -1,0 +1,82 @@
+{
+  "baseline": "1a2f362b4ba1a97a3896939edd232900c38b6b17",
+  "changes": [
+    {
+      "path": "lab/bin/box-engine.mjs",
+      "oldSha256": "44ef65e4472287b5946575b8d26ec1f45f823aef9cfaf3e20ba65caea1a3cba0",
+      "newSha256": "8cc2385eded4d652b7474ccd27bdd1f6a6eb091bb4f4885b8326c113a01248fc",
+      "contractLiteral": null,
+      "scope": "evaluator inventory or explicitly pinned input; no re-pin performed"
+    },
+    {
+      "path": "lab/bin/box.mjs",
+      "oldSha256": "8edd824361864b8636b13081a23a21f82e6f0b7f7b2b1e16873ae1e2e7c1c8dd",
+      "newSha256": "b5913a713d0bbffbbe52164d32c86541a5b902549bfda9c84acce51d8bc53fe3",
+      "contractLiteral": null,
+      "scope": "evaluator inventory or explicitly pinned input; no re-pin performed"
+    },
+    {
+      "path": "lab/bin/claim.mjs",
+      "oldSha256": "7fe922196bce8c30d21e7205b07f6f32d880498e685f285112ea240969a09faf",
+      "newSha256": "3bff869d0dcc376d26b18ea4b1034098a03ea72643bab423a40b26a4f277bf31",
+      "contractLiteral": null,
+      "scope": "evaluator inventory or explicitly pinned input; no re-pin performed"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "oldSha256": "24e0c8f8816f77af4afd1cf874d33bbf620f286b1329003d241644ae49a31eb6",
+      "newSha256": "aaa61a7a48093792aa5d7dbeafb74aa94d3eefdc34efbb00f9984cf6682494d7",
+      "contractLiteral": null,
+      "scope": "evaluator inventory or explicitly pinned input; no re-pin performed"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "oldSha256": "7782987ee7b03a11037e648ca46622784a41e3f936051133d86b3dcbbb3bd06d",
+      "newSha256": "bef1cf800b201937ffea49f94fd27d34be35023257dd866994dca9c1643c1cd5",
+      "contractLiteral": null,
+      "scope": "evaluator inventory or explicitly pinned input; no re-pin performed"
+    },
+    {
+      "path": "lab/bin/ns-policy.mjs",
+      "oldSha256": null,
+      "newSha256": "6063db882961214bcf56881160605ec7297d008889033537b768409813162302",
+      "contractLiteral": null,
+      "scope": "evaluator inventory or explicitly pinned input; no re-pin performed"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "oldSha256": "d8a2f18de7afe55090b514da6e01f3c1c33de6dfe35ee5c1a55c91e49289e8d1",
+      "newSha256": "bc394609630c6d63f8501b1385226351228f4a0fcd6831f07ad86c0f470719e0",
+      "contractLiteral": null,
+      "scope": "evaluator inventory or explicitly pinned input; no re-pin performed"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "oldSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+      "newSha256": "8c138ab3d1972de4660ff5e4e082250a581f13cd091ba358c62eed7521544ab3",
+      "contractLiteral": null,
+      "scope": "evaluator inventory or explicitly pinned input; no re-pin performed"
+    }
+  ],
+  "driverAdaptations": {
+    "baseline": "709a18f17eec40a7b6af17587a86578c2bf0af1c",
+    "changes": [
+      {
+        "path": "lab/bench/ns-driver/clock.mjs",
+        "oldSha256": "93dd437482c0c74f0360752dad7e80a690ba49cfcce55b51d8a8a3376ecdabcb",
+        "newSha256": "d548d1ca8edc5cad9d43b742bc504d50db28780d2e96715851835c5aecf883a8"
+      },
+      {
+        "path": "lab/bench/ns-driver/launch-artifact.mjs",
+        "oldSha256": "665e9cc39e5817970e6bc01eb2fe5c29669026935b7de5c30e046fde180741ce",
+        "newSha256": "8c0df9b11ddbedba4d69b5c9daa288db6373c95f25b6fbe1806fbe1fe68a2e94"
+      },
+      {
+        "path": "packages/qualification/workloads/ns-sut.ts",
+        "oldSha256": "1761a5874750bba7771de28a41f03f3e0cac1728716a01b893400e5c87edf91d",
+        "newSha256": "7c1a501dba5d3a9c12d17da3b10bee54ca2e06185ca82259f2858fbcdd679f91"
+      }
+    ],
+    "scope": "accepted NSR source adaptations; DRIVER_PIN remains proposal only"
+  }
+}

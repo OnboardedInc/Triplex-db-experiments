@@ -42,3 +42,5 @@ for(const [label,change]of [['duplicate',a=>a[1]=a[0]],['bytes',a=>a[1].command.
 
 test('candidate second network is refused',()=>{const r=layout();r[0].inspect.NetworkSettings.Networks.bridge={};assert.ok(layoutProblems(r,volumes).length)});
 test('observer writable source mount is refused',()=>{const r=layout();r[4].inspect.Mounts=[{Name:'source',RW:true}];assert.ok(layoutProblems(r,volumes).length)});
+
+for(const extra of [{trusted:true},{image:'python'},{mounts:[]},{extra:['--privileged']},{memory:0},{cpuset:'0'}])test('placement refuses hardening override '+JSON.stringify(extra),()=>assert.throws(()=>servicePlan({role:'broker',instance:'i',inputs:'in',state:'state',network:'arm',argv:['node'],placement:{memory:134217728,cpuset:'2',...extra}})));

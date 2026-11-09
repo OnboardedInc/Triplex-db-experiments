@@ -8,15 +8,19 @@ export function clockFacts(bootId, offsets, timeNs) {
 }
 export function sameClock(facts){if(!facts.length)throw Error('clock facts missing');const checked=facts.map(x=>clockFacts(x.bootId,`monotonic ${x.offsets?.monotonic?.join(' ')}\nboottime ${x.offsets?.boottime?.join(' ')}`,x.timeNs));if(checked.some(x=>x.bootId!==checked[0].bootId))throw Error('ISOLATION-NOT-IN-FORCE: foreign boot');return {bootId:checked[0].bootId,primitive:'CLOCK_MONOTONIC',offsets:checked[0].offsets}}
 export const CLOCK_SCRIPT="const fs=require('fs');console.log(JSON.stringify({bootId:fs.readFileSync('/proc/sys/kernel/random/boot_id','utf8').trim(),offsetText:fs.readFileSync('/proc/self/timens_offsets','utf8'),timeNs:String(fs.statSync('/proc/self/ns/time',{bigint:true}).ino)}))";
+// [EXP-G03-R5] Why: diagnostic sizing cannot smuggle image/trust/mount overrides into hardened role creation. Rejected: spreading an unrestricted placement object into Box.create.
+function placementPlan(role,placement){
+ if(!placement||Object.keys(placement).some(k=>!['memory','cpuset'].includes(k))||!Number.isSafeInteger(placement.memory)||placement.memory<67108864||placement.memory>NS_LAYOUT[role].memory||placement.cpuset!==NS_LAYOUT[role].cpuset)throw Error('invalid NS placement');return {memory:placement.memory,cpuset:placement.cpuset};
+}
 export function servicePlan({role,instance,inputs,state,network,argv,placement=NS_LAYOUT[role]}){
  if(!['broker','readers','consumer'].includes(role)||!instance||!inputs||!network||network==='bridge'||network==='none'||!Array.isArray(argv)||!argv.length)throw Error('invalid NS service');
  if((role==='readers'&&state)||(role!=='readers'&&!state))throw Error('NS state ownership');
  const names=[instance,inputs,...(state?[state]:[])];if(new Set(names).size!==names.length)throw Error('overlapping NS mounts');
- return {...placement,argv,network,mounts:[{name:instance,target:'/work',rw:false},{name:inputs,target:'/in',rw:false},...(state?[{name:state,target:'/state',rw:true}]:[])],pids:256,extra:['--init']};
+ return {...placementPlan(role,placement),argv,network,mounts:[{name:instance,target:'/work',rw:false},{name:inputs,target:'/in',rw:false},...(state?[{name:state,target:'/state',rw:true}]:[])],pids:256,extra:['--init']};
 }
 export function driverPlan({bundle,inputs,key,output,network,placement=NS_LAYOUT.driver}){
  if(new Set([bundle,inputs,key,output]).size!==4||[bundle,inputs,key,output].some(x=>!x)||!network||['none','bridge'].includes(network))throw Error('driver private mounts required');
- return {...placement,argv:['node','/driver/launch-artifact.mjs','/driver','/driver-in/config.json'],network,pids:128,mounts:[{name:bundle,target:'/driver',rw:false},{name:inputs,target:'/driver-in',rw:false},{name:key,target:'/key',rw:false},{name:output,target:'/out',rw:true}]};
+ return {...placementPlan('driver',placement),argv:['node','/driver/launch-artifact.mjs','/driver','/driver-in/config.json'],network,pids:128,mounts:[{name:bundle,target:'/driver',rw:false},{name:inputs,target:'/driver-in',rw:false},{name:key,target:'/key',rw:false},{name:output,target:'/out',rw:true}]};
 }
 export function layoutProblems(roles,privateVolumes){
  const problems=[];const candidate=roles.filter(x=>['broker','readers','consumer'].includes(x.role));
