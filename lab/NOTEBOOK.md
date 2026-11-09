@@ -2196,3 +2196,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Action:** contract 0.4.0 started (CX-A01-040) with NSR+P3M+FD01, DF01, QNODELAY, M01, CHECKJS; compiles Q98a-i, Q101a, Q104a. RT01 with Q89/Q90 joins in a later round once its G6 completes; CRNS, HS01, P2B, DI01 and G03 follow as they are accepted.
 - **Long runners:** DI01 has made about ten "final" attempts over 228 minutes; P2B is on its last step after 223 minutes. Both are still writing. If DI01's report shows the attempts were churn, its next brief caps final attempts.
 - **Research this hour:** none new; R45 and R46 just landed and their builders (HS01, then QH1) are the follow-up.
+
+## 2026-11-09: RT01 G6 stopped on disk again; live windows need the heavy writers quiet
+
+- **7ee171ea:** recorder fixed (non-setuid counters), G2 passes, G6 stopped on its own disk forecast after 500 control commits. Three G6 attempts in a row stopped before judging (sandbox denial, then disk twice), each correctly. **Lesson:** a live window competes with every agent writing evidence on the same disk; schedule live windows when the heavy writers (here P2B and DI01) are idle, not only when the slot is free.

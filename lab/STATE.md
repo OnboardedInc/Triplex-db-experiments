@@ -282,3 +282,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   decoders, oracles and the calibration registry (0.4.1). Contract note for 0.4.1's CS-NS manifest: the per-loop reader floor must be the
   intended closed-loop load, not the fixture's 2 per second. **Question for Sam (low priority):** P1's read bar is p99 <= 100 ms, which
   allows reads to bunch within 100 ms; if he wants read service spread below that, it needs a p99.9 or max read bar.
+- 2026-11-09 RT01 live round 5 (7ee171ea): M01's shared noise recorder now uses non-setuid counters (21 tests; merge note
+  live5/M01-MERGE.md; OS memory pressure is unavailable in the sandbox and is recorded as such). G2 passed again. G6 stopped on its disk
+  forecast after 500 A/A control commits, because other agents' evidence grew during the run; no B samples, no judgment. **Next RT01 G6
+  window opens when CX-P2B and CX-DI01 have finished** (the two heaviest evidence writers), with host disk above the runbook's forecast.
