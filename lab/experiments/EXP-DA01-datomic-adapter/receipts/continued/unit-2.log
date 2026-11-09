@@ -1,0 +1,11 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 3357 "CX-VP2Q-4-package", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 3323 "CX-VP2Q-4-fuzz60"
+[lab] heavy: waiting for one of 4 slots; held by pid 4561 "CX-VO05-2-independent", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 6060 "DA01-image-build"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+
+ Test Files  2 passed | 1 skipped (3)
+      Tests  29 passed | 8 skipped (37)
+   Start at  17:26:32
+   Duration  1.14s (import 64%, transform 31%, tests 4%, worker 1%)
+

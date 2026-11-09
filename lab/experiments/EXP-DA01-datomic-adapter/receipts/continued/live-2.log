@@ -1,0 +1,35 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+ ❯ packages/datomic/test/adapter.test.ts (8 tests | 1 failed) 3876ms
+   ❯ Datomic storage transaction boundary (8)
+     × preserves signed zero and int64 bounds and rejects noncanonical integers 283ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > preserves signed zero and int64 bounds and rejects noncanonical integers
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ packages/datomic/test/adapter.test.ts:135:11
+    133|         expect(
+    134|           Object.is((await Effect.runPromise(a.getById("negative-zero"…
+    135|         ).toBe(true);
+       |           ^
+    136|         for (const value of ["-9223372036854775808", "9223372036854775…
+    137|           await Effect.runPromise(
+ ❯ withStore packages/datomic/test/adapter.test.ts:30:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 7 passed (8)
+   Start at  17:23:53
+   Duration  4.31s (tests 92%, import 6%, transform 2%)
+

@@ -18,10 +18,11 @@ afterEach(() => {
 });
 
 describe("five public query surface registry", () => {
-  it("keeps five surfaces over three foundation identities", () => {
-    expect(Object.keys(qualificationQueryPaths)).toHaveLength(5);
+  // [EXP-DA01] Why: Datomic adds the sixth surface/fourth foundation. Rejected: hiding the backend from the registry to preserve an obsolete count.
+  it("keeps six surfaces over four foundation identities", () => {
+    expect(Object.keys(qualificationQueryPaths)).toHaveLength(6);
     expect(new Set(Object.values(qualificationQueryPaths).map((path) => path.backend)).size).toBe(
-      3,
+      4,
     );
     delete process.env["TRIPLEX_BACKEND"];
     process.env["TRIPLEX_QUERY_PATH"] = "xtdb-native";
@@ -37,12 +38,15 @@ describe("five public query surface registry", () => {
   // not built in this checkout, so this case failed on every pure run. It is opt-in and the
   // lab G0 gate lists it as an expected skip (lab/config/g0-expected-skips.json).
   // Rejected: building DuckDB in G0 (native build cost for a backend outside our scope).
-  it.runIf(process.env["TRIPLEX_DUCKDB"] === "1")("loads the real built DuckDB async factory once and exposes the synchronous runtime facade", async () => {
-    delete process.env["TRIPLEX_BACKEND"];
-    process.env["TRIPLEX_QUERY_PATH"] = "duckdb-datalog";
-    const backend = await loadQualificationBackend();
-    expect(backend.name).toBe("duckdb");
-    expect(backend.makeRuntime()).toBe(backend.makeRuntime());
-    expect(backend.artifact).toContain("packages/duckdb/dist/index.js");
-  });
+  it.runIf(process.env["TRIPLEX_DUCKDB"] === "1")(
+    "loads the real built DuckDB async factory once and exposes the synchronous runtime facade",
+    async () => {
+      delete process.env["TRIPLEX_BACKEND"];
+      process.env["TRIPLEX_QUERY_PATH"] = "duckdb-datalog";
+      const backend = await loadQualificationBackend();
+      expect(backend.name).toBe("duckdb");
+      expect(backend.makeRuntime()).toBe(backend.makeRuntime());
+      expect(backend.artifact).toContain("packages/duckdb/dist/index.js");
+    },
+  );
 });

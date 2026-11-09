@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 25540 "CX-A01-0312-R2-evaluator", pid 49577 "CX-C8-R4-default-control", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 57843 "CX-VP2Q-4-R8-foundation", pid 59984 "CX-VP2Q-4-R8-live", pid 37317 "CX-G03-r3-claim-suites2", pid 59432 "CX-VP2Q-4-R8-package"
+[lab] heavy: waiting for one of 4 slots; held by pid 57843 "CX-VP2Q-4-R8-foundation", pid 59984 "CX-VP2Q-4-R8-live", pid 37317 "CX-G03-r3-claim-suites2", pid 65369 "CX-O06-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 57843 "CX-VP2Q-4-R8-foundation", pid 59984 "CX-VP2Q-4-R8-live", pid 37317 "CX-G03-r3-claim-suites2", pid 80088 "CX-C8-R4-finish"
+[{"name":"types","command":"/Users/sam/.hermes/node/bin/node","args":["/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/node_modules/typescript/bin/tsc","--noEmit","--module","nodenext","--moduleResolution","nodenext","--target","ESNext","--skipLibCheck","smoke.ts"],"status":0},{"name":"runtime","command":"/Users/sam/.hermes/node/bin/node","args":["smoke.mjs"],"status":0}]

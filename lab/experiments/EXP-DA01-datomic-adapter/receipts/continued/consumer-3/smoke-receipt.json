@@ -1,0 +1,20 @@
+{
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"da01-packed-consumer-07349abf-04bd-484a-9454-271077202fb5\",0]",
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "964c58ead14530e7f687a7a6639fe4a35bb4fdbaf9d37bab9b1b1e1efa9b76e5"
+  },
+  "output": {
+    "factId": "01M6YNZQJ45HXGGJE5N5KNHBQV",
+    "results": [
+      {
+        "?e": "subject",
+        "?v": "saved"
+      }
+    ]
+  },
+  "deleted": {
+    "db": "s-3ae78de08d047fcf99ab1bf6deb8cdef",
+    "deleted": true
+  }
+}

@@ -1,0 +1,69 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+overrides:
+  '@triplex-build/triplex': file:/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/runs/pack/DA01/triplex-pack-nBA1J3/tarballs/triplex-build-triplex-0.2.0.tgz
+  effect: 4.0.3
+
+importers:
+
+  .:
+    dependencies:
+      '@triplex-build/triplex':
+        specifier: file:/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/runs/pack/DA01/triplex-pack-nBA1J3/tarballs/triplex-build-triplex-0.2.0.tgz
+        version: file:../../../../../../runs/pack/DA01/triplex-pack-nBA1J3/tarballs/triplex-build-triplex-0.2.0.tgz(effect@4.0.3)
+      '@triplex-build/triplex-datomic':
+        specifier: file:/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/package/triplex-build-triplex-datomic-0.1.0.tgz
+        version: file:../package/triplex-build-triplex-datomic-0.1.0.tgz(effect@4.0.3)
+      effect:
+        specifier: 4.0.3
+        version: 4.0.3
+
+packages:
+
+  '@triplex-build/triplex-datomic@file:../package/triplex-build-triplex-datomic-0.1.0.tgz':
+    resolution: {integrity: sha512-bEY1qHr5XzVIeccLuScBaZWGwVWHnHvpmvegz7nLTUqvq+unj1S6AYbi3O/urk6ZW89MP9wZmp96aZ8m4Z4BKA==, tarball: file:../package/triplex-build-triplex-datomic-0.1.0.tgz}
+    version: 0.1.0
+    engines: {node: '>=22'}
+    peerDependencies:
+      effect: 4.0.3
+
+  '@triplex-build/triplex@file:../../../../../../runs/pack/DA01/triplex-pack-nBA1J3/tarballs/triplex-build-triplex-0.2.0.tgz':
+    resolution: {integrity: sha512-G1KpOI4sfBWFRbd5ll/QAYnMm6l+Mual+07W9kNi4LiA9MiqxNd8CiT/bCcPUEnRXanNd2HHwAoyPXFH2I/xrA==, tarball: file:../../../../../../runs/pack/DA01/triplex-pack-nBA1J3/tarballs/triplex-build-triplex-0.2.0.tgz}
+    version: 0.2.0
+    engines: {node: '>=22'}
+    peerDependencies:
+      effect: 4.0.3
+
+  effect@4.0.3:
+    resolution: {integrity: sha512-LoWn/Uwwx0JjHSDmBAAahx8sB+klzM6vsZovnbYowBNw6B4QScJLRLBByO61plvNiycx7HPN8FnsWUCu0eXW5w==}
+
+  layerr@3.0.0:
+    resolution: {integrity: sha512-tv754Ki2dXpPVApOrjTyRo4/QegVb9eVFq4mjqp4+NM5NaX7syQvN5BBNfV/ZpAHCEHV24XdUVrBAoka4jt3pA==}
+
+  ulidx@2.4.1:
+    resolution: {integrity: sha512-xY7c8LPyzvhvew0Fn+Ek3wBC9STZAuDI/Y5andCKi9AX6/jvfaX45PhsDX8oxgPL0YFp0Jhr8qWMbS/p9375Xg==}
+    engines: {node: '>=16'}
+
+snapshots:
+
+  '@triplex-build/triplex-datomic@file:../package/triplex-build-triplex-datomic-0.1.0.tgz(effect@4.0.3)':
+    dependencies:
+      '@triplex-build/triplex': file:../../../../../../runs/pack/DA01/triplex-pack-nBA1J3/tarballs/triplex-build-triplex-0.2.0.tgz(effect@4.0.3)
+      effect: 4.0.3
+
+  '@triplex-build/triplex@file:../../../../../../runs/pack/DA01/triplex-pack-nBA1J3/tarballs/triplex-build-triplex-0.2.0.tgz(effect@4.0.3)':
+    dependencies:
+      effect: 4.0.3
+      ulidx: 2.4.1
+
+  effect@4.0.3: {}
+
+  layerr@3.0.0: {}
+
+  ulidx@2.4.1:
+    dependencies:
+      layerr: 3.0.0

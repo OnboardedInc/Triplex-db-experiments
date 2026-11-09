@@ -1,0 +1,41 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+ ❯ packages/datomic/test/adapter.test.ts (8 tests | 8 failed) 53ms
+   ❯ Datomic storage transaction boundary (8)
+     × reads speculative inserts and retractions without publishing them 14ms
+     × rolls back nested failures while preserving the parent 6ms
+     × rejects identity reuse without replacing the original 6ms
+     × resolves an acknowledgement lost after durable submission 6ms
+     × returns an identifiable unknown outcome within the resolution budget 5ms
+     × returns the original transaction id for a duplicate command 5ms
+     × preserves signed zero and int64 bounds and rejects noncanonical integers 4ms
+     × replays one safe callback after a concurrent scope conflict 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 8 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > reads speculative inserts and retractions without publishing them
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rolls back nested failures while preserving the parent
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rejects identity reuse without replacing the original
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > resolves an acknowledgement lost after durable submission
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns an identifiable unknown outcome within the resolution budget
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns the original transaction id for a duplicate command
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > preserves signed zero and int64 bounds and rejects noncanonical integers
+ FAIL  packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > replays one safe callback after a concurrent scope conflict
+Error: Only test scope tuples may be created or deleted
+ ❯ IncomingMessage.<anonymous> packages/datomic/src/DatomicClient.ts:89:19
+     87|               if (status < 200 || status >= 300)
+     88|                 reject(
+     89|                   new DatomicHttpError(
+       |                   ^
+     90|                     status,
+     91|                     String(data["code"] ?? "GatewayError"),
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/8]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  8 failed (8)
+   Start at  17:22:36
+   Duration  636ms (transform 52%, import 38%, tests 9%)
+

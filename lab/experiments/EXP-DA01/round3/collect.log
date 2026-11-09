@@ -1,0 +1,65 @@
+{
+  "head": "6f70eb46dea8ecae3d3448a2d1ceaa05e3844de0",
+  "gates": [
+    {
+      "id": "G0-datomic-20261109T001802Z-f61e8a",
+      "counts": {
+        "executed": 1095,
+        "pass": 1095,
+        "fail": 0,
+        "skip": 62,
+        "expectedSkip": 62,
+        "unexpectedSkip": 0
+      }
+    },
+    {
+      "id": "G1-datomic-20261109T001828Z-85abad",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "route": 88
+    },
+    {
+      "id": "G1-datomic-20261109T002002Z-e3adf2",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "route": 88
+    }
+  ],
+  "image": "sha256:9619fb07157511efa7c22e8e86041cb9179ffd473c28bb761344ca57bcc59a30",
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "92c14a52764a4933376e8efbf4b7164a4d8f0318fe7996d6ac3ac8242e62386f"
+  }
+}

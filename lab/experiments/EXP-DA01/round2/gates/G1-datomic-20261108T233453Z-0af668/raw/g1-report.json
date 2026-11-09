@@ -1,0 +1,756 @@
+{
+  "format": "tx2-lab-conformance/1",
+  "runId": "75e5fcf3-f8a5-48d7-b674-18959b16870f",
+  "backend": "datomic",
+  "queryPath": "datomic-datalog",
+  "endpoint": "http://127.0.0.1:8470",
+  "artifact": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/packages/datomic/dist/index.js",
+  "admission": {
+    "path": "/Users/sam/projects/triplex-db-2/lab/locks/datomic-dev/owner.json",
+    "sha256": "2a285f175e23879cc95c4f443cfdead072a5735f594dd6c7d9ef9ad3b818ebe4"
+  },
+  "caseCount": 44,
+  "caseNames": [
+    "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+    "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+    "historical cursor pages intersect recorded time and the commit snapshot",
+    "recursive relations support cursor pagination and optional total counts",
+    "assert then get and match return the fact",
+    "same-value facts in one batch keep distinct identities",
+    "datalog query finds asserted facts",
+    "datalog projections preserve scalar types without guessing from text",
+    "datalog deduplicates flattened scalar families before grouping and pagination",
+    "datalog constant projections retain their scalar values through pagination",
+    "datalog pattern constants use flattened scalar identity in filters",
+    "datalog value joins compare every scalar family",
+    "datalog equality predicates compare numeric values as numbers",
+    "datalog equality keeps identity bindings string-typed",
+    "ordered Datalog predicates accept only numeric scalar families",
+    "datalog reverse lookup matches an explicitly typed ref constant",
+    "datalog joins a variable bound from a ref in value position",
+    "datalog supports multi-hop joins over ref edges",
+    "datalog recursive rules compute the same transitive closure",
+    "datalog rule patterns unify repeated variables",
+    "datalog aggregations group, filter, and order consistently",
+    "datalog having preserves typed group and aggregate equality",
+    "datalog aggregates preserve duplicate rows and define empty and distinct results",
+    "datalog conjunctions establish bindings independent of clause order",
+    "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+    "wrapped filters preserve scalar types and SQL null semantics",
+    "Datalog ordering and pagination preserve mixed scalar order",
+    "datalog untyped strings match string and ref values while typed refs stay exact",
+    "transact records provenance datoms",
+    "conditional transactions are atomic and journal their changes",
+    "entity transaction history is indexed, complete, and snapshot-stable",
+    "graph constraints reject invalid post-states across valid time",
+    "dependency state is attribute-scoped and schedules temporal edges",
+    "derivation materialization uses indexed dependency freshness",
+    "graph constraints agree across storage backends",
+    "consumer checkpoints advance atomically and remain queryable",
+    "retractByPattern respects entityType",
+    "reserved Triplex namespaces reject ordinary writes atomically",
+    "transaction journals cannot be retracted through ordinary writes",
+    "direct and Datalog reads share one bitemporal basis",
+    "historical corrections preserve what was previously recorded",
+    "batch entity reads preserve association, missing entries, and temporal basis",
+    "retract is coherent across write and datalog paths",
+    "paged queries use deterministic snapshot-stable cursors"
+  ],
+  "selectedCount": 44,
+  "subset": false,
+  "status": "FAIL",
+  "startedAt": "2026-11-08T23:35:03.406Z",
+  "suite": {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-suite-6c1c856c-43be-4563-864a-b544f6353cc2\",0]",
+    "status": "FAIL",
+    "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+    "elapsedMs": 871.2972910000001
+  },
+  "executions": [
+    {
+      "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-9c3b7f02-f542-4a6e-83aa-50e3c24a38be\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 491.42816700000003
+    },
+    {
+      "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-a70a23bb-ae2f-49de-807d-f5f562909be7\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 305.978292
+    },
+    {
+      "name": "historical cursor pages intersect recorded time and the commit snapshot",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-7cba2ca1-14b5-4640-ab84-627dee27dc66\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 193.85670800000003
+    },
+    {
+      "name": "recursive relations support cursor pagination and optional total counts",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-07f9c6e2-01bb-4bd9-8c2f-1a69ac4446e2\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 117.01762499999995
+    },
+    {
+      "name": "assert then get and match return the fact",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-ea1acd86-9f5b-4301-8e19-78febb53d171\",0]",
+      "status": "PASS",
+      "elapsedMs": 113.47229100000004
+    },
+    {
+      "name": "same-value facts in one batch keep distinct identities",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-1fcb4269-ada8-42ae-810e-4c9c0548e19c\",0]",
+      "status": "PASS",
+      "elapsedMs": 129.18083400000023
+    },
+    {
+      "name": "datalog query finds asserted facts",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-7ab7dba8-66ca-415c-a342-c82a2c803380\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 80.86695800000007
+    },
+    {
+      "name": "datalog projections preserve scalar types without guessing from text",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-643941b4-a8bc-4dd0-addc-efe8995d090a\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 83.63404199999968
+    },
+    {
+      "name": "datalog deduplicates flattened scalar families before grouping and pagination",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-c4efd97e-9172-468e-93c6-f788b0150110\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 100.58720799999992
+    },
+    {
+      "name": "datalog constant projections retain their scalar values through pagination",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-8cc5bc78-2f16-452d-a796-ff29a76cd16f\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 100.24108400000023
+    },
+    {
+      "name": "datalog pattern constants use flattened scalar identity in filters",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-808d1238-31a3-4680-835b-000bb48e9ac1\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 98.68604199999982
+    },
+    {
+      "name": "datalog value joins compare every scalar family",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-cac399a5-7200-45b8-8bde-cad0837659ff\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 127.60258299999987
+    },
+    {
+      "name": "datalog equality predicates compare numeric values as numbers",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-0191a4bb-bb20-432e-90e7-058360f98bc5\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 109.0753749999999
+    },
+    {
+      "name": "datalog equality keeps identity bindings string-typed",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-1e3c920f-0175-45f9-98ab-8f00e347424a\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 101.65120900000011
+    },
+    {
+      "name": "ordered Datalog predicates accept only numeric scalar families",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-c93e71a4-1c54-41df-920c-86563f169a37\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 109.82225000000017
+    },
+    {
+      "name": "datalog reverse lookup matches an explicitly typed ref constant",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-229acb98-2bee-488c-9125-1f07405624de\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 112.6360410000002
+    },
+    {
+      "name": "datalog joins a variable bound from a ref in value position",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-0eb11a10-22b3-454d-9b8b-d0dc955f32b8\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 116.30075000000033
+    },
+    {
+      "name": "datalog supports multi-hop joins over ref edges",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-eb3de97c-2e83-414d-b1dd-d7fefa3fbf13\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 92.73049999999967
+    },
+    {
+      "name": "datalog recursive rules compute the same transitive closure",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-afbfb63b-8e9b-4226-a5a0-9f55b8ff2b85\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 117.55237500000021
+    },
+    {
+      "name": "datalog rule patterns unify repeated variables",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-9a2ef8fc-1b39-4769-83e6-ed92ddef34b1\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 122.62945799999989
+    },
+    {
+      "name": "datalog aggregations group, filter, and order consistently",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-48f878bf-4ec1-41f5-bc79-da36843a6493\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 167.73466700000017
+    },
+    {
+      "name": "datalog having preserves typed group and aggregate equality",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-74f2e7b4-fa3a-4db7-b13a-3ace05b02373\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 137.81004100000018
+    },
+    {
+      "name": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-18fe7e5b-4185-48c1-b9aa-5ceab66d7f3d\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 109.98250000000007
+    },
+    {
+      "name": "datalog conjunctions establish bindings independent of clause order",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-80da24b9-7d0c-4c8a-9694-cd21ac25dac6\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 109.96500000000015
+    },
+    {
+      "name": "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-c6964656-deaa-4b8f-af3d-b06a79416c34\",0]",
+      "status": "PASS",
+      "elapsedMs": 71.85791599999993
+    },
+    {
+      "name": "wrapped filters preserve scalar types and SQL null semantics",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-a76bb7d6-b41e-4e9a-9975-c096a6eeffc1\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 93.8910420000002
+    },
+    {
+      "name": "Datalog ordering and pagination preserve mixed scalar order",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-352449bf-3494-4bd1-bffd-d8d3ebb75d8e\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 116.26754100000016
+    },
+    {
+      "name": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-0c629a4e-f99b-428a-8ee5-f6e83ff2f5a8\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 101.31087500000012
+    },
+    {
+      "name": "transact records provenance datoms",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-5bed9292-be92-4b1b-abe4-e09f6fd0fb76\",0]",
+      "status": "PASS",
+      "elapsedMs": 148.6415420000003
+    },
+    {
+      "name": "conditional transactions are atomic and journal their changes",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-f44474bc-33f6-49e0-84fd-2df8f5c35aea\",0]",
+      "status": "PASS",
+      "elapsedMs": 176.5385409999999
+    },
+    {
+      "name": "entity transaction history is indexed, complete, and snapshot-stable",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-3a71b8cd-dd61-4650-afeb-d9e69a294e80\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 122.34204200000022
+    },
+    {
+      "name": "graph constraints reject invalid post-states across valid time",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-9f9e05d1-0ee9-4069-a831-717a3252919e\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 69.65733300000011
+    },
+    {
+      "name": "dependency state is attribute-scoped and schedules temporal edges",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-2563f211-d996-403a-a412-ac457a5c5d40\",0]",
+      "status": "PASS",
+      "elapsedMs": 211.22429199999988
+    },
+    {
+      "name": "derivation materialization uses indexed dependency freshness",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-b1997437-ddb5-459b-bad5-831e9ce0edb0\",0]",
+      "status": "PASS",
+      "elapsedMs": 335.2303750000001
+    },
+    {
+      "name": "graph constraints agree across storage backends",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-929decca-6e9f-4f11-9ddf-c312b8349e2b\",0]",
+      "status": "PASS",
+      "elapsedMs": 125.83400000000074
+    },
+    {
+      "name": "consumer checkpoints advance atomically and remain queryable",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-739f7aef-2453-47a9-933c-bae492e841db\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 79.17366700000002
+    },
+    {
+      "name": "retractByPattern respects entityType",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-321d6766-869b-481b-8901-6fd97a0592aa\",0]",
+      "status": "PASS",
+      "elapsedMs": 177.66054199999962
+    },
+    {
+      "name": "reserved Triplex namespaces reject ordinary writes atomically",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-1949c66f-5ce2-4cb6-8995-3208a8353bd5\",0]",
+      "status": "PASS",
+      "elapsedMs": 125.99829200000022
+    },
+    {
+      "name": "transaction journals cannot be retracted through ordinary writes",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-a83a363f-8f93-44ff-9fbb-f81733b2308e\",0]",
+      "status": "PASS",
+      "elapsedMs": 139.39229200000045
+    },
+    {
+      "name": "direct and Datalog reads share one bitemporal basis",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-27fe08c4-03e3-4eea-a201-34ebf15c8652\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 99.7802500000007
+    },
+    {
+      "name": "historical corrections preserve what was previously recorded",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-b251bc7e-1b96-40c3-abb9-dc429802d816\",0]",
+      "status": "PASS",
+      "elapsedMs": 109.79745900000034
+    },
+    {
+      "name": "batch entity reads preserve association, missing entries, and temporal basis",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-c303ad76-c3ed-4115-9fcd-8da29b72cc2b\",0]",
+      "status": "PASS",
+      "elapsedMs": 86.95449999999983
+    },
+    {
+      "name": "retract is coherent across write and datalog paths",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-48393fe7-2f75-4019-8d6e-ac5721ba2ff3\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 98.82750000000033
+    },
+    {
+      "name": "paged queries use deterministic snapshot-stable cursors",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-db383127-f536-4878-bd6e-a935b7c0f63f\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 98.90008399999988
+    },
+    {
+      "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-fa5e5b44-a147-47e4-a93e-3d734efb4a77\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 241.6450420000001
+    },
+    {
+      "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-6dd52aa2-1850-40f7-95f8-3bf9e5459142\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 197.80433300000004
+    },
+    {
+      "name": "historical cursor pages intersect recorded time and the commit snapshot",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-2ecb681d-6499-4dfd-bec5-228802b41595\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 93.34962499999983
+    },
+    {
+      "name": "recursive relations support cursor pagination and optional total counts",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-015a3ef2-788d-41f0-8e07-0d81e630b4e1\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 65.39141700000073
+    },
+    {
+      "name": "assert then get and match return the fact",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-27ba394e-30ed-4bd5-8250-d037bc68228e\",0]",
+      "status": "PASS",
+      "elapsedMs": 102.12379099999998
+    },
+    {
+      "name": "same-value facts in one batch keep distinct identities",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-bcfe4c05-ed9c-4c18-8b3f-db1f0a705e95\",0]",
+      "status": "PASS",
+      "elapsedMs": 75.8100000000004
+    },
+    {
+      "name": "datalog query finds asserted facts",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-90bacc4c-7dfe-46d2-9ea7-2254a2b03bac\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 65.08841699999994
+    },
+    {
+      "name": "datalog projections preserve scalar types without guessing from text",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-ed765363-6838-44f4-826f-ec30bddca12a\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 81.02354100000048
+    },
+    {
+      "name": "datalog deduplicates flattened scalar families before grouping and pagination",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-c653a0cf-955c-492e-8528-f2131c23057b\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 73.65841699999964
+    },
+    {
+      "name": "datalog constant projections retain their scalar values through pagination",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-60d8ed6e-2ca0-4efb-bb1f-b4964153eff7\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 109.214833
+    },
+    {
+      "name": "datalog pattern constants use flattened scalar identity in filters",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-eccc9d49-8b78-4c55-a516-5a740da65cb2\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 104.16608300000007
+    },
+    {
+      "name": "datalog value joins compare every scalar family",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-d788e52a-18f3-4c7c-bbc5-44b795d16956\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 128.66862500000025
+    },
+    {
+      "name": "datalog equality predicates compare numeric values as numbers",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-6619cfd9-1e04-4c8c-8bff-425701192ab3\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 93.14754200000061
+    },
+    {
+      "name": "datalog equality keeps identity bindings string-typed",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-a28d9a75-7ce6-4ee6-8b24-84b3d9617a7f\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 69.53795799999898
+    },
+    {
+      "name": "ordered Datalog predicates accept only numeric scalar families",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-26638e52-04e0-484f-bcd7-92553693b566\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 84.73283300000003
+    },
+    {
+      "name": "datalog reverse lookup matches an explicitly typed ref constant",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-af4c1f60-1578-4748-b901-e857b763395d\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 82.31183299999975
+    },
+    {
+      "name": "datalog joins a variable bound from a ref in value position",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-7b1d5a84-4e9d-4eef-a3df-7436020859af\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 70.52041699999972
+    },
+    {
+      "name": "datalog supports multi-hop joins over ref edges",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-628acfb0-87c0-42a3-8834-f14edb2c9155\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 74.02004100000158
+    },
+    {
+      "name": "datalog recursive rules compute the same transitive closure",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-259e8f22-8829-4c66-afcd-ab426a014267\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 90.47404199999983
+    },
+    {
+      "name": "datalog rule patterns unify repeated variables",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-d69c7501-b8bf-4d47-a104-95849e3c8806\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 78.50745800000004
+    },
+    {
+      "name": "datalog aggregations group, filter, and order consistently",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-2c9d9fe1-9949-4e47-9a45-588207668eec\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 74.02445799999987
+    },
+    {
+      "name": "datalog having preserves typed group and aggregate equality",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-ca0cdef1-504a-44fd-babb-16bdfb8b8c91\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 105.3882909999993
+    },
+    {
+      "name": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-d38e11e7-6019-4bda-a366-f905ac08311e\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 78.13587499999994
+    },
+    {
+      "name": "datalog conjunctions establish bindings independent of clause order",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-def1685d-343a-4b7b-a545-2219300273fb\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 112.28637499999968
+    },
+    {
+      "name": "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-f8cdf1d3-4757-4583-81ff-5eda79c4a640\",0]",
+      "status": "PASS",
+      "elapsedMs": 78.78949999999895
+    },
+    {
+      "name": "wrapped filters preserve scalar types and SQL null semantics",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-95cad855-cfdf-46d5-98d8-fd543114b38f\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 89.55687500000022
+    },
+    {
+      "name": "Datalog ordering and pagination preserve mixed scalar order",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-611d46cf-1897-44c9-84d7-b544f171a3ae\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 103.98358299999927
+    },
+    {
+      "name": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-53a3e913-acaa-4dbf-9b6b-6b0d2cc852c0\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 102.18925000000127
+    },
+    {
+      "name": "transact records provenance datoms",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-b163b338-14be-4bc2-a92f-307565527af7\",0]",
+      "status": "PASS",
+      "elapsedMs": 102.37795800000094
+    },
+    {
+      "name": "conditional transactions are atomic and journal their changes",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-52f4bcfe-10eb-46d7-b488-83e44df09b4b\",0]",
+      "status": "PASS",
+      "elapsedMs": 214.87737500000003
+    },
+    {
+      "name": "entity transaction history is indexed, complete, and snapshot-stable",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-322b6e5f-50fb-4b79-9fc6-aae60d24d561\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 132.71508399999948
+    },
+    {
+      "name": "graph constraints reject invalid post-states across valid time",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-9363cf5c-b2fe-40b4-8d9e-c200cb2e8022\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 59.565042000000176
+    },
+    {
+      "name": "dependency state is attribute-scoped and schedules temporal edges",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-8626dcd6-d844-42ea-97ab-1aea4641703e\",0]",
+      "status": "PASS",
+      "elapsedMs": 195.0779590000002
+    },
+    {
+      "name": "derivation materialization uses indexed dependency freshness",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-04d69b65-f003-43ef-8c50-6ba7bc3dac2f\",0]",
+      "status": "PASS",
+      "elapsedMs": 206.2591250000005
+    },
+    {
+      "name": "graph constraints agree across storage backends",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-a255552b-c86c-44ee-84b5-49b9b1b66087\",0]",
+      "status": "PASS",
+      "elapsedMs": 106.4494590000013
+    },
+    {
+      "name": "consumer checkpoints advance atomically and remain queryable",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-4f7e5544-8d50-4535-ae5a-9f781784e77a\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 104.45370800000092
+    },
+    {
+      "name": "retractByPattern respects entityType",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-dcdec2ce-c623-4ee9-a701-39baed137866\",0]",
+      "status": "PASS",
+      "elapsedMs": 145.63174999999865
+    },
+    {
+      "name": "reserved Triplex namespaces reject ordinary writes atomically",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-faf05a95-b5de-4287-89a0-6d955db45a1c\",0]",
+      "status": "PASS",
+      "elapsedMs": 88.82395800000086
+    },
+    {
+      "name": "transaction journals cannot be retracted through ordinary writes",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-33a4e653-0c4c-4081-8510-a755f6181da2\",0]",
+      "status": "PASS",
+      "elapsedMs": 81.78033299999879
+    },
+    {
+      "name": "direct and Datalog reads share one bitemporal basis",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-c904601e-1a62-4d15-a37d-1ee68f0de3bb\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 89.26445800000147
+    },
+    {
+      "name": "historical corrections preserve what was previously recorded",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-71dad078-e2a0-4649-9a9d-3253a273ef7a\",0]",
+      "status": "PASS",
+      "elapsedMs": 113.40600000000086
+    },
+    {
+      "name": "batch entity reads preserve association, missing entries, and temporal basis",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-8bb241d5-09a1-42de-8a4b-55a800b76c15\",0]",
+      "status": "PASS",
+      "elapsedMs": 99.68320799999856
+    },
+    {
+      "name": "retract is coherent across write and datalog paths",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-fd24c4b1-01f4-4374-b16e-76f2258e2e4e\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 115.29162499999984
+    },
+    {
+      "name": "paged queries use deterministic snapshot-stable cursors",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-365c224a-9f6b-4a9a-8d50-06b78bb56abe\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: TypeError: Invalid Datomic database name))])",
+      "elapsedMs": 88.1807919999992
+    }
+  ],
+  "counts": {
+    "expectedExecutions": 88,
+    "executed": 88,
+    "passed": 26,
+    "failed": 62
+  },
+  "endedAt": "2026-11-08T23:35:14.928Z"
+}

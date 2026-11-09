@@ -1,0 +1,7 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 93777 "CX-P5A-R2-completion-regression", pid 92614 "orch-q87-rq01", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 11550 "DA01-r5-G1", pid 92614 "orch-q87-rq01", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 11550 "DA01-r5-G1", pid 92614 "orch-q87-rq01", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] G0-datomic-20261109T014236Z-c1644d: raw output runs/G0/G0-datomic-20261109T014236Z-c1644d
+error: could not write index
+PASS G0 datomic scope=full executed=1095 pass=1095 fail=0 skip=62
+receipt: lab/runs/G0/G0-datomic-20261109T014236Z-c1644d.json

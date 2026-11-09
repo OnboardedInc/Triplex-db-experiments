@@ -1,0 +1,10 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33682 "CX-VSQL01-r2b-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33682 "CX-VSQL01-r2b-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 33693 "CX-VSQL01-r2b-kill50"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 24500 "CX-INT-XCJ-X02-evaluator", pid 33700 "CX-VSQL01-r2b-live", pid 50515 "CX-K01-R4-offline"
+[lab] G1-datomic-20261108T233453Z-0af668: raw output runs/G1/G1-datomic-20261108T233453Z-0af668
+FAIL G1 datomic/dev scope=full executed=88 pass=26 fail=62 skip=0
+profile: default; planner budget: null
+  reason: complete unchanged suite failed
+  reason: 62 failed case executions
+receipt: lab/runs/G1/G1-datomic-20261108T233453Z-0af668.json

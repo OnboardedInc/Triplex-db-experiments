@@ -1,0 +1,26 @@
+{
+  "at": "2026-11-09T00:17:54.707Z",
+  "sources": [
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/acceptance/RULINGS-PENDING.md",
+      "sha256": "8dec81913c52e843c29d6679d66a68fc524c93f20674eb9106b68ee3c52a85ce"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/research/R31-route-equivalence.md",
+      "sha256": "b564958f72d84b37ec645bb52ab1f06b4b9783def74a445431eee4e111d8bbe6"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/SCOPE.md",
+      "sha256": "94527879db763dd6f3e7d233470250cd53b86f4fb594c8ade2aedc730cb14f96"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/NORTH-STAR.md",
+      "sha256": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/PROTOCOL.md",
+      "sha256": "cc314b62e43f9f8bce1de6cdb720e70fd5b272c7cc390d0d775c507c98b33734"
+    }
+  ],
+  "q89": "## Q89: route equivalence (from R31)\n| Q | Ruling | Basis |\n| --- | --- | --- |\n| Q89a record time at decision (design first) | Record time is to be stamped when the commit is decided, monotone in position, on every lane (broker writer lock, XTDB engine stamp, Datomic transactor value), with a record-time watermark that gates a named T like a future position. Today `transact` stamps before allocating a position (TriplesLive.ts:309 before :326), so a recordedAt cut is not a log prefix and an answer at a named T can change after it was served (R31 D-C1). Because this changes the core receipt `instant`, a planner designs it (R33) and it lands with a contract version. | R31 5.1 |\n| Q89b refuse what a route cannot answer | Until Q89a lands, every store that retires rows by position refuses any basis naming a record time: H1 (including its pull predicate, sqlite-worker.ts:158), R24's planned current store, and Datomic's `:f/live` path. | R31 5.3, 5.4 |\n| Q89c typed refusal | A route that cannot answer a basis exactly fails with a typed error, never an empty result with a flag; every route waits then refuses for a future position (and, after Q89a, a future record time). | R31 5.5 |\n| Q89d DA01 read pins | DA01's next round pins multi-request Datalog (rule rounds, final query, optional pulls) to one position or held db (D-D1), refuses future positions (D-D3), seeks the position-to-t map (D-D4) and enumerates by subject for getByEntities (D-D5). | R31 5.2, 5.5 |\n| Q89e Datomic current/history | Datomic separates current from history at the index level; R18 line 97 is superseded. DA03's P4 path reads `:f/live` for latest and position shapes and falls back to `:f/subject` for record-time shapes (Q89b). | R31 2, 3 |\n| Q89f route-equivalence gate | The harness of R31 section 4 lives in packages/testkit and is a required gate for every branch that adds or changes a read route (SQL01, EXP-P4, P2X, DA01, DA03, R24's current store). | R31 4 |\n| Q89g public position token (Sam) | Waiting for Sam with Q89a: add a position or opaque snapshot token to the public TemporalBasis so callers can pin \"the latest committed tx (named exactly)\". It changes the public TypeScript API (goal 10). | R31 R31-g |\n| Q89h P4 arm X1 guard | Before any promotion of P4 arm X1, an initialization probe refuses default bounds when any row in tx_assertions has native valid time (D-X2). | R31 5.6 |\n"
+}

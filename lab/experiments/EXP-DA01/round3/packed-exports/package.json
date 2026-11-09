@@ -1,0 +1,5 @@
+{
+  "name": "route-fixture-consumer",
+  "private": true,
+  "type": "module"
+}

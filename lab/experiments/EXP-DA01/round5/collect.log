@@ -1,0 +1,7 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 96427 "CX-GS12F-gates", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 12216 "CX-VP2Q-4-R9-enum-direct-retry", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 51742 "CX-GS12F-gates-attempt2", pid 96367 "CX-VP2Q-4-R9-new-live-journal-retry", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 51742 "CX-GS12F-gates-attempt2", pid 96367 "CX-VP2Q-4-R9-new-live-journal-retry", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 51742 "CX-GS12F-gates-attempt2", pid 96367 "CX-VP2Q-4-R9-new-live-journal-retry", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 51742 "CX-GS12F-gates-attempt2", pid 96367 "CX-VP2Q-4-R9-new-live-journal-retry", pid 95503 "CX-P5A-R2-1k-traffic-fixed"
+{"validated":true,"head":"1c3739edb1d0e88bf46bbdd022de17f80b3a8ba4","image":"sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf","gates":["G0-datomic-20261109T014236Z-c1644d","G1-datomic-20261109T014110Z-21ed97","G1-datomic-20261109T015019Z-b44fce"]}

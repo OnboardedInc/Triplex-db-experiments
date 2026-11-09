@@ -1,0 +1,854 @@
+{
+  "startedAt": "2026-11-08T21:55:30.653Z",
+  "createdScopes": [
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-0\",\"1794174950103\"]",
+      "db": "s-f43d78e756286da105c6aa52db4e63e5",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-1\",\"1794174950103\"]",
+      "db": "s-f3bbef1ea743fe6d74cf63342f934757",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-2\",\"1794174950103\"]",
+      "db": "s-c8202978834cb8f0d7b0d311074eac02",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-3\",\"1794174950103\"]",
+      "db": "s-4ad2e5e07231bae8a86275a1d1b88905",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-4\",\"1794174950103\"]",
+      "db": "s-7879dfceb42c600785708dd54001caba",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-5\",\"1794174950103\"]",
+      "db": "s-abe141eab59999e1f7cffbd23fcfa72c",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-6\",\"1794174950103\"]",
+      "db": "s-7677169a4ee0b2022a1485b700d9d374",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-7\",\"1794174950103\"]",
+      "db": "s-6cba0efebdeebaf84ecaa1bdc2a6fd29",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-8\",\"1794174950103\"]",
+      "db": "s-f69b1d21318792fee688180264583c6b",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-9\",\"1794174950103\"]",
+      "db": "s-4edc19bc0a5150759d56b84fedc6e9fb",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-10\",\"1794174950103\"]",
+      "db": "s-6962e45375187c61ff8ae4062e60ef2a",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-11\",\"1794174950103\"]",
+      "db": "s-97256827cfe142573b4e642523e17dd6",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-12\",\"1794174950103\"]",
+      "db": "s-2a22985385af5ac08ab8506168c9bc4b",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-13\",\"1794174950103\"]",
+      "db": "s-ea211b8841ac9c9b364ea0c251e6564a",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-14\",\"1794174950103\"]",
+      "db": "s-a294d4ff8617cb65aa19384ec6e71095",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-15\",\"1794174950103\"]",
+      "db": "s-7895beef1cd5c3eb1d780fb1bf7169a5",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-16\",\"1794174950103\"]",
+      "db": "s-19da6dbc733d12c1265c7bfbf141f2bf",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-17\",\"1794174950103\"]",
+      "db": "s-e5ca78f60277f8c988409fb352c9846a",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-18\",\"1794174950103\"]",
+      "db": "s-43263459c4d56eb5813139224d969e51",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-19\",\"1794174950103\"]",
+      "db": "s-7c4f1da35494305100694e4fd300a3c3",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-20\",\"1794174950103\"]",
+      "db": "s-7eead68122407013ffc0afe0fd043fcb",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-21\",\"1794174950103\"]",
+      "db": "s-72e69021757f71f48bdcd3455aabf7b7",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-22\",\"1794174950103\"]",
+      "db": "s-84afad1b04687c7344f1841986d1d2c3",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-23\",\"1794174950103\"]",
+      "db": "s-987eb72b477b1f87f4ea317fc7eb4e92",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-24\",\"1794174950103\"]",
+      "db": "s-cca8281d1eab53781c5058e6178ebb75",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-25\",\"1794174950103\"]",
+      "db": "s-bb242a65389eb6c7c8de0ac69d3a52c0",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-26\",\"1794174950103\"]",
+      "db": "s-f2015ff98fd393674d3b8bcc2c6731af",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-27\",\"1794174950103\"]",
+      "db": "s-18831c2218ad16321fba221d34ae4853",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-28\",\"1794174950103\"]",
+      "db": "s-158f4b02c77ef8cbe36f3d52bf68be76",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-29\",\"1794174950103\"]",
+      "db": "s-c2cdf9dc715e61e07d7a0a7362c0151e",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-30\",\"1794174950103\"]",
+      "db": "s-9ee2c5f37db4dfff6fab34c3067f9c9a",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-31\",\"1794174950103\"]",
+      "db": "s-612d9ce63f38fd1b09a40b8153cf6620",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-32\",\"1794174950103\"]",
+      "db": "s-e4d01b1487503449ae0b102d5d9b7881",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-33\",\"1794174950103\"]",
+      "db": "s-1c935a567191e5ce103e322723929b23",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-34\",\"1794174950103\"]",
+      "db": "s-c534f839ea6b5b4aae1988b84c120a65",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-35\",\"1794174950103\"]",
+      "db": "s-27fdfb27b8053f156057186b80cd4643",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-36\",\"1794174950103\"]",
+      "db": "s-7d6b43b99480ea984458290383338dfc",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-37\",\"1794174950103\"]",
+      "db": "s-65fa388c27626fcea73e24f2acf7aa41",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-38\",\"1794174950103\"]",
+      "db": "s-5ce6f2a27c6bc55700b49eccccdc8538",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-39\",\"1794174950103\"]",
+      "db": "s-829867169a4df5a3991e0bafac4a0b93",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-40\",\"1794174950103\"]",
+      "db": "s-14dd9a2aa21f4e5c44b19aa93a2010c3",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-41\",\"1794174950103\"]",
+      "db": "s-5f6063acb925c87a7787018abf0d07e1",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-42\",\"1794174950103\"]",
+      "db": "s-0731e9300345b8c5bbfb7411dd71836b",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-43\",\"1794174950103\"]",
+      "db": "s-ae0f3fbc17c798d4dbf27fb719650bab",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-44\",\"1794174950103\"]",
+      "db": "s-cd5431bcb756eb6fe0871f513042a1e9",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-45\",\"1794174950103\"]",
+      "db": "s-29f7dfcaa9a63bad316a4d2b67cd2efd",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-46\",\"1794174950103\"]",
+      "db": "s-efdb2ebe25835ee5bf8411f85a4f5765",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-47\",\"1794174950103\"]",
+      "db": "s-32b9f04b532be33053816c832f182152",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-48\",\"1794174950103\"]",
+      "db": "s-d09d7cceab83351e0e8ae457bd743e1d",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-49\",\"1794174950103\"]",
+      "db": "s-459428167dbff68b8bf7eddb97d7a846",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-50\",\"1794174950103\"]",
+      "db": "s-1b16cd2b66be7b83f52af706cf2dd09b",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-51\",\"1794174950103\"]",
+      "db": "s-eaebff2d9f70b856ae54e12f0e70fb05",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-52\",\"1794174950103\"]",
+      "db": "s-2cedd04655a4e76969f254f1ffead6d5",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-53\",\"1794174950103\"]",
+      "db": "s-35e47b8a29d4eeeab0c766f4bd157e4f",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-54\",\"1794174950103\"]",
+      "db": "s-57b7b2f737564eb335e893b69316a0cb",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-55\",\"1794174950103\"]",
+      "db": "s-b3a7ff5ad9b3be8337cc43591a9fe597",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-56\",\"1794174950103\"]",
+      "db": "s-b7cd55c36211b18d3d1408807a3b8010",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-57\",\"1794174950103\"]",
+      "db": "s-e7389ef71947df50a809b50ff531ea0e",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-58\",\"1794174950103\"]",
+      "db": "s-790dbb5c6a5167bd66f98bbe488f81f9",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-59\",\"1794174950103\"]",
+      "db": "s-5fa89cd7278bcad4866e533b3972d4fd",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-60\",\"1794174950103\"]",
+      "db": "s-8df5c6ad025a7656c3364a548f5cb235",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-61\",\"1794174950103\"]",
+      "db": "s-6a88a961e51673a89d290ddb289f47d5",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-62\",\"1794174950103\"]",
+      "db": "s-bf2ced147ebe7d7dddb5dfa10309e53e",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-63\",\"1794174950103\"]",
+      "db": "s-2d0ba0926c9162b1d34c9420b89862d3",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-64\",\"1794174950103\"]",
+      "db": "s-ba78c3ff5412acdf7699bb7fd614b312",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-65\",\"1794174950103\"]",
+      "db": "s-d1e28a8ab0831f4849655c34f5838fbd",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-66\",\"1794174950103\"]",
+      "db": "s-93ac0453a051101710b19a52b8f5f2ef",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-67\",\"1794174950103\"]",
+      "db": "s-caece3c5ddc5eef6aa9bad3aceb35cc3",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-68\",\"1794174950103\"]",
+      "db": "s-d410707e429ef122ba96e6147b1fd196",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-69\",\"1794174950103\"]",
+      "db": "s-b07c0156d51badd5fbc6bfda0089817a",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-70\",\"1794174950103\"]",
+      "db": "s-46d3b6b9797d718c075b1da99191ec8d",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-71\",\"1794174950103\"]",
+      "db": "s-91d8880e2daffe3732859661e4e06bd6",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-72\",\"1794174950103\"]",
+      "db": "s-ccbb612d67ab32e97da297fa03a3b475",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-73\",\"1794174950103\"]",
+      "db": "s-61ba26ebdf4a2a8fcdab9776bd1261a9",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-74\",\"1794174950103\"]",
+      "db": "s-6a1c3cda73291dab55fa442d158280c2",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-75\",\"1794174950103\"]",
+      "db": "s-c94c061f6b7dde41250d3c8865530be9",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-76\",\"1794174950103\"]",
+      "db": "s-0a649ef143c61826500bbdd8154c1ab4",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-77\",\"1794174950103\"]",
+      "db": "s-af55f444a1302ec56fd92f387036dc33",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-78\",\"1794174950103\"]",
+      "db": "s-e0e23c733aff3a55e1724a14ba3fb986",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-79\",\"1794174950103\"]",
+      "db": "s-09defb75e73233ed2d177929d319db6a",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-80\",\"1794174950103\"]",
+      "db": "s-fbda63bb051de6e9a09f18d760f7a2ef",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-81\",\"1794174950103\"]",
+      "db": "s-d46f40d8280ad33ac90d1fae7605948b",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-82\",\"1794174950103\"]",
+      "db": "s-4aeacc373af59c8475a1e2006ee906ee",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-83\",\"1794174950103\"]",
+      "db": "s-d23d3116160bd23305cf92bc3a5a0c0a",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-84\",\"1794174950103\"]",
+      "db": "s-959d8697858b250c85c14365ec285af2",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-85\",\"1794174950103\"]",
+      "db": "s-665e054011a250a4f421b7236ce34da7",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-86\",\"1794174950103\"]",
+      "db": "s-4d3866da42a33c680e07872cb8706e3f",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-87\",\"1794174950103\"]",
+      "db": "s-ead96ec34957773f22ed633b98af8033",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-88\",\"1794174950103\"]",
+      "db": "s-cb94fb5a3d441e4994c5933154e89e21",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-89\",\"1794174950103\"]",
+      "db": "s-b6d089306371d855d46cd2b37c6a4a76",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-90\",\"1794174950103\"]",
+      "db": "s-c075d04bcbda27e8d682ea865fd1b8da",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-91\",\"1794174950103\"]",
+      "db": "s-0f407be1ba547e9cc9074e4fab94b5a7",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-92\",\"1794174950103\"]",
+      "db": "s-1b7ac22ded113ec0843bf5e8337d104d",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-93\",\"1794174950103\"]",
+      "db": "s-83fa9fa7a06fa47ee2ffc951bafe97c8",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-94\",\"1794174950103\"]",
+      "db": "s-9bd7e0cf6d4774b3d4df2297716bd130",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-95\",\"1794174950103\"]",
+      "db": "s-dba3b84d12a2f240d4b2edb10afbb83b",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-96\",\"1794174950103\"]",
+      "db": "s-dd06bfc8e9d6ecdeacb57cd05ba2868c",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-97\",\"1794174950103\"]",
+      "db": "s-ed9b746b6f162f7a9be4ea0d643c79ad",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-98\",\"1794174950103\"]",
+      "db": "s-e575871d42e5c986c2d886642c65c215",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-99\",\"1794174950103\"]",
+      "db": "s-ee7ad9985db721eb48c4772318ce9b3d",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    }
+  ],
+  "createLatencyMs": [
+    1407.510875,
+    697.677208000001,
+    793.5026670000007,
+    849.0184169999993,
+    562.3448339999995,
+    502.68524999999863,
+    502.8977080000004,
+    534.7196670000012,
+    487.8995419999992,
+    664.5294160000012,
+    450.3892080000005,
+    435.3809999999976,
+    520.4972080000007,
+    417.34500000000116,
+    483.3222910000004,
+    630.327874999999,
+    368.8812910000015,
+    436.0784590000003,
+    524.5694999999978,
+    384.79841699999815,
+    438.31866699999955,
+    344.6153750000012,
+    350.3191250000018,
+    332.45266699999775,
+    339.1355000000003,
+    407.0013749999998,
+    496.66387499999837,
+    390.0304580000011,
+    318.8404999999984,
+    392.9046660000022,
+    349.16333300000406,
+    327.50133300000016,
+    371.017875000005,
+    290.3936659999963,
+    256.5235840000023,
+    337.76341700000194,
+    669.4606249999997,
+    497.76062499999534,
+    469.419249999999,
+    460.71275000000605,
+    341.0379580000008,
+    336.13500000000204,
+    395.08908299999894,
+    382.54404200000135,
+    338.96679199999926,
+    348.6747499999983,
+    275.0664160000015,
+    302.56262500000594,
+    248.90695799999958,
+    403.9518339999995,
+    543.9835000000021,
+    462.8527909999975,
+    312.2622080000001,
+    323.05233299999963,
+    288.3411669999987,
+    274.7879580000008,
+    339.5897079999995,
+    296.07450000000244,
+    416.33758300000045,
+    285.9155830000018,
+    229.7842909999963,
+    301.90258399999584,
+    303.0055410000059,
+    264.77158300000156,
+    262.5604579999999,
+    235.8866659999985,
+    260.6842499999984,
+    266.95850000000064,
+    255.84579200000007,
+    290.19333399999596,
+    270.9850000000006,
+    295.8567919999987,
+    356.53783299999486,
+    420.68683299999975,
+    392.099083000001,
+    215.64762500000506,
+    207.1327500000043,
+    185.00550000000658,
+    180.98933399999805,
+    188.10145799999736,
+    183.94791700000496,
+    196.15029200000572,
+    236.12729200000467,
+    234.3871250000011,
+    266.0567500000034,
+    195.63691700000345,
+    191.30600000000413,
+    225.93033300000388,
+    224.58612500000163,
+    273.14029099999607,
+    167.19458299999678,
+    224.62758300000132,
+    314.00645899999654,
+    249.7883340000044,
+    397.32050000000163,
+    339.3110000000015,
+    187.1091249999954,
+    168.76704099999915,
+    245.1758339999942,
+    182.2292080000043
+  ],
+  "storageVolumeExistedAtStart": true,
+  "coldStartToReadyMs": 18148.832208,
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "0177dcf44530bc32f02b4230a2203ae0c03652b27a4fb61a1b559283d68be1dc"
+  },
+  "runtime": {
+    "cpusetCpus": "0,1",
+    "mounts": [
+      {
+        "Type": "volume",
+        "Name": "tx2-datomic-dev-data",
+        "Source": "/var/lib/docker/volumes/tx2-datomic-dev-data/_data",
+        "Destination": "/data",
+        "Driver": "local",
+        "Mode": "z",
+        "RW": true,
+        "Propagation": ""
+      },
+      {
+        "Type": "bind",
+        "Source": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-dev/transactor.properties",
+        "Destination": "/config/transactor.properties",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      },
+      {
+        "Type": "bind",
+        "Source": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-dev/entrypoint.sh",
+        "Destination": "/config/entrypoint.sh",
+        "Mode": "ro",
+        "RW": false,
+        "Propagation": "rprivate"
+      }
+    ]
+  },
+  "idle": {
+    "at": "2026-11-08T21:55:48.972Z",
+    "processes": "/proc/80 java -server -Xmx1g -Xms1g -Xms1g -Xmx1g -Ddatomic.objectCacheMax=320m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError -cp resources:datomic-transactor-pro-1.0.7745.jar:lib/*:samples/clj:bin:/opt/gateway/src clojure.main -i bin/bridge.clj -m triplex.gateway.main \nName:\tjava\nPid:\t80\nVmHWM:\t  312228 kB\nVmRSS:\t  311512 kB\nThreads:\t39\nCpus_allowed_list:\t1\n/proc/9 java -server -cp resources:datomic-transactor-pro-1.0.7745.jar:lib/*:samples/clj:bin:/opt/gateway/src -Xmx640m -Xms640m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError clojure.main --main datomic.launcher /data/effective-transactor.properties \nName:\tjava\nPid:\t9\nVmHWM:\t  366028 kB\nVmRSS:\t  366028 kB\nThreads:\t62\nCpus_allowed_list:\t0",
+    "stats": "{\"BlockIO\":\"24.6kB / 119kB\",\"CPUPerc\":\"28.73%\",\"Container\":\"tx2-datomic-dev\",\"ID\":\"4214fb9a0cfd\",\"MemPerc\":\"22.22%\",\"MemUsage\":\"625.8MiB / 2.75GiB\",\"Name\":\"tx2-datomic-dev\",\"NetIO\":\"2.54kB / 1.91kB\",\"PIDs\":\"109\"}"
+  },
+  "after100": {
+    "at": "2026-11-08T21:56:26.657Z",
+    "processes": "/proc/80 java -server -Xmx1g -Xms1g -Xms1g -Xmx1g -Ddatomic.objectCacheMax=320m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError -cp resources:datomic-transactor-pro-1.0.7745.jar:lib/*:samples/clj:bin:/opt/gateway/src clojure.main -i bin/bridge.clj -m triplex.gateway.main \nName:\tjava\nPid:\t80\nVmHWM:\t  518996 kB\nVmRSS:\t  518996 kB\nThreads:\t375\nCpus_allowed_list:\t1\n/proc/9 java -server -cp resources:datomic-transactor-pro-1.0.7745.jar:lib/*:samples/clj:bin:/opt/gateway/src -Xmx640m -Xms640m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError clojure.main --main datomic.launcher /data/effective-transactor.properties \nName:\tjava\nPid:\t9\nVmHWM:\t  570192 kB\nVmRSS:\t  570192 kB\nThreads:\t879\nCpus_allowed_list:\t0",
+    "stats": "{\"BlockIO\":\"24.6kB / 2.56MB\",\"CPUPerc\":\"5.98%\",\"Container\":\"tx2-datomic-dev\",\"ID\":\"4214fb9a0cfd\",\"MemPerc\":\"37.62%\",\"MemUsage\":\"1.035GiB / 2.75GiB\",\"Name\":\"tx2-datomic-dev\",\"NetIO\":\"54.4kB / 53kB\",\"PIDs\":\"1256\"}"
+  },
+  "basisBeforePark": {
+    "t": {
+      "t": "long",
+      "v": "1001"
+    },
+    "position": {
+      "t": "long",
+      "v": "0"
+    },
+    "recordedAt": null,
+    "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+  },
+  "volumeRetained": true,
+  "restartToReadyMs": 20250.308916999995,
+  "basisAfterPark": {
+    "t": {
+      "t": "long",
+      "v": "1001"
+    },
+    "position": {
+      "t": "long",
+      "v": "0"
+    },
+    "recordedAt": null,
+    "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+  },
+  "duplicateCreate": {
+    "db": "s-f43d78e756286da105c6aa52db4e63e5",
+    "created": false,
+    "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+  },
+  "retention": {
+    "kept": {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-0\",\"1794174950103\"]",
+      "db": "s-f43d78e756286da105c6aa52db4e63e5",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    "deleted": 99,
+    "resident": "left running for orchestrator"
+  },
+  "effectiveConfigSha256": "41160708b65bbc45ec2b56b835c0bd55adc641acd04887854f26afcef33055bd",
+  "image": {
+    "Architecture": "arm64",
+    "Config": {
+      "Entrypoint": [
+        "/bin/bash",
+        "/config/entrypoint.sh"
+      ],
+      "Env": [
+        "PATH=/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "JAVA_HOME=/opt/java/openjdk",
+        "LANG=en_US.UTF-8",
+        "LANGUAGE=en_US:en",
+        "LC_ALL=en_US.UTF-8",
+        "JAVA_VERSION=jdk-21.0.13+9",
+        "DATOMIC_EXT_CLASSPATH=/opt/gateway/src"
+      ],
+      "Labels": {
+        "org.opencontainers.image.version": "24.04",
+        "tx2.build-inputs-sha256": "c15195a2c2bffd4de222f55ea79c76266b321bc8b02f6451e9a157d386199256"
+      },
+      "WorkingDir": "/opt/datomic"
+    },
+    "Created": "2026-11-08T16:49:42.165436246-05:00",
+    "Descriptor": {
+      "digest": "sha256:d0e2465fd9548980373a61f84b8f50e339a82cd627c56ead0ac284b87cb34c6d",
+      "mediaType": "application/vnd.oci.image.manifest.v1+json",
+      "size": 2067
+    },
+    "Id": "sha256:d0e2465fd9548980373a61f84b8f50e339a82cd627c56ead0ac284b87cb34c6d",
+    "Metadata": {
+      "LastTagTime": "2026-11-08T21:49:42.933562106Z"
+    },
+    "Os": "linux",
+    "Parent": "sha256:7c2fe21d3a352c4bede934d40fbbda446e219095ab92b8390396accbf3b1e29e",
+    "RepoDigests": [
+      "tx2-datomic@sha256:d0e2465fd9548980373a61f84b8f50e339a82cd627c56ead0ac284b87cb34c6d"
+    ],
+    "RepoTags": [
+      "tx2-datomic:1.0.7745-da00"
+    ],
+    "RootFS": {
+      "Layers": [
+        "sha256:107ffca6dcd3fc87a7bed8c062f5ddc0d6a4b107205c82c0b49efdb7c1aff967",
+        "sha256:d2d2be7e27da928754087278bf9b0f3944356a62e3d530b55b7c805242fc2f5f",
+        "sha256:0654e1f8ada2bdd3cca9a55e6e9caf8cbbd74e3c1da1feed5075261ca2e3ff1c",
+        "sha256:8e6eef616b4dc70cb53f0677b9f30f4b6ee3a0795adc5259667ea06504dc216d",
+        "sha256:9586a75cd339430639adbceb2560d74812abd1cd6b014da65879d21971223b3f",
+        "sha256:067f858bcfd181f698007c39d3d129cddd561d1b7559a480e770ad1c682d4299",
+        "sha256:20d5e12c17f250aa77430bb1c09bf94f5130fed35ffc832ea1a40ad8cc2952fd",
+        "sha256:8563211f91bbb84d77b4ff710f32ef493de463b65b456a4f9902ff12f2ffa77f"
+      ],
+      "Type": "layers"
+    },
+    "Size": 371251125
+  },
+  "measureSourceSha256": "dcd0b254f8d330a11d85efb9e944680421a31cd2de57a8332c48297195d4dd18",
+  "passed": true,
+  "finishedAt": "2026-11-08T21:57:16.036Z"
+}

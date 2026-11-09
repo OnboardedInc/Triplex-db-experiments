@@ -1,0 +1,85 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+ ❯ packages/datomic/test/route-equivalence.test.ts (0 test)
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"public-112c8ddc-2c49-4949-af27-15d6e672b98b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJwdWJsaWMtMTEyYzhkZGMtMmM0OS00OTQ5LWFmMjctMTVkNmU2NzJiOThiIiwwXQ","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-e0c8405e-fde6-48c8-a36f-c765598c2f21\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1lMGM4NDA1ZS1mZGU2LTQ4YzgtYTM2Zi1jNzY1NTk4YzJmMjEiLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"public-112c8ddc-2c49-4949-af27-15d6e672b98b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJwdWJsaWMtMTEyYzhkZGMtMmM0OS00OTQ5LWFmMjctMTVkNmU2NzJiOThiIiwwXQ","deleted":true}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-e0c8405e-fde6-48c8-a36f-c765598c2f21\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1lMGM4NDA1ZS1mZGU2LTQ4YzgtYTM2Zi1jNzY1NTk4YzJmMjEiLDBd","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"prod\",\"租户/😀\",\"quote\\\" slash/\\\\ lone\\ud800-311dcc8d-102c-4a6c-b79b-7f804ed4c22a\",9007199254740991]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwicHJvZCIsIuenn-aIty_wn5iAIiwicXVvdGVcIiBzbGFzaC9cXCBsb25lXHVkODAwLTMxMWRjYzhkLTEwMmMtNGE2Yy1iNzliLTdmODA0ZWQ0YzIyYSIsOTAwNzE5OTI1NDc0MDk5MV0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"prod\",\"租户/😀\",\"quote\\\" slash/\\\\ lone\\ud800-311dcc8d-102c-4a6c-b79b-7f804ed4c22a\",9007199254740991]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwicHJvZCIsIuenn-aIty_wn5iAIiwicXVvdGVcIiBzbGFzaC9cXCBsb25lXHVkODAwLTMxMWRjYzhkLTEwMmMtNGE2Yy1iNzliLTdmODA0ZWQ0YzIyYSIsOTAwNzE5OTI1NDc0MDk5MV0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-ab9ed410-da61-4169-8da9-550ebdb46066\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1hYjllZDQxMC1kYTYxLTQxNjktOGRhOS01NTBlYmRiNDYwNjYiLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-ab9ed410-da61-4169-8da9-550ebdb46066\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1hYjllZDQxMC1kYTYxLTQxNjktOGRhOS01NTBlYmRiNDYwNjYiLDBd","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\" staging \",\"﻿x\",\"\\na92d02f4-d298-4965-a8e4-9c8e60c06460\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwiIHN0YWdpbmcgIiwi77u_eCIsIlxuYTkyZDAyZjQtZDI5OC00OTY1LWE4ZTQtOWM4ZTYwYzA2NDYwIiwwXQ","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\" staging \",\"﻿x\",\"\\na92d02f4-d298-4965-a8e4-9c8e60c06460\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwiIHN0YWdpbmcgIiwi77u_eCIsIlxuYTkyZDAyZjQtZDI5OC00OTY1LWE4ZTQtOWM4ZTYwYzA2NDYwIiwwXQ","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-7a371f93-75d4-4ba1-8410-8f316b767be0\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi03YTM3MWY5My03NWQ0LTRiYTEtODQxMC04ZjMxNmI3NjdiZTAiLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-a269090e-757b-4b29-a6df-7341ddab4e08\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWEyNjkwOTBlLTc1N2ItNGIyOS1hNmRmLTczNDFkZGFiNGUwOCIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-a269090e-757b-4b29-a6df-7341ddab4e08\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWEyNjkwOTBlLTc1N2ItNGIyOS1hNmRmLTczNDFkZGFiNGUwOCIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-38b328a4-2328-4175-8076-59e458b5bd61\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTM4YjMyOGE0LTIzMjgtNDE3NS04MDc2LTU5ZTQ1OGI1YmQ2MSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-38b328a4-2328-4175-8076-59e458b5bd61\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTM4YjMyOGE0LTIzMjgtNDE3NS04MDc2LTU5ZTQ1OGI1YmQ2MSIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-01755300-867d-433c-8c6a-fda09fc08cbe\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTAxNzU1MzAwLTg2N2QtNDMzYy04YzZhLWZkYTA5ZmMwOGNiZSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-01755300-867d-433c-8c6a-fda09fc08cbe\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTAxNzU1MzAwLTg2N2QtNDMzYy04YzZhLWZkYTA5ZmMwOGNiZSIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d9e2f275-f027-4899-b63b-23ba1d32e831\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQ5ZTJmMjc1LWYwMjctNDg5OS1iNjNiLTIzYmExZDMyZTgzMSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d9e2f275-f027-4899-b63b-23ba1d32e831\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQ5ZTJmMjc1LWYwMjctNDg5OS1iNjNiLTIzYmExZDMyZTgzMSIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-e41f8480-3b9d-4e49-a628-838b4c0285b3\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWU0MWY4NDgwLTNiOWQtNGU0OS1hNjI4LTgzOGI0YzAyODViMyIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-e41f8480-3b9d-4e49-a628-838b4c0285b3\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWU0MWY4NDgwLTNiOWQtNGU0OS1hNjI4LTgzOGI0YzAyODViMyIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-be9ebff4-cd95-4f2a-9966-c1bae9bd8ded\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWJlOWViZmY0LWNkOTUtNGYyYS05OTY2LWMxYmFlOWJkOGRlZCIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-be9ebff4-cd95-4f2a-9966-c1bae9bd8ded\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWJlOWViZmY0LWNkOTUtNGYyYS05OTY2LWMxYmFlOWJkOGRlZCIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d28e3809-84c6-40d5-9dba-4744149efe37\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQyOGUzODA5LTg0YzYtNDBkNS05ZGJhLTQ3NDQxNDllZmUzNyIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-7a371f93-75d4-4ba1-8410-8f316b767be0\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi03YTM3MWY5My03NWQ0LTRiYTEtODQxMC04ZjMxNmI3NjdiZTAiLDBd","deleted":true}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d28e3809-84c6-40d5-9dba-4744149efe37\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQyOGUzODA5LTg0YzYtNDBkNS05ZGJhLTQ3NDQxNDllZmUzNyIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-918f9128-a11f-4e61-912e-530726f4829a\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi05MThmOTEyOC1hMTFmLTRlNjEtOTEyZS01MzA3MjZmNDgyOWEiLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-54bd753c-5c0b-4b09-a622-d737857ebb7a\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTU0YmQ3NTNjLTVjMGItNGIwOS1hNjIyLWQ3Mzc4NTdlYmI3YSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-54bd753c-5c0b-4b09-a622-d737857ebb7a\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTU0YmQ3NTNjLTVjMGItNGIwOS1hNjIyLWQ3Mzc4NTdlYmI3YSIsMF0","deleted":true}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-918f9128-a11f-4e61-912e-530726f4829a\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi05MThmOTEyOC1hMTFmLTRlNjEtOTEyZS01MzA3MjZmNDgyOWEiLDBd","deleted":true}
+ ❯ packages/datomic/test/read-pins.test.ts (4 tests | 1 failed) 8114ms
+   ❯ Datomic read pins (4)
+     × pins optional pulls across a commit between query requests 2297ms
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-ea3fbf1a-2286-4c1e-b447-131f8aa15a25\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWVhM2ZiZjFhLTIyODYtNGMxZS1iNDQ3LTEzMWY4YWExNWEyNSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-ea3fbf1a-2286-4c1e-b447-131f8aa15a25\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWVhM2ZiZjFhLTIyODYtNGMxZS1iNDQ3LTEzMWY4YWExNWEyNSIsMF0","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-2829586e-4ef9-4560-be06-45d64a3a247d\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTI4Mjk1ODZlLTRlZjktNDU2MC1iZTA2LTQ1ZDY0YTNhMjQ3ZCIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-2829586e-4ef9-4560-be06-45d64a3a247d\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTI4Mjk1ODZlLTRlZjktNDU2MC1iZTA2LTQ1ZDY0YTNhMjQ3ZCIsMF0","deleted":true}
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/datomic/test/route-equivalence.test.ts [ packages/datomic/test/route-equivalence.test.ts ]
+Error: Cannot find package '@triplex-build/triplex-testkit' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/da01/packages/datomic/test/route-equivalence.test.ts
+ ❯ packages/datomic/test/route-equivalence.test.ts:9:1
+      7| import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
+      8| import { DatabaseScope, type TripleRow } from "@triplex-build/triplex/…
+      9| import {
+       | ^
+     10|   makeRouteEquivalenceCases,
+     11|   canonicalRouteValue,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/datomic/test/read-pins.test.ts > Datomic read pins > pins optional pulls across a commit between query requests
+AssertionError: expected 2 to be 1 // Object.is equality
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ packages/datomic/test/read-pins.test.ts:112:39
+    110|         expect(injected).toBe(true);
+    111|         expect(handles.length).toBeGreaterThan(1);
+    112|         expect(new Set(handles).size).toBe(1);
+       |                                       ^
+    113|         expect(handles[0]).toBeTypeOf("string");
+    114|         expect(released).toBeGreaterThan(0);
+ ❯ fixture packages/datomic/test/read-pins.test.ts:48:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  2 failed | 3 passed (5)
+      Tests  1 failed | 114 passed (115)
+   Start at  19:04:52
+   Duration  8.97s (tests 92%, import 5%, transform 3%)
+

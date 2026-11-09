@@ -1,0 +1,4 @@
+[lab] G0-datomic-20261108T215822Z-205199: raw output runs/G0/G0-datomic-20261108T215822Z-205199
+[lab] heavy: waiting for one of 4 slots; held by pid 67168 "R25-nosweep-b-r4", pid 5291 "CX-VP2Q-3-live", pid 50198 "DA00-G0-final-source", pid 54453 "CX-A01-0311-regressions"
+PASS G0 datomic scope=full executed=1017 pass=1017 fail=0 skip=46
+receipt: lab/runs/G0/G0-datomic-20261108T215822Z-205199.json
