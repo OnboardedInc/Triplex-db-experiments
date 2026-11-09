@@ -1,0 +1,18 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 51789 "CX-RT01-live-T10-final", pid 51456 "CX-W02-r2-outcome-final", pid 57629 "CX-P2Q-R9-mutation-focus"
+
+> triplex-monorepo@0.1.0 pack:check /Users/sam/projects/triplex-db-2/.claude/worktrees/int-d
+> node scripts/check-packages.mjs
+
+Package verification artifacts retained at /Users/sam/projects/triplex-db-2/.claude/worktrees/int-d/.experiments/pack/triplex-pack-9Wdxas
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/int-d/scripts/check-packages.mjs:79
+        throw new Error(`${tarball} is missing ${required}`);
+              ^
+
+Error: /Users/sam/projects/triplex-db-2/.claude/worktrees/int-d/.experiments/pack/triplex-pack-9Wdxas/tarballs/triplex-build-triplex-cli-0.1.1.tgz is missing package/dist/index.js
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/int-d/scripts/check-packages.mjs:79:15
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+ ELIFECYCLE  Command failed with exit code 1.
