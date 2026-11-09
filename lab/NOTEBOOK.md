@@ -1842,3 +1842,11 @@ Where each priority stands, from evidence so far (research probes and baselines;
   every QLever read the lab has measured.
 - **Learning:** R17 found the stall weeks of plan time ago and nobody applied the fix. Research findings with a cheap fix now get a builder
   in the same pass.
+
+## 2026-11-09 04:01Z: a connection per request removes QLever's keep-alive stall (EXP-QNODELAY)
+- Diagnostic probe on qlever-dev: stalls 120/240 to 0/240; per-request p99 59.06 ms to 7.87 ms. Opt-in mode, default unchanged; 38 tests
+  pass. In review (CX-VQNODELAY), including a socket-leak check. If it holds, the default flips and every earlier QLever latency number is
+  DIAGNOSTIC (Q97b) anyway.
+- **Also this stretch:** K01 round 11 corrected three XTDB wire-type assumptions from source (union spelling, I8, bpchar), live rerun queued;
+  RT01 review found three defects against its own rulings (native routes wrap typed refusals, same-commit retractions keep their instant,
+  empty batches skip the watermark), fix round running; erasure scanners and GS12F each in their third review.
