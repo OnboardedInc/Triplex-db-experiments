@@ -1,0 +1,37 @@
+{
+  "lab/bin/claim.mjs": {
+    "oldSha256": "987c1878f747a66dd002933fd16296c74472cd7bf886c96aebe3339f020cc4ad",
+    "newSha256": "8b9fa966291f87e43d374be3b24163aa9960d4d86d496432a9d53377258fc683",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/bin/test/claim-ns-round2.test.mjs": {
+    "oldSha256": "5d36db5b4f1aced067d63400cb6db6a8308104bcbab9d2237d6510203933de32",
+    "newSha256": "fa85ddb64288b2b57d8a8aed3184466053b0a035880f6fc97c4dddbc6393e086",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/bin/test/claim-ns-round3.test.mjs": {
+    "oldSha256": "5bd25a95cfa3644434c34256ebe954760df14d6e3ae6823208cdaee2f0dea2f3",
+    "newSha256": "bb237661769be5c49040c48b345eb6d67bcfe3e1991697c37db3b024621c2ade",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/bin/test/ns-round2-fixture.mjs": {
+    "oldSha256": "e5ca2f5a772640a198ac6ea019779300449f188957298aa44335cbef2c2cc292",
+    "newSha256": "030dff41c2eaa20c25922113c82f01791e63428f68b5c5414c36c3ccab5e3816",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/verify/CRNS-opus/forgeries-round4.test.mjs": {
+    "oldSha256": "3f68cce62dec9edc2a7ddf699066d951a2fa44f7d76976297f6a04ead25aeefa",
+    "newSha256": "66e37b5dcb94ac9c2305d7448a365e9dded507c395c7279a6103228b71e50fcf",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/verify/CRNS/fixture.mjs": {
+    "oldSha256": "94e310b045e4be20bd08356b9889ddee16e89c604707fb3fa758700219c1e154",
+    "newSha256": "521e8967041b3354a96b363a34f0ecfc1f2f621c903b41b94accd3eaea7fb417",
+    "oldHashReferencesInAcceptance": []
+  },
+  "lab/verify/CRNS/round2/fixtures.mjs": {
+    "oldSha256": "6aecd0eecb57137bc9dc9e5898db9c7784a67baa56c6a9faa70abfe49e69ff60",
+    "newSha256": "022422d6172943bac50ec4921514d2c9fdc74a6c3854a8cdc745ccb91c2de2cb",
+    "oldHashReferencesInAcceptance": []
+  }
+}

@@ -1725,26 +1725,47 @@ function nsReaderEvidence(reads, declared, window, level) {
   }
   return qualifying / seconds;
 }
-// [EXP-CRNS-R4] Why: loop presence alone allows fast but mostly idle readers. Rejected: a candidate-chosen throughput floor.
+// [EXP-CRNS-R5] Why: Q103d counts a loop only if it meets every 100 ms bin and has no >1 s read. Rejected: per-bin rotating populations or p99 alone (parked readers pass).
 function nsLoadRate(reads, window, level, floor) {
   nsAssert(Number.isSafeInteger(floor) && floor>0, 'READER-RATE-UNBOUND');
-  const start=nsTime(window.startNs),end=nsTime(window.endNs),bins=new Map(),byLoop=new Map();
+  const start=nsTime(window.startNs),end=nsTime(window.endNs),byLoop=new Map();
   for(const r of reads) {if(!byLoop.has(r.loop)) byLoop.set(r.loop,[]);byLoop.get(r.loop).push(r);}
+  let counted=0;
   for(const loop of byLoop.values()) {
     loop.sort((a,b)=>nsTime(a.sentAtNs)<nsTime(b.sentAtNs)?-1:1);
     for(let i=1;i<loop.length;i++) nsAssert(nsTime(loop[i].sentAtNs)>=nsTime(loop[i-1].receivedAtNs),'READER-LOOP-OVERLAP');
+    if(loop.some(r=>nsTime(r.receivedAtNs)-nsTime(r.sentAtNs)>1000000000n)) continue;
+    const bins=new Map();
+    for(const r of loop) {
+      const at=nsTime(r.receivedAtNs); if(at<start||at>=end) continue;
+      const key=String((at-start)/100000000n);bins.set(key,(bins.get(key)??0)+1);
+    }
+    let qualifies=true;
+    for(let at=start;at<end;at+=100000000n) {
+      const width=end-at<100000000n?end-at:100000000n;
+      const needed=Number((BigInt(floor)*width+999999999n)/1000000000n);
+      if((bins.get(String((at-start)/100000000n))??0)<needed) {qualifies=false;break;}
+    }
+    if(qualifies) counted++;
   }
-  for(const r of reads) {
-    const at=nsTime(r.receivedAtNs); if(at<start||at>=end) continue;
-    const second=(at-start)/1000000000n, key=String(second);
-    if(!bins.has(key)) bins.set(key,new Map());
-    const loops=bins.get(key); loops.set(r.loop,(loops.get(r.loop)??0)+1);
+  nsAssert(counted>=level,'READER-RATE-SHORT');
+  return counted;
+}
+// [EXP-CRNS-R5] Why: Q103e freezes pair membership, not a winner; invalid/overlapping pairs cannot remove static validity obligations. Rejected: inferring races from candidate conflicts.
+function nsRacePairs(plan, commands) {
+  const pairs=plan.racePairs??[], seen=new Set();
+  nsAssert(Array.isArray(pairs),'RACE-PLAN-INVALID');
+  for(const pair of pairs) {
+    nsAssert(Array.isArray(pair.commands) && pair.commands.length===2 && pair.commands[0]!==pair.commands[1],'RACE-PLAN-INVALID');
+    const inside=[];
+    for(const id of pair.commands) {
+      const offers=plan.offers?.filter(o=>o.commandId===id);
+      nsAssert(nsText(id) && commands?.[id] && !seen.has(id) && offers?.length>0,'RACE-PLAN-INVALID');
+      seen.add(id);inside.push(offers.some(o=>nsTime(o.scheduledAtNs)>=nsTime(plan.window.startNs)&&nsTime(o.scheduledAtNs)<nsTime(plan.window.endNs)));
+    }
+    nsAssert(inside[0]===inside[1],'RACE-PLAN-INVALID','race straddles measured population');
   }
-  for(let at=start;at<end;at+=1000000000n) {
-    const width=end-at<1000000000n?end-at:1000000000n;
-    const needed=Number((BigInt(floor)*width+999999999n)/1000000000n);
-    nsAssert([...(bins.get(String((at-start)/1000000000n))??new Map()).values()].filter(n=>n>=needed).length>=level,'READER-RATE-SHORT');
-  }
+  return pairs;
 }
 function nsReadSample(reads, window, replayRead, entries) {
   nsAssert(Array.isArray(reads) && reads.length > 0 && typeof replayRead === 'function', 'READS-NOT-ESTIMABLE');
@@ -1771,7 +1792,10 @@ function nsSameCompanionContext(primary, companion) {
 function nsTraceAttempt(trusted, binding) {
   nsAssert(isObj(trusted.frozenTrace) && sha256(canonText(trusted.frozenTrace)) === binding.traceSha256, 'TRACE-NOT-FROZEN');
   nsAssert(same(Object.keys(trusted.commands??{}).sort(),Object.keys(trusted.frozenTrace.commands??{}).sort()), 'TRACE-COMMAND-PIN-MISMATCH');
-  for(const [id,expected] of Object.entries(trusted.frozenTrace.commands??{})) nsAssert(typeof expected.valid==='boolean' && nsHash(expected.commandSha256) && trusted.commands?.[id]?.commandSha256===expected.commandSha256 && trusted.commands?.[id]?.changesSha256===expected.changesSha256 && trusted.commands?.[id]?.valid===expected.valid, 'TRACE-COMMAND-PIN-MISMATCH');
+  const plans=Object.values(trusted.frozenTrace.attempts??{});
+  const raceSets=plans.map(plan=>new Set(nsRacePairs(plan,trusted.frozenTrace.commands).flatMap(pair=>pair.commands)));
+  const raceOnly=id=>plans.some((p,i)=>raceSets[i].has(id)) && plans.every((p,i)=>!p.offers.some(o=>o.commandId===id)||raceSets[i].has(id));
+  for(const [id,expected] of Object.entries(trusted.frozenTrace.commands??{})) nsAssert((raceOnly(id)||typeof expected.valid==='boolean') && nsHash(expected.commandSha256) && trusted.commands?.[id]?.commandSha256===expected.commandSha256 && trusted.commands?.[id]?.changesSha256===expected.changesSha256 && trusted.commands?.[id]?.valid===expected.valid, 'TRACE-COMMAND-PIN-MISMATCH');
   const plan=trusted.frozenTrace.attempts?.[binding.attemptId];
   nsAssert(plan && Array.isArray(plan.offers) && plan.offers.length>0, 'TRACE-NOT-FROZEN');
   return plan;
@@ -1923,7 +1947,10 @@ export function recomputeNS(bundle, trusted) {
       for (const row of c[name]) { const k = canonText(row.position); if (!observedSubjects[name].has(k)) observedSubjects[name].set(k, new Set()); observedSubjects[name].get(k).add(row.subject); }
     }
     const lag = [], steady = [], burst = [], widths = [], midpoint = [];
-    const scheduledIds=new Set(trace.offers.filter(o=>nsTime(o.scheduledAtNs)>=start && nsTime(o.scheduledAtNs)<end && trusted.frozenTrace.commands?.[o.commandId]?.valid===true).map(o=>o.commandId));
+    const racePairs=nsRacePairs(trace,trusted.frozenTrace.commands), raceIds=new Set(racePairs.flatMap(pair=>pair.commands));
+    const scheduled=trace.offers.filter(o=>nsTime(o.scheduledAtNs)>=start && nsTime(o.scheduledAtNs)<end);
+    const scheduledIds=new Set(scheduled.filter(o=>raceIds.has(o.commandId)||trusted.frozenTrace.commands?.[o.commandId]?.valid===true).map(o=>o.commandId));
+    const frozenPopulation=[...scheduledIds].filter(id=>!raceIds.has(id)).length+racePairs.filter(pair=>pair.commands.every(id=>scheduledIds.has(id))).length;
     let outOfWindowLag=0;
     for (const [key, { p, tx, entry }] of positions) {
       const expected = trusted.domainAffected({ position: p, transaction: tx, entry, prefix: nsPrefix(entries, p) });
@@ -1964,6 +1991,7 @@ export function recomputeNS(bundle, trusted) {
     for (const f of e.faults) {
       nsAssert(f.format === 'fault-witness/1' && same(f.binding, raw.binding) && nsHash(f.eventsSha256) && f.eventsSha256 === sha256(canonText(f.events)) && !witnessHashes.has(f.eventsSha256) && f.events?.some(x => x.transition === 'cgroup-gone' && nsTime(x.t) <= drain), 'FAULT-WITNESS-INVALID');
       const gone=f.events.filter(x=>x.transition==='cgroup-gone');
+      nsAssert(trace.crashTarget && ['cgroup','process'].includes(trace.crashTarget.kind) && nsText(trace.crashTarget.identity) && gone.length===1 && gone[0][trace.crashTarget.kind]===trace.crashTarget.identity, 'CRASH-TARGET-MISMATCH');
       nsAssert(gone.length===1 && nsTime(gone[0].t)>=start && nsTime(gone[0].t)<end && !crashTimes.has(gone[0].t) && nsText(f.injectionId) && !injectionIds.has(f.injectionId), 'FAULT-WITNESS-INVALID', 'crash not distinct/in traffic');
       nsAssert(e.offers.some(o=>nsTime(o.sentAtNs)<nsTime(gone[0].t)) && e.offers.some(o=>nsTime(o.sentAtNs)>nsTime(gone[0].t)) && e.reads.some(r=>nsTime(r.receivedAtNs)<nsTime(gone[0].t)) && e.reads.some(r=>nsTime(r.sentAtNs)>nsTime(gone[0].t)), 'FAULT-WITNESS-INVALID','crash outside active reader/writer span');
       const injection=trace.injections?.find(x=>x.injectionId===f.injectionId);
@@ -1995,7 +2023,7 @@ export function recomputeNS(bundle, trusted) {
     if (e.faults.length) for (const point of ['before-effect', 'after-effect', 'after-checkpoint']) if (e.faults.filter(f => f.faultPointId === point).length < 3) refuse('CX-FAULT-REPS-SHORT', point);
     const timing = e.noise?.grade === 'GREEN' && trusted.gradeWindow?.(e.noise, w) === 'GREEN';
     nsAssert(isObj(trusted.minimumSamples), 'SAMPLE-FLOOR-UNBOUND');
-    const frozenMinimum=scheduledIds.size;
+    const frozenMinimum=frozenPopulation;
     if (trusted.minimumSamples.lag?.[raw.binding.attemptId] !== frozenMinimum) {refuse('LAG-POPULATION-UNBOUND');refuse('LAG-SAMPLES-SHORT');}
     const lagJudged = timing && !e.faults.length && frozenMinimum>0 && lag.length>=frozenMinimum;
     if (outOfWindowLag) refuse('LAG-SAMPLES-SHORT','scheduled command published outside window; infinite lag retained');
@@ -2040,6 +2068,18 @@ function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timi
   const commandPositions = new Map();
   for (const p of positions.values()) for (const id of p.tx.commandIds) commandPositions.set(id, p);
   const offers = e.offers, bands = new Map(), receipts = new Map();
+  const plan=trusted.frozenTrace.attempts[trusted.binding.attemptId], raceIds=new Set();
+  for(const pair of nsRacePairs(plan,trusted.frozenTrace.commands)) {
+    const winners=pair.commands.filter(id=>commandPositions.has(id));
+    if(winners.length!==1) refuse('RACE-OUTCOME-INVALID',canonText(pair.commands));
+    for(const id of pair.commands) {
+      raceIds.add(id);
+      if(!commandPositions.has(id)) {
+        const attempts=offers.filter(o=>o.commandId===id);
+        if(!attempts.length || !attempts.every(o=>isObj(o.typedConflict)&&nsText(o.typedConflict.code)&&o.ackAtNs!==undefined&&!o.receipt&&!o.typedError)) refuse('RACE-CONFLICT-MISSING',id);
+      }
+    }
+  }
   let unaccounted = 0, ackUndecided = 0, maxWaitNs = 0n;
   const queue = [], validity = new Map();
   try { nsUniqueEvents(offers, 'eventId'); } catch (error) { refuse(error.code, error.message); }
@@ -2059,10 +2099,10 @@ function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timi
       has(target,key) { nsAssert(Object.hasOwn(target,key), 'O-REPLAY-INPUT-UNBOUND',String(key)); return true; }
     });
     const beforePosition = p ? e.source.entries.map(en=>({...en,transactions:(en.transactions??[]).filter(tx=>tx.positions.every(pos=>nsComparePosition(pos,p.p)<0))})).filter(en=>en.kind!=='commit'||en.transactions.length) : prefix;
-    const valid = trusted.commandValid(command, beforePosition);
+    const valid = raceIds.has(o.commandId) ? !!p : trusted.commandValid(command, beforePosition);
     nsAssert(typeof valid === 'boolean', 'O-REPLAY-REFUSED');
     validity.set(o.commandId,valid);
-    if (valid!==frozen?.valid) refuse('COMMAND-VALIDITY-PIN-MISMATCH',o.commandId);
+    if (!raceIds.has(o.commandId) && valid!==frozen?.valid) refuse('COMMAND-VALIDITY-PIN-MISMATCH',o.commandId);
     if (!valid && p) refuse('INVALID-COMMAND-PUBLISHED',o.commandId);
     const firstAttempt=offers.filter(x=>x.commandId===o.commandId).reduce((a,x)=>nsTime(x.sentAtNs)<nsTime(a.sentAtNs)?x:a,o);
     const publication=p && brackets.get(canonText(p.p));

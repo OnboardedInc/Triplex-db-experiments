@@ -9,9 +9,10 @@ const refusedWith=(f,code)=>{const r=run(f);assert.equal(r.status,'REFUSED');ass
 function positiveP1() {
   const f=fixture(),e=f.raw.events; f.trusted.priorities=['P3','P1'];
   e.reads.forEach(r=>{r.subject='pl:a';});
-  for(const [i,r] of e.reads.filter(r=>r.readId.endsWith("-0")).slice(0,60).entries()) {
+  for(const [i,r] of e.reads.filter(r=>r.readId.endsWith("-0")).slice(0,200).entries()) {
     Object.assign(r,{sentAtNs:'1001000000',receivedAtNs:'1001100000',splitGroup:`g${i}`,straddledCommandId:'cmd1'});
     e.reads.push({...r,readId:`split-after-${i}`,sentAtNs:'1004000000',receivedAtNs:'1004100000'});
+    e.reads.push({...r,readId:`split-before2-${i}`,splitGroup:`g2-${i}`,sentAtNs:'1001200000',receivedAtNs:'1001300000'}, {...r,readId:`split-after2-${i}`,splitGroup:`g2-${i}`,sentAtNs:'1004200000',receivedAtNs:'1004300000'});
   }
   e.readers=readerRows(e.reads,e.window); e.mainSegmentId='L256'; e.ladder=ladder();
   Object.assign(e.ladder.find(w=>w.id===e.mainSegmentId),{startNs:e.window.startNs,endNs:e.window.endNs,reads:structuredClone(e.reads),readers:structuredClone(e.readers)});

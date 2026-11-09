@@ -92,7 +92,7 @@ export function p4() {
 export function p4Sequential(origin = 1000000000n) {
   const f = p4();
   f.raw.events.reads.forEach((r, i) => {
-    const sent = origin + BigInt(i) * 500000n;
+    const sent = origin + BigInt(i) * 909000n;
     r.sentAtNs = String(sent); r.receivedAtNs = String(sent + 100000n);
   });
   f.raw.events.readers=readerRows(f.raw.events.reads,f.raw.events.window);

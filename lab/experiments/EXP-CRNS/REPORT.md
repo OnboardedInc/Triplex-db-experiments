@@ -498,3 +498,88 @@ Open contract work is Q103a trace secrecy, Q103b indistinguishable execution and
 independent registry authority, real frozen completion-rate selection, and production schema/oracle/decoder pins. The W-H3
 residual is explicitly still accepted by offline arithmetic and is **not** reported fixed. Separate independent review remains
 required; no human clarification was needed for this builder round.
+
+## Round 5 — final offline round (2026-11-09)
+
+North star: P1 load must stay active over the entire P2/P3 measurement, P3 recovery must observe the intended consumer, and P2
+compare-and-set races must allow either honest winner. Goals/targets remain lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md.
+The user supplied the Opus offline P2/P3 arithmetic ACCEPT at e96a85cb and the earlier Codex ACCEPT; neither is this builder's
+independent verdict. All ten new review files were preserved unchanged first at **1f0e86df**. Historical audit4/TAP files remain
+unchanged; the three TODO cases were then converted into required own-code assertions.
+
+| Finding | Fix | Required test |
+| --- | --- | --- |
+| Q103d / W-H1r4 parked reads | A loop qualifies only if the frozen completion floor holds in every 100 ms bin and it has no read over 1 s. Qualification is per identity across the entire window; exact BigInt ceil covers partial bins. Existing correct-answer, p99, relay and non-overlap checks remain. | Both required W-H1r4 P3/P3+P2 variants assert READER-RATE-SHORT; new round5 tests remove initial/middle/final bins, rotate populations, add a >1 s read below pooled p99, raise frozen rate, and exercise partial-bin ceil. |
+| W-H2r4 wrong crash target | Frozen crashTarget names cgroup or exact process incarnation; each cgroup-gone must name it exactly. Missing target/plan and stale identity refuse CRASH-TARGET-MISMATCH. | Required W-H2r4 checks companion's own code and primary resume refusal; round5 checks missing/sidecar/stale identities, valid process identity and absent frozen target. |
+| Q103e static winner flags | Independently frozen race pairs require exactly one committed command and an acknowledged typed conflict for the other; either winner valid. Ordinary commands retain oracle and static checks. Race eligibility is never inferred from candidate errors. | New round5 cases accept either winner (including the statically false one), accept absent flags for race-only commands, reject zero/two winners, missing/untyped/error/censored conflicts, invalid memberships and straddling pairs. Ordinary validity still refuses its own code. |
+| Q103e lag denominator | One expected winner per scheduled frozen pair, plus ordinary valid commands. Either racer's committed position may supply the pair's lag sample; missing wins do not shrink the floor. | Both positive race winners have exactly two lag samples (one pair plus the ordinary control); zero wins still refuse RACE-OUTCOME-INVALID and lag shortage. |
+
+The new independently authored builder race profile freezes three command hashes and schedules before constructing judged
+observations. The two racers are simultaneous; a third ordinary command keeps source enumeration nonempty even for the
+zero-winner negative. Expected hashes/pins are never taken from the observed winner. The ordinary command also provides
+coverage that bypassing the static check is limited to declared racers. Typed conflict representation is `{code: nonempty
+string, ...}`; production must use the registered ERROR_REPRESENTATION and qualified race membership.
+
+Fixtures now collect ten completions/loop/second across all 100 ms bins. Positive P1 straddle populations were expanded with
+nonoverlapping before/after requests on 200 loops, preserving the existing >=10% floor. P4's unchanged 2,200 sequential reads
+are distributed across the full two-second window (909,000 ns start spacing, unchanged 0.1 ms latency and 1,100/s goodput).
+The prior crash-active-span negative now removes all reads after its first crash rather than only the tail samples, since the
+new dense ordinary samples otherwise still span the crash. All earlier assertions/codes remain required, including the prior
+causal-order controls and the explicit W-H3 positive residual; no target bar is weakened.
+
+Focused attempt 1 retained five expected fixture-transition failures (three P4 controls burst-completed early; the old tail-only
+traffic removal remained active; one P4 baseline test uses the same control). Focused attempt 2 passed 182/182. Focused attempt
+3 includes the additional trailing-partial-bin and missing-plan-target regressions: **184/184 passed**, no failed/skipped/todo.
+Heavy runs waited for admission in the shared four-slot queue; disk was above 5 GiB before admission. These are offline builder
+checks, not an NS acceptance grant.
+
+### Round 5 pre-commit PASS audit (rule 9a)
+
+These are every changed path that can turn observations into a positive bar, count, recomputation status or receipt. Earlier
+round audits continue to cover all unchanged source/feed digests, committed WAL insertion counts, range/order consistency,
+O-DOMAIN every-position affected set, read/answer hashes, receipt/progress/ACK/RYOW, P1/P4/P5 and calibration authority guards.
+
+| Point | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| nsLoadRate, used by main/crash/P1 ladder/P5 traffic | Counts actual completion bytes/times per loop, all 100 ms bins, max <=1 s; no population pooling; overlap still refuses. Existing read hash/basis checks precede final grants. | Only this attempt's full window; trailing partial bins checked. A loop missing any bin cannot count. | Same loop id across all bins; positive integer rate from independently pinned trace/calibration. Missing/short evidence refuses before aggregate met/status. |
+| nsTraceAttempt / nsRacePairs | Exact command pin sets/digests; explicit two-member unique/disjoint pairs, both offered and in the same measurement population. Static boolean flags required wherever an id is offered outside races. | Frozen plan pre-dates judged offers; current attempt selects its own pair set. | Trace canonical hash equals authenticated raw binding; command ids and source/slot/inputs/attempt stay exact. Qualified generator must establish race eligibility. |
+| nsOtherPriorities race outcome/validity | Exactly one source-committed id; every loser attempt has acknowledged typed conflict and no receipt/error. Content/receipt/ACK/progress/idempotency/RYOW remain checked. Ordinary commands still run source-prefix validity oracle. | Current complete source prefix and current authenticated E1 events; loser cannot disappear, time out or return an unrelated error. | Pair membership is expected input, not judged error output. Both winner choices are checked against identical frozen command/schedule pins. |
+| recomputeNS P3 lag population and aggregate met | Expected population counts one pair winner, not flags/candidate commits; measured samples come from source/consumer brackets, never supplied latency. Invalid race outcomes clear met/counts and refuse status. | Current scheduled window, full source prefix and drain; missing winner remains expected. | Independently frozen membership/schedule and exact command content. Existing source/slot/inputs, clock, decoder and companion bindings remain. |
+| recomputeNS P3 crash resume/status | Each authenticated cgroup-gone names the exact pinned consumer target before resume; existing witness-set, checkpoint, page, replay/digest and causal checks still run. | Distinct planned injections inside actual traffic, bound checkpoint/recovery brackets from this attempt. | Frozen target is under trace hash and exact crash attempt/source/slot/inputs; event target under witness digest, HMAC and separately witnessed chunk head. Kernel death proof still belongs to qualified observer. |
+| Round5 test/audit and final receipt | Assertions check concrete own-property refusal codes and positive controls, including both winners. Fresh terminal TAP counts, actual exit status and all current audit assertions will be required. | New round5 logs only; earlier failure/review outputs retained as historical. | Exact committed evaluator/test/audit hashes and log hashes; fixture identities remain synthetic and cannot be consumed as production PASS. |
+
+### Contract 0.4.0 / 0.4.1 work — acceptance files unchanged
+
+The contract builder must register/pin all of the following before NS acceptance wiring:
+
+- The exact final claim.mjs/recompute helpers and runner dependencies; event/trace/calibration/fault schemas and refusal codes,
+  plus the required F1–F20, subsequent reviewer regressions and original evaluator gates.
+- Trusted trace generator and command preimages/content hashes, per-attempt closed-loop rate, Q103d 100 ms/1 s rule, measured
+  schedule/window/sample population, racePairs membership and typed-conflict representation under Q103e, and exact consumer
+  crashTarget (cgroup ownership or process incarnation) and injection plan.
+- Production source enumerator/feed-entry encoding and CRC decoder; consumer WAL committed-effect/affected/delivery decoder;
+  qualified fault observer/injector and target-death/checkpoint/page/recovery decoder. Hash-shaped fields and synthetic JSON
+  decoders are not qualified live evidence.
+- Independent O-REPLAY/O-DOMAIN and all their runner/oracle bytes, callback input/preimage boundary and race-eligibility generator;
+  every-position affected-set evaluation; production retained raw event coverage and chunk/HMAC/head/clock identities.
+- Independent A0 and calibration records/build identities admitted through VERIFIER_REGISTRY (Q99b/Q103c), load floors and
+  baseline budgets. Different candidate-id strings and authority labels alone do not establish admission.
+- Q103a trace/seed/schedule secrecy and Q103b identical hook handshakes, evaluator-only injection choices and common complete
+  timing workload on injected/main attempts; qualified execution/resource/isolation gates, GREEN window grading and exact
+  source/slot/inputs/attempt/build bindings. Offline brackets cannot close those boundaries.
+
+No contract version, generated artifact, ruling, pin or acceptance cell is changed here. Final full-suite results and exact
+old/new code hashes follow after committing the evaluator bytes for Q75a integrity.
+
+Changed code hashes (old reviewer-preservation 1f0e86df → round5 evaluator bytes):
+
+- `lab/bin/claim.mjs`: `987c1878f747a66dd002933fd16296c74472cd7bf886c96aebe3339f020cc4ad` → `8b9fa966291f87e43d374be3b24163aa9960d4d86d496432a9d53377258fc683`. Old-hash references in acceptance: none.
+- `lab/bin/test/claim-ns-round2.test.mjs`: `5d36db5b4f1aced067d63400cb6db6a8308104bcbab9d2237d6510203933de32` → `fa85ddb64288b2b57d8a8aed3184466053b0a035880f6fc97c4dddbc6393e086`. Old-hash references in acceptance: none.
+- `lab/bin/test/claim-ns-round3.test.mjs`: `5bd25a95cfa3644434c34256ebe954760df14d6e3ae6823208cdaee2f0dea2f3` → `bb237661769be5c49040c48b345eb6d67bcfe3e1991697c37db3b024621c2ade`. Old-hash references in acceptance: none.
+- `lab/bin/test/ns-round2-fixture.mjs`: `e5ca2f5a772640a198ac6ea019779300449f188957298aa44335cbef2c2cc292` → `030dff41c2eaa20c25922113c82f01791e63428f68b5c5414c36c3ccab5e3816`. Old-hash references in acceptance: none.
+- `lab/verify/CRNS-opus/forgeries-round4.test.mjs`: `3f68cce62dec9edc2a7ddf699066d951a2fa44f7d76976297f6a04ead25aeefa` → `66e37b5dcb94ac9c2305d7448a365e9dded507c395c7279a6103228b71e50fcf`. Old-hash references in acceptance: none.
+- `lab/verify/CRNS/fixture.mjs`: `94e310b045e4be20bd08356b9889ddee16e89c604707fb3fa758700219c1e154` → `521e8967041b3354a96b363a34f0ecfc1f2f621c903b41b94accd3eaea7fb417`. Old-hash references in acceptance: none.
+- `lab/verify/CRNS/round2/fixtures.mjs`: `6aecd0eecb57137bc9dc9e5898db9c7784a67baa56c6a9faa70abfe49e69ff60` → `022422d6172943bac50ec4921514d2c9fdc74a6c3854a8cdc745ccb91c2de2cb`. Old-hash references in acceptance: none.
+
+The literal old-hash scan covers this branch and read-only main acceptance artifacts; neither is edited. New test/audit files
+have no prior hash and will be hashed in the final committed-source receipt.

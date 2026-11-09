@@ -255,3 +255,43 @@ residual, without a TODO or any claim that offline brackets establish secrecy. C
 on crash traffic, but this normalized companion format does not prove identical hooks, WAL-shape distributions or the P1/P4/P5
 whole-run workload on every injected run. The existing CRASH-RECOMPUTED result never grants the null P3 lag bar. No NS PASS
 wiring or acceptance file is changed by these amendments.
+
+## Round 5 — Q103d/e and the crash target (last offline round)
+
+This section supersedes round 4's one-second completion bins. A loop counts as load only if its completed reads meet the frozen
+`minimumCompletionsPerLoopSecond` rate in **every 100 ms bin** starting at the measured window's start and **none of its reads
+exceeds 1,000,000,000 ns**. Required completions in each bin are exact ceil(rate * binWidthNs / 1e9), including the trailing
+partial bin. The same loop must qualify across the whole window; distinct per-bin populations cannot be pooled. Insufficient
+counted loops refuse `READER-RATE-SHORT`. Existing answer/basis, window, event identity, non-overlap, relay/E8 and read p99 bars
+remain unchanged. Main/crash floor is pinned in the frozen trace; auxiliary P1/P5 floor is pinned in calibration. Fixture rate
+2/s requires one discrete completion in every 100 ms bin, so compact fixtures now collect ten per second; this is no production
+rate selection. Q103d does not replace TARGETS' existing p50/p99 bars.
+
+A frozen crash attempt requires `crashTarget: {kind: 'cgroup' | 'process', identity: string}`. Each authenticated `cgroup-gone`
+event must have the named field (`cgroup` or `process`) equal byte-for-byte to that identity; missing/mismatched target or plan
+refuses `CRASH-TARGET-MISMATCH`. Process identity is an opaque exact registered incarnation token (e.g. boot/pid/start), not an
+unqualified reusable pid. A production cgroup identity must be bound by the qualified injector/observer to the consumer's owned
+cgroup for this attempt. The frozen trace hash and source/slot/inputs/attempt binding cover the plan; event HMAC/chunk head and
+witness digest cover the observation. Existing planned-id equality, temporal, active-traffic, fault-point, checkpoint and exact
+replay checks still apply. Pure arithmetic cannot prove that an observer actually checked kernel death; the qualified adapter
+owns that observation.
+
+An attempt may freeze `racePairs: [{commands: ['A', 'B']}]`. Each pair has exactly two distinct pinned command ids, both offered in
+the plan, with no command reused across pairs. Both members must be in the measured schedule population or both outside it;
+a straddling pair refuses `RACE-PLAN-INVALID`. Exactly one distinct command id must commit (`RACE-OUTCOME-INVALID` otherwise),
+and every observed attempt of the losing command must return an acknowledged typed conflict object with a nonempty code and
+no receipt or typed error (`RACE-CONFLICT-MISSING` otherwise). Winner receipts, publication/ACK order, byte content, idempotency,
+progress and RYOW checks remain mandatory. Pair membership comes from the independently frozen trace, never from the candidate's
+error output. The qualified generator/oracle must establish that the commands are an eligible compare-and-set race.
+
+Either winner is valid under Q103e. For members of the current attempt's race pairs, validity is determined by the pair outcome,
+not a static flag or the standalone commandValid callback. Ordinary commands still require a boolean frozen valid flag and
+source-prefix oracle agreement. A command that appears in any non-race attempt still requires its static flag; optional flags
+are allowed only for commands offered exclusively as racers. Frozen/trusted command pin key sets and content digests remain
+exact. Lag population is independently fixed at one expected winner per scheduled pair plus each scheduled ordinary valid
+command; both members are eligible to supply that pair's sample, and an invalid outcome always refuses. A missing winner cannot
+reduce the expected sample floor. Keep separate pair membership, response and winner observation in production E1/source data.
+
+Contract 0.4.0/0.4.1 must pin these input schemas, refusal codes, evaluator and helper bytes, qualified trace generator (including
+race membership and per-attempt floor/target), source/WAL/fault decoders, O-REPLAY/O-DOMAIN and calibration/A0 registry records,
+and the execution boundaries from Q103a–c. This branch adds no acceptance wiring or NS PASS grant.

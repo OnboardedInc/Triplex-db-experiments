@@ -6,8 +6,8 @@ import { sha256 as h } from '../lib.mjs';
 export function readsFor(window, level, answer = h('correct')) {
   const start = BigInt(window.startNs), end = BigInt(window.endNs), reads = [];
   const n = Number((end - start + 999999999n) / 1000000000n);
-  for (let second = 0; second < n; second++) for (let loop = 0; loop < Math.max(1, level); loop++) for(let sample=0;sample<2;sample++) {
-    const at = start + BigInt(second) * 1000000000n + 20000000n + BigInt(sample)*400000000n + BigInt(loop) * 1000n;
+  for (let second = 0; second < n; second++) for (let loop = 0; loop < Math.max(1, level); loop++) for(let sample=0;sample<10;sample++) {
+    const at = start + BigInt(second) * 1000000000n + 20000000n + BigInt(sample)*100000000n + BigInt(loop) * 1000n;
     if (at + 100000n >= end) continue;
     reads.push({ readId: `${window.id ?? 'main'}-${second}-${loop}-${sample}`, loop, subject: `s${loop}`, shape: 'pull', requestedBasis: '1', echoedBasis: '1', sentAtNs: String(at), receivedAtNs: String(at + 100000n), answerSha256: answer, hot: true });
   }
@@ -44,13 +44,14 @@ function change(profile,id,index,position) {
   return profile==='builder' ? {op:'assert',entity:'jur:ny',attribute:'stateMinWageCents',validFrom:0,validTo:null,position,assertionId:`a${index+1}`} : {op:'assert',entity:`s${index}`,attribute:'a',validFrom:'0',validTo:'9',position,assertionId:`as${index}.0`};
 }
 export function frozenFixtureTrace(profile='builder', options={}) {
-  const count=profile==='builder'?2:3, attemptId=options.attemptId??(profile==='builder'?'CX-CRNS-fixture':'att'), crashId=attemptId+'-crash';
+  const count=options.race?3:profile==='builder'?2:3, attemptId=options.attemptId??(profile==='builder'?'CX-CRNS-fixture':'att'), crashId=attemptId+'-crash';
   const commands={}, offers=[];
   for(let i=0;i<count;i++) {
     const commandId=profile==='builder'?`cmd${i+1}`:`c${i}`, ch=change(profile,commandId,i,String(i+1));
     commands[commandId]={commandSha256:nsCommandSha256([ch]),changesSha256:nsCommandSha256([ch]),valid:true,...(profile==='builder'&&i===0?{releaseSha256:options.releaseSha256??h('release')}:{})};
     offers.push({eventId:`offer-${i}`,commandId,commandSha256:commands[commandId].commandSha256,scheduledAtNs:String(profile==='builder'?1000000000+i*1000000000:1010000000+i*100000000)});
   }
+  if(options.race) {offers[1].scheduledAtNs=offers[0].scheduledAtNs;offers[2].scheduledAtNs='2000000000';commands.cmd2.valid=false;}
   if(options.extraInvalid) {commands.invalid={commandSha256:h('invalid'),valid:false};offers.push({eventId:'invalid-offer',commandId:'invalid',commandSha256:h('invalid'),scheduledAtNs:'2500000000'});}
   if(options.lostAck) offers.push({eventId:'retry',commandId:'cmd1',commandSha256:commands.cmd1.commandSha256,scheduledAtNs:'1100000000'});
   const injections=[],crashOffers=[];
@@ -61,8 +62,8 @@ export function frozenFixtureTrace(profile='builder', options={}) {
     if(i<9) { const point=['before-effect','after-effect','after-checkpoint'][Math.floor(i/3)];injections.push({injectionId:`injection-${i}`,faultPointId:point,pageFrontier:String(point==='after-checkpoint'?i+1:i+2)}); }
   }
   return freeze({profile,candidateId:'fixture-candidate',primaryAttemptId:attemptId,crashAttemptId:crashId,stream:profile==='builder'?'s':'feed',epoch:profile==='builder'?'0':'1',consumerId:profile==='builder'?'c':'k1',commands,attempts:{
-    [attemptId]:{offers,minimumCompletionsPerLoopSecond:2,window:{startNs:'1000000000',endNs:profile==='builder'?'3000000000':'2000000000',drainEndNs:options.drainEndNs??(profile==='builder'?'4000000000':'3000000000'),bursts:profile==='builder'?[{startNs:'2000000000',endNs:'2500000000'}]:[]}},
-    [crashId]:{offers:crashOffers,minimumCompletionsPerLoopSecond:2,window:{startNs:'1000000000',endNs:'2000000000',drainEndNs:'3000000000',bursts:[]},injections}
+    [attemptId]:{offers,...(options.race?{racePairs:[{commands:['cmd1','cmd2']}]}:{}),minimumCompletionsPerLoopSecond:2,window:{startNs:'1000000000',endNs:profile==='builder'?'3000000000':'2000000000',drainEndNs:options.drainEndNs??(profile==='builder'?'4000000000':'3000000000'),bursts:profile==='builder'?[{startNs:'2000000000',endNs:'2500000000'}]:[]}},
+    [crashId]:{offers:crashOffers,crashTarget:{kind:'cgroup',identity:'/fixture/consumer'},minimumCompletionsPerLoopSecond:2,window:{startNs:'1000000000',endNs:'2000000000',drainEndNs:'3000000000',bursts:[]},injections}
   }});
 }
 export function calibration(writerMs=1,kind='P1',overrides={}) {
@@ -87,7 +88,7 @@ export function attachIndependentCrash(f) {
   const source={origin:'observer-source-store',storage:'fixture-json/1',firstOffset:'1',finalOffset:'10',entries,commandDigests:Object.fromEntries(plan.offers.map(o=>[o.commandId,o.commandSha256]))};source.rawHex=Buffer.from(canonText({entries,commandDigests:source.commandDigests})).toString('hex');
   if(tr.sourceStorage==='broker-frame/2') sourceFrames(source);
   const binding={...tr.binding,attemptId:tr.binding.crashAttemptId},faults=plan.injections.map((inj,i)=>{
-    const t=String(BigInt(plan.offers[i].scheduledAtNs)+50000000n),events=[{transition:'cgroup-gone',injectionId:inj.injectionId,t}];
+    const t=String(BigInt(plan.offers[i].scheduledAtNs)+50000000n),events=[{transition:'cgroup-gone',injectionId:inj.injectionId,t,[plan.crashTarget.kind]:plan.crashTarget.identity}];
     const snapshot={injectionId:inj.injectionId,checkpoint:String(i+1),pageFrontier:inj.pageFrontier,effectState:{'before-effect':'absent','after-effect':'uncommitted','after-checkpoint':'committed'}[inj.faultPointId]};
     return {format:'fault-witness/1',binding,...inj,events,eventsSha256:h(canonText(events)),snapshotHex:Buffer.from(canonText(snapshot)).toString('hex'),beforeTransaction:i,recoveryTransaction:i+1,checkpointOffset:String(i+1),recoveryOffset:String(i+2),replay:structuredClone(transactions[i+1].deliveries)};
   });

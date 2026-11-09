@@ -149,22 +149,23 @@ function parkedReads(level) {
   }
   return reads;
 }
-for (const priorities of [['P3'], ['P3', 'P2']]) test(`W-H1r4 ${priorities.join('+')}: parked reads keep 4 loops "running" while the store is idle ~96% of the window`, { todo: 'accepted: load floor is per one-second bin and latency is p99 only; 1 parked read per 101 stays above p99' }, () => {
+for (const priorities of [['P3'], ['P3', 'P2']]) test(`W-H1r4 ${priorities.join('+')}: parked reads keep 4 loops "running" while the store is idle ~96% of the window`, () => {
   const w = world({ priorities }); w.trusted.readerLevel = 4; refresh(w);
   w.raw.events.reads = parkedReads(4); w.raw.events.readers = readerRows(w.raw.events.reads, w.raw.events.window);
   const r = run(w);
   const served = 4n * 100n * 100_000n, window = END - START;
   assert.ok(Number(served) / Number(window) < 0.05, 'precondition: under 5% of the window has any read being served');
+  assert.ok(codes(r).includes('READER-RATE-SHORT'),JSON.stringify(r.reasons));
   recomputedMet(r, 'parked readers');
 });
 
 // ---------------------------------------------- W-H2 variant: the crash witness does not name which process died
-test('W-H2r4 every planned injection witnessed, but each cgroup-gone event names a sidecar cgroup, not the consumer', { todo: 'accepted: the witness event carries injectionId and t only; the killed target is never checked' }, () => {
+test('W-H2r4 every planned injection witnessed, but each cgroup-gone event names a sidecar cgroup, not the consumer', () => {
   const w = world();
   const companion = w.trusted.crashRun, craw = JSON.parse(companion.bundle.payload);
   for (const f of craw.events.faults) { for (const ev of f.events) if (ev.transition === 'cgroup-gone') ev.cgroup = '/candidate/sidecar-metrics'; f.eventsSha256 = H(canonText(f.events)); }
   w.trusted.crashRun = reseal(craw, companion.trusted);
-  assert.equal(recomputeNS(w.trusted.crashRun.bundle, w.trusted.crashRun.trusted).status, 'CRASH-RECOMPUTED');
+  assert.ok(codes(recomputeNS(w.trusted.crashRun.bundle,w.trusted.crashRun.trusted)).includes('CRASH-TARGET-MISMATCH'));
   recomputedMet(run(w), 'crashes of the wrong process prove consumer resume');
 });
 
