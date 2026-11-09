@@ -1,0 +1,636 @@
+{
+  "review": "CX-VP2X2",
+  "reviewKind": "offline reanalysis, no fresh engine execution",
+  "reanalysisAt": "2026-11-09T00:32:55.897240-05:00",
+  "reviewerScriptSha256": "6983ed313787c08f93cfaa6eee829d96b4996b3b0249bf203ca6b2586921c8a8",
+  "builderHead": "b9a76c0bed7c269805290b8496e176af8377219c",
+  "evidenceManifestSha256": "9733e569ecb43e2e936c96de79953179be84ff924901d516fce9fbce688a5adf",
+  "indexedFiles": 338,
+  "indexedBytes": 282539738,
+  "Q96d": {
+    "path": "/Users/sam/projects/triplex-db-2/lab/acceptance/RULINGS-PENDING.md",
+    "sha256": "42f0ba89780694d876c7cb41d912a31ede858d8ef11a0ef5a916e58872c7339e",
+    "text": "| Q96d native lane X P2 is closed | EXP-P2X2 (exp/P2X2-commit-floor b9a76c0, one exclusive xtdb-s1 run) met Q96c's preregistered rule: F3 p50 7.68 ms (bar 6) and F5 fresh 33.00 ms (bar 20). The XTDB-native commit path cannot meet P2 in this VM, which the lab states plainly (SCOPE 3.2); lane X's P2 candidate is XTDB behind the broker (EXP-P2B), and the native per-subject arm stays as a comparison. Aged F6, F7 to F9 and strict no-wait checks remain open as diagnostics, and the run awaits an independent review of its receipts. | EXP-P2X2 report |"
+  },
+  "checkedAssertions": 48044,
+  "builds": {
+    "p2x": {
+      "head": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+      "source": 135,
+      "dist": 492
+    },
+    "main": {
+      "head": "9a7996e2a242690edbc86417283d8c7348950adb",
+      "source": 138,
+      "dist": 504
+    },
+    "rt01": {
+      "head": "1283f9fb3fe3a90448785f28d420c92a622a1991",
+      "source": 140,
+      "dist": 512
+    }
+  },
+  "pooled": {
+    "F1": {
+      "n": 1000,
+      "p50": 8.015124999999898,
+      "p99": 21.581375000000662,
+      "mean": 9.143110466999987,
+      "min": 3.896250000000691,
+      "max": 78.90949999999975
+    },
+    "F2": {
+      "n": 1000,
+      "p50": 14.099999999999454,
+      "p99": 41.92962499999885,
+      "mean": 15.826534660999984,
+      "min": 8.186125000000175,
+      "max": 72.40062500000022
+    },
+    "F3": {
+      "n": 1000,
+      "p50": 7.681542000000263,
+      "p99": 21.81304199999977,
+      "mean": 8.329346384000011,
+      "min": 4.602917000000161,
+      "max": 102.88558399999965
+    }
+  },
+  "attempts": [
+    {
+      "id": "F1-2026-11-09T04-01-29-830Z-bb9e6b",
+      "arm": "F1",
+      "latencyMs": {
+        "n": 1000,
+        "p50": 8.015124999999898,
+        "p99": 21.581375000000662,
+        "mean": 9.143110466999987,
+        "min": 3.896250000000691,
+        "max": 78.90949999999975
+      },
+      "engine": {
+        "node_tx_execute_seconds": {
+          "count": 1000.0,
+          "perCommitMs": 4.387274524999999
+        },
+        "node_tx_await_seconds": {
+          "count": 1000.0,
+          "perCommitMs": 2.5210946189999994
+        },
+        "tx_op_timer_seconds": {
+          "count": 1000.0,
+          "perCommitMs": 0.09774412699999857
+        }
+      },
+      "start": "2026-11-09T04:01:29.929Z",
+      "end": "2026-11-09T04:01:41.406Z",
+      "hostLoad1": [
+        9.8212890625,
+        12.57421875
+      ],
+      "freeDiskBytes": [
+        13423775744,
+        13424578560
+      ],
+      "residentStats": [
+        {
+          "tx2-xtdb-s1": 1.26,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 1.07
+        },
+        {
+          "tx2-xtdb-s1": 0.82,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 1.23
+        }
+      ],
+      "compactorCompleted": 0.0
+    },
+    {
+      "id": "F2-2026-11-09T04-01-43-739Z-b4f81f",
+      "arm": "F2",
+      "latencyMs": {
+        "n": 500,
+        "p50": 17.711208000000624,
+        "p99": 47.73004199999923,
+        "mean": 18.786208749999957,
+        "min": 10.163209000000279,
+        "max": 72.40062500000022
+      },
+      "engine": {
+        "node_tx_execute_seconds": {
+          "count": 500.0,
+          "perCommitMs": 7.811648715999993
+        },
+        "node_tx_await_seconds": {
+          "count": 500.0,
+          "perCommitMs": 5.187021936000001
+        },
+        "tx_op_timer_seconds": {
+          "count": 3000.0,
+          "perCommitMs": 3.2705269160000014
+        }
+      },
+      "start": "2026-11-09T04:01:43.779Z",
+      "end": "2026-11-09T04:01:55.135Z",
+      "hostLoad1": [
+        12.57421875,
+        12.4052734375
+      ],
+      "freeDiskBytes": [
+        13420756992,
+        13123063808
+      ],
+      "residentStats": [
+        {
+          "tx2-xtdb-s1": 0.83,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 0.96
+        },
+        {
+          "tx2-xtdb-s1": 1.14,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 1.17
+        }
+      ],
+      "compactorCompleted": 0.0
+    },
+    {
+      "id": "F2-2026-11-09T04-02-06-853Z-2c0c89",
+      "arm": "F2",
+      "latencyMs": {
+        "n": 500,
+        "p50": 11.906291999999667,
+        "p99": 29.588666999999987,
+        "mean": 12.866860572000009,
+        "min": 8.186125000000175,
+        "max": 69.94820900000013
+      },
+      "engine": {
+        "node_tx_execute_seconds": {
+          "count": 500.0,
+          "perCommitMs": 5.518212878
+        },
+        "node_tx_await_seconds": {
+          "count": 500.0,
+          "perCommitMs": 3.7921043600000033
+        },
+        "tx_op_timer_seconds": {
+          "count": 3000.0,
+          "perCommitMs": 2.125546205999995
+        }
+      },
+      "start": "2026-11-09T04:02:06.886Z",
+      "end": "2026-11-09T04:02:15.198Z",
+      "hostLoad1": [
+        11.7919921875,
+        11.328125
+      ],
+      "freeDiskBytes": [
+        13067345920,
+        13066870784
+      ],
+      "residentStats": [
+        {
+          "tx2-xtdb-s1": 0.91,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 0.97
+        },
+        {
+          "tx2-xtdb-s1": 0.77,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 0.99
+        }
+      ],
+      "compactorCompleted": 0.0
+    },
+    {
+      "id": "F3-2026-11-09T04-01-57-427Z-e2a7a1",
+      "arm": "F3",
+      "latencyMs": {
+        "n": 500,
+        "p50": 9.099083999999493,
+        "p99": 23.321415999999772,
+        "mean": 10.155474358000008,
+        "min": 6.088999999999942,
+        "max": 102.88558399999965
+      },
+      "engine": {
+        "node_tx_execute_seconds": {
+          "count": 500.0,
+          "perCommitMs": 6.691198098000001
+        },
+        "node_tx_await_seconds": {
+          "count": 500.0,
+          "perCommitMs": 4.251583658000001
+        },
+        "tx_op_timer_seconds": {
+          "count": 3000.0,
+          "perCommitMs": 2.651173391999997
+        }
+      },
+      "start": "2026-11-09T04:01:57.458Z",
+      "end": "2026-11-09T04:02:04.496Z",
+      "hostLoad1": [
+        12.21240234375,
+        12.03515625
+      ],
+      "freeDiskBytes": [
+        13118967808,
+        13070077952
+      ],
+      "residentStats": [
+        {
+          "tx2-xtdb-s1": 1.03,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 1.13
+        },
+        {
+          "tx2-xtdb-s1": 0.86,
+          "tx2-qlever-dev": 33.86,
+          "tx2-xtdb-dev": 2.75
+        }
+      ],
+      "compactorCompleted": 0.0
+    },
+    {
+      "id": "F3-2026-11-09T04-02-17-445Z-8a4c01",
+      "arm": "F3",
+      "latencyMs": {
+        "n": 500,
+        "p50": 5.776166999999987,
+        "p99": 14.275208999999904,
+        "mean": 6.503218410000013,
+        "min": 4.602917000000161,
+        "max": 30.619916000000103
+      },
+      "engine": {
+        "node_tx_execute_seconds": {
+          "count": 500.0,
+          "perCommitMs": 4.303893484
+        },
+        "node_tx_await_seconds": {
+          "count": 500.0,
+          "perCommitMs": 2.1602148620000032
+        },
+        "tx_op_timer_seconds": {
+          "count": 3000.0,
+          "perCommitMs": 1.8216013000000046
+        }
+      },
+      "start": "2026-11-09T04:02:17.477Z",
+      "end": "2026-11-09T04:02:22.667Z",
+      "hostLoad1": [
+        10.7412109375,
+        11.642578125
+      ],
+      "freeDiskBytes": [
+        13065441280,
+        13058125824
+      ],
+      "residentStats": [
+        {
+          "tx2-xtdb-s1": 0.7,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 0.67
+        },
+        {
+          "tx2-xtdb-s1": 2.52,
+          "tx2-qlever-dev": 2.34,
+          "tx2-xtdb-dev": 1.13
+        }
+      ],
+      "compactorCompleted": 0.0
+    },
+    {
+      "id": "F5-p2x-fresh-2026-11-09T04-03-38-727Z-257ad2",
+      "arm": "C",
+      "latencyMs": {
+        "n": 135,
+        "p50": 32.99845800000003,
+        "p99": 63.25891700000011,
+        "mean": 34.98698705925937,
+        "min": 25.668250000000626,
+        "max": 67.515625
+      },
+      "engine": {
+        "node_tx_execute_seconds": {
+          "count": 150.0,
+          "perCommitMs": 9.505082820000013
+        },
+        "node_tx_await_seconds": {
+          "count": 150.0,
+          "perCommitMs": 6.259686813333332
+        },
+        "tx_op_timer_seconds": {
+          "count": 1200.0,
+          "perCommitMs": 5.521430526666649
+        }
+      },
+      "start": "2026-11-09T04:03:39.104Z",
+      "end": "2026-11-09T04:03:50.227Z",
+      "hostLoad1": [
+        7.23779296875,
+        6.9541015625
+      ],
+      "freeDiskBytes": [
+        13038702592,
+        13037355008
+      ],
+      "residentStats": [
+        {
+          "tx2-xtdb-s1": 0.71,
+          "tx2-qlever-dev": 21.11,
+          "tx2-xtdb-dev": 0.65
+        },
+        {
+          "tx2-xtdb-s1": 59.95,
+          "tx2-qlever-dev": 7.51,
+          "tx2-xtdb-dev": 0.7
+        }
+      ],
+      "compactorCompleted": 0.0
+    },
+    {
+      "id": "F5-p2x-history-10k-2026-11-09T04-26-59-722Z-6c69e7",
+      "arm": "C",
+      "latencyMs": {
+        "n": 135,
+        "p50": 60.13229200000205,
+        "p99": 115.71250000000146,
+        "mean": 61.936885814814595,
+        "min": 39.862457999999606,
+        "max": 122.82466600000043
+      },
+      "engine": {
+        "node_tx_execute_seconds": {
+          "count": 150.0,
+          "perCommitMs": 29.01674744666631
+        },
+        "node_tx_await_seconds": {
+          "count": 150.0,
+          "perCommitMs": 26.23573869333389
+        },
+        "tx_op_timer_seconds": {
+          "count": 1200.0,
+          "perCommitMs": 24.670169086666647
+        }
+      },
+      "start": "2026-11-09T04:27:00.161Z",
+      "end": "2026-11-09T04:28:27.312Z",
+      "hostLoad1": [
+        10.3818359375,
+        8.1337890625
+      ],
+      "freeDiskBytes": [
+        12725510144,
+        12559138816
+      ],
+      "residentStats": [
+        {
+          "tx2-xtdb-s1": 68.51,
+          "tx2-qlever-dev": 148.63,
+          "tx2-xtdb-dev": 0.81
+        },
+        {
+          "tx2-xtdb-s1": 1.07,
+          "tx2-qlever-dev": 48.97,
+          "tx2-xtdb-dev": 1.05
+        }
+      ],
+      "compactorCompleted": 0.0
+    },
+    {
+      "id": "F6-p2x2-fresh-2026-11-09T04-03-52-447Z-3f32b5",
+      "arm": "A0",
+      "latencyMs": {
+        "n": 135,
+        "p50": 35.41741699999966,
+        "p99": 51.50404100000014,
+        "mean": 36.39541202962958,
+        "min": 30.297207999999955,
+        "max": 52.63562499999989
+      },
+      "engine": {
+        "node_tx_execute_seconds": {
+          "count": 150.0,
+          "perCommitMs": 11.277224886666678
+        },
+        "node_tx_await_seconds": {
+          "count": 150.0,
+          "perCommitMs": 8.278856286666686
+        },
+        "tx_op_timer_seconds": {
+          "count": 1200.0,
+          "perCommitMs": 8.123055173333332
+        }
+      },
+      "start": "2026-11-09T04:03:52.806Z",
+      "end": "2026-11-09T04:04:03.188Z",
+      "hostLoad1": [
+        7.03759765625,
+        6.71728515625
+      ],
+      "freeDiskBytes": [
+        13033304064,
+        13031755776
+      ],
+      "residentStats": [
+        {
+          "tx2-xtdb-s1": 0.67,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 0.72
+        },
+        {
+          "tx2-xtdb-s1": 1.19,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 1.26
+        }
+      ],
+      "compactorCompleted": 0.0
+    },
+    {
+      "id": "F6-p2x2-fresh-2026-11-09T04-04-20-097Z-07b4db",
+      "arm": "A0",
+      "latencyMs": {
+        "n": 135,
+        "p50": 56.912874999999985,
+        "p99": 197.19750000000022,
+        "mean": 69.45605249629632,
+        "min": 34.35004200000003,
+        "max": 284.3015839999998
+      },
+      "engine": {
+        "node_tx_execute_seconds": {
+          "count": 150.0,
+          "perCommitMs": 25.511698473333315
+        },
+        "node_tx_await_seconds": {
+          "count": 150.0,
+          "perCommitMs": 22.314399140000017
+        },
+        "tx_op_timer_seconds": {
+          "count": 1200.0,
+          "perCommitMs": 20.665043179999998
+        }
+      },
+      "start": "2026-11-09T04:04:20.438Z",
+      "end": "2026-11-09T04:04:40.210Z",
+      "hostLoad1": [
+        6.6015625,
+        7.4677734375
+      ],
+      "freeDiskBytes": [
+        13020626944,
+        12987105280
+      ],
+      "residentStats": [
+        {
+          "tx2-xtdb-s1": 0.66,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 0.7
+        },
+        {
+          "tx2-xtdb-s1": 0.72,
+          "tx2-qlever-dev": 33.28,
+          "tx2-xtdb-dev": 183.18
+        }
+      ],
+      "compactorCompleted": 0.0
+    },
+    {
+      "id": "F6-rt01-fresh-2026-11-09T04-04-05-408Z-df5fa7",
+      "arm": "A0",
+      "latencyMs": {
+        "n": 135,
+        "p50": 37.5488749999995,
+        "p99": 80.15720900000088,
+        "mean": 40.71390893333334,
+        "min": 30.677083000000493,
+        "max": 196.57887500000106
+      },
+      "engine": {
+        "node_tx_execute_seconds": {
+          "count": 150.0,
+          "perCommitMs": 13.844751313333367
+        },
+        "node_tx_await_seconds": {
+          "count": 150.0,
+          "perCommitMs": 10.726602859999966
+        },
+        "tx_op_timer_seconds": {
+          "count": 1200.0,
+          "perCommitMs": 10.338793873333334
+        }
+      },
+      "start": "2026-11-09T04:04:05.728Z",
+      "end": "2026-11-09T04:04:17.791Z",
+      "hostLoad1": [
+        6.71728515625,
+        6.6015625
+      ],
+      "freeDiskBytes": [
+        13027962880,
+        13024940032
+      ],
+      "residentStats": [
+        {
+          "tx2-xtdb-s1": 1.85,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 1.99
+        },
+        {
+          "tx2-xtdb-s1": 0.59,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 0.82
+        }
+      ],
+      "compactorCompleted": 0.0
+    },
+    {
+      "id": "F6-rt01-fresh-2026-11-09T04-04-42-451Z-b0b63c",
+      "arm": "A0",
+      "latencyMs": {
+        "n": 135,
+        "p50": 53.123625000000175,
+        "p99": 80.87466600000153,
+        "mean": 53.345041644444414,
+        "min": 37.987082999999984,
+        "max": 86.75916599999982
+      },
+      "engine": {
+        "node_tx_execute_seconds": {
+          "count": 150.0,
+          "perCommitMs": 20.84522038000003
+        },
+        "node_tx_await_seconds": {
+          "count": 150.0,
+          "perCommitMs": 17.317373626666686
+        },
+        "tx_op_timer_seconds": {
+          "count": 1200.0,
+          "perCommitMs": 16.645212926666655
+        }
+      },
+      "start": "2026-11-09T04:04:42.798Z",
+      "end": "2026-11-09T04:04:59.093Z",
+      "hostLoad1": [
+        7.91064453125,
+        8.26123046875
+      ],
+      "freeDiskBytes": [
+        12983296000,
+        12982034432
+      ],
+      "residentStats": [
+        {
+          "tx2-xtdb-s1": 2.18,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 137.99
+        },
+        {
+          "tx2-xtdb-s1": 26.74,
+          "tx2-qlever-dev": 0,
+          "tx2-xtdb-dev": 141.89
+        }
+      ],
+      "compactorCompleted": 0.0
+    }
+  ],
+  "historicalG1": [
+    {
+      "runId": "G1-xtdb-20261109T035632Z-48b59d",
+      "cases": 88,
+      "contractVersion": "0.3.1",
+      "declarationDrift": [
+        {
+          "path": "packages/core/dist/kv/layers/KvTriplesLive.d.ts",
+          "g1Sha256": "3325b53ab034666447eab034f059facd1dfad5515cd2b40d338994b539ba43af",
+          "serviceSha256": "1e61ae71a24c53db9e7e6456ae83a69fb5b7a9ffe3d121a82a2847c2e0ddc902"
+        }
+      ]
+    },
+    {
+      "runId": "G1-xtdb-20261109T035857Z-203df3",
+      "cases": 88,
+      "contractVersion": "0.3.1",
+      "declarationDrift": []
+    }
+  ],
+  "unretainedNonexecutedHelpers": [
+    [
+      "candidate.mjs",
+      "b1b489aa8beaaa230717de5aaa9ba0375e21e85aa4b2eb28c07df29af9a180da"
+    ],
+    [
+      "preload.mjs",
+      "b99b4fe38757af538ab09c0dbcc7b483556ce55251abfb521097533db95d8987"
+    ]
+  ],
+  "decisionThresholdsTriggered": {
+    "F3": true,
+    "F5": true,
+    "resolve": false
+  },
+  "mechanicalDecision": "D1"
+}
