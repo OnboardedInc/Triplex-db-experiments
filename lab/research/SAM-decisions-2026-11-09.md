@@ -59,3 +59,22 @@ Sam, verbatim:
 | Q107-S | **Option C on every lane.** `:_tx/change` and `:_tx/changed-entity` stay stored and queryable as ordinary triples; raw queries (Datalog, match, native XTQL/SPARQL/Datomic) over them keep working as documented today ("way 2"). | No lane stops storing them. The broker-internal one-record journal (HS01 round 3, R47 option B-store) stays OFF by default and is never used for an acceptance claim; its measurements are informational. Where a priority misses because of the journal's cost, the miss is reported as a miss with a TODO, not worked around by dropping way 2. |
 | VM size | **8 CPU, 20 GiB RAM, 100 GiB disk ceiling** (the orchestrator's recommendation). | Resize triplex2 after the OBS01 live witness window (round 15) finishes and before calibration. |
 | Host disk | Sam is finding disk space. | Keep archiving settled evidence; P5 at 100k waits for the reclaimed space. |
+
+## 2026-11-09, afternoon: lanes and slots
+
+Sam, verbatim:
+
+> Can you continue using the broker for QLever? That makes sense but I want to go back to XTDB as native and iterate on it there for the built-in commit path. We need to try to get that faster, or if it's going to be slightly longer, seeing as 33 ms versus a 10 ms bar, that's barely anything.
+>
+> Can you just help keep going on that? The broker can be the path for QLever, which is great because then we'll get the broker for free if we want to bring it over to XTDB in the future.
+>
+> For Datomic, we can move to Postgres. That makes sense. We can get rid of QLever native. I think I like exactly what you're saying for the slots. I think you could even put a second slot on XTDB native as well, so there are six going. I think it locked up because I was doing something else on the computer, so you can go back to using six.
+>
+> The broker on QLever, Datomic, and XTDB native each get two slots, and I agree with what you're saying you're going to do with them.
+
+| Decision | What the lab does |
+|---|---|
+| Lane Q = QLever behind the broker | The broker (log of record, feed, H1 reads, activation) stays lane Q's path; P4N and P5N continue there. QLever-native write/feed work is dropped. |
+| Lane X = XTDB native | Iterate on XTDB's built-in commit path (fresh commit p50 33 ms vs 10 ms bar), its native feed lag (2.9 s vs 250 ms) and native P4/P5. Aim to meet the bars; if a number lands slightly above a bar, report it plainly with the gap so Sam can judge. The broker remains available to bring to lane X later. |
+| Lane D = Datomic on Postgres storage | Move off dev storage (can lose acknowledged commits, R32) to Postgres storage, then the first lane D P1-P5 measurements. |
+| Capacity | Six agents at a time: two per lane (broker/Q, Datomic, XTDB native). The lock-up was attributed to other activity on the Mac. |
