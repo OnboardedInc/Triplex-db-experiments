@@ -47,7 +47,7 @@ import {
   ConstraintViolationError,
   PaginationCursorError,
 } from "../errors/index.js";
-import { unsafe } from "../Branded.js";
+import { unsafe, type TransactionId } from "../Branded.js";
 import * as Constraint from "../Constraint.js";
 import { TripleStoreRuntime } from "./TripleStoreRuntime.js";
 import {
@@ -66,7 +66,7 @@ import {
   reservedAssertError,
   reservedWriteError,
 } from "./systemNamespace.js";
-import { resolveTemporalBasis } from "../Temporal.js";
+import { resolveTemporalBasis, type ResolvedTemporalBasis } from "../Temporal.js";
 import { TxAttributes } from "../utils/id.js";
 import { finishPagination, preparePagination, wrapDatalogQuery } from "../Pagination.js";
 import { transactionsForEntity } from "./entityTransactionHistory.js";
@@ -631,10 +631,14 @@ export const TriplesLive = Layer.effect(
         return rows.map(rowToTriple);
       });
 
-    const transaction: TriplesService["transaction"] = (txId) =>
+    // [EXP-P2Q] Why: both the journal index and envelope must use the named snapshot cut.
+    // Rejected: loading indexed envelopes at latest (a later metadata retirement changes an old page).
+    const transactionAtBasis = (txId: TransactionId, basis?: ResolvedTemporalBasis) =>
       adapter
-        .query({ entityId: unsafe.entityId(txId), entityType: "_Transaction" })
+        .query({ entityId: unsafe.entityId(txId), entityType: "_Transaction" }, basis)
         .pipe(Effect.map((rows) => transactionRecordFromTriples(txId, rows.map(rowToTriple))));
+
+    const transaction: TriplesService["transaction"] = (txId) => transactionAtBasis(txId);
 
     const transactionByCommand: TriplesService["transactionByCommand"] = (commandId) =>
       adapter
@@ -676,7 +680,20 @@ export const TriplesLive = Layer.effect(
 
     const entityTransactions: TriplesService["transactionsForEntity"] = (entityId, request) =>
       transactionsForEntity(
-        { currentPosition: adapter.currentCommitPosition, query: queryAll, transaction },
+        {
+          currentPosition: adapter.currentCommitPosition,
+          query: queryAll,
+          queryAtPosition: (query, recordedPosition) =>
+            Effect.gen(function* () {
+              const validAt = yield* now;
+              return yield* executor.execute(query, false, { validAt, recordedPosition });
+            }),
+          transaction,
+          transactionAtPosition: (txId, recordedPosition) =>
+            Effect.flatMap(now, (validAt) =>
+              transactionAtBasis(txId, { validAt, recordedPosition }),
+            ),
+        },
         entityId,
         request,
       );

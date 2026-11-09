@@ -1,3 +1,4 @@
+import { awaitSnapshotBasis } from "../broker/snapshot.js";
 import { Effect } from "effect";
 import type { TypeExpr } from "@triplex-build/triplex/config";
 import {
@@ -179,23 +180,18 @@ export const makeQleverNativeQueries = (
           let current = await readSource();
           let before = incarnation;
           const requested = options.basis?.recordedPosition;
-          if (gated && requested !== undefined && Number.isSafeInteger(requested))
-            while (current < requested) {
-              const waited = performance.now() - sourceStarted;
-              if (waited >= defaults.awaitBasisMs!)
-                throw new BasisNotAvailable({
-                  required: requested,
-                  observed: current,
-                  replica: "the QLever replica",
-                  surface: "native",
-                  waitedMs: waited,
-                });
-              await new Promise((resolve) =>
-                setTimeout(resolve, Math.min(25, defaults.awaitBasisMs! - waited)),
-              );
-              current = await readSource();
-              before = incarnation;
-            }
+          if (gated && (requested === undefined || Number.isSafeInteger(requested))) {
+            current = await awaitSnapshotBasis({
+              required: requested ?? current,
+              observed: current,
+              refresh: readSource,
+              waitMs: defaults.awaitBasisMs!,
+              started: sourceStarted,
+              replica: "the QLever replica",
+              surface: "native",
+            });
+            before = incarnation;
+          }
           steps.push({
             phase: "source-cut",
             language: "sparql-1.1",

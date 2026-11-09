@@ -1,0 +1,37 @@
+{
+  "code": "ENETUNREACH",
+  "transport": true,
+  "depth": 0,
+  "kind": "standard",
+  "surface": "native",
+  "endpoint": "http://127.0.0.1:61531",
+  "injected": 1,
+  "uv": [
+    -51,
+    [
+      "ENETUNREACH",
+      "network is unreachable"
+    ]
+  ],
+  "injection": "one synthetic code after connection establishment with the response held open; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: fetch failed",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "fetch failed",
+      "reason": null
+    },
+    {
+      "name": "Error",
+      "code": "ENETUNREACH",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

@@ -1,0 +1,146 @@
+[
+  {
+    "route": "getByEntity",
+    "transaction": false,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]",
+    "after": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]",
+    "equal": true
+  },
+  {
+    "route": "getByEntity",
+    "transaction": true,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]",
+    "after": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]",
+    "equal": true
+  },
+  {
+    "route": "getByEntities",
+    "transaction": false,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[[\"s:immutable\",[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]]]",
+    "after": "[[\"s:immutable\",[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]]]",
+    "equal": true
+  },
+  {
+    "route": "getByEntities",
+    "transaction": true,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[[\"s:immutable\",[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]]]",
+    "after": "[[\"s:immutable\",[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]]]",
+    "equal": true
+  },
+  {
+    "route": "query",
+    "transaction": false,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]",
+    "after": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]",
+    "equal": true
+  },
+  {
+    "route": "query",
+    "transaction": true,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]",
+    "after": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entity_id\":\"s:immutable\",\"attribute\":\":v/f0\",\"value_type\":\"string\",\"value_string\":\"first-0\",\"value_number\":null,\"value_boolean\":null,\"value_datetime\":null,\"value_json\":null,\"recorded_at\":1794186936825,\"recorded_position\":2048,\"valid_from\":1794186936825,\"valid_to\":null,\"created_by\":null,\"retracted_at\":null,\"retracted_position\":null,\"retract_tx_id\":null,\"entity_type\":null,\"schema_version\":1,\"tx_id\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"}]",
+    "equal": true
+  },
+  {
+    "route": "entity",
+    "transaction": false,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]",
+    "after": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]",
+    "equal": true
+  },
+  {
+    "route": "entity",
+    "transaction": true,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]",
+    "after": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]",
+    "equal": true
+  },
+  {
+    "route": "entities",
+    "transaction": false,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]]",
+    "after": "[[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]]",
+    "equal": true
+  },
+  {
+    "route": "entities",
+    "transaction": true,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]]",
+    "after": "[[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]]",
+    "equal": true
+  },
+  {
+    "route": "match",
+    "transaction": false,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]",
+    "after": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]",
+    "equal": true
+  },
+  {
+    "route": "match",
+    "transaction": true,
+    "basis": {
+      "recordedPosition": 2048,
+      "recordedAt": 1794186936829,
+      "validAt": 1794186936829
+    },
+    "before": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]",
+    "after": "[{\"id\":\"01M6YY00FS0ME29M8Z572FMFAV\",\"entityId\":\"s:immutable\",\"attribute\":\":v/f0\",\"value\":{\"type\":\"string\",\"value\":\"first-0\"},\"recordedAt\":1794186936825,\"validFrom\":1794186936825,\"validTo\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"createdBy\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"retractedAt\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"entityType\":{\"_id\":\"Option\",\"_tag\":\"None\"},\"schemaVersion\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":1},\"txId\":{\"_id\":\"Option\",\"_tag\":\"Some\",\"value\":\"_tx/01M6YY00FS0ME29M8Z572FMFAT\"},\"retractTxId\":{\"_id\":\"Option\",\"_tag\":\"None\"}}]",
+    "equal": true
+  }
+]

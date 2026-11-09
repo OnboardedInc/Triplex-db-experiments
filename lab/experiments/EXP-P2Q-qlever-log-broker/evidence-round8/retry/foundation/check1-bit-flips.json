@@ -1,0 +1,26 @@
+{
+  "middleFrameBits": 62760,
+  "statuses": {
+    "corruption": 62760
+  },
+  "header": {
+    "bad-header": 256
+  },
+  "fullOpens": {
+    "firstLsn": {
+      "opened": false,
+      "error": "Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a56ab43df1f0e0ef7/runs/broker/CX-P2Q-R8-retry-bce03806-71a9-4952-9550-cef8888b6cac/c1-copy-f3638817-2335-4df2-919b-8c28273958",
+      "segmentUntouched": true
+    },
+    "lastFrame": {
+      "opened": false,
+      "error": "Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a56ab43df1f0e0ef7/runs/broker/CX-P2Q-R8-retry-bce03806-71a9-4952-9550-cef8888b6cac/c1-copy-449f78ea-dabf-497d-a87d-92897564b7",
+      "segmentUntouched": true
+    },
+    "middle": {
+      "opened": false,
+      "error": "Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a56ab43df1f0e0ef7/runs/broker/CX-P2Q-R8-retry-bce03806-71a9-4952-9550-cef8888b6cac/c1-copy-80434701-8577-4616-92e0-05cc717c14",
+      "segmentUntouched": true
+    }
+  }
+}

@@ -45,8 +45,8 @@ import {
 } from "../rdf.js";
 import { BrokerFailed, type HostBroker, type ReplicaSnapshot } from "./broker.js";
 import { markerFields } from "./sparql.js";
-import { lastPositionOf } from "./position.js";
-import { BasisNotAvailable, ReplicaUnavailable, isUnreachable, type BasisSurface } from "./errors.js";
+import { awaitSnapshotBasis, snapshotRows } from "./snapshot.js";
+import { ReplicaUnavailable, isUnreachable, type BasisSurface } from "./errors.js";
 
 export type BrokerReadRoute = "replica" | "overlay" | "log";
 export interface BrokerReadEvent {
@@ -211,22 +211,11 @@ export const makeQleverBrokerStorageAdapter = (
     surface: BasisSurface,
   ) => {
     const b = requested ?? sourceK ?? broker.head();
-    if (sourceK !== undefined && b > sourceK) {
-      const started = performance.now();
-      while (performance.now() - started < basisWaitMs)
-        await new Promise<void>((resolve) =>
-          setTimeout(resolve, basisWaitMs - (performance.now() - started)),
-        );
-      throw new BasisNotAvailable({
-        required: b,
-        observed: sourceK,
-        replica: "the transaction snapshot",
-        surface,
-        waitedMs: performance.now() - started,
-      });
-    }
-    if (sourceK === undefined && b > lastPositionOf(broker.durable().lsn))
-      await broker.awaitResolved(b, basisWaitMs, surface);
+    if (sourceK === undefined) await broker.awaitResolved(b, basisWaitMs, surface);
+    else await awaitSnapshotBasis({
+      required: b, observed: sourceK, refresh: () => sourceK, waitMs: basisWaitMs, surface,
+      replica: "the transaction snapshot",
+    });
     return b;
   };
 
@@ -246,7 +235,7 @@ export const makeQleverBrokerStorageAdapter = (
             ? cause
             : new ReadError({ message: "QLever read failed", cause }),
       });
-      if (entities?.length === 0) return [];
+      if (entities?.length === 0) return snapshotRows([], b, basis, history);
       if (state) {
         // CAS read set (module comment item 5).
         if (pattern.entityId !== undefined && !isPatternVariable(pattern.entityId)) state.reads.entities.add(pattern.entityId);
@@ -344,7 +333,8 @@ export const makeQleverBrokerStorageAdapter = (
           )
             out.set(rowId, row);
         }
-      return [...out.values()].sort((a, b2) => a.recorded_at - b2.recorded_at || a.id.localeCompare(b2.id));
+      return snapshotRows([...out.values()], b, basis, history)
+        .toSorted((a, b2) => a.recorded_at - b2.recorded_at || a.id.localeCompare(b2.id));
     });
 
   const persist = (state: State, operationId: string, attemptId: string) =>
@@ -534,7 +524,8 @@ export const makeQleverBrokerStorageAdapter = (
               };
             const remaining = basisWaitMs - (performance.now() - started);
             if (remaining <= 0)
-              throw new BasisNotAvailable({ required: b, observed, replica: "the QLever replica", surface: "dependency-state", waitedMs: performance.now() - started });
+              await awaitSnapshotBasis({ required: b, observed, refresh: () => observed, waitMs: basisWaitMs,
+                started, replica: "the QLever replica", surface: "dependency-state" });
             await broker.awaitReplica(b, remaining, "dependency-state");
           }
         } }));

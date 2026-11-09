@@ -1,0 +1,37 @@
+{
+  "timing": "body",
+  "kind": "fresh",
+  "surface": "native",
+  "events": [
+    "marker",
+    "answer-acquired",
+    "headers-flushed",
+    "partial-body-flushed",
+    "socket-destroyed"
+  ],
+  "answers": 1,
+  "forwarded": 0,
+  "ok": false,
+  "error": {
+    "name": "ReadError",
+    "tag": "ReadError",
+    "reason": "replica-unreachable",
+    "required": 1024,
+    "observed": 2048,
+    "replica": "the QLever replica",
+    "surface": "native",
+    "code": null,
+    "message": "QLever replica the QLever replica is unreachable for native reads: Error: aborted",
+    "cause": {
+      "name": "Error",
+      "reason": null,
+      "required": null,
+      "observed": null,
+      "replica": null,
+      "surface": null,
+      "code": "ECONNRESET",
+      "message": "aborted",
+      "cause": null
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "captured": 2048,
+  "future": 6144,
+  "headAfter": 2048,
+  "elapsedMs": 41.95883300000003,
+  "ok": false,
+  "value": null,
+  "error": {
+    "tag": "ReadError",
+    "reason": "basis-not-reached"
+  }
+}
