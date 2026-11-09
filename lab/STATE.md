@@ -451,3 +451,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 OBS01 round 13 review FIX-FIRST (CX-VOBS7, 6785096a): Q109a accepted as the review contract; all 11 expectation changes
   verified; one medium finding R13-F1, the source check's comment stripping ignores string literals and can hide a time read. Round 14
   (same Sonnet builder) lexes strings and comments or refuses comment delimiters inside strings.
+- 2026-11-09 disk: archived eight settled evidence folders as verified .tar.zst (file counts match; hashes in
+  evidence/ARCHIVES-SHA256SUMS.txt) and removed 11 finished worktrees (verify-obs6's one dirty file saved to evidence/worktree-leftovers/).
+  Free 9.8 -> 20.2 GiB. Nine agent-* worktrees are locked by a Claude process from 2026-11-07 (pid 27791) and were left alone.
