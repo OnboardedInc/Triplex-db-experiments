@@ -9,6 +9,7 @@
  * `Triples` service guarantees.
  */
 
+export { exactIntegerLimitCase, valueLimitCases } from "./valueLimits.js";
 import { Effect } from "effect";
 import {
   boolean,

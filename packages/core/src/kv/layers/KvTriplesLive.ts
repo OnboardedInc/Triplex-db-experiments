@@ -6,6 +6,7 @@
  * handle, keeping their in-memory datom cache coherent.
  */
 
+import { withValidAssertValues } from "../../store/validateValues.js";
 import { Effect, Layer, Option, Stream } from "effect";
 import type { Triple, TripleInput, TripleId, EntityId, TransactOp } from "../../Triple.js";
 import type { TripleValue } from "../../Value.js";
@@ -20,6 +21,7 @@ import {
 import type { QueryDebugInfo, QueryMetrics, QueryResult } from "../../storage/QueryExecutor.js";
 import type { DatalogQuery, WrappedQuery } from "../datalog/types.js";
 import {
+  InvalidTripleError,
   WriteError,
   UnsupportedValueTypeError,
   ReadError,
@@ -355,7 +357,7 @@ const makeKvTriplesService = Effect.gen(function* () {
       ]).pipe(
         Effect.map((result) => result.triples[0]!),
         Effect.mapError((cause) =>
-          cause instanceof WriteError
+          cause instanceof WriteError || cause instanceof InvalidTripleError
             ? cause
             : new WriteError({ message: "Failed to assert triple", cause }),
         ),
@@ -377,7 +379,7 @@ const makeKvTriplesService = Effect.gen(function* () {
       ).pipe(
         Effect.map((result) => result.triples),
         Effect.mapError((cause) =>
-          cause instanceof WriteError
+          cause instanceof WriteError || cause instanceof InvalidTripleError
             ? cause
             : new WriteError({ message: "Failed to assert triple batch", cause }),
         ),
@@ -643,6 +645,7 @@ const makeKvTriplesService = Effect.gen(function* () {
               ? Effect.fail(e)
               : Effect.fail(new WriteError({ message: `Transact failed: ${String(e)}`, cause: e })),
           ),
+          (effect) => withValidAssertValues(operations, effect),
         )),
 
     // === Triple-level reads ================================================

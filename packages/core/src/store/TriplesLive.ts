@@ -10,6 +10,7 @@
  * The same service owns storage mutations and query execution.
  */
 
+import { withValidAssertValues } from "./validateValues.js";
 import { Effect, Layer, Option } from "effect";
 import {
   Triples,
@@ -36,6 +37,7 @@ import type { Pattern } from "../types/Pattern.js";
 import type { DatalogQuery, WrappedQuery } from "../datalog/types.js";
 import { validateDatalogQuery, validateWrappedQuery } from "../datalog/validation.js";
 import {
+  InvalidTripleError,
   WriteError,
   UnsupportedValueTypeError,
   ReadError,
@@ -155,7 +157,7 @@ export const TriplesLive = Layer.effect(
     // Write Operations
     // =========================================================================
 
-    const assert_ = (input: TripleInput): Effect.Effect<Triple, WriteError> =>
+    const assert_ = (input: TripleInput): Effect.Effect<Triple, WriteError | InvalidTripleError> =>
       transact([
         {
           op: "assert",
@@ -170,7 +172,7 @@ export const TriplesLive = Layer.effect(
       ]).pipe(
         Effect.map((result) => result.triples[0]!),
         Effect.mapError((cause) =>
-          cause instanceof WriteError
+          cause instanceof WriteError || cause instanceof InvalidTripleError
             ? cause
             : new WriteError({ message: "Failed to assert triple", cause }),
         ),
@@ -178,7 +180,7 @@ export const TriplesLive = Layer.effect(
 
     const assertBatch = (
       inputs: readonly TripleInput[],
-    ): Effect.Effect<readonly Triple[], WriteError> => {
+    ): Effect.Effect<readonly Triple[], WriteError | InvalidTripleError> => {
       if (inputs.length === 0) return Effect.succeed([]);
 
       return transact(
@@ -195,7 +197,7 @@ export const TriplesLive = Layer.effect(
       ).pipe(
         Effect.map((result) => result.triples),
         Effect.mapError((cause) =>
-          cause instanceof WriteError
+          cause instanceof WriteError || cause instanceof InvalidTripleError
             ? cause
             : new WriteError({ message: "Failed to assert triple batch", cause }),
         ),
@@ -260,6 +262,7 @@ export const TriplesLive = Layer.effect(
       | TransactionConflictError
       | CommandAlreadyCommittedError
       | ConstraintViolationError
+      | InvalidTripleError
     > =>
       Effect.flatMap(
         Effect.try({
@@ -520,7 +523,7 @@ export const TriplesLive = Layer.effect(
             }),
             { replaySafe: true },
           ),
-      );
+      ).pipe((effect) => withValidAssertValues(operations, effect));
 
     const retract = (id: TripleId): Effect.Effect<void, WriteError> =>
       transact([{ op: "retract", id }]).pipe(

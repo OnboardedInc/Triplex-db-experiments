@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/acceptance-obligations/3",
-  "version": "0.3.12",
+  "version": "0.4.0",
   "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
   "date": "2026-11-08",
   "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",
@@ -34,13 +34,13 @@
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/workload-hunk-review.json": "86fccbf5ef7a27611f45b44659a37a5bcba8e613953bcfd04a8e326464c77dae",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/xtdb-workloads.ts.diff": "b31cae3941b058b72f9cda6e890ab600983fde24c0f4b609d9e161f5ba4d4f1f",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/qlever-workloads.ts.diff": "1a40dcce1fb973666abe0385fb2af3f24bf499676b9b595fea4a5aa7c49fb85a",
-    "lab/acceptance/build_contract.py": "914db3d15e91180e8b449fffeeb27b997dc10eb835fff66e10eca6517e985b59"
+    "lab/acceptance/build_contract.py": "602ffef8ce4bd557bfbf73256b9d3e8e098b9d12b2b524183a273a25c90add98"
   },
   "artifacts": {
     "oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
-    "load-contract.json": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428",
-    "budgets.json": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159",
-    "capability-matrix.md": "36fd4485da5d7b25fc4406722645f0d49cf7cddc519493b6d752f6b731c5cf4f"
+    "load-contract.json": "0eed6e91719ec5f4b30d0d55cc9d656012232054f3a9c64a7bb53ba7ab0212a4",
+    "budgets.json": "5ac9f83af125c50fbf04a62669c2b18e7ac4eaba023b560bfe1fb57e833503d3",
+    "capability-matrix.md": "9cdf64105d55e13c03ac4845698eeb702da8fc7e668065ae106d10e1b91dfb72"
   },
   "lanes": [
     "xtdb-xtql",
@@ -3804,7 +3804,7 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "914db3d15e91180e8b449fffeeb27b997dc10eb835fff66e10eca6517e985b59",
+        "lab/acceptance/build_contract.py": "602ffef8ce4bd557bfbf73256b9d3e8e098b9d12b2b524183a273a25c90add98",
         "lab/acceptance/oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0"
       }
     },
@@ -11003,7 +11003,7 @@
     "O-TESTKIT": [
       {
         "path": "packages/testkit/src/index.ts",
-        "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+        "sha256": "432cec5c6aa33150c5c6f6c54091184edcaece3395ee3c809524c5502594a6d6"
       }
     ],
     "O-KV": []
@@ -15196,7 +15196,7 @@
       "pinnedSourceFiles": [
         {
           "path": "packages/testkit/src/index.ts",
-          "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+          "sha256": "432cec5c6aa33150c5c6f6c54091184edcaece3395ee3c809524c5502594a6d6"
         }
       ],
       "note": null
@@ -16732,7 +16732,7 @@
     "CS-U44": [
       {
         "path": "packages/testkit/src/index.ts",
-        "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+        "sha256": "432cec5c6aa33150c5c6f6c54091184edcaece3395ee3c809524c5502594a6d6"
       }
     ],
     "CS-PKT71": [
@@ -18050,11 +18050,11 @@
   ],
   "budgetsRef": {
     "path": "lab/acceptance/budgets.json",
-    "sha256": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159"
+    "sha256": "5ac9f83af125c50fbf04a62669c2b18e7ac4eaba023b560bfe1fb57e833503d3"
   },
   "loadContractRef": {
     "path": "lab/acceptance/load-contract.json",
-    "sha256": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428"
+    "sha256": "0eed6e91719ec5f4b30d0d55cc9d656012232054f3a9c64a7bb53ba7ab0212a4"
   },
   "obligations": [
     {
@@ -30981,5 +30981,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "9907cb15f0c2d7dd4fdf74d1e5d9c2eb78d9a25fac1febbcd701ccfb5a0a112c"
+  "transitiveContractSha256": "f10018d149ceed77b15df4479893072eb459717f15209743c60c0d1adad98c99"
 }

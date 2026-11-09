@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/3",
-  "version": "0.3.12",
+  "version": "0.4.0",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [

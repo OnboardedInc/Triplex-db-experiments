@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Single source of truth for the triplex-db-2 acceptance contract (version 0.3.0).
+"""Single source of truth for the triplex-db-2 acceptance contract (version 0.4.0).
 
 Run:  python3 -I lab/acceptance/build_contract.py
 It validates the whole contract (references, statement and profile consistency, thresholds, selectors,
@@ -23,7 +23,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERSION = "0.3.12"
+VERSION = "0.4.0"
 
 
 def contract_oracle_answer(case_bytes, contract):

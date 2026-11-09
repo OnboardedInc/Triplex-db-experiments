@@ -1,0 +1,32 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/packages/xtdb
+
+
+ Test Files  8 passed | 9 skipped (17)
+      Tests  62 passed | 90 skipped (152)
+   Start at  20:58:29
+   Duration  7.04s (import 69%, tests 23%, transform 7%, worker 1%)
+
+     Import  142 modules were evaluated 189 times · 3.83s total, 69% of tracked time
+             ~952ms faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/packages/qlever
+
+
+ Test Files  8 passed | 4 skipped (12)
+      Tests  31 passed | 24 skipped (55)
+   Start at  20:58:36
+   Duration  4.11s (import 87%, transform 9%, tests 3%, worker 2%)
+
+     Import  122 modules were evaluated 229 times · 2.64s total, 87% of tracked time
+             ~1.24s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+

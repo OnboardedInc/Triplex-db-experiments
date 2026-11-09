@@ -1,0 +1,34 @@
+| Section | xtdb-xtql | xtdb-sql | qlever-sparql | datomic-datalog | engine-scoped | policy-pending | derived |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| G1 | 22 | 22 | 22 | 21 | 15 | 0 | 0 |
+| G2 | 11 | 11 | 11 | 11 | 2 | 0 | 0 |
+| G3 | 7 | 7 | 7 | 7 | 0 | 0 | 2 |
+| G4 | 8 | 8 | 7 | 8 | 0 | 0 | 0 |
+| G5 | 11 | 11 | 11 | 11 | 1 | 0 | 0 |
+| G6 | 8 | 8 | 8 | 8 | 0 | 0 | 0 |
+| G7 | 25 | 25 | 26 | 25 | 22 | 0 | 1 |
+| G8 | 12 | 12 | 13 | 12 | 3 | 0 | 0 |
+| G9 | 27 | 27 | 27 | 27 | 8 | 3 | 0 |
+| G10 | 17 | 17 | 17 | 17 | 2 | 0 | 1 |
+| R | 12 | 12 | 12 | 12 | 2 | 0 | 0 |
+| NS | 9 | 9 | 9 | 9 | 3 | 0 | 0 |
+| GS | 24 | 24 | 24 | 24 | 4 | 0 | 0 |
+| S | 8 | 8 | 8 | 8 | 4 | 0 | 0 |
+| distinct | 154 | 154 | 155 | 153 | 50 | 3 | 4 |
+obligations: 157; raw exceptions: 18; traced cases: 75; mutants: 44; thresholds: 50 (12 derived)
+rulings compiled: RESCOPE, NUMERIC, Q1, Q3, Q5, Q6, Q7, Q8a, Q8b, Q8c, Q8d, Q8e, Q8f, Q9, Q10, Q12, Q13, Q14a, Q14b, Q14c, Q14d, Q15, Q16, Q17, Q18, Q19, Q20, Q21, Q22, Q23, Q24, Q25, Q26, Q27, Q28, Q29, Q30, Q31, Q32, Q33, Q34, Q35, Q36, Q37, Q38, Q39, Q40, Q41, Q42, Q43, Q44, Q45, Q46, Q47, Q48, Q49, Q50, Q51, Q52, Q53, Q54, Q55, Q56, Q58, Q59, Q60, Q61, Q62, Q57, Q63, Q64, Q65, Q66, Q67, Q68, Q69, Q71, Q72f, Q70a, Q70b, Q70c, Q70d, Q70e, Q70f, Q70g, Q74a, Q74b, Q74c, Q74d, Q74e, Q74f, Q74g, Q70h, Q70i, Q70j, Q70k, Q75a, Q75b, Q75c, Q75d, Q75e, Q75f, Q75g, Q75h, Q75i, Q75j, Q70l, Q70m, Q76a, Q76b, Q76c, Q76d, Q76e, Q76f, Q70n, Q70o, Q77a, Q77b, Q77c, Q78a, Q78b, Q78c, Q78d, Q79a, Q79b, Q79c, Q79d, Q81a, Q72a, Q72b, Q72c, Q72d, Q72e, Q72g, Q80a, Q80b, Q80c, Q82a, Q82b, Q82c, Q82d, Q82e, Q83a, Q83b, Q83c, Q84a, Q84b, Q84c, Q84d, Q84e, Q83d, Q79e, Q85a, Q85b, Q85c, Q85d, Q86a, Q86b, Q86c, Q86d, Q86e, Q86f, Q79f, Q87, Q83e, Q88a, Q88b, Q88c; superseded: Q2, Q4, Q11
+transitive hash: f10018d149ceed77b15df4479893072eb459717f15209743c60c0d1adad98c99
+oracle-contract.json: a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0
+obligations.json: 1704ac471b56b68b658dcbfbbd82b5ebfc8809695ec403cbfe058cb4c1343564
+load-contract.json: 0eed6e91719ec5f4b30d0d55cc9d656012232054f3a9c64a7bb53ba7ab0212a4
+budgets.json: 5ac9f83af125c50fbf04a62669c2b18e7ac4eaba023b560bfe1fb57e833503d3
+capability-matrix.md: 9cdf64105d55e13c03ac4845698eeb702da8fc7e668065ae106d10e1b91dfb72
+ACCEPTANCE.md: 59020fbf693615893e956eec5f98ebbdaf4c5ddfcb739c5c8e0f1fb03227b387
+verify transitive hash: f10018d149ceed77b15df4479893072eb459717f15209743c60c0d1adad98c99
+verify oracle-contract.json: a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0
+verify obligations.json: 1704ac471b56b68b658dcbfbbd82b5ebfc8809695ec403cbfe058cb4c1343564
+verify load-contract.json: 0eed6e91719ec5f4b30d0d55cc9d656012232054f3a9c64a7bb53ba7ab0212a4
+verify budgets.json: 5ac9f83af125c50fbf04a62669c2b18e7ac4eaba023b560bfe1fb57e833503d3
+verify capability-matrix.md: 9cdf64105d55e13c03ac4845698eeb702da8fc7e668065ae106d10e1b91dfb72
+verify ACCEPTANCE.md: 59020fbf693615893e956eec5f98ebbdaf4c5ddfcb739c5c8e0f1fb03227b387
+second regeneration byte-identical (RULINGS Q34e)

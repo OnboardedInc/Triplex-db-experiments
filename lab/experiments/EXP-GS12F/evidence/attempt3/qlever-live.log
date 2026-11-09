@@ -1,0 +1,35 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/packages/qlever
+
+ ❯ test/value-limits.test.ts (3 tests | 3 failed) 90006ms
+   ❯ GS12F qlever value limits (3)
+     × GS12F invalid wire values fail typed before claims on every write entry point 30003ms
+     × GS12F W0 wire kinds retain exact boundary representations 30000ms
+     × GS12F exact integer boundaries round trip with receipt and historical binding 30001ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 3 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/value-limits.test.ts > GS12F qlever value limits > GS12F invalid wire values fail typed before claims on every write entry point
+ FAIL  test/value-limits.test.ts > GS12F qlever value limits > GS12F W0 wire kinds retain exact boundary representations
+ FAIL  test/value-limits.test.ts > GS12F qlever value limits > GS12F exact integer boundaries round trip with receipt and historical binding
+Error: Test timed out in 30000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ test/value-limits.test.ts:10:5
+      8| describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("GS12F qlev…
+      9|   for (const test of [...valueLimitCases, exactIntegerLimitCase]) {
+     10|     it(test.name, () =>
+       |     ^
+     11|       Effect.runPromise(
+     12|         test.run.pipe(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/3]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  3 failed (3)
+   Start at  21:02:23
+   Duration  90.72s (tests 99%)
+
