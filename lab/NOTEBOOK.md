@@ -2207,3 +2207,18 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **P2 at 256 readers, ten facts:** p50/p99 13.80/92.88, 11.34/100.52, 8.92/81.62 ms across three repeats (bars 10/50). The tail is scheduling and host contention on a Mac running about nine agents; maintenance changes moved scheduling p99 from 34.87 to 14.90 ms.
 - **Decision:** stop tuning P2 on the shared Mac. R44 puts P2 acceptance in the VM, single-arm, in a GREEN window, with a different durability class (Q100r: VM commit 1.06/4.43 ms idle). P2B's next measurement runs through G03's NS runner. CX-VP2B reviews rounds 1-3 for correctness now (pinned reads in workers, watermark, durability default, pin/purge ordering, lost-ACK, WAL growth).
 - **Lesson:** a latency bar measured on a host that is also running the lab's agents mostly measures the agents. Absolute bars need the quiet window (Q60/Q100-S1, still waiting for Sam).
+
+## 2026-11-09: HS01 cuts the host store 11x (5,656 to 509 B per fact); correctness unchanged
+
+- **2f7b42d6 (frozen product 13ce4978):** schema v2 (entity-clustered facts, history, journal with derived references, dictionaries,
+  frame retention with a CRC anchor). G6: 50,000 v1/v2 reads, zero mismatches. G7: 100,000 rows exact, 15.5% verbatim fallback on a
+  deliberately pathological sample. Recovery, pack and evaluator gates pass. 10k seed: 2.275 GB, 509 B per asserted fact (G9 target 300;
+  not promoted).
+- **Where the bytes are (10k dbstat):** journal 213.77 B/fact (R45 132), frames tail 140.10 (1,024 frames retained at 10k), facts 107.37,
+  entity dictionary 28.09. IDs stayed TEXT because the core generator makes base-36 ids, not canonical ULIDs, so R45's 16-byte ids did not
+  apply.
+- **Next:** review (CX-VHS01, from the diff and R45's design). Then a round 2 aimed at the three largest terms: frame retention by bytes
+  rather than count, a compact id encoding for base-36 ids, and R45's round 2 journal record (one record per transaction, 150-195 B/fact
+  predicted). At 509 B, 100k is about 23 GB, which still does not fit this disk next to everything else.
+- **Lesson:** a size prediction built on a prototype with substituted ids measured something the real generator does not produce. Prototype
+  with the real id generator.
