@@ -516,3 +516,10 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   no BPF disassembly, so the diagnostic parser (which looks for disassembly) must be rewritten to read IR against the golden before it can
   gate; five harness bugs fixed live (output buffering, memlock ulimit, cgroupfs path, kfunc alias, partial-window facts). Not run: W4,
   writer-p99 ABBA, W1 on the resized VM. Needs review (CX-VOBS7) in the CLI session.
+- 2026-11-09 QH1 round 4 (Sonnet, febcd098; product fix 365fe188): F1 fixed. Triples.reach captures one record position per pull via a new
+  optional StorageAdapter.pullPosition() (QLever broker: nothing inside a transaction, the caller's cut inside withCurrentPull, else the
+  head); KV reach and entities read every level at one position; no lock. 11 lab + 5 KV regressions (6 and 5 fail on the old source).
+  Core 859, qlever 257, QH1 24 (incl. RQ01), INT-Q 1, mutants rejected, O-REPLAY 100k zero mismatches, --verify, evaluator 108,
+  typechecks. CPU per pull unchanged (paired 0.999). Open: other backends without pullPosition (SQLite, Postgres, DuckDB, XTDB, Datomic,
+  Cloudflare, non-broker QLever) still read per level on the reach fallback and can mix cuts (untested). Needs review (CX-VQH1) in the
+  CLI session; P4N round 1 merges it.
