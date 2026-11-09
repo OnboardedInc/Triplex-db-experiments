@@ -1,0 +1,30 @@
+// [CX-VP2B-R2] Why: every completed verification binds candidate, source preimages, actual dependencies and fresh subprocess output. Rejected: using builder receipts or a zero exit code without checking the observed assertions and counts.
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {createHash,randomUUID} from 'node:crypto';
+import {createRequire} from 'node:module';
+const candidate='e9f0014b0181ec536ffba599551a68a3f5bdb5cd',root=process.cwd(),req=createRequire(import.meta.url);
+const out=path.join('/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VP2B/round2','gate-'+randomUUID());fs.mkdirSync(out,{recursive:true});
+const sha=b=>createHash('sha256').update(b).digest('hex');
+const git=args=>{const r=spawnSync('git',args,{encoding:'utf8'});if(r.status)throw Error(r.stderr);return r.stdout.trim();};
+if(git(['diff',candidate,'--','packages/broker/src','pnpm-lock.yaml']))throw Error('Candidate source differs');
+const walk=dir=>fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>e.isDirectory()?walk(path.join(dir,e.name)):e.isFile()?[path.join(dir,e.name)]:[]);
+const sources=[...walk('packages/broker/src'),...walk('packages/broker/test'),...walk('lab/verify/P2B/round2').filter(p=>/\.(?:mjs|ts|cjs|py)$/.test(p)),'lab/verify/P2B/source-worker.cjs','pnpm-lock.yaml'];
+const driver=req.resolve('better-sqlite3',{paths:[path.resolve('packages/broker')]}),nativeDir=path.resolve(path.dirname(driver),'..');
+const deps=[...walk('packages/broker/node_modules/@triplex-build/triplex/dist'),...walk('packages/broker/node_modules/@triplex-build/triplex-testkit/dist'),...walk(path.join(nativeDir,'build/Release')).filter(p=>p.endsWith('.node'))];
+const files=[...sources,...deps];
+const snapshot=()=>Object.fromEntries(files.map(p=>[p,{sha256:sha(fs.readFileSync(p)),realpath:fs.realpathSync(p)}]));
+const before=snapshot();
+for(const p of sources){const dest=path.join(out,'preimages',p);fs.mkdirSync(path.dirname(dest),{recursive:true});fs.copyFileSync(p,dest);}
+fs.writeFileSync(path.join(out,'before.json'),JSON.stringify({candidate,head:git(['rev-parse','HEAD']),node:process.version,execPath:process.execPath,inputs:before},null,2)+'\n');
+const st=fs.statfsSync(root,{bigint:true});if(st.bavail*st.bsize<5n*1024n**3n)throw Error('Host disk below 5 GiB');
+const extra=process.argv.slice(2),countArg=extra.find(arg=>arg.startsWith('--expected-count=')),expectedCount=countArg?Number(countArg.split('=')[1]):39;
+if(!Number.isSafeInteger(expectedCount)||expectedCount<1)throw Error('Invalid expected count');
+const fd=fs.openSync(path.join(out,'tests.log'),'wx'),args=['node_modules/vitest/vitest.mjs','run','--config','lab/verify/P2B/round2/vitest.config.mjs',...extra.filter(arg=>arg!==countArg)];
+const result=spawnSync(process.execPath,args,{cwd:root,stdio:['ignore',fd,fd]});fs.closeSync(fd);
+const after=snapshot(),unchanged=JSON.stringify(before)===JSON.stringify(after),log=fs.readFileSync(path.join(out,'tests.log'),'utf8');
+const counts=[...log.matchAll(/Tests\s+(\d+) passed/g)].map(m=>Number(m[1]));
+fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({out,candidate,args,status:result.status,signal:result.signal,counts,unchanged,logSha256:sha(log),after},null,2)+'\n');
+console.log(JSON.stringify({out,status:result.status,counts,unchanged}));
+if(result.status!==0||!unchanged||counts.length!==1||counts[0]!==expectedCount||/Unhandled Error|Unhandled Rejection/.test(log))process.exitCode=1;

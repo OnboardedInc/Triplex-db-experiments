@@ -1,0 +1,4 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 4670 "CX-VA01-040-G0-datomic-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 2802 "CX-QH1-candidate-G0-G5"
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 4670 "CX-VA01-040-G0-datomic-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 2802 "CX-QH1-candidate-G0-G5"
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 4670 "CX-VA01-040-G0-datomic-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 2802 "CX-QH1-candidate-G0-G5"
+{"out":"/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VP2B/round2/gate-30470d1b-b4e5-48fb-b242-1d80ce537b2a","status":0,"counts":[1],"unchanged":true}

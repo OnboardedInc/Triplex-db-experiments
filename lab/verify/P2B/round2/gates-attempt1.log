@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 28591 "CX-VA01-040-G0-xtdb-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 32466 "CX-QH1-fixture-clone"
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 28591 "CX-VA01-040-G0-xtdb-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 62669 "CX-QH1-sql01-retry"
+{"out":"/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VP2B/round2/gate-9899538e-0699-44de-98cb-bce6cfd0261c","status":0,"counts":[38],"unchanged":true}

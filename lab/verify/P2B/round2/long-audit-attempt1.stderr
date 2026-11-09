@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 4670 "CX-VA01-040-G0-datomic-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 62669 "CX-QH1-sql01-retry"
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 4670 "CX-VA01-040-G0-datomic-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 62669 "CX-QH1-sql01-retry"
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 4670 "CX-VA01-040-G0-datomic-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 30516 "CX-QH1-source-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 4670 "CX-VA01-040-G0-datomic-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 30516 "CX-QH1-source-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 4670 "CX-VA01-040-G0-datomic-after-w0-build", pid 64219 "CX-G03-R6-committed2", pid 44676 "CX-QH1-frozen-gates"

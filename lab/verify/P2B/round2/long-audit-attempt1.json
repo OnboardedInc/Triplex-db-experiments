@@ -1,0 +1,15 @@
+{
+  "scope": "Historical builder ten-minute samples and frozen input bytes; not a new ten-minute run",
+  "attempt": "long-pin-29284db8-0724-4679-b6e0-6fbcf627304f",
+  "resultSha256": "8c8e36a1f529d50b702e3edda7b8573d468fbb9d87a571dcfe1da429434ec5c0",
+  "samplesSha256": "1a57227f1fbc8e71eea25361b0ff7031a04e1cd7d6e1b956c47195d828572444",
+  "samples": 2827,
+  "firstAtMs": 5.715917,
+  "lastAtMs": 599802.38075,
+  "reportedDurationMs": 600006.299584,
+  "expectedSeedSha256": "e3c0fc778f8793835303f5b128accb1cf6014938846fd571a6c3a3e3e3f8285b",
+  "peakWal": 2027072,
+  "cap": 33554432,
+  "sourceDifferencesFromCandidate": [],
+  "frozenInputFiles": 93
+}
