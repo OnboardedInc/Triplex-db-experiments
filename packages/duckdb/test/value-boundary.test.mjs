@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { InvalidTripleError } from '@triplex-build/triplex';

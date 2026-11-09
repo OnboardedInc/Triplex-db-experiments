@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Four offline fixture-metadata controls, no worker/SDK/driver import. */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';

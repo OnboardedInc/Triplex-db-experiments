@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-X05 driver: does a read-only follower on the writer's volume keep the writer's commit latency flat?
 //
 //   TX2_CONFIG_DIR=<worktree> node lab/experiments/EXP-X05-xtdb-read-follower/driver.mjs

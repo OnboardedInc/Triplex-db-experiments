@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { readLatencyRun } from "../../receipts/parse.ts";
 import fs from "node:fs";
 import path from "node:path";

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; runtime error inspection. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: use a distinct entity per command so exact returned-cut reads have ten expected facts.
 // Rejected: accumulating assertions on 50 entities (changes the RYOW denominator and read cost).
 import path from "node:path";

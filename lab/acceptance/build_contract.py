@@ -23,7 +23,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERSION = "0.3.14"
+VERSION = "0.4.0"
 
 
 def contract_oracle_answer(case_bytes, contract):
@@ -1797,7 +1797,7 @@ O_REPLAY_FILES = {
     "lab/oracles/replay/run.py": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
     "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
     "lab/oracles/replay/selfcheck.py": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
-    "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+    "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": "752aaa5c706c514ec265ed6865458fd6bd78795486764e200c088c3f52f53f28",
     "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
     "lab/oracles/replay/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "lab/oracles/replay/tests/helpers.py": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
@@ -3404,7 +3404,7 @@ def build_load_contract():
         "obligations": [o["id"] for o in OBL if o["id"].startswith(("NS.", "GS."))],
         "population": "SCALE_POPULATION year-one (obligations.json scalePopulation), on one identified profile and composition",
         "writerTrace": WRITER_TRACE,
-        "seedRules": SEED_RULES, "freezeProtocol": FREEZE_PROTOCOL, "qleverEvidencePolicy": QLEVER_EVIDENCE_POLICY, "goldenScenarioPolicy": GOLDEN_SCENARIO_POLICY, "laneXP2Rules": LANE_X_P2_RULES, "laneQP4Rules": LANE_Q_P4_RULES,
+        "seedRules": SEED_RULES, "freezeProtocol": FREEZE_PROTOCOL, "qleverEvidencePolicy": QLEVER_EVIDENCE_POLICY, "goldenScenarioPolicy": GOLDEN_SCENARIO_POLICY, "feedRules": FEED_RULES, "feedPolicy": FEED_POLICY, "positionMappingRules": POSITION_MAPPING_RULES, "positionMappingPolicy": POSITION_MAPPING_POLICY, "noRegressionRules": NO_REGRESSION_RULES, "noRegressionPolicy": NO_REGRESSION_POLICY, "laneXP2Rules": LANE_X_P2_RULES, "laneQP4Rules": LANE_Q_P4_RULES,
         "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql, datomic-datalog query and pull); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
         "measurements": {
             "P1": {"readers": "closed-loop, zero think time, each reader a distinct client id", "levels": [0, 1, 4, 16, 64, 256], "stress": 1024, "zeroReaderBaseline": "level 0 = writer trace alone, same trace segment and burst phase",
@@ -6318,7 +6318,7 @@ def checks_0314():
     if expected & set(pending_ruling_ids()):
         errors.append("0.3.14: compiled rulings cannot remain pending")
     held = {"Q78e", "Q86g", "Q94a"} | {r for r in ruling_row_ids((REPO / AUTHORITY_0314["originalPending"]).read_text()) if r.startswith(("Q89", "Q90", "Q92", "Q95", "Q98"))}
-    if not held <= set(pending_ruling_ids()) or held & {r["id"] for r in RULINGS}:
+    if not (held - set(RULES_040)) <= set(pending_ruling_ids()) or (held - set(RULES_040)) & {r["id"] for r in RULINGS}:
         errors.append("0.3.14: requested holds must remain pending")
     if PIN_CHANGES_0314 != {p["path"]: {"previousSha256": p["baseSha256"], "sha256": p["sha256"]} for p in audit["pinChanges"]}:
         errors.append("Q45a: reviewed repins required")
@@ -6369,8 +6369,98 @@ def checks_pin_CHECKJS():
     return errors
 
 
+# [CX-A01-040] Why: compile exactly the authorized pending rows into machine and human consumers.
+# Rejected: compiling Q98j or qualification rulings early, or treating merged diagnostic code as acceptance.
+AUTHORITY_040 = {'path': 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/authority-review.json', 'sha256': '10bb0303850c4a61f4697194996cf92d7a8a0142bdc5425939a630e1fc5a50ea', 'originalPending': 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/pending-authority.md'}
+RULES_040 = {'Q98a': {'topic': '', 'rule': "**The feed contract.** P3 is measured only on identity-only feeds whose entries carry, per transaction, stream, epoch, offset or LSN, positions, txIds, operationId, commandIds and the decided stamp, and per change op (`assert`, `retract`, `erase`), entity, attribute, validFrom, validTo, position and assertion id, plus the erasure seq on erase changes. Entries never carry a value, an envelope or a key id. Resolutions are `commit`, `aborted`, `epoch` and `seal`. Core's value-bearing journal route (`transactions()` and its siblings) is a history API and serves P3 only as the A0 control. Consumer outputs hold subject ids and positions only", 'basis': 'R41 a; TARGETS 1.1 P3, 3 row 3, 7 items 3 and 8; Q31c; R38 2.3, 3.2, 5.3; R33 3.6'}, 'Q98b': {'topic': '', 'rule': "**Consumer state off the engine's write path.** A P3 consumer writes its effects, affected set and checkpoint in one transaction of a host SQLite store with the Q84a pragmas. An engine-resident consumer (P2X `tx_feed_checkpoints`, a Datomic consumer entity) is a control arm only. Amends R29:244 and refines R18 3.4 item 5 (the checkpoint shares a transaction with the consumer's own outputs, not with the source)", 'basis': "R41 b; P2X trace-C 88da3e: consumer write p50 431 ms, p99 2,212 ms in the serial indexer; TARGETS 1.1 P3 item 4 needs one durable write, not the source's store"}, 'Q98c': {'topic': '', 'rule': "**Publication instant per arm.** Broker: `watermarkAt` per LSN. XTDB as source: the host monotonic instant when the writer's COMMIT SYNC returns, recorded per tx id by the writer apart from the ACK, with XTDB `system_time` beside it as a cross-check. Datomic as source: the host monotonic instant when the TS client receives the transact result. Engine clocks are never subtracted from host clocks. A position without an instant fails the run", 'basis': 'R41 c; TARGETS 1.1 P3 item 1; Q55d; Q67d; P2X trace-C 88da3e had 63 positions without one'}, 'Q98d': {'topic': '', 'rule': '**Stamp and publication instant are separate.** The decided stamp is the entry\'s record time; it never starts a lag interval, and a publication instant is never a record time. A consumer re-runs a subject at the delivered entry\'s stamp or position, never at the wall clock\'s "now"', 'basis': 'R41 d; Q90a, Q90d; R33 1.3 Q14-Q15'}, 'Q98e': {'topic': '', 'rule': "**The gap unit.** Gaps are counted over positions (Q31c coordinates), with every LSN or offset in the read range accounted as a commit, an abort, an epoch boundary or a seal. A seal is never a gap. Positions acknowledged after the consumer stopped are outside the run (the 7ed77c65 fix) and the run's end is the final published prefix (Q67d)", 'basis': "R41 e; Q31c; R33 3.6; N01 6f67e0's 11 gaps"}, 'Q98f': {'topic': '', 'rule': '**Exact resume is byte-exact for identity-only feeds,** including across an erasure and, on lane D, across an excision; no "modulo erasure" relaxation applies to feed entries. A re-sent or lost-ACK command creates no new position', 'basis': 'R41 f; TARGETS 1.1 P3 item 5, 7 item 2; Q90c; Q95h'}, 'Q98g': {'topic': '', 'rule': '**The affected set for P3 is O-DOMAIN\'s** (W0 SPEC 10; Q36e; Q40b). A direct-subject affected set is DIAGNOSTIC for NS-P3-DOMAIN-AFFECTED-SET; the N01 bar "affected-subject set matches" and every consumer before EXP-DI01 are diagnostic on it', 'basis': 'R41 g; TARGETS 1.1 P3 item 3; W0 SPEC 10 items 3 and 4'}, 'Q98h': {'topic': '', 'rule': "**The P3 reader load is real.** A P3 lag receipt counts only with 256 closed-loop readers per TARGETS 1.1 P1 on the lane's read composition, the consumer in its own worker or process, and the reader level taken from the run. Lag is pooled over the whole window, bursts included, and reported split steady and burst", 'basis': 'R41 h; TARGETS 1.1 P3 bar; N01 6f67e0 label defect'}, 'Q98i': {'topic': '', 'rule': '**Every P3 receipt so far is DIAGNOSTIC** (P2X, P2Q, SQL01 kill-50, N01, all GS receipts): none ran with 256 readers, none used the O-DOMAIN affected set, none ran through an executing gate, all predate contract 0.4.0. Their correctness findings (0 gaps, 0 order violations, 0 keyed duplicates over 100 crashes per variant) stay as design evidence', 'basis': 'R41 i; Q90f, Q94e; R41-g, R41-h'}, 'Q101a': {'topic': '(orchestrator, from EXP-P5 round B)', 'rule': "**Reference positions map to native positions; they need not be equal.** A source whose native positions are sparse but strictly increasing (the broker packs LSN * 1024 + ordinal, so its first commit is 2048) is seeded by recording, in the seed manifest, the order-preserving bijection from each W0 reference position to the native position of its receipt, built from the receipts in submission order. A gap in the reference sequence, a non-increasing native position, or a receipt whose readback bytes differ from the submitted command refuses the seed. Every consumer of positions (O-REPLAY, activation bases, sweep pins, feed resume, history reads, G0 fingerprints) translates through the bound map; the map's hash binds into every receipt that uses it. This follows the lane D position-to-t map (Q89d) and changes no bar", 'basis': 'EXP-P5 roundB 3d23d208 (BLOCKED-REFERENCE-POSITION-MISMATCH, 1 vs 2048); R34 1.2 item 2; Q89d'}, 'Q104a': {'topic': '(orchestrator, from EXP-RT01 live round 3)', 'rule': "**No-regression gates (G6 and similar) use a statistically sound rule fixed before the B runs.** A tolerance band from one A/A pair is not a noise estimate: RT01's compact five-fact p99 band was 0.237% from two 150-sample arms, where a nearest-rank p99 at n=150 is the second-highest sample. From now on: the band comes from M01's PAIR-0 grading (accepted, verify/M01-rebase 3a354133) over at least three A/A rounds, giving s_d per metric; p50 is judged at n >= 150 per arm; p99 is judged only at n >= 1,000 per arm or with a bootstrap 95% interval of the B/A ratio whose lower bound must exceed 1 + the A/A band to count as a regression; the window grade (Q100k) applies. A receipt failed under an earlier frozen rule stays FAILED and is kept; a rerun under the new rule is a new receipt, never a replacement", 'basis': 'EXP-RT01 43f9d590 live3-run; M01 PAIR-0; Q100k; R22'}}
+FEED_RULES = {k: dict(v) for k, v in RULES_040.items() if k.startswith("Q98")}
+POSITION_MAPPING_RULES = {"Q101a": dict(RULES_040["Q101a"])}
+NO_REGRESSION_RULES = {"Q104a": dict(RULES_040["Q104a"])}
+FEED_POLICY = {
+    "identityOnly": True, "forbiddenFields": ["value", "envelope", "keyId"],
+    "resolutions": ["commit", "aborted", "epoch", "seal"],
+    "consumerStore": "off-engine SQLite; Q84a; effects, affected set and checkpoint in one transaction",
+    "publicationClock": "per-position source publication on the host monotonic clock, independent of ACK; absent instant fails",
+    "stampIsPublicationInstant": False, "resume": "byte-exact, including erasure and excision",
+    "affectedSetOracle": "O-DOMAIN", "directSubjectOnly": "DIAGNOSTIC",
+    "readers": 256, "consumerPlacement": "own worker or process", "lagPooling": "whole window including bursts; also split steady/burst",
+    "historicalReceipts": "DIAGNOSTIC", "qualification": "blocked until executing gate and qualification pins exist",
+}
+POSITION_MAPPING_POLICY = {
+    "seedManifest": "order-preserving bijection built from receipts in submission order",
+    "refuse": ["reference gap", "non-increasing native position", "readback bytes differ from submitted command"],
+    "consumers": ["O-REPLAY", "activation bases", "sweep pins", "feed resume", "history reads", "G0 fingerprints"],
+    "receiptBinding": "map sha256 in every using receipt",
+}
+NO_REGRESSION_POLICY = {
+    "frozenBeforeB": True, "noiseSource": "M01 PAIR-0", "minAaRounds": 3, "dispersion": "s_d per metric",
+    "p50MinSamplesPerArm": 150, "p99MinSamplesPerArm": 1000,
+    "p99Alternative": "bootstrap 95% interval of B/A; lower bound must exceed 1 + A/A band for regression",
+    "windowGrade": "Q100k", "windowGradeAuthority": "Q104a reference only; Q100k remains pending",
+    "earlierFailedReceipts": "retained FAILED; rerun creates a new receipt",
+}
+for _rid, _v in RULES_040.items():
+    _dest = "feedRules" if _rid.startswith("Q98") else "positionMappingRules" if _rid == "Q101a" else "noRegressionRules"
+    RULINGS.append({"id": _rid, "topic": _v["topic"], "ruling": _v["rule"], "compiledInto": [_dest]})
+SEED_RULES["Q101a"] = dict(RULES_040["Q101a"])
+for _o in OBL:
+    if _o["id"] == "NS.P3":
+        _o["statement"] += " Identity-only feed, off-engine consumer, source publication, stamp separation, resolved-prefix gaps, byte-exact resume, O-DOMAIN affected set and actual reader load follow feedRules Q98a-i; all earlier P3 receipts remain DIAGNOSTIC."
+SCOPE_SOURCES += [AUTHORITY_040["path"], AUTHORITY_040["originalPending"], "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/DF01-image-review.json"]
+
+
+def checks_040():
+    errors = []
+    audit = json.loads((REPO / AUTHORITY_040["path"]).read_text())
+    if VERSION != "0.4.0" or sha_file(AUTHORITY_040["path"]) != AUTHORITY_040["sha256"]:
+        errors.append("0.4.0: version and immutable authority required")
+    authority = {}
+    expected = {"Q98" + c for c in "abcdefghi"} | {"Q101a", "Q104a"}
+    for line in (REPO / AUTHORITY_040["originalPending"]).read_text().splitlines():
+        m = re.match(r"^\| (Q\d+[a-z]?)\b([^|]*)\| (.*?) \| (.*?) \|$", line)
+        if m and m[1] in expected:
+            authority[m[1]] = {"topic": m[2].strip(), "rule": m[3], "basis": m[4]}
+    if set(RULES_040) != expected or RULES_040 != authority or audit["rules"] != authority:
+        errors.append("0.4.0: eleven exact authorized literal rulings required")
+    md = (HERE / "RULINGS.md").read_text()
+    for rid, v in authority.items():
+        dest = FEED_RULES if rid.startswith("Q98") else POSITION_MAPPING_RULES if rid == "Q101a" else NO_REGRESSION_RULES
+        if dest.get(rid) != v or not any(x["id"] == rid and x["ruling"] == v["rule"] for x in RULINGS) or v["rule"] not in md:
+            errors.append(rid + ": literal rule and generated consumer required")
+    after = (HERE / "RULINGS-PENDING.md").read_text().splitlines()
+    if expected & set(pending_ruling_ids()) or any(row not in after for row in audit["heldRows"]):
+        errors.append("0.4.0: compiled rows removed and all other pending rows preserved exactly")
+    if FEED_POLICY != {'identityOnly': True, 'forbiddenFields': ['value', 'envelope', 'keyId'], 'resolutions': ['commit', 'aborted', 'epoch', 'seal'], 'consumerStore': 'off-engine SQLite; Q84a; effects, affected set and checkpoint in one transaction', 'publicationClock': 'per-position source publication on the host monotonic clock, independent of ACK; absent instant fails', 'stampIsPublicationInstant': False, 'resume': 'byte-exact, including erasure and excision', 'affectedSetOracle': 'O-DOMAIN', 'directSubjectOnly': 'DIAGNOSTIC', 'readers': 256, 'consumerPlacement': 'own worker or process', 'lagPooling': 'whole window including bursts; also split steady/burst', 'historicalReceipts': 'DIAGNOSTIC', 'qualification': 'blocked until executing gate and qualification pins exist'}:
+        errors.append("Q98: complete feed measurement policy required")
+    if POSITION_MAPPING_POLICY["receiptBinding"] != "map sha256 in every using receipt" or SEED_RULES.get("Q101a") != RULES_040.get("Q101a"):
+        errors.append("Q101a: seed map and receipt binding required")
+    if NO_REGRESSION_POLICY["minAaRounds"] != 3 or NO_REGRESSION_POLICY["p50MinSamplesPerArm"] != 150 or NO_REGRESSION_POLICY["p99MinSamplesPerArm"] != 1000 or not NO_REGRESSION_POLICY["frozenBeforeB"]:
+        errors.append("Q104a: predeclared multi-round noise and tail-sample rule required")
+    if sha_text(json.dumps(FEED_POLICY, sort_keys=True)) != 'ddb4f94584d84aa68e480027263c769d210177eb6ea16770422808f029aa01c4':
+        errors.append("0.4.0: FEED_POLICY policy drift")
+    if sha_text(json.dumps(POSITION_MAPPING_POLICY, sort_keys=True)) != 'e44f9da278379cf0779e7c876c6bebf535e310643787debe9c1e63893a3ad05a':
+        errors.append("0.4.0: POSITION_MAPPING_POLICY policy drift")
+    if sha_text(json.dumps(NO_REGRESSION_POLICY, sort_keys=True)) != 'd1be72db1d887f5196be7c5db6c213673188c4a22a800bf74a4e3d863cccfb8c':
+        errors.append("0.4.0: NO_REGRESSION_POLICY policy drift")
+    for stage, pins in [("QNODELAY", PIN_STAGE_QNODELAY), ("M01", PIN_STAGE_M01), ("CHECKJS", PIN_STAGE_CHECKJS), ("CHECKJS_FINAL", PIN_STAGE_CHECKJS_FINAL)]:
+        record = "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/" + stage + "-repin-review.json"
+        if any(sha_file(p["path"]) != p["sha256"] or sha_file(p["diff"]) != p["diffSha256"] for p in pins):
+            errors.append("Q45a: accepted source/diff drift: " + stage)
+        if json.loads((REPO / record).read_text()) != pins:
+            errors.append("Q45a: immutable per-stage pin review differs: " + stage)
+    image = json.loads((REPO / "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/DF01-image-review.json").read_text())
+    if DATOMIC_IMAGE_040["imageId"] != image["new"] or image["old"] != PIN_CHANGES_0313["datomic"]["new"]["imageId"]:
+        errors.append("Q45a: DF01 image pin must follow reviewed identity chain")
+    return errors
+
+
+# [CX-A01-040] Why: final CHECKJS helper changes a transitive O-REPLAY/O-OBS source pin. Rejected: retaining stale oracle hashes.
+PIN_STAGE_CHECKJS_FINAL = [{'path': 'lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs', 'previousSha256': 'c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206', 'sha256': '752aaa5c706c514ec265ed6865458fd6bd78795486764e200c088c3f52f53f28', 'baseCommit': '3b34d5c3ca0a8e110d9130a95074a027d697c52f', 'diff': 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-FINAL-freeze-ham-reference.mjs.diff', 'diffSha256': '030e63d57c5e74fdef57c0a25bc67b5a0f20f1dc59495239ecf7c28a39f4dc96', 'hunks': [{'header': '@@ -1,3 +1,4 @@', 'changesMeasuredWorkload': False, 'reason': 'Comment-only checkJs directive; executable statements unchanged.'}]}]
+SCOPE_SOURCES += ['lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS_FINAL-repin-review.json', 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-FINAL-freeze-ham-reference.mjs.diff']
+
 def main():
     errs = validate()
+    errs += checks_040()
     errs += checks_pin_CHECKJS()
     errs += checks_pin_M01()
     errs += checks_pin_QNODELAY()
@@ -6403,7 +6493,7 @@ def main():
         "temporalRules": TEMPORAL_RULES, "readShapeRules": READ_SHAPE_RULES, "journalRules": JOURNAL_RULES, "ambRulings": AMB_RULINGS, "goldenResolutions": GOLDEN_RESOLUTIONS, "goldenRule": GOLDEN_RULE, "goldenFilesPinned": {f"{GOLDEN_DIR}/{k}": sha_file(f"{GOLDEN_DIR}/{k}") for k in golden_vectors()},
         "erasure": ERASURE, "protectedCopyInventory": PROTECTED_COPY_INVENTORY, "composition": COMPOSITION, "worldW0": WORLD_W0, "goldenFailureSchedules": {f"GS.{k:02d}": [{"case": c, "schedule": w, "expected": x} for c, w, x in v] for k, v in GS_FAILURE_SCHEDULES.items()},
         "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "a0Controls": A0_CONTROLS, "a0Registry": A0_REGISTRY, "qualificationRun": dict(QUALIFICATION_RUN, integrity=EVALUATOR_INTEGRITY, unprotected=["in-run edit and restore", "setsid", "TOCTOU", "no filesystem isolation", "no network isolation"] + ISOLATION_ADMISSION["unprotected"], protectedProcessCleanup="double-fork descendants are killed; setsid remains unprotected (Q75j)"), "continuationRules": CONTINUATION_RULES, "seedRules": SEED_RULES, "recursionRules": RECURSION_RULES, "datomicRules": DATOMIC_RULES, "exactQueryRules": EXACT_QUERY_RULES, "oracleRunners": ORACLE_RUNNERS, "compositionFields": list(COMPOSITION_FIELDS), "oracleAnswerRule": ORACLE_ANSWER_RULE, "answerMembers": ANSWER_MEMBERS, "caseManifest": CASE_MANIFEST, "buildSpec": BUILD_SPEC, "imagePins": IMAGE_PINS, "verifierRegistry": VERIFIER_REGISTRY, "verifierBriefSources": VERIFIER_BRIEF_SOURCES, "sourceVariantFields": SOURCE_VARIANT_FIELDS, "logFields": LOG_FIELDS, "workloadIdentity": WORKLOAD_IDENTITY, "workloadRepins": WORKLOAD_REPINS_0312, "workloadRepinReview": WORKLOAD_REPIN_REVIEW, "datomicStoragePolicy": DATOMIC_STORAGE_POLICY, "evidenceSchemas": EVIDENCE_SCHEMAS, "outsideBlockMutationFixture": OUTSIDE_BLOCK_MUTATION_FIXTURE, "positionRequiredCases": POSITION_REQUIRED_CASES, "claimAdmission": CLAIM_ADMISSION,
-        "brokerRules": BROKER_RULES, "observationRules": OBSERVATION_RULES, "isolationRules": ISOLATION_RULES, "isolationAdmission": ISOLATION_ADMISSION, "freezeProtocol": FREEZE_PROTOCOL, "qleverEvidenceRules": QLEVER_EVIDENCE_RULES, "qleverEvidencePolicy": QLEVER_EVIDENCE_POLICY, "goldenScenarioRulings": GOLDEN_SCENARIO_RULES, "goldenScenarioPolicy": GOLDEN_SCENARIO_POLICY, "seedAmendments": SEED_AMENDMENTS_0313, "retiredSeedRules": RETIRED_RULES_0313, "pinChanges0313": PIN_CHANGES_0313, "pinChanges0314": PIN_CHANGES_0314, "laneXP2Rules": LANE_X_P2_RULES, "laneQP4Rules": LANE_Q_P4_RULES, "rulingReview0314": RULING_REVIEW_0314, "mergeGates": MERGE_GATES, "pendingRulings": pending_rulings(), "closability": closability(), "oraclePins": ORACLE_PINS, "oracleRefusals": ORACLE_REFUSALS, "oracleRefusalRule": ORACLE_REFUSAL_RULE, "oracleScope": {k: oracle_scope(k) for k in ORACLE_PINS}, "pinScopeExpectedDiff": PIN_SCOPE_EXPECTED_DIFF, "q43Rules": Q43_RULES, "receiverCases": RECEIVER_CASES, "atomicUnitCases": ATOMIC_UNIT_CASES, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "decimalRoutingQ52": DECIMAL_ROUTING_Q52, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
+        "brokerRules": BROKER_RULES, "observationRules": OBSERVATION_RULES, "isolationRules": ISOLATION_RULES, "isolationAdmission": ISOLATION_ADMISSION, "freezeProtocol": FREEZE_PROTOCOL, "qleverEvidenceRules": QLEVER_EVIDENCE_RULES, "qleverEvidencePolicy": QLEVER_EVIDENCE_POLICY, "goldenScenarioRulings": GOLDEN_SCENARIO_RULES, "goldenScenarioPolicy": GOLDEN_SCENARIO_POLICY, "seedAmendments": SEED_AMENDMENTS_0313, "retiredSeedRules": RETIRED_RULES_0313, "pinChanges0313": PIN_CHANGES_0313, "pinChanges0314": PIN_CHANGES_0314, "feedRules": FEED_RULES, "feedPolicy": FEED_POLICY, "positionMappingRules": POSITION_MAPPING_RULES, "positionMappingPolicy": POSITION_MAPPING_POLICY, "noRegressionRules": NO_REGRESSION_RULES, "noRegressionPolicy": NO_REGRESSION_POLICY, "laneXP2Rules": LANE_X_P2_RULES, "laneQP4Rules": LANE_Q_P4_RULES, "rulingReview0314": RULING_REVIEW_0314, "mergeGates": MERGE_GATES, "pendingRulings": pending_rulings(), "closability": closability(), "oraclePins": ORACLE_PINS, "oracleRefusals": ORACLE_REFUSALS, "oracleRefusalRule": ORACLE_REFUSAL_RULE, "oracleScope": {k: oracle_scope(k) for k in ORACLE_PINS}, "pinScopeExpectedDiff": PIN_SCOPE_EXPECTED_DIFF, "q43Rules": Q43_RULES, "receiverCases": RECEIVER_CASES, "atomicUnitCases": ATOMIC_UNIT_CASES, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "decimalRoutingQ52": DECIMAL_ROUTING_Q52, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
         "numericOps": NUMERIC_OPS, "conversionRules": CONVERSION_RULES, "comparisonRules": COMPARISON_RULES, "aggregateRules": AGGREGATE_RULES,
         "cardManyOrder": CARD_MANY_ORDER, "constraintRules": CONSTRAINT_RULES, "errorTable": ERROR_TABLE, "retiredErrors": RETIRED_ERRORS, "errorRepresentation": ERROR_REPRESENTATION, "errorComparison": ERROR_COMPARISON,
         "commitOutcomes": COMMIT_OUTCOMES, "cursorTransitions": CURSOR_TRANSITIONS,

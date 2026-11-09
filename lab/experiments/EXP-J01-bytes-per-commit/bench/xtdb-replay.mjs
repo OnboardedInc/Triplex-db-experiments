@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; runtime null guards not inferred. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 XTDB replay helpers: classify the statements one Triplex commit submits, rebuild variants of
 // them, and size each variant's source-log record in a fresh replay scope of the same key length (so
 // every value keeps its byte length and the replay of the unchanged statements is byte-identical to

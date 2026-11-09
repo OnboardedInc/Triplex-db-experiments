@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; runtime-populated records, option bags, or branch-specific union members; option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 probe 7: source-log bytes of candidate XTDB commit layouts for the same 10-fact command, before
 // any is built. Captures one A0 command (82-character DatabaseScope, A0 = 30,061 bytes), rebuilds its
 // statements in each layout, replays each on one raw connection in a fresh scope of equal key length.

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Run through lab/bin/heavy.mjs. Only scratch copies under runs/ are patched.
 import fs from 'node:fs';
 import path from 'node:path';

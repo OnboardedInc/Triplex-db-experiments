@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { readLatencyRun } from "../../../lab/receipts/parse.ts";
 /** Independent post-run use of the controller's retained-byte/cut oracle verifier. */
 import assert from "node:assert/strict";

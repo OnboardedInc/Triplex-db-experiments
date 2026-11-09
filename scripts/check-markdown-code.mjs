@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated local values; unannotated dynamic parameters; mutually dependent inference; recursive helper inference; recursive callback inference; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";

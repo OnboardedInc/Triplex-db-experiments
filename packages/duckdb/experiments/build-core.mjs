@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { spawnSync } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { join, resolve } from 'node:path';

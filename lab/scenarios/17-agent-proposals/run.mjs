@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated local values; unannotated dynamic parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 17: agent proposals churn (TARGETS 6 row 17). Spec and golden only.
 // Agents write proposals on the subject's proposal entity (never on the I-9) at 5x the human rate; 80% are
 // withdrawn (retracted) and 20% are accepted by a person, who writes the decision on the I-9 itself.

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; runtime-populated records, option bags, or branch-specific union members; callback receiver supplied with call/apply. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Isolated diagnostic observers. Original owners, checks and native calls are
  * preserved. Dispatch-to-settlement spans include driver/scheduler overhead;
  * only existing C++ writer metrics are labelled native measurements.

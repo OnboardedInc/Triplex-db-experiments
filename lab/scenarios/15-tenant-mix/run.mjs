@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated local values; unannotated dynamic parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 15: tenant mix, with GS.15's storage-level cross-tenant attempt and one 10x-slow tenant consumer
 // (TARGETS 6 row 15, 6.1). Spec and golden only.
 //

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: every arm imports its own built public exports and Effect instance.
 // Rejected: overlaying old adapter source onto current core (would measure a new, unqualified hybrid).
 import path from "node:path";

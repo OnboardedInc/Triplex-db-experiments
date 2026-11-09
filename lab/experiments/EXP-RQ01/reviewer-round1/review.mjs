@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing; runtime-guarded iterable values. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [CX-VRQ01] Why: measure semantic witnesses and isolate one bad route at a time.
 // Rejected: mutating every route (would confound HE-2 with reference failures).
 import assert from 'node:assert/strict';

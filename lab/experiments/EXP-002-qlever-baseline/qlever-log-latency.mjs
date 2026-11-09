@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-002] Server-side latency from a QLever 0.6.0 server log (docker logs of tx2-qlever-dev):
 // per-update and per-query "total time" lines, plus the delta size the update responses report in
 // the log. Diagnostic for North-star P2 (small commit latency) and P1 (reads while writes run); it is

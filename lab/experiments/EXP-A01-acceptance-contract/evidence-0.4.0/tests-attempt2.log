@@ -1,0 +1,27 @@
+test_all_accepted_ancestry (__main__.Contract040.test_all_accepted_ancestry) ... FAIL
+test_every_repin_and_hunk (__main__.Contract040.test_every_repin_and_hunk) ... ok
+test_exact_eleven_authority_rows (__main__.Contract040.test_exact_eleven_authority_rows) ... ok
+test_feed_contract_policy (__main__.Contract040.test_feed_contract_policy) ... ok
+test_image_identity_chain (__main__.Contract040.test_image_identity_chain) ... ok
+test_load_projections (__main__.Contract040.test_load_projections) ... ok
+test_no_changed_bars_or_workload (__main__.Contract040.test_no_changed_bars_or_workload) ... ok
+test_no_regression_policy (__main__.Contract040.test_no_regression_policy) ... ok
+test_original_evaluator_assertions_preserved (__main__.Contract040.test_original_evaluator_assertions_preserved) ... ok
+test_pending_rows_byte_preserved (__main__.Contract040.test_pending_rows_byte_preserved) ... ok
+test_qualification_remains_blocked (__main__.Contract040.test_qualification_remains_blocked) ... ok
+test_sparse_mapping_policy (__main__.Contract040.test_sparse_mapping_policy) ... ok
+test_version_and_all_generator_checks (__main__.Contract040.test_version_and_all_generator_checks) ... ok
+
+======================================================================
+FAIL: test_all_accepted_ancestry (__main__.Contract040.test_all_accepted_ancestry)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-040/lab/experiments/EXP-A01-acceptance-contract/regressions/test040.py", line 102, in test_all_accepted_ancestry
+    self.assertEqual(subprocess.call(['git','merge-base','--is-ancestor',rev,'HEAD'],cwd=R),0,rev)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 0 : f72cd5ad
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.702s
+
+FAILED (failures=1)

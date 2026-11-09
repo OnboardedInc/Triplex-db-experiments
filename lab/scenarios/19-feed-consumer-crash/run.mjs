@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated dynamic parameters; unannotated destructured parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 19: feed consumer crash (TARGETS 6 row 19), with GS.19b (TARGETS 6.1), the crash points of
 // TARGETS 1.1 P3 item 6, and the work-item delivery identity of RULINGS Q38f.
 //

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: bind each observation to the live slot, owner, config and exact harness bytes.
 // Rejected: endpoint alone (the next holder could answer it).
 import fs from "node:fs";

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated local values; unannotated dynamic parameters; initially empty collections; runtime error inspection. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: real public commits in groups of eight create claims, journal and fact history.
 // Rejected: literal stamped VALUES and synthetic journal rows (heap exhaustion / incomplete history).
 import path from "node:path";

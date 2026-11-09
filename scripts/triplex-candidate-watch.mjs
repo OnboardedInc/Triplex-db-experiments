@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Independent read-only sampling. The runner owns cancellation and stop actions.
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";

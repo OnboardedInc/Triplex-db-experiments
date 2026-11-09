@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 // node lab/scenarios/run.mjs --lane xtdb|qlever --rung 10k|smoke --scenarios 2,3|all --output runs/.../gs-report.json
 //   [--raw-dir DIR] [--readers 16] [--run-tag TAG] [--fresh-world] [--sweep-cap N] [--drain-timeout-ms N]

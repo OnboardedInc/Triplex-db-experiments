@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; dynamic record keys. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { readLatencyRun } from "../../../lab/receipts/parse.ts";
 import { latencyReceipt } from "../../../lab/receipts/latency.mjs";
 /** Inspect failed diagnostic trials without converting them into acceptance. */

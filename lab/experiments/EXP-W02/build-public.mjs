@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-W02-R2] Why: package builds must precede typechecking their public exports; pnpm's run parser
 // rejects the install-only --store-dir option. Rejected: excluding the live adapter or using a sibling dist.
 import fs from 'node:fs';

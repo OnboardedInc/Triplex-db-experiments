@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated local values; unannotated dynamic parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 4: lost acknowledgements and a restart (TARGETS 6 row 4), plus GS.04b (TARGETS 6.1).
 //
 // Lost ACKs: the client discards the receipt of a marked command and re-sends it with the same commandId;

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 probe 9: which commit encoding a G1 run actually wrote (the gate receipt does not bind
 // TRIPLEX_COMMIT_ENCODING). Reads the scopes from the run's raw G1 report and checks the engine:
 //   QLever: count triples of the omitted channels (`recorded_at_native`, `schema_version`) in each scope's

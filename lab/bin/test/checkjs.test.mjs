@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
+import { execFileSync, spawnSync } from 'node:child_process';
 import ts from 'typescript';
-import { checkProject, withoutDirectives } from '../checkjs.mjs';
+import { checkProject, coverageDiagnostics, trackedCoverage, withoutDirectives } from '../checkjs.mjs';
 
 /** @param {string} source @param {(project: string) => void} work */
 function fixture(source, work) {
@@ -59,21 +60,75 @@ test('valid code passes and directives in runtime text stay byte-identical', () 
   fixture(source, project => assert.deepEqual(checkProject(project).diagnostics, []));
 });
 
-test('project includes every JavaScript file recursively in the three tool trees', () => {
+test('project checks or explicitly excludes every tracked JavaScript file', () => {
   const lab = path.resolve(import.meta.dirname, '../..');
   const config = path.join(lab, 'tsconfig.checkjs.json');
   const read = ts.readConfigFile(config, ts.sys.readFile);
   assert.equal(read.error, undefined);
   const parsed = ts.parseJsonConfigFileContent(read.config, ts.sys, lab);
-  const roots = new Set(parsed.fileNames);
-  for (const dir of ['bin', 'bench', '../qualification']) {
-    const absolute = path.resolve(lab, dir);
-    for (const file of fs.readdirSync(absolute, { recursive: true, withFileTypes: true })) {
-      if (file.isFile() && /\.[cm]?js$/.test(file.name)) assert(roots.has(path.join(file.parentPath, file.name)), file.name);
-    }
-  }
+  const inventory = trackedCoverage(path.dirname(lab), path.join(lab, 'checkjs-exclusions.json'));
+  assert.deepEqual(coverageDiagnostics(parsed.fileNames, inventory, path.dirname(lab)), []);
+  assert.equal(inventory.checked.length + inventory.excluded.size + inventory.generated.length, inventory.tracked.length);
   assert.equal(parsed.options.allowJs, true);
   assert.equal(parsed.options.checkJs, true);
   assert.equal(parsed.options.noEmit, true);
   assert.equal(parsed.options.strict, true);
+});
+
+test('new staged JavaScript anywhere fails coverage until checked or explicitly excluded with a reason', () => {
+  fixture('export const present = true;\n', project => {
+    const dir = path.dirname(project), policy = path.join(dir, 'exclusions.json');
+    /** @param {...string} args */
+    const git = (...args) => execFileSync('git', args, { cwd: dir, encoding: 'utf8' });
+    git('init', '-q');
+    git('add', 'input.mjs', 'exports.mjs');
+    fs.writeFileSync(policy, JSON.stringify({ format: 'triplex-checkjs-exclusions/1', exclusions: [] }));
+    const nested = path.join(dir, 'new-area');
+    fs.mkdirSync(nested);
+    fs.writeFileSync(path.join(nested, 'dormant.cjs'), '// @ts-nocheck\nfunction dormant() { missingNewTrackedName(); }\n');
+    fs.mkdirSync(path.join(dir, 'dist'));
+    fs.writeFileSync(path.join(dir, 'dist/output.js'), 'generatedOutput();\n');
+    git('add', 'new-area/dormant.cjs', 'dist/output.js');
+    const config = JSON.parse(fs.readFileSync(project, 'utf8'));
+    config.include = [];
+    config.files = ['input.mjs', 'exports.mjs'];
+    fs.writeFileSync(project, JSON.stringify(config));
+    const coverage = { repository: dir, exclusionsFile: policy };
+    assert(checkProject(project, coverage).diagnostics.some(d => d.code === 90001 && String(d.messageText).includes('new-area/dormant.cjs')));
+    config.files.push('new-area/dormant.cjs');
+    fs.writeFileSync(project, JSON.stringify(config));
+    assert(checkProject(project, coverage).diagnostics.some(d => d.code === 2304));
+    config.files.pop();
+    fs.writeFileSync(project, JSON.stringify(config));
+    fs.writeFileSync(policy, JSON.stringify({ format: 'triplex-checkjs-exclusions/1', exclusions: [{ path: 'new-area/dormant.cjs', reason: 'Deliberate dormant-name fixture; no runtime entry point.' }] }));
+    assert.deepEqual(checkProject(project, coverage).diagnostics, []);
+    for (const exclusions of [
+      [{ path: 'new-area/dormant.cjs', reason: '' }],
+      [{ path: 'new-area/*.cjs', reason: 'Wildcard is not an exact tracked path.' }],
+      [{ path: 'gone.mjs', reason: 'Stale path must be refused.' }],
+      [{ path: 'input.mjs', reason: 'one' }, { path: 'input.mjs', reason: 'duplicate' }],
+    ]) {
+      fs.writeFileSync(policy, JSON.stringify({ format: 'triplex-checkjs-exclusions/1', exclusions }));
+      assert.throws(() => trackedCoverage(dir, policy), /checkjs exclusion/);
+    }
+  });
+});
+
+test('reviewer CLI probes reject GS launcher, CS-GS manifest, and engine dormant/import failures', () => {
+  const root = path.resolve(import.meta.dirname, '../../..');
+  for (const [file, mutation] of [
+    ['lab/scenarios/run.mjs', 'append'], ['lab/scenarios/v2/cases.mjs', 'append'],
+    ['lab/bin/engine.mjs', 'append'], ['lab/bin/engine.mjs', 'engine-import'],
+  ]) {
+    const result = spawnSync(process.execPath, ['--import', './lab/bin/test/checkjs-overlay.mjs', 'lab/bin/checkjs.mjs'], {
+      cwd: root, encoding: 'utf8', maxBuffer: 1024 * 1024,
+      env: { ...process.env, CHECKJS_REVIEW_TARGET: path.join(root, file), CHECKJS_REVIEW_MUTATION: mutation },
+    });
+    assert.equal(result.status, 1, result.stderr);
+    assert.match(result.stderr, /TS2304/);
+    assert(result.stderr.includes(file));
+    assert(result.stderr.includes(mutation === 'engine-import' ? 'sha256File' : 'cxVcheckjsDormantUnboundName'));
+    const record = JSON.parse(result.stderr.split('\n').find(line => line.startsWith('CX-VCHECKJS overlay: '))?.slice('CX-VCHECKJS overlay: '.length) ?? 'null');
+    assert(record?.reads > 0 && record.originalUnchanged === true);
+  }
 });

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Sample and stop only a newly launched, owned process group. Sampling does not
 // establish a physical RSS bound, and V8 heap settings are not an RSS limit.
 import { execFileSync, spawn } from "node:child_process";

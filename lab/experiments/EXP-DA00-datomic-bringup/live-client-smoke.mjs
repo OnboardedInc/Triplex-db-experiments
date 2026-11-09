@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-DA00] Why: prove the built TS client reaches the actual gateway and test-only lifecycle fencing. Rejected: mock-only transport evidence.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

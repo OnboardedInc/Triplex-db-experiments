@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; unannotated record members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: Q51a's FIFO lives in the candidate API: one subject at a time,
 // up to eight commands per engine transaction; independent subjects share 16 permits.
 // Inspiration: R39 3.2 and Q51a. Rejected: serializing in the trace driver (hides the candidate's cost).

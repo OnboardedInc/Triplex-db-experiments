@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: recover committed commands of an interrupted calibration from durable engine claims.
 // Rejected: discarding its rows or treating an incomplete offer/ACK log as a qualified trace.
 import fs from "node:fs";

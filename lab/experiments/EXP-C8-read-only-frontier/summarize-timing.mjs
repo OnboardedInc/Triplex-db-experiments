@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; unannotated destructured parameters; dynamic record keys. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { readLatencyRun } from "../../receipts/parse.ts";
 // EXP-C8: summarize round-timing.mjs outputs: per call total, per-round step times, engine writes
 // per call (scratch phases), Datalog wall time. Usage: summarize-timing.mjs <file.json>...

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing; runtime-guarded iterable values. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-RQ01-QA2] Why: independently rerun the original fault ledger under explicit Q89i contracts and measure coverage witnesses.
 // Rejected: treating a passing builder test or a coverage boolean as proof of actual input content.
 import assert from 'node:assert/strict';

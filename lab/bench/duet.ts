@@ -1,3 +1,5 @@
+import { readLatencyRun } from "../receipts/parse.ts";
+import { requireQleverConnectionMode } from "../receipts/latency.mjs";
 #!/usr/bin/env node
 /**
  * PAIR-0 duet coordinator (EXP-M01; R22 section 7; RULINGS Q60a-h). Normally run by `node lab/bin/gate.mjs PAIR`,
@@ -227,7 +229,7 @@ async function run(argv: string[]) {
 
   const driverReports: Record<string, any> = {};
   for (const [arm, c] of Object.entries(children)) {
-    driverReports[arm] = fs.existsSync(c.report) ? JSON.parse(fs.readFileSync(c.report, "utf8")) : null;
+    driverReports[arm] = fs.existsSync(c.report) ? readLatencyRun(c.report, { lane, expectedMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap().data : null;
     const d = driverReports[arm];
     report.arms[arm] = {
       ...report.arms[arm], exitCode: exited[arm] ?? null, report: path.relative(REPO, c.report), reportSha256: fs.existsSync(c.report) ? sha256(fs.readFileSync(c.report)) : null,

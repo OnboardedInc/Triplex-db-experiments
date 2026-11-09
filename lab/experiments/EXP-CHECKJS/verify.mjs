@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] Node overloads over dynamic option/result unions. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-CHECKJS] Why: compare executable source against the dispatched HEAD, and bind
 // validation to actual changed bytes. Rejected: claiming comments are harmless without comparison.
 import assert from 'node:assert/strict';

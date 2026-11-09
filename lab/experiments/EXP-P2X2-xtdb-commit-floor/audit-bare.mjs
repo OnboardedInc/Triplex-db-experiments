@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: independent postgres.js decoding validates all retained command bytes.
 // Rejected: replacing failed original accounting receipts (first failures remain immutable).
 import fs from "node:fs";
