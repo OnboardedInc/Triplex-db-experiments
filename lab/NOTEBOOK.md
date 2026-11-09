@@ -2229,3 +2229,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Disk guidance given:** about 60 GiB free for 100k on one lane at a time, about 150 GiB for several lanes plus evidence.
 - **OBS01 accepted offline,** with live P3 evidence refused until writer sync is independently witnessed; that witness is the next design item on the critical path.
 - **HS01 review:** one finding (a frame over 16 MiB stalls finite retention); round 2 is the first Sonnet builder.
+
+## 2026-11-09: R48: writer durability is witnessed in the kernel; OBS01 round 9 (Sonnet) builds it
+
+- **Design (R48, rulings Q108a-d pending):** a trusted sync-witness container with only CAP_BPF and CAP_PERFMON traces ext4 file and filesystem syncs, writes, mmap writes and truncations in the store directory, with the calling cgroup and CLOCK_MONOTONIC time; it never opens candidate files. A commit's durable instant D is the first successful sync from the writer's own cgroup after its WAL frames were written. P2 requires ACK >= D, the source requires U >= D, and consumer lag ends at max(U_c, D_c). Estimated cost 5-60 us per commit.
+- **Rejected:** trusting SQLite settings (per connection, overridable), and process kills as sync tests (the VM page cache survives a container kill; kill-after-ACK is a recovery test, Q108c). Enforcing durability for the candidate is not allowed (Q108d).
+- **Lesson:** "the writer says it synced" and "the setting says FULL" are both candidate claims. The only trustworthy durability evidence comes from below the candidate, here the guest kernel.
+- **R47 (journal format)** committed with rulings Q107a-c; Q107-S asked of Sam. DF01 round 4 (Sonnet) fixes the lane D feed emitting journal facts.
