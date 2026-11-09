@@ -1938,3 +1938,7 @@ Where each priority stands, from evidence so far (research probes and baselines;
 
 - **INT-Q ACCEPT (verify/INT-Q c14cdfc9).** Broker default off. Fresh checks include all five live broker cases and 50 process stops with zero acknowledged commits lost. Open: physical power loss, performance qualification, and WAL growth under a pinned reader held indefinitely.
 - **Contract 0.3.14 (CX-A01-0314):** merges INT-Q and GS12F with their re-pins in one commit (Q45a), compiles Q96a-d and Q97a-c. QNODELAY goes into a later contract when its round 4 is accepted. Unblocks EXP-QH1 (lane Q P4 from H1) once merged.
+
+## 2026-11-09: K01 G0 count fix accepted offline
+
+- **verify/K01 12a30d8 ACCEPT-OFFLINE:** the reviewer independently recomputed 61,384 expected rows; 468 tests and both TypeScript checks pass. The K01 live rerun (LIVE-round12) is next in the scale window after P5 A1.
