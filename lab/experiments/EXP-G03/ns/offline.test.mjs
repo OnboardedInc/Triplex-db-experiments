@@ -1,6 +1,6 @@
 // [EXP-G03-R5] Why: regressions must reject foreign mounts, missing clock facts and stale/raw event forgeries. Rejected: offline fixture success as VM qualification.
 import test from 'node:test';import assert from 'node:assert/strict';import {createHmac} from 'node:crypto';
-import {clockFacts,sameClock,checkNsPreflight,servicePlan,driverPlan,layoutProblems} from '../../../bin/ns-policy.mjs';import {verifyHr,verifyObserver,seedRpcScript} from '../../../bin/ns-run.mjs';
+import {clockFacts,sameClock,checkNsPreflight,servicePlan,driverPlan,layoutProblems} from '../../../bin/ns-policy.mjs';import {verifyHr,verifyObserver,seedRpcScript,matchOffers} from '../../../bin/ns-run.mjs';
 const boot='7a064e31-8ca0-47a5-926f-d2de8d786302',zero='monotonic 0 0\nboottime 0 0\n';
 test('Q100q: distinct inodes with equal boot and zero offsets accepted',()=>{const a=clockFacts(boot,zero,1),b=clockFacts(boot,zero,2);assert.equal(sameClock([a,b]).bootId,boot)});
 for(const offsets of ['', 'monotonic 0 0','monotonic 1 0\nboottime 0 0','monotonic 0 1\nboottime 0 0','monotonic 0 0\nmonotonic 0 0','monotonic 0 NaN\nboottime 0 0'])test('Q100q refuses '+JSON.stringify(offsets),()=>assert.throws(()=>clockFacts(boot,offsets,1)));
@@ -35,3 +35,7 @@ test('seed RPC script sends a bounded newline-delimited request with exact run/p
  const server=net.createServer({allowHalfOpen:true},socket=>{let raw='';socket.on('data',b=>raw+=b);socket.on('end',()=>{assert.ok(raw.endsWith('\n'));actual=JSON.parse(raw);socket.end(JSON.stringify({ok:true,result:{seeded:16}})+'\n')})});await new Promise(r=>server.listen(0,'127.0.0.1',r));
  try{const script=seedRpcScript({host:'127.0.0.1',port:server.address().port},'fresh-seed',16);const child=spawn(process.execPath,['-e',script],{stdio:['ignore','pipe','pipe']});let err='';child.stderr.on('data',b=>err+=b);assert.equal((await once(child,'exit'))[0],0,err);assert.equal(actual.runId,'fresh-seed');assert.equal(actual.method,'commit');assert.deepEqual(actual.params,{command:{kind:'seed',population:16}})}finally{await new Promise(r=>server.close(r))}
 });
+
+const frozen=[{command:{id:'one',value:1}},{command:{id:'two',value:2}}],ack=frozen.map((x,i)=>({command:x.command,response:{commandId:x.command.id,status:'committed',receipt:{position:String(i+1)}}}));
+test('open-loop ACK completion permutation retains exact offer/receipt correspondence',()=>assert.deepEqual(matchOffers([...ack].reverse(),frozen),ack));
+for(const [label,change]of [['duplicate',a=>a[1]=a[0]],['bytes',a=>a[1].command.value=999],['receipt',a=>a[1].response.receipt.position='1'],['wrong echoed id',a=>a[1].response.commandId='one'],['missing',a=>a.pop()]])test('offer matching refuses '+label,()=>{const a=structuredClone(ack);change(a);assert.throws(()=>matchOffers(a,frozen))});

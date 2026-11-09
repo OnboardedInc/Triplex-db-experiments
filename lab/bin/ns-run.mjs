@@ -17,9 +17,14 @@ export function verifyObserver(files,key,runId){const seal=JSON.parse(files.get(
  for(const line of files.get('polls.ndjson').toString().trim().split('\n')){const row=JSON.parse(line),body=JSON.parse(row.raw);if(body.schema!=='ns-observer/1'||body.runId!==runId||body.sequence!==seq++||body.previous!==head||createHmac('sha256',key).update(row.raw).digest('hex')!==row.hmac)throw Error('observer content/binding');head=row.hmac;polls.push(...body.polls)}
  if(seal.runId!==runId||seq<1||seal.chunks!==seq||seal.head!==head)throw Error('observer seal');return {seal,polls};
 }
+// [EXP-G03-R5] Why: ACK completion order is not offer order in an open-loop driver. Rejected: positional zipping (rejects correct concurrent replies) or ignoring duplicate/missing IDs.
+export function matchOffers(offers,trace){
+ if(offers.length!==trace.length||new Set(trace.map(o=>o.command.id)).size!==trace.length)throw Error('offer coverage');
+ const byId=new Map(offers.map(o=>[o.command.id,o]));if(byId.size!==trace.length)throw Error('duplicate offer identity');
+ return trace.map((expected,i)=>{const o=byId.get(expected.command.id);if(!o||JSON.stringify(o.command)!==JSON.stringify(expected.command)||o.response.commandId!==expected.command.id||o.response.status!=='committed'||o.response.receipt.position!==String(i+1))throw Error('offer bytes/receipt');return o});
+}
 export function checkSmoke(events,observer,trace,population,binding){
- const offers=events.filter(e=>e.kind==='offer');if(offers.length!==trace.length)throw Error('offer coverage');
- for(let i=0;i<trace.length;i++){const o=offers[i].data;if(JSON.stringify(o.command)!==JSON.stringify(trace[i].command)||o.response.status!=='committed'||o.response.receipt.position!==String(i+1))throw Error('offer bytes/receipt');}
+ const offers=matchOffers(events.filter(e=>e.kind==='offer').map(e=>e.data),trace);
  if(events.filter(e=>e.kind==='driver-runtime').length!==1||events.some(e=>e.kind==='driver-runtime'&&(!e.data.permissionModel||e.data.childPermission||e.data.workerPermission||e.data.bundleSha256!==binding.driverBundleSha256)))throw Error('driver permissions');
  const reads=events.filter(e=>['read','ryow','p4','sweep'].includes(e.kind));if(!reads.length)throw Error('no read observations');
  for(const {data:d}of reads){const r=d.request;let value=0;for(let i=0;i<Math.min(Number(r.basis),trace.length);i++)if(trace[i].command.subject===r.subject)value=trace[i].command.value;const expectedAnswer={subject:r.subject,value,basis:r.basis};if(sha256(Buffer.from(canonicalAnswer(expectedAnswer)))!==d.answerSha256)throw Error('named-cut read content');}
