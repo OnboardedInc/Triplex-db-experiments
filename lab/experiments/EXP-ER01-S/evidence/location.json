@@ -1,0 +1,9 @@
+{
+  "format": "er01-s-evidence-location/1",
+  "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/ER01-S/run-20261109-frozen-final",
+  "runId": "ER01-S-2ea6f81b26d8442087e849a0e9e8b788",
+  "manifestSha256": "d23e3127e010abf0d046503ad9c65650ddad53b08026e09c9eed1903a8add225",
+  "gatesSha256": "ffa61ef7d6056350b59f71f4e82dc4191ead9228a48ffdd748bc967def96bbf2",
+  "manifestFileCount": 219,
+  "manifestBytes": 4104595
+}

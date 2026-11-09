@@ -97,3 +97,7 @@ The retention-copy check introduces no new semantic PASS: it checks each exact m
 No live engine scan, erasure product operation, FSST IndexBuilder invocation, engine/VM configuration change, physical freed-block proof, scale/overhead qualification, concurrent DB/WAL snapshot qualification or independent verifier recollection was performed. The existing archived real QLever index is decoded and verified against its known bootstrap input and full archived manifest; new planted vocabulary controls use an explicit legal fixture encoder. No acceptance claim follows for the resident's index.
 
 ER01-C must settle actual padding/AAD/key schemas before its independent read-only adapters are pinned. Native Datomic segment and compressed Postgres/TOAST decoding remain unavailable; actual locations without a working positive control REFUSE. O-OBS needs a four-scan semantic consumer before these records can support an ERASURE acceptance claim. Host APFS/SSD residuals remain as R38 states. No Sam approval question is needed for this offline scanner work.
+
+## Delivery commits
+
+Implementation and PASS audit: `503832b3d51a0c8ddc8d087744e888e70d901284`. Retained gate records, manifest and unit log are committed separately in the following evidence commit. No merge or push was performed. The final scanner sources still match the frozen gate pins; only report/evidence files changed after qualification.
