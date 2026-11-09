@@ -1,0 +1,32 @@
+[
+  {
+    "attempt": "build-1",
+    "failure": "ERROR: failed to build: failed to update builder last activity time: open /Users/sam/.docker/buildx/activity/.tmp-default2803220810: operation not permitted",
+    "reasonForRetry": "Move Docker/Buildx config and activity to project-owned ENGINE_DIR; no global cache fallback."
+  },
+  {
+    "attempt": "ts-typecheck-1",
+    "failure": "TS4111 data.code and data.message access index signatures",
+    "reasonForRetry": "Use bracket access as required by TypeScript."
+  },
+  {
+    "attempt": "pnpm-typecheck-cli-1",
+    "failure": "pnpm --store-dir is rejected for run commands",
+    "reasonForRetry": "Use workspace compiler directly for lightweight check; use --config.store-dir for gate subprocesses."
+  },
+  {
+    "attempt": "selftest-1",
+    "failure": "Datomic rejects a Datalog attribute ident before schema installation (:db.error/not-an-entity :triplex.scope/key).",
+    "reasonForRetry": "stored-scope first checks d/entid; absence is expected only before initial schema installation."
+  },
+  {
+    "attempt": "selftest-2",
+    "failure": "get-database-names requires a wildcard URI; schema introspection test incorrectly treated valueType keyword as entity.",
+    "reasonForRetry": "Use base URI plus * for listing and assert the returned valueType keyword directly; add idempotency test preserving nonzero position."
+  },
+  {
+    "attempt": "selftest-3",
+    "failure": "delete-database returned false after releasing the mem peer, although the database existed before release.",
+    "reasonForRetry": "Delete before releasing its peer connection; retain the failing assertion."
+  }
+]

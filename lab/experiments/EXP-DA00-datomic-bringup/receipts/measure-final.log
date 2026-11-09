@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 41588 "R25-sweepshort-a-r4", pid 5291 "CX-VP2Q-3-live", pid 4241 "CX-E01-R3-tests", pid 5696 "CX-C8-R3-checks"
+[lab] tx2-datomic-dev removed; volume tx2-datomic-dev-data retained; reservation and slot lock released

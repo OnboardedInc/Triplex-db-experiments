@@ -1,0 +1,224 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { randomUUID, createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { afterAll, beforeAll, expect, it } from 'vitest';
+import { Effect } from 'effect';
+import { Triples, EntityId, string } from '@triplex-build/triplex';
+import { Capabilities, DatabaseScope } from '@triplex-build/triplex/runtime';
+import { DatomicClient, DatomicHttpError } from '../../../packages/datomic/src/DatomicClient.js';
+import { makeDatomicStorageAdapter } from '../../../packages/datomic/src/DatomicStorageAdapter.js';
+import { makeDatomicQueryExecutor } from '../../../packages/datomic/src/DatomicQueryExecutor.js';
+import { makeDatomicRuntime } from '../../../packages/datomic/src/index.js';
+import { DatomicBasisNotAvailable } from '../../../packages/datomic/src/readErrors.js';
+import { encodeRow } from '../../../packages/datomic/src/protocol.js';
+import { validateTagged, stringifyExact } from '../../../packages/datomic/src/codec.js';
+
+// [CX-VDA01] Why: retain independent inputs, observed content, attempt identity and cleanup, bound to the live gateway. Rejected: deriving a verdict from the builder's PASS text.
+const url = 'http://127.0.0.1:8470';
+const attempt = `CX-VDA01-${randomUUID()}`;
+const out = path.join(import.meta.dirname, 'attempts', attempt);
+const ownerPath = '/Users/sam/projects/triplex-db-2/lab/locks/datomic-dev/owner.json';
+const expectedHealth = JSON.parse(fs.readFileSync('lab/experiments/EXP-DA01/round3/SUMMARY.json', 'utf8')).health;
+let owner: string;
+let sourceBefore: ReturnType<typeof source>;
+const hash = (bytes: string | Buffer) => createHash('sha256').update(bytes).digest('hex');
+function source() {
+  const files = execFileSync('git', ['ls-files', 'packages/datomic', 'packages/core', 'packages/testkit', 'lab/bin', 'lab/config', 'lab/oracles/replay', 'pnpm-lock.yaml'], { encoding: 'utf8' }).trim().split('\n');
+  return Object.fromEntries(files.map(file => [file, hash(fs.readFileSync(file))]));
+}
+function event(value: unknown) { fs.appendFileSync(path.join(out, 'observations.jsonl'), stringifyExact({ at: new Date().toISOString(), attempt, value }) + '\n'); }
+const created: string[] = [], deleted: string[] = [];
+beforeAll(async () => {
+  fs.mkdirSync(out, { recursive: true });
+  owner = fs.readFileSync(ownerPath, 'utf8');
+  sourceBefore = source();
+  const health = await (await fetch(url + '/health')).json();
+  fs.writeFileSync(path.join(out, 'inputs.json'), JSON.stringify({ attempt, startedAt: new Date().toISOString(), head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), owner: JSON.parse(owner), health, files: sourceBefore }, null, 2) + '\n', { flag: 'wx' });
+  expect(health).toEqual(expectedHealth);
+  expect(JSON.parse(owner).container).toBe('tx2-datomic-dev');
+});
+afterAll(async () => {
+  expect(source()).toEqual(sourceBefore);
+  expect(fs.readFileSync(ownerPath, 'utf8')).toBe(owner);
+  expect(await (await fetch(url + '/health')).json()).toEqual(expectedHealth);
+  expect([...deleted].sort()).toEqual([...created].sort());
+  event({ kind: 'completion', created, deleted, sourceUnchanged: true });
+});
+const run = Effect.runPromise;
+async function fixture(body: (f: { client: DatomicClient; scope: string; db: string; a: ReturnType<typeof makeDatomicStorageAdapter>; q: ReturnType<typeof makeDatomicQueryExecutor> }) => Promise<void>, scope = DatabaseScope.test(`${attempt}-${randomUUID()}`)) {
+  const client = new DatomicClient(url, 35000);
+  const original = client.request.bind(client);
+  client.request = async function <A>(method: 'GET' | 'POST', p: string, input?: unknown, timeout?: number): Promise<A> {
+    try { const result = await original<A>(method, p, input, timeout); event({ method, path: p, ...(input === undefined ? {} : { input }), result }); return result; }
+    catch (e) { event({ method, path: p, ...(input === undefined ? {} : { input }), error: { message: String(e), code: (e as DatomicHttpError).code ?? null } }); throw e; }
+  };
+  const c = await client.create(scope); created.push(scope);
+  try { await body({ client, scope, db: c.db, a: makeDatomicStorageAdapter(client, scope), q: makeDatomicQueryExecutor(client, scope) }); }
+  finally { const d = await client.delete(scope); expect(d.deleted).toBe(true); deleted.push(scope); client.close(); }
+}
+const fact = (id: string, value = id, entityId = 's') => ({ id, input: { entityId, attribute: ':value', value: { type: 'string' as const, value }, validFrom: 0 } });
+async function write(a: ReturnType<typeof makeDatomicStorageAdapter>, facts: ReturnType<typeof fact>[], retire: string[] = [], stamp = 10) {
+  return run(a.withTransaction(Effect.gen(function* () {
+    const p = yield* a.nextCommitPosition();
+    for (const id of retire) expect(yield* a.retract(id, stamp, `tx-${p}`, p)).toBe(true);
+    for (const f of facts) yield* a.insert(f.input, `tx-${p}`, stamp, f.id, p);
+    return p;
+  })));
+}
+
+it('Q85b public scope identities round-trip controls, UTF-16, whitespace and long names; noncanonical identities refuse', async () => {
+  const names = ['\u0000\u0001\b\f\t\n\r\"\\/', '😀租户\u2028\u2029', '\ud800x\udc00', '\ufeff x \u00a0', 'z'.repeat(3000)];
+  for (const [i, name] of names.entries()) {
+    const scope = DatabaseScope.make({ env: i % 2 ? ' prod ' : 'test', tenant: `${attempt}-${i}`, database: name, generation: i === 4 ? Number.MAX_SAFE_INTEGER : -0 });
+    await fixture(async ({ client, db }) => {
+      expect(Buffer.from(db.slice(3), 'base64url').toString('utf8')).toBe(scope);
+      expect((await client.create(scope)).db).toBe(db);
+      expect((await client.basis(db)).position.v).toBe('0');
+    }, scope);
+  }
+  const client = new DatomicClient(url);
+  try { for (const scope of ['["triplex-scope-v1","test","t","d",-0]', '["triplex-scope-v1","test","t","d",1.0]', '["triplex-scope-v1","test","t","d",9007199254740992]', '["triplex-scope-v1","test"," ","d",0]']) {
+    await expect(client.create(scope)).rejects.toBeInstanceOf(DatomicHttpError);
+  } } finally { client.close(); }
+});
+
+it('Q85a overlapping creates converge and never lower the position during continued publication', async () => {
+  for (let round = 0; round < 4; round++) {
+    const scope = DatabaseScope.test(`${attempt}-first-open-${round}`);
+    const client = new DatomicClient(url, 35000);
+    const pending = Array.from({ length: 16 }, () => client.create(scope));
+    try {
+      const first = await Promise.any(pending); created.push(scope);
+      const a = makeDatomicStorageAdapter(client, scope);
+      expect(await write(a, [fact('first-open')])).toBe(1);
+      const all = await Promise.all(pending);
+      expect(all.filter(x => x.created)).toHaveLength(1);
+      expect(all.every(x => x.db === first.db)).toBe(true);
+      expect((await client.basis(first.db)).position.v).toBe('1');
+      event({ kind: 'first-open-race', round, scope, all, head: await client.basis(first.db) });
+    } finally {
+      await Promise.allSettled(pending);
+      expect((await client.delete(scope)).deleted).toBe(true); deleted.push(scope); client.close();
+    }
+  }
+  for (let round = 0; round < 4; round++) await fixture(async ({ client, scope, db, a }) => {
+    const burst = Array.from({ length: 16 }, () => client.create(scope));
+    await write(a, [fact('first')]);
+    const results = await Promise.all(burst);
+    expect(results.every(x => x.db === db)).toBe(true);
+    for (let p = 2; p <= 7; p++) {
+      const late = Promise.all(Array.from({ length: 4 }, () => client.create(scope)));
+      expect(await write(a, [fact(`p${p}`)])).toBe(p);
+      await late;
+      expect((await client.basis(db)).position.v).toBe(String(p));
+    }
+  });
+});
+
+it('Q85d shared codec acceptance vectors agree at the TS validator and actual JVM decode boundary', async () => fixture(async ({ client, db, a }) => {
+  const snap = await client.begin(db);
+  const cases = JSON.parse(fs.readFileSync('packages/datomic/gateway/codec-cases.json', 'utf8'));
+  try {
+    for (const [i, c] of cases.entries()) {
+      let tsAccept = true; try { validateTagged(c.wire); } catch { tsAccept = false; }
+      expect(tsAccept, `TS vector ${i}`).toBe(c.expected === 'accept');
+      const row = encodeRow({ id: 'probe', entity_id: 's', attribute: ':value', value_type: 'string', value_string: 'ok', value_number: null, value_datetime: null, value_boolean: null, value_json: null, recorded_at: 1, recorded_position: 1, valid_from: 0, valid_to: null, created_by: null, retracted_at: null, retracted_position: null, retract_tx_id: null, entity_type: null, schema_version: 1, tx_id: 'probe' });
+      // [CX-VDA01] Why: decode-row decodes every wire field before fact-map; an extra probe field tests all tags without changing the schema. Rejected: a second JVM or trusting old selftest output.
+      const response = await fetch(`${url}/v1/db/${db}/read`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: stringifyExact({ handle: snap.handle, staged: { sourceK: 0, position: 1, operationId: randomUUID(), rows: [{ ...row, codec_probe: c.wire }], newIds: ['probe'], claims: [] }, pattern: { entityId: 's' }, basis: { validAt: 5, recordedPosition: 1 } }) });
+      const raw = await response.text(); event({ kind: 'codec-vector', i, wire: c.wire, expected: c.expected, tsAccept, status: response.status, raw });
+      expect(response.status === 200, `JVM vector ${i}: ${raw}`).toBe(tsAccept);
+      if (tsAccept) expect(JSON.parse(raw).rows[0].id.v).toBe('probe');
+    }
+    expect(await run(a.currentCommitPosition())).toBe(0);
+  } finally { await client.release(db, snap.handle); }
+}));
+
+it('Q89i repeats complete P and TP row bytes after later retractions and preserves an interior ordinal', async () => fixture(async ({ client, db, a }) => {
+  await run(a.withTransaction(Effect.gen(function* () {
+    for (let i = 1; i <= 3; i++) { const p = yield* a.nextCommitPosition(); yield* a.insert(fact(`f${i}`).input, `tx-${i}`, i * 10, `f${i}`, p); }
+  })));
+  const cuts = [{ validAt: 100, recordedPosition: 0 }, { validAt: 100, recordedPosition: 1 }, { validAt: 100, recordedPosition: 2 }, { validAt: 100, recordedPosition: 3 }, { validAt: 100, recordedPosition: 3, recordedAt: 20 }, { validAt: 100, recordedAt: 20 }];
+  const read = async (basis: object) => (await client.request<{ rows: unknown[] }>('POST', `/v1/db/${db}/read`, { entityIds: ['s'], basis })).rows;
+  const before = await Promise.all(cuts.map(read));
+  expect(before.map(x => x.length)).toEqual([0, 1, 2, 3, 2, 2]);
+  await write(a, [fact('later')], ['f1', 'f2', 'f3'], 40);
+  const after = await Promise.all(cuts.map(read));
+  expect(after.map(stringifyExact)).toEqual(before.map(stringifyExact));
+  for (const basis of cuts) {
+    const current = await run(a.getByEntities(['s', 'missing', 's'], basis));
+    expect(current.size).toBe(2); expect(current.get('missing')).toEqual([]);
+  }
+}));
+
+it('Q89d holds one DB for optional pulls across a commit and releases it exactly once', async () => fixture(async ({ client, a, q }) => {
+  await write(a, [fact('kind', 'present'), { ...fact('old', 'old'), input: { ...fact('old', 'old').input, attribute: ':status' } }]);
+  const original = client.request.bind(client); let injected = false; const pins: unknown[] = []; let releases = 0; let queryHandle: string | undefined;
+  client.request = async function <A>(method: 'GET' | 'POST', p: string, input?: unknown, timeout?: number): Promise<A> {
+    const result = await original<A>(method, p, input, timeout);
+    const handle = (input as { handle?: string } | undefined)?.handle;
+    if (p.endsWith('/q')) queryHandle ??= handle;
+    if (p.endsWith('/q') || (p.endsWith('/read') && handle === queryHandle)) pins.push(handle ?? null);
+    if (p.endsWith('/release') && handle === queryHandle) releases++;
+    if (p.endsWith('/q') && !injected) {
+      injected = true;
+      await write(a, [{ ...fact('new', 'new'), input: { ...fact('new', 'new').input, attribute: ':status' } }], ['kind', 'old'], 20);
+      releases = 0;
+    }
+    return result;
+  };
+  const result = await run(q.execute({ find: ['?e', '?s'], where: [['?e', ':value', 'present']], optionalProjection: { rowBinding: '?e', fields: [{ attribute: ':status', variable: '?s' }] } }, false, { validAt: 30 }));
+  expect(result.results).toEqual([{ '?e': 's', '?s': 'old' }]);
+  expect(injected).toBe(true); expect(pins.length).toBeGreaterThan(1); expect(new Set(pins).size).toBe(1); expect(pins[0]).toBeTypeOf('string'); expect(releases).toBe(1);
+}));
+
+it('Q89c future pins refuse typed on populated, empty, dependency and query routes, including held stale DBs', async () => fixture(async ({ client, db, a, q }) => {
+  await write(a, [fact('one')]);
+  const basis = { validAt: 100, recordedPosition: 2 };
+  for (const read of [a.getByEntity('s', basis), a.getByEntities([], basis), a.getByEntities(['s'], basis), a.dependencyState([':value'], basis), q.execute({ find: ['?e'], where: [['?e', ':value', '?v']] }, false, basis)]) {
+    const started = performance.now(); const error = await run(read.pipe(Effect.flip));
+    expect(error).toBeInstanceOf(DatomicBasisNotAvailable); expect(performance.now() - started).toBeGreaterThan(450);
+  }
+  const snap = await client.begin(db);
+  await write(a, [fact('two')], [], 20);
+  try { await expect(client.rows(db, { handle: snap.handle, entityIds: ['s'], basis, basisWaitMs: 40 })).rejects.toMatchObject({ code: 'BasisNotAvailable', status: 409 }); }
+  finally { await client.release(db, snap.handle); }
+  expect((await run(a.getByEntity('s', basis))).map(x => x.id)).toEqual(['one', 'two']);
+}));
+
+it('Q89b forced live routes refuse T and TP; source retains rows hidden by position retirement', async () => fixture(async ({ client, db, a }) => {
+  await write(a, Array.from({ length: 40 }, (_, i) => fact(`f${i}`)), [], 10);
+  await write(a, [], Array.from({ length: 10 }, (_, i) => `f${i}`), 20);
+  for (const basis of [{ validAt: 30, recordedAt: 10 }, { validAt: 30, recordedAt: 10, recordedPosition: 2 }]) {
+    expect(await client.rows(db, { entityIds: ['s'], basis })).toHaveLength(40);
+    await expect(client.rows(db, { route: 'live', entityIds: ['s'], basis })).rejects.toMatchObject({ code: 'BasisNotAvailable' });
+    await expect(client.request('POST', `/v1/db/${db}/q`, { edn: '[:find ?f :in $ $rules :where [?f :f/live _]]', relations: [], basis })).rejects.toMatchObject({ code: 'BasisNotAvailable' });
+    await expect(client.request('POST', `/v1/db/${db}/q`, { edn: '[:find ?f :in $ $rules :where [(ground :f/live) ?a] [?f ?a _]]', relations: [], basis })).rejects.toMatchObject({ code: 'BasisNotAvailable' });
+  }
+}));
+
+it('P2 duplicate commands identify the original immutable public receipt after intervening writes and lost ACK resolution', async () => fixture(async ({ client, scope }) => {
+  const runtime = makeDatomicRuntime({ url });
+  await run(Effect.gen(function* () {
+    const t = yield* Triples;
+    const input = { entityId: EntityId.make('subject'), attribute: ':value' as const, value: string('first') };
+    const original = yield* t.transact([{ op: 'assert', ...input }], { commandId: 'duplicate' });
+    const receipt = yield* t.transactionByCommand('duplicate');
+    expect(receipt).not.toBeNull();
+    yield* t.assert({ ...input, value: string('second') });
+    yield* t.retract(original.triples[0]!.id);
+    const position = yield* t.currentPosition();
+    const duplicate = yield* t.transact([{ op: 'assert', ...input, value: string('wrong') }], { commandId: 'duplicate' }).pipe(Effect.flip);
+    expect(duplicate).toMatchObject({ _tag: 'CommandAlreadyCommittedError', transactionId: original.txId });
+    const repeated = yield* t.transactionByCommand('duplicate');
+    event({ kind: 'duplicate-receipt', original, receipt, repeated, duplicate });
+    expect(stringifyExact(repeated)).toBe(stringifyExact(receipt));
+    expect(yield* t.currentPosition()).toBe(position);
+    expect((yield* t.entity(EntityId.make('subject'))).some(f => f.value.value === 'wrong')).toBe(false);
+  }).pipe(Effect.provide(runtime.layer({ scope, capabilities: Capabilities.none })), Effect.scoped));
+  const a = makeDatomicStorageAdapter(client, scope, { resolutionTimeoutMs: 1500 });
+  const original = client.transact.bind(client);
+  client.transact = async (...args) => { await original(...args); throw new Error('CX-VDA01 dropped ACK after gateway commit'); };
+  await write(a, [fact('lost-ack', 'verified')], [], 30);
+  expect((await run(a.getById('lost-ack')))?.value_string).toBe('verified');
+}));

@@ -1,0 +1,780 @@
+{
+  "format": "tx2-lab-conformance/1",
+  "runId": "323457c8-29bb-4e25-8417-7e66ee979015",
+  "backend": "datomic",
+  "queryPath": "datomic-datalog",
+  "endpoint": "http://127.0.0.1:8470",
+  "artifact": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/packages/datomic/dist/index.js",
+  "admission": {
+    "path": "/Users/sam/projects/triplex-db-2/lab/locks/datomic-dev/owner.json",
+    "sha256": "2a285f175e23879cc95c4f443cfdead072a5735f594dd6c7d9ef9ad3b818ebe4"
+  },
+  "caseCount": 44,
+  "caseNames": [
+    "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+    "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+    "historical cursor pages intersect recorded time and the commit snapshot",
+    "recursive relations support cursor pagination and optional total counts",
+    "assert then get and match return the fact",
+    "same-value facts in one batch keep distinct identities",
+    "datalog query finds asserted facts",
+    "datalog projections preserve scalar types without guessing from text",
+    "datalog deduplicates flattened scalar families before grouping and pagination",
+    "datalog constant projections retain their scalar values through pagination",
+    "datalog pattern constants use flattened scalar identity in filters",
+    "datalog value joins compare every scalar family",
+    "datalog equality predicates compare numeric values as numbers",
+    "datalog equality keeps identity bindings string-typed",
+    "ordered Datalog predicates accept only numeric scalar families",
+    "datalog reverse lookup matches an explicitly typed ref constant",
+    "datalog joins a variable bound from a ref in value position",
+    "datalog supports multi-hop joins over ref edges",
+    "datalog recursive rules compute the same transitive closure",
+    "datalog rule patterns unify repeated variables",
+    "datalog aggregations group, filter, and order consistently",
+    "datalog having preserves typed group and aggregate equality",
+    "datalog aggregates preserve duplicate rows and define empty and distinct results",
+    "datalog conjunctions establish bindings independent of clause order",
+    "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+    "wrapped filters preserve scalar types and SQL null semantics",
+    "Datalog ordering and pagination preserve mixed scalar order",
+    "datalog untyped strings match string and ref values while typed refs stay exact",
+    "transact records provenance datoms",
+    "conditional transactions are atomic and journal their changes",
+    "entity transaction history is indexed, complete, and snapshot-stable",
+    "graph constraints reject invalid post-states across valid time",
+    "dependency state is attribute-scoped and schedules temporal edges",
+    "derivation materialization uses indexed dependency freshness",
+    "graph constraints agree across storage backends",
+    "consumer checkpoints advance atomically and remain queryable",
+    "retractByPattern respects entityType",
+    "reserved Triplex namespaces reject ordinary writes atomically",
+    "transaction journals cannot be retracted through ordinary writes",
+    "direct and Datalog reads share one bitemporal basis",
+    "historical corrections preserve what was previously recorded",
+    "batch entity reads preserve association, missing entries, and temporal basis",
+    "retract is coherent across write and datalog paths",
+    "paged queries use deterministic snapshot-stable cursors"
+  ],
+  "selectedCount": 44,
+  "subset": false,
+  "status": "FAIL",
+  "startedAt": "2026-11-08T23:31:59.353Z",
+  "suite": {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-suite-5a1d3a80-0328-456b-973b-b635fc42bfb0\",0]",
+    "status": "FAIL",
+    "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-03dd9cc9f0e0d0c9191fab63dcf3ffa1 in catalog)))])",
+    "elapsedMs": 349.593792
+  },
+  "executions": [
+    {
+      "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-1aae4519-5beb-4507-ad22-3ef440ccaa3d\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-58db5eee5e76523f8e1fc77a1fb7d956 in catalog)))])",
+      "elapsedMs": 251.268916
+    },
+    {
+      "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-51e67289-3d4e-44db-92c4-43c32f85ff11\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-f34101ca29c04137e0f2dc769173ca3e in catalog)))])",
+      "elapsedMs": 232.49366699999996
+    },
+    {
+      "name": "historical cursor pages intersect recorded time and the commit snapshot",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-345a26f2-fd07-4e79-89f6-f097bff11086\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-c015eef8e593ac965f3d2a895587dd46 in catalog)))])",
+      "elapsedMs": 252.14820799999984
+    },
+    {
+      "name": "recursive relations support cursor pagination and optional total counts",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-b23f98d3-54b2-420a-ad6d-b9f7a73e45ab\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-0f1aeae8391bea87ddb3a75451b47881 in catalog)))])",
+      "elapsedMs": 329.17220799999996
+    },
+    {
+      "name": "assert then get and match return the fact",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-099b6841-1edc-4c6f-b593-7c2a185359e5\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-52f10bfb1cac2009bebb2f095aac0d99 in catalog)))])",
+      "elapsedMs": 350.29454199999986
+    },
+    {
+      "name": "same-value facts in one batch keep distinct identities",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-3d991261-54e9-4d2f-bb5d-3cfb14c6a415\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-aaccaf6ea723185848d878e758db6811 in catalog)))])",
+      "elapsedMs": 261.01266599999985
+    },
+    {
+      "name": "datalog query finds asserted facts",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-d403aa9d-0d3e-44d2-a574-1966c48e50c3\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-fb07da215e1a70ddd355144fed90c430 in catalog)))])",
+      "elapsedMs": 218.5001669999997
+    },
+    {
+      "name": "datalog projections preserve scalar types without guessing from text",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-ac70b5e8-ff10-465a-8042-5b923c944641\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-27902c51f682696754b3ccf5290e3c85 in catalog)))])",
+      "elapsedMs": 204.8340000000003
+    },
+    {
+      "name": "datalog deduplicates flattened scalar families before grouping and pagination",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-99ecbbae-e11a-44bc-bf07-0106e5eeabf4\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-bd8af695ef29fa91a347e3833f17c7df in catalog)))])",
+      "elapsedMs": 230.9848750000001
+    },
+    {
+      "name": "datalog constant projections retain their scalar values through pagination",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-799feb33-e940-4b16-81cb-12360d554565\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-1e6e8fe09f59c8c1124985d4129dcb13 in catalog)))])",
+      "elapsedMs": 254.9326659999997
+    },
+    {
+      "name": "datalog pattern constants use flattened scalar identity in filters",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-31412e93-b982-4a75-9147-6730cad64671\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-6d349f9c19380b4b8a2c66d2ab8c793b in catalog)))])",
+      "elapsedMs": 460.9419579999999
+    },
+    {
+      "name": "datalog value joins compare every scalar family",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-afcc5bd7-02c2-4f33-9cbb-fe4678a5c7b4\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-cd96f91caff21adf851fb847c58a5b3c in catalog)))])",
+      "elapsedMs": 286.7281250000001
+    },
+    {
+      "name": "datalog equality predicates compare numeric values as numbers",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-c5acd1dd-e663-48cd-ac33-f2a9dfdf2f26\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-b9c644ae402b662edafce7fea360ba85 in catalog)))])",
+      "elapsedMs": 275.74033299999974
+    },
+    {
+      "name": "datalog equality keeps identity bindings string-typed",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-e39563ce-1a89-41d1-a918-e84080ffcbc2\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-954c196966c65eafa4864ed4acfd3f06 in catalog)))])",
+      "elapsedMs": 247.27854200000002
+    },
+    {
+      "name": "ordered Datalog predicates accept only numeric scalar families",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-1cbfdd95-fd51-42b2-82d8-1a0ccc1eade4\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-5b76d7e2075efa28d47fbb8e5e05f12e in catalog)))])",
+      "elapsedMs": 218.61441699999978
+    },
+    {
+      "name": "datalog reverse lookup matches an explicitly typed ref constant",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-503f7951-e6f2-4fab-bc23-535353a201b5\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-bd80bb86b15470db79143b506c3fba18 in catalog)))])",
+      "elapsedMs": 219.4485420000001
+    },
+    {
+      "name": "datalog joins a variable bound from a ref in value position",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-4e820e44-8512-4515-aee2-61b5fa47f68e\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-15c0a14413a8fd20837ee589fb3afc4b in catalog)))])",
+      "elapsedMs": 178.594916
+    },
+    {
+      "name": "datalog supports multi-hop joins over ref edges",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-43584f85-60af-498c-9834-1dc0415dc85a\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-7e88193a6559caef134612169f7c46e3 in catalog)))])",
+      "elapsedMs": 234.76341599999978
+    },
+    {
+      "name": "datalog recursive rules compute the same transitive closure",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-5b6edeea-fb19-4eae-bbcf-6138e629c83f\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-148488241ddabde870a6ffa801a56c50 in catalog)))])",
+      "elapsedMs": 256.01737500000036
+    },
+    {
+      "name": "datalog rule patterns unify repeated variables",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-644ee9ec-0a36-4656-8ec2-57644f188afd\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-5890246e476c46e779e5774c16510887 in catalog)))])",
+      "elapsedMs": 196.04050000000007
+    },
+    {
+      "name": "datalog aggregations group, filter, and order consistently",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-5ede84cd-4346-4c22-843d-88b00a0ad3ee\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-956eafe85817a291028c6fa6c3c1af0f in catalog)))])",
+      "elapsedMs": 190.8183340000005
+    },
+    {
+      "name": "datalog having preserves typed group and aggregate equality",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-45e79c1c-4c2d-47f6-a27d-5c25cab2a5d5\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-77ef5b8ddb83c0917994ee426340d517 in catalog)))])",
+      "elapsedMs": 188.32583299999988
+    },
+    {
+      "name": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-07db0125-b208-414c-b96e-00fe002c6d00\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-2937887cd79188c9437ed5e404577858 in catalog)))])",
+      "elapsedMs": 207.47179199999937
+    },
+    {
+      "name": "datalog conjunctions establish bindings independent of clause order",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-b7f300ac-241c-49e9-864a-e7cbc3bd3e37\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-ae8332418a76a0aa73e7ff2776eb50a0 in catalog)))])",
+      "elapsedMs": 261.27537500000017
+    },
+    {
+      "name": "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-a804b338-924b-49f2-92cf-81814585a17e\",0]",
+      "status": "PASS",
+      "elapsedMs": 147.75137499999983
+    },
+    {
+      "name": "wrapped filters preserve scalar types and SQL null semantics",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-ecea79df-2155-4216-92bd-63003dfff9ad\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-f8cb8e7c642cf162a2e45930b132145d in catalog)))])",
+      "elapsedMs": 156.76958299999933
+    },
+    {
+      "name": "Datalog ordering and pagination preserve mixed scalar order",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-20c757e1-0050-40ed-847e-02cfdfd10441\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-8082bb2ce791541b4f907728bbc8ed2f in catalog)))])",
+      "elapsedMs": 165.14358300000004
+    },
+    {
+      "name": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-187c8034-9c99-47aa-97d4-40f2fdd8da7b\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-8b820aee849471b886825cb55142a6d9 in catalog)))])",
+      "elapsedMs": 205.269542
+    },
+    {
+      "name": "transact records provenance datoms",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-981bf993-bfda-47fa-a516-e4bbaf128b20\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-ff375d0dc7740ddcaba4431d9b2452df in catalog)))])",
+      "elapsedMs": 254.27054099999987
+    },
+    {
+      "name": "conditional transactions are atomic and journal their changes",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-8f6ab529-a816-4eea-9481-3fc22c24b908\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-f1b875cebfc22043caa6a14c6e90369a in catalog)))])",
+      "elapsedMs": 175.75329200000033
+    },
+    {
+      "name": "entity transaction history is indexed, complete, and snapshot-stable",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-cd574f79-8374-4616-8647-8495d327db8f\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-e2a00c0486917f232e6c5251cca88f89 in catalog)))])",
+      "elapsedMs": 176.3379160000004
+    },
+    {
+      "name": "graph constraints reject invalid post-states across valid time",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-1c635348-4822-41c2-852a-88a50950f3bf\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: Error: Could not find s-b1d00987667227cf03dbdb984c6f38d1 in catalog))])",
+      "elapsedMs": 196.01375000000007
+    },
+    {
+      "name": "dependency state is attribute-scoped and schedules temporal edges",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-efe5b76d-3912-4ec3-98e7-4d85bd5cf755\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-96d3a3ca73a48217e729b815544f6ebc in catalog)))])",
+      "elapsedMs": 220.889959000001
+    },
+    {
+      "name": "derivation materialization uses indexed dependency freshness",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-50fdf1cf-80aa-4ba4-8fd1-1a8694bc9b98\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: Error: Could not find s-f6d236965d66b6380da53c33a547100c in catalog))])",
+      "elapsedMs": 232.06479099999888
+    },
+    {
+      "name": "graph constraints agree across storage backends",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-e4dded2f-ce97-4ae2-82f6-0649be7c9342\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-c5dd1ff4939f734704a99dfff5cc3e77 in catalog)))])",
+      "elapsedMs": 179.92000000000007
+    },
+    {
+      "name": "consumer checkpoints advance atomically and remain queryable",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-a35cb4f6-7022-42c5-86a4-cb0a78a34e27\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: Error: Could not find s-09fb6d299dd9ab6ec54a4c0b6ed9a47f in catalog))])",
+      "elapsedMs": 230.5818330000002
+    },
+    {
+      "name": "retractByPattern respects entityType",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-e0c62d8e-b509-4ca6-9a2e-bacacab553db\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-f3e9ef9dbf860b43a0e6abff845abfb7 in catalog)))])",
+      "elapsedMs": 200.48974999999882
+    },
+    {
+      "name": "reserved Triplex namespaces reject ordinary writes atomically",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-62e1e0c2-6053-4bc0-9bff-292f71116df5\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ConformanceError: reserved writes should fail with an explicit namespace error)])",
+      "elapsedMs": 193.61283400000138
+    },
+    {
+      "name": "transaction journals cannot be retracted through ordinary writes",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-ca465763-b6e1-4f42-a972-b032d0abe83b\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-c61d66257723c60db2df438aafbeccd3 in catalog)))])",
+      "elapsedMs": 146.8103749999991
+    },
+    {
+      "name": "direct and Datalog reads share one bitemporal basis",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-a5d14f81-6597-49dc-9821-0d01ae7b33af\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-f93b700a6f288bf8e6212cee7c8a1c5c in catalog)))])",
+      "elapsedMs": 176.05225000000064
+    },
+    {
+      "name": "historical corrections preserve what was previously recorded",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-4b6184af-af00-40cb-aaa3-bb68cc9b104c\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-54feb0246cca3735a04018a6bad9979f in catalog)))])",
+      "elapsedMs": 175.31933299999946
+    },
+    {
+      "name": "batch entity reads preserve association, missing entries, and temporal basis",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-155b0bc9-a561-45e4-b386-90d0948b2c9e\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-f7e86fc51830293e439682f0233bc86d in catalog)))])",
+      "elapsedMs": 205.0991669999985
+    },
+    {
+      "name": "retract is coherent across write and datalog paths",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-e0dea1f9-6f10-44f2-a5b8-ffab524ab7e0\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-8eecf2d898f542291968264bfcee2e19 in catalog)))])",
+      "elapsedMs": 204.22654200000034
+    },
+    {
+      "name": "paged queries use deterministic snapshot-stable cursors",
+      "phase": "current",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-42279523-1076-40ef-bc36-64de6006e405\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-d5461a9f585ddf38955c1f1471efcddf in catalog)))])",
+      "elapsedMs": 263.92658400000073
+    },
+    {
+      "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-f6b4c048-1212-4614-b127-57824f9d1591\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-eb9074b0cca0fa1cd97838efe6ecbad1 in catalog)))])",
+      "elapsedMs": 209.48920800000087
+    },
+    {
+      "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1fed3152-091e-43e1-97df-1877553dc19a\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-47a89604ab5f252dd7189a91fa0ce4bc in catalog)))])",
+      "elapsedMs": 165.99424999999974
+    },
+    {
+      "name": "historical cursor pages intersect recorded time and the commit snapshot",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-6bc323d5-2036-4646-a825-c62b287c18cb\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-6cbc5d4afb518c47cbfa270214816e68 in catalog)))])",
+      "elapsedMs": 229.91899999999987
+    },
+    {
+      "name": "recursive relations support cursor pagination and optional total counts",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-ef978f17-6202-4e3d-ab08-5c26dfaf6cbe\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-d8252ffa2fc672aa1ba0b52aa2da4ab9 in catalog)))])",
+      "elapsedMs": 217.5392499999998
+    },
+    {
+      "name": "assert then get and match return the fact",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-6f2a41b1-5f8f-4077-a74e-894003e0d772\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-aeadd9b23b12d83ca16c82eadf6115db in catalog)))])",
+      "elapsedMs": 218.97808299999997
+    },
+    {
+      "name": "same-value facts in one batch keep distinct identities",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-530e8009-bede-4337-aca6-d49d3018f692\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-6ffa960dc15df3b159014062c1b4e54f in catalog)))])",
+      "elapsedMs": 163.5993750000016
+    },
+    {
+      "name": "datalog query finds asserted facts",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-93d6fe53-3f28-452e-9fce-86ef23a16384\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-8dd977115f5b12b7832599832935b9ae in catalog)))])",
+      "elapsedMs": 191.0226249999996
+    },
+    {
+      "name": "datalog projections preserve scalar types without guessing from text",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-150738bb-0d1d-4c79-ad06-f74b6684dfdb\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-290edb84b3217f91f0c2fc7cbda67525 in catalog)))])",
+      "elapsedMs": 220.86112499999945
+    },
+    {
+      "name": "datalog deduplicates flattened scalar families before grouping and pagination",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-4465edcb-865c-4122-bba5-0610f4cfde74\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-6159f5cc595ccd9b60c6c40a2bcd321f in catalog)))])",
+      "elapsedMs": 165.3328330000004
+    },
+    {
+      "name": "datalog constant projections retain their scalar values through pagination",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-aa2c3528-4afb-41f4-9d19-0ca720f035a9\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-3b426b577bf0a668783a4c49340d5eea in catalog)))])",
+      "elapsedMs": 217.36291600000004
+    },
+    {
+      "name": "datalog pattern constants use flattened scalar identity in filters",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-4e517540-abad-464a-b40d-9367ae3cae3b\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-3f8140e24ee0657d06d23d421c52b1ed in catalog)))])",
+      "elapsedMs": 195.36804200000006
+    },
+    {
+      "name": "datalog value joins compare every scalar family",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-79680c00-1184-41eb-9a87-75f1f08b0a6b\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-3e842458c9f7c5cde002799246fae6b3 in catalog)))])",
+      "elapsedMs": 206.3918330000015
+    },
+    {
+      "name": "datalog equality predicates compare numeric values as numbers",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-19efe26b-e506-4f95-9139-f5e05234b7f3\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-d7880a8977698103782a5e235aad0c34 in catalog)))])",
+      "elapsedMs": 163.2432090000002
+    },
+    {
+      "name": "datalog equality keeps identity bindings string-typed",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1af4d54c-7f72-4ef1-8d7f-967868b235d8\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-1ea51a96dc43f1ca970dc1be553272af in catalog)))])",
+      "elapsedMs": 225.44620899999973
+    },
+    {
+      "name": "ordered Datalog predicates accept only numeric scalar families",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-444d7810-cd3e-4665-9775-66e145174af1\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-4f763cbb15d0efcbce2315edc07446dc in catalog)))])",
+      "elapsedMs": 168.1855829999986
+    },
+    {
+      "name": "datalog reverse lookup matches an explicitly typed ref constant",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1458a0bd-a5fe-4644-b466-828839a1f2e6\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-0b49b8e4a1f12bc53b488182608a84d4 in catalog)))])",
+      "elapsedMs": 190.5724999999984
+    },
+    {
+      "name": "datalog joins a variable bound from a ref in value position",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-4ffe06f9-1b6b-4c34-b8fb-78ead25de272\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-703b6e827300a25f9c1ec43309f863e2 in catalog)))])",
+      "elapsedMs": 167.76416600000084
+    },
+    {
+      "name": "datalog supports multi-hop joins over ref edges",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-6a87161e-51c7-4a10-8345-850c69ce5f09\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-decd1a3eafe2f68507052706fbe9a830 in catalog)))])",
+      "elapsedMs": 155.29591700000128
+    },
+    {
+      "name": "datalog recursive rules compute the same transitive closure",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-f15a6c94-5626-4da8-b5e7-db77fe5d2bdf\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-682a31ebcd42ff5e1fab1de80f334bc5 in catalog)))])",
+      "elapsedMs": 167.58749999999964
+    },
+    {
+      "name": "datalog rule patterns unify repeated variables",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-044d96e3-4355-43b3-b8e1-f2bb26a54fcb\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-f926fe2627c19a4f1807152f4d743311 in catalog)))])",
+      "elapsedMs": 181.2091249999994
+    },
+    {
+      "name": "datalog aggregations group, filter, and order consistently",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-6eddff56-8be4-4859-a10e-4e82ae3fb4b0\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-515e512d7f81f60ef683a01f9fb0410b in catalog)))])",
+      "elapsedMs": 188.3587090000001
+    },
+    {
+      "name": "datalog having preserves typed group and aggregate equality",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-3f86bab5-872a-4170-b3c6-efd46b7b6384\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-f1d7226b6e2278e49f424efa196d2bb6 in catalog)))])",
+      "elapsedMs": 155.24616700000115
+    },
+    {
+      "name": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-107f7685-5955-4369-92b7-f6d04bf28c84\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-27b9f6bbecfa9c07b3dfd49b9bf6481f in catalog)))])",
+      "elapsedMs": 160.34474999999838
+    },
+    {
+      "name": "datalog conjunctions establish bindings independent of clause order",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1f563b86-3e5c-4d7d-a00b-fc828a6fb24e\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-cddfdc40402ba7376a8baa0eb5bd033c in catalog)))])",
+      "elapsedMs": 162.28691600000093
+    },
+    {
+      "name": "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-cb8c5bf2-7714-4fac-89be-672daaa46dc9\",0]",
+      "status": "PASS",
+      "elapsedMs": 191.97083399999974
+    },
+    {
+      "name": "wrapped filters preserve scalar types and SQL null semantics",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-ac978599-e02d-4e03-8f7e-56dd9d870633\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-5b588bd6186148b6dd3baba43ef3c868 in catalog)))])",
+      "elapsedMs": 157.92062500000065
+    },
+    {
+      "name": "Datalog ordering and pagination preserve mixed scalar order",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-a323e025-d1c0-4316-8b4c-733ba3830a7e\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-41b3b657b39863d4b50eb8417a59ee87 in catalog)))])",
+      "elapsedMs": 159.0139999999992
+    },
+    {
+      "name": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-5ddc68eb-608b-4888-9a42-66f418b16196\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-fc1a5cc82de9162f4ef7cea8464bf979 in catalog)))])",
+      "elapsedMs": 142.6497500000005
+    },
+    {
+      "name": "transact records provenance datoms",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-0bc59d66-8120-4db2-9150-6aa1ba325361\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-456c49cc9d0a7e225544ac9adeea76da in catalog)))])",
+      "elapsedMs": 222.51266699999906
+    },
+    {
+      "name": "conditional transactions are atomic and journal their changes",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-e736bbba-e2fb-4321-ab68-faac34302d66\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-11b0095ba0ac183b30123d710c8b69ed in catalog)))])",
+      "elapsedMs": 260.079416999999
+    },
+    {
+      "name": "entity transaction history is indexed, complete, and snapshot-stable",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1890f2b9-ef42-4510-b0ac-28570125a970\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-5d46e372c23d175cd0bd933d0b12d414 in catalog)))])",
+      "elapsedMs": 266.0539579999986
+    },
+    {
+      "name": "graph constraints reject invalid post-states across valid time",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-538c27c6-2f08-49f6-9bda-b0aaea7d1d0c\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: Error: Could not find s-4b8d40e97c9cf8dabb6a7ee6ca89f280 in catalog))])",
+      "elapsedMs": 293.8077080000003
+    },
+    {
+      "name": "dependency state is attribute-scoped and schedules temporal edges",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-c4317a9e-3925-4f61-8c7d-cbf863993159\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-99aebb045267029f10eddcfa41992a45 in catalog)))])",
+      "elapsedMs": 318.62054200000057
+    },
+    {
+      "name": "derivation materialization uses indexed dependency freshness",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-fcd6466a-543b-4d13-b473-7e12102c2ce3\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: Error: Could not find s-4e4aa765637a67722d9ca450bfbe1b5e in catalog))])",
+      "elapsedMs": 484.76574999999866
+    },
+    {
+      "name": "graph constraints agree across storage backends",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-2c84c1c1-35cc-4b50-8406-ff11b0873bea\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-65885250e7e6647642f627a4d9ebfc53 in catalog)))])",
+      "elapsedMs": 281.33537499999875
+    },
+    {
+      "name": "consumer checkpoints advance atomically and remain queryable",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-759306d7-f647-4a17-97bc-44247c423463\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ReadError: Datomic read failed (cause: Error: Could not find s-84ece478455bf31cd009b3f097b30f2b in catalog))])",
+      "elapsedMs": 259.3781249999993
+    },
+    {
+      "name": "retractByPattern respects entityType",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-947134c3-34ef-4e5a-becd-c892524d37f3\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-97c802d28beae9dc2b0bcbe03967d4d2 in catalog)))])",
+      "elapsedMs": 226.8502499999995
+    },
+    {
+      "name": "reserved Triplex namespaces reject ordinary writes atomically",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-5dfe9092-efaa-4d11-8303-2ac071cb6309\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(ConformanceError: reserved writes should fail with an explicit namespace error)])",
+      "elapsedMs": 218.98983299999963
+    },
+    {
+      "name": "transaction journals cannot be retracted through ordinary writes",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-5dc142f6-ecec-4ac9-bcac-b1fec69cebfd\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-ea5bc4775015501503b681908fdd5441 in catalog)))])",
+      "elapsedMs": 156.37304099999892
+    },
+    {
+      "name": "direct and Datalog reads share one bitemporal basis",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1f639117-86d7-47fb-9032-126584cc0ab7\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-86080c61a6b93f0247608caaac5ac2e5 in catalog)))])",
+      "elapsedMs": 113.66699999999764
+    },
+    {
+      "name": "historical corrections preserve what was previously recorded",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-c1737504-2716-4f49-9b90-5b4ef09d9a40\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-b678e0a74ed129559e7c5b249d8a2e0d in catalog)))])",
+      "elapsedMs": 146.79175000000032
+    },
+    {
+      "name": "batch entity reads preserve association, missing entries, and temporal basis",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-d7837fe4-fbb8-46aa-9ad5-4c3792cc986c\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-02309bc637211783647d660acec5d228 in catalog)))])",
+      "elapsedMs": 152.63737499999843
+    },
+    {
+      "name": "retract is coherent across write and datalog paths",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-f4dd6c4b-7692-4313-99e5-8baf0f174532\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-99a783345c08fbb176f528bc9d1f47e5 in catalog)))])",
+      "elapsedMs": 170.57795899999837
+    },
+    {
+      "name": "paged queries use deterministic snapshot-stable cursors",
+      "phase": "reopen",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-8e67871f-20aa-4117-9c1d-7f3fe83a22f2\",0]",
+      "status": "FAIL",
+      "error": "Cause([Fail(WriteError: Cannot acquire Datomic source cut (cause: ReadError: Datomic read failed (cause: Error: Could not find s-dc2a622f6aa3fd70f1ea3c45e367d37e in catalog)))])",
+      "elapsedMs": 210.614458
+    }
+  ],
+  "counts": {
+    "expectedExecutions": 88,
+    "executed": 88,
+    "passed": 2,
+    "failed": 86
+  },
+  "endedAt": "2026-11-08T23:32:18.573Z"
+}

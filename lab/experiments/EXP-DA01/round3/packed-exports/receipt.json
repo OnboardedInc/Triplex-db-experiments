@@ -1,0 +1,55 @@
+{
+  "at": "2026-11-09T00:26:21.337Z",
+  "inputs": [
+    {
+      "name": "core",
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round3/pack-check/triplex-pack-R3RZTe/tarballs/triplex-build-triplex-0.2.0.tgz",
+      "sha256": "14bca01aa3a05cdfb242d1ba567128bc88bfbe75ae172d587dfd6d1bea3cea11"
+    },
+    {
+      "name": "testkit",
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round3/pack-check/triplex-pack-R3RZTe/tarballs/triplex-build-triplex-testkit-0.2.0.tgz",
+      "sha256": "97f6c390a94fbbb2b69738e9fe749d1b99d1a9b8c79bace8c9a4e904a546f881"
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "effect",
+      "target": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/node_modules/.pnpm/effect@4.0.3/node_modules/effect",
+      "version": "4.0.3"
+    },
+    {
+      "name": "ulidx",
+      "target": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/node_modules/.pnpm/ulidx@2.4.1/node_modules/ulidx",
+      "version": "2.4.1"
+    }
+  ],
+  "results": [
+    {
+      "name": "types",
+      "command": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "--module",
+        "nodenext",
+        "--moduleResolution",
+        "nodenext",
+        "--target",
+        "ESNext",
+        "--skipLibCheck",
+        "smoke.ts"
+      ],
+      "status": 0
+    },
+    {
+      "name": "runtime",
+      "command": "/Users/sam/.hermes/node/bin/node",
+      "args": [
+        "smoke.mjs"
+      ],
+      "status": 0
+    }
+  ],
+  "freshDependencyInstall": false
+}

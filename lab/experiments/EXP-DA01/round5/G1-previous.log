@@ -1,0 +1,20 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 12919 "CX-VP2Q-4-R9-foundation", pid 92614 "orch-q87-rq01", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 12919 "CX-VP2Q-4-R9-foundation", pid 92614 "orch-q87-rq01", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 12919 "CX-VP2Q-4-R9-foundation", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 12919 "CX-VP2Q-4-R9-foundation", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 16586 "CX-VP2Q-4-R9-package", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 95761 "CX-P5A-R2-10k-G4-fixed", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 95761 "CX-P5A-R2-10k-G4-fixed", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 95761 "CX-P5A-R2-10k-G4-fixed", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 95761 "CX-P5A-R2-10k-G4-fixed", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 95761 "CX-P5A-R2-10k-G4-fixed", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 95761 "CX-P5A-R2-10k-G4-fixed", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 95761 "CX-P5A-R2-10k-G4-fixed", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 21981 "CX-G03-r4-claim", pid 95761 "CX-P5A-R2-10k-G4-fixed", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 87137 "CX-RT01-route", pid 95761 "CX-P5A-R2-10k-G4-fixed", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 87137 "CX-RT01-route", pid 96427 "CX-GS12F-gates", pid 17453 "CX-VP2Q-4-R9-earlier-live", pid 9564 "CX-VP2Q-4-R9-new-live"
+[lab] G1-datomic-20261109T015019Z-b44fce: raw output runs/G1/G1-datomic-20261109T015019Z-b44fce
+error: could not write index
+PASS G1 datomic/dev scope=full executed=88 pass=88 fail=0 skip=0
+profile: default; planner budget: null
+receipt: lab/runs/G1/G1-datomic-20261109T015019Z-b44fce.json

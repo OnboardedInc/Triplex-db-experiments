@@ -1,0 +1,714 @@
+[
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-suite-e677d9f9-ff41-4dcd-8767-329d665faa15\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-fd7874a4f793cd2cca0093f52db2f1ef",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-59d1bbd4-ec74-44cb-8d37-2597171b01ff\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-80d72c5558dd9fbb742f89689d7b366b",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-84b4c232-b52d-45a7-969d-43bf44e49a2f\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-412f3e3eee3bc372ac1d2774be645d5f",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-c99cdf56-b319-459b-9952-111d1fe7f3b5\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-2fc6472530762a6524fce66efc6f2df8",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-497a5d76-6c61-4520-8d3b-cdd875a1b709\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-8b59668be53c1aad937f8f4cea6d78f2",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-8566bcd6-5814-409b-ab67-71a118ba01c3\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-712bc4b0f0c4f5ec7c0f80c717f80a1c",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-17d40136-badc-4b57-a3ea-7a34010cd2da\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-eb43b653b36ce5b3fc0c41791d33e80a",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-c9c0cb98-f49a-48bc-a8ab-92fd4404e5e0\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-56b9ea9b7f0adf729868c16f04a90638",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-8744f0e9-2683-400e-bec3-c7fb8723bcd3\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-d2a2d2d54e43fc822a30b3dcadba811b",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-2a876a9a-d7c5-4783-9f8d-d8e8671ec18e\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-3395fe3f50718ef26d2a0059876b29ef",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-4133cea1-a75b-442f-8294-446b28fd3663\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-d58a457193fa6257026f75983f4c71d0",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-113b74ec-c3a8-4c33-93bd-2295a389abfc\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-d9f233e68b608dbdef77692c5672c6bb",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-05f92d30-1418-4887-b3c3-781d7a22cdf9\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-eeae5b9ffbb18746f2cc7182985e3a47",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-01e087fc-6362-46f3-8c55-391556f5aa40\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-59ba1db4851563a36681f70e1c450d40",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-9a237c3a-92f3-4ba9-844d-44e50beb7b1f\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-594df0fa2b02106faa56bcda9cfc75ea",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-e8b8618d-2069-4e90-92fb-223a2d3be18c\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-7ba7d4b4ccb1ec7cd43647a85bcad62d",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-75f770f3-c5cb-43d1-9cd1-56d4c31de6c1\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-97e73b2457627387298a93bb7f6943f9",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-bee7f3e7-bf50-4fb7-b05f-56a6b4dde037\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-9b965b54e35c878b9dba66511e74ef9a",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-e4a9ed9e-5a8a-4d72-9585-5738a5582f0d\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-7d9befdf9541de2278d1350d602d8a20",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-ef7b1118-0b14-4855-b18b-d3088005e858\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-07df793527165e70921d61b25f737bc0",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-e60b9d6b-abda-49e3-a615-0a89cfbbd974\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-04319eb479dde3daed3ba59d5b5a10fd",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-8f190512-6962-42ad-8eee-34f72cc3a093\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-f098ee69ff97f53934938e8c2bb5424c",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-32ab091f-6b3b-4583-8b20-2b8f788cc0aa\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-e9cd780aa4ee25b5762c49404592ddf6",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-249108c6-ea31-4e9e-99e0-bbdd1fd7226d\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-c6e6e5d6f7df89f0e0023382e99067fd",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-1d9ade8a-11c0-4186-bae7-19ed3716ecea\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-33b2edc77056991a3917f12d5fa9485f",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-cf1be82c-592e-40ea-b7fa-16d4907d33f1\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-bad2975c4498681556f3beee732ccad1",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-8b2eb8a6-3e0c-461b-a790-72b28e1b71b6\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-1a8dfb88fa3f9c3e2378e5ee6b282304",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-27c80165-4fe8-487a-8467-7fc023192a3d\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-414a0b46b20cc16a462d73037a760232",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-fffb1323-f774-4807-af09-f9c9e548ef98\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-a609c01565ce61f2a707fda85120f3a2",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-c88ce59b-627b-4340-8f24-b65b0d5f8921\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-77b30e341072eafd7eaf063a9cc86856",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-e83dceb6-435b-42a9-8529-730ea96f24e7\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-0aa7a9b8a5f573ec98e0149a027a7fbb",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-e0d23b19-e479-4b79-94b7-59f5dda4ce76\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-ec0ad14cec7bb08115bcb8760885ed39",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-d352997d-7be9-4ccd-ae35-ce479c878a3f\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-5faea7601f895fe1571d2e69c2af278b",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-23b6a5c2-cce8-4b3c-ba1d-ced5c6965251\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-ed23042effc3c03de880be0e1e87f36b",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-01c3b04a-14ba-4082-abc7-271c5c4014e6\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-b76b59c3f59ab51ff1a95355b1bd3544",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-ab9f01c7-f237-4314-9dc3-fad2d9654612\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-b3b771e795139ea4f5a846412d4960fc",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-a3ce8ae7-6a0d-4fba-ba5a-25075cca9d83\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-0891b8d43502a9db1fdc51d6074138ea",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-5227d927-02e5-4ba2-bf9a-f082f1ccbdb8\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-798d44cf6c003535f44f7f1b1d87748e",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-99b56f57-2bd3-4763-a786-cc4e5f1c538e\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-1e1c73b1b611d84073919e1022fcf3b6",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-0f5f75a2-6b7f-43ba-9c35-c702494e2eb3\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-daf43bafcefe879b5579715285470af1",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-854086c0-9c6d-4ca9-afaf-55717ab03855\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-d31ac813f0cf73fcd1b1a083c4372e7f",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-2101df49-c751-4534-8887-cc3e3a6e9862\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-61c4c9eb742dfe33ffa347a7e629ac3f",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-0e50ea75-5b48-40d7-b61a-b0a1108ab3e1\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-1010728e35935d6014a9ceac450c0969",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-29379831-924c-4a38-9da1-4895aa5e1696\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-c345f228989352856282eafcc4c012f5",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-current-0a653152-9332-4869-9445-276bf64b1bb0\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-5e89aaf972289a868807016cbc724f85",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-9dae27a8-043e-4585-b39e-fd5d627f4b06\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-b38ea5d8178d2990e4e7f2b13a3d41ee",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-b7b216a0-b25a-4301-84e6-2a4e9ce5e2db\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-04524710461510ef16b2a7b32bfbaf17",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-e8a70743-e03f-413d-8633-108f2b21822d\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-4965218345418ad831c0d38850a9da37",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-7140c2ae-aa72-45e2-948b-04bbf44ebcf6\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-a0f186d0a222b128f27ba934c8a3ad5c",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-2460c3e6-c6ba-4066-8f2b-1f21219619de\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-b40ed504311a16dfa3d39c26e63ddc91",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1c6c2765-9af3-4c1f-8306-e9ebd926a2ac\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-b35c18c1a147ea7addcf974147316a0b",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-7c8e084a-b2cd-41da-b473-b3d7e63be743\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-44971448ba11478a94781c408171d34b",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-8ee5520e-8544-48ce-b0ea-ad9d59957452\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-47d5826f71b8138eac9fbff20e1ed235",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-dc98c586-894c-414b-b115-1fb963aa7c99\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-84cf90125e58016c4d7a81d1c4efd565",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-bae46b34-344e-4a81-9a48-a24353bbc60d\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-32c8a25f28b46e34fa5ba52122ebbbd5",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-e1183527-30bc-41ef-9744-b9979ce2cd7f\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-a0b30fe5710c510e40c2571b668c675a",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-efc5195b-7f16-4588-97ea-8dc48060965d\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-3e1e7349f7b64a2c99c79c7bd420552e",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-1590a59b-9d43-4287-b477-92ddd6e346e0\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-2646c5b437a06d246812ff64aaa1a760",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-f072d0dd-2abd-461b-a661-c8d1cca687af\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-fa7f8150824dc096e5c0db76eecdcfb0",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-8d798a49-bf39-4f9f-8b30-135239918091\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-2d44c5e206fce4fff8f36a3d1135b833",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-26343758-e9f0-45f7-b30e-b1df6f95f793\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-399c57fc3e696729a859275564cf973c",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-fb6b0052-6b96-493d-8e81-f9bbe5607489\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-d421215f16bbb1b2e1d4417c1ebc918a",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-6c05e77c-02e1-4081-a197-a49d27b232ec\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-13bd19abf08d71fde4fa320f506f0823",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-d8016036-a853-4dd3-b397-34f0051726ba\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-230ebd9340e388ed2a47bf87df4b82d4",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-5f67789b-2d06-4422-a8c5-664bcfebed51\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-2545b73f158a09cfb55a888202494a1e",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-94224520-7dfb-452d-b82d-1051c2d131a2\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-2faf6bf79d4c9af19db3c60feb41749d",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-b08e0b34-9c7d-4105-8834-2f1a153e1abe\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-33f0a359ebe8406ce93af5f10d15c87e",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-e277e8cc-e1dc-4c6a-b953-40a4b69b596b\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-86c05113e1096d4debba2299ec57894a",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-5d7236c7-c5b0-437d-9afd-963d396905dd\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-721d6fc8faf4ea437c12210ca5de2dfc",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-3a4e8255-b33b-4710-8d7f-26524a7bc316\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-722a46b2a0c84869594ab6bda77ae4c8",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-5d05ed42-da7b-4a4c-9772-653559db78dd\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-374c905b686b328f8df724be06f5fc13",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-c7c1af2c-775a-4919-80ba-728de43c8641\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-1bf3320ca7cdf2a93b5cf45e2c19026a",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-c41e0fd4-8247-4421-9905-c5e07fb8fa59\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-1393326113b3afce9d6f21184c2956cc",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-debfee7c-99f3-40b1-9a6e-7abb6ec23790\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-2c35ee61761b2455f4db546b180a0054",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-f1b64069-bdf1-4dec-83dc-d900ba05c40c\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-0c2075c6a87ceaa2e244f5ddf7de7752",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-c640982b-2820-4704-89e8-afd024a8b9e4\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-a14e5a15a93a9c9576103d6898b35f52",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-44af5c4c-6f19-4f20-9861-19fcf3834d78\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-8c7d054202703b0acce8fe0445c0d13f",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-b43961f6-8bb9-414a-a070-3cdbb1d24984\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-70116b6cd055c08bed040d1176d18462",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-2cfabad3-661b-4821-9510-d0dba750beb1\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-494435e18eae3fd1e8161ed6ce8b8401",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-8fab3f0b-de86-4e01-abf9-1c62da337ab8\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-520061882d64af627c62ead5df58daa8",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-cdacb840-7b09-4a32-b8d7-7c3cb6bfbbeb\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-b61311b74b3830290dc811b9fca28111",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-ef9d894d-4b5a-4d01-be04-0b4fc54e8523\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-d36ec6e19e8fec0dcfef33f50cc3b409",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-c6c756a3-5f56-4b69-9a19-3111c1d2d659\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-95a605c0d673b5f32f2392cb76f775e7",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-e17b5ce3-10da-4102-959f-3201be7f4700\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-dc552c231026eb8400d5395e6f4e0db8",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-01328f97-7c5d-4578-bc6b-21f49b6e4090\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-723769a65033f008790ab77f79313b76",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-8a408b45-094b-45a2-be11-cdedb4860cd3\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-93a298fbd527861de3d7655119b10565",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-05ad170e-1388-4d5d-b375-ca9589bc43a5\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-9441946214213c61dbd75d22aa39b9d1",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-7c84d706-438d-4b49-b368-c2349e394bb0\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-5711ae1ec61c192d767b2b825ee90e95",
+      "deleted": true
+    }
+  },
+  {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"lab-g1-datomic-reopen-db61a106-1c7c-4346-b612-c0d878790971\",0]",
+    "status": 200,
+    "body": {
+      "db": "s-52056e90f7e9ffdc9bc7038bd6faddf9",
+      "deleted": true
+    }
+  }
+]

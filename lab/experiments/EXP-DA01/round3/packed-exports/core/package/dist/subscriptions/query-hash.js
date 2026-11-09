@@ -1,0 +1,43 @@
+import { Hash } from "effect";
+//#region src/subscriptions/query-hash.ts
+/**
+* Query Hashing for Subscription Deduplication
+*
+* Uses Effect's Hash module to create consistent hashes for Datalog queries.
+* Structurally identical queries produce the same hash, enabling:
+* - Deduplication of identical subscriptions
+* - Fast lookup of subscriptions by query structure
+* - Potential use as reactivity keys for frontend caching
+*/
+/**
+* Hash a Datalog query using Effect's Hash module.
+*
+* Two structurally identical queries will produce the same hash.
+* The hash is a 32-bit integer, so collisions are possible but rare.
+* Collisions are acceptable since they only result in extra invalidation
+* checks (conservative approach - no false negatives).
+*
+* @example
+* ```typescript
+* const query1: DatalogQuery = {
+*   find: ["?name"],
+*   where: [["?emp", ":employee/name", "?name"]],
+* };
+* const query2: DatalogQuery = {
+*   find: ["?name"],
+*   where: [["?emp", ":employee/name", "?name"]],
+* };
+*
+* hashQuery(query1) === hashQuery(query2) // true
+* ```
+*
+* @param query The Datalog query to hash
+* @returns A 32-bit integer hash
+*/
+function hashQuery(query) {
+	return Hash.string(JSON.stringify(query));
+}
+//#endregion
+export { hashQuery };
+
+//# sourceMappingURL=query-hash.js.map

@@ -1,0 +1,39 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/int-d/packages/testkit/tsdown.config.ts 
+ℹ entry: src/index.ts, src/offline-route-fixtures.ts, src/route-coverage.ts, src/route-equivalence.ts, src/route-history-grammar.ts, src/route.ts, src/routeEquivalence.ts, src/routeHistory.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ Cleaning 30 files
+ℹ dist/index.js                          87.58 kB │ gzip: 16.13 kB
+ℹ dist/route-equivalence.js              20.75 kB │ gzip:  6.05 kB
+ℹ dist/route-coverage.js                  8.55 kB │ gzip:  2.61 kB
+ℹ dist/offline-route-fixtures.js          5.50 kB │ gzip:  2.09 kB
+ℹ dist/route-history-grammar.js           5.17 kB │ gzip:  1.66 kB
+ℹ dist/routeEquivalence.js                2.44 kB │ gzip:  0.99 kB
+ℹ dist/routeHistory.js                    2.16 kB │ gzip:  0.94 kB
+ℹ dist/route.js                           1.02 kB │ gzip:  0.32 kB
+ℹ dist/index.js.map                     157.59 kB │ gzip: 27.54 kB
+ℹ dist/route-equivalence.js.map          46.18 kB │ gzip: 12.39 kB
+ℹ dist/route-coverage.js.map             16.56 kB │ gzip:  4.76 kB
+ℹ dist/route-history-grammar.js.map      10.30 kB │ gzip:  3.23 kB
+ℹ dist/offline-route-fixtures.js.map     10.04 kB │ gzip:  3.54 kB
+ℹ dist/routeEquivalence.js.map            5.29 kB │ gzip:  1.96 kB
+ℹ dist/routeHistory.js.map                5.05 kB │ gzip:  1.94 kB
+ℹ dist/route-equivalence.d.ts.map         3.88 kB │ gzip:  1.05 kB
+ℹ dist/index.d.ts.map                     0.84 kB │ gzip:  0.35 kB
+ℹ dist/routeEquivalence.d.ts.map          0.59 kB │ gzip:  0.28 kB
+ℹ dist/routeHistory.d.ts.map              0.52 kB │ gzip:  0.25 kB
+ℹ dist/route-coverage.d.ts.map            0.32 kB │ gzip:  0.18 kB
+ℹ dist/offline-route-fixtures.d.ts.map    0.21 kB │ gzip:  0.17 kB
+ℹ dist/route-history-grammar.d.ts.map     0.16 kB │ gzip:  0.14 kB
+ℹ dist/route-equivalence.d.ts             8.09 kB │ gzip:  2.17 kB
+ℹ dist/route-coverage.d.ts                3.65 kB │ gzip:  0.83 kB
+ℹ dist/index.d.ts                         2.63 kB │ gzip:  0.96 kB
+ℹ dist/route.d.ts                         1.71 kB │ gzip:  0.42 kB
+ℹ dist/offline-route-fixtures.d.ts        1.21 kB │ gzip:  0.63 kB
+ℹ dist/routeHistory.d.ts                  1.13 kB │ gzip:  0.43 kB
+ℹ dist/routeEquivalence.d.ts              0.98 kB │ gzip:  0.39 kB
+ℹ dist/route-history-grammar.d.ts         0.29 kB │ gzip:  0.20 kB
+ℹ 30 files, total: 410.40 kB
+✔ Build complete in 1174ms

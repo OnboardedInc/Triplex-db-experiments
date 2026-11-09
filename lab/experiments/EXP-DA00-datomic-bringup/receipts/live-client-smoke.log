@@ -1,0 +1,4 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 4998 "G0-qlever-20261108T215153Z-3524cf build", pid 1980 "DA00-G0-final", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 4998 "G0-qlever-20261108T215153Z-3524cf vitest-qualification", pid 1980 "DA00-G0-final", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5290 "CX-VP2Q-3-fuzz60", pid 5437 "CX-C8-R3-offline", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5290 "CX-VP2Q-3-fuzz60", pid 4910 "CX-E01-R3-reference", pid 5696 "CX-C8-R3-checks"

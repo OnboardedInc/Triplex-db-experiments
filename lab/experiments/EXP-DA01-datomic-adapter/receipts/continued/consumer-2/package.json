@@ -1,0 +1,10 @@
+{
+  "name": "datomic-isolated-consumer",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@triplex-build/triplex": "file:/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/runs/pack/DA01/triplex-pack-nBA1J3/tarballs/triplex-build-triplex-0.2.0.tgz",
+    "@triplex-build/triplex-datomic": "file:/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/package/triplex-build-triplex-datomic-0.1.0.tgz",
+    "effect": "4.0.3"
+  }
+}

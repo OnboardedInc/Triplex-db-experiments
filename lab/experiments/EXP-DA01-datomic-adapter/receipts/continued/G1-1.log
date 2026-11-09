@@ -1,0 +1,7 @@
+[lab] G1-datomic-20261108T222406Z-bff062: raw output runs/G1/G1-datomic-20261108T222406Z-bff062
+error: could not write index
+FAIL G1 datomic/dev scope=full executed=88 pass=71 fail=17 skip=0
+profile: default; planner budget: null
+  reason: complete unchanged suite failed
+  reason: 17 failed case executions
+receipt: lab/runs/G1/G1-datomic-20261108T222406Z-bff062.json

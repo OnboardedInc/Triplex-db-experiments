@@ -1,0 +1,19 @@
+{
+  "readAt": "2026-11-08T23:41:47.115Z",
+  "reviewCommit": "d393484",
+  "sources": [
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/acceptance/RULINGS-PENDING.md",
+      "sha256": "51c4ed62d52984a4fa8329f2028970f83e48f6198d6222f299068ff8fa363496"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/research/R29-datomic-lane-design.md",
+      "sha256": "9e7c5a6931d2c843647eb3cae69e63029fac65383c1b4c260a6e56b3777f7bf9"
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/lab/verify/DA00/VERIFY.md",
+      "sha256": "3239d582b54553e937f04a799a9539239e0d613225043ac3b2dfa8f6e62d08b5"
+    }
+  ],
+  "q85": "## Q85: V-DA00 findings (fixed in the DA01 branch)\n| Q | Ruling | Basis |\n| --- | --- | --- |\n| Q85a create is idempotent and monotonic | Database creation for a scope is idempotent and never resets or lowers an existing scope position; concurrent creates converge on one database with its position intact. | V-DA00 F1 |\n| Q85b public scopes | The gateway accepts every scope name the public Triplex constructor can produce (mapped to a Datomic database name by a documented, reversible encoding) and nothing else. | V-DA00 F2 |\n| Q85c hermetic image builds | Every image build starts from a fresh context that contains only verified inputs listed in the input hash; a reused or dirty context refuses the build. | V-DA00 F3 |\n| Q85d one codec definition | The TypeScript and JVM codecs share one specification of each value kind's range and representation, with a shared test vector set; a value either codec cannot represent is refused by both. | V-DA00 F4 |\n\n"
+}

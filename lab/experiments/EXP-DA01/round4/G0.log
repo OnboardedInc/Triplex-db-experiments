@@ -1,0 +1,15 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 4587 "CX-RQ01-round3-a3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 4587 "CX-RQ01-round3-a3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 70032 "DA01-r4-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 70032 "DA01-r4-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 70032 "DA01-r4-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 65856 "CX-O06-round3-final-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 65856 "CX-O06-round3-final-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 65856 "CX-O06-round3-final-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 65856 "CX-O06-round3-final-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 65856 "CX-O06-round3-final-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 56233 "CX-OBS01-R5-remaining"
+[lab] G0-datomic-20261109T011153Z-d9516d: raw output runs/G0/G0-datomic-20261109T011153Z-d9516d
+error: could not write index
+PASS G0 datomic scope=full executed=1095 pass=1095 fail=0 skip=62
+receipt: lab/runs/G0/G0-datomic-20261109T011153Z-d9516d.json

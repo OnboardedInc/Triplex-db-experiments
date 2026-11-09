@@ -23,7 +23,7 @@ import sys
 
 HERE = pathlib.Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-VERSION = "0.3.12"
+VERSION = "0.3.13"
 
 
 def contract_oracle_answer(case_bytes, contract):
@@ -68,7 +68,7 @@ if __name__ == "__main__" and len(sys.argv) == 4 and sys.argv[1] == "--oracle" a
     sys.stdout.write(contract_oracle_answer(pathlib.Path(sys.argv[3]).read_bytes(), json.loads((HERE / "oracle-contract.json").read_text())) + "\n")
     sys.exit(0)
 STATUS = "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review"
-DATE = "2026-11-08"
+DATE = "2026-11-09"
 
 LANES = ["xtdb-xtql", "xtdb-sql", "qlever-sparql", "datomic-datalog"]
 ALL = LANES
@@ -1435,7 +1435,7 @@ BUILD_SPEC = {
 }
 # RULINGS Q61i: engine image pins (moved from lab/config/slots.json; the contract is the authority, slots.json must agree).
 IMAGE_PINS = {
-    "datomic": {"image": None, "imageId": None},
+    "datomic": {'image': 'tx2-datomic:1.0.7745-da00', 'imageId': 'sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf'},
     "xtdb": {"image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77", "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"},
     "qlever": {"image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec", "imageId": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"},
 }
@@ -1712,6 +1712,8 @@ def admit_claim(claim, ev=None, pins=None, w0=None, a0=None, verifiers=None, pin
     if not ids or any(i not in obl for i in ids):
         return "DIAGNOSTIC"
     claimed = [obl[i] for i in ids]
+    if any(o["id"].startswith("GS.") for o in claimed):
+        return "DIAGNOSTIC"  # [EXP-A01-0313] Why: Q94e forbids GS closure and comparisons before 0.4.0. Rejected: accepting a GS measurement after pin checks.
     tree, comp, commit = claim.get("sourceTreeSha256"), claim.get("composition") or {}, claim.get("commit")
     if claim.get("kind", "comparison") not in ("comparison", "screening"):
         return "DIAGNOSTIC"  # RULINGS Q67j: promotion qualification is rejected explicitly until its prerequisites are enforced mechanically
@@ -1933,6 +1935,8 @@ def contract_blockers(o, lane=None):
     """Contract-level blockers of one obligation (pins, refusals, the W0 pin): what a contract version must change before the obligation
     can close. Evaluator-side blockers that apply to every claim (QUALIFICATION_RUN blockers, RULINGS Q67a) are listed separately."""
     out = []
+    if o["id"].startswith("GS."):
+        out.append("gs-diagnostic-before-0.4.0:Q94e")
     if lane is not None and not (IMAGE_PINS.get(ENGINE_OF[lane]) or {}).get("imageId"):
         out.append("image-unpinned:" + ENGINE_OF[lane])
     for x in o["oracles"]:
@@ -3400,7 +3404,7 @@ def build_load_contract():
         "obligations": [o["id"] for o in OBL if o["id"].startswith(("NS.", "GS."))],
         "population": "SCALE_POPULATION year-one (obligations.json scalePopulation), on one identified profile and composition",
         "writerTrace": WRITER_TRACE,
-        "seedRules": SEED_RULES, "freezeProtocol": FREEZE_PROTOCOL,
+        "seedRules": SEED_RULES, "freezeProtocol": FREEZE_PROTOCOL, "qleverEvidencePolicy": QLEVER_EVIDENCE_POLICY, "goldenScenarioPolicy": GOLDEN_SCENARIO_POLICY,
         "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql, datomic-datalog query and pull); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
         "measurements": {
             "P1": {"readers": "closed-loop, zero think time, each reader a distinct client id", "levels": [0, 1, 4, 16, 64, 256], "stress": 1024, "zeroReaderBaseline": "level 0 = writer trace alone, same trace segment and burst phase",
@@ -3955,7 +3959,7 @@ def ruling_checks():
             c_["source"]["log"] = log
         return c_
     BIN = {"t1": _h(b"candidate build"), "t0": _h(b"A0 build")}
-    used = ["G1.found.unchanged44", "G7.position.coordinates", "G10.composition.identity-bound", "W0.coverage-floors", "NS.P2", "GS.05", "G7.migration.schema-evolution", "G9.erasure.residual-shapes", "G9.erasure.query-semantics", "G1.decimal.channel-routing"]
+    used = ["G7.outbox.receiver-ordering", "G1.found.unchanged44", "G7.position.coordinates", "G10.composition.identity-bound", "W0.coverage-floors", "NS.P2", "GS.05", "G7.migration.schema-evolution", "G9.erasure.residual-shapes", "G9.erasure.query-semantics", "G1.decimal.channel-routing"]
     tokens = {}
     for oid in used:
         for c in obl[oid]["cases"]:
@@ -4016,7 +4020,7 @@ def ruling_checks():
         runners_t[k] = dict(runners_t.get(k, {"argv": ["true", "{case}"]}), files=list(v["sha256"]))
         if k != "O-REPLAY":
             vreg[f"VT-{k}"] = {"subject": {"kind": "oracle", "id": k, "commit": v["commit"]}, "verdict": "ACCEPT (test)"}
-    for oid in ("G1.found.unchanged44", "NS.P2", "GS.05", "G7.migration.schema-evolution", "G9.erasure.residual-shapes", "G9.erasure.query-semantics", "G1.decimal.channel-routing"):
+    for oid in ("G1.found.unchanged44", "NS.P2", "GS.05", "G7.outbox.receiver-ordering", "G7.migration.schema-evolution", "G9.erasure.residual-shapes", "G9.erasure.query-semantics", "G1.decimal.channel-routing"):
         vreg[f"VT-{oid}"] = {"subject": {"kind": "obligation", "id": oid, "commit": "c1"}, "verdict": "ACCEPT (test)"}
     a0_full = {"A0-XTDB": {"commit": "a" * 40, "sourceTreeSha256": "t0", "binarySha256": BIN["t0"], "composition": _comp(slot="s2"), "measuredBy": "VT-A0-XTDB"}, "A0-QLEVER": None}
     vreg["VT-A0-XTDB"] = {"subject": {"kind": "a0", "id": "A0-XTDB", "commit": "a" * 40}, "verdict": "ACCEPT (test)"}
@@ -4030,7 +4034,9 @@ def ruling_checks():
         e.append("Q61c: qualification_run refuses a missing oracle runner before invoking it")
     if _adm(good) != "QUALIFIED":
         e.append("Q55a: a claim the evaluator's own run passes, with every oracle pinned and accepted, A0 registered and the obligation verified, must be admitted (positive control)")
-    dom = dict(good, obligations=["GS.05"])
+    dom = dict(good, obligations=["G7.outbox.receiver-ordering"])
+    if _adm(dict(good, obligations=["GS.05"])) != "DIAGNOSTIC":
+        e.append("Q94e: even a complete GS claim cannot enter a comparison before 0.4.0")
     if _adm(dom) != "QUALIFIED":
         e.append("0.3.10: with W0-1.1.2 and the O-DOMAIN fingerprint pinned, a complete domain-dependent claim qualifies against the contract's own W0 pin (positive control)")
     if _adm(dom, w0=w0_full) != "QUALIFIED":
@@ -5091,7 +5097,10 @@ def render_acceptance(doc, cells, counts):
     A("Round 3 integrates X02/C8/J01 default-off and atomically repins both reviewed native workload recipes; all 17 diff hunks preserve logical task operations, input data and offered schedule. Q88a-c compile lane D storage requirements; Q78e/Q86g/Q89/Q90 remain pending.\n")
     A(md_table(["Ruling", "Storage rule"], [[k, v["rule"]] for k, v in RULES_0312_R3.items()]))
 
-    A("O-OBS 23e2273 is accepted for screening by V-O05 round 4 (3e3df9c), with every runner file hashed. Acceptance requires verifier recollection; no engine obligation closes from this pin. Q78e and Q86g wait for Sam; G03 isolation pins wait for 0.3.13. Q83e takes precedence for F, M and T. Q87 requires at least 108 unchanged evaluator assertions on the merged branch.\n")
+    A("## Contract 0.3.13: Datomic integration, content fingerprint admission and GS diagnostic policy\n")
+    A(md_table(["Ruling", "Rule"], [[k, v["rule"]] for k, v in RULES_0313.items()]))
+    A("Q93 amendments are applied to Q74b/c/d and Q83a/b/c. Q83d/e are retired. D matches a clone byte-for-byte; D-prime normalizes only engine-assigned fields for fresh-seed E1. GS receipts before 0.4.0 are DIAGNOSTIC; Q94a and the RT01/ER01 rulings remain pending.\n")
+    A("O-OBS 23e2273 is accepted for screening by V-O05 round 4 (3e3df9c), with every runner file hashed. Acceptance requires verifier recollection; no engine obligation closes from this pin. Q78e and Q86g wait for Sam; G03 isolation pins remain deferred (no accepted integration requested here). Q93a-c replaces the process-evidence admission rules; Q83d/e are retired. Q87 requires at least 108 unchanged evaluator assertions on the merged branch.\n")
     for title, rules in (("Broker", BROKER_RULES), ("Observation provenance", OBSERVATION_RULES), ("Isolation requirements (not yet in force)", ISOLATION_RULES)):
         A("\n" + title + "\n")
         A(md_table(["Ruling", "Contract rule"], [[k, v["rule"]] for k, v in rules.items()]))
@@ -5768,13 +5777,13 @@ def checks_0311():
             if case not in CS[cs]["requiredCases"] or (cs, case) not in selected_pairs(o):
                 e.append(rid + ": required regression case must be selected")
     # [EXP-A01] Why: each generic obligation follows the new surface; engine-specific exception obligations keep their original scope. Rejected: silently treating lane D as already qualified.
-    if LANES != ["xtdb-xtql", "xtdb-sql", "qlever-sparql", "datomic-datalog"] or ENGINE_OF.get("datomic-datalog") != "datomic" or LANG_OF.get("datomic-datalog") != "datomic-datalog" or IMAGE_PINS.get("datomic") != {"image": None, "imageId": None}:
-        e.append("Q78: lane D surface registered with a null image pending EXP-DA00")
+    if LANES != ["xtdb-xtql", "xtdb-sql", "qlever-sparql", "datomic-datalog"] or ENGINE_OF.get("datomic-datalog") != "datomic" or LANG_OF.get("datomic-datalog") != "datomic-datalog":
+        e.append("Q78: lane D surface registered; its accepted DA00 image is checked by Q61i/0.3.13")
     if not {"d_raw", "d_frag", "repo_d"} <= set(COLS) or A0_REGISTRY["entries"].get("A0-DATOMIC", "missing") is not None:
         e.append("Q78: matrix surfaces and null A0-DATOMIC required")
     dc = closability()["perSurface"].get("datomic-datalog", {})
-    if dc.get("total") != 153 or dc.get("closable") != 0 or dc.get("total") != dc.get("blocked"):
-        e.append("Q78: every lane D obligation must stay blocked by its null image")
+    if dc.get("total") != 153 or dc.get("total") != dc.get("closable", 0) + dc.get("blocked", 0) or any("image-unpinned:datomic" in contract_blockers(o, "datomic-datalog") for o in OBL if "datomic-datalog" in o["lanes"]):
+        e.append("Q61i: lane D image pin removes only the image blocker, never grants qualification")
     if ORACLE_RUNNERS.get("O-CONTRACT", {}).get("files") != ["lab/acceptance/build_contract.py", "lab/acceptance/oracle-contract.json"]:
         e.append("Q75c: O-CONTRACT runner retains both source and generated projection")
     # [EXP-A01] Why: missing or partial runner maps must fail closed for compiled and accepted oracles. Rejected: checking only status labels.
@@ -6099,7 +6108,7 @@ def checks_0312():
         m = re.match(r"^\| (Q\d+[a-z]?)\b([^|]*)\| (.*?) \| (.*?) \|$", line)
         if m:
             authority[m[1]] = {"topic": m[2].strip(), "rule": m[3], "basis": m[4]}
-    expected = {"Q72" + x for x in "abcdeg"} | {"Q79e", "Q79f", "Q87"} | {"Q80" + x for x in "abc"} | {"Q82" + x for x in "abcde"} | {"Q83" + x for x in "abcde"} | {"Q84" + x for x in "abcde"} | {"Q85" + x for x in "abcd"} | {"Q86" + x for x in "abcdef"}
+    expected = {"Q72" + x for x in "abcdeg"} | {"Q79e", "Q79f", "Q87"} | {"Q80" + x for x in "abc"} | {"Q82" + x for x in "abcde"} | {"Q83" + x for x in "abc"} | {"Q84" + x for x in "abcde"} | {"Q85" + x for x in "abcd"} | {"Q86" + x for x in "abcdef"}
     if set(RULES_0312) != expected:
         errors.append("0.3.12: exact authorized ruling set required")
     for rid in expected:
@@ -6110,8 +6119,8 @@ def checks_0312():
             errors.append(rid + ": regression selection missing")
     if not {"Q78e", "Q86g"} <= set(pending_ruling_ids()) or {"Q78e", "Q86g"} & {r["id"] for r in RULINGS}:
         errors.append("Sam's Q78e and Q86g remain pending")
-    if SEED_RULES["Q74b"].get("supersededBy") != ["Q83b", "Q83d", "Q83e"] or FREEZE_PROTOCOL["resumeBoundTo"] != "M" or set(FREEZE_PROTOCOL["frontiers"]) != {"F", "M", "T"}:
-        errors.append("Q83: three frontiers replace the old freeze interpretation")
+    if FREEZE_PROTOCOL.get("precedence") != ["Q93a", "Q93b", "Q93c"] or any(k in SEED_RULES for k in ("Q83d", "Q83e")):
+        errors.append("Q93: content admission replaces Q83d/e process predicates")
     if ISOLATION_ADMISSION["inForce"] or ISOLATION_ADMISSION["pins"] is not None or BUILD_SPEC["argv"] is not None:
         errors.append("Q86: G03 pins deferred, isolation is not yet in force")
     if MERGE_GATES["minimumTests"] < 108 or MERGE_GATES["weakenAssertions"] or MERGE_GATES["evaluatorArgv"] != ["node", "--test", "lab/bin/test/claim.test.mjs", "lab/bin/test/claim-round2.test.mjs"]:
@@ -6180,11 +6189,103 @@ def checks_0312_round3():
     return errors
 
 
+
+# [EXP-A01-0313] Why: literal authority and reviewed pins land with the DA01 merge (Q45a). Rejected: deriving new admission authority from pending rows at runtime.
+AUTHORITY_0313 = {"path": 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13/authority-and-pin-review.json', "sha256": 'b1f7dd9f18527b5f374b80ef2afe161d104781e273fe2d881c376f8ed890a26b'}
+RULES_0313 = {'Q91a': {'topic': 'built base, bounded delta', 'rule': "QLever-lane performance evidence (P1, P4, P5, GS) counts only from a server whose data sits mostly in a built base index with a delta bounded by a declared rebuild threshold. Every QLever receipt records base triple count, delta triple count and the delta in the blocks the measured scans touched. The lane's design (R2, R8, R13, R17) always assumed this; nothing built or measured it, and qlever-dev's base holds 1 triple. Earlier QLever latency numbers from delta-only servers are DIAGNOSTIC.", 'basis': 'R35 sections 1-3'}, 'Q91b': {'topic': 'stop dropping data with --fresh', 'rule': 'qlever-dev is no longer reset with --fresh as a delta policy; delta growth on shared residents is handled by the rebuild loop of Q91c once it is qualified.', 'basis': 'R35 3'}, 'Q91c': {'topic': 'generations from the log', 'rule': "EXP-QG1 (lab/experiments/EXP-QG1-qlever-generations/) builds the rebuild loop: phase 1 on an exclusive slot measures scan and join cost against delta size (monotonic and spread keys) on a 10M-triple base and picks the threshold; phase 2 rebuilds blue/green index generations from the broker log, with reader leases so one multi-request read stays on one generation, and checks Q89i byte identity across every swap. The feed stays the log. Bounding the delta per graph is rejected (all graphs share one server's blocks).", 'basis': 'R35 5'}, 'Q91d': {'topic': 'phase 0 on a copy', 'rule': "The first rebuild-index runs on a copy of qlever-dev's data on an exclusive slot, not on the shared resident, because several reviews read qlever-dev live and upstream bug #3172 can make a rebuild fail.", 'basis': 'orchestrator'}, 'Q93a': {'topic': 'process evidence refuses, never grants', 'rule': 'For seed reuse on every lane, the only evidence that grants admission is a content fingerprint (G0) read through the engine by the process that will measure, on the endpoint it measures, before its warm-up, compared with a digest pinned before the freeze began (and with O-DOMAIN where one exists). Every other observation (stop, settle, log tails, frontiers, inspect, stderr, timers, owner state, copy hashes, plan hashes, disk) is refusal-only or a diagnostic, and no decision reads a diagnostic.', 'basis': 'R36 section 6'}, 'Q93b': {'topic': 'G0 for K01', 'rule': 'Fields, pinning point and counts as in sections 2.1 and 3.2; every read has a deadline; the golden is published only after two starts of a clone each reproduce `D` and the layout digest `L`.', 'basis': 'R36 section 6'}, 'Q94b': {'topic': '', 'rule': 'Every GS stream is W0-valid and every domain claim a scenario names is checked by O-DOMAIN; a scenario whose spec names a domain claim and whose run makes no such check fails closed. The W01 world vocabulary is retired', 'basis': 'R37 b; GATE-W0; TARGETS 6 rule 2'}, 'Q94c': {'topic': '', 'rule': 'The GS background is the frozen TARGETS 2.1 trace through the W0 trace mapper (Q92k); the private writerTrace is retired; every measured window holds one burst and one maintenance event', 'basis': 'R37 c; TARGETS 1.1 P1 item 3, 2.1'}, 'Q94d': {'topic': '', 'rule': 'GS world admission follows Q93a: a G0 content fingerprint per run; a fresh scope or verified clone per run; store counts at start and end; on lane Q the Q91a counts', 'basis': 'R37 d; Q93a, Q92c, Q91a'}, 'Q94e': {'topic': '', 'rule': 'Every GS receipt before contract 0.4.0 is DIAGNOSTIC: none closes an obligation or enters a comparison. The GS.12 defect and the W01b harness findings stay as defect reports', 'basis': 'R37 e; Q90f, Q91a, Q93a'}, 'Q94f': {'topic': '', 'rule': "GS.04b applies only to compositions with a separate current store; on those it is required. GS.04's engine-kill schedule is required on every lane and runs only on an exclusive slot", 'basis': 'R37 f; TARGETS 4.1 item 6; Q31e'}, 'Q94g': {'topic': '', 'rule': "GS.19's outbox and GS.10's publications must be the product's atomic outbox; a harness-side outbox file can pass only GS.19's P3 checks, as a diagnostic", 'basis': 'R37 g; TARGETS 3 (atomic path to the outbox); Q42c'}, 'Q94h': {'topic': '', 'rule': "GS.10's race (in-flight reconciles finish on the old release) is scheduled as EXP-P5 round C, right after rounds A and B, and is required for GS.10 to close", 'basis': 'R37 h; Q92j; TARGETS 6 row 10'}, 'Q94i': {'topic': '(orchestrator; the superseded outcome flagged for Sam)', 'rule': "GS.03's vendor-revision rule goes into W0-1.2 with an O-DOMAIN `signal-ack` operation; the `superseded` outcome stays flagged for Sam", 'basis': 'R37 i; TARGETS 6.1; W0 lacks it'}, 'Q93c': {'topic': 'two digests', 'rule': "G0 admits a clone by the full digest D over every stored column (byte-level identity with its golden). E1, which compares a clone with a fresh seed of the same inputs, uses a second digest D' over the same columns with engine-assigned values normalized: engine-generated ids and system timestamps are replaced by their rank in commit order, and every other column is kept as is. A fresh seed must match the golden's D', never its D. The normalization list is part of the G0 module, each entry with a comment naming the engine source that assigns it, and a test fails if a column is normalized without one.", 'basis': 'CX-K01-R2 round 8'}}
+SEED_AMENDMENTS_0313 = {'Q74b': {'topic': 'freeze state', 'rule': 'becomes the **recipe**: two finish-blocks, jobs-0 waits, `docker stop -t 60`, copy from a stopped container. A timeout refuses; nothing in it grants.', 'basis': 'Q93; R36 section 6'}, 'Q74d': {'topic': 'readiness', 'rule': '**replaced** by Q93a/b: health precondition plus G0 in the driver; `owner.json` holds slot ownership only', 'basis': 'Q93; R36 section 6'}, 'Q83a': {'topic': 'log4j flag on slots', 'rule': '**kept as a diagnostic aid**; no rule requires the lines', 'basis': 'Q93; R36 section 6'}, 'Q83b': {'topic': 'canonical freeze state', 'rule': '**superseded by Q93a**: the steps stay in the recipe, their readings become diagnostics; `xt.live_tables` is read only on a freshly started node (K3)', 'basis': 'Q93; R36 section 6'}, 'Q83c': {'topic': 'block listing', 'rule': 'kept for diagnostic tools; B never reads `xt.block_files`', 'basis': 'Q93; R36 section 6'}, 'Q74c': {'topic': 'validation first', 'rule': "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked. **unchanged**; E1 is rerun when the recipe, the image or the XTDB version changes", 'basis': 'R26 section 6.9; Q93; R36 section 6'}}
+PIN_CHANGES_0313 = {'testkit': {'path': 'packages/testkit/src/index.ts', 'oldSha256': '6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988', 'sha256': 'cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28'}, 'datomic': {'old': {'image': None, 'imageId': None}, 'new': {'image': 'tx2-datomic:1.0.7745-da00', 'imageId': 'sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf'}}}
+RETIRED_RULES_0313 = {'Q83d': {'topic': 'settle evidence after fast compaction', 'rule': "Settle evidence does not require observing L0 tries: compaction may merge them before the first poll. Settled means the new block's tx_id and latest_processed_msg_id equal the node gauges, xt.trie_stats covers that block at whatever level it now sits, compactor jobs 0, and the file listing and trie digest are unchanged over three readings 5 s apart.", 'basis': 'K01 round 2 (G3 blocked by fast compaction)'}, 'Q83e': {'topic': 'three frontiers', 'rule': "Settle evidence records three values separately and never equates them: (a) the block-cut frontier F, the immutable block's latest_processed_msg_id; (b) the settled replay frontier M, the processed watcher after maintenance drains (lag 0, jobs 0, tries stable, over the Q83d polls); (c) the stable application transaction T. F < M is accepted only when every source message in (F, M] is read from the stopped log tail and is a maintenance message (TriesAdded, compactor output), never an application transaction; T is unchanged across the window. The final stopped log tails and the reference and clone resume are bound to M. Exact reference/clone equality and the two-start catalog checks stay. This replaces the part of Q83d that refused every F < M.", 'basis': 'XTDB c6c1962: BlockCutter.kt:235, 280-295; SourceMessage.kt:139-147; Compactor.kt:150-152; SourceLogProcessor.kt:142, 199-211; Database.kt:375-387'}}
+for _rid, _v in SEED_AMENDMENTS_0313.items():
+    (RULES_0311 if _rid.startswith("Q74") else RULES_0312)[_rid] = dict(_v)
+    SEED_RULES[_rid] = dict(_v)
+    for _r in RULINGS:
+        if _r["id"] == _rid:
+            _r.update(topic=_v["topic"], ruling=_v["rule"])
+for _rid in RETIRED_RULES_0313:
+    RULES_0312.pop(_rid, None)
+    SEED_RULES.pop(_rid, None)
+RULINGS[:] = [r for r in RULINGS if r["id"] not in RETIRED_RULES_0313]
+QLEVER_EVIDENCE_RULES = {k: v for k, v in RULES_0313.items() if k.startswith("Q91")}
+GOLDEN_SCENARIO_RULES = {k: v for k, v in RULES_0313.items() if k.startswith("Q94")}
+SEED_RULES.update({k: v for k, v in RULES_0313.items() if k.startswith("Q93")})
+for _rid, _v in RULES_0313.items():
+    _dest = "qleverEvidenceRules" if _rid.startswith("Q91") else "seedRules" if _rid.startswith("Q93") else "goldenScenarioRulings"
+    RULINGS.append({"id": _rid, "topic": _v["topic"], "ruling": _v["rule"], "compiledInto": [_dest]})
+FREEZE_PROTOCOL = {
+    "precedence": ["Q93a", "Q93b", "Q93c"],
+    "grant": "G0 content fingerprint only; read in the measuring process on its measured endpoint before warm-up every run",
+    "pinBefore": "after last seed commit, before first finish-block",
+    "cloneDigest": "D: every stored column, byte-level identity to golden",
+    "freshSeedDigest": "D-prime: same columns; only engine-assigned ids/system timestamps normalized to rank in commit order; every normalization has an engine-source comment and a test",
+    "scope": "all seed-scope assertions (all value/lifetime columns), claims, attempts; tx_meta enumerates every scope",
+    "counts": "independent COUNT(*) equals closed-form manifest counts; tx_meta holds only the seed scope; W0 worlds and R2 outputs equal O-DOMAIN",
+    "deadlines": "every read has a deadline; timeout refuses",
+    "goldenPublication": "two starts of a qualification clone each reproduce D and L before golden publication",
+    "recipe": ["finish-block", "jobs-0 wait", "finish-block", "jobs-0 wait", "docker stop -t 60", "copy from stopped container"],
+    "refusalOnly": ["current golden key", "copy tree hash", "started-node quiescence: jobs 0 over three readings, live rows 0, layout L, transaction T, lag 0", "Triplex lastPosition", "first warm-up commit lastPosition + 1", "end counts start plus recorded commands", "resource/disk floor"],
+    "diagnostics": ["stop/log lines", "settle readings", "F", "M", "log tails", "inspect", "stderr", "timers", "owner state", "plan hashes"],
+    "ownerJson": "slot ownership only; no readiness admission",
+    "blockListing": "diagnostic tools only; B never reads xt.block_files",
+    "e1": "fresh D-prime equals golden D-prime; PAIR-0 A/A p50 <= 1.10 and p99 <= 1.15; rerun on recipe/image/XTDB version changes",
+    "retired": ["Q83d", "Q83e"]}
+QLEVER_EVIDENCE_POLICY = {"performance": ["P1", "P4", "P5", "GS"], "required": ["built base index", "declared rebuild threshold", "base triple count", "delta triple count", "delta in touched blocks"], "deltaOnly": "DIAGNOSTIC", "freshResetAsDeltaPolicy": False, "phase0": "copy on exclusive slot, never shared resident", "phase1": "10M-triple base; scan/join versus delta, monotonic and spread keys", "phase2": "blue/green generations rebuilt from broker log; leases bind every multi-request read to one generation; Q89i byte identity across every swap", "feed": "log", "perGraphDeltaBound": "rejected: shared server blocks"}
+GOLDEN_SCENARIO_POLICY = {"before040": "DIAGNOSTIC", "closesObligation": False, "entersComparison": False, "world": "W0-valid; domain claims checked by O-DOMAIN or fail closed; W01 retired", "background": "frozen TARGETS 2.1 trace via W0 mapper; private writerTrace retired", "everyWindow": ["one burst", "one maintenance event"], "admission": ["per-run G0", "fresh scope or verified clone", "start/end store counts", "QLever Q91a counts"], "GS04b": "required exactly when a separate current store exists", "GS04": "engine-kill schedule every lane, exclusive only", "outbox": "product atomic outbox for GS.10 and GS.19; harness file only diagnostic P3 checks", "GS10": "round C after A/B race required for closure", "GS03": "W0-1.2 signal-ack pending implementation; superseded outcome flagged for Sam", "acceptanceSize": "Q94a pending; TARGETS unchanged"}
+GS_RULES += [v["rule"] for v in GOLDEN_SCENARIO_RULES.values()]
+SCOPE_SOURCES += [AUTHORITY_0313["path"], "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13/testkit-index.diff"]
+
+
+def checks_0313():
+    errors = []
+    audit = json.loads((REPO / AUTHORITY_0313["path"]).read_text())
+    if sha_file(AUTHORITY_0313["path"]) != AUTHORITY_0313["sha256"]:
+        errors.append("0.3.13: immutable authority/pre-pin review changed")
+    expected = {"Q91" + c for c in "abcd"} | {"Q93" + c for c in "abc"} | {"Q94" + c for c in "bcdefghi"}
+    if set(RULES_0313) != expected or RULES_0313 != audit["rules"]:
+        errors.append("0.3.13: every newly compiled ruling must match original literal authority")
+    for rid in expected:
+        dest = QLEVER_EVIDENCE_RULES if rid.startswith("Q91") else SEED_RULES if rid.startswith("Q93") else GOLDEN_SCENARIO_RULES
+        if dest.get(rid) != audit["rules"].get(rid):
+            errors.append(rid + ": required literal consumer missing or weakened")
+    if SEED_AMENDMENTS_0313 != audit["amendments"] or any(SEED_RULES.get(k) != v for k, v in audit["amendments"].items()):
+        errors.append("Q93: amendments to older seed rulings must be applied")
+    if any(k in SEED_RULES or k in {v["id"] for v in RULINGS} for k in ("Q83d", "Q83e")) or FREEZE_PROTOCOL != {'precedence': ['Q93a', 'Q93b', 'Q93c'], 'grant': 'G0 content fingerprint only; read in the measuring process on its measured endpoint before warm-up every run', 'pinBefore': 'after last seed commit, before first finish-block', 'cloneDigest': 'D: every stored column, byte-level identity to golden', 'freshSeedDigest': 'D-prime: same columns; only engine-assigned ids/system timestamps normalized to rank in commit order; every normalization has an engine-source comment and a test', 'scope': 'all seed-scope assertions (all value/lifetime columns), claims, attempts; tx_meta enumerates every scope', 'counts': 'independent COUNT(*) equals closed-form manifest counts; tx_meta holds only the seed scope; W0 worlds and R2 outputs equal O-DOMAIN', 'deadlines': 'every read has a deadline; timeout refuses', 'goldenPublication': 'two starts of a qualification clone each reproduce D and L before golden publication', 'recipe': ['finish-block', 'jobs-0 wait', 'finish-block', 'jobs-0 wait', 'docker stop -t 60', 'copy from stopped container'], 'refusalOnly': ['current golden key', 'copy tree hash', 'started-node quiescence: jobs 0 over three readings, live rows 0, layout L, transaction T, lag 0', 'Triplex lastPosition', 'first warm-up commit lastPosition + 1', 'end counts start plus recorded commands', 'resource/disk floor'], 'diagnostics': ['stop/log lines', 'settle readings', 'F', 'M', 'log tails', 'inspect', 'stderr', 'timers', 'owner state', 'plan hashes'], 'ownerJson': 'slot ownership only; no readiness admission', 'blockListing': 'diagnostic tools only; B never reads xt.block_files', 'e1': 'fresh D-prime equals golden D-prime; PAIR-0 A/A p50 <= 1.10 and p99 <= 1.15; rerun on recipe/image/XTDB version changes', 'retired': ['Q83d', 'Q83e']}:
+        errors.append("Q93: only content grants admission; old frontier predicates retired; D and D-prime distinct")
+    if QLEVER_EVIDENCE_POLICY != {'performance': ['P1', 'P4', 'P5', 'GS'], 'required': ['built base index', 'declared rebuild threshold', 'base triple count', 'delta triple count', 'delta in touched blocks'], 'deltaOnly': 'DIAGNOSTIC', 'freshResetAsDeltaPolicy': False, 'phase0': 'copy on exclusive slot, never shared resident', 'phase1': '10M-triple base; scan/join versus delta, monotonic and spread keys', 'phase2': 'blue/green generations rebuilt from broker log; leases bind every multi-request read to one generation; Q89i byte identity across every swap', 'feed': 'log', 'perGraphDeltaBound': 'rejected: shared server blocks'}:
+        errors.append("Q91: built-base counts, generations and exclusive copy requirements preserved")
+    if GOLDEN_SCENARIO_POLICY != {'before040': 'DIAGNOSTIC', 'closesObligation': False, 'entersComparison': False, 'world': 'W0-valid; domain claims checked by O-DOMAIN or fail closed; W01 retired', 'background': 'frozen TARGETS 2.1 trace via W0 mapper; private writerTrace retired', 'everyWindow': ['one burst', 'one maintenance event'], 'admission': ['per-run G0', 'fresh scope or verified clone', 'start/end store counts', 'QLever Q91a counts'], 'GS04b': 'required exactly when a separate current store exists', 'GS04': 'engine-kill schedule every lane, exclusive only', 'outbox': 'product atomic outbox for GS.10 and GS.19; harness file only diagnostic P3 checks', 'GS10': 'round C after A/B race required for closure', 'GS03': 'W0-1.2 signal-ack pending implementation; superseded outcome flagged for Sam', 'acceptanceSize': 'Q94a pending; TARGETS unchanged'} or not all("gs-diagnostic-before-0.4.0:Q94e" in contract_blockers(o) for o in OBL if o["id"].startswith("GS.")):
+        errors.append("Q94: golden scenarios remain diagnostic with exact content/schedule/outbox requirements")
+    authority = {}
+    for line in (HERE / "RULINGS.md").read_text().splitlines():
+        m = re.match(r"^\| (Q\d+[a-z])\b([^|]*)\| (.*?) \| (.*?) \|$", line)
+        if m:
+            authority[m[1]] = {"topic": m[2].strip(), "rule": m[3], "basis": m[4]}
+    if any(authority.get(k) != v for k, v in {**audit["rules"], **audit["amendments"]}.items()):
+        errors.append("0.3.13: authoritative rows must match literal compiled rules and amendments")
+    saved_image = IMAGE_PINS["datomic"]
+    try:
+        IMAGE_PINS["datomic"] = {"image": None, "imageId": None}
+        if "image-unpinned:datomic" not in contract_blockers(next(o for o in OBL if "datomic-datalog" in o["lanes"]), "datomic-datalog"):
+            errors.append("Q61i: missing image must still block lane D")
+    finally:
+        IMAGE_PINS["datomic"] = saved_image
+    if PIN_CHANGES_0313 != audit["pins"] or IMAGE_PINS.get("datomic") != audit["pins"]["datomic"]["new"]:
+        errors.append("Q45a/Q61i: reviewed Datomic image repin required")
+    p = audit["pins"]["testkit"]
+    if sha_file(p["path"]) != p["sha256"] or [{"path": f, "sha256": sha_file(f)} for f in ORACLES["O-TESTKIT"]["files"] if ORACLES["O-TESTKIT"]["status"] == "EXISTS"] != [{"path": p["path"], "sha256": p["sha256"]}] or CS["CS-U44"]["pinnedSourceFiles"] != [{"path": p["path"], "sha256": p["sha256"]}]:
+        errors.append("Q45a: all reviewed testkit source pin projections required")
+    held = {"Q78e", "Q86g", "Q94a"} | {k for k in pending_ruling_ids() if k.startswith(("Q89", "Q90", "Q92", "Q95"))}
+    if not held <= set(pending_ruling_ids()) or held & {v["id"] for v in RULINGS}:
+        errors.append("0.3.13: Sam/RT01/ER01 rulings remain pending")
+    return errors
+
+
 def main():
     errs = validate()
     errs += checks_0311()
     errs += checks_0312()
     errs += checks_0312_round3()
+    errs += checks_0313()
     for o in OBL:
         o["verifierMode"] = verifier_mode(o)
         o["definitionSha256"] = obligation_hash(o)
@@ -6209,7 +6310,7 @@ def main():
         "temporalRules": TEMPORAL_RULES, "readShapeRules": READ_SHAPE_RULES, "journalRules": JOURNAL_RULES, "ambRulings": AMB_RULINGS, "goldenResolutions": GOLDEN_RESOLUTIONS, "goldenRule": GOLDEN_RULE, "goldenFilesPinned": {f"{GOLDEN_DIR}/{k}": sha_file(f"{GOLDEN_DIR}/{k}") for k in golden_vectors()},
         "erasure": ERASURE, "protectedCopyInventory": PROTECTED_COPY_INVENTORY, "composition": COMPOSITION, "worldW0": WORLD_W0, "goldenFailureSchedules": {f"GS.{k:02d}": [{"case": c, "schedule": w, "expected": x} for c, w, x in v] for k, v in GS_FAILURE_SCHEDULES.items()},
         "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "a0Controls": A0_CONTROLS, "a0Registry": A0_REGISTRY, "qualificationRun": dict(QUALIFICATION_RUN, integrity=EVALUATOR_INTEGRITY, unprotected=["in-run edit and restore", "setsid", "TOCTOU", "no filesystem isolation", "no network isolation"] + ISOLATION_ADMISSION["unprotected"], protectedProcessCleanup="double-fork descendants are killed; setsid remains unprotected (Q75j)"), "continuationRules": CONTINUATION_RULES, "seedRules": SEED_RULES, "recursionRules": RECURSION_RULES, "datomicRules": DATOMIC_RULES, "exactQueryRules": EXACT_QUERY_RULES, "oracleRunners": ORACLE_RUNNERS, "compositionFields": list(COMPOSITION_FIELDS), "oracleAnswerRule": ORACLE_ANSWER_RULE, "answerMembers": ANSWER_MEMBERS, "caseManifest": CASE_MANIFEST, "buildSpec": BUILD_SPEC, "imagePins": IMAGE_PINS, "verifierRegistry": VERIFIER_REGISTRY, "verifierBriefSources": VERIFIER_BRIEF_SOURCES, "sourceVariantFields": SOURCE_VARIANT_FIELDS, "logFields": LOG_FIELDS, "workloadIdentity": WORKLOAD_IDENTITY, "workloadRepins": WORKLOAD_REPINS_0312, "workloadRepinReview": WORKLOAD_REPIN_REVIEW, "datomicStoragePolicy": DATOMIC_STORAGE_POLICY, "evidenceSchemas": EVIDENCE_SCHEMAS, "outsideBlockMutationFixture": OUTSIDE_BLOCK_MUTATION_FIXTURE, "positionRequiredCases": POSITION_REQUIRED_CASES, "claimAdmission": CLAIM_ADMISSION,
-        "brokerRules": BROKER_RULES, "observationRules": OBSERVATION_RULES, "isolationRules": ISOLATION_RULES, "isolationAdmission": ISOLATION_ADMISSION, "freezeProtocol": FREEZE_PROTOCOL, "mergeGates": MERGE_GATES, "pendingRulings": pending_rulings(), "closability": closability(), "oraclePins": ORACLE_PINS, "oracleRefusals": ORACLE_REFUSALS, "oracleRefusalRule": ORACLE_REFUSAL_RULE, "oracleScope": {k: oracle_scope(k) for k in ORACLE_PINS}, "pinScopeExpectedDiff": PIN_SCOPE_EXPECTED_DIFF, "q43Rules": Q43_RULES, "receiverCases": RECEIVER_CASES, "atomicUnitCases": ATOMIC_UNIT_CASES, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "decimalRoutingQ52": DECIMAL_ROUTING_Q52, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
+        "brokerRules": BROKER_RULES, "observationRules": OBSERVATION_RULES, "isolationRules": ISOLATION_RULES, "isolationAdmission": ISOLATION_ADMISSION, "freezeProtocol": FREEZE_PROTOCOL, "qleverEvidenceRules": QLEVER_EVIDENCE_RULES, "qleverEvidencePolicy": QLEVER_EVIDENCE_POLICY, "goldenScenarioRulings": GOLDEN_SCENARIO_RULES, "goldenScenarioPolicy": GOLDEN_SCENARIO_POLICY, "seedAmendments": SEED_AMENDMENTS_0313, "retiredSeedRules": RETIRED_RULES_0313, "pinChanges0313": PIN_CHANGES_0313, "mergeGates": MERGE_GATES, "pendingRulings": pending_rulings(), "closability": closability(), "oraclePins": ORACLE_PINS, "oracleRefusals": ORACLE_REFUSALS, "oracleRefusalRule": ORACLE_REFUSAL_RULE, "oracleScope": {k: oracle_scope(k) for k in ORACLE_PINS}, "pinScopeExpectedDiff": PIN_SCOPE_EXPECTED_DIFF, "q43Rules": Q43_RULES, "receiverCases": RECEIVER_CASES, "atomicUnitCases": ATOMIC_UNIT_CASES, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "decimalRoutingQ52": DECIMAL_ROUTING_Q52, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
         "numericOps": NUMERIC_OPS, "conversionRules": CONVERSION_RULES, "comparisonRules": COMPARISON_RULES, "aggregateRules": AGGREGATE_RULES,
         "cardManyOrder": CARD_MANY_ORDER, "constraintRules": CONSTRAINT_RULES, "errorTable": ERROR_TABLE, "retiredErrors": RETIRED_ERRORS, "errorRepresentation": ERROR_REPRESENTATION, "errorComparison": ERROR_COMPARISON,
         "commitOutcomes": COMMIT_OUTCOMES, "cursorTransitions": CURSOR_TRANSITIONS,

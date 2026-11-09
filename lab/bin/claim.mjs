@@ -254,7 +254,7 @@ export function coreContext(contract, { pins, w0, a0, verifiers, pinned, overrid
     comparators: Object.keys(contract.comparators ?? {}), sourceVariantFields: contract.sourceVariantFields ?? {}, logFields: contract.logFields ?? {},
     caseManifest: contract.caseManifest ?? { required: ['id', 'tags', 'input', 'contentSha256', 'comparator'] }, answerMembers: contract.answerMembers ?? {},
     cfg: { buildSpec: contract.buildSpec ?? null, frozenTrace: loadContract?.writerTrace?.generator?.frozen ?? null, imagePins: contract.imagePins ?? {}, oracleRunners: contract.oracleRunners ?? {}, ...(overrides ?? {}) },
-    pair0: loadContract?.measurementProtocol ?? null,
+    pair0: loadContract?.measurementProtocol ?? null, goldenScenarioPolicy: contract.goldenScenarioPolicy ?? null,
     oracles: contract.oracles, refusals: contract.oracleRefusals, caseSets: contract.caseSets, onRun,
   };
 }
@@ -425,6 +425,8 @@ export function admitCore(claim, ev, ctx) {
   if (!ids.length) return stop('CLAIM-NO-OBLIGATIONS', 'the claim names no obligation');
   if (ids.some(i => typeof i !== 'string' || !ctx.byId.has(i))) return stop('UNKNOWN-OBLIGATION', `unknown obligation ids in ${JSON.stringify(ids)} are rejected, never dropped (RULINGS Q42a)`);
   const claimed = ids.map(i => ctx.byId.get(i));
+  // [EXP-A01-0313] Why: Q94e makes every pre-0.4.0 GS receipt diagnostic, including comparisons. Rejected: allowing complete pins to override the GS hold.
+  if (ctx.goldenScenarioPolicy?.before040 === 'DIAGNOSTIC' && claimed.some(o => o.id.startsWith('GS.'))) return stop('GS-DIAGNOSTIC', 'GS evidence cannot close obligations or enter comparisons before contract 0.4.0 (Q94e)');
   const tree = own(claim, 'sourceTreeSha256') ?? null, comp = pyFalsy(own(claim, 'composition')) ? {} : claim.composition, commit = own(claim, 'commit') ?? null;
   // 0.3.10 (Q67j, Q75i): a promotion is rejected explicitly until its prerequisites are enforced mechanically. The reference admits
   // kinds "comparison" and "screening" (a missing kind is "comparison"); the claim format and CLAIM_ADMISSION say "comparative", so
@@ -510,6 +512,8 @@ export function documentCore(claim, env, ctx) {
   const unknown = ids.filter(i => typeof i !== 'string' || !ctx.byId.has(i));
   if (unknown.length) { why('UNKNOWN-OBLIGATION', `unknown obligation ids ${JSON.stringify(unknown)} are rejected, never dropped (RULINGS Q42a)`); return done(); }
   const claimed = ids.map(i => ctx.byId.get(i));
+  // [EXP-A01-0313] Why: Q94e applies to document verdicts as well as executing claims. Rejected: a GS document labelled QUALIFIED before 0.4.0.
+  if (ctx.goldenScenarioPolicy?.before040 === 'DIAGNOSTIC' && claimed.some(o => o.id.startsWith('GS.'))) { why('GS-DIAGNOSTIC', 'GS evidence is diagnostic before contract 0.4.0 (Q94e)'); return done(); }
   const tree = claim.sourceTreeSha256, comp = isObj(claim.composition) ? claim.composition : {}, commit = claim.commit, rs = Array.isArray(claim.receipts) ? claim.receipts : [];
   const domain = claimed.some(o => o.oracles.includes('O-DOMAIN'));
   const prereq = [PREREQ.position, PREREQ.identity, ...(domain ? [PREREQ.w0] : [])];

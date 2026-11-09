@@ -1,0 +1,4 @@
+channel: https://repo.maven.apache.org/maven2/com/datomic/peer/1.0.7745/peer-1.0.7745.jar.sha1
+expected: a976733ab47a8ed3f19c687995e09f406191f9b7
+actual: a976733ab47a8ed3f19c687995e09f406191f9b7
+match: true

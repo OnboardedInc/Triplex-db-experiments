@@ -1,0 +1,39 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-25d8d0fa-452f-410c-9d43-0a94a8b12ddd\",0]","db":"s-9195db0992893a2672c95d56c594f7bd","created":true,"schemaHash":"d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-25d8d0fa-452f-410c-9d43-0a94a8b12ddd\",0]","db":"s-9195db0992893a2672c95d56c594f7bd","deleted":true}
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > reads speculative inserts and retractions without publishing them 353ms
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-789767d8-8902-4cbb-8c98-6d758570ac67\",0]","db":"s-7f43d29fca980b0771c6df07e2cc71a5","created":true,"schemaHash":"d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-789767d8-8902-4cbb-8c98-6d758570ac67\",0]","db":"s-7f43d29fca980b0771c6df07e2cc71a5","deleted":true}
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rolls back nested failures while preserving the parent 184ms
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-233872a8-203b-4d24-8e43-ed70ee9adcbb\",0]","db":"s-74cdd0f24ec086153fd045f8c2e6b922","created":true,"schemaHash":"d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-233872a8-203b-4d24-8e43-ed70ee9adcbb\",0]","db":"s-74cdd0f24ec086153fd045f8c2e6b922","deleted":true}
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rejects identity reuse without replacing the original 288ms
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-b126f1e9-b1b5-456e-8582-b9c0456a4d84\",0]","db":"s-bc8e0fe0da178ade9fc8d08cbf0ab08f","created":true,"schemaHash":"d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-b126f1e9-b1b5-456e-8582-b9c0456a4d84\",0]","db":"s-bc8e0fe0da178ade9fc8d08cbf0ab08f","deleted":true}
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-8fff5013-ed07-4376-82a9-efaa938680b2\",0]","db":"s-6f97a8e9ad705b683786a901f53ac4c7","created":true,"schemaHash":"d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"}
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > resolves an acknowledgement lost after durable submission 123ms
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-8fff5013-ed07-4376-82a9-efaa938680b2\",0]","db":"s-6f97a8e9ad705b683786a901f53ac4c7","deleted":true}
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns an identifiable unknown outcome within the resolution budget 340ms
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-fac7f331-460e-42f0-9585-6e4807954333\",0]","db":"s-54db81cfff4a954fc99684a46da538d7","created":true,"schemaHash":"d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-fac7f331-460e-42f0-9585-6e4807954333\",0]","db":"s-54db81cfff4a954fc99684a46da538d7","deleted":true}
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns the original transaction id for a duplicate command 146ms
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-3d0ee747-d340-470b-a274-bcf6232f4fff\",0]","db":"s-7598b8fe7a7ca84ef24b53cec240faf6","created":true,"schemaHash":"d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-3d0ee747-d340-470b-a274-bcf6232f4fff\",0]","db":"s-7598b8fe7a7ca84ef24b53cec240faf6","deleted":true}
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > preserves signed zero and int64 bounds and rejects noncanonical integers 298ms
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-ccb15688-4c67-4919-aa64-4d7eafcb8be2\",0]","db":"s-71278293bcd4d36e2ec46eeca3e43e85","created":true,"schemaHash":"d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-ccb15688-4c67-4919-aa64-4d7eafcb8be2\",0]","db":"s-71278293bcd4d36e2ec46eeca3e43e85","deleted":true}
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > replays one safe callback after a concurrent scope conflict 146ms
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-14901c77-a38d-4d6a-8ade-79b9b666961e\",0]","db":"s-839ca651ae9994ed8f39fe2a561f7907","created":true,"schemaHash":"d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-14901c77-a38d-4d6a-8ade-79b9b666961e\",0]","db":"s-839ca651ae9994ed8f39fe2a561f7907","deleted":true}
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > queries the speculative delta through native Datalog 142ms
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-4497c85b-e53d-46d0-890b-96399c6d7a72\",0]","db":"s-ee4b6a42b2a1268be28e47c1038ec93d","created":true,"schemaHash":"d12389fbc5d53f8b8a1a59acd32db4a6d88145f30d49f6aac5d18f56c393dadd"}
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-4497c85b-e53d-46d0-890b-96399c6d7a72\",0]","db":"s-ee4b6a42b2a1268be28e47c1038ec93d","deleted":true}
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > reconstructs intermediate logical cuts and mixed timestamps in one physical commit 162ms
+
+ Test Files  1 passed (1)
+      Tests  10 passed (10)
+   Start at  17:52:34
+   Duration  2.58s (tests 88%, import 9%, transform 3%)
+

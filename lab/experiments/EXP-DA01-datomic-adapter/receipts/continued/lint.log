@@ -1,0 +1,79 @@
+
+  ! eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
+     ,-[packages/datomic/src/DatomicQueryExecutor.ts:156:15]
+ 155 |               ...row,
+ 156 |               ...(entities.get(String(row[optional.rowBinding])) ?? {}),
+     :               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 157 |             }));
+     `----
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ! eslint(no-useless-escape): Unnecessary escape character '"'
+   ,-[packages/datomic/test/query.test.ts:8:49]
+ 7 |     const q = compileDatomic(
+ 8 |       { find: ["?e"], where: [["?e", ":name", 'x\" ) (evil']] },
+   :                                                 ^^
+ 9 |       { validAt: 0 },
+   `----
+  help: Replace `\"` with `"`.
+
+  ! eslint(no-constant-condition): Unexpected constant condition
+     ,-[packages/datomic/src/DatomicStorageAdapter.ts:153:18]
+ 152 |           await new Promise((resolve) => setTimeout(resolve, 25));
+ 153 |         } while (true);
+     :                  ^^|^
+     :                    `-- this expression will always evaluate to the same value
+ 154 |         throw new TransactionOutcomeUnknown({
+     `----
+  help: Update the condition to not be constant, or remove the condition entirely
+
+  ! eslint(no-unused-vars): Parameter 'tail' is declared but never used. Unused parameters should start with a '_'.
+     ,-[lab/bin/gate.mjs:732:29]
+ 731 |     git, lockfileSha256, toolchain: tools, gateScripts, ...result,
+ 732 |     steps: run.steps.map(({ tail, ...step }) => step), firstFailures: run.firstFailures,
+     :                             ^^|^
+     :                               `-- 'tail' is declared here
+ 733 |     rawDir: run.rel(run.rawDir), reasons: run.reasons,
+     `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Parameter 'secretLike' is declared but never used. Unused parameters should start with a '_'.
+     ,-[lab/bin/gate.mjs:735:83]
+ 734 |   };
+ 735 |   if (receipt.git) { receipt.git.modifiedFiles = receipt.git.modifiedFiles.map(({ secretLike, ...f }) => f); receipt.git.untrackedFiles = receipt.git.untrackedFiles.map(({ secretLike, ...f }) => f); }
+     :                                                                                   ^^^^^|^^^^
+     :                                                                                        `-- 'secretLike' is declared here
+ 736 |   const { verdict, reasons } = verdictOf(receipt);
+     `----
+  help: Consider removing this parameter.
+
+  ! eslint(no-unused-vars): Parameter 'secretLike' is declared but never used. Unused parameters should start with a '_'.
+     ,-[lab/bin/gate.mjs:735:173]
+ 734 |   };
+ 735 |   if (receipt.git) { receipt.git.modifiedFiles = receipt.git.modifiedFiles.map(({ secretLike, ...f }) => f); receipt.git.untrackedFiles = receipt.git.untrackedFiles.map(({ secretLike, ...f }) => f); }
+     :                                                                                                                                                                             ^^^^^|^^^^
+     :                                                                                                                                                                                  `-- 'secretLike' is declared here
+ 736 |   const { verdict, reasons } = verdictOf(receipt);
+     `----
+  help: Consider removing this parameter.
+
+  ! eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
+     ,-[lab/bin/gate.mjs:374:5]
+ 373 |     ...profile,
+ 374 |     ...(entry.extraEnv ?? {}),
+     :     ^^^^^^^^^^^^^^^^^^^^^^^^^
+ 375 |   });
+     `----
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+  ! eslint-plugin-unicorn(no-useless-fallback-in-spread): Empty fallbacks in spreads are unnecessary
+     ,-[lab/bin/gate.mjs:683:205]
+ 682 |   result.cases = executions.map(e => ({ caseId: e.caseId, mode: e.mode, status: e.status, kind: e.kind, expectedBaseline: e.expectedBaseline, oracleId: e.oracleId,
+ 683 |     oracleSource: e.oracleSource, expected: e.expected, actual: e.actual ?? null, query: e.query ?? null, rawResultSha256: e.rawResultSha256 ?? null, ...caseLanguages([{ operation: 'public-native-query', ...(e.trace ?? {}) }]) }));
+     :                                                                                                                                                                                                             ^^^^^^^^^^^^^^^^^^
+ 684 |   result.scopes = { scope: report.scope, fresh: true, write: report.write };
+     `----
+  help: Spreading falsy values in object literals won't add any unexpected properties, so it's unnecessary to add an empty object as fallback.
+
+Found 8 warnings and 0 errors.
+Finished in 10ms on 16 files with 93 rules using 12 threads.

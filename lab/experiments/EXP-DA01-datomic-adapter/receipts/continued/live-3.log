@@ -1,0 +1,10 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 2977 "CX-VP2Q-4-live-http", pid 3055 "CX-VP2Q-4-live-prior", pid 9405 "DA01-peer-selftest"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+
+ Test Files  1 passed (1)
+      Tests  8 passed (8)
+   Start at  17:27:03
+   Duration  4.59s (tests 94%, import 4%, transform 1%)
+

@@ -1,0 +1,5 @@
+[lab] G1-datomic-20261108T230444Z-41d742: raw output runs/G1/G1-datomic-20261108T230444Z-41d742
+error: could not write index
+PASS G1 datomic/dev scope=full executed=88 pass=88 fail=0 skip=0
+profile: default; planner budget: null
+receipt: lab/runs/G1/G1-datomic-20261108T230444Z-41d742.json

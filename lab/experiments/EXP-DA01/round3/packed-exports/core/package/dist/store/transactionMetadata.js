@@ -1,0 +1,122 @@
+import { EntityId, TransactionId, TripleId, unsafe } from "../Branded.js";
+import { TxAttributes } from "../utils/id.js";
+import { Option } from "effect";
+//#region src/store/transactionMetadata.ts
+const text = (value) => ({
+	type: "string",
+	value
+});
+const transactionChangeFromTriple = (op, triple, transactionId, transactionInstant) => ({
+	op,
+	tripleId: triple.id,
+	entityId: triple.entityId,
+	attribute: triple.attribute,
+	...Option.isSome(triple.entityType) ? { entityType: triple.entityType.value } : {},
+	value: triple.value,
+	validFrom: triple.validFrom,
+	...Option.isSome(triple.validTo) ? { validTo: triple.validTo.value } : {},
+	recordedAt: triple.recordedAt,
+	...op === "retract" ? { retractedAt: transactionInstant } : {},
+	...Option.isSome(triple.txId) ? { assertionTxId: triple.txId.value } : {},
+	...op === "retract" ? { retractionTxId: transactionId } : {}
+});
+const metadataInputs = (txId, position, instant, meta, changes) => {
+	const input = (attribute, value) => ({
+		entityId: txId,
+		attribute,
+		value,
+		entityType: "_Transaction"
+	});
+	return [
+		input(TxAttributes.POSITION, {
+			type: "number",
+			value: position
+		}),
+		input(TxAttributes.INSTANT, {
+			type: "datetime",
+			value: instant
+		}),
+		...meta?.actor ? [input(TxAttributes.ACTOR, text(meta.actor))] : [],
+		...meta?.commandId ? [input(TxAttributes.COMMAND_ID, text(meta.commandId))] : [],
+		...meta?.correlationId ? [input(TxAttributes.CORRELATION_ID, text(meta.correlationId))] : [],
+		...meta?.causationId ? [input(TxAttributes.CAUSATION_ID, text(meta.causationId))] : [],
+		...meta?.configSnapshot ? [input(TxAttributes.CONFIG_SNAPSHOT, text(meta.configSnapshot))] : [],
+		...[...new Set(changes.map((change) => change.entityId))].map((entityId) => input(TxAttributes.CHANGED_ENTITY, {
+			type: "ref",
+			value: entityId
+		})),
+		...changes.map((change) => input(TxAttributes.CHANGE, {
+			type: "json",
+			value: change
+		}))
+	];
+};
+const scalar = (triple) => {
+	if (!triple) return void 0;
+	return triple.value.type === "string" || triple.value.type === "ref" ? triple.value.value : void 0;
+};
+const decodeChange = (value) => {
+	if (typeof value !== "object" || value === null || !("op" in value) || !("tripleId" in value) || !("entityId" in value) || !("attribute" in value)) return;
+	const candidate = value;
+	if (candidate["op"] !== "assert" && candidate["op"] !== "retract" || typeof candidate["tripleId"] !== "string" || typeof candidate["entityId"] !== "string" || typeof candidate["attribute"] !== "string" || candidate["assertionTxId"] !== void 0 && typeof candidate["assertionTxId"] !== "string" || candidate["retractionTxId"] !== void 0 && typeof candidate["retractionTxId"] !== "string") return;
+	try {
+		return {
+			...candidate,
+			tripleId: TripleId.make(candidate["tripleId"]),
+			entityId: EntityId.make(candidate["entityId"]),
+			...typeof candidate["assertionTxId"] === "string" ? { assertionTxId: TransactionId.make(candidate["assertionTxId"]) } : {},
+			...typeof candidate["retractionTxId"] === "string" ? { retractionTxId: TransactionId.make(candidate["retractionTxId"]) } : {}
+		};
+	} catch {
+		return;
+	}
+};
+const transactionRecordFromTriples = (txId, triples) => {
+	const at = (attribute) => triples.find((triple) => triple.attribute === attribute);
+	const instantTriple = at(TxAttributes.INSTANT);
+	const positionTriple = at(TxAttributes.POSITION);
+	if (!instantTriple || instantTriple.value.type !== "datetime" || !positionTriple || positionTriple.value.type !== "number" || !Number.isSafeInteger(positionTriple.value.value) || positionTriple.value.value < 1) return null;
+	const changes = triples.filter((triple) => triple.attribute === TxAttributes.CHANGE && triple.value.type === "json").flatMap((triple) => {
+		const change = decodeChange(triple.value.value);
+		return change === void 0 ? [] : [change];
+	});
+	return {
+		txId,
+		position: positionTriple.value.value,
+		instant: instantTriple.value.value,
+		...scalar(at(TxAttributes.ACTOR)) ? { actor: scalar(at(TxAttributes.ACTOR)) } : {},
+		...scalar(at(TxAttributes.COMMAND_ID)) ? { commandId: scalar(at(TxAttributes.COMMAND_ID)) } : {},
+		...scalar(at(TxAttributes.CORRELATION_ID)) ? { correlationId: scalar(at(TxAttributes.CORRELATION_ID)) } : {},
+		...scalar(at(TxAttributes.CAUSATION_ID)) ? { causationId: scalar(at(TxAttributes.CAUSATION_ID)) } : {},
+		...scalar(at(TxAttributes.CONFIG_SNAPSHOT)) ? { configSnapshot: scalar(at(TxAttributes.CONFIG_SNAPSHOT)) } : {},
+		changes
+	};
+};
+const transactionRecordsFromTriples = (triples) => {
+	const grouped = /* @__PURE__ */ new Map();
+	for (const triple of triples) {
+		const txId = unsafe.transactionId(triple.entityId);
+		const group = grouped.get(txId) ?? [];
+		group.push(triple);
+		grouped.set(txId, group);
+	}
+	return [...grouped.entries()].flatMap(([txId, txTriples]) => {
+		const record = transactionRecordFromTriples(txId, txTriples);
+		return record === null ? [] : [record];
+	}).sort((left, right) => left.position - right.position);
+};
+const livePreconditionIds = (meta) => new Set(meta?.preconditions?.flatMap((condition) => condition._tag === "TripleLive" ? [condition.id] : []) ?? []);
+const entityStatePreconditions = (meta) => meta?.preconditions?.filter((condition) => condition._tag === "EntityState") ?? [];
+const invalidCommandId = (meta) => {
+	const commandId = meta?.commandId;
+	return commandId !== void 0 && (commandId.length === 0 || commandId.length > 1024) ? commandId : void 0;
+};
+const validatePreconditions = (operations, meta) => {
+	const retractIds = new Set(operations.flatMap((operation) => operation.op === "retract" && operation.id !== void 0 ? [operation.id] : []));
+	const invalid = meta?.preconditions?.find((condition) => condition._tag === "TripleLive" && !retractIds.has(condition.id));
+	return invalid?._tag === "TripleLive" ? invalid.id : void 0;
+};
+//#endregion
+export { entityStatePreconditions, invalidCommandId, livePreconditionIds, metadataInputs, transactionChangeFromTriple, transactionRecordFromTriples, transactionRecordsFromTriples, validatePreconditions };
+
+//# sourceMappingURL=transactionMetadata.js.map

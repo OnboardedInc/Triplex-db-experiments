@@ -1,0 +1,80 @@
+{
+  "format": "EXP-DA00-builder-evidence/1",
+  "implementationCommit": "5b09b57b704a925bb6c28ad52f5203deba82b069",
+  "verification": {
+    "zipSha256": "60ac6bc5f04fefb85a5aeef6a5e6c5369c5a880ca6b9f205e00a12719e7bd2dc",
+    "zipBytes": 272751248,
+    "peerSha1": "a976733ab47a8ed3f19c687995e09f406191f9b7",
+    "peerSha1Url": "https://repo.maven.apache.org/maven2/com/datomic/peer/1.0.7745/peer-1.0.7745.jar.sha1",
+    "gpgVerdict": "VALIDSIG",
+    "fingerprint": "749F6F7C583CA630FF76AECDF255D6EA3FD20B93",
+    "keySource": "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x749F6F7C583CA630FF76AECDF255D6EA3FD20B93",
+    "keyTrust": "Signature valid; keyserver key identity not independently certified",
+    "baseIndexDigest": "sha256:0eda5830ed7b669abc246a8dc520ea8a23cab06f9a8d4b6964109e2f2394e46f",
+    "arm64Manifest": "sha256:e29bfdff2f7245d8be69ee092651149c026e1b8c2b2d4967c9563963f30076f3",
+    "jars": {
+      "clojure-1.12.5.jar": "dfdee131460216a84fef22e537bb0d0579965f8f70338d748323dff26f8e5a8b",
+      "jetty-server-9.4.53.v20231009.jar": "9c4e9c6cb0a7a541031500af0823b678f65d809f481efa9cadd1ff81bda19f78",
+      "ring-jetty-adapter-1.10.0.jar": "8d224dc95a88da7e42da9b7f68527eca18070803fe0b1c74ee2da6a794281dfc",
+      "data.json-2.5.2.jar": "0938c730961d32b331ea7e5cd7c6a822c0a889def79d1c3f2af4dd201fdddeb3"
+    }
+  },
+  "imageId": "sha256:d0e2465fd9548980373a61f84b8f50e339a82cd627c56ead0ac284b87cb34c6d",
+  "imageSizeBytes": 371251125,
+  "buildInputsSha256": "c15195a2c2bffd4de222f55ea79c76266b321bc8b02f6451e9a157d386199256",
+  "sourceInputsSha256": "1ac6a327b79735778212eef110d1e7983a23c3fb15561415fbe613a9d85378cb",
+  "effectiveConfigSha256": "ff80bcfe25a5d31687afff84999b5d9dd03f564c9cb84579002d98d0efcc0c28",
+  "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d",
+  "gatewaySourceSha256": "0177dcf44530bc32f02b4230a2203ae0c03652b27a4fb61a1b559283d68be1dc",
+  "coldStartToReadyMs": 19756.721125,
+  "restartToReadyMs": 19612.531040999995,
+  "creationEndpointLatencyMs": {
+    "count": 100,
+    "min": 122.65175000000454,
+    "median": 272.1334584999968,
+    "mean": 325.94817535000004,
+    "p95NearestRank": 663.4820410000029,
+    "p99NearestRank": 877.7266660000023,
+    "max": 1001.8899579999998
+  },
+  "measurementPassed": true,
+  "persistence": {
+    "volumeRetained": true,
+    "basisBefore": {
+      "t": {
+        "t": "long",
+        "v": "1001"
+      },
+      "position": {
+        "t": "long",
+        "v": "0"
+      },
+      "recordedAt": null,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    "basisAfter": {
+      "t": {
+        "t": "long",
+        "v": "1001"
+      },
+      "position": {
+        "t": "long",
+        "v": "0"
+      },
+      "recordedAt": null,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    "duplicateCreateCreated": false
+  },
+  "retention": {
+    "kept": {
+      "scope": "[\"triplex-scope-v1\",\"test\",\"da00\",\"measure-0\",\"1794174634082\"]",
+      "db": "s-5a377987b021d5401900564fbae6a1ee",
+      "created": true,
+      "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+    },
+    "deleted": 99,
+    "resident": "left running for orchestrator"
+  },
+  "independentReview": "not performed by builder"
+}

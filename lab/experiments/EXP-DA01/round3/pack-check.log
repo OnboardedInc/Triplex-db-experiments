@@ -1,0 +1,17 @@
+
+> triplex-monorepo@0.1.0 pack:check /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+> node scripts/check-packages.mjs
+
+Package verification artifacts retained at /Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round3/pack-check/triplex-pack-R3RZTe
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/da01/scripts/check-packages.mjs:79
+        throw new Error(`${tarball} is missing ${required}`);
+              ^
+
+Error: /Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round3/pack-check/triplex-pack-R3RZTe/tarballs/triplex-build-triplex-cli-0.1.1.tgz is missing package/dist/index.js
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/da01/scripts/check-packages.mjs:79:15
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+ ELIFECYCLE  Command failed with exit code 1.

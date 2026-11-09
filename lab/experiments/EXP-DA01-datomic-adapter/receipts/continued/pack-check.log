@@ -1,0 +1,21 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 45994 "CX-VP2Q-4-r5-live", pid 43591 "CX-SQL01-r2-verifier", pid 62697 "DA01-G1-repeat", pid 43700 "CX-SQL01-r2-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45994 "CX-VP2Q-4-r5-live", pid 43591 "CX-SQL01-r2-verifier", pid 51245 "orch-claim-tests", pid 43700 "CX-SQL01-r2-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45994 "CX-VP2Q-4-r5-live", pid 66545 "CX-G03-smoke2", pid 51245 "orch-claim-tests", pid 43700 "CX-SQL01-r2-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45994 "CX-VP2Q-4-r5-live", pid 87952 "DA01-package", pid 51245 "orch-claim-tests", pid 43700 "CX-SQL01-r2-live"
+
+> triplex-monorepo@0.1.0 pack:check /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+> node scripts/check-packages.mjs
+
+Package verification artifacts retained at /Users/sam/projects/triplex-db-2/.claude/worktrees/da01/runs/pack/DA01/triplex-pack-nBA1J3
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/da01/scripts/check-packages.mjs:79
+        throw new Error(`${tarball} is missing ${required}`);
+              ^
+
+Error: /Users/sam/projects/triplex-db-2/.claude/worktrees/da01/runs/pack/DA01/triplex-pack-nBA1J3/tarballs/triplex-build-triplex-cli-0.1.1.tgz is missing package/dist/index.js
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/da01/scripts/check-packages.mjs:79:15
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2
+ ELIFECYCLE  Command failed with exit code 1.
