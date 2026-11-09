@@ -136,7 +136,7 @@ Builder: Claude Sonnet 5.5, offline. Base `7ae302bc`; main `7fd55aac` (contains 
 | --- | --- |
 | `node --import tsx --test lab/bench/di01*.test.ts` | 16/16 passed (11 existing + 5 new) |
 | Lab PACK gate (`lab/bin/check-packages.mjs`, offline npm shim, cache from `CX-VA01-040`) | PASS: 12 tarballs, clean consumer install, entry-point imports, CLI checks; artifacts in `evidence/CX-DI01-R2/pack/`. First attempt failed `Cannot find module 'undici'` (stale install, before the offline frozen install above); kept as `pack-attempt1*`. |
-| Evaluator `node --test lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs` | see final line below |
+| Evaluator `node --test lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs` | 108 passed, 0 failed, 0 skipped; run on `efb488c5` (report commit; code identical to `80b6477e`); log `evidence/CX-DI01-R2/evaluator.log` |
 
 **Rule 9a audit.** This round adds no PASS, receipt or verdict producer. The only new checks are test assertions: (1) refusal tests compare the thrown object's class, tag, reason and numeric fields with the requested and fixture-set values (content), run in this attempt on freshly created temp databases (freshness), and the reader under test is the shipped `di01-refs.ts` with a fake source whose head and rows the test sets, so the observed refusal is tied to that input (binding); (2) the unchanged-state assertions compare the full dependency, effect, affected and checkpoint snapshot, taken before the refusal and after reopen, field by field with `deepEqual`; (3) retry success asserts the checkpoint token and the reach answer, not merely absence of an error. Existing DI01 receipts and evidence were not regenerated and are not changed by this round.
 
