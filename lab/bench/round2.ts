@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline";
+import { createGunzip } from "node:zlib";
 import { randomUUID, createHash } from "node:crypto";
 import { memoryComposition } from "./lib/memory.ts";
 import { fingerprintSweep } from "./lib/w0-fingerprint.ts";
@@ -34,12 +35,23 @@ const report: any = {
 };
 for (const f of fs.readdirSync("lab/bench/lib").filter((f) => f.endsWith(".ts")))
   report.sources[f] = sha256(fs.readFileSync("lab/bench/lib/" + f));
+report.entrySourceSha256 = sha256(fs.readFileSync(new URL(import.meta.url)));
+report.runtime = { node: process.version, lockSha256: sha256(fs.readFileSync("pnpm-lock.yaml")) };
+report.kernelBuild = Object.fromEntries(
+  fs
+    .readdirSync("packages/w0/dist")
+    .filter((f) => f.endsWith(".js"))
+    .map((f) => [f, sha256(fs.readFileSync("packages/w0/dist/" + f))]),
+);
 const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 save();
 try {
   const log = path.join(path.dirname(seedReceipt), "seed.ndjson"),
     hash = createHash("sha256");
-  const stream = fs.createReadStream(log);
+  const stream = fs.existsSync(log)
+    ? fs.createReadStream(log)
+    : fs.createReadStream(log + ".gz").pipe(createGunzip());
+  report.seedLogStorage = fs.existsSync(log) ? log : log + ".gz";
   stream.on("data", (d) => hash.update(d));
   console.error("[P5 R2] restore recorded commands, then admit only by fresh G0");
   for await (const line of createInterface({ input: stream, crlfDelay: Infinity })) {
@@ -80,7 +92,12 @@ try {
     // Traffic arms must start from the seed, not from the recovery reference's published outbox.
     const trafficScope = scope + ":traffic",
       traffic = memoryComposition("xtdb", trafficScope);
-    const lines = createInterface({ input: fs.createReadStream(log), crlfDelay: Infinity });
+    const lines = createInterface({
+      input: fs.existsSync(log)
+        ? fs.createReadStream(log)
+        : fs.createReadStream(log + ".gz").pipe(createGunzip()),
+      crlfDelay: Infinity,
+    });
     for await (const line of lines) {
       const c = JSON.parse(line),
         r = await traffic.transact(c.operations, { commandId: c.commandId, actor: "p5-restore" });
@@ -105,6 +122,11 @@ try {
   for (const [file, digest] of Object.entries(report.sources))
     if (sha256(fs.readFileSync("lab/bench/lib/" + file)) !== digest)
       throw new Error("source changed during attempt: " + file);
+  if (report.entrySourceSha256 !== sha256(fs.readFileSync(new URL(import.meta.url))))
+    throw new Error("entry source changed");
+  for (const [file, hash] of Object.entries(report.kernelBuild))
+    if (sha256(fs.readFileSync("packages/w0/dist/" + file)) !== hash)
+      throw new Error("kernel build changed");
   report.status = "OFFLINE-CHECKS-COMPLETE";
 } catch (e: any) {
   report.status = "FAIL";

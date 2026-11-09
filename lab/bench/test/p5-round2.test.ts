@@ -9,7 +9,7 @@ import { W0, V_W0, triplexValue, worldOf } from "../lib/w0-world.ts";
 import { seedW0 } from "../lib/w0-seed.ts";
 import { readW0Fingerprint, fingerprintSweep, FingerprintRefusal } from "../lib/w0-fingerprint.ts";
 import { recoverSweep } from "../lib/sweep-recovery.ts";
-import { subjectList, Controller } from "../lib/sweep.ts";
+import { subjectList, Controller, runW0Sweep } from "../lib/sweep.ts";
 import { applyW0Trace, trafficArm, ratioSummary } from "../lib/w0-traffic.ts";
 const dir = () => fs.mkdtempSync(path.join(os.tmpdir(), "p5-r2-"));
 test("shared G0 reads every subject and refuses altered digest/count/binding/partial/deadline", async () => {
@@ -219,4 +219,40 @@ test("64 live readers overlap real mapped writer progress and controller-fed swe
   assert.ok(result.trace.committed > 0);
   assert.equal(result.sweepComplete, true);
   assert.ok(result.controller.windows.length > 0);
+});
+
+test("paused workers exit when the admitted worker drains remaining pages", async () => {
+  const scope = randomUUID(),
+    comp = memoryComposition("xtdb", scope);
+  for (const s of subjectList(650))
+    await comp.transact(
+      [
+        {
+          op: "assert",
+          entityId: s,
+          attribute: "weeklyMinutes",
+          value: triplexValue("weeklyMinutes", 2400),
+          validFrom: 0,
+        },
+      ],
+      {},
+    );
+  const controller = new Controller(2);
+  controller.limit = 1;
+  const result = await runW0Sweep({
+    comp,
+    composition: "memory",
+    lane: "xtdb",
+    scope,
+    subjects: subjectList(650),
+    basis: { position: 650, validAt: V_W0 },
+    sweepId: scope,
+    cursor: path.join(dir(), "cursor.json"),
+    workers: 2,
+    controller,
+    signal: AbortSignal.timeout(5000),
+    onPage: async () => {},
+  });
+  assert.equal(result.complete, true);
+  assert.equal(result.published.length, 11);
 });

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
-import { generateTrace, traceDigest, type TraceEvent } from "./trace.ts";
+import { generateTrace, type TraceEvent } from "./trace.ts";
 import { mapW0Trace } from "./w0-trace.ts";
 import { Controller, CONTROLLER, runW0Sweep, subjectList } from "./sweep.ts";
 import { W0, V_W0, canonical, worldOf, sha256 } from "./w0-world.ts";
@@ -348,6 +348,14 @@ export async function trafficArm(o: ArmOptions) {
       failed = e;
     }
   }, CONTROLLER.intervalMs);
+  const sweepAbort = new AbortController();
+  const sweepDeadline = setTimeout(
+    () => {
+      failed = new Error("sweep deadline exceeded");
+      sweepAbort.abort(failed);
+    },
+    Math.max(o.durationS * 1000, 120000),
+  );
   let sweep: any = null,
     sweepWallMs = 0;
   try {
@@ -355,6 +363,7 @@ export async function trafficArm(o: ArmOptions) {
       const captured = performance.now();
       sweep = await runW0Sweep({
         comp: o.comp,
+        signal: sweepAbort.signal,
         composition: "memory",
         lane: "xtdb",
         scope: o.scope,
@@ -395,7 +404,7 @@ export async function trafficArm(o: ArmOptions) {
         p99: percentile(commits, 0.99),
       },
       trace: {
-        sha256: traceDigest(events),
+        sha256: sha256(JSON.stringify(events)),
         offered: events.length,
         committed: writes.length,
         duplicates,
@@ -415,6 +424,7 @@ export async function trafficArm(o: ArmOptions) {
   } finally {
     stopped = true;
     clearInterval(timer);
+    clearTimeout(sweepDeadline);
     await writer.catch(() => {});
     await Promise.all(readers);
     fs.closeSync(raw);

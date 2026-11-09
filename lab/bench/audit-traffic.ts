@@ -51,6 +51,8 @@ for (const r of report.traffic.rounds) {
       events = writes.map((x) => x.event);
     if (encode(events) !== encode(expected))
       throw new Error(`round ${r.round} ${name} changed/missing trace events`);
+    if (arm.trace.sha256 !== hash(JSON.stringify(events)))
+      throw new Error("trace SHA-256 differs from raw events");
     const readValues = reads.filter((x) => x.startedAtMs <= ms).map((x) => x.latencyMs),
       commitValues = writes
         .filter((x) => x.scheduledAtMs <= ms)
