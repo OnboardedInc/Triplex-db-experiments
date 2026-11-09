@@ -87,17 +87,17 @@ The table below is R36 section 6 verbatim (old rule, its status, new text). Q83d
 
 | Ruling | Today | Proposed |
 |---|---|---|
-| **New Q93a: process evidence refuses, never grants** | n/a | For seed reuse on every lane, the only evidence that grants admission is a content fingerprint (G0) read through the engine by the process that will measure, on the endpoint it measures, before its warm-up, compared with a digest pinned before the freeze began (and with O-DOMAIN where one exists). Every other observation (stop, settle, log tails, frontiers, inspect, stderr, timers, owner state, copy hashes, plan hashes, disk) is refusal-only or a diagnostic, and no decision reads a diagnostic. |
-| **New Q93b: G0 for K01** | n/a | Fields, pinning point and counts as in sections 2.1 and 3.2; every read has a deadline; the golden is published only after two starts of a clone each reproduce `D` and the layout digest `L`. |
-| Q74a golden key | refuse a stale key | **unchanged** (refusal-only) |
-| Q74b canonical freeze state | settled: finish-block, jobs 0, live index empty | becomes the **recipe**: two finish-blocks, jobs-0 waits, `docker stop -t 60`, copy from a stopped container. A timeout refuses; nothing in it grants. |
-| Q74c E1 first | no clone receipt counts until E1 passes | **unchanged**; E1 is rerun when the recipe, the image or the XTDB version changes |
-| Q74d readiness | `/healthz/started` plus C1-C8 PASS stored in `owner.json` | **replaced** by Q93a/b: health precondition plus G0 in the driver; `owner.json` holds slot ownership only |
-| Q74e, Q74f, Q74g | maintenance event in the window; disk floor; broker compositions copy together | unchanged |
-| Q83a Log4j flag | required so the stop lines appear | **kept as a diagnostic aid**; no rule requires the lines |
-| Q83b settle and clean-stop evidence | gating evidence | **superseded by Q93a**: the steps stay in the recipe, their readings become diagnostics; `xt.live_tables` is read only on a freshly started node (K3) |
-| Q83c block listing | never read an unlisted block | kept for diagnostic tools; B never reads `xt.block_files` |
-| Q83d settle after fast compaction | gating predicate | **retired** |
-| Q83e three frontiers F, M, T | gating, with a stopped-tail proof for (F, M] | **retired**; F and M recorded as diagnostics, T checked on the clone (K3) |
-| Q92c, Q92g (P5 fingerprint) | "freshly seeded or fingerprint-verified clone"; G0 after every seed or clone | unchanged; Q93a makes K01 conform to them |
+| Q93a process evidence refuses, never grants | n/a | For seed reuse on every lane, the only evidence that grants admission is a content fingerprint (G0) read through the engine by the process that will measure, on the endpoint it measures, before its warm-up, compared with a digest pinned before the freeze began (and with O-DOMAIN where one exists). Every other observation (stop, settle, log tails, frontiers, inspect, stderr, timers, owner state, copy hashes, plan hashes, disk) is refusal-only or a diagnostic, and no decision reads a diagnostic. |
+| Q93b G0 for K01 | n/a | Fields, pinning point and counts as in sections 2.1 and 3.2; every read has a deadline; the golden is published only after two starts of a clone each reproduce `D` and the layout digest `L`. |
+| change to Q74a golden key | refuse a stale key | **unchanged** (refusal-only) |
+| change to Q74b canonical freeze state | settled: finish-block, jobs 0, live index empty | becomes the **recipe**: two finish-blocks, jobs-0 waits, `docker stop -t 60`, copy from a stopped container. A timeout refuses; nothing in it grants. |
+| change to Q74c E1 first | no clone receipt counts until E1 passes | **unchanged**; E1 is rerun when the recipe, the image or the XTDB version changes |
+| change to Q74d readiness | `/healthz/started` plus C1-C8 PASS stored in `owner.json` | **replaced** by Q93a/b: health precondition plus G0 in the driver; `owner.json` holds slot ownership only |
+| change to Q74e, Q74f, Q74g | maintenance event in the window; disk floor; broker compositions copy together | unchanged |
+| change to Q83a Log4j flag | required so the stop lines appear | **kept as a diagnostic aid**; no rule requires the lines |
+| change to Q83b settle and clean-stop evidence | gating evidence | **superseded by Q93a**: the steps stay in the recipe, their readings become diagnostics; `xt.live_tables` is read only on a freshly started node (K3) |
+| change to Q83c block listing | never read an unlisted block | kept for diagnostic tools; B never reads `xt.block_files` |
+| change to Q83d settle after fast compaction | gating predicate | **retired** |
+| change to Q83e three frontiers F, M, T | gating, with a stopped-tail proof for (F, M] | **retired**; F and M recorded as diagnostics, T checked on the clone (K3) |
+| change to Q92c, Q92g (P5 fingerprint) | "freshly seeded or fingerprint-verified clone"; G0 after every seed or clone | unchanged; Q93a makes K01 conform to them |
 | `load-contract.json` lines 174-234 | binds Q83b, Q83d, Q83e precedence and the F/M/T schema | replace with the Q93a/b binding in the next contract version |
