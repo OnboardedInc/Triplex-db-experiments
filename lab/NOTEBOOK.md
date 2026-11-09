@@ -1752,3 +1752,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   because whether QLever can serve reads from a built index decides the lane. Next in the window: K01 live, G03's slot run, X02 and C8
   exclusive reruns, J01 compact-on, P5 A1.
 - GS12F (typed rejection of unholdable values) is in review; RT01 round A, W02, P5 round A, ER01-S and P2Q's review are running.
+
+## 2026-11-09 02:31Z: hourly pass: usage 5%; 10 of 10 agents busy, so no new research this hour
+- **Converging loops:** K01 (review 7: one finding, -0 lost by JSON encoding in G0) and P2Q (review 9: one finding, inheritance and
+  declaration merging bypass the enumeration guard). Both rounds now ask for the class to be closed by construction: G0 encodes exact stored
+  representations; P2Q's public reads are built from one table of wrapped operations, so a bypass cannot be written.
+- **Pattern across the day:** the lasting fixes changed structure, not cases (one granting check in K01; one canonical query map in lane D;
+  one wrapped read table in P2Q; transport codes derived from sources; G0 columns derived from the schema). Briefs now ask for the structural
+  form first.
+- **Research:** none launched; the agent cap is full and the open questions (tenancy Q78e, erasure S1-S4, GS rung Q94a, commit pin Q89g) wait
+  on Sam, not on research. Next research candidates once a slot frees: lane X's single-writer composition (R37: A0 commit bars measure
+  queueing), and QLever generations phase 2 design once QG1 phase 1 numbers exist.
+- **Scale window:** open, QG1 holds the only exclusive slot's turn.
