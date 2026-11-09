@@ -8,8 +8,14 @@ export const rowTextColumns = assertionColumns.filter(
   (c) => c !== "retracted_at" && c !== "retracted_position" && c !== "retract_tx_id",
 );
 const numeric = new Set([
-  "value_number", "value_boolean", "value_datetime", "recorded_at", "recorded_position",
-  "valid_from", "valid_to", "schema_version",
+  "value_number",
+  "value_boolean",
+  "value_datetime",
+  "recorded_at",
+  "recorded_position",
+  "valid_from",
+  "valid_to",
+  "schema_version",
 ]);
 const hex4 = (n: number) => {
   if (n > 65535) throw new RangeError("Row header string exceeds UTF-16 length limit");
@@ -28,14 +34,25 @@ export function encodeRowText(row: TripleRow): string {
   for (const c of ["recorded_position", "schema_version"] as const)
     if (!Number.isSafeInteger(row[c])) throw new RangeError(`Unsafe ${c}`);
   const ref = row.value_type === "ref" ? row.value_string! : "";
-  return "1" + hex4(row.id.length) + row.id + bits(row.valid_from) +
-    (row.valid_to === null ? "----------------" : bits(row.valid_to)) + hex4(ref.length) + ref +
-    JSON.stringify(rowTextColumns.map((c) => Object.is(row[c], -0) ? "-0" : row[c]));
+  return (
+    "1" +
+    hex4(row.id.length) +
+    row.id +
+    bits(row.valid_from) +
+    (row.valid_to === null ? "----------------" : bits(row.valid_to)) +
+    hex4(ref.length) +
+    ref +
+    JSON.stringify(rowTextColumns.map((c) => (Object.is(row[c], -0) ? "-0" : row[c])))
+  );
 }
 export function decodeRowTextArray(values: unknown): TripleRow {
   if (!Array.isArray(values) || values.length !== rowTextColumns.length)
     throw new TypeError("Invalid row text columns");
-  const row: Record<string, unknown> = { retracted_at: null, retracted_position: null, retract_tx_id: null };
+  const row: Record<string, unknown> = {
+    retracted_at: null,
+    retracted_position: null,
+    retract_tx_id: null,
+  };
   rowTextColumns.forEach((c, i) => {
     const v = values[i];
     if (numeric.has(c)) {

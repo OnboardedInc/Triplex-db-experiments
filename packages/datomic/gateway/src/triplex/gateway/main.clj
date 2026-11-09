@@ -85,6 +85,13 @@
                                              (let [^String encoded (or v "")] [k (java.net.URLDecoder/decode encoded "UTF-8")])))
                                   (remove empty? (clojure.string/split (or query-string "") #"&"))))]
         (response 200 (assoc (feed/log-page (connection (str base-uri name)) params) :database name)))
+      (and (= :post request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/transact" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) db-uri (str base-uri name)]
+        (try (response 200 (storage/commit! (connection db-uri) (sync-db db-uri) input))
+             (finally (when (get input "release") (storage/release! name (get input "handle"))))))
+      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/begin" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)]
+        (response 200 (storage/begin-command! name (sync-db (str base-uri name)) input)))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/reach" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)
             conn (connection (str base-uri name))
@@ -94,11 +101,11 @@
                                    (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
                                    (d/db conn))))]
         {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
-         :body (reach/response name db input)})
+         :body (reach/response conn db input)})
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (str base-uri name)
             input (when (= request-method :post) (request-json body))
-            conn (when-not (or (get input "handle") (= action "release")) (connection db-uri))
+            conn (when (and (not= action "release") (or (= action "transact") (not (get input "handle")))) (connection db-uri))
             ;; [EXP-DA01] Why: held queries need no transactor sync and must never substitute a new db between requests (Q89d). Rejected: unconditional per-request sync.
             db (when conn
                  (storage/await-position (if (#{"snapshot" "transact"} action) (sync-db db-uri) (d/db conn))
@@ -111,7 +118,8 @@
           (case action
             "snapshot" (storage/begin! name db)
             "release" (storage/release! name (get input "handle"))
-            "transact" (storage/commit! conn db input)
+            "transact" (try (storage/commit! conn db input)
+                         (finally (when (get input "release") (storage/release! name (get input "handle")))))
             "read" (storage/read-rows name db input)
             "q" (query/run name db input)
             "operation" (storage/operation db id)

@@ -16,7 +16,7 @@
 (def ^ConcurrentHashMap ids (ConcurrentHashMap.))
 (defn decline! [reason] (throw (ex-info reason {:declined reason})))
 (defn entity-id [db name ^String id]
-  (let [key (str name ":" id)]
+  (let [key [name id]]
     (or (.get ids key)
         (when-let [eid (d/entid db [:triplex.entity/id id])]
           (.putIfAbsent ids key eid) eid))))
@@ -41,7 +41,7 @@
     (let [[db position t] (select-db current (get input "basis"))
           valid (double (get-in input ["basis" "validAt"]))
           root (get input "root") queue (ArrayDeque.) seen (HashSet.) out (StringBuilder. 65536)
-          rows (volatile! 0)]
+          rows (volatile! 0) scanned (volatile! 0)]
       (.add queue root) (.add seen root)
       (.append out "{\"position\":") (.append out (long position))
       (.append out ",\"t\":\"") (.append out (long t)) (.append out "\",\"rows\":[")
@@ -57,6 +57,8 @@
                       from (bits text start) end (+ start 16)
                       to (when-not (= "----------------" (.substring text end (+ end 16))) (bits text end))
                       ref-start (+ end 20) ref-size (Integer/parseInt (.substring text (+ end 16) ref-start) 16)]
+                  (vswap! scanned inc)
+                  (when (> (long @scanned) 100000) (decline! "row-budget"))
                   (when (and (<= from valid) (or (nil? to) (> (double to) valid)))
                     (when (>= (long @rows) 100000) (decline! "row-budget"))
                     (when (pos? (long @rows)) (.append out \,))

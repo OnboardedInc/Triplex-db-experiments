@@ -59,7 +59,10 @@ export interface StorageAdapterService {
   }) => Effect.Effect<readonly ViolationAt[] | undefined, ReadError | WriteError>;
   readonly withTransaction: <A, E>(
     effect: Effect.Effect<A, E>,
-    options?: { readonly replaySafe?: boolean },
+    options?: {
+      readonly replaySafe?: boolean;
+      readonly hint?: { readonly commandId?: string; readonly tripleIds?: readonly string[] };
+    },
   ) => Effect.Effect<A, E | WriteError>;
   /** Allocate the next ordered commit position inside the current transaction. */
   readonly nextCommitPosition: () => Effect.Effect<number, WriteError>;

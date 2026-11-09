@@ -84,7 +84,10 @@ export class DatomicClient {
     // Rejected: d/sync without t and the old ten-millisecond poll.
     if (body && typeof body === "object" && this.lastCommit) {
       const input = body as { basis?: { recordedPosition?: number }; position?: number };
-      if (path.includes(`/db/${this.lastCommit.db}/`) && (input.basis?.recordedPosition ?? input.position) === this.lastCommit.position)
+      if (
+        path.includes(`/db/${this.lastCommit.db}/`) &&
+        (input.basis?.recordedPosition ?? input.position) === this.lastCommit.position
+      )
         body = { ...body, basisT: this.lastCommit.t };
     }
     const bytes = body === undefined ? undefined : Buffer.from(stringifyExact(body));
@@ -168,6 +171,56 @@ export class DatomicClient {
     if (!Number.isSafeInteger(position) || position < 0) throw new RangeError("Unsafe position");
     return { handle: response.handle, position };
   }
+  async beginCommand(
+    db: string,
+    hint: { readonly commandId?: string; readonly tripleIds?: readonly string[] },
+  ) {
+    const response = await this.request<{
+      handle: string;
+      position: TaggedValue;
+      t: TaggedValue;
+      claim: string | null;
+      rows: WireRow[];
+    }>("POST", `/v2/db/${db}/begin`, {
+      ...(hint.commandId === undefined ? {} : { commandId: hint.commandId }),
+      ids: hint.tripleIds ?? [],
+    });
+    const p = validateTagged(response.position);
+    const position = Number(p.v);
+    if (
+      p.t !== "long" ||
+      !Number.isSafeInteger(position) ||
+      position < 0 ||
+      typeof response.handle !== "string"
+    )
+      throw new TypeError("Invalid begin position/handle");
+    const t = validateTagged(response.t);
+    if (
+      t.t !== "long" ||
+      BigInt(t.v) < 0n ||
+      (response.claim !== null && typeof response.claim !== "string")
+    )
+      throw new TypeError("Invalid begin t/claim");
+    const rows = new Map<string, TripleRow | null>((hint.tripleIds ?? []).map((id) => [id, null]));
+    const seen = new Set<string>();
+    for (const wire of response.rows) {
+      const row = decodeRow(wire);
+      if (seen.has(row.id) || row.retracted_at !== null || row.recorded_position > position)
+        throw new TypeError("Invalid prefetched row cut");
+      seen.add(row.id);
+      if (!rows.has(row.id)) throw new TypeError("Unexpected prefetched row");
+      rows.set(row.id, row);
+    }
+    return {
+      handle: response.handle,
+      position,
+      prefetch: {
+        ...(hint.commandId === undefined ? {} : { commandId: hint.commandId }),
+        claim: response.claim,
+        rows,
+      },
+    };
+  }
   release(db: string, handle: string): Promise<unknown> {
     return this.request("POST", `/v1/db/${db}/release`, { handle }, 250);
   }
@@ -185,17 +238,29 @@ export class DatomicClient {
       rows: readonly TripleRow[];
       newIds: readonly string[];
       claims: readonly { commandId: string; txId: string; timestamp: number }[];
+      handle?: string;
+      release?: boolean;
     },
   ): Promise<unknown> {
-    const response = await this.request<{ t?: TaggedValue; position?: TaggedValue }>("POST", `/v1/db/${db}/transact`, {
-      ...input,
-      rows: input.rows.map(encodeRow),
-      rowTexts: Object.fromEntries(input.rows.filter(r => input.newIds.includes(r.id) && r.retracted_at === null).map(r => [r.id, encodeRowText(r)])),
-    });
+    const response = await this.request<{ t?: TaggedValue; position?: TaggedValue }>(
+      "POST",
+      `/v1/db/${db}/transact`,
+      {
+        ...input,
+        rows: input.rows.map(encodeRow),
+        rowTexts: Object.fromEntries(
+          input.rows
+            .filter((r) => input.newIds.includes(r.id) && r.retracted_at === null)
+            .map((r) => [r.id, encodeRowText(r)]),
+        ),
+      },
+    );
     if (response.t && response.position) {
-      const position = Number(validateTagged(response.position).v);
+      const p = validateTagged(response.position);
+      const position = Number(p.v);
       const t = validateTagged(response.t);
-      if (t.t !== "long" || position !== input.position) throw new TypeError("Commit basis mismatch");
+      if (p.t !== "long" || !Number.isSafeInteger(position) || position < 0 || t.t !== "long" || BigInt(t.v) < 0n || position !== input.position)
+        throw new TypeError("Commit basis mismatch");
       this.lastCommit = { db, position, t: String(t.v) };
     }
     return response;

@@ -143,6 +143,7 @@
     (let [report (deref (d/transact conn (tx-data db input)) 5000 ::timeout)]
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
+       :operationId (get input "operationId")
        :position (codec/encode-value "long" (get input "position")) :datoms (count (:tx-data report))})
     (catch Exception e
       (let [text (str e)]
@@ -265,3 +266,17 @@
                                      (every? (fn [[k field]] (or (nil? (get pattern k)) (.startsWith ^String (str (get pattern k)) "?")
                                                                (= (get pattern k) (get r field))))
                                              [["entityId" :entity_id] ["attribute" :attribute] ["entityType" :entity_type]]))) rows))}))
+
+;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
+;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).
+(defn begin-command! [name db input]
+  (let [snapshot (begin! name db) command (get input "commandId") ids (get input "ids" [])]
+    (try
+      (merge snapshot
+        {:t (codec/encode-value "long" (d/basis-t db))
+         :claim (when command (:triplex.claim/tx-id (d/entity db [:triplex.claim/command-id command])))
+         :rows (mapv wire-row
+                 (keep (fn [id]
+                         (when-let [eid (d/entid db [:f/id id])]
+                           (let [r (row db eid)] (when (visible? r nil false) r)))) ids))})
+      (catch Exception e (release! name (:handle snapshot)) (throw e)))))

@@ -484,7 +484,18 @@ const makeTriplesServices = Effect.gen(function* () {
 
               return { txId, position, instant: timestamp, triples, retracted: retractedCount };
             }),
-            { replaySafe: true },
+            {
+              replaySafe: true,
+              // [EXP-DX1] Why: one snapshot prefetch answers claim and all known retraction/precondition reads.
+              // Rejected: repeated claim/by-id round trips for an already described command.
+              hint: {
+                ...(meta?.commandId === undefined ? {} : { commandId: meta.commandId }),
+                tripleIds: [...new Set([
+                  ...operations.flatMap(op => op.op === "retract" ? [op.id] : []),
+                  ...(meta?.preconditions ?? []).flatMap(condition => condition._tag === "TripleLive" ? [condition.id] : [...condition.tripleIds]),
+                ])],
+              },
+            },
           ),
       ).pipe((effect) => withValidAssertValues(operations, effect, valueDomain));
 
