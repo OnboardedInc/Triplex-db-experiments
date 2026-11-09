@@ -102,7 +102,7 @@ const report: any = {
   mapSha256: mapSha,
   sources: before,
   runtime: { node: process.version, platform: process.platform, arch: process.arch },
-  params: { ROUNDS, WINDOW_S, WARM_S, LAT_WORKERS, READERS, DILATE },
+  params: { ROUNDS, WINDOW_S, WARM_S, LAT_WORKERS, READERS, DILATE, DIRECT, AA_EVERY: Number(opt("aa-every", "0")) },
   activation: {},
   latency: { rounds: [] },
 };
@@ -454,7 +454,7 @@ async function latencyArm(name: string, withSweep: boolean, seed: string, oldCut
   const events = generateTrace({ seed, subjects: N, durationS: OFFSET_S + total / DILATE }).filter(
     (e) => e.atMs >= OFFSET_S * 1000 && e.atMs < (OFFSET_S + total / DILATE) * 1000,
   );
-  const commits: { rel: number; lat: number; queue: number }[] = [],
+  const commits: { rel: number; lat: number; queue: number; svc: number }[] = [],
     reads: { rel: number; ms: number }[] = [],
     sweeps: any[] = [];
   const hot = new Map<number, number>(),
@@ -479,7 +479,7 @@ async function latencyArm(name: string, withSweep: boolean, seed: string, oldCut
         if (r.duplicate) duplicates++;
         else hot.set(event.subject, ack);
         if (event.ackLoss) lostAck++;
-        commits.push({ rel: rel(scheduled), lat: ack - scheduled, queue: begun - scheduled });
+        commits.push({ rel: rel(scheduled), lat: ack - scheduled, queue: begun - scheduled, svc: ack - begun });
       } finally {
         busy = false;
         queued--;
@@ -541,6 +541,8 @@ async function latencyArm(name: string, withSweep: boolean, seed: string, oldCut
         activations: [{ tx: basis.position, from: W0.POPULATION_VALID_TIME, release: W0.RELEASES_BY_NAME.get(release)!.hash }],
         readThroughOwner: !DIRECT,
         directReads: DIRECT,
+        // The latency arms do not read worlds back, so only a 1-in-1,000,000 sample (subject 0) returns its world.
+        sampleEvery: 1_000_000,
         // Publication yields to queued live commits, as in the round A arm; the wait is recorded, never hidden.
         beforePublish: async () => {
           const w = performance.now();
@@ -586,6 +588,7 @@ async function latencyArm(name: string, withSweep: boolean, seed: string, oldCut
       sweeps,
       sweepDutyShare: withSweep ? sweeps.reduce((a, s) => a + s.wallMs, 0) / (total * 1000) : 0,
       walMaxBytes: walBytes(dst),
+      load: os.loadavg(),
       oldCut,
       raw: { commits, reads },
     };
@@ -616,8 +619,14 @@ try {
   }
   if (!flag("skip-lat")) {
     const rng = new Rng(seedOf("p5b-r3:" + scope));
-    for (let r = 0; r < ROUNDS + 1; r++) {
-      const aa = r === ROUNDS,
+    // [EXP-P5N] Why: brief 3.4 wants an A/A round at least every sixth round. --aa-every K makes round r an A/A round when (r+1) is a multiple of K and plays ROUNDS sweep pairs in the rest;
+    // without it the earlier plan (ROUNDS pairs, one A/A last) is unchanged.
+    const AA_EVERY = Number(opt("aa-every", "0"));
+    const plan: boolean[] = [];
+    if (AA_EVERY) for (let r = 0, pairs = 0; pairs < ROUNDS; r++) plan.push((r + 1) % AA_EVERY === 0 ? true : (pairs++, false));
+    else plan.push(...Array.from({ length: ROUNDS }, () => false), true);
+    for (let r = 0; r < plan.length; r++) {
+      const aa = plan[r]!,
         sweepFirst = rng.int(2) === 0,
         order = aa ? ["base-a", "base-b"] : sweepFirst ? ["sweep", "base"] : ["base", "sweep"];
       const round: any = { round: r, aa, order, seed: "p5b-r3-trace:" + r };
