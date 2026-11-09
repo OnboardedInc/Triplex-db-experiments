@@ -1,0 +1,120 @@
+{
+  "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n  99: (85) call 125\n",
+  "proof": {
+    "pass": true,
+    "reasons": [],
+    "flags": [
+      "-d",
+      "all"
+    ],
+    "version": "bpftrace v0.20.2",
+    "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+    "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+    "sourceMonotonicSites": 15,
+    "monotonicCalls": {
+      "ir": 15,
+      "asm": 0,
+      "named": 0
+    },
+    "helperCalls": {
+      "ir": {
+        "5": 15
+      },
+      "asm": {},
+      "named": {}
+    },
+    "forbidden": [],
+    "compiledSha256": "45716d4877e56e81e33a3a4e5f85704cefa51b80f37bb41527b68488b6d7f243",
+    "compiledBytes": 725,
+    "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+  },
+  "w0": {
+    "pass": true,
+    "reasons": [],
+    "checks": {
+      "clock": {
+        "pass": true,
+        "reasons": [],
+        "flags": [
+          "-d",
+          "all"
+        ],
+        "version": "bpftrace v0.20.2",
+        "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+        "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+        "sourceMonotonicSites": 15,
+        "monotonicCalls": {
+          "ir": 15,
+          "asm": 0,
+          "named": 0
+        },
+        "helperCalls": {
+          "ir": {
+            "5": 15
+          },
+          "asm": {},
+          "named": {}
+        },
+        "forbidden": [],
+        "compiledSha256": "45716d4877e56e81e33a3a4e5f85704cefa51b80f37bb41527b68488b6d7f243",
+        "compiledBytes": 725,
+        "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+      },
+      "clockTransport": {
+        "pass": true,
+        "status": "INCONCLUSIVE",
+        "reasons": [],
+        "detail": {
+          "status": "INCONCLUSIVE",
+          "pass": false,
+          "reasons": [
+            "clock identity not established by observation: separation of CLOCK_BOOTTIME from CLOCK_MONOTONIC (-1 ns) is not larger than the measured uncertainty (100900000 ns)"
+          ],
+          "toleranceNs": 100000000,
+          "slackNs": 1000000,
+          "samples": 20,
+          "minHopNs": 100000,
+          "maxHopNs": 100000,
+          "probeBootMinusMonotonicNs": 0,
+          "separationNs": -1,
+          "uncertaintyNs": 100900000,
+          "readBracketNs": 1
+        }
+      },
+      "perf": {
+        "pass": true,
+        "paranoid": 4,
+        "reasons": []
+      },
+      "memory": {
+        "pass": true,
+        "reasons": [],
+        "peakBytes": 94371840,
+        "oomKills": 0,
+        "capBytes": 268435456,
+        "headroomFraction": 0.8
+      },
+      "ext4": {
+        "pass": true,
+        "reasons": []
+      },
+      "mapKeys": {
+        "pass": true,
+        "configured": 65536,
+        "floor": 16384,
+        "reasons": []
+      },
+      "attach": {
+        "pass": true,
+        "reasons": []
+      }
+    },
+    "clockIdentity": {
+      "provenBy": "compiled program",
+      "program": true,
+      "observational": "INCONCLUSIVE"
+    }
+  },
+  "expected": "refuse: call 125 is forbidden by the implementation itself, regardless of numeric opcode formatting",
+  "provenance": "CONSTRUCTED partial-format variation; not a recording of bpftrace output"
+}

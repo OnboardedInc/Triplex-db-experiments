@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: controls: a complete successful constructed dump passes, empty and wholly unknown dumps refuse
+ok 1 - controls: a complete successful constructed dump passes, empty and wholly unknown dumps refuse
+  ---
+  duration_ms: 3.194625
+  type: 'test'
+  ...
+# Subtest: controls: declared forbidden helper ids and names refuse in recognised forms
+ok 2 - controls: declared forbidden helper ids and names refuse in recognised forms
+  ---
+  duration_ms: 1.538292
+  type: 'test'
+  ...
+# Subtest: controls: exact version and matching source hashes are required
+ok 3 - controls: exact version and matching source hashes are required
+  ---
+  duration_ms: 0.34825
+  type: 'test'
+  ...
+# Subtest: A: a nonzero or missing compile exit status must refuse even after printing valid IR
+not ok 4 - A: a nonzero or missing compile exit status must refuse even after printing valid IR
+  ---
+  duration_ms: 1.055667
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round11.mjs:46:1'
+  failureType: 'testCodeFailure'
+  error: 'proof and W0 accept non-successful compilation'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round11.mjs:53:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: A: a partly recognised dump must not ignore a numeric forbidden helper call
+not ok 5 - A: a partly recognised dump must not ignore a numeric forbidden helper call
+  ---
+  duration_ms: 0.687375
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round11.mjs:56:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    proof ignores an unparsed forbidden helper after sufficient recognised monotonic calls
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round11.mjs:62:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 3
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 66.842

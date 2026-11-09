@@ -1,0 +1,470 @@
+[
+  {
+    "id": 118,
+    "name": "bpf_jiffies64",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 118 to i64 ()*)()",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: ir:bpf_jiffies64#118 x1"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15,
+          "118": 1
+        },
+        "asm": {},
+        "named": {}
+      },
+      "forbidden": [
+        "ir:bpf_jiffies64#118 x1"
+      ],
+      "compiledSha256": "6049c152faaa898607bd53827f3840d25afb08acecf10dda8a4a0b56b8d3ccc1",
+      "compiledBytes": 753,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  },
+  {
+    "id": 118,
+    "name": "bpf_jiffies64",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n  99: call 118",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: asm:bpf_jiffies64#118 x1"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15
+        },
+        "asm": {
+          "118": 1
+        },
+        "named": {}
+      },
+      "forbidden": [
+        "asm:bpf_jiffies64#118 x1"
+      ],
+      "compiledSha256": "be3c6785ef6b15d093c0e7a140fab27a424296d1003f94fbf9ed2e8e8e94338c",
+      "compiledBytes": 719,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  },
+  {
+    "id": 118,
+    "name": "bpf_jiffies64",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n  99: (85) call bpf_jiffies64#118",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: named:bpf_jiffies64#118 x1",
+        "forbidden clock helper named in the compiled output: bpf_jiffies64"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15
+        },
+        "asm": {},
+        "named": {
+          "118": 1
+        }
+      },
+      "forbidden": [
+        "named:bpf_jiffies64#118 x1"
+      ],
+      "compiledSha256": "5c00e7218f878b5cf767ec18680e17efd369abb3256f43acfa41ce6a43a09d25",
+      "compiledBytes": 738,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  },
+  {
+    "id": 125,
+    "name": "bpf_ktime_get_boot_ns",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 125 to i64 ()*)()",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: ir:bpf_ktime_get_boot_ns#125 x1"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15,
+          "125": 1
+        },
+        "asm": {},
+        "named": {}
+      },
+      "forbidden": [
+        "ir:bpf_ktime_get_boot_ns#125 x1"
+      ],
+      "compiledSha256": "b49e1cdf69dc646d654844944e935762b617f61e6e78c277d8cd62aa32e715ce",
+      "compiledBytes": 753,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  },
+  {
+    "id": 125,
+    "name": "bpf_ktime_get_boot_ns",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n  99: call 125",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: asm:bpf_ktime_get_boot_ns#125 x1"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15
+        },
+        "asm": {
+          "125": 1
+        },
+        "named": {}
+      },
+      "forbidden": [
+        "asm:bpf_ktime_get_boot_ns#125 x1"
+      ],
+      "compiledSha256": "c837e9bee70a929d6fc3713137bb91a6faf478d07ae1443ee8b238d50965e68f",
+      "compiledBytes": 719,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  },
+  {
+    "id": 125,
+    "name": "bpf_ktime_get_boot_ns",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n  99: (85) call bpf_ktime_get_boot_ns#125",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: named:bpf_ktime_get_boot_ns#125 x1",
+        "forbidden clock helper named in the compiled output: bpf_ktime_get_boot_ns"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15
+        },
+        "asm": {},
+        "named": {
+          "125": 1
+        }
+      },
+      "forbidden": [
+        "named:bpf_ktime_get_boot_ns#125 x1"
+      ],
+      "compiledSha256": "eb5a1d6cff2fe4d159d24805fa1882d684089e741f8d4c338c730d5cd97ed75c",
+      "compiledBytes": 746,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  },
+  {
+    "id": 160,
+    "name": "bpf_ktime_get_coarse_ns",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 160 to i64 ()*)()",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: ir:bpf_ktime_get_coarse_ns#160 x1"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15,
+          "160": 1
+        },
+        "asm": {},
+        "named": {}
+      },
+      "forbidden": [
+        "ir:bpf_ktime_get_coarse_ns#160 x1"
+      ],
+      "compiledSha256": "88640f698ddfae24f31635c0ed346e3f6d3049bb85a4761c466bb27fa38f4d4b",
+      "compiledBytes": 753,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  },
+  {
+    "id": 160,
+    "name": "bpf_ktime_get_coarse_ns",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n  99: call 160",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: asm:bpf_ktime_get_coarse_ns#160 x1"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15
+        },
+        "asm": {
+          "160": 1
+        },
+        "named": {}
+      },
+      "forbidden": [
+        "asm:bpf_ktime_get_coarse_ns#160 x1"
+      ],
+      "compiledSha256": "fa2e5b3ff58be6767a57602e7229a8b40e889e1a418106cbde57862b9512a229",
+      "compiledBytes": 719,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  },
+  {
+    "id": 160,
+    "name": "bpf_ktime_get_coarse_ns",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n  99: (85) call bpf_ktime_get_coarse_ns#160",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: named:bpf_ktime_get_coarse_ns#160 x1",
+        "forbidden clock helper named in the compiled output: bpf_ktime_get_coarse_ns"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15
+        },
+        "asm": {},
+        "named": {
+          "160": 1
+        }
+      },
+      "forbidden": [
+        "named:bpf_ktime_get_coarse_ns#160 x1"
+      ],
+      "compiledSha256": "cb3d4ef7f20a4628ed5f12dcd0633ccb981ff9bda9ec03a8899a56b6b4f8abad",
+      "compiledBytes": 748,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  },
+  {
+    "id": 208,
+    "name": "bpf_ktime_get_tai_ns",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 208 to i64 ()*)()",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: ir:bpf_ktime_get_tai_ns#208 x1"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15,
+          "208": 1
+        },
+        "asm": {},
+        "named": {}
+      },
+      "forbidden": [
+        "ir:bpf_ktime_get_tai_ns#208 x1"
+      ],
+      "compiledSha256": "87fdf42620cba11cf5df3b01b17d058274b3b6b6c528b0972758fa8f6018b57e",
+      "compiledBytes": 753,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  },
+  {
+    "id": 208,
+    "name": "bpf_ktime_get_tai_ns",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n  99: call 208",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: asm:bpf_ktime_get_tai_ns#208 x1"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15
+        },
+        "asm": {
+          "208": 1
+        },
+        "named": {}
+      },
+      "forbidden": [
+        "asm:bpf_ktime_get_tai_ns#208 x1"
+      ],
+      "compiledSha256": "8e76357a157ee2d6e1d2b39c67693fb23a631d854ba9fcbfa92ecc85321eba00",
+      "compiledBytes": 719,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  },
+  {
+    "id": 208,
+    "name": "bpf_ktime_get_tai_ns",
+    "text": "%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n%time = call i64 inttoptr (i64 5 to i64 ()*)()\n  99: (85) call bpf_ktime_get_tai_ns#208",
+    "result": {
+      "pass": false,
+      "reasons": [
+        "compiled program reads another clock: named:bpf_ktime_get_tai_ns#208 x1",
+        "forbidden clock helper named in the compiled output: bpf_ktime_get_tai_ns"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceMonotonicSites": 15,
+      "monotonicCalls": {
+        "ir": 15,
+        "asm": 0,
+        "named": 0
+      },
+      "helperCalls": {
+        "ir": {
+          "5": 15
+        },
+        "asm": {},
+        "named": {
+          "208": 1
+        }
+      },
+      "forbidden": [
+        "named:bpf_ktime_get_tai_ns#208 x1"
+      ],
+      "compiledSha256": "6c5ca5fdb65fe768f2ece5de2d339f0a390d0bb511ffb722b7c7f74924608d54",
+      "compiledBytes": 745,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    }
+  }
+]
