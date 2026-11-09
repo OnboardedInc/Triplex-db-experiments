@@ -75,7 +75,7 @@ Builder execution is not independent promotion verification. No backend-engine i
 
 ## Round 2: complete workspace accounting and evaluated imports
 
-Review `verify/PACK` c71ec6d6 reproduced two false PASS cases: an added failing workspace build was omitted, and a freshly packed QLever import-time throw was never evaluated. This round replaces the fixed include array with pnpm's actual recursive workspace inventory. Every non-excluded workspace is selected for build/pack; candidates without build/export contracts fail with an unclassified-workspace error. `lab/config/pack-exclusions.json` is the single exclusion policy, with a non-empty reason per exact workspace name. Empty, unnamed, duplicate and stale entries fail closed. The current 25 workspaces comprise 12 checked packages and 13 explicit exclusions. Datomic's current unqualified package (LICENSE not configured) is now explicitly reported rather than silently omitted; its packaging needs lane D follow-up. Examples, application runners, test runners and internal oracle/qualification workspaces are separately named with reasons. DuckDB retains its OUT-OF-SCOPE diagnostic and scope citation.
+Review `verify/PACK` c71ec6d6 reproduced two false PASS cases: an added failing workspace build was omitted, and a freshly packed QLever import-time throw was never evaluated. This round replaces the fixed include array with pnpm's actual recursive workspace inventory. Every non-excluded workspace is selected for build/pack; candidates without build/export contracts fail with an unclassified-workspace error. `lab/config/pack-exclusions.json` is the single exclusion policy, with a non-empty reason per exact workspace name. Empty inventories, unnamed/duplicate workspace identities, blank exclusion reasons and stale exclusions fail closed. The current 25 workspaces comprise 12 checked packages and 13 explicit exclusions. Datomic's current unqualified package (LICENSE not configured) is now explicitly reported rather than silently omitted; its packaging needs lane D follow-up. Examples, application runners, test runners and internal oracle/qualification workspaces are separately named with reasons. DuckDB retains its OUT-OF-SCOPE diagnostic and scope citation.
 
 Each public entry point from each packed exports map is now evaluated by `await import` in a separate Node process using this attempt's installed consumer. Import exceptions fail the gate. No checked runtime entry point is exempted, including FoundationDB's lazily loaded native backend facade. Wildcard/non-subpath export maps fail closed until explicitly supported, rather than claiming incomplete entry-point coverage. The existing declaration, runtime behavior and CLI checks remain.
 
@@ -86,4 +86,36 @@ Each public entry point from each packed exports map is now evaluated by `await 
 - Each import success follows actual module evaluation in its own fresh process. Receipt imports name exactly the attempted exports, command logs bind specifiers/cwd/exit/output hashes, and tarball/source hashes bind the evaluated installed bytes to this attempt.
 - `regressions.mjs`, adapted from the reviewer's planted cases, checks exit plus receipt status, fresh attempt timestamps, HEAD/gate/fixture hashes, expected error markers and every command log hash. Baseline checks local installed bytes against tarballs, stale sentinels absent, every exported specifier imported in its own process, and all workspaces accounted for. Added-package and QLever tests now require FAIL and retain direct controls; missing-export, broken-declaration, SQLite and stale-source tests remain failure controls. All source mutations restore in finally. SHA256 manifests reread retained bytes; no builder result is independent acceptance.
 
-Round 2 execution results will be appended after the committed-source regression run. No existing pinned path is intentionally changed; acceptance and original checker remain untouched.
+Round 2 execution completed against clean committed implementation `aaeae3ef0d20f3f1413330ae1331d028c6484ca1`. The seven-case controller ran under `heavy.mjs --label CX-PACK-round2-regressions`; each case checked the 5 GiB host free floor before starting. Node 22.23.2 and pnpm 10.11.0 were used. The install shim seeded only registry cache bytes from round 1 and forced offline npm installation into each new consumer; no consumer node_modules was reused.
+
+
+### Round 2 results
+
+| Reviewer-derived regression | Expected gate result | Observed | Evidence attempt |
+| --- | --- | --- | --- |
+| baseline | PASS | PASS, exit 0 | `triplex-pack-udUANd` |
+| added-package | FAIL with planted marker | FAIL, exit 1 | `triplex-pack-DNMaam` |
+| missing-export | FAIL with planted marker | FAIL, exit 1 | `triplex-pack-NUdZz4` |
+| broken-declaration | FAIL with planted marker | FAIL, exit 1 | `triplex-pack-a4FXan` |
+| qlever-runtime-throw | FAIL with planted marker | FAIL, exit 1 | `triplex-pack-0DJs91` |
+| sqlite-runtime-control | FAIL with planted marker | FAIL, exit 1 | `triplex-pack-qbBNjG` |
+| stale-dist-source-error | FAIL with planted marker | FAIL, exit 1 | `triplex-pack-08oprY` |
+
+Baseline: all 25 pnpm workspaces classified (12 built/packed, 13 reasoned exclusions), all 22 public entry points evaluated in 22 separate fresh Node processes, 66 command records, strict declarations, SQLite behavior and installed CLI checks passed. All 12 planted stale-dist sentinels were removed. Installed package bytes matched freshly hashed tarballs and resolved inside the clean consumer. FoundationDB, Cloudflare, XTDB and QLever public facades all imported with no engine connection or runtime-import exemption.
+
+Added-package: the workspace inventory and receipt contain the added package and bind its previously untracked manifest bytes. Its actual selected build fails with `CX_VPACK_ADDED_BUILD_MUST_FAIL`, before packing. QLever: its fresh tarball contains the throw; the gate fails on `CX_VPACK_QLEVER_RUNTIME_THROW` during isolated import, and an independent direct import in that same installed consumer fails with the same marker. The other four fault controls retain their expected errors, including the post-build declaration fault reaching the consumer compiler. DuckDB's OUT-OF-SCOPE line remains visible in all seven outputs.
+
+`regressions.mjs` restored every source fixture, checked the original checker and acceptance diff unchanged, and rehashed all recorded command logs. Final focused syntax, oxlint, oxfmt and whitespace checks passed. Source changes are limited to the lab gate, exclusion file, regression tools and report/evidence indexes. There are **no moved acceptance pins**: no existing file under lab/acceptance or pinned package source changed. The changed lab gate was not pinned by the acceptance contract; its prior review hash was `5f4ae9849d70d4035a63fd108f1f8c8b3d545b382564d710e675a1003db191c1`, and its new hash is `f556e34af0bbc5316070a373c0fc874cdc67a608711306b08dab01075b730ec6`. The new exclusion policy hash is `2891744d1cc02d9619f8d65e02a715e72ff5c3b063f015726f11a82ae71dfb04`. No contract changes or re-pins were made.
+
+### Round 2 evidence and reproduction
+
+Durable root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-PACK/round2/`. Each named case contains gate console output, regression/source binding, receipt/command logs, tarballs/consumer inputs where reached, and fixture diffs or control outputs. `regression-source/` contains the exact executed controller/helpers. `results.json` and `audit.json` index outcomes and restoration. Committed `ROUND2-results.json` is the small outcome index; `ROUND2-SHA256SUMS` covers raw evidence excluding dependency installations, npm caches and the helper symlink directory. All 384 round 2 manifest entries were independently reread by shasum and matched. Round 1 evidence and its original SHA256SUMS remain unchanged.
+
+```sh
+CX_VPACK_EVIDENCE=/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-PACK/round2-new-attempt \
+  node lab/bin/heavy.mjs --label CX-PACK-round2-reproduce -- node lab/experiments/EXP-PACK/regressions.mjs
+```
+
+Use a new evidence directory. The controller uses the explicit shared pnpm store via --config.store-dir, preserves first failures, and reruns the reviewer's real build/pack/install cases rather than mocking build output.
+
+These are builder regression results, pending fresh independent review. Datomic packaging remains explicitly excluded/unqualified; DuckDB's reported TS4023 failures remain out of scope and unresolved. No package source or packaging metadata was repaired in this round; no engine/native FoundationDB execution, full root pnpm check, performance/acceptance qualification, package publish, push or merge was performed.
