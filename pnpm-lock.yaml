@@ -502,6 +502,9 @@ importers:
       '@triplex-build/triplex-sqlite':
         specifier: workspace:^
         version: link:../sqlite
+      '@triplex-build/triplex-testkit':
+        specifier: workspace:^
+        version: link:../testkit
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.1

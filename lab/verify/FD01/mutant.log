@@ -1,0 +1,3 @@
+(node:98115) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-fd01/lab/verify/FD01/mutant.json

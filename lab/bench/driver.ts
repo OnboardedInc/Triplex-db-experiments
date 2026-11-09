@@ -24,6 +24,7 @@ import { Worker } from "node:worker_threads";
 import { openComposition, type CompositionHandle, type Receipt } from "./lib/composition.ts";
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
+import { feedLagWithinBar } from "./lib/feed-lag.ts";
 import { FeedConsumer, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
@@ -454,6 +455,8 @@ async function run() {
   // ---------------------------------------------------------------- feed consumer (P3)
   const lvl = (config.levelS ?? PROFILES[profile].levelS) * 1000;
   const crashPlan: { at: number; point: CrashPoint }[] = (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
+  // [EXP-FD01-R2] Why: no source publication observer is integrated here yet. Missing instants now refuse P3 samples.
+  // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
   feed = new FeedConsumer({
     dir: rawDir, epoch: `${scopeName}#0`, startAfter: seed.lastPosition, now,
     commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, subjects: a.subjects ?? [a.subject], stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },
@@ -877,7 +880,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   // ---------------- P3
   const f = feed!;
   const lagAll = new Histogram(), lagAck = new Histogram();
-  for (const l of lagRows) { lagAll.recordMs(l.lagMs); lagAck.recordMs(l.lagFromAckMs); }
+  for (const l of lagRows) { lagAll.recordMs(l.lagMs); if (l.lagFromAckMs !== null) lagAck.recordMs(l.lagFromAckMs); }
   // A gap is a position the consumer passed (at or below its final checkpoint) without delivering it. Positions
   // acknowledged after the consumer stopped are reported separately, never as gaps.
   let gaps = 0;
@@ -895,7 +898,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const replayOk = ctx.replay.exact && f.counts.redeliveryMismatches === 0;
   const p3 = {
     consumer: f.name, cursor: { epoch: f.epoch, position: coordinate(f.checkpoint) }, counts: f.counts, gaps, gapSample, notReachedAtStop: { count: notReached.length, sample: notReached.sort((a, b) => a - b).slice(0, 10), wind: feedWind }, visibleDuplicateEffects: visibleDup, crashes, replay: ctx.replay,
-    lag: { fromCommitInstant: lagAll.summary(), fromDriverAck: lagAck.summary(), atL256: lag256, commitTime: "receipt instant (Triplex runtime publication stamp, host clock); 'known' = durable affected-set + checkpoint write" },
+    lag: { fromCommitInstant: lagAll.summary(), fromDriverAck: lagAck.summary(), atL256: lag256, commitTime: "producer publication record (bound host/boot hrtime; observer required); 'known' = durable affected-set + checkpoint write" },
     expectedAffected: "direct subjects from command intent; dependency-rule subjects (O-DOMAIN) are a seam: the trace writes only own entities, so expected = {subject}",
     bars: [
       bar("NS-P3 gaps", gaps, "= 0", gaps === 0),
@@ -903,7 +906,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       bar("NS-P3 visible duplicate effects", visibleDup, "= 0", visibleDup === 0, `replay attempts (allowed): ${f.counts.replayAttempts}`),
       bar("NS-P3 resume from checkpoint replays exactly", replayOk, "= true", replayOk),
       bar("NS-P3 crash injection at three points", crashes.filter((c) => c.fired).length, "= 3", crashes.filter((c) => c.fired).length === 3),
-      bar("NS-P3 lag p99 ms at L256", lag256?.p99Ms ?? null, "<= 250", lag256?.p99Ms != null ? lag256.p99Ms <= 250 : null),
+      bar("NS-P3 lag p99 ms at L256", lag256?.p99Ms ?? null, "<= 250", feedLagWithinBar(lag256?.p99Ms)),
       bar("NS-P3 affected-subject set matches", f.counts.affectedMismatches, "= 0", f.counts.affectedMismatches === 0),
       bar("NS-P3 corrections report their valid-time range", f.counts.corrections ? f.counts.correctionRangeReported / f.counts.corrections : null, "= 1.0", f.counts.corrections ? f.counts.correctionRangeReported === f.counts.corrections : null),
     ],

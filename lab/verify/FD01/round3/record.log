@@ -1,0 +1,38 @@
+{
+  "review": "CX-VFD01-round3",
+  "reviewedHead": "731e10e4075715c65c10f2ce720de2d3dcee9b1a",
+  "verdict": "ACCEPT-OFFLINE",
+  "generatedAt": "2026-11-09T06:24:57.321Z",
+  "base": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VFD01/round3-30e5e9a4-fa9e-4baa-9ed9-42897738d375",
+  "engines": false,
+  "slot": null,
+  "baseline": {
+    "host": 14,
+    "bench": 11,
+    "crashObservations": 900,
+    "crashArms": {
+      "keyed-atomic": 500,
+      "keyed-split": 100,
+      "unkeyed-split": 300
+    }
+  },
+  "independentAtomicStops": 25,
+  "crossProcess": {
+    "boundLagMs": 409.0305,
+    "legacyRelativeLagMs": 75.19062500000001
+  },
+  "workerLagMs": 521.294,
+  "unchangedR2Probe": {
+    "sha256": "b815f359f9d2481be16b2b60ae647b26ed9d5b52144af980fa334b6dcba01568",
+    "expectedExit": 1,
+    "specificError": "Publication clock origin mismatch"
+  },
+  "sourceUnchanged": true,
+  "acceptanceUnchanged": true,
+  "boundary": [
+    true,
+    true,
+    false
+  ],
+  "scope": "Trusted producer must capture at native publication; no real source observer, machine reboot, live workload or package installation qualified."
+}

@@ -1,0 +1,29 @@
+{
+  "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VFD01/duplicates-0b8aa7ca-a298-458a-96e5-bdb15cd2d9cf",
+  "sources": {
+    "duplicate-probe.mjs": "6e31e1e22953fbbb2092427901b69838204c8cbf76a4bb268d771656d291beaa",
+    "split-child.mjs": "4afa629ba8fc21a2ef9de34d98f603b50e8e4d070f4388cfe0445a7d8ade9f43",
+    "source-hook.mjs": "32ae466bcff1eb7e73ce88bb0c8827eff732ed2aa280bb7a9245679bfaeda04e",
+    "../../../packages/testkit/src/feed/index.ts": "b1f4e6af263c4ddf6f13c4111f427fd58d61b0b3194861e8d0bbb7a7dbeb19b9"
+  },
+  "rejection": "Error: Keyed crash failed: after-effect/0",
+  "actualCrashes": 201,
+  "actualRestarts": 201,
+  "last": {
+    "point": "after-effect",
+    "attempt": 0,
+    "arm": "keyed-atomic",
+    "observation": {
+      "crashed": true,
+      "gaps": 0,
+      "duplicateEffects": 1,
+      "affectedMatches": true,
+      "checkpointMatches": true,
+      "resumeBytesMatch": true
+    }
+  },
+  "engines": false,
+  "slot": null
+}
+(node:2477) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

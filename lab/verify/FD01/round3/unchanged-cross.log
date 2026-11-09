@@ -1,0 +1,11 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 15198 "CX-P2B-R2-before", pid 4949 "CX-VFD01-R3-baseline", pid 15540 "CX-VA01-0314-mutations-frozen", pid 16730 "CX-VFD01-R3-probes"
+file:///Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VFD01/round3-30e5e9a4-fa9e-4baa-9ed9-42897738d375/subject/packages/core/src/feed/index.ts:219
+    throw new Error("Publication clock origin mismatch");
+          ^
+
+Error: Publication clock origin mismatch
+    at publicationLagMs (file:///Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VFD01/round3-30e5e9a4-fa9e-4baa-9ed9-42897738d375/subject/packages/core/src/feed/index.ts:219:11)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-fd01/lab/verify/FD01/round3/cross-process.mjs:31:18
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+
+Node.js v22.23.2
