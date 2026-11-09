@@ -69,7 +69,14 @@ docker network create "$prefix-net" >/dev/null
 docker volume create "$prefix-pg-data" >/dev/null
 docker run -d --pull never --name "$prefix-pg" --network "$prefix-net" --cpuset-cpus "$pg" --memory 512m --memory-swap 512m \
   -e POSTGRES_PASSWORD=datomic -v "$prefix-pg-data:/var/lib/postgresql/data" postgres:17-alpine >/dev/null
-for ((i=0;i<90;i++)); do docker exec "$prefix-pg" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+# [DX-B2-N4] Why: initdb's temporary socket server stops before the final TCP server starts.
+# Rejected: socket-only pg_isready (n4b raced that shutdown during vendor SQL setup).
+ready=false
+for ((i=0;i<90;i++)); do
+  if docker exec "$prefix-pg" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1; then ready=true; break; fi
+  sleep 1
+done
+[[ $ready == true ]] || { echo "Postgres TCP startup timed out" >&2; exit 1; }
 # Vendor scripts use their own database/connect statements; keep their order and bytes.
 for file in postgres-db.sql postgres-table.sql postgres-user.sql; do
   db=postgres
