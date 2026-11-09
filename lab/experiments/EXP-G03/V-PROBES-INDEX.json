@@ -1,0 +1,33 @@
+{
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-G03/v-probes-20261109",
+  "sourceCommit": "4a53fd01cd2dcb8f9e3b1d73227504ac67632375",
+  "manifest": "V-PROBES-SHA256SUMS",
+  "files": 168,
+  "bytes": 101331584,
+  "perProbeHashesVerified": 121,
+  "bulkyFiles": [
+    {
+      "path": "window-1/V3/observations.json",
+      "bytes": 1198784
+    },
+    {
+      "path": "window-1/V6/capture.ndjson",
+      "bytes": 98176878
+    }
+  ],
+  "qualification": false,
+  "summary": "summary.json",
+  "receipts": [
+    "window-1/V1/receipt.json",
+    "window-1/V2/receipt.json",
+    "window-1/V3/receipt.json",
+    "window-1/V4/receipt.json",
+    "window-1/V5/receipt.json",
+    "window-1/V6/receipt.json",
+    "window-1/V7/receipt.json"
+  ],
+  "researchInput": {
+    "path": "/Users/sam/projects/triplex-db-2/lab/research/R44-ns-run-execution.md",
+    "sha256": "53764d9fcc8abd3f6d53f13afe0cbd6942f6e04ab839880bd9a60b4ff4ed7821"
+  }
+}
