@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
 import { qleverConnectionModeOf } from "../src/QleverClient.js";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
@@ -6,12 +7,12 @@ import { makeQleverClient } from "../src/QleverClient.js";
 const client = makeQleverClient("http://127.0.0.1:7019");
 const run = randomUUID(),
   prefix = `urn:triplex:probe:${run}`;
-const result: Record<string, unknown> = {
+const result: Record<string, unknown> = qleverLatencyReceipt({
   qleverConnectionMode: qleverConnectionModeOf(),
   run,
   at: new Date().toISOString(),
   version: await client.command("stats"),
-};
+});
 const experiments = await Promise.allSettled([
   (async () => {
     const g = `<${prefix}:cas>`;

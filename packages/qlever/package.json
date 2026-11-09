@@ -24,7 +24,8 @@
     "test": "vitest run --maxWorkers=1 --no-file-parallelism"
   },
   "dependencies": {
-    "@triplex-build/triplex": "workspace:^"
+    "@triplex-build/triplex": "workspace:^",
+    "undici": "catalog:"
   },
   "devDependencies": {
     "@triplex-build/triplex-testkit": "workspace:^",

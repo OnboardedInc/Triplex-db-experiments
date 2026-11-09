@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt } from "../../../receipts/latency.mjs";
 // EXP-J01 harness library: Triplex runtimes per lane and journal encoding over measuring clients,
 // source-log record sizing (XTDB) and delta accounting (QLever), statistics and receipts.
 // Imports the built dist (the bytes a gate hashes), never package sources.
@@ -186,7 +187,7 @@ export const writeReceipt = (kind, body) => {
     rawPath = path.join(RAW_DIR, `${id}.raw.json`);
     fs.writeFileSync(rawPath, JSON.stringify(raw));
   }
-  const receipt = { qleverConnectionMode: qlever.qleverConnectionModeOf(), format: 'j01-receipt/1', id, kind, writtenAt: new Date().toISOString(), identity: identity(), ...rest, rawPath, rawSha256: rawPath ? createHash('sha256').update(fs.readFileSync(rawPath)).digest('hex') : null };
+  const receipt = qleverLatencyReceipt({ qleverConnectionMode: qlever.qleverConnectionModeOf(), format: 'j01-receipt/1', id, kind, writtenAt: new Date().toISOString(), identity: identity(), ...rest, rawPath, rawSha256: rawPath ? createHash('sha256').update(fs.readFileSync(rawPath)).digest('hex') : null });
   const file = path.join(RECEIPT_DIR, `${id}.json`);
   fs.writeFileSync(file, JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' });
   return { id, file };

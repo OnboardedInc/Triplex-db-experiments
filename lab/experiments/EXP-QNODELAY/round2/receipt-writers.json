@@ -1,0 +1,118 @@
+[
+  {
+    "path": "lab/bench/driver.ts",
+    "constructors": 1
+  },
+  {
+    "path": "lab/bench/w0-driver.ts",
+    "constructors": 1
+  },
+  {
+    "path": "lab/bin/gate.mjs",
+    "constructors": 1
+  },
+  {
+    "path": "lab/experiments/EXP-C8-read-only-frontier/round-timing.mjs",
+    "constructors": 1
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/lib.mjs",
+    "constructors": 1
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/grid.mjs",
+    "constructors": 6
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/p4-sample.ts",
+    "constructors": 1
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/probe.mjs",
+    "constructors": 3
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/summarize.mjs",
+    "constructors": 1
+  },
+  {
+    "path": "lab/experiments/EXP-QNODELAY/probe.ts",
+    "constructors": 2
+  },
+  {
+    "path": "lab/scenarios/legacy.mjs",
+    "constructors": 1
+  },
+  {
+    "path": "lab/scenarios/v2/run.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/aggregate-entry.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/boundary-shapes.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/cancel-restart.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/join-shapes.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/lab-counterexamples.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/native-capabilities.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/native-entry.ts",
+    "constructors": 2
+  },
+  {
+    "path": "packages/qlever/experiments/native-query-shapes.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/oom-recovery.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/persisted-source-entry.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/retirement-pair-entry.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/scalar-order-entry.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/string-order-probe.ts",
+    "constructors": 3
+  },
+  {
+    "path": "packages/qlever/experiments/transaction-admission.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/update-shapes.ts",
+    "constructors": 1
+  },
+  {
+    "path": "packages/qlever/experiments/upstream44.ts",
+    "constructors": 1
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/summary-cell.mjs",
+    "constructors": 2
+  }
+]

@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
 import { qleverConnectionModeOf } from "../src/QleverClient.js";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
@@ -134,14 +135,14 @@ const trial = async (admissionQueue: boolean) => {
   );
 };
 const results = await Promise.allSettled([trial(false), trial(true)]);
-const artifact = {
+const artifact = qleverLatencyReceipt({
   qleverConnectionMode: qleverConnectionModeOf(),
   run,
   at: new Date().toISOString(),
   timing:
     "end-to-end command completion includes queueing, HTTP, outcome marker visibility and decoding; receipt verification outside timed section",
   results,
-};
+});
 const path = `qualification/evidence/qlever-transaction-admission-${run}.json`;
 await writeFile(path, JSON.stringify(artifact, null, 2) + "\n");
 console.log(JSON.stringify({ path, ...artifact }, null, 2));

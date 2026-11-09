@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt } from "../../receipts/latency.mjs";
 // [EXP-QNODELAY] Why: sequential, nonce-bound literal SELECTs isolate host HTTP
 // transport without writes or data drift. Rejected: P1/P4 qualification from a
 // shared delta-only resident (Q91a), or an engine-only timing that excludes HTTP.
@@ -41,6 +42,12 @@ const sourcePaths = [
   "packages/qlever/dist/QleverClient.js",
   "packages/qlever/dist/index.js",
   "pnpm-lock.yaml",
+  "pnpm-workspace.yaml",
+  "packages/qlever/package.json",
+  "packages/qlever/node_modules/undici/package.json",
+  "packages/qlever/node_modules/undici/lib/dispatcher/agent.js",
+  "lab/receipts/latency.mjs",
+  "lab/receipts/latency.d.mts",
 ];
 const sources = Object.fromEntries(
   sourcePaths.map((p, i) => {
@@ -102,33 +109,39 @@ try {
                 (field) => (rows[0][key] as any)?.[field] === (expected[0] as any)[key][field],
               ),
             );
-          report.samples.push({
-            connectionMode: mode,
-            round,
-            size,
-            i,
-            warmup: i < 0,
-            at,
-            ms,
-            query,
-            contentEqual,
-            expectedSha256: hash(expectedBytes),
-            decodedBindingBytes: actualBytes,
-            decodedBindingsSha256: hash(actualBytes),
-          });
+          report.samples.push(
+            qleverLatencyReceipt({
+              qleverConnectionMode: mode,
+              connectionMode: mode,
+              round,
+              size,
+              i,
+              warmup: i < 0,
+              at,
+              ms,
+              query,
+              contentEqual,
+              expectedSha256: hash(expectedBytes),
+              decodedBindingBytes: actualBytes,
+              decodedBindingsSha256: hash(actualBytes),
+            }),
+          );
           if (!contentEqual) throw Error(`wrong content at ${round}/${size}/${i}`);
           if (i >= 0) times.push(ms);
         }
         times.sort((a, b) => a - b);
-        report.summary.push({
-          connectionMode: mode,
-          round,
-          payloadBytes: size,
-          n: times.length,
-          p50Ms: times[Math.ceil(times.length * 0.5) - 1],
-          p99Ms: times[Math.ceil(times.length * 0.99) - 1],
-          stallCount: times.filter((ms) => ms >= report.stallThresholdMs).length,
-        });
+        report.summary.push(
+          qleverLatencyReceipt({
+            qleverConnectionMode: mode,
+            connectionMode: mode,
+            round,
+            payloadBytes: size,
+            n: times.length,
+            p50Ms: times[Math.ceil(times.length * 0.5) - 1],
+            p99Ms: times[Math.ceil(times.length * 0.99) - 1],
+            stallCount: times.filter((ms) => ms >= report.stallThresholdMs).length,
+          }),
+        );
       }
     } finally {
       await client.close();

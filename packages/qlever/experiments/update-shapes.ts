@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
 import { qleverConnectionModeOf } from "../src/QleverClient.js";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
@@ -36,5 +37,5 @@ const results = await Promise.allSettled(
   }),
 );
 const path = `qualification/evidence/qlever-update-shapes-${run}.json`;
-await writeFile(path, JSON.stringify({ qleverConnectionMode: qleverConnectionModeOf(), run, results }, null, 2) + "\n");
+await writeFile(path, JSON.stringify(qleverLatencyReceipt({ qleverConnectionMode: qleverConnectionModeOf(), run, results }), null, 2) + "\n");
 console.log(path, JSON.stringify(results, null, 2));

@@ -382,7 +382,7 @@ export function gitBuffer(args) {
 }
 
 // Untracked files under these roots are executed inputs and are hashed and stored.
-export const SOURCE_ROOTS = ['packages', 'qualification', 'lab/bin', 'lab/config', 'vitest.workspace-aliases.ts', 'tsconfig.base.json', 'tsconfig.node.json', 'package.json', 'pnpm-workspace.yaml', 'pnpm-lock.yaml', 'turbo.json'];
+export const SOURCE_ROOTS = ['packages', 'qualification', 'lab/bin', 'lab/config', 'lab/receipts', 'vitest.workspace-aliases.ts', 'tsconfig.base.json', 'tsconfig.node.json', 'package.json', 'pnpm-workspace.yaml', 'pnpm-lock.yaml', 'turbo.json'];
 const SECRET = /(token|secret|credential|\.pem$|\.key$|\.env)/i;
 
 /**

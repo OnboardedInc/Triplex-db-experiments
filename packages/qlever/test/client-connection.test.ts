@@ -43,9 +43,7 @@ it.each(["keep-alive", "per-request"] as const)(
         await client.update("INSERT DATA {}");
         await client.command("stats");
       }
-      expect(
-        headers.every((h) => h === (connectionMode === "per-request" ? "close" : "keep-alive")),
-      ).toBe(true);
+      expect(headers.every((h) => h === "keep-alive")).toBe(true);
       expect(new Set(sockets).size)[connectionMode === "per-request" ? "toBe" : "toBeLessThan"](
         sockets.length,
       );

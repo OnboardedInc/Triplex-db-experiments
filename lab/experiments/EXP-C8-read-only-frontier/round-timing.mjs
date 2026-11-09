@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { latencyReceipt } from "../../receipts/latency.mjs";
 // EXP-C8 gate 4: recursive-read timing per round, before (scratch writes) and after (read-only
 // frontier), on the same engine, graphs and calls.
 //
@@ -71,7 +72,7 @@ const rules = (name) => [
   { name: `c8-${name}`, body: [['?x', attribute(name), '?z'], [`c8-${name}`, '?z', '?y']] },
 ];
 
-const result = { qleverConnectionMode: lane === 'qlever' ? engine.qleverConnectionModeOf() : null, format: 'c8-round-timing/1', label, lane, url, root, scope, startedAt: new Date().toISOString(), repeat, graphs: {} };
+const result = latencyReceipt({ qleverConnectionMode: lane === 'qlever' ? engine.qleverConnectionModeOf() : null, format: 'c8-round-timing/1', label, lane, url, root, scope, startedAt: new Date().toISOString(), repeat, graphs: {} });
 await Effect.runPromise(Effect.gen(function* () {
   const t = yield* core.Triples;
   for (const [name, graph] of Object.entries(graphs))

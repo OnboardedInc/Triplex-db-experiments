@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
 import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Lab G4 entry (lane Q): the raw QLever semantic counterexamples through the public native
  * SPARQL surface (`makeQleverNativeQueries().select`) against one lab slot, scored against their
@@ -86,7 +87,7 @@ const struct = (fields: Record<string, TypeExpr.TypeExpr>) =>
   TypeExpr.struct(
     Object.fromEntries(Object.entries(fields).map(([key, type]) => [key, TypeExpr.required(type)])),
   );
-const report: Record<string, any> = {
+const report: Record<string, any> = qleverLatencyReceipt({
   qleverConnectionMode: qleverConnectionModeOf(),
   format: "tx2-lab-counterexamples/1",
   runId,
@@ -100,7 +101,7 @@ const report: Record<string, any> = {
   startedAt: new Date().toISOString(),
   write: null as unknown,
   executions: [] as Record<string, unknown>[],
-};
+});
 writeFileSync(output, JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
 const save = () => writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 

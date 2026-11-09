@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 /**
  * NS north-star benchmark driver (EXP-N01, measurement semantics v2 = TARGETS 1.1, 2.1, 4.1).
  * Measures P1 to P5 on the frozen writer trace against one composition and writes one report JSON.
@@ -114,9 +115,9 @@ const log = (line: string) => {
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
 const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 
-const report: Record<string, any> = {
+const report: Record<string, any> = latencyReceipt({
   format: "tx2-ns-report/2",
-  qleverConnectionMode: lane === "qlever" ? (process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
+  qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v2 sections 1.1, 2.1, 4.1",
   status: "RUNNING",
   startedAt: new Date().toISOString(),
@@ -126,7 +127,7 @@ const report: Record<string, any> = {
   generator: { traceSha256: sha256File("lab/bench/lib/trace.ts"), worldSha256: sha256File("lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
-};
+});
 const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 
 // ---------------------------------------------------------------- engine sampling (async; never blocks the writer)
