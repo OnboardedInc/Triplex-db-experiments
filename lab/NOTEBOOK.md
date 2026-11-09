@@ -1947,3 +1947,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 
 - **RT01 472c2c24:** journal reads use all valid time at the committed position cut; 1,096 tests pass; A0 and compact clock regressions pass. CX-VRT01 reviews round 4, including the pack verification the builder deferred for disk.
 - **Disk:** 4.8 GiB free before cleanup, 9.9 GiB after removing five finished worktrees.
+
+## 2026-11-09: P5 A1 stopped on the disk guard; FD01 round 2 FIX-FIRST; K01 live round 12 takes the slot
+
+- **P5 A1 (e283d83a):** stopped during seeding because host disk fell below 5 GiB. G0 never ran, so the K01 symptom was neither reproduced nor ruled out. The disk guard worked as designed. P5 A1 also needs K01's native G0 handoff, so it waits for K01's live rerun.
+- **FD01 round 2 review (verify/FD01 0fcaa911):** atomicity fixed (13/13, 900 crash trials, every split variant rejected). New R2-F1: two processes with different performance.now() origins and the same "host-monotonic" label passed, so a true 402.37 ms lag read as 122.35 ms. **Lesson:** a clock label is not a clock origin; cross-process intervals need one shared, origin-bound capture primitive. The ERESOLVE failure is missing offline npm metadata, not a peer-range defect. CX-FD01 round 3 fixes R2-F1.
+- **K01 live round 12 (CX-K01-R2) on xtdb-s1:** must capture actual COUNT results and the manifest before removing volumes.
