@@ -1050,7 +1050,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const p1 = {
     ladder: ladder.map(strip),
     recovery,
-    writerWaitAttribution: { method: "matched-phase comparison against the zero-reader run of the same trace", baselineRun: config.baselineWrites, engineWaitEvidence: lane === "xtdb" ? "none exposed: XTDB has no read-path locks (TARGETS 1.1 P1 item 5)" : "not exposed: no QLever broker queue in this composition" },
+    writerWaitAttribution: { method: "matched-phase comparison against the zero-reader run of the same trace", baselineRun: config.baselineWrites, engineWaitEvidence: lane === "xtdb" ? "none exposed: XTDB has no read-path locks (TARGETS 1.1 P1 item 5)" : lane === "datomic" ? "not exposed: Datomic transactor/write-queue wait metrics unavailable" : "not exposed: no QLever broker queue in this composition" },
     bars: [
       bar("NS-P1-VIOLATIONS-MAX (L256)", L("L256")?.violations ?? null, "= 0", L("L256") ? L("L256").violations === 0 : null),
       bar("NS-P1-GOODPUT-256-VS-64", ratio(L("L256")?.goodputPerS, L("L64")?.goodputPerS), ">= 1.0", L("L256") && L("L64") ? L("L256").goodputPerS >= L("L64").goodputPerS : null),
@@ -1064,7 +1064,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       bar("1.1 P1.1 hot-set share of reads (min over ladder levels)", ladder.length ? Math.min(...ladder.map((s) => s.hotShare ?? 0)) : null, ">= 0.5", ladder.length ? ladder.every((s) => (s.hotShare ?? 0) >= 0.5) : null),
       bar("1.1 P1.2 split reads straddling a frozen-trace command, all correct", ladder.reduce((s, x) => s + x.split.straddledATraceCommand, 0), "> 0 and all correct", ladder.length ? ladder.some((s) => s.split.straddledATraceCommand > 0) && ladder.every((s) => s.split.straddledATraceCommand === s.split.straddledCorrect) : null, "step 1 before the trace command's ACK, step 2 after; the driver adds no writes (RULINGS Q31b)"),
       bar("4.1.5 fallback share per window (reported)", ladder.map((s) => s.routing.fallbackShare), "reported", null, "one-engine composition: every read is served by the source of truth's own surface"),
-      bar("1.1 P1.3 a maintenance event in every P1 window", ladder.map((s) => s.maintenanceEvents), "every window >= 1", ladder.length ? ladder.every((s) => s.maintenanceEvents >= 1) : null, "observed in engine logs only; the driver cannot force compaction or a rebuild yet (seam)"),
+      bar("1.1 P1.3 a maintenance event in every P1 window", ladder.map((s) => s.maintenanceEvents), "every window >= 1", ladder.length ? ladder.every((s) => s.maintenanceEvents >= 1) : null, lane === "datomic" ? "not observed: Datomic indexing-job hook is unavailable" : "observed in engine logs only; the driver cannot force compaction or a rebuild yet (seam)"),
     ],
   };
 
