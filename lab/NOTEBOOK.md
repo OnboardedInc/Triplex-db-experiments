@@ -1867,3 +1867,16 @@ Where each priority stands, from evidence so far (research probes and baselines;
   retired). Q87 gate 108/108 on main after the commit. All three lanes now have their adapters on main. Lane D acceptance evidence stays
   DIAGNOSTIC until EXP-DA04 moves it to Postgres (Q88a); DA04 starts when the scale window ends and the resident is unparked.
 - A few DA01 round-3 raw oracle files of about 35k lines each came in under the 1 MB limit of 9c; small, left as is.
+
+## 2026-11-09 04:44Z: R41: no lane can close P3 yet; every P3 number so far is diagnostic
+- **By lane:** X (native P2X feed) 0 gaps, 0 order violations, 0 keyed duplicates over 100 crashes per variant, but lag p99 2.9 s at zero
+  readers (bar 250 ms), three quarters of it the consumer's own XTDB write in the serial indexer (p50 431 ms, p99 2,212 ms). Q (broker feed)
+  lag p99 13.7 to 24.9 ms at zero readers, entries lack a decided stamp. D has no feed route in the gateway.
+- **Missing everywhere:** the O-DOMAIN two-hop affected set (every consumer uses directly written subjects, which W0 says is wrong both ways),
+  an erase op in feed entries, and an off-engine consumer store. None ran with 256 readers.
+- **Rulings Q98a-j:** one identity-only feed contract with no values or keys in entries; consumer state in a host SQLite store, off the
+  engine; publication instant separate from the decided stamp; gaps counted over positions; byte-exact resume including across erasure;
+  O-DOMAIN's affected set; real 256-reader load; all current P3 receipts DIAGNOSTIC; lane X reports two arms.
+- **For Sam:** does a broker-sourced feed count as lane X meeting P3 (Q98j, R39 open question 2)?
+- **Started:** EXP-FD01 (feed contract, host consumer store, conformance suite) on main. Next: EXP-DI01 (dependency-index consumer),
+  EXP-P3M (lag from the publication instant with 256 readers), EXP-DF01 (Datomic log route).
