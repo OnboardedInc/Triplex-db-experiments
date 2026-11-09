@@ -436,3 +436,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   forbidden-name scan of a non-empty dump; structured parser diagnostic only); R12-F3 BTF strictness fixed. All suites and reviewer
   fixtures pass with 11 listed expectation changes. Known residual: a numeric-only forbidden call passes the gate until a golden dump
   exists (follows from Q109a). In review (CX-VOBS7 round 5, scoped to Q109a).
+- 2026-11-09 DI01 ACCEPT-OFFLINE (verify/DI01 9661d368, CX-VDI01 round 3): typed BasisNotAvailable everywhere, state unchanged on refusal,
+  same-page recovery; DI01 18/18, evaluator 108, lab PACK, --verify. Joins contract 0.4.1 at exp/DI01-dependency-index b256d60c with the
+  verify branch. Live backend retention and the 100k lag benchmark not rerun.
