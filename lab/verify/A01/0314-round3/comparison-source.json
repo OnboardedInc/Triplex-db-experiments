@@ -1,0 +1,73 @@
+{
+  "head": "108a87141fac375c7916cf4dbfdcf05854c955b4",
+  "main": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+  "historical": "f8d1c3da0a871f4c9c724ebae09e380dbb9222a8",
+  "testPath": "test/integration/test/value-domains.test.ts",
+  "testName": "memory accepted endpoints survive journal, callback, get and receipt without conversion",
+  "testBodySha256": "071c2e9b56e4667eca1d58dfdbce832bdb565f82dc88a7a66c425c0e8728f09d",
+  "generatorSha256": "50c4d1e4051b73d631fc84a34a730a6d09383c5e09af5331a6b2118a33495122",
+  "fixtureSha256": "b014e599afe4a8935154dce1b75a30f84970a668533cdd9f73ad5169bb0357ff",
+  "memoryDomain": {
+    "id": "memory/kv",
+    "kinds": [
+      "string",
+      "number",
+      "integer",
+      "boolean",
+      "datetime",
+      "ref",
+      "json",
+      "blob"
+    ],
+    "integer": {
+      "min": "-9223372036854775808",
+      "max": "9223372036854775807"
+    },
+    "decimal": null,
+    "string": {
+      "maxUtf8Bytes": 1048576,
+      "allowNul": false
+    },
+    "number": {
+      "min": -1.7976931348623157e+308,
+      "max": 1.7976931348623157e+308,
+      "negativeZero": false
+    },
+    "datetime": {
+      "min": -8640000000000000,
+      "max": 8640000000000000,
+      "integerMilliseconds": false
+    },
+    "storage": null,
+    "json": {
+      "maxDepth": 128,
+      "maxArrayHoles": 0,
+      "journalDepthAllowance": 16
+    },
+    "sources": [
+      "packages/core/src/kv/hexastore/KvTripleStore.ts:serializeDatom"
+    ],
+    "blob": {
+      "minSize": 0,
+      "maxSize": 9007199254740991
+    }
+  },
+  "baselines": {
+    "main": {
+      "commit": "bb36862daf55b4f46a3cbf763f757c6341de4575",
+      "snapshot": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0314/runs/verify-A01-0314-round3/main",
+      "sourceArchiveSha256": "9987c861d0ecc7a3c21efc07ed041f942f88929e64fe87907fecf4954bc74222",
+      "originalHasTest": false,
+      "originalHasDomain": false,
+      "lockSha256": "fb4ce15c7b6672b86d8b833436c8c0e9f37a4abfff4214417aedad7cf8cd3da4"
+    },
+    "historical": {
+      "commit": "f8d1c3da0a871f4c9c724ebae09e380dbb9222a8",
+      "snapshot": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-0314/runs/verify-A01-0314-round3/historical",
+      "sourceArchiveSha256": "c2cbacd252be590a31a08d56eceb0ee18d2a8ac2d7db70fdabc3fe12a595d36f",
+      "originalHasTest": true,
+      "originalHasDomain": true,
+      "lockSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+    }
+  }
+}
