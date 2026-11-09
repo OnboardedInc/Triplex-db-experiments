@@ -1,0 +1,15 @@
+unit 0
+selfcheck 0
+fixtures 0
+review-probes 0
+core-legacy 0
+core-updated 0
+qlever-legacy 0
+qlever-updated 0
+Q70E-unfiltered-prefixes caught 1
+Q70H-compare-page-bodies caught 1
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/gates.py", line 68, in <module>
+    assert row['testsRun']==403 and row['failures'] and not row['errors'],row
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'variant': 'Q70I-choose-ambiguous-journal', 'scope': 'in-memory diagnostic; runtime source hashes alone do not identify substituted behavior', 'variantSourceSha256': 'c23a1cb522232a082bac099c0d0496038ce915c55a1f7dc03852e35cfc13b893', 'testsRun': 403, 'failures': [], 'errors': ['lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70I_journal_ambiguity_and_scope']}

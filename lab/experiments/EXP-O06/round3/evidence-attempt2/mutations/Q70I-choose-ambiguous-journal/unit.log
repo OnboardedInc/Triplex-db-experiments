@@ -1,0 +1,14 @@
+................................................................................................................................................................................................................................................................................F..................................................................................................................................
+======================================================================
+FAIL: test_Q70I_journal_ambiguity_and_scope (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70I_journal_ambiguity_and_scope)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_q70_coverage.py", line 63, in test_Q70I_journal_ambiguity_and_scope
+    self.assertIn('error',error)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+AssertionError: 'error' not found in {'transactions': [{'txId': 'tx:1', 'position': 2, 'instant': 110, 'commandId': 's1', 'changes': [{'op': 'assert', 'tripleId': 's2', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'recordedAt': 110, 'assertionTxId': 'tx:1'}], 'changedEntities': ['p1']}], 'next': 2}
+
+----------------------------------------------------------------------
+Ran 403 tests in 17.014s
+
+FAILED (failures=1)

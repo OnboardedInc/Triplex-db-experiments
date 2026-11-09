@@ -1,0 +1,289 @@
+{
+  "attemptStarted": "2026-11-09T01:00:51.120707+00:00",
+  "runtimeHashes": {
+    "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+    "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+    "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+    "errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+    "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+    "exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+    "replay.py": "e80ecf94423c6985090fd5af2f7be1d768f22c2a30dbbee2a15a75b32a71c85c",
+    "constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+    "views.py": "2ab52f5aaf2742b9e6832ff1b80fc94f5e9dad54bebb0e2d6393f1c2fc483a8e",
+    "entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+    "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+    "run.py": "5a533a3f1944f2c483e2cf0e5bfa26f4334c5fd8a04aa03828c8c053d4a2b02f",
+    "selfcheck.py": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+    "stamps.py": "3a5c37aae37b44f5c41b0e0fccba3eee658985ca3a18dc55d147e8b6ece8526d"
+  },
+  "checks": [
+    {
+      "id": "correct-clock-driven",
+      "expected": {
+        "verdict": "PASS"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "4cbb93f038a8378f6b6f202dfb689f674bcd356b649c795dfd7df8eb1e756c16"
+    },
+    {
+      "id": "staging-clock-tie",
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "FAIL"
+      },
+      "matchesSpec": true,
+      "caseSha256": "9efe929d56a82b1dbfe3bf35a13eba9b846934a3c627e33922f82cb3ff349efb"
+    },
+    {
+      "id": "decreasing-stamp",
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "FAIL"
+      },
+      "matchesSpec": true,
+      "caseSha256": "b4bc7edf4c242654b6cf3f1d9122d6315e44d1e7a8637451219772c0dc1d6bda"
+    },
+    {
+      "id": "wrong-reference-increasing",
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "FAIL"
+      },
+      "matchesSpec": true,
+      "caseSha256": "d8e3bb1a72d164b2cb81f8adf6d0ddebe17fba9b4565de30290e7a56a7a9e66f"
+    },
+    {
+      "id": "staged-clock-mismatch",
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "FAIL"
+      },
+      "matchesSpec": true,
+      "caseSha256": "06a724822423f156f76226d5e5194b796f93d5e18d03fffe5b43841d44152c7b"
+    },
+    {
+      "id": "non-microsecond-stamp",
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "FAIL"
+      },
+      "matchesSpec": true,
+      "caseSha256": "870aa64ff7817e26d4dcd3bdd18533d393b476ae48207ffca5e7a76c7d600e48"
+    },
+    {
+      "id": "engine-clock-valid",
+      "expected": {
+        "verdict": "PASS"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "d9a6686a558dbb396398104ecc4baa9d5f4786158bd3335e7f997359fa425586"
+    },
+    {
+      "id": "engine-clock-tie",
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "FAIL"
+      },
+      "matchesSpec": true,
+      "caseSha256": "7a6e99ed95c3c1242f8ddc4b6b16101ad23b3aa30213eac65c5ed788af3afcd8"
+    },
+    {
+      "id": "engine-clock-backward",
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "FAIL"
+      },
+      "matchesSpec": true,
+      "caseSha256": "3ad18fad65cdbb52215130099ad0289b3d717443e1f4061dab4cf5cef37ff543"
+    },
+    {
+      "id": "replay-true",
+      "expected": {
+        "verdict": "PASS"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "1d3ed4a3d7670ce7f012865a767aaaae28f798e3f0a0621f6f0ee85ea9571f0a"
+    },
+    {
+      "id": "replay-false",
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "FAIL"
+      },
+      "matchesSpec": true,
+      "caseSha256": "04780bfc8586bfaec8a198d199ec16f480242e197d76f13f3000706eeff8056f"
+    },
+    {
+      "id": "interior-true",
+      "expected": {
+        "verdict": "PASS"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "0af70ed29c425ef2bb1588f735653dc73679d85ffba4a6dcda23080a093f1b66"
+    },
+    {
+      "id": "interior-false",
+      "expected": {
+        "verdict": "FAIL"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "FAIL"
+      },
+      "matchesSpec": true,
+      "caseSha256": "d03ba54dba7e850bf893c15a37e5ba08962f2b56231767592a12ebbf3a59d22b"
+    },
+    {
+      "id": "published-watermark",
+      "expected": {
+        "count": 1
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "f878d72e6c698c4d2cb14d02c85a9f2a12b612f9f38b315d569a465e794db0fd"
+    },
+    {
+      "id": "pending-refusal",
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "1655da2f99831d492f8ff3637a55249e1839280d559185e64650d4878c5e55bc"
+    },
+    {
+      "id": "pending-with-explicit-p",
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "c8cc65b81b224f682a651af06e2492f652c6bfb9baab11c7604043b62773ec11"
+    },
+    {
+      "id": "idle-future-refusal",
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "ef191172eab1854ea0a55fbf06778f3d5ae7fad5fe921f02a6b9d8c00800ce49"
+    },
+    {
+      "id": "large-future-refusal",
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "dd9677c0fcca72edac0ec8a12672d09b8c84654f70546f4869ade63784e206fa"
+    },
+    {
+      "id": "staged-valid-time-and-journal",
+      "expected": {
+        "validFrom": 500,
+        "rawOwnInstants": "absent",
+        "olderInstant": 500
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "e287040f9d468a067b89d08f211f3e83fc2b297ffc90816dcbe7d560fa05201f"
+    },
+    {
+      "id": "cross-ordinal-journal-own-instant",
+      "expected": {
+        "rawOwnInstants": "absent"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "e28e7bd58aafe3f82662ec3d2df05c2f2f6214533f0f65cde46dce801532b642"
+    },
+    {
+      "id": "resolved-receipt-false",
+      "expected": {
+        "verdict": "PASS"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "c6a89ce53a6400ae650dc5a265567caa8db6e467ee9d6f660196118804e05ca5"
+    },
+    {
+      "id": "resolved-receipt-true",
+      "expected": {
+        "verdict": "PASS"
+      },
+      "observed": {
+        "type": "report",
+        "verdict": "PASS"
+      },
+      "matchesSpec": true,
+      "caseSha256": "94a77fca42e534b3648809f9bb22d8ef8ea98ad4511aa05f9ffdd9dcf35afb36"
+    }
+  ],
+  "specMismatches": [],
+  "manifestAllMatch": true
+}

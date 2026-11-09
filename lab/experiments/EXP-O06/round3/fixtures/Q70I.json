@@ -1,0 +1,80 @@
+{
+  "format": "triplex-db-2/o-replay-case/1",
+  "caseId": "round3",
+  "defaultScope": "s",
+  "commands": [
+    {
+      "scope": "s",
+      "clock": 100,
+      "meta": {
+        "commandId": "s0"
+      },
+      "operations": [
+        {
+          "op": "assert",
+          "ref": "s1",
+          "entityId": "p1",
+          "attribute": ":w/pay",
+          "value": {
+            "type": "integer",
+            "value": "1"
+          },
+          "validFrom": 0
+        }
+      ]
+    },
+    {
+      "scope": "s",
+      "clock": 110,
+      "meta": {
+        "commandId": "s1"
+      },
+      "operations": [
+        {
+          "op": "assert",
+          "ref": "s2",
+          "entityId": "p1",
+          "attribute": ":w/pay",
+          "value": {
+            "type": "integer",
+            "value": "2"
+          },
+          "validFrom": 0
+        }
+      ]
+    },
+    {
+      "scope": "s",
+      "clock": 200,
+      "operations": [
+        {
+          "op": "erase",
+          "entityId": "p1"
+        }
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "a",
+      "kind": "transactions",
+      "after": 0,
+      "limit": 1,
+      "readStart": {
+        "afterCommand": 1
+      }
+    },
+    {
+      "id": "b",
+      "kind": "transactions",
+      "after": 0,
+      "limit": 1
+    },
+    {
+      "id": "c",
+      "kind": "transactions",
+      "after": 1,
+      "limit": 1
+    }
+  ]
+}

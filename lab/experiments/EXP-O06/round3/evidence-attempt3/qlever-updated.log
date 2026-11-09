@@ -1,0 +1,39 @@
+{
+ "vectors": 49,
+ "itemCounts": {
+  "AGREE": 298,
+  "NOT-MODELED": 3,
+  "AGREE-RULED": 18,
+  "CONVERTER-ERROR": 1,
+  "DISAGREE": 19,
+  "VECTOR-BUG": 2
+ },
+ "vectorCounts": {
+  "AGREE": 36,
+  "AGREE+NOT-MODELED": 2,
+  "DISAGREE": 10,
+  "AGREE+VECTOR-BUG": 1
+ }
+}
+-- G1-I64-01 converter-error CONVERTER-ERROR {"error": "KeyError('MAX')"}
+-- G1-I64-01 Q2 DISAGREE {"oracle": {"n:max": null, "n:min": null, "n:p53p1": null, "n:f53": null}, "golden": {"n:max": {"$id": "n:max", "v": ["int64", "9223372036854775807"]}, "n:min": {"$id": "n:min", "v": ["int64", "-9223372036854775808"]}, "n:p53p1": {"$id": "n:p53p1", "v": ["int64", "9007199254740993"]}, "n:f53": {"$id": "n:f53", "f": ["num", 4845873199050653696]}}}
+-- G1-I64-01 Q3 DISAGREE {"oracle": [], "golden": ["P53P1"]}
+-- G1-I64-01 Q4 DISAGREE {"oracle": [], "golden": ["P53"]}
+-- G1-I64-01 Q5 DISAGREE {"oracle": [], "golden": ["n:p59"]}
+-- G1-I64-01 Q6 DISAGREE {"oracle": [], "golden": ["n:min", "n:negmax", "n:m59m1", "n:m59", "n:zero", "n:p53", "n:p53p1", "n:p59m1", "n:p59", "n:max"]}
+-- G1-I64-01 Q7 DISAGREE {"ambiguity": "AMB-16", "oracle": {"items": [], "nextCursor": "absent"}, "readingsMatched": {"A-range-on-int64-supported": false, "B-not-offered": "not machine-comparable: type error: R3 Predicate offers gt/gte/lt/lte only when the model value is a JS number; int64 model values are IntegerValue objects"}, "ruling": "Q21 AMB-16 A (integer range predicates)", "ruledReadingMatched": false}
+-- G1-I64-01 cmd:C1 DISAGREE {"oracle": {"outcome": "rejected", "error": "E-VALUE-OUT-OF-RANGE", "errorTag": "InvalidTripleError", "reason": "value-out-of-range", "phase": "preflight", "message": "integer 9223372036854775807 is outside the qlever lane range [-576460752303423488, 576460752303423487]", "lane": "qlever"}, "golden": {"outcome": "committed", "assertedCount": 11}}
+-- G1-I64-02 post:min-exact:ok DISAGREE {"oracle": [], "golden": ["OK-min-exact"]}
+-- G1-I64-02 post:min-exact:bad DISAGREE {"oracle": [], "golden": ["BAD-min-exact"]}
+-- G1-I64-02 cmd:min-exact DISAGREE {"oracle": {"outcome": "rejected", "error": "E-VALUE-OUT-OF-RANGE", "errorTag": "InvalidTripleError", "reason": "value-out-of-range", "phase": "preflight", "message": "integer -9223372036854775808 is outside the qlever lane range [-576460752303423488, 576460752303423487]", "lane": "qlever"}, "golden": {"outcome": "committed"}}
+-- G10-CUR-01 E1 VECTOR-BUG {"oracle": {"error": "E-CURSOR", "_tag": "PaginationCursorError", "reason": "other-query", "phase": "preflight", "message": "the request's validAt differs from the cursor's pinned basis (CE-OTHER-QUERY)"}, "golden": {"_tag": "PaginationCursorError", "reason": "basis_mismatch"}, "note": "ACC 4.7 E-CURSOR reasons are malformed|other-scope|other-query (CURSOR_TRANSITIONS); the golden reason is not one of them, so the contract wins (EXP-O02 brief)"}
+-- G10-CUR-01 E2 VECTOR-BUG {"oracle": {"error": "E-CURSOR", "_tag": "PaginationCursorError", "reason": "other-query", "phase": "preflight", "message": "the cursor belongs to another query (CE-OTHER-QUERY)"}, "golden": {"_tag": "PaginationCursorError", "reason": "query_mismatch"}, "note": "ACC 4.7 E-CURSOR reasons are malformed|other-scope|other-query (CURSOR_TRANSITIONS); the golden reason is not one of them, so the contract wins (EXP-O02 brief)"}
+-- G5-SUM-01 Q DISAGREE {"oracle": [{"?total": null}], "golden": {"code": "integer-overflow", "partialRows": "none"}}
+-- G5-SUM-02 Q DISAGREE {"oracle": [{"?total": null}], "golden": [{"?total": ["integer", "4611686018427387904"]}]}
+-- G5-SUM-04 Q DISAGREE {"oracle": [{"?total": null}], "golden": [{"?total": ["integer", "9223372036854775807"]}]}
+-- G5-SUM-05 Q DISAGREE {"oracle": [{"?total": null}], "golden": {"code": "integer-overflow", "partialRows": "none"}}
+-- G5-SUM-06 Q DISAGREE {"oracle": [{"?total": null}], "golden": [{"?total": ["integer", "-1"]}]}
+-- G5-SUM-08 Q DISAGREE {"oracle": [], "golden": {"code": "integer-overflow", "partialRows": "none"}}
+-- G5-SUM-11 Q-case2 DISAGREE {"oracle": [{"?avg": null}], "golden": {"value": 4.611686018427388e+18, "bits": "43d0000000000000"}, "note": "conversion syntax is AMB-11; the oracle's integerAvg=convert switch was used"}
+-- Q8F-02 Q1 DISAGREE {"oracle": null, "golden": {"$id": "card:2", "tags": [], "ints": [["int64", "-9223372036854775808"], ["int64", "-1"], ["int64", "9"], ["int64", "10"], ["int64", "9007199254740992"], ["int64", "9007199254740993"], ["int64", "9223372036854775807"]], "nums": []}}
+-- Q8F-02 cmd:C1 DISAGREE {"oracle": {"outcome": "rejected", "error": "E-VALUE-OUT-OF-RANGE", "errorTag": "InvalidTripleError", "reason": "value-out-of-range", "phase": "preflight", "message": "integer -9223372036854775808 is outside the qlever lane range [-576460752303423488, 576460752303423487]", "lane": "qlever"}, "golden": {"outcome": "committed"}}

@@ -1,0 +1,18 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 37552 "CX-RQ01-round3-a2"
+unit 0
+selfcheck 0
+fixtures 0
+review-probes 0
+core-legacy 0
+core-updated 0
+qlever-legacy 0
+qlever-updated 0
+Q70E-unfiltered-prefixes caught 1
+Q70H-compare-page-bodies caught 1
+Q70I-choose-ambiguous-journal caught 1
+Q70I-ignore-journal-scope caught 1
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/gates.py", line 71, in <module>
+    assert all('test_'+letter+'_' in name for name in row['failures']), row
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'variant': 'Q70K-default-nonjournal-scope', 'scope': 'in-memory diagnostic; runtime source hashes alone do not identify substituted behavior', 'variantSourceSha256': 'c23a1cb522232a082bac099c0d0496038ce915c55a1f7dc03852e35cfc13b893', 'testsRun': 403, 'failures': ["lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transaction', defaultErasure=True)", "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transactionByCommand', defaultErasure=True)", "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='transactionsForEntity', defaultErasure=True)", "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='journalFacts', defaultErasure=True)", "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='assertions', defaultErasure=True)", "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface (kind='history', defaultErasure=True)", 'lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface', 'lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key'], 'errors': []}

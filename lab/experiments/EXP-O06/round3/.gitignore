@@ -1,0 +1,3 @@
+# Complete generated golden bytes are retained locally and inventoried.
+evidence-*/**/cases/
+evidence-*/**/runs/

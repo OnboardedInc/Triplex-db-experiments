@@ -1,0 +1,94 @@
+.................................................................................................................................................................................................................................................................................FFFFFFFF................................................................................................................................
+======================================================================
+FAIL: test_Q70K_scope_on_every_scope_surface (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface) (kind='transaction', defaultErasure=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_q70_coverage.py", line 83, in test_Q70K_scope_on_every_scope_surface
+    self.assertIn('acceptable',node)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+AssertionError: 'acceptable' not found in {'txId': 'tx:0', 'position': 1, 'instant': 100, 'commandId': 't0', 'changes': [{'op': 'assert', 'tripleId': 't1', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'recordedAt': 100, 'assertionTxId': 'tx:0'}], 'changedEntities': ['p1']}
+
+======================================================================
+FAIL: test_Q70K_scope_on_every_scope_surface (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface) (kind='transactionByCommand', defaultErasure=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_q70_coverage.py", line 83, in test_Q70K_scope_on_every_scope_surface
+    self.assertIn('acceptable',node)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+AssertionError: 'acceptable' not found in {'txId': 'tx:0', 'position': 1, 'instant': 100, 'commandId': 't0', 'changes': [{'op': 'assert', 'tripleId': 't1', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'recordedAt': 100, 'assertionTxId': 'tx:0'}], 'changedEntities': ['p1']}
+
+======================================================================
+FAIL: test_Q70K_scope_on_every_scope_surface (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface) (kind='transactionsForEntity', defaultErasure=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_q70_coverage.py", line 83, in test_Q70K_scope_on_every_scope_surface
+    self.assertIn('acceptable',node)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+AssertionError: 'acceptable' not found in {'transactions': [{'txId': 'tx:2', 'position': 3, 'instant': 200, 'changes': [{'op': 'erase', 'entityId': 'p1', 'attribute': ':w/pay', 'assertionIds': ['t1', 't2']}], 'changedEntities': ['p1']}, {'txId': 'tx:1', 'position': 2, 'instant': 110, 'commandId': 't1', 'changes': [{'op': 'assert', 'tripleId': 't2', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'recordedAt': 110, 'assertionTxId': 'tx:1'}], 'changedEntities': ['p1']}, {'txId': 'tx:0', 'position': 1, 'instant': 100, 'commandId': 't0', 'changes': [{'op': 'assert', 'tripleId': 't1', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'recordedAt': 100, 'assertionTxId': 'tx:0'}], 'changedEntities': ['p1']}], 'snapshotPosition': 3}
+
+======================================================================
+FAIL: test_Q70K_scope_on_every_scope_surface (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface) (kind='journalFacts', defaultErasure=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_q70_coverage.py", line 83, in test_Q70K_scope_on_every_scope_surface
+    self.assertIn('acceptable',node)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+AssertionError: 'acceptable' not found in {'scope': 't', 'facts': [{'id': 'journal:tx:0:changed-entity:0', 'entityId': 'tx:0', 'attribute': ':_tx/changed-entity', 'value': {'type': 'ref', 'value': 'p1'}, 'validFrom': 100, 'validTo': None, 'recordedAt': 100, 'recordedPosition': 1, 'createdBy': None, 'entityType': '_Transaction', 'schemaVersion': None, 'txId': 'tx:0', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None, 'journal': True}, {'id': 'journal:tx:0:change:0', 'entityId': 'tx:0', 'attribute': ':_tx/change', 'value': {'type': 'json', 'value': {'op': 'assert', 'tripleId': 't1', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'recordedAt': 100, 'assertionTxId': 'tx:0'}, 'canonical': '{"assertionTxId":"tx:0","attribute":":w/pay","entityId":"p1","op":"assert","recordedAt":100,"tripleId":"t1","validFrom":0,"value":{"_tag":"ErasedValue","erasedAt":200}}'}, 'validFrom': 100, 'validTo': None, 'recordedAt': 100, 'recordedPosition': 1, 'createdBy': None, 'entityType': '_Transaction', 'schemaVersion': None, 'txId': 'tx:0', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None, 'journal': True}, {'id': 'journal:tx:1:changed-entity:0', 'entityId': 'tx:1', 'attribute': ':_tx/changed-entity', 'value': {'type': 'ref', 'value': 'p1'}, 'validFrom': 110, 'validTo': None, 'recordedAt': 110, 'recordedPosition': 2, 'createdBy': None, 'entityType': '_Transaction', 'schemaVersion': None, 'txId': 'tx:1', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None, 'journal': True}, {'id': 'journal:tx:1:change:0', 'entityId': 'tx:1', 'attribute': ':_tx/change', 'value': {'type': 'json', 'value': {'op': 'assert', 'tripleId': 't2', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'recordedAt': 110, 'assertionTxId': 'tx:1'}, 'canonical': '{"assertionTxId":"tx:1","attribute":":w/pay","entityId":"p1","op":"assert","recordedAt":110,"tripleId":"t2","validFrom":0,"value":{"_tag":"ErasedValue","erasedAt":200}}'}, 'validFrom': 110, 'validTo': None, 'recordedAt': 110, 'recordedPosition': 2, 'createdBy': None, 'entityType': '_Transaction', 'schemaVersion': None, 'txId': 'tx:1', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None, 'journal': True}, {'id': 'journal:tx:2:changed-entity:0', 'entityId': 'tx:2', 'attribute': ':_tx/changed-entity', 'value': {'type': 'ref', 'value': 'p1'}, 'validFrom': 200, 'validTo': None, 'recordedAt': 200, 'recordedPosition': 3, 'createdBy': None, 'entityType': '_Transaction', 'schemaVersion': None, 'txId': 'tx:2', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None, 'journal': True}, {'id': 'journal:tx:2:change:0', 'entityId': 'tx:2', 'attribute': ':_tx/change', 'value': {'type': 'json', 'value': {'op': 'erase', 'entityId': 'p1', 'attribute': ':w/pay', 'assertionIds': ['t1', 't2']}, 'canonical': '{"assertionIds":["t1","t2"],"attribute":":w/pay","entityId":"p1","op":"erase"}'}, 'validFrom': 200, 'validTo': None, 'recordedAt': 200, 'recordedPosition': 3, 'createdBy': None, 'entityType': '_Transaction', 'schemaVersion': None, 'txId': 'tx:2', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None, 'journal': True}]}
+
+======================================================================
+FAIL: test_Q70K_scope_on_every_scope_surface (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface) (kind='assertions', defaultErasure=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_q70_coverage.py", line 83, in test_Q70K_scope_on_every_scope_surface
+    self.assertIn('acceptable',node)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+AssertionError: 'acceptable' not found in {'scope': 't', 'assertions': [{'id': 't1', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'validTo': None, 'recordedAt': 100, 'recordedPosition': 1, 'createdBy': None, 'entityType': None, 'schemaVersion': None, 'txId': 'tx:0', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None}, {'id': 't2', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'validTo': None, 'recordedAt': 110, 'recordedPosition': 2, 'createdBy': None, 'entityType': None, 'schemaVersion': None, 'txId': 'tx:1', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None}]}
+
+======================================================================
+FAIL: test_Q70K_scope_on_every_scope_surface (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface) (kind='history', defaultErasure=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_q70_coverage.py", line 83, in test_Q70K_scope_on_every_scope_surface
+    self.assertIn('acceptable',node)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+AssertionError: 'acceptable' not found in {'cut': {'scope': 't', 'position': 3, 'recordedAt': None, 'validAt': None}, 'entityId': 'p1', 'rawLifetime': [{'id': 't1', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'validTo': None, 'recordedAt': 100, 'recordedPosition': 1, 'createdBy': None, 'entityType': None, 'schemaVersion': None, 'txId': 'tx:0', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None}, {'id': 't2', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'validTo': None, 'recordedAt': 110, 'recordedPosition': 2, 'createdBy': None, 'entityType': None, 'schemaVersion': None, 'txId': 'tx:1', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None}], 'asOfSnapshot': [{'id': 't1', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'validTo': None, 'recordedAt': 100, 'recordedPosition': 1, 'createdBy': None, 'entityType': None, 'schemaVersion': None, 'txId': 'tx:0', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None}, {'id': 't2', 'entityId': 'p1', 'attribute': ':w/pay', 'value': {'_tag': 'ErasedValue', 'erasedAt': 200}, 'validFrom': 0, 'validTo': None, 'recordedAt': 110, 'recordedPosition': 2, 'createdBy': None, 'entityType': None, 'schemaVersion': None, 'txId': 'tx:1', 'retractedAt': None, 'retractedPosition': None, 'retractTxId': None}]}
+
+======================================================================
+FAIL: test_Q70K_scope_on_every_scope_surface (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_q70_coverage.py", line 91, in test_Q70K_scope_on_every_scope_surface
+    self.assertEqual({record['scope'] for record in run.read_log},{'t'})
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the first set but not the second:
+'s'
+
+======================================================================
+FAIL: test_Q70L_entity_and_scope_key (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_q70_coverage.py", line 104, in test_Q70L_entity_and_scope_key
+    self.assertEqual(journal_values(c),[([], [i64(1)]),(['tx:5'],[mark()])])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [('plain', [{'_tag': 'ErasedValue', 'erasedAt': 200}])] != [([], [{'type': 'integer', 'value': '1'}]),[51 chars]0}])]
+
+First differing element 0:
+('plain', [{'_tag': 'ErasedValue', 'erasedAt': 200}])
+([], [{'type': 'integer', 'value': '1'}])
+
+Second list contains 1 additional elements.
+First extra element 1:
+(['tx:5'], [{'_tag': 'ErasedValue', 'erasedAt': 200}])
+
++ [([], [{'type': 'integer', 'value': '1'}]),
+- [('plain', [{'_tag': 'ErasedValue', 'erasedAt': 200}])]
+?  - ^^^^^
+
++  (['tx:5'], [{'_tag': 'ErasedValue', 'erasedAt': 200}])]
+? ++  ^^^^ +
+
+
+----------------------------------------------------------------------
+Ran 403 tests in 17.021s
+
+FAILED (failures=8)
