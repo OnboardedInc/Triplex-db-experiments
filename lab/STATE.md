@@ -197,3 +197,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - GS12F accepted (verify/GS12F f5664a1: every functional check passed; its one blocker, being behind main, closed at 2fdf491: lab/acceptance
   diff against main empty, 854 core and 55 bounds tests pass). It moves pinned core files, so it merges with contract 0.3.14, which re-pins
   them (after 0.3.13 lands). Queue for 0.3.14: GS12F; QNODELAY if accepted; any other accepted branch that moves pins.
+- P5 round A ACCEPT-OFFLINE (verify/P5A 85c1b13: 207 suite, 57 await-boundary and 2 late-cleanup tests). Ready for its A1 run at 1k on an
+  exclusive XTDB slot (A1-RUNBOOK.md in .claude/worktrees/p5a), queued after K01's live rerun. Its g0.ts guard commit goes onto K01's branch.
