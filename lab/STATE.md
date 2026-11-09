@@ -421,3 +421,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   hashing, or retained volumes if export is unprovable) and F4 (every record's clock domain validated) fixed; NS 177/177, --verify.
   Full suite and evaluator still running. Orchestrator decisions: keep the 2-line box.mjs change (moves the protected evaluator closure;
   re-pin in 0.4.1 with the driver bundle); fix the exclusive.mjs `docker context use colima` rule 10 violation in this round.
+- 2026-11-09 DI01 round 2 review FIX-FIRST (CX-VDI01, 7f1078a4): the four helper guards are fixed and typed; one remaining plain Error in
+  DependencyIndex.prepare (DependencyIndex.ts:186, row later than the reported basis). State unchanged on refusal. Round 3 (same Sonnet
+  builder) adds a tagged refusal at a public package boundary. G03 round 7c builder is waiting on its own suites, then finishes
+  (rule 10 fix in exclusive.mjs, report, evidence).
