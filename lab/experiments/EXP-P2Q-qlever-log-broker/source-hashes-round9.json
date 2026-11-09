@@ -1,6 +1,5 @@
 {
   "base": "36dacc2e158919a9fbede9d9d2c93d0e492aad3d",
-  "testedHead": "5b16e04d90ece6353690106e64ae77fe016d01df",
   "paths": [
     {
       "path": ".changeset/p2q-exact-journal-snapshot.md",
@@ -17,7 +16,7 @@
     {
       "path": "packages/core/src/storage/ReadSurface.ts",
       "oldSha256": null,
-      "newSha256": "72c901c078f497e2f522c1d95f6c54e15eb33b237f87cc0ab9163ed37a3c7443",
+      "newSha256": "d68a7992b9a741739f07678bbf10c733011d40656c4c7a32b500446d13a4074b",
       "pinnedAcceptanceReference": false
     },
     {
@@ -41,7 +40,7 @@
     {
       "path": "packages/qlever/src/broker/BrokerStorageAdapter.ts",
       "oldSha256": "01b8e46fb2cdbff5fff98321bbfb85ff354095f067f21983d075ab5b57c9e7e9",
-      "newSha256": "f6a20932745e05d4c9a93eae136fef874088d1727171239e96427e92c8aeb9c2",
+      "newSha256": "3e3d52b3bbcc05e98885b0396e070c29c6532c2e5452e80ad13bea91a23cc1ac",
       "pinnedAcceptanceReference": false
     },
     {
@@ -56,5 +55,7 @@
       "newSha256": "f33a0a0eab0294ec57ebb484eb13b9d21de6f6ba6c85db2062295f7c63804860",
       "pinnedAcceptanceReference": false
     }
-  ]
+  ],
+  "matrixSourceHead": "5b16e04d90ece6353690106e64ae77fe016d01df",
+  "finalSourceHead": "a5109ce81490a0fbe5827143ae12668f9dc0b198"
 }
