@@ -205,3 +205,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   verify/K01 12a30d8: the G0 expected count now includes journal rows, 61,384 for the round 11 seed); then G03's slot run; then RT01 live
   G2/G6 after round 4; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04. Contract 0.3.14 (CX-A01-0314) building with
   INT-Q (accepted, verify/INT-Q c14cdfc9) and GS12F, compiling Q96 and Q97.
+- 2026-11-09 disk: free space fell to 4.8 GiB. Archived and removed 5 finished worktrees (p2x2, verify-p2x2, contract-0312, sql01,
+  verify-int-q; INDEX.txt in worktree-archive/), now 9.9 GiB free. Nine agent-* worktrees (about 22 GiB) are locked by this session's
+  agent tool and stay. runs/engines/datomic-build is 5.4 GiB and stays until EXP-DA04 no longer needs image rebuilds.

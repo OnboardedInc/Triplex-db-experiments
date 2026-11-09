@@ -1942,3 +1942,25 @@ Where each priority stands, from evidence so far (research probes and baselines;
 ## 2026-11-09: K01 G0 count fix accepted offline
 
 - **verify/K01 12a30d8 ACCEPT-OFFLINE:** the reviewer independently recomputed 61,384 expected rows; 468 tests and both TypeScript checks pass. The K01 live rerun (LIVE-round12) is next in the scale window after P5 A1.
+
+## 2026-11-09: RT01 round 4 (F7 fix) in review; disk housekeeping
+
+- **RT01 472c2c24:** journal reads use all valid time at the committed position cut; 1,096 tests pass; A0 and compact clock regressions pass. CX-VRT01 reviews round 4, including the pack verification the builder deferred for disk.
+- **Disk:** 4.8 GiB free before cleanup, 9.9 GiB after removing five finished worktrees.
+
+## 2026-11-09: P5 A1 stopped on the disk guard; FD01 round 2 FIX-FIRST; K01 live round 12 takes the slot
+
+- **P5 A1 (e283d83a):** stopped during seeding because host disk fell below 5 GiB. G0 never ran, so the K01 symptom was neither reproduced nor ruled out. The disk guard worked as designed. P5 A1 also needs K01's native G0 handoff, so it waits for K01's live rerun.
+- **FD01 round 2 review (verify/FD01 0fcaa911):** atomicity fixed (13/13, 900 crash trials, every split variant rejected). New R2-F1: two processes with different performance.now() origins and the same "host-monotonic" label passed, so a true 402.37 ms lag read as 122.35 ms. **Lesson:** a clock label is not a clock origin; cross-process intervals need one shared, origin-bound capture primitive. The ERESOLVE failure is missing offline npm metadata, not a peer-range defect. CX-FD01 round 3 fixes R2-F1.
+- **K01 live round 12 (CX-K01-R2) on xtdb-s1:** must capture actual COUNT results and the manifest before removing volumes.
+
+## 2026-11-09: QNODELAY round 4 FIX-FIRST; round 5 scoped to one reader function
+
+- **verify/QNODELAY 813fcf4e:** the stall result reproduces offline (120/240 keep-alive versus 0/240 no-delay); keep-alive stays default. Three medium gaps: one reader skips the parser (R4-F1), malformed but labeled timings reach EXP-QG1's summaries (R4-F2), and per-event mode does not bind a run's mode, so compare.mjs can merge both modes (R4-F3).
+- **Lesson:** a shared parser of metadata is not a shared reader of data. Round 5 makes one function the only way to read QLever latency data, returning a typed run with one mode, plus a test that fails on any other access. This is the fifth round of receipt hardening; the measured finding has been stable since round 2, so later rounds are limited to the reviewer's named findings.
+
+## 2026-11-09: K01 live round 12: count fix confirmed live, next stop is a lazily created table
+
+- **Confirmed live (3d334592):** tx_assertions COUNT = 61,384 on the engine, captured before cleanup, matching the source-derived expectation exactly.
+- **Next failure:** G0 queried tx_native_relation_attempts, which the adapter declares but XTDB 2 creates only on first insert; this seed never writes it.
+- **Lesson:** each full live run has found exactly one new G0 assumption about the engine (union integer type, journal rows, lazy table creation). Round 13 runs a small diagnostic smoke run that records every failure in order instead of stopping at the first, then fixes them all offline, before the next full run. Absence of a table is checked through the catalog, never by catching a planning error.
