@@ -23,7 +23,6 @@ export async function runArtifactControls(output) {
     const root = path.join(output, kind + "-" + randomUUID());
     fs.mkdirSync(path.join(root, "packages"), { recursive: true });
     const runOutput = path.join(root, "run-output");
-    fs.mkdirSync(runOutput);
     const marker = path.join(runOutput, "candidate-ran"),
       candidate = path.join(root, "packages/candidate.mjs");
     fs.writeFileSync(

@@ -396,3 +396,9 @@ test("NSR round4: filesystem denies candidate text despite vm and replaced hooks
     9,
   );
 });
+
+// [EXP-NSR-R5] Why: legal literal-star paths and inherited host environment must not widen the driver envelope. Rejected: relying on denied subprocess permissions to justify host PATH.
+test("NSR round5: exact fresh output grant and minimal recorded child environment", async () => {
+  const { runEnvelopeControls } = await import("../../verify/NSR/round5/envelope-controls.mjs");
+  assert.equal((await runEnvelopeControls(path.join(dir, "envelope-" + randomUUID()))).length, 8);
+});
