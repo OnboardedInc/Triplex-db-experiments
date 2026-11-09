@@ -240,3 +240,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   to lane D**: EXP-DF01 offline (R41 E6: the gateway route GET /v1/db/{db}/log long-poll over d/tx-range, the position-to-t map per
   Q89d, the Triplex stamp from the transaction annotation, FD01's host SQLite consumer store, resume across excision, restart resumes
   from the log alone) built and tested against a fake report queue, with live dev-storage runs when the pool allows.
+- 2026-11-09 QNODELAY ACCEPT (verify/QNODELAY 1f59d223, scoped to R4-F1..F3; replay 120/240 vs 0/240; keep-alive default). Queued for a
+  default-off merge in the next contract after 0.3.14 (0.4.0). P5 round B (CX-P5B) starts on contract/0.3.14 with round A merged: host
+  store screening B0-B2 per R34 6, diagnostic; P5 A1 on native XTDB is demoted per R43.
