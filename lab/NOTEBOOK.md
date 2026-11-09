@@ -1822,3 +1822,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Rulings Q96a-c:** per-subject serial and cross-subject parallel composition, A0 single-flight only as a control; per-subject arms need a
   decider-side stamp (RT01's client stamp is monotone only because A0 serializes); the broker (P2B) is the shortest path, and EXP-P2X2 runs
   once on an exclusive slot, with its decision rule written in advance, to settle whether the native path is closed.
+
+## 2026-11-09 03:46Z: scale window: X02, C8 and J01 pass their exclusive reruns; K01 live starts
+- **CX-XRUN on xtdb-s1:** A0 G1 88/88 plus the suite, A0 G2 142/142, compact G1 88/88 plus the suite. J01's mode collector exited 1 on four
+  scopes that only rejected and never wrote; a classifier gap for J01 to fix later (those scopes have no mode to report), not a correctness
+  failure. Volumes removed, slot released.
+- **Next in the window:** K01's live two-start run and E1 (now), then EXP-P2X2, P5 A1, G03's slot run, RT01 live G2 and G6, W02 live GS.
