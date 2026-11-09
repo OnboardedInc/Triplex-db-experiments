@@ -1,0 +1,78 @@
+{
+  table: 'tx_wire_int_narrow',
+  cat: [
+    { column_name: '_id', xt_type: ':utf8' },
+    { column_name: '_system_from', xt_type: ':instant' },
+    { column_name: '_system_to', xt_type: '[:? :instant]' },
+    { column_name: '_valid_from', xt_type: ':instant' },
+    { column_name: '_valid_to', xt_type: '[:? :instant]' },
+    { column_name: 'scope_key', xt_type: ':utf8' },
+    { column_name: 'v', xt_type: ':i32' }
+  ],
+  canonical: 'tx2-value/2;array82:object73:str4:0076wire57:f6416:4037000000000000str16:003a006900330032str8:00330031'
+}
+{
+  table: 'tx_wire_int_wide',
+  cat: [
+    { column_name: '_id', xt_type: ':utf8' },
+    { column_name: '_system_from', xt_type: ':instant' },
+    { column_name: '_system_to', xt_type: '[:? :instant]' },
+    { column_name: '_valid_from', xt_type: ':instant' },
+    { column_name: '_valid_to', xt_type: '[:? :instant]' },
+    { column_name: 'scope_key', xt_type: ':utf8' },
+    { column_name: 'v', xt_type: ':i64' }
+  ],
+  canonical: 'tx2-value/2;array82:object73:str4:0076wire57:f6416:4034000000000000str16:003a006900360034str8:00330031'
+}
+{
+  table: 'tx_wire_float_narrow',
+  cat: [
+    { column_name: '_id', xt_type: ':utf8' },
+    { column_name: '_system_from', xt_type: ':instant' },
+    { column_name: '_system_to', xt_type: '[:? :instant]' },
+    { column_name: '_valid_from', xt_type: ':instant' },
+    { column_name: '_valid_to', xt_type: '[:? :instant]' },
+    { column_name: 'scope_key', xt_type: ':utf8' },
+    { column_name: 'v', xt_type: ':f32' }
+  ],
+  canonical: 'tx2-value/2;array99:object90:str4:0076wire74:f6416:4085e00000000000str16:003a006600330032str24:003300310032006500330030'
+}
+{
+  table: 'tx_wire_float_wide',
+  cat: [
+    { column_name: '_id', xt_type: ':utf8' },
+    { column_name: '_system_from', xt_type: ':instant' },
+    { column_name: '_system_to', xt_type: '[:? :instant]' },
+    { column_name: '_valid_from', xt_type: ':instant' },
+    { column_name: '_valid_to', xt_type: '[:? :instant]' },
+    { column_name: 'scope_key', xt_type: ':utf8' },
+    { column_name: 'v', xt_type: ':f64' }
+  ],
+  canonical: 'tx2-value/2;array99:object90:str4:0076wire74:f6416:4085e80000000000str16:003a006600360034str24:003300310032006500330030'
+}
+{
+  table: 'tx_wire_mixed_int',
+  cat: [
+    { column_name: '_id', xt_type: ':utf8' },
+    { column_name: '_system_from', xt_type: ':instant' },
+    { column_name: '_system_to', xt_type: '[:? :instant]' },
+    { column_name: '_valid_from', xt_type: ':instant' },
+    { column_name: '_valid_to', xt_type: '[:? :instant]' },
+    { column_name: 'scope_key', xt_type: ':utf8' },
+    { column_name: 'v', xt_type: '#{:i32 :i64}' }
+  ],
+  refusedAmbiguousUnion: true
+}
+{
+  table: 'tx_wire_mixed_float',
+  cat: [
+    { column_name: '_id', xt_type: ':utf8' },
+    { column_name: '_system_from', xt_type: ':instant' },
+    { column_name: '_system_to', xt_type: '[:? :instant]' },
+    { column_name: '_valid_from', xt_type: ':instant' },
+    { column_name: '_valid_to', xt_type: '[:? :instant]' },
+    { column_name: 'scope_key', xt_type: ':utf8' },
+    { column_name: 'v', xt_type: '#{:f64 :f32}' }
+  ],
+  refusedAmbiguousUnion: true
+}

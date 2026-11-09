@@ -1,0 +1,124 @@
+{
+  "diagnosticOnly": true,
+  "complete": true,
+  "mode": "probe",
+  "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5471/xtdb",
+  "holder": "CX-K01-R12-live",
+  "at": "2026-11-09T06:01:52.269Z",
+  "reads": [
+    {
+      "table": "tx_wire_int_narrow",
+      "query": "SELECT COUNT(*) AS n FROM tx_wire_int_narrow FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "wire",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "31"
+          ]
+        ]
+      },
+      "countText": "1"
+    },
+    {
+      "table": "tx_wire_int_wide",
+      "query": "SELECT COUNT(*) AS n FROM tx_wire_int_wide FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "wire",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "31"
+          ]
+        ]
+      },
+      "countText": "1"
+    },
+    {
+      "table": "tx_wire_float_narrow",
+      "query": "SELECT COUNT(*) AS n FROM tx_wire_float_narrow FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "wire",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "31"
+          ]
+        ]
+      },
+      "countText": "1"
+    },
+    {
+      "table": "tx_wire_float_wide",
+      "query": "SELECT COUNT(*) AS n FROM tx_wire_float_wide FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "wire",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "31"
+          ]
+        ]
+      },
+      "countText": "1"
+    },
+    {
+      "table": "tx_wire_mixed_int",
+      "query": "SELECT COUNT(*) AS n FROM tx_wire_mixed_int FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "wire",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "32"
+          ]
+        ]
+      },
+      "countText": "2"
+    },
+    {
+      "table": "tx_wire_mixed_float",
+      "query": "SELECT COUNT(*) AS n FROM tx_wire_mixed_float FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "wire",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "32"
+          ]
+        ]
+      },
+      "countText": "2"
+    }
+  ]
+}

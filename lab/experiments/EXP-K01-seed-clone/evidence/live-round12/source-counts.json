@@ -1,0 +1,125 @@
+{
+  "diagnosticOnly": true,
+  "complete": false,
+  "mode": "seed",
+  "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5471/xtdb",
+  "holder": "CX-K01-R12-live",
+  "at": "2026-11-09T06:04:04.436Z",
+  "reads": [
+    {
+      "table": "tx_assertions",
+      "query": "SELECT COUNT(*) AS n FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"ns-xtdb-dev500-seed-ns-v2-0604cd31\",0]",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "3631333834"
+          ]
+        ]
+      },
+      "countText": "61384"
+    },
+    {
+      "table": "tx_attempts",
+      "query": "SELECT COUNT(*) AS n FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"ns-xtdb-dev500-seed-ns-v2-0604cd31\",0]",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "3831"
+          ]
+        ]
+      },
+      "countText": "81"
+    },
+    {
+      "table": "tx_claims",
+      "query": "SELECT COUNT(*) AS n FROM tx_claims FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"ns-xtdb-dev500-seed-ns-v2-0604cd31\",0]",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "3831"
+          ]
+        ]
+      },
+      "countText": "81"
+    },
+    {
+      "table": "tx_constraint_generations",
+      "query": "SELECT COUNT(*) AS n FROM tx_constraint_generations FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"ns-xtdb-dev500-seed-ns-v2-0604cd31\",0]",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "30"
+          ]
+        ]
+      },
+      "countText": "0"
+    },
+    {
+      "table": "tx_constraint_graphs",
+      "query": "SELECT COUNT(*) AS n FROM tx_constraint_graphs FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"ns-xtdb-dev500-seed-ns-v2-0604cd31\",0]",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "30"
+          ]
+        ]
+      },
+      "countText": "0"
+    },
+    {
+      "table": "tx_meta",
+      "query": "SELECT COUNT(*) AS n FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"ns-xtdb-dev500-seed-ns-v2-0604cd31\",0]",
+      "frame": {
+        "columns": [
+          {
+            "name": "n",
+            "oid": 20
+          }
+        ],
+        "rows": [
+          [
+            "31"
+          ]
+        ]
+      },
+      "countText": "1"
+    }
+  ],
+  "error": "PostgresError: Errors planning SQL statement:\n  - Table not found: tx_native_relation_attempts\n  - Column not found: scope_key\n    at ErrorResponse (/Users/sam/projects/triplex-db-2/.claude/worktrees/k01/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/connection.js:815:30)\n    at handle (/Users/sam/projects/triplex-db-2/.claude/worktrees/k01/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/connection.js:489:6)\n    at Socket.data (/Users/sam/projects/triplex-db-2/.claude/worktrees/k01/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/connection.js:324:9)\n    at Socket.emit (node:events:519:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)\n    at TCP.onStreamRead (node:internal/stream_base_commons:189:23)"
+}
