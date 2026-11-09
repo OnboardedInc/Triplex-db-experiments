@@ -25,9 +25,28 @@ try {
     );
     files.push(target);
   }
+  if (process.argv.includes("--adapter")) {
+    const source = await fs.readFile(
+      path.join(import.meta.dirname, "evidence/main-XtdbStorageAdapter.txt"),
+      "utf8",
+    );
+    const target = path.join(root, "packages/xtdb/src/__rt01_main_XtdbStorageAdapter.js");
+    await fs.writeFile(
+      target,
+      ts.transpileModule(source, {
+        compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
+      }).outputText,
+    );
+    files.push(target);
+  }
   const result = spawnSync(
     path.join(root, "node_modules/.bin/tsx"),
-    [path.join(import.meta.dirname, "microbench.ts")],
+    [
+      path.join(
+        import.meta.dirname,
+        process.argv.includes("--adapter") ? "adapter-microbench.ts" : "microbench.ts",
+      ),
+    ],
     { cwd: root, stdio: "inherit" },
   );
   process.exitCode = result.status ?? 1;

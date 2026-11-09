@@ -77,18 +77,25 @@ export const recordTimeConformanceCases = (
         const t = yield* Triples;
         const receipts = yield* Effect.all(Array.from({ length: 200 }, write), { concurrency: 4 });
         receipts.sort((a, b) => a.position - b.position);
-        for (const [i, r] of receipts.entries()) {
-          yield* check(i === 0 || r.instant > receipts[i - 1]!.instant, "stamp order");
-          yield* check(
-            r.triples.every((row) => row.recordedAt === r.instant),
-            "assert stamp",
-          );
-          yield* check((yield* t.transaction(r.txId))?.instant === r.instant, "journal stamp");
-          yield* check(
-            (yield* t.history(r.triples[0]!.entityId)).every((row) => row.recordedAt === r.instant),
-            "history stamp",
-          );
-        }
+        yield* Effect.forEach(
+          receipts,
+          (r, i) =>
+            Effect.gen(function* () {
+              yield* check(i === 0 || r.instant > receipts[i - 1]!.instant, "stamp order");
+              yield* check(
+                r.triples.every((row) => row.recordedAt === r.instant),
+                "assert stamp",
+              );
+              yield* check((yield* t.transaction(r.txId))?.instant === r.instant, "journal stamp");
+              yield* check(
+                (yield* t.history(r.triples[0]!.entityId)).every(
+                  (row) => row.recordedAt === r.instant,
+                ),
+                "history stamp",
+              );
+            }),
+          { concurrency: 8 },
+        );
         const shared = EntityId.make("rt:shared");
         yield* t.transact([
           { op: "assert", entityId: shared, attribute: ":rt/value", value: string("initial") },

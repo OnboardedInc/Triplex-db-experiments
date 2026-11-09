@@ -1,3 +1,4 @@
+import { appendFileSync } from "node:fs";
 import { triplesConformanceCases } from "@triplex-build/triplex-testkit";
 import { randomUUID } from "node:crypto";
 import { describe, it, expect } from "vitest";
@@ -44,6 +45,12 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("EXP-RT01 QLever A0",
           loseNextAck: () => {
             lose = true;
           },
+          progress: (message) =>
+            appendFileSync(
+              "../../lab/experiments/EXP-RT01/evidence/qlever-progress.jsonl",
+              JSON.stringify({ time: new Date().toISOString(), commitEncoding, scope, message }) +
+                "\n",
+            ),
         },
       );
       await Effect.runPromise(suite.run.pipe(Effect.provide(suite.layer)));

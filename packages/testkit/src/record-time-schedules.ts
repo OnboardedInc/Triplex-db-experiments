@@ -30,7 +30,7 @@ export const makeA0RecordTimeSuite = (
   adapter: StorageAdapterService,
   queries: QueryExecutorService,
   scope: string,
-  faults: { readonly loseNextAck: () => void },
+  faults: { readonly loseNextAck: () => void; readonly progress?: (message: string) => void },
 ) => {
   const clock = makeControllableRecordClock(100000);
   let pause: { entered: Deferred.Deferred<void>; release: Deferred.Deferred<void> } | undefined;
@@ -89,6 +89,7 @@ export const makeA0RecordTimeSuite = (
     clock,
     delayedDecision: Effect.gen(function* () {
       const t = yield* Triples;
+      faults.progress?.("T1 seed");
       clock.set(99999);
       yield* write("page:a");
       yield* write("page:b");
@@ -97,12 +98,16 @@ export const makeA0RecordTimeSuite = (
         release = yield* Deferred.make<void>();
       pause = { entered, release };
       const pending = yield* Effect.forkChild(write("schedule:X"));
+      faults.progress?.("T1 await staged A");
       yield* Deferred.await(entered);
+      faults.progress?.("T1 B write");
       clock.set(100001);
       const b = yield* write("schedule:Y");
       const basis = { recordedAt: b.instant, validAt: 100001 };
+      faults.progress?.("T1 pinned read");
       const before = yield* t.entity(EntityId.make("schedule:X"), basis);
       const first = yield* t.entityPage({ entityType: "RecordTime", limit: 1, basis });
+      faults.progress?.("T1 release A");
       yield* Deferred.succeed(release, undefined);
       const a = yield* Fiber.join(pending);
       yield* require(a.instant > b.instant, "late decision reused staged stamp");
@@ -190,9 +195,9 @@ export const makeA0RecordTimeSuite = (
       cases,
       (entry) =>
         Effect.gen(function* () {
-          console.log(`RT01 start ${entry.name}`);
+          faults.progress?.(`start ${entry.name}`);
           yield* entry.run;
-          console.log(`RT01 completed ${entry.name}`);
+          faults.progress?.(`completed ${entry.name}`);
         }),
       { discard: true },
     ),

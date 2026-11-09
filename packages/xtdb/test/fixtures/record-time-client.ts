@@ -39,6 +39,12 @@ export const makeRecordTimeClient = (): XtdbClient => {
         throw new Error(`Unsupported offline SQL: ${sql}`);
       let rows = values("tx_assertions", scope),
         index = 1;
+      const entityList = /entity_id IN \(([^)]+)\)/.exec(sql);
+      if (entityList) {
+        const count = entityList[1]!.split(",").length;
+        const ids = params.slice(index, index + count); index += count;
+        rows = rows.filter((row) => ids.includes(row["entity_id"]));
+      }
       for (const column of [
         "id",
         "entity_id",
