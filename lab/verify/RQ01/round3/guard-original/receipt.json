@@ -1,0 +1,27 @@
+{
+  "mode": "original",
+  "at": "2026-11-09T01:23:03.929Z",
+  "head": "c6ce697a15dc90c6e7aa7994ffc74ff0b0b80b11",
+  "slot": "offline/no engine; CX-VRQ01-round3-guard",
+  "command": [
+    "node",
+    "/Users/sam/projects/triplex-db-2/node_modules/vitest/vitest.mjs",
+    "run",
+    "--configLoader",
+    "runner",
+    "--config",
+    "lab/verify/RQ01/round3/guard.config.mjs",
+    "--reporter=json",
+    "--outputFile=lab/verify/RQ01/round3/guard-original/tests.json"
+  ],
+  "status": 0,
+  "sourceSha256": "c2aab3c2df375819dbacd7ce0b66519e936a7240155743b77eea4e48370d1d47",
+  "controllerSha256": "ffd7ceb1de048e4dc2fd99216d1a01ee41e6e2f008113cf2caca2bda31b622d3",
+  "derivedProbeSha256": "55bddc20cdd8038eac38b2900e3fc97ecd7168f3c886e111ebba15056ddf3db7",
+  "transformation": "imports only",
+  "content": true,
+  "fresh": true,
+  "binding": true,
+  "exactFailure": true,
+  "matched": true
+}

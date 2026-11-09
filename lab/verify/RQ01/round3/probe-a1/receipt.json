@@ -1,0 +1,168 @@
+{
+  "head": "c6ce697a15dc90c6e7aa7994ffc74ff0b0b80b11",
+  "started": 1794187327907,
+  "admission": {
+    "kind": "offline-heavy/no-engine",
+    "slot": "1",
+    "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/1/owner.json",
+    "owner": {
+      "pid": 19134,
+      "label": "CX-VRQ01-round3-probe-a1",
+      "at": "2026-11-09T01:22:07.828Z"
+    }
+  },
+  "before": {
+    "packages/testkit/src/route-equivalence.ts": "723399315a33500832e215b1a79085d8c449d1ecb99e2254e2e23a33013b6505",
+    "packages/testkit/src/route-coverage.ts": "9e53f647ec7862c62c4831279a075a09ea5176d78e7e7afe149da837c26261f3",
+    "packages/testkit/src/route-history-grammar.ts": "1db28c3e695f6c827dd814210a8a5f7a882aa1677fff6815c70e0d118baea934",
+    "packages/testkit/src/offline-route-fixtures.ts": "e6ca91277f7ef4e70888983f86e68727e02e43fa3046c221fa27f35eaa09d37c",
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rq01/lab/verify/RQ01/round3/probe.mjs": "7a1a75a4711b432735ac487ce8b40d111b9be31b078613b4cef8132b2c465724",
+    "lab/verify/RQ01/source-loader.mjs": "768f9dd918dcd32f2c8be71860f79ab966f10b26788df02f34c346c9b0cd8dd7",
+    "lab/verify/RQ01/content-shim.mjs": "113b0d33f80835e501b3db9d61758bcdf44e2b3a3af1ef903002226c81af7f4d",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+  },
+  "results": [
+    {
+      "test": "drop-retraction",
+      "caught": true,
+      "cleanViolations": 0,
+      "violations": 10,
+      "rules": [
+        "HE-1",
+        "HE-2"
+      ]
+    },
+    {
+      "test": "drop-same-ms-tie",
+      "caught": true,
+      "cleanViolations": 0,
+      "violations": 10,
+      "rules": [
+        "HE-1",
+        "HE-2"
+      ]
+    },
+    {
+      "test": "future-old-data",
+      "caught": true,
+      "cleanViolations": 0,
+      "violations": 14,
+      "rules": [
+        "HE-3",
+        "HE-1",
+        "HE-5"
+      ]
+    },
+    {
+      "test": "empty-ineligible",
+      "caught": true,
+      "cleanViolations": 0,
+      "violations": 15,
+      "rules": [
+        "HE-6",
+        "HE-3",
+        "HE-1"
+      ]
+    },
+    {
+      "test": "ignore-correction",
+      "caught": true,
+      "cleanViolations": 0,
+      "violations": 10,
+      "rules": [
+        "HE-1",
+        "HE-2"
+      ]
+    },
+    {
+      "test": "all-generated-profile-lengths",
+      "profiles": 405,
+      "validated": 380,
+      "rejectedPartial": 25
+    },
+    {
+      "test": "invalid-history-pre-use",
+      "cases": 12,
+      "entryPoints": 6,
+      "fixtureCalls": 0
+    },
+    {
+      "test": "coverage-five-seeds",
+      "complete": true,
+      "seeds": [
+        1,
+        42,
+        890,
+        89,
+        891
+      ]
+    },
+    {
+      "test": "custom-cut-dropped-row",
+      "caught": true,
+      "cleanViolations": 0,
+      "missingCutsRejected": true,
+      "violations": 378,
+      "rules": [
+        "HE-1",
+        "HE-2"
+      ]
+    },
+    {
+      "test": "retirement-pending",
+      "rejected": true
+    },
+    {
+      "test": "retirement-wrong-horizon",
+      "rejected": true
+    },
+    {
+      "test": "retirement-wrong-pin",
+      "rejected": true
+    },
+    {
+      "test": "invalid-driver-policies",
+      "cases": 3,
+      "rejected": true
+    },
+    {
+      "test": "retirement-snapshot",
+      "violations": 0
+    },
+    {
+      "test": "retirement-raw-lifetime",
+      "violations": 0
+    },
+    {
+      "test": "empty-filtered-empty",
+      "rejected": true
+    },
+    {
+      "test": "generated-correction-mutant",
+      "caught": true,
+      "violations": 3734
+    },
+    {
+      "test": "D-C1-Q89a",
+      "violations": 20,
+      "rules": [
+        "HE-5"
+      ],
+      "positiveWrapperRejected": true
+    }
+  ],
+  "after": {
+    "packages/testkit/src/route-equivalence.ts": "723399315a33500832e215b1a79085d8c449d1ecb99e2254e2e23a33013b6505",
+    "packages/testkit/src/route-coverage.ts": "9e53f647ec7862c62c4831279a075a09ea5176d78e7e7afe149da837c26261f3",
+    "packages/testkit/src/route-history-grammar.ts": "1db28c3e695f6c827dd814210a8a5f7a882aa1677fff6815c70e0d118baea934",
+    "packages/testkit/src/offline-route-fixtures.ts": "e6ca91277f7ef4e70888983f86e68727e02e43fa3046c221fa27f35eaa09d37c",
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rq01/lab/verify/RQ01/round3/probe.mjs": "7a1a75a4711b432735ac487ce8b40d111b9be31b078613b4cef8132b2c465724",
+    "lab/verify/RQ01/source-loader.mjs": "768f9dd918dcd32f2c8be71860f79ab966f10b26788df02f34c346c9b0cd8dd7",
+    "lab/verify/RQ01/content-shim.mjs": "113b0d33f80835e501b3db9d61758bcdf44e2b3a3af1ef903002226c81af7f4d",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+  },
+  "sourceStillMatches": true,
+  "admissionStillMatches": true,
+  "completed": 1794187382786,
+  "probesCompleted": true
+}

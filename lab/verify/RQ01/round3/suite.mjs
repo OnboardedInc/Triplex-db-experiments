@@ -1,0 +1,30 @@
+// [EXP-RQ01-QA2] Why: audit real test content, fresh output, and exact source binding before reporting success.
+// Rejected: trusting an exit code or reusing the builder's receipt.
+import fs from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync, spawnSync } from 'node:child_process';
+const out = 'lab/verify/RQ01/round3/suite-a1';
+fs.mkdirSync(out, { recursive: false });
+const files = execFileSync('git', ['ls-files', 'packages/testkit', 'packages/core', 'packages/xtdb', 'packages/qlever/test/route-equivalence.test.ts', 'pnpm-lock.yaml', 'vitest.workspace-aliases.ts'], { encoding: 'utf8' }).trim().split('\n');
+files.push(import.meta.filename, 'lab/verify/RQ01/round3/suite.config.ts', 'lab/verify/RQ01/lane-a5.config.ts', 'lab/verify/RQ01/lane-a4.config.ts', 'lab/verify/RQ01/lane.config.ts');
+const hashes = () => Object.fromEntries(files.map(f => [f, createHash('sha256').update(fs.readFileSync(f)).digest('hex')]));
+const before = hashes();
+const started = Date.now();
+const command = ['node', '/Users/sam/projects/triplex-db-2/node_modules/vitest/vitest.mjs', 'run', '--configLoader', 'runner', '--config', 'lab/verify/RQ01/round3/suite.config.ts', '--reporter=json', `--outputFile=${out}/tests.json`];
+const child = spawnSync(command[0], command.slice(1), { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 });
+fs.writeFileSync(`${out}/command.log`, `${child.stdout ?? ''}${child.stderr ?? ''}${child.error ?? ''}`);
+const tests = fs.existsSync(`${out}/tests.json`) ? JSON.parse(fs.readFileSync(`${out}/tests.json`, 'utf8')) : null;
+const assertions = tests?.testResults.flatMap(s => s.assertionResults) ?? [];
+const names = assertions.map(t => t.fullName);
+const expectedNames = ['drop-retraction', 'drop-same-ms-tie', 'future-old-data', 'empty-ineligible', 'ignore-correction', 'known-failing Q89a / R31 D-C1', 'existing-row retirement', 'empty and filtered-to-empty', 'consecutive physical groups', 'custom purge-cut dropped-row', 'coverage binds the frozen executed plan'];
+const content = tests?.success === true && tests.numTotalTests === 95 && tests.numPassedTests === 95 && tests.numFailedTests === 0 && tests.numPendingTests === 0 && tests.numTodoTests === 0 && expectedNames.every(n => names.some(name => name.includes(n))) && assertions.every(t => t.status === 'passed');
+const fresh = tests?.startTime >= started && fs.statSync(`${out}/tests.json`).mtimeMs >= started;
+const after = hashes();
+const stable = JSON.stringify(before) === JSON.stringify(after);
+const builder = JSON.parse(fs.readFileSync('lab/experiments/EXP-RQ01/evidence/round3-a4/receipt.json', 'utf8'));
+const builderSourceMatch = Object.fromEntries(Object.entries(builder.source).map(([f,h]) => [f, createHash('sha256').update(fs.readFileSync(fs.existsSync(f) ? f : '/Users/sam/projects/triplex-db-2/' + f)).digest('hex') === h]));
+const passed = child.status === 0 && content && fresh && stable && Object.values(builderSourceMatch).every(Boolean);
+const receipt = { at: new Date().toISOString(), head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), slot: 'offline/no engine slot; heavy label CX-VRQ01-round3-suite-a1', command, status: child.status, signal: child.signal, content, fresh, sourceStillMatches: stable, builderSourceMatch, tests: tests && { total: tests.numTotalTests, passed: tests.numPassedTests, pending: tests.numPendingTests, todo: tests.numTodoTests }, expectedNames, before, after, passed };
+fs.writeFileSync(`${out}/receipt.json`, JSON.stringify(receipt, null, 2) + '\n');
+console.log(JSON.stringify({ passed, status: child.status, content, fresh, stable, tests: receipt.tests }));
+process.exitCode = passed ? 0 : 1;

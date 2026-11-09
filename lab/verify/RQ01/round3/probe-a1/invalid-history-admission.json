@@ -1,0 +1,158 @@
+[
+  {
+    "name": "old-nested-gap",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  },
+  {
+    "name": "partial-group",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  },
+  {
+    "name": "bad-ordinal",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  },
+  {
+    "name": "wrong-size",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  },
+  {
+    "name": "missing-receipt",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  },
+  {
+    "name": "wrong-receipt",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  },
+  {
+    "name": "missing-attempt",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  },
+  {
+    "name": "bad-retract-target",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  },
+  {
+    "name": "duplicate-assertion",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  },
+  {
+    "name": "invalid-valid-interval",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  },
+  {
+    "name": "bad-attempt-order",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  },
+  {
+    "name": "abort-became-committed",
+    "methods": [
+      "validate",
+      "fold",
+      "bases",
+      "coverage",
+      "plan",
+      "run"
+    ],
+    "resets": 0,
+    "reads": 0
+  }
+]

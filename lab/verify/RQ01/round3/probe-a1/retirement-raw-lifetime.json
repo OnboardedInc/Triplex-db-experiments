@@ -1,0 +1,673 @@
+{
+  "seed": 89001,
+  "lane": "CX-VRQ01-independent-model",
+  "reference": "offline-fold-not-independent",
+  "plan": {
+    "history": {
+      "seed": 89001,
+      "now": 2000,
+      "commits": [
+        {
+          "position": 1024,
+          "instant": 1000,
+          "writes": [
+            {
+              "op": "assert",
+              "row": {
+                "id": "metadata",
+                "entity_id": "s",
+                "attribute": ":route/value",
+                "value_type": "string",
+                "value_string": "metadata",
+                "value_number": null,
+                "value_boolean": null,
+                "value_datetime": null,
+                "value_json": null,
+                "recorded_at": 0,
+                "recorded_position": 0,
+                "valid_from": 0,
+                "valid_to": null,
+                "created_by": "route-fixture",
+                "retracted_at": null,
+                "retracted_position": null,
+                "retract_tx_id": null,
+                "entity_type": "RouteSubject",
+                "schema_version": 1,
+                "tx_id": "tx:metadata"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "extension": {
+      "position": 2048,
+      "instant": 1001,
+      "writes": [
+        {
+          "op": "retract",
+          "id": "metadata"
+        }
+      ]
+    },
+    "extensionAttempt": null,
+    "policies": [
+      {
+        "route": "control",
+        "kind": "complete",
+        "cuts": []
+      },
+      {
+        "route": "injected",
+        "kind": "complete",
+        "cuts": []
+      }
+    ],
+    "requests": [
+      {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      }
+    ],
+    "digest": "2ce9eab093d5fb6fb64bbaf25e045530c6e4054477e27d6fb8450030177f09b3"
+  },
+  "observations": [
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    }
+  ],
+  "coverage": {
+    "requiredShapes": [
+      "P",
+      "T",
+      "TP",
+      "H"
+    ],
+    "minimumPerShape": 1,
+    "shapes": {
+      "L": 0,
+      "V": 0,
+      "P": 1,
+      "T": 1,
+      "TP": 1,
+      "H": 1
+    }
+  },
+  "events": [
+    {
+      "event": "evict-overlay",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Independent in-memory event; no engine assertion"
+      }
+    },
+    {
+      "event": "catch-up",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Independent in-memory event; no engine assertion"
+      }
+    },
+    {
+      "event": "cold-cache",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Independent in-memory event; no engine assertion"
+      }
+    },
+    {
+      "event": "index-job",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "pending",
+        "reason": "No physical engine"
+      }
+    },
+    {
+      "event": "flush",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "pending",
+        "reason": "No physical engine"
+      }
+    },
+    {
+      "event": "compaction",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "pending",
+        "reason": "No physical engine"
+      }
+    }
+  ],
+  "violations": []
+}

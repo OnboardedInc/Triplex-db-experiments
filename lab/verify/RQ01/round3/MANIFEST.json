@@ -1,0 +1,261 @@
+{
+  "at": "2026-11-09T01:28:30.255Z",
+  "reviewedBuilder": "d5cd32e6",
+  "mergeHead": "c6ce697a15dc90c6e7aa7994ffc74ff0b0b80b11",
+  "verdict": "ACCEPT",
+  "scope": "Q89f reusable offline harness; not engine/read-route/independent-oracle qualification",
+  "admission": {
+    "kind": "offline-heavy/no-engine",
+    "slot": "2",
+    "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/2/owner.json",
+    "owner": {
+      "pid": 70250,
+      "label": "CX-VRQ01-round3-seal",
+      "at": "2026-11-09T01:28:29.985Z"
+    }
+  },
+  "admissionStillMatches": true,
+  "implementationUnchanged": true,
+  "content": {
+    "testsPassed": 95,
+    "originalFaultsCaught": 5,
+    "customCutFaultHE1": 189,
+    "customCutFaultHE2": 189,
+    "grammarProfiles": 405,
+    "validProfiles": 380,
+    "truncatedRejected": 25,
+    "malformedHistories": 12,
+    "preUseRejectionEntryPoints": 6,
+    "seedCoverage": 5,
+    "DC1GuardActive": true,
+    "packedConsumerObservations": 26628,
+    "fullRootPackagePassed": false
+  },
+  "localRetention": "Ignored package source/build/consumer/root-artifact trees remain locally retained; source-copy hashes, logs, entry lists and three tarballs are committed",
+  "files": {
+    "lab/verify/RQ01/VERIFY-round3.md": {
+      "bytes": 15578,
+      "sha256": "11ac5407b18c3b2aee523013b5788f5737ea3b8a01a0959e6e5f4ea015335b33"
+    },
+    "lab/verify/RQ01/round3/.gitignore": {
+      "bytes": 70,
+      "sha256": "a6b2ab69e6bdbcb79da76d6238beae57ff0491f5328d0ee6e5ab53aee176b548"
+    },
+    "lab/verify/RQ01/round3/bin/pnpm": {
+      "bytes": 315,
+      "sha256": "968758fb9bc9cf41a4664a5214b3cf4d80b9bebf4ffb5a2ff6888cc8e59a8fd8"
+    },
+    "lab/verify/RQ01/round3/guard-original/case.probe.ts": {
+      "bytes": 1416,
+      "sha256": "55bddc20cdd8038eac38b2900e3fc97ecd7168f3c886e111ebba15056ddf3db7"
+    },
+    "lab/verify/RQ01/round3/guard-original/command.log": {
+      "bytes": 135,
+      "sha256": "24097da72182cd0c3db02868542477c23245b0d7974dcff901eb43509cabde45"
+    },
+    "lab/verify/RQ01/round3/guard-original/receipt.json": {
+      "bytes": 890,
+      "sha256": "8cb592034abe6b03666b0ff4ac54a5dd26f2f654569425652e7eaaa4d73675fc"
+    },
+    "lab/verify/RQ01/round3/guard-original/tests.json": {
+      "bytes": 1030,
+      "sha256": "503f8521304a82bc01b98b1201eaffc290a23d0f679b30fcb772fa73311ab4d3"
+    },
+    "lab/verify/RQ01/round3/guard-repair/case.probe.ts": {
+      "bytes": 1416,
+      "sha256": "f305725f15f20712c8b5447198961ff7b174b70d8de58d0564046f62315be7c3"
+    },
+    "lab/verify/RQ01/round3/guard-repair/command.log": {
+      "bytes": 133,
+      "sha256": "2cc26466223db80139e7e7072c11187883d26e79131ef8b94215fb9f38cf5265"
+    },
+    "lab/verify/RQ01/round3/guard-repair/receipt.json": {
+      "bytes": 921,
+      "sha256": "b5fe65302f5d4a0e16513d2e4a1f1d1745676cb283d3b67fb7f63d21b69024b4"
+    },
+    "lab/verify/RQ01/round3/guard-repair/tests.json": {
+      "bytes": 1515,
+      "sha256": "f94ba3dae2c1cb2aacd4f891f41e2ec4bf974cf8d54bea474952cea510cd5511"
+    },
+    "lab/verify/RQ01/round3/guard-run.mjs": {
+      "bytes": 401,
+      "sha256": "c3388a2eea09c6075bbe03ffcfbabd433b33997261022d5628b8bb30a861bc4d"
+    },
+    "lab/verify/RQ01/round3/guard.config.mjs": {
+      "bytes": 657,
+      "sha256": "3f9388c0873589316f10d5b56be73117e85deb63d1b8255dca8850c9c0c2cc2d"
+    },
+    "lab/verify/RQ01/round3/guard.mjs": {
+      "bytes": 3234,
+      "sha256": "ffd7ceb1de048e4dc2fd99216d1a01ee41e6e2f008113cf2caca2bda31b622d3"
+    },
+    "lab/verify/RQ01/round3/package-a1/build-core.log": {
+      "bytes": 37910,
+      "sha256": "166cebae7018cb453eeb0005c475587980ca80c0bd6a0b20a66dad9d16d82248"
+    },
+    "lab/verify/RQ01/round3/package-a1/build-sql-declarations.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/verify/RQ01/round3/package-a1/build-sql.log": {
+      "bytes": 1652,
+      "sha256": "b7df71179528c24d13a039762a1ba222d81633e61b4bda1474adeeb02aa8e32c"
+    },
+    "lab/verify/RQ01/round3/package-a1/build-testkit.log": {
+      "bytes": 1888,
+      "sha256": "1b0fb61886fecd081ce40f559baaafeb79f33d1ac1d67ccc3afa5815457430ff"
+    },
+    "lab/verify/RQ01/round3/package-a1/consumer-runtime.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/verify/RQ01/round3/package-a1/consumer-types.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/verify/RQ01/round3/package-a1/entries.json": {
+      "bytes": 20918,
+      "sha256": "cfcbb4647db781f4d1380cb83cb0439fa2bf085b999331df01e2c813620f2b84"
+    },
+    "lab/verify/RQ01/round3/package-a1/list-core.log": {
+      "bytes": 15569,
+      "sha256": "7e2ccf775bae135c859e717ddd2b84dc903ff8441cec9a47012448546720989a"
+    },
+    "lab/verify/RQ01/round3/package-a1/list-sql.log": {
+      "bytes": 1193,
+      "sha256": "e2688b4b3e308ad02b3165274cf5d02437bc49b5b0daef76ca31b4429ff18331"
+    },
+    "lab/verify/RQ01/round3/package-a1/list-testkit.log": {
+      "bytes": 771,
+      "sha256": "61546ff2a907d369d66ef921de96b926bf8fdb82189157b4ab57caf86acf337e"
+    },
+    "lab/verify/RQ01/round3/package-a1/pack-core.log": {
+      "bytes": 12455,
+      "sha256": "2ca63afa04a9b22f2cf2925a9b30fb44a819675afba5b4cab3cbf5adb6190b47"
+    },
+    "lab/verify/RQ01/round3/package-a1/pack-sql.log": {
+      "bytes": 1103,
+      "sha256": "d47cbec29327642cd5dce21f7ffb1a4c21b44b962339a00c156fe83832543bd3"
+    },
+    "lab/verify/RQ01/round3/package-a1/pack-testkit.log": {
+      "bytes": 809,
+      "sha256": "d97d156de9277212c7d857d4ac0f8d4e175eb8049b2ddcf8d729c59f462de51a"
+    },
+    "lab/verify/RQ01/round3/package-a1/receipt.json": {
+      "bytes": 74788,
+      "sha256": "09b88a277fa81ae465e27c4d34f937b1e1c5066435a632a1ce2c3b792833e5ae"
+    },
+    "lab/verify/RQ01/round3/package-a1/root-package-check.log": {
+      "bytes": 1665,
+      "sha256": "32f97a60b401b967373229a1592a1d210a12bc0a8901e215e082f63ad46d2b90"
+    },
+    "lab/verify/RQ01/round3/package-a1/tarballs/triplex-build-triplex-0.2.0.tgz": {
+      "bytes": 627713,
+      "sha256": "f61819e09d5c4c1b4120bd7be61b9862ed5c3f70d3954459f75d37ccf4277b7b"
+    },
+    "lab/verify/RQ01/round3/package-a1/tarballs/triplex-build-triplex-sql-0.2.0.tgz": {
+      "bytes": 35019,
+      "sha256": "6a03975e5ee0efbf93f8b3910d236eed6e7358386c485a37031f304134b1db84"
+    },
+    "lab/verify/RQ01/round3/package-a1/tarballs/triplex-build-triplex-testkit-0.2.0.tgz": {
+      "bytes": 87025,
+      "sha256": "1b9df019460d7396ef1385c8282a05b14f34ed389819f1a06008f51052a5954a"
+    },
+    "lab/verify/RQ01/round3/package-a1/unpack-core.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/verify/RQ01/round3/package-a1/unpack-sql.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/verify/RQ01/round3/package-a1/unpack-testkit.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "lab/verify/RQ01/round3/package.mjs": {
+      "bytes": 10463,
+      "sha256": "8a62fe4fd012743f417025e4071f907f831f360d706402fb960af5884fc24041"
+    },
+    "lab/verify/RQ01/round3/probe-a1/coverage.json": {
+      "bytes": 77774,
+      "sha256": "15c479a07b4aeec55dec93dd6d8553639d38ad85cc5fb924560776f8d578528c"
+    },
+    "lab/verify/RQ01/round3/probe-a1/custom-cut-fault.json": {
+      "bytes": 458147,
+      "sha256": "124a3c462c1047b2b14f59cb5653e9397f928ac8ea7dcf5232ca841a51ee9f02"
+    },
+    "lab/verify/RQ01/round3/probe-a1/dc1-Q89a.json": {
+      "bytes": 19462,
+      "sha256": "4b38f13d8cc8a449731dadeb9bb6341bc7d2f439a789b783592d75d688899d92"
+    },
+    "lab/verify/RQ01/round3/probe-a1/drop-retraction.json": {
+      "bytes": 19220,
+      "sha256": "a540bb960c4047355a6b645952b89f00982be3ccb15c9de7fd6661bb870c36b4"
+    },
+    "lab/verify/RQ01/round3/probe-a1/drop-same-ms-tie.json": {
+      "bytes": 20646,
+      "sha256": "3a2b5f6970c62b0638b5e7449544f77360cb4cd9f01e0cfc02d8e0d862f4d21f"
+    },
+    "lab/verify/RQ01/round3/probe-a1/empty-ineligible.json": {
+      "bytes": 21476,
+      "sha256": "c174ce8a1f34a4f34524b87c819c4f330a2b780c823c2870bd56b68c02771daf"
+    },
+    "lab/verify/RQ01/round3/probe-a1/future-old-data.json": {
+      "bytes": 21302,
+      "sha256": "6d3018c6dc70401ff6e8d8d8db81e6b89d118f8d70c16c285b852e7d88dab6a2"
+    },
+    "lab/verify/RQ01/round3/probe-a1/generated-grammar.json": {
+      "bytes": 27949,
+      "sha256": "9063dc26d30673d4ebb08b894d226be710f0c95a8879a54c4117e424a81e174a"
+    },
+    "lab/verify/RQ01/round3/probe-a1/ignore-correction.json": {
+      "bytes": 20960,
+      "sha256": "9f5703457f6ce44e8158810360f6a9419f09c7d4c8dc9f9b83ce06fc73ac2674"
+    },
+    "lab/verify/RQ01/round3/probe-a1/invalid-history-admission.json": {
+      "bytes": 2256,
+      "sha256": "a17a877bca188a0079dda1a32785db392414c89fa538fab4ec441f42d81f3cdd"
+    },
+    "lab/verify/RQ01/round3/probe-a1/receipt.json": {
+      "bytes": 4780,
+      "sha256": "da9c2b277ebf549dabe6ab98890feb181ea158520f9fab752f3ca77ff0dc9faa"
+    },
+    "lab/verify/RQ01/round3/probe-a1/retirement-raw-lifetime.json": {
+      "bytes": 17123,
+      "sha256": "b9cea1254036adec3cf1e4e20f3b562c9e70aa39a7ec8c407ca8cb8cb81e51f7"
+    },
+    "lab/verify/RQ01/round3/probe-a1/retirement-snapshot.json": {
+      "bytes": 16963,
+      "sha256": "c0fc8065168ef256d716883dd47c3f09322167a59339f1a42c5a26b50dfc6c1b"
+    },
+    "lab/verify/RQ01/round3/probe.mjs": {
+      "bytes": 18253,
+      "sha256": "7a1a75a4711b432735ac487ce8b40d111b9be31b078613b4cef8132b2c465724"
+    },
+    "lab/verify/RQ01/round3/seal.mjs": {
+      "bytes": 7537,
+      "sha256": "663f05fd9ab5afb4a30247ce09c82659bd10cf66461f7fb4342d1db901ff729a"
+    },
+    "lab/verify/RQ01/round3/suite-a1/command.log": {
+      "bytes": 129,
+      "sha256": "1dd62db976c320d5610d3f0d4f9e129579af7fac45e9e54152a8c7182d155f45"
+    },
+    "lab/verify/RQ01/round3/suite-a1/receipt.json": {
+      "bytes": 77481,
+      "sha256": "015adac78c00d8b0310e08ff3c81b027d60a543efd9c4e506fdc796df6fdb4fe"
+    },
+    "lab/verify/RQ01/round3/suite-a1/tests.json": {
+      "bytes": 34383,
+      "sha256": "bf5a19c0afc350b97de429df1a6350b6375c338abf1e1dc1c649a5b1596a5093"
+    },
+    "lab/verify/RQ01/round3/suite.config.ts": {
+      "bytes": 364,
+      "sha256": "6f27f35a40d800802934f4181c64c60590ead86eabbb35d25aa74a159744d14b"
+    },
+    "lab/verify/RQ01/round3/suite.mjs": {
+      "bytes": 3679,
+      "sha256": "59d7a04d2746cdfa81aa78712442a53f98c223a26272f10ecf0818006a82b09a"
+    }
+  }
+}

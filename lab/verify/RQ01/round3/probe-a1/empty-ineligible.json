@@ -1,0 +1,849 @@
+{
+  "clean": {
+    "seed": 89001,
+    "lane": "CX-VRQ01-independent-model",
+    "reference": "offline-fold-not-independent",
+    "plan": {
+      "history": {
+        "seed": 89001,
+        "now": 2000,
+        "commits": [
+          {
+            "position": 1024,
+            "instant": 1000,
+            "writes": [
+              {
+                "op": "assert",
+                "row": {
+                  "id": "tie:A",
+                  "entity_id": "s",
+                  "attribute": ":route/value",
+                  "value_type": "string",
+                  "value_string": "tie:A",
+                  "value_number": null,
+                  "value_boolean": null,
+                  "value_datetime": null,
+                  "value_json": null,
+                  "recorded_at": 0,
+                  "recorded_position": 0,
+                  "valid_from": 0,
+                  "valid_to": null,
+                  "created_by": "route-fixture",
+                  "retracted_at": null,
+                  "retracted_position": null,
+                  "retract_tx_id": null,
+                  "entity_type": "RouteSubject",
+                  "schema_version": 1,
+                  "tx_id": "tx:tie:A"
+                }
+              }
+            ]
+          },
+          {
+            "position": 2048,
+            "instant": 1000,
+            "writes": [
+              {
+                "op": "assert",
+                "row": {
+                  "id": "tie:B",
+                  "entity_id": "s",
+                  "attribute": ":route/value",
+                  "value_type": "string",
+                  "value_string": "tie:B",
+                  "value_number": null,
+                  "value_boolean": null,
+                  "value_datetime": null,
+                  "value_json": null,
+                  "recorded_at": 0,
+                  "recorded_position": 0,
+                  "valid_from": 0,
+                  "valid_to": null,
+                  "created_by": "route-fixture",
+                  "retracted_at": null,
+                  "retracted_position": null,
+                  "retract_tx_id": null,
+                  "entity_type": "RouteSubject",
+                  "schema_version": 1,
+                  "tx_id": "tx:tie:B"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "extension": {
+        "position": 4096,
+        "instant": 1010,
+        "writes": [
+          {
+            "op": "assert",
+            "row": {
+              "id": "extension",
+              "entity_id": "extension",
+              "attribute": ":route/value",
+              "value_type": "string",
+              "value_string": "new",
+              "value_number": null,
+              "value_boolean": null,
+              "value_datetime": null,
+              "value_json": null,
+              "recorded_at": 0,
+              "recorded_position": 0,
+              "valid_from": 0,
+              "valid_to": null,
+              "created_by": "route-fixture",
+              "retracted_at": null,
+              "retracted_position": null,
+              "retract_tx_id": null,
+              "entity_type": "RouteSubject",
+              "schema_version": 1,
+              "tx_id": "tx:extension"
+            }
+          }
+        ]
+      },
+      "extensionAttempt": null,
+      "policies": [
+        {
+          "route": "control",
+          "kind": "complete",
+          "cuts": []
+        },
+        {
+          "route": "injected",
+          "kind": "complete",
+          "cuts": []
+        }
+      ],
+      "requests": [
+        {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        }
+      ],
+      "digest": "a56d61af540a4ffa474cd9a4ee48447c6704e0787384418007323c8245fd14ef"
+    },
+    "observations": [
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "evict-overlay",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "evict-overlay",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      }
+    ],
+    "coverage": {
+      "requiredShapes": [
+        "P"
+      ],
+      "minimumPerShape": 1,
+      "shapes": {
+        "L": 0,
+        "V": 0,
+        "P": 1,
+        "T": 0,
+        "TP": 0,
+        "H": 0
+      }
+    },
+    "events": [
+      {
+        "event": "evict-overlay",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "catch-up",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "cold-cache",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "index-job",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "pending",
+          "reason": "No physical engine"
+        }
+      },
+      {
+        "event": "flush",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "pending",
+          "reason": "No physical engine"
+        }
+      },
+      {
+        "event": "compaction",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "pending",
+          "reason": "No physical engine"
+        }
+      }
+    ],
+    "violations": []
+  },
+  "broken": {
+    "seed": 89001,
+    "lane": "CX-VRQ01-independent-model",
+    "reference": "offline-fold-not-independent",
+    "plan": {
+      "history": {
+        "seed": 89001,
+        "now": 2000,
+        "commits": [
+          {
+            "position": 1024,
+            "instant": 1000,
+            "writes": [
+              {
+                "op": "assert",
+                "row": {
+                  "id": "tie:A",
+                  "entity_id": "s",
+                  "attribute": ":route/value",
+                  "value_type": "string",
+                  "value_string": "tie:A",
+                  "value_number": null,
+                  "value_boolean": null,
+                  "value_datetime": null,
+                  "value_json": null,
+                  "recorded_at": 0,
+                  "recorded_position": 0,
+                  "valid_from": 0,
+                  "valid_to": null,
+                  "created_by": "route-fixture",
+                  "retracted_at": null,
+                  "retracted_position": null,
+                  "retract_tx_id": null,
+                  "entity_type": "RouteSubject",
+                  "schema_version": 1,
+                  "tx_id": "tx:tie:A"
+                }
+              }
+            ]
+          },
+          {
+            "position": 2048,
+            "instant": 1000,
+            "writes": [
+              {
+                "op": "assert",
+                "row": {
+                  "id": "tie:B",
+                  "entity_id": "s",
+                  "attribute": ":route/value",
+                  "value_type": "string",
+                  "value_string": "tie:B",
+                  "value_number": null,
+                  "value_boolean": null,
+                  "value_datetime": null,
+                  "value_json": null,
+                  "recorded_at": 0,
+                  "recorded_position": 0,
+                  "valid_from": 0,
+                  "valid_to": null,
+                  "created_by": "route-fixture",
+                  "retracted_at": null,
+                  "retracted_position": null,
+                  "retract_tx_id": null,
+                  "entity_type": "RouteSubject",
+                  "schema_version": 1,
+                  "tx_id": "tx:tie:B"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "extension": {
+        "position": 4096,
+        "instant": 1010,
+        "writes": [
+          {
+            "op": "assert",
+            "row": {
+              "id": "extension",
+              "entity_id": "extension",
+              "attribute": ":route/value",
+              "value_type": "string",
+              "value_string": "new",
+              "value_number": null,
+              "value_boolean": null,
+              "value_datetime": null,
+              "value_json": null,
+              "recorded_at": 0,
+              "recorded_position": 0,
+              "valid_from": 0,
+              "valid_to": null,
+              "created_by": "route-fixture",
+              "retracted_at": null,
+              "retracted_position": null,
+              "retract_tx_id": null,
+              "entity_type": "RouteSubject",
+              "schema_version": 1,
+              "tx_id": "tx:extension"
+            }
+          }
+        ]
+      },
+      "extensionAttempt": null,
+      "policies": [
+        {
+          "route": "control",
+          "kind": "complete",
+          "cuts": []
+        },
+        {
+          "route": "injected",
+          "kind": "complete",
+          "cuts": []
+        }
+      ],
+      "requests": [
+        {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        }
+      ],
+      "digest": "a56d61af540a4ffa474cd9a4ee48447c6704e0787384418007323c8245fd14ef"
+    },
+    "observations": [
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "evict-overlay",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "evict-overlay",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache",
+        "contract": "snapshot",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+      }
+    ],
+    "coverage": {
+      "requiredShapes": [
+        "P"
+      ],
+      "minimumPerShape": 1,
+      "shapes": {
+        "L": 0,
+        "V": 0,
+        "P": 1,
+        "T": 0,
+        "TP": 0,
+        "H": 0
+      }
+    },
+    "events": [
+      {
+        "event": "evict-overlay",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "catch-up",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "cold-cache",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "index-job",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "pending",
+          "reason": "No physical engine"
+        }
+      },
+      {
+        "event": "flush",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "pending",
+          "reason": "No physical engine"
+        }
+      },
+      {
+        "event": "compaction",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "pending",
+          "reason": "No physical engine"
+        }
+      }
+    ],
+    "violations": [
+      {
+        "rule": "HE-6",
+        "detail": "Ineligible flag reached caller",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial"
+      },
+      {
+        "rule": "HE-3",
+        "detail": "Ineligible route answered",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial"
+      },
+      {
+        "rule": "HE-6",
+        "detail": "Ineligible flag reached caller",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append"
+      },
+      {
+        "rule": "HE-3",
+        "detail": "Ineligible route answered",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append"
+      },
+      {
+        "rule": "HE-6",
+        "detail": "Ineligible flag reached caller",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "evict-overlay"
+      },
+      {
+        "rule": "HE-3",
+        "detail": "Ineligible route answered",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "evict-overlay"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "evict-overlay"
+      },
+      {
+        "rule": "HE-6",
+        "detail": "Ineligible flag reached caller",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up"
+      },
+      {
+        "rule": "HE-3",
+        "detail": "Ineligible route answered",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up"
+      },
+      {
+        "rule": "HE-6",
+        "detail": "Ineligible flag reached caller",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache"
+      },
+      {
+        "rule": "HE-3",
+        "detail": "Ineligible route answered",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache"
+      }
+    ]
+  }
+}
