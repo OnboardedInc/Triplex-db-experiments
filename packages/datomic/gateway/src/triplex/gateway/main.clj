@@ -6,7 +6,9 @@
 (set! *warn-on-reflection* true)
 
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
-(def base-uri (or (System/getenv "DATOMIC_BASE_URI") "datomic:dev://127.0.0.1:4334/"))
+;; [DX-H1] Why: SQL storage places the database before the JDBC query. Rejected: suffix concatenation (dev-only).
+(def uri-template (or (System/getenv "DATOMIC_URI_TEMPLATE") "datomic:dev://127.0.0.1:4334/{db}"))
+(defn db-uri [name] (clojure.string/replace uri-template "{db}" name))
 (def connections (atom {}))
  ;; [EXP-DX1] Why: opening a connection must not introduce a no-argument sync on a read route.
 ;; Rejected: lazy initial sync inside connection (a cold read would contact the transactor).
@@ -33,7 +35,7 @@
         (assert-scope current scope)
         (when-not (stored-scope current) (throw e))))))
 (defn create-scope! [base scope]
-  (let [name (scope-name scope) uri (str base name) created (d/create-database uri) conn (connection uri)]
+  (let [name (scope-name scope) uri (db-uri name) created (d/create-database uri) conn (connection uri)]
     (assert-scope (sync-db uri) scope)
     (when-not (stored-scope (sync-db uri))
       @(d/transact conn schema/schema)
@@ -44,8 +46,8 @@
       @(d/transact conn [{:triplex.scope/key scope :triplex.scope/schema-hash schema/schema-hash}]))
     {:db name :created created :schemaHash schema/schema-hash}))
 (defn delete-scope! [base scope]
-  (let [name (scope-name scope) uri (str base name)]
-    (when (some #{name} (d/get-database-names (str base "*"))) (assert-scope (sync-db uri) scope))
+  (let [name (scope-name scope) uri (db-uri name)]
+    (when (some #{name} (d/get-database-names (db-uri "*"))) (assert-scope (sync-db uri) scope))
     ;; [EXP-DA00] Why: releasing the last mem peer may destroy it before delete. Rejected: release-first (selftest-3 returned false).
     (let [deleted (d/delete-database uri)]
       (.clear ^java.util.concurrent.ConcurrentHashMap reach/ids)
@@ -53,7 +55,7 @@
         {:db name :deleted deleted})))
 (defn basis [base name]
   (when-not (re-matches #"(s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)" name) (codec/invalid "Invalid database name"))
-  (let [db (d/db (connection (str base name))) scope (stored-scope db)]
+  (let [db (d/db (connection (db-uri name))) scope (stored-scope db)]
     (when-not scope (throw (ex-info "Scope not initialized" {:status 409 :code "ScopeUninitialized"})))
     (let [entity (d/entity db [:triplex.scope/key scope])]
       {:t (codec/encode-value "long" (d/basis-t db))
@@ -69,30 +71,30 @@
   (try
     (cond
       (and (= :get request-method) (= "/health" uri))
-      (do (d/db (connection (str base-uri "tx2-health")))
+      (do (d/db (connection (db-uri "tx2-health")))
           (response 200 {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}))
       (and (= :post request-method) (= "/v1/db/create" uri))
-      (response 200 (create-scope! base-uri (get (request-json body) "scope")))
+      (response 200 (create-scope! uri-template (get (request-json body) "scope")))
       (and (= :post request-method) (= "/v1/db/delete" uri))
-      (response 200 (delete-scope! base-uri (get (request-json body) "scope")))
+      (response 200 (delete-scope! uri-template (get (request-json body) "scope")))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/basis" uri))
-      (response 200 (basis base-uri (nth (clojure.string/split uri #"/") 3)))
+      (response 200 (basis uri-template (nth (clojure.string/split uri #"/") 3)))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/log" uri))
       (let [name (nth (clojure.string/split uri #"/") 3)
             params (into {} (map (fn [part] (let [[k v] (clojure.string/split part #"=" 2)]
                                              (let [^String encoded (or v "")] [k (java.net.URLDecoder/decode encoded "UTF-8")])))
                                   (remove empty? (clojure.string/split (or query-string "") #"&"))))]
-        (response 200 (assoc (feed/log-page (connection (str base-uri name)) params) :database name)))
+        (response 200 (assoc (feed/log-page (connection (db-uri name)) params) :database name)))
       (and (= :post request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/transact" uri))
-      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) db-uri (str base-uri name)]
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) db-uri (db-uri name)]
         (try (response 200 (storage/commit! (connection db-uri) (sync-db db-uri) input))
              (finally (when (get input "release") (storage/release! name (get input "handle"))))))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/begin" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)]
-        (response 200 (storage/begin-command! name (sync-db (str base-uri name)) input)))
+        (response 200 (storage/begin-command! name (sync-db (db-uri name)) input)))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/reach" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)
-            conn (connection (str base-uri name))
+            conn (connection (db-uri name))
             db (storage/await-position (d/db conn) (get-in input ["basis" "recordedPosition"])
                  (get input "basisWaitMs")
                  (fn [remaining] (if-let [t (get input "basisT")]
@@ -101,7 +103,7 @@
         {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
          :body (reach/response conn db input)})
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
-      (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (str base-uri name)
+      (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name)
             input (when (= request-method :post) (request-json body))
             conn (when (and (not= action "release") (or (= action "transact") (not (get input "handle")))) (connection db-uri))
             ;; [EXP-DA01] Why: held queries need no transactor sync and must never substitute a new db between requests (Q89d). Rejected: unconditional per-request sync.
@@ -128,8 +130,8 @@
     (catch Exception e (response (or (:status (ex-data e)) (if (= uri "/health") 503 400))
                                 {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e)}))))
 (defn -main [& _]
-  (d/create-database (str base-uri "tx2-health"))
+  (d/create-database (db-uri "tx2-health"))
   ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.
   ;; Rejected: per-read initialization barriers.
-  (doseq [name (d/get-database-names (str base-uri "*"))] (sync-db (str base-uri name)))
+  (doseq [name (d/get-database-names (db-uri "*"))] (sync-db (db-uri name)))
   (jetty/run-jetty handler {:port 8080 :host "0.0.0.0" :join? true :min-threads 8 :max-threads 512}))

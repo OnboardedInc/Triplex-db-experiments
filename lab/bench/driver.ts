@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { httpCounts } from "./lib/http-counts.ts";
 import { readLatencyRun } from "../receipts/parse.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 /**
@@ -6,7 +7,7 @@ import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency
  * Measures P1 to P5 on the frozen writer trace against one composition and writes one report JSON.
  * Normally run by `node lab/bin/gate.mjs NS --lane L --rung R`, which binds the report into a receipt.
  *
- *   node lab/bench/driver.ts --lane xtdb|qlever --rung 10k|100k|1m|10m --output runs/NS/<id>/ns-report.json
+ *   node lab/bench/driver.ts --lane xtdb|qlever|datomic --rung 10k|100k|1m|10m --output runs/NS/<id>/ns-report.json
  *     [--profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline-writes FILE]
  *     [--composition public] [--seed ns-v2] [--reader-threads 4] [--seed-budget-s 3600] [--seed-batch-facts 400]
  *     [--writer-max-inflight 32] [--sweep-concurrency 16] [--oracle-root DIR]
@@ -17,7 +18,7 @@ import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency
  *     per-round histograms (commit, commitAll with censored values, open-loop read probe), per-second goodput and max
  *     latency, ELU and a hiccup meter per round. R22 sections 2.4, 6.2, 7.
  *
- * Engine endpoint: XTDB_URL / QLEVER_URL. TX2_ENGINE_CONTAINER names the container whose CPU and logs
+ * Engine endpoint: XTDB_URL / QLEVER_URL / DATOMIC_URL; reader peers: DATOMIC_READ_URLS. TX2_ENGINE_CONTAINER names the container whose CPU and logs
  * are sampled (docker over the lab socket only); TX2_ENGINE_CPUS is the slot's CPU quota.
  * lab/bench/README.md documents the trace, the composition interface, metric names and report fields.
  */
@@ -32,7 +33,8 @@ import { openComposition, type CompositionHandle, type Receipt } from "./lib/com
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
 import { feedLagWithinBar } from "./lib/feed-lag.ts";
-import { FeedConsumer, type CrashPoint } from "./lib/feed.ts";
+import { observeDatomicPublication } from "./lib/datomic-publication.ts";
+import { FeedConsumer, openHostFeedClock, openPublicationWriter, openPublicationReader, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
 import { R, observe, type ReadRecord } from "./lib/observe.ts";
@@ -53,7 +55,8 @@ import { RoundBook, type ClientStats, type RoundRecord } from "./lib/rounds.ts";
 
 const argv = process.argv.slice(2);
 const opt = (name: string, fallback?: string) => {
-  const i = argv.indexOf(`--${name}`);
+  // [DX-H1] Why: explicit flags override wrapper defaults. Rejected: first occurrence (silently ignores development limits).
+  const i = argv.lastIndexOf(`--${name}`);
   return i >= 0 ? argv[i + 1] : fallback;
 };
 const flag = (name: string) => argv.includes(`--${name}`);
@@ -61,10 +64,10 @@ if (opt("world") === "w0") {
   await (await import("./w0-driver.ts")).runW0Driver(argv);
   process.exit(process.exitCode ?? 0);
 }
-const lane = opt("lane") as "xtdb" | "qlever";
+const lane = opt("lane") as "xtdb" | "qlever" | "datomic";
 const rung = opt("rung", "10k")!;
 const devSubjects = opt("subjects");
-if (!["xtdb", "qlever"].includes(lane)) throw new Error("--lane xtdb|qlever is required");
+if (!["xtdb", "qlever", "datomic"].includes(lane)) throw new Error("--lane xtdb|qlever|datomic is required");
 if (!devSubjects && !(rung in RUNGS)) throw new Error(`--rung must be one of ${Object.keys(RUNGS).join("|")}`);
 const profile = opt("profile", "smoke") as Profile;
 if (!(profile in PROFILES)) throw new Error(`--profile must be one of ${Object.keys(PROFILES).join("|")}`);
@@ -156,8 +159,10 @@ const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\
 
 const slots = JSON.parse(fs.readFileSync(path.join(REPO, "lab/config/slots.json"), "utf8"));
 const container = process.env["TX2_ENGINE_CONTAINER"] ?? null;
+const containers = lane === "datomic" ? container?.split(",").map(s => s.trim()).filter(Boolean) ?? [] : container ? [container] : [];
+const workerHttpCounts: any[] = [];
 const engineCpus = Number(process.env["TX2_ENGINE_CPUS"] ?? "0") || null;
-const engineSamples: { t: number; cpuPercent: number; memBytes: number }[] = [];
+const engineSamples: { t: number; cpuPercent: number; memBytes: number; containers: Record<string, { cpuPercent: number; memBytes: number }> }[] = [];
 const watermarkSamples: { t: number; marks: Record<string, number> }[] = [];
 let samplersOn = true;
 const docker = (args: string[], timeout = 20_000) =>
@@ -170,10 +175,12 @@ const parseBytes = (text: string) => {
 async function engineSampler() {
   while (samplersOn && container) {
     const t = now();
-    const out = await docker(["stats", "--no-stream", "--format", "{{json .}}", container], 15_000);
+    const out = await docker(["stats", "--no-stream", "--format", "{{json .}}", ...containers], 15_000);
     try {
-      const row = JSON.parse(out!.trim().split("\n")[0]!);
-      engineSamples.push({ t, cpuPercent: Number(String(row.CPUPerc).replace("%", "")), memBytes: parseBytes(String(row.MemUsage).split("/")[0]!) });
+      const rows = out!.trim().split("\n").map(line => JSON.parse(line));
+      const byContainer: Record<string, { cpuPercent: number; memBytes: number }> = Object.fromEntries(rows.map(row => [row.Name, { cpuPercent: Number(String(row.CPUPerc).replace("%", "")), memBytes: parseBytes(String(row.MemUsage).split("/")[0]!) }]));
+      if (rows.length !== containers.length) throw new Error("partial engine sample");
+      engineSamples.push({ t, cpuPercent: Object.values(byContainer).reduce((sum, r) => sum + r.cpuPercent, 0), memBytes: Object.values(byContainer).reduce((sum, r) => sum + r.memBytes, 0), containers: byContainer });
     } catch {}
     await sleep(1000);
   }
@@ -247,6 +254,7 @@ let coordinate: (position: number) => any = (position) => ({ stream: "unknown", 
 
 function main() {
   return run().catch((error) => {
+    report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
     report.status = "ERROR";
     report.error = String(error?.stack ?? error);
     log(`fatal: ${report.error}`);
@@ -328,7 +336,7 @@ async function run() {
   };
   const startWorker = async (w: number, cfg: any) => {
     const worker: any = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: cfg, env: process.env });
-    const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && resolve()));
+    const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (workerHttpCounts.push({ worker: w, counts: m.httpCounts }), resolve())));
     await new Promise<void>((resolve, reject) => {
       worker.on("message", (m: any) => { if (m.type === "ready") resolve(); else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
       worker.on("error", reject);
@@ -492,15 +500,24 @@ async function run() {
   // [EXP-M01] Paired rounds measure the writer and the read probe; the P3 consumer and its crash injection stay in NS.
   const lvl = (config.levelS ?? PROFILES[profile].levelS) * 1000;
   const crashPlan: { at: number; point: CrashPoint }[] = (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
-  // [EXP-FD01-R2] Why: no source publication observer is integrated here yet. Missing instants now refuse P3 samples.
+  // [DX-H1] Why: Datomic observes the native transact-result boundary before the driver ACK; other lanes still lack observers.
   // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
+  const publicationClock = lane === "datomic" && !pairPlan ? openHostFeedClock() : null;
+  const publicationSource = JSON.stringify({ route: "A0-control", dir: rawDir, epoch: `${scopeName}#0` });
+  const publicationWriter = publicationClock ? openPublicationWriter(path.join(rawDir, "publication.db"), publicationSource, publicationSource, publicationClock) : null;
+  const publicationReader = publicationWriter ? openPublicationReader(path.join(rawDir, "publication.db")) : null;
   feed = pairPlan ? null : new FeedConsumer({
     dir: rawDir, epoch: `${scopeName}#0`, startAfter: seed.lastPosition, now,
+    ...(publicationClock && publicationReader ? { measurement: { clock: publicationClock, records: publicationReader } } : {}),
     commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, subjects: a.subjects ?? [a.subject], stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },
     open: () => openComposition(config.composition, lane, scopeName), log, crashes: crashPlan,
   });
+  if (publicationWriter) observeDatomicPublication((position, operationId) => publicationWriter.publish(feed!.publicationKey(position), operationId));
+  report.publicationObserver = publicationWriter ? "DatomicClient.transact result, before Triples receipt and driver ACK; durable bound host-clock sidecar" : "not integrated";
   const feedTarget = setInterval(() => { if (feed) feed.lifeMaxTarget = acked.length ? acked[acked.length - 1]!.position : 0; }, 100);
   const feedDone = feed ? feed.run() : Promise.resolve();
+  // [DX-H1] Why: retain a failing feed as a caught driver failure during wind-down. Rejected: an unhandled rejection that leaves status RUNNING.
+  void feedDone.catch(() => {});
 
   // ---------------------------------------------------------------- probe10 (P2 diagnostic only)
   let probeTimer: ReturnType<typeof setInterval> | null = null;
@@ -669,6 +686,9 @@ async function run() {
   await aux.close().catch(() => {});
   await growthComp.close().catch(() => {});
   await probeComp?.close().catch(() => {});
+  observeDatomicPublication(undefined);
+  publicationReader?.close();
+  publicationWriter?.close();
   log(`wind down: writer pending ${scheduler.pending}, probe pending ${probeScheduler?.pending ?? 0}, feed checkpoint ${feed?.checkpoint ?? "-"}/${lastAcked}, final position ${finalPosition}`);
   fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify(latencyReceipt({ writer: "ns-write-event/1", qleverConnectionMode: report.qleverConnectionMode, stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome }))).join("\n") + "\n");
 
@@ -680,6 +700,13 @@ async function run() {
   if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });
   else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
   report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : runOracle(finalPosition, lastAcked);
+  // [DX-H1] Why: API round trips and observed HTTP requests differ when reach falls back inside the adapter.
+  // Rejected: discarding the reader's roundTrips field during analysis (cannot compare compositions).
+  const pullCalls = records.filter(r => r[R.error] === null).map(r => r[R.roundTrips]);
+  report.pullRoundTrips = { pulls: pullCalls.length, mean: mean(pullCalls),
+    distribution: countBy(pullCalls.map(String)), unit: "public Triples service calls; see httpRequests for actual HTTP" };
+  report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
+  report.engineSamples = engineSamples;
   report.status = "DONE";
   report.endedAt = new Date().toISOString();
   fs.writeFileSync(path.join(rawDir, "ns-log.txt"), logLines.join("\n") + "\n");
@@ -886,6 +913,9 @@ async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt) 
 }
 /** Maintenance evidence (TARGETS 1.1 P1 item 3): engine log lines naming compaction, merge or rebuild. */
 async function maintenanceEvents(traceStart: number) {
+  // [DX-H1] Why: indexing needs an explicit source-bound job hook; log words alone do not prove completion.
+  // Rejected: treating arbitrary "index" log lines as a P1 maintenance witness.
+  if (lane === "datomic") return { source: null, events: [], note: "not observed: Datomic indexing job hook is unavailable", trigger: "not observed" };
   if (!container) return { source: null, events: [] as { t: number; line: string }[], note: "no TX2_ENGINE_CONTAINER: maintenance evidence not collected" };
   const since = new Date(traceStart - 1000).toISOString();
   const text = (await docker(["logs", "--timestamps", "--since", since, container], 60_000)) ?? "";
@@ -996,7 +1026,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       maintenanceEvents: maint,
       watermarks: marks.length ? { source: { min: coordinate(Math.min(...marks)), max: coordinate(Math.max(...marks)) } } : null,
       client: { workerEluMean, maxWorkerElu, mainElu: mainEluMean, saturated: (maxWorkerElu ?? 0) > 0.9 || (mainEluMean ?? 0) > 0.9 },
-      engine: { cpuPercentMean: mean(eng.map((e) => e.cpuPercent)), samples: eng.length, peakMemBytes: eng.length ? Math.max(...eng.map((e) => e.memBytes)) : null },
+      engine: { containers: Object.fromEntries(containers.map(name => [name, { cpuPercentMean: mean(eng.map(e => e.containers[name]?.cpuPercent).filter((n): n is number => n !== undefined)) }])), cpuPercentMean: mean(eng.map((e) => e.cpuPercent)), samples: eng.length, peakMemBytes: eng.length ? Math.max(...eng.map((e) => e.memBytes)) : null },
       _read: read,
       _commit: commit,
     };
@@ -1020,7 +1050,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const p1 = {
     ladder: ladder.map(strip),
     recovery,
-    writerWaitAttribution: { method: "matched-phase comparison against the zero-reader run of the same trace", baselineRun: config.baselineWrites, engineWaitEvidence: lane === "xtdb" ? "none exposed: XTDB has no read-path locks (TARGETS 1.1 P1 item 5)" : "not exposed: no QLever broker queue in this composition" },
+    writerWaitAttribution: { method: "matched-phase comparison against the zero-reader run of the same trace", baselineRun: config.baselineWrites, engineWaitEvidence: lane === "xtdb" ? "none exposed: XTDB has no read-path locks (TARGETS 1.1 P1 item 5)" : lane === "datomic" ? "not exposed: Datomic transactor/write-queue wait metrics unavailable" : "not exposed: no QLever broker queue in this composition" },
     bars: [
       bar("NS-P1-VIOLATIONS-MAX (L256)", L("L256")?.violations ?? null, "= 0", L("L256") ? L("L256").violations === 0 : null),
       bar("NS-P1-GOODPUT-256-VS-64", ratio(L("L256")?.goodputPerS, L("L64")?.goodputPerS), ">= 1.0", L("L256") && L("L64") ? L("L256").goodputPerS >= L("L64").goodputPerS : null),
@@ -1034,7 +1064,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       bar("1.1 P1.1 hot-set share of reads (min over ladder levels)", ladder.length ? Math.min(...ladder.map((s) => s.hotShare ?? 0)) : null, ">= 0.5", ladder.length ? ladder.every((s) => (s.hotShare ?? 0) >= 0.5) : null),
       bar("1.1 P1.2 split reads straddling a frozen-trace command, all correct", ladder.reduce((s, x) => s + x.split.straddledATraceCommand, 0), "> 0 and all correct", ladder.length ? ladder.some((s) => s.split.straddledATraceCommand > 0) && ladder.every((s) => s.split.straddledATraceCommand === s.split.straddledCorrect) : null, "step 1 before the trace command's ACK, step 2 after; the driver adds no writes (RULINGS Q31b)"),
       bar("4.1.5 fallback share per window (reported)", ladder.map((s) => s.routing.fallbackShare), "reported", null, "one-engine composition: every read is served by the source of truth's own surface"),
-      bar("1.1 P1.3 a maintenance event in every P1 window", ladder.map((s) => s.maintenanceEvents), "every window >= 1", ladder.length ? ladder.every((s) => s.maintenanceEvents >= 1) : null, "observed in engine logs only; the driver cannot force compaction or a rebuild yet (seam)"),
+      bar("1.1 P1.3 a maintenance event in every P1 window", ladder.map((s) => s.maintenanceEvents), "every window >= 1", ladder.length ? ladder.every((s) => s.maintenanceEvents >= 1) : null, lane === "datomic" ? "not observed: Datomic indexing-job hook is unavailable" : "observed in engine logs only; the driver cannot force compaction or a rebuild yet (seam)"),
     ],
   };
 

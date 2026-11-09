@@ -7,8 +7,11 @@
  * Rejected: adding lab/bench to the pnpm workspace (lockfile change); importing packages' src (unbuilt bytes).
  */
 import path from "node:path";
+import { installDatomicPublication } from "./datomic-publication.ts";
+import fs from "node:fs";
+import { isMainThread, workerData } from "node:worker_threads";
 import { pathToFileURL } from "node:url";
-import { Effect, ManagedRuntime } from "effect";
+import { Context, Effect, ManagedRuntime } from "effect";
 
 export const REPO = path.resolve(import.meta.dirname, "../../..");
 const dist = (pkg: string, file: string) =>
@@ -33,8 +36,8 @@ export interface TriplesHandle {
 
 /**
  * One runtime opening on a named scope; `run` executes an Effect from the service.
- * `xtdbOptions` (XTDB only) builds the runtime from the public `makeXtdbRuntime` export with explicit
- * adapter options (for example `admissionQueue: true`) instead of the qualification default.
+ * `xtdbOptions` builds XTDB with explicit adapter options (for example `admissionQueue: true`).
+ * Datomic receives those options only when its built public runtime declaration exposes admissionQueue.
  */
 export async function openTriples(
   lane: Lane,
@@ -44,11 +47,16 @@ export async function openTriples(
   process.env["TRIPLEX_QUERY_PATH"] ??= `${lane}-datalog`;
   // [EXP-W02-R2] Why: D uses its own public runtime and endpoint even before the shared qualification registry merges. Rejected: routing an unknown lane through the X/Q default.
   const backend = lane === "datomic" ? await (async () => {
-    const url = process.env["DATOMIC_URL"];
+    // [DX-H1] Why: writer/feed stay on W; each reader thread selects a read peer. Rejected: one shared endpoint (CPU attribution).
+    const readUrls = process.env["DATOMIC_READ_URLS"]?.split(",").map(s => s.trim()).filter(Boolean);
+    const url = !isMainThread && readUrls?.length
+      ? readUrls[Number(workerData?.worker ?? 0) % readUrls.length]
+      : process.env["DATOMIC_URL"];
     if (!url) throw new Error("DATOMIC_URL is required for the Datomic GS lane");
     const api = await import(dist("datomic", "index.js"));
+    installDatomicPublication(api);
     if (typeof api.makeDatomicRuntime !== "function") throw Error("Datomic public runtime unavailable");
-    return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url }) };
+    return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url, ...(xtdbOptions && fs.readFileSync(path.join(REPO, "packages/datomic/dist/index.d.ts"), "utf8").includes("admissionQueue") ? xtdbOptions : {}) }) };
   })() : await qualification.loadQualificationBackend(lane);
   if (lane === "qlever" && process.env["QLEVER_COMMIT_PATH"] === "broker") {
     const api = await import(dist("qlever", "index.js"));
@@ -63,7 +71,11 @@ export async function openTriples(
   const clock = process.env["TX2_P5_CLOCK_START"];
   const layer = definition.layer({
     scope,
-    capabilities: runtimeApi.Capabilities.none,
+    // [DX-H1] Why: Runtime.layer exports only installed capability services; portable W0 helpers need its adapter.
+    // Rejected: asking the finished runtime for a private service (Service not found before seed).
+    capabilities: { build: Effect.map(Effect.service(runtimeApi.StorageAdapter), (adapter: any) => ({
+      capabilities: [], services: Context.make(runtimeApi.StorageAdapter, adapter),
+    })) },
     ...(clock === undefined ? {} : { deterministic: { startTime: Number(clock), seed: scope } }),
   });
   const managed: any = (ManagedRuntime as any).make(layer);
