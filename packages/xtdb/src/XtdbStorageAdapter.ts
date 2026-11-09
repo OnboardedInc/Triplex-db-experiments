@@ -10,7 +10,7 @@ import {
   type QueryPattern,
   WriteError,
   ReadError,
-  BasisNotAvailable,
+  toReadError,
   MigrationError,
   TransactionOutcomeUnknown,
 } from "@triplex-build/triplex/runtime";
@@ -168,10 +168,7 @@ export const makeXtdbStorageAdapter = (
   const read = <A>(thunk: (signal: AbortSignal) => Promise<A>): Effect.Effect<A, ReadError> =>
     Effect.tryPromise({
       try: thunk,
-      catch: (cause) =>
-        cause instanceof BasisNotAvailable || cause instanceof ReadError
-          ? cause
-          : new ReadError({ message: "XTDB read failed", cause }),
+      catch: (cause) => toReadError(cause, "XTDB read failed"),
     });
   const currentCut = () => read((signal) => readXtdbCut(client, scopeKey, signal));
   const committedPosition = () => Effect.map(currentCut(), (cut) => cut.position);
@@ -194,6 +191,8 @@ export const makeXtdbStorageAdapter = (
         basis = yield* read((signal) =>
           resolveXtdbBasis(client, scopeKey, basis!, signal, options.basisWaitMs ?? 2000),
         );
+      // [EXP-RT01] Why: an empty batch still names a cut. Rejected: returning before resolveXtdbBasis (silently answers unavailable T).
+      if (entityIds?.length === 0) return [];
       const position =
         state === undefined
           ? basis?.recordedPosition
@@ -692,18 +691,13 @@ export const makeXtdbStorageAdapter = (
     getById: (id) => Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null),
     getByEntity: (entityId, basis) => queryRows({ entityId }, basis),
     getByEntities: (entityIds, basis) =>
-      entityIds.length === 0
-        ? Effect.succeed(new Map())
-        : Effect.map(
-            queryRows({}, basis, false, undefined, [...new Set(entityIds)]),
-            (rows) =>
-              new Map(
-                [...new Set(entityIds)].map(
-                  (entityId) =>
-                    [entityId, rows.filter((row) => row.entity_id === entityId)] as const,
-                ),
-              ),
+      Effect.map(
+        queryRows({}, basis, false, undefined, [...new Set(entityIds)]),
+        (rows) =>
+          new Map(
+            [...new Set(entityIds)].map((id) => [id, rows.filter((row) => row.entity_id === id)]),
           ),
+      ),
     query: (pattern, basis) => queryRows(pattern, basis),
     history: (entityId) => queryRows({ entityId }, undefined, true),
     dependencyState: (attributes, requested) =>

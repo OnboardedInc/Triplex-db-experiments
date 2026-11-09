@@ -254,3 +254,10 @@ export class BasisNotAvailable extends Data.TaggedError("BasisNotAvailable")<{
       ? ("record-time-not-reached" as const)
       : ("position-not-reached" as const);
 }
+
+/** Preserve typed read refusals at every transport and public-route boundary. */
+export const toReadError = (cause: unknown, message: string): ReadError =>
+  // [EXP-RT01] Why: a nested wrapper hides catchTag's basis refusal. Rejected: repairing only outer catches (the original tag is already lost).
+  cause instanceof BasisNotAvailable || cause instanceof ReadError
+    ? cause
+    : new ReadError({ message, cause });

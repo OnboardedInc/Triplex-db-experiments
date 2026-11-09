@@ -36,3 +36,24 @@ it("preserves discriminated catchTag handlers for normal and basis read failures
   });
   expect(position.reason).toBe("position-not-reached");
 });
+
+it("uses one read mapper without hiding or replacing typed errors", async () => {
+  const { toReadError } = await import("../../src/index.js");
+  const normal = new ReadError({ message: "existing" });
+  const basis = new BasisNotAvailable({
+    axis: "recordedAt",
+    required: 2,
+    observed: 1,
+    waitedMs: 2000,
+    surface: "test",
+    message: "not yet",
+  });
+  expect(toReadError(normal, "wrapper")).toBe(normal);
+  expect(toReadError(basis, "wrapper")).toBe(basis);
+  const cause = new Error("transport");
+  expect(toReadError(cause, "wrapper")).toMatchObject({
+    _tag: "ReadError",
+    message: "wrapper",
+    cause,
+  });
+});

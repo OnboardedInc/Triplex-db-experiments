@@ -1,6 +1,6 @@
 import { instantOf } from "@triplex-build/triplex";
 import { Effect } from "effect";
-import { ReadError } from "@triplex-build/triplex/runtime";
+import { type ReadError, toReadError } from "@triplex-build/triplex/runtime";
 import type { XtdbClient } from "./XtdbClient.js";
 
 export type OperationResolution =
@@ -57,5 +57,5 @@ export const resolveXtdbOperation = (
         instant: instantOf(Number(row.stamp)),
       };
     },
-    catch: (cause) => new ReadError({ message: "Cannot resolve XTDB operation outcome", cause }),
+    catch: (cause) => toReadError(cause, "Cannot resolve XTDB operation outcome"),
   });

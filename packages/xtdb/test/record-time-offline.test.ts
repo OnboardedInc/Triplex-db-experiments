@@ -61,3 +61,54 @@ it("the decided stamp shares the existing A0/compact CAS statement", async () =>
     expect(guards[0]!.params!.at(-1)).toBe(1000001);
   }
 });
+
+for (const commitEncoding of ["a0", "compact"] as const)
+  it(`omits same-command and cross-ordinal own instants from raw journals (${commitEncoding})`, async () => {
+    const { Triples, EntityId, string } = await import("@triplex-build/triplex");
+    const adapter = makeXtdbStorageAdapter(makeRecordTimeClient(), "journal-r2", {
+      commitEncoding,
+    });
+    const suite = makeA0RecordTimeSuite(adapter, {} as QueryExecutorService, "journal-r2", {
+      loseNextAck: () => {},
+    });
+    await Effect.runPromise(
+      Effect.gen(function* () {
+        const t = yield* Triples;
+        const assertion = {
+          op: "assert" as const,
+          entityId: EntityId.make("single"),
+          attribute: ":value",
+          value: string("one"),
+        };
+        const single = yield* t.transact([
+          assertion,
+          { op: "retract-pattern", pattern: { entityId: assertion.entityId } },
+        ]);
+        const nested = yield* adapter.withTransaction(
+          Effect.gen(function* () {
+            const a = yield* t.transact([{ ...assertion, entityId: EntityId.make("nested") }]);
+            const r = yield* t.transact([{ op: "retract", id: a.triples[0]!.id }]);
+            expect(a.instant).toBe(r.instant);
+            return { a, r };
+          }),
+        );
+        for (const receipt of [single, nested.a, nested.r]) {
+          const raw = yield* adapter.query({ entityId: receipt.txId });
+          const changes = raw
+            .filter((row) => row.attribute === ":_tx/change")
+            .map((row) => JSON.parse(row.value_json!));
+          expect(changes.length).toBeGreaterThan(0);
+          for (const change of changes) {
+            expect(change).not.toHaveProperty("recordedAt");
+            expect(change).not.toHaveProperty("retractedAt");
+          }
+          const hydrated = yield* t.transaction(receipt.txId);
+          expect(hydrated!.changes.length).toBe(changes.length);
+          for (const change of hydrated!.changes) {
+            expect(change.recordedAt).toBe(receipt.instant);
+            if (change.op === "retract") expect(change.retractedAt).toBe(receipt.instant);
+          }
+        }
+      }).pipe(Effect.provide(suite.layer)),
+    );
+  });

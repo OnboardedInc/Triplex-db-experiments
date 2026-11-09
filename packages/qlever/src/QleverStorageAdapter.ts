@@ -6,7 +6,7 @@ import { isPatternVariable, type ResolvedTemporalBasis } from "@triplex-build/tr
 import {
   WriteError,
   ReadError,
-  BasisNotAvailable,
+  toReadError,
   MigrationError,
   TransactionOutcomeUnknown,
   type StorageAdapterService,
@@ -100,10 +100,7 @@ export const makeQleverStorageAdapter = (
   const read = <A>(thunk: (signal: AbortSignal) => Promise<A>) =>
     Effect.tryPromise({
       try: thunk,
-      catch: (cause) =>
-        cause instanceof BasisNotAvailable || cause instanceof ReadError
-          ? cause
-          : new ReadError({ message: "QLever read failed", cause }),
+      catch: (cause) => toReadError(cause, "QLever read failed"),
     });
   const currentCut = () => read((signal) => readQleverCut(client, scopeKey, signal));
   const position = () => Effect.map(currentCut(), (cut) => cut.position);
@@ -123,6 +120,8 @@ export const makeQleverStorageAdapter = (
       const state = yield* current;
       if (!state && basis)
         basis = yield* read((signal) => resolveQleverBasis(client, scopeKey, basis!, signal));
+      // [EXP-RT01] Why: an empty batch still names a cut. Rejected: returning before resolveQleverBasis (silently answers unavailable T).
+      if (entities?.length === 0) return [];
       const k =
         state === undefined
           ? basis?.recordedPosition
@@ -542,15 +541,11 @@ export const makeQleverStorageAdapter = (
     getById: (id) => Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null),
     getByEntity: (entityId, basis) => queryRows({ entityId }, basis),
     getByEntities: (ids, basis) =>
-      ids.length
-        ? Effect.map(
-            queryRows({}, basis, false, undefined, [...new Set(ids)]),
-            (rows) =>
-              new Map(
-                [...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)]),
-              ),
-          )
-        : Effect.succeed(new Map()),
+      Effect.map(
+        queryRows({}, basis, false, undefined, [...new Set(ids)]),
+        (rows) =>
+          new Map([...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)])),
+      ),
     query: (pattern, basis) => queryRows(pattern, basis),
     history: (entityId) => queryRows({ entityId }, undefined, true),
     dependencyState: (attributes, requested) =>
