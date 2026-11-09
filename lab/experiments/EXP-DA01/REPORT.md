@@ -599,7 +599,7 @@ still use pinned history pulls. No new native-query feature is claimed.
 The generated regressions cover equivalent vector/map/list-valued layouts,
 repeated sections, reordered data clauses, variable aliases and nested logical
 bodies. They assert the actual reported route and complete assertion IDs against
-history. Nested Triplex rule chains, including reversed rule-definition order,
+history. Supported self-recursive Triplex rule definitions, including reversed definition order,
 exercise the frontier path. Ambiguous input/source aliases, conflicting `:find`,
 unsupported nested native rules/pulls and trailing queries must refuse. The
 required G1 fixture retains these observations in its existing six hashed files;
@@ -686,3 +686,80 @@ canonicalization across nested rule rounds; it does not claim new cross-rule
 composition support. The previously described generated multi-name chains were
 fixture attempts and did not produce qualifying results. No core contract is
 relaxed to make the test pass.
+
+Final implementation head: `1c3739edb1d0e88bf46bbdd022de17f80b3a8ba4` (parser
+implementation `9d9cd988`, followed by the two retained fixture corrections).
+The final standalone live validation passes **118/118**, no failures/pending,
+with **18/18 matching successful database deletes**. It includes the unchanged
+936-observation matrix and **570 generated observations**: 480 native equivalent
+surface/basis/phase cases, 40 supported self-recursive rule cases, and 50 actual
+unsupported/ambiguous-input refusals. Native cases inspect the actual reported
+route and exact IDs; they do not infer success from HTTP status or counts alone.
+The JVM corrected-image selftest passes **9 tests / 2484 assertions**.
+
+Final locally built image:
+`sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf`.
+Gateway source hash:
+`ebddb75ea2e100bb041459130017a2dd39f516bdee58ea37b9fd782f5fd11c92`.
+Build-input hash: `ff1b91d51131c8860e732fb23cea7acdd24f5356b03c31dab105b4730bedaf34`;
+source-input hash: `41e6e2521b666b94e19492637f2a84428c43cc2eef200294cd772ab3688ed163`.
+Each fresh context has 812 verified inputs, including the new canonical parser.
+Both image/context receipts and restart windows are retained; volume retention
+and READY are checked again during collection.
+
+| Fresh gate | Result | Previous |
+| --- | --- | --- |
+| `G0-datomic-20261109T014236Z-c1644d` | PASS, 1095/1095 executed, 62 expected skips, zero unexpected | `G0-datomic-20261109T011153Z-d9516d` |
+| `G1-datomic-20261109T014110Z-21ed97` | PASS, full unchanged suite + 44 current / 44 reopen; required route/oracle/property fixture passes | `G1-datomic-20261109T011231Z-5c906f` |
+| `G1-datomic-20261109T015019Z-b44fce` | PASS, full unchanged suite + 88 executions and the fresh required oracle/matrix/property fixture | `G1-datomic-20261109T014110Z-21ed97` |
+
+All three gate receipts bind implementation `1c3739ed`, zero executed-source diff
+bytes, and no modified/untracked executed source. Each G1 deletes its 89
+conformance databases and one route-fixture database. The six hashed route files
+per G1 include the unchanged O-REPLAY row comparisons, 936 matrix outcomes and
+570 generated properties. G0's expected skips are unchanged. Optional Git stash
+snapshot creation logs `could not write index` in G0 and the repeat G1; no stash
+proof is claimed. Actual source/diff/build binding checks remain mandatory.
+
+Evidence is in [`round5/`](round5/): original review reproduction/regression source,
+fresh wrong-answer characterization, both verified image/context receipts, both
+restart/selftest windows, both failed live fixture attempts, final live receipt,
+complete gate receipts/raw outputs, oracle/property journals, retained database
+readbacks and final resident state. The collector requires complete current
+outcomes and real cleanup, rehashes the bound evidence, and records declaration-only
+changes after later gate builds as in round 4; runtime/source drift refuses.
+`FILES.json` and `manifest-validation.json` check retained lengths and SHA values.
+
+Open action: independent review of canonical parsing and generated equivalence
+regressions. Builder evidence does not constitute independent review or merge
+permission. No root `pnpm check`, pack/fresh-consumer check, production storage or
+durability qualification, crash/process-stop experiment, scale/performance run,
+authentication/isolation/erasure qualification, Q89a/Q90 record-time redesign,
+merge, push or publication was performed. Q88a dev-storage DIAGNOSTIC and
+default-off acceptance remain. Native `%` rule composition, pull patterns and
+non-variable projections deliberately refuse; binary self-recursive Triplex
+rules and optional projections retain their existing supported paths.
+
+Collection succeeded against the exact final implementation head: current-source
+G0 and both linked G1 receipts, each 570-property journal, both failed live cleanup
+receipts, both verified contexts and final live/runtime identity all check out.
+The final live run fingerprints 707 source/built files, unchanged during its
+invocation. Three later core declaration/declaration-map files differ after gate
+builds (`Capabilities.d.ts`, `TriplesLive.d.ts`, `TriplesLive.d.ts.map`); their old
+and rebuilt hashes are in `SUMMARY.json`, with rebuilt bytes retained. No source
+or runtime JavaScript differs; original earlier declaration bytes are not claimed
+reconstructible from this packet.
+
+Both retained DA00 databases still return their original position-zero / t=1001 /
+schema-hash basis receipts. Final resident: READY, owner EXP-DA01, image pinned
+above, retained `tx2-datomic-dev-data` volume. No exclusive slot was acquired; no
+other resident was stopped or recreated. Host free bytes at collection were
+7,648,542,720. Every heavy run was submitted after a current check above 5 GiB;
+admission briefly approached that floor, then host free space recovered. No
+retained evidence, build context, image or other lane's data was removed for space.
+
+Final evidence index validation passes: **138 indexed files, 29,612,946 bytes,
+zero missing files and zero SHA/length mismatches**. `FILES.json` excludes itself
+and the collector/manifest generation logs; those logs are retained separately.
+The index and exact ignored declaration artifacts are included in the commit,
+with indexed-file Git coverage checked before and after staging.
