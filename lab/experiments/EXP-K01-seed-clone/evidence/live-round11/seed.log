@@ -1,0 +1,17 @@
+[xtdb-seed 05:25:07] seeding 500 subjects (20 accounts) into scope ns-xtdb-dev500-seed-ns-v2-0604cd31 at postgres://xtdb:xtdb@127.0.0.1:5471/xtdb through composition public
+[xtdb-seed 05:25:21] seed: 20 shared account worlds in 14.5 s
+[xtdb-seed 05:25:55] seed: 500 subjects in 47.8 s
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/bench/lib/g0.ts:110
+        throw Error("G0 count mismatch: " + table);
+              ^
+
+Error: G0 count mismatch: tx_assertions
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/bench/lib/g0.ts:110:15
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async bounded (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/bench/lib/g0.ts:49:12)
+    at async file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/bench/lib/g0.ts:162:19
+    at async bounded (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/bench/lib/g0.ts:49:12)
+    at async pinXtdb (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/bench/lib/g0-xtdb.ts:107:12)
+    at async file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/bench/xtdb-seed.ts:120:12
+
+Node.js v22.23.2

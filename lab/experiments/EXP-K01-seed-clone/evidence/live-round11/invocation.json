@@ -1,0 +1,27 @@
+{
+  "startedAt": "2026-11-09T05:24:25Z",
+  "head": "b9d1be7952bb4b1f5890588e693ebe764ec33360",
+  "run": "runs/xtdb-seed/k01-r11-20261109T052411Z",
+  "holder": "CX-K01-R11-live",
+  "hostFreeBytesBeforeProbe": 10764390400,
+  "sources": {
+    "lab/experiments/EXP-K01-seed-clone/LIVE-round11.md": "6dfc239d6cc506a15c4ddae72ad2a14d113ba841dddd1fcc41f99470dbd5a55e",
+    "lab/bin/engine.mjs": "1447cbd2db4a51af353d96e234d17e39c4c0510f6ca7995f569e38780fd697cf",
+    "lab/bin/lib.mjs": "08da34d2f927a64099f2c42c2dbb3ab83e2862b879465e2f4e692c4327efd406",
+    "lab/bench/xtdb-seed.ts": "82ac7eb63a49c4be16d0543baac362d7bba1a3c1aed298d9578f2365aa61e0a3",
+    "lab/bench/clone-check.ts": "dcab0fecc0d466386e37a196141c7b79e3d312146c67242ba3092964c1995df5",
+    "packages/xtdb/dist/index.js": "902c0eda6b26883a204c6bb9c03c2ae8866333de781cc123630baf3cb0c94ef8",
+    "packages/core/dist/runtime/index.js": "a558ff64b66dc0ca51688a94ec35f5659c03fa56c3fb3153e6a4c6e1cffdaf2c",
+    "/Users/sam/projects/triplex-db-2/lab/config/slots.json": "3cd5463b6fda8af3653057e74ae287a34f1ad1478fa173e98f5ceaefc8e5c225",
+    "lab/bench/lib/g0-xtdb.ts": "21560713bea2d4b9eb74a4b75e29f0a022249b3d6a21ef0e865cb60eb35aca67",
+    "lab/bench/lib/g0-native.ts": "a7531ec11c58a37a865198eb0c45d1c469d8b70917bb8c3ea7d38e5c5854e86a",
+    "lab/bench/lib/g0-normalize.ts": "749037ed2727801ab01cd0ab5ddb134f3db66d3197472f119bb81e04af1e8ef8",
+    "lab/bench/lib/g0-values.ts": "31737e6296bbca788ea4946b719d920d41ae86a0d56f250d7cbf332697a56b5c",
+    "lab/bench/lib/g0-schema.ts": "72499249d961a60e604bd1913e3ec8ecb6b41b07576be925725f51e6b1e2b40e",
+    "lab/bench/lib/g0-wire.ts": "47b7a5b44c48d99dd278160084ff7d1c1a6a9af9c18699eb23c78437cc51721e",
+    "lab/bench/lib/g0.ts": "d2995b912bbe0460b3eb1c53a728f2242046676de73f43a401f26d6b4ad6f195"
+  },
+  "commands": {
+    "wire": "node lab/bin/heavy.mjs --label CX-K01-R11-wire -- node --experimental-strip-types --input-type=module > \"$run/wire.log\" 2>&1 <<'JS'\nimport assert from 'node:assert/strict';\nimport { makeXtdbClient } from './packages/xtdb/dist/index.js';\nimport { openWire } from './lab/bench/lib/g0-wire.ts';\nimport { canonical } from './lab/bench/lib/g0-values.ts';\nimport { nativeUnionLegs } from './lab/bench/lib/g0-native.ts';\nimport { bounded } from './lab/bench/lib/g0.ts';\nassert(process.env.XTDB_URL);\nassert(process.env.TRIPLEX_LAB_SLOT_OWNER?.endsWith('/xtdb-s1/owner.json'));\nconst fs = await import('node:fs');\nconst owner = JSON.parse(fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER,'utf8'));\nassert.equal(owner.holder,'CX-K01-R11-live');\nconst c = makeXtdbClient(process.env.XTDB_URL,{maxConnections:1});\nconst w = await openWire(process.env.XTDB_URL);\nconst query = s => bounded(signal => c.query(s,[],undefined,{signal,timeoutMs:60000}),60000);\n// [EXP-K01-R11] Why: serde/types.clj:97-109 renders native scalar keywords; PgType.kt:951-960 maps the SQL widths to OIDs. Rejected: treating a result-column OID as a per-row union-leg witness.\nconst cases = [\n ['int_narrow','INTEGER',':i32'], ['int_wide','BIGINT',':i64'],\n ['float_narrow','REAL',':f32'], ['float_wide','DOUBLE PRECISION',':f64'],\n];\nconst observed = new Map();\ntry {\n for (const [suffix,cast,expected] of cases) {\n  const table='tx_wire_'+suffix;\n  await bounded(() => c.submit([{sql:`INSERT INTO ${table} (_id,scope_key,v) VALUES ('a','wire',CAST(1 AS ${cast}))`}]),60000);\n  const n=await query(`SELECT COUNT(*) AS n FROM ${table}`);\n  assert.equal(Number(n[0].n),1);\n  const cat=await query(`SELECT column_name,xt_type FROM information_schema.columns WHERE table_name='${table}' AND table_schema='public' ORDER BY column_name`);\n  assert.equal(cat.find(r=>r.column_name==='v')?.xt_type,expected);\n  const rows=await bounded(signal=>w.scan(`SELECT v FROM ${table} WHERE scope_key = ?`,['wire'],signal),60000);\n  assert.equal(rows.length,1);\n  observed.set(suffix,canonical(rows[0].v));\n  console.log({table,cat,canonical:canonical(rows)});\n }\n assert.notEqual(observed.get('int_narrow'),observed.get('int_wide'));\n assert.notEqual(observed.get('float_narrow'),observed.get('float_wide'));\n for (const [suffix,narrow,wide] of [['mixed_int','INTEGER','BIGINT'],['mixed_float','REAL','DOUBLE PRECISION']]) {\n  const table='tx_wire_'+suffix;\n  await bounded(()=>c.submit([{sql:`INSERT INTO ${table} (_id,scope_key,v) VALUES ('a','wire',CAST(1 AS ${narrow})),('b','wire',CAST(2 AS ${wide}))`}]),60000);\n  assert.equal(Number((await query(`SELECT COUNT(*) AS n FROM ${table}`))[0].n),2);\n  const cat=await query(`SELECT column_name,xt_type FROM information_schema.columns WHERE table_name='${table}' AND table_schema='public' ORDER BY column_name`);\n  // [EXP-K01-R11] Why: serde/types.clj:286-288 renders Poly as an unordered EDN set, confirmed by live-round10. Rejected: /:union/ (Arrow input tag); assert the complete expected leg set instead.\n  assert.deepEqual(nativeUnionLegs(cat.find(r=>r.column_name==='v')?.xt_type), suffix==='mixed_int' ? [':i32',':i64'] : [':f32',':f64']);\n  await assert.rejects(()=>bounded(signal=>w.scan(`SELECT v FROM ${table} WHERE scope_key = ?`,['wire'],signal),60000),/ambiguous or inconsistent native type/);\n  console.log({table,cat,refusedAmbiguousUnion:true});\n }\n} finally { await bounded(()=>Promise.all([c.close(),w.close()]),30000); }\nJS\n"
+  }
+}
