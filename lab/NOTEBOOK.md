@@ -2318,3 +2318,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **2026-11-09 OBS01 rounds 9-12 lesson:** four review rounds hardened a parser for an output format nobody had observed, against an
   adversary who cannot write that output. The threat model decides which checks gate. Here the producer is lab-trusted, so the gate is
   the pinned source and toolchain; the parser waits for a real golden dump.
+
+## 2026-11-09: afternoon: DI01 typed refusals, G03 failure paths, one hourly check
+
+- **DI01 rounds 2-3** turned every reference-basis refusal into one typed BasisNotAvailable at the host package's public boundary (the
+  last one was in DependencyIndex.prepare, not the helpers the first review named). Lesson: when a review asks for a class of error to be
+  typed, search the whole consumer for that class, not just the named lines.
+- **G03 round 7c** makes a failed control channel a runner-owned terminal with full export, or keeps the run's volumes when export
+  cannot be proven safe. Lesson: the failure path is where evidence gets deleted; it needs the same export guarantees as success.
+- **Suites under load:** the evaluator-inclusive G03 suite takes over 20 minutes while six agents share the Mac, because claim tests
+  spawn fixture drivers serially. Not a hang; heavy.mjs admission is working.
