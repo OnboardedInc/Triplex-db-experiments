@@ -1,0 +1,51 @@
+{
+  "sourceMerge": "95bcaf574fc9725c4cdf35520994a2ac9018ded6",
+  "liveDiagnosticSource": "0512f9ad",
+  "QLeverRetry": {
+    "exit": 1,
+    "attemptsThisRound": 1,
+    "phase": "loaded-readers",
+    "queryId": "datalog/ancestor-closure",
+    "elapsedMs": 30507.775083,
+    "at": "2026-11-09T00:08:32.412Z",
+    "stopFurtherRetries": true
+  },
+  "G0": {
+    "exit": 1,
+    "runId": "G0-xtdb-20261109T000920Z-414bda",
+    "counts": {
+      "executed": 1168,
+      "pass": 1168,
+      "fail": 0,
+      "skip": 137,
+      "expectedSkip": 134,
+      "unexpectedSkip": 3
+    },
+    "unexpectedSkips": [
+      "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) lets exactly one of two racing commands with the same id commit, for every tricky id",
+      "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) rejects an existing assertion id and an existing operation as a definite identity conflict",
+      "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) refuses a stale source cut as a serialization conflict"
+    ]
+  },
+  "evaluator": {
+    "exit": 0,
+    "tests": 108,
+    "pass": 108,
+    "fail": 0
+  },
+  "contract": {
+    "exit": 1,
+    "newPinChangesAfterJ01": [],
+    "mismatchedPinnedFiles": [
+      "packages/qualification/src/native/xtdb-workloads.ts",
+      "packages/qualification/src/native/qlever-workloads.ts"
+    ],
+    "regenerated": false
+  },
+  "defaultOff": {
+    "gateEnvironment": "TRIPLEX_COMMIT_ENCODING unset",
+    "xtdbAdapterDefault": "a0",
+    "qleverInheritedScaffoldDefault": "a0",
+    "compactLiveTestsRun": false
+  }
+}

@@ -147,3 +147,86 @@ An initial command setup used the package working directory for root-relative ev
 The source-pin summaries above remain current: XTDB workload `ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0`, QLever workload `9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da`. Contract 0.3.12 still needs the reviewed repins. No authoritative contract file was edited.
 
 **Current integration boundary:** the unexpected-skip blocker is resolved, but the newly required live QLever C8 control failed. Under the integration's stop-on-failure rule, J01 `0d9a860` remains unmerged; there is no J01 post-merge gate or pin audit to claim. The next authorized round needs to resolve or explicitly rule on the preserved QLever timeout before continuing default-off J01. No full G1/G2 gate, root-wide check, performance/golden-scenario qualification, deployment, publication, main-branch merge or push was performed. Independent reviewer acceptance remains outstanding.
+
+## Round 4 — query-timed QLever retry and independent J01 integration
+
+The latest dispatch authorizes one logging-only QLever C8 retry and explicitly requires J01 to merge **either way**, independently of this control. That instruction supersedes the prior report's J01 stop boundary. The previous live failure and all original evidence remain intact.
+
+### Logging-only change and source binding
+
+Commit **`0512f9ad`** adds per-phase and per-logical-query start/pass/fail events, wall-clock timestamps, monotonic durations and unique invocation IDs to the QLever C8 control. Effect exit logging preserves failures/interruption and rethrows the original async errors. Shared Datalog/writer helpers accept an identity observer for the unchanged XTDB path and a logging observer for the QLever path. The events identify runtime/fixture setup, the initial read window, each Datalog query/page, native single-read and rounds closures, baseline/loaded writes, loaded readers, positive-control insert and cleanup.
+
+`evidence/round4/logging-only-check.json` records a TypeScript AST comparison against `9c1e78f2`: assertion expressions, query call argument text and the reader/window constants are identical. No assertion, logical query, reader count (8), window (8,000 ms), retry setting or timeout was changed. Oxlint passed with zero warnings/errors. No production query implementation changed for this diagnostic.
+
+The retry runner `evidence/round4/run-live.mjs` executes **inside** the heavy grant. Immediately before starting Vitest, it records `engine.mjs status` in `engine-at-live-start.log` and the actual semaphore owner records in `heavy-at-live-start.json`. At `2026-11-09T00:06:58.316Z`, the snapshot contains this retry (`CX-INT-XCJ-QLever-C8-diagnostic-once`) and one other heavy job, `CX-G03-r3-claim-suites2`. QLever dev was running/healthy and READY, using about 1.31 GiB under its 3.50 GiB/2-CPU cap; XTDB dev was also healthy. These are point-in-time resource/job observations, not a census of all resident requests. In particular, the snapshot does **not** establish multiple competing QLever live suites during this second attempt.
+
+### Retry result: exact failed phase/query
+
+**FAIL, one selected test executed, zero selected skips.** The other test in the file (XTDB) was filtered out. No additional retry was run. Source commit is `0512f9ad`, before J01; receipts are `QLever-C8-live.json`, `QLever-C8-live.log`, `live-execution.json` and extracted `timings.json`, all under `evidence/round4/`.
+
+| Phase / logical query | Observed outcome |
+| --- | --- |
+| setup / fixture-and-direct-runtime | PASS, 4,956.457 ms |
+| initial-reads / datalog/ancestor-closure | PASS, 10,262.130 ms |
+| initial read window (all Datalog reads/pages and native closure strategies) | PASS, 47,003.983 ms including proxied runtime setup |
+| writer baseline (direct runtime and writer) | PASS, three writes; whole phase 10,472.034 ms |
+| **loaded-readers / datalog/ancestor-closure, invocation 17** | **First underlying timeout: 30,507.775 ms**, `ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout` |
+| remaining seven ancestor-closure reader invocations | Interrupted after approximately 30,509–30,510 ms when the first reader failed; these are cancellation outcomes, not seven independently proven timeouts |
+| loaded-writer / writer/loaded/0 | Interrupted after 30,553.676 ms, not a confirmed commit outcome |
+| loaded-window / runtimes-readers-and-writer | FAIL, 30,948.866 ms including setup/teardown |
+
+The exact timed-out logical query is the ancestor closure from `c8:a`:
+
+```ts
+{
+  find: ["?ancestor"],
+  where: [["c8-ancestor", "c8:a", "?ancestor"]],
+  rules: ancestorRules
+}
+```
+
+`ancestorRules` is unchanged: a direct `:c8/parent` edge plus its recursive transitive rule. Eight readers begin this first logical query concurrently in the loaded-reader window while the writer runs. The first timeout event is `2026-11-09T00:08:32.412Z` (the raw event is authoritative for exact timestamp); the query had passed before the loaded window. This localizes the repeat failure to the loaded Datalog ancestor closure, **not** the native frontier helper, fixture loading, pagination or positive-control update. It does not identify the exact internal SPARQL subrequest or establish a root cause beyond the timeout. No engine restart, load reduction, timeout increase, resident cleanup or further QLever retry was performed. The failed attempt stops this QLever diagnostic work as instructed; its cancellation and unresolved writer observation remain evidence.
+
+Reproduction from repository root, through the single heavy grant:
+
+```sh
+node lab/bin/heavy.mjs --label CX-INT-XCJ-QLever-C8-diagnostic-once -- node lab/experiments/INT-XCJ/evidence/round4/run-live.mjs
+```
+
+The runner sets `QLEVER_INTEGRATION=1`, `XTDB_INTEGRATION=0`, QLever URL `http://127.0.0.1:7070`, and removes `TRIPLEX_COMMIT_ENCODING`. It leaves C8_READERS/C8_LOAD_MS unset, preserving their defaults. Both this attempt and the round-3 attempt are retained separately.
+
+### J01 merge and default-off scope
+
+J01 `0d9a860` merged without conflicts as **`95bcaf57`**. Its merge message preserves X02/C8 intent and explicitly leaves compact encoding opt-in. The exact requested branch includes earlier **QLever** encoding scaffolding (`QleverStorageAdapter.ts`, `index.ts`, `rdf.ts` and tests), in addition to the XTDB-specific repair at its tip. I merged the requested branch as supplied rather than silently dropping ancestors. Both adapter defaults remain `options.commitEncoding ?? "a0"`; both public runtime selectors choose compact only via an explicit option or `TRIPLEX_COMMIT_ENCODING=compact`. Post-merge gates remove that variable. Compact-on was not enabled, and no live compact-on qualification is claimed.
+
+`evidence/round4/J01-pins/audit.json` shows **no additional pinned-source change** versus C8. Its generated JSON diff still consists of the same four workload-hash entries (two occurrences per file) and transitive hash. The XTDB workload remains `ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0`; QLever remains `9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da`. The source-diff summaries in the C8 continuation still apply. J01 changes candidate commit encoding code paths, not either pinned workload's logical operations/data/schedule. No contract regeneration was performed; expected-skips is unchanged from the four-entry ruling and remains not contract-pinned.
+
+### Post-J01 gates
+
+| Gate | Result | Evidence under `evidence/round4/` |
+| --- | --- | --- |
+| G0 XTDB | **FAIL, exit 1: 1,168 executed / 1,168 pass / 0 failed tests; 134 expected skips and three unexpected skips** | `J01-G0-receipt.json`, `J01-G0-raw/`, `J01-G0.log` |
+| Evaluator | **PASS, exit 0: 108/108, zero failures/skips** | `J01-evaluator.log` |
+| Contract verify | **FAIL, exit 1: same two workload pins and derived transitive hash only** | `J01-contract.log`, `J01-pins/audit.json`, JSON/Markdown diffs |
+
+Commands from repository root:
+
+```sh
+PATH="$PWD/lab/experiments/EXP-X02-xtql-parity/round2/bin:$PATH" node lab/bin/heavy.mjs --label CX-INT-XCJ-J01-G0 -- env -u XTDB_INTEGRATION -u QLEVER_INTEGRATION -u TRIPLEX_COMMIT_ENCODING node lab/bin/gate.mjs G0 --lane xtdb --exp INT-XCJ-J01
+node lab/bin/heavy.mjs --label CX-INT-XCJ-J01-evaluator -- env -u TRIPLEX_COMMIT_ENCODING node --test lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs
+python3 -B lab/acceptance/build_contract.py --verify
+python3 -B lab/experiments/INT-XCJ/evidence/audit-pins.py round4/J01-pins
+```
+
+
+J01 G0 is `G0-xtdb-20261109T000920Z-414bda`; canonical receipt `lab/runs/G0/G0-xtdb-20261109T000920Z-414bda.json`. Its three unexpected skips are the new live tests in `packages/xtdb/test/commit-encoding.test.ts`, suite `XTDB compact commit guards against the engine (EXP-J01)`:
+
+1. `lets exactly one of two racing commands with the same id commit, for every tricky id`
+2. `rejects an existing assertion id and an existing operation as a definite identity conflict`
+3. `refuses a stale source cut as a serialization conflict`
+
+They require `XTDB_INTEGRATION=1`; the requested offline G0 intentionally leaves that unset. They are not in the expected-skip manifest. I did not add them: the manifest ruling authorizes exactly the four C8 entries and nothing else. No assertion failed, but the strict G0 gate **did not pass**. No compact-on live tests were run in this round. Default-off source and unit evidence is retained in `default-off-unit-results.json`: all three selected tests pass, covering explicit compact descriptor binding, compact-off public/native arrays byte-identical to the pre-J01 client, and default/explicit/environment encoding selection with invalid-name rejection. The actual G0 environment removes TRIPLEX_COMMIT_ENCODING. The inherited QLever scaffold's default is source-inspected; no separate fresh QLever package unit/live suite was run after the merge.
+
+The G0 receipt binds merge `95bcaf57` with empty executed-source diffs; dirty paths are integration report/evidence. The diagnostic retry is bound separately to `0512f9ad` and is not presented as a post-J01 live run. The unchanged owned-store shim supplies the same build/typecheck/Vitest sequence used in prior rounds. No dependency install, lockfile edit or pnpm configuration change occurred. Heavy admission was respected; pre-gate disk remained above 12 GiB, well above the 5 GiB floor.
+
+**Current result:** all three requested source commits are ancestors of `int/X02-C8-J01`: X02 merge `7fcf69ea`, C8 merge `0157eda1`, J01 merge `95bcaf57`. This is an integrated builder branch, **not promotion or independently verified acceptance**. J01 stays default-off. Open items are the repeat QLever loaded-ancestor timeout, the three J01 live-test skip classifications, and reviewed contract 0.3.12 repins of the two workload libraries. No further QLever retry, live compact-on qualification, full G1/G2, root-wide check, performance/golden scenarios, main-branch merge, push, publication or deployment occurred. The separate reviewer still evaluates this branch. All first-failure receipts are retained; round-4 outputs are indexed by their own SHA256SUMS.

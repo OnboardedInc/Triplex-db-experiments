@@ -1,0 +1,143 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/packages/qualification
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"setup","queryId":"fixture-and-direct-runtime","invocation":1,"event":"start","at":"2026-11-09T00:06:59.074Z","elapsedMs":0.3558330000000183}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"setup","queryId":"fixture-and-direct-runtime","invocation":1,"event":"pass","at":"2026-11-09T00:07:04.030Z","elapsedMs":4956.457}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"proxied-runtime-and-read-window","invocation":2,"event":"start","at":"2026-11-09T00:07:04.031Z","elapsedMs":0.011791999999331892}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"datalog/ancestor-closure","invocation":3,"event":"start","at":"2026-11-09T00:07:04.485Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"datalog/ancestor-closure","invocation":3,"event":"pass","at":"2026-11-09T00:07:14.747Z","elapsedMs":10262.129832999999}
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"datalog/shared-ancestor","invocation":4,"event":"start","at":"2026-11-09T00:07:14.748Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"datalog/shared-ancestor","invocation":4,"event":"pass","at":"2026-11-09T00:07:22.879Z","elapsedMs":8130.750208000001}
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"datalog/repeated-variable-self","invocation":5,"event":"start","at":"2026-11-09T00:07:22.879Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"datalog/repeated-variable-self","invocation":5,"event":"pass","at":"2026-11-09T00:07:27.360Z","elapsedMs":4481.624832999998}
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"datalog/ancestor-page-first","invocation":6,"event":"start","at":"2026-11-09T00:07:27.361Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"datalog/ancestor-page-first","invocation":6,"event":"pass","at":"2026-11-09T00:07:35.866Z","elapsedMs":8505.693333}
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"datalog/ancestor-page-last","invocation":7,"event":"start","at":"2026-11-09T00:07:35.866Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"datalog/ancestor-page-last","invocation":7,"event":"pass","at":"2026-11-09T00:07:43.920Z","elapsedMs":8053.7565419999955}
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"native/closure/single-read","invocation":8,"event":"start","at":"2026-11-09T00:07:43.921Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"native/closure/single-read","invocation":8,"event":"pass","at":"2026-11-09T00:07:46.809Z","elapsedMs":2887.87025}
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"native/closure/rounds","invocation":9,"event":"start","at":"2026-11-09T00:07:46.809Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"native/closure/rounds","invocation":9,"event":"pass","at":"2026-11-09T00:07:51.034Z","elapsedMs":4224.920041999998}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"initial-reads","queryId":"proxied-runtime-and-read-window","invocation":2,"event":"pass","at":"2026-11-09T00:07:51.035Z","elapsedMs":47003.98325}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"writer-baseline","queryId":"direct-runtime-and-writer","invocation":10,"event":"start","at":"2026-11-09T00:07:51.035Z","elapsedMs":0.003916000001481734}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"writer-baseline","queryId":"writer/alone/0","invocation":11,"event":"start","at":"2026-11-09T00:07:51.481Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"writer-baseline","queryId":"writer/alone/0","invocation":11,"event":"pass","at":"2026-11-09T00:07:55.059Z","elapsedMs":3578.2524580000027}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"writer-baseline","queryId":"writer/alone/1","invocation":12,"event":"start","at":"2026-11-09T00:07:55.112Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"writer-baseline","queryId":"writer/alone/1","invocation":12,"event":"pass","at":"2026-11-09T00:07:58.246Z","elapsedMs":3133.7651250000054}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"writer-baseline","queryId":"writer/alone/2","invocation":13,"event":"start","at":"2026-11-09T00:07:58.299Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"writer-baseline","queryId":"writer/alone/2","invocation":13,"event":"pass","at":"2026-11-09T00:08:01.456Z","elapsedMs":3157.381459000004}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"writer-baseline","queryId":"direct-runtime-and-writer","invocation":10,"event":"pass","at":"2026-11-09T00:08:01.507Z","elapsedMs":10472.034416000002}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"loaded-window","queryId":"runtimes-readers-and-writer","invocation":14,"event":"start","at":"2026-11-09T00:08:01.507Z","elapsedMs":0.0038750000021536835}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"loaded-writer","queryId":"writer/loaded/0","invocation":15,"event":"start","at":"2026-11-09T00:08:01.902Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":16,"event":"start","at":"2026-11-09T00:08:01.903Z","elapsedMs":0}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":17,"event":"start","at":"2026-11-09T00:08:01.904Z","elapsedMs":0}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":18,"event":"start","at":"2026-11-09T00:08:01.905Z","elapsedMs":0}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":19,"event":"start","at":"2026-11-09T00:08:01.906Z","elapsedMs":0}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":20,"event":"start","at":"2026-11-09T00:08:01.907Z","elapsedMs":0}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":21,"event":"start","at":"2026-11-09T00:08:01.907Z","elapsedMs":0}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":22,"event":"start","at":"2026-11-09T00:08:01.907Z","elapsedMs":0}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":23,"event":"start","at":"2026-11-09T00:08:01.908Z","elapsedMs":0}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":17,"event":"fail","at":"2026-11-09T00:08:32.412Z","elapsedMs":30507.775083,"error":"Cause([Fail(ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout (cause: TimeoutError: The operation was aborted due to timeout))])"}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":16,"event":"fail","at":"2026-11-09T00:08:32.414Z","elapsedMs":30510.159374999996,"error":"Cause([Interrupt(6),Interrupt(6)])"}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":18,"event":"fail","at":"2026-11-09T00:08:32.415Z","elapsedMs":30509.7805,"error":"Cause([Interrupt(6),Interrupt(6)])"}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":19,"event":"fail","at":"2026-11-09T00:08:32.416Z","elapsedMs":30509.590249999994,"error":"Cause([Interrupt(6),Interrupt(6)])"}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":20,"event":"fail","at":"2026-11-09T00:08:32.416Z","elapsedMs":30509.759292000002,"error":"Cause([Interrupt(6),Interrupt(6)])"}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":21,"event":"fail","at":"2026-11-09T00:08:32.417Z","elapsedMs":30509.850999999995,"error":"Cause([Interrupt(6),Interrupt(6)])"}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":22,"event":"fail","at":"2026-11-09T00:08:32.417Z","elapsedMs":30509.830875,"error":"Cause([Interrupt(6),Interrupt(6)])"}
+{"c8Timing":"qlever","phase":"loaded-readers","queryId":"datalog/ancestor-closure","invocation":23,"event":"fail","at":"2026-11-09T00:08:32.418Z","elapsedMs":30509.426375000003,"error":"Cause([Interrupt(6),Interrupt(6)])"}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"loaded-writer","queryId":"writer/loaded/0","invocation":15,"event":"fail","at":"2026-11-09T00:08:32.456Z","elapsedMs":30553.675834,"error":"Cause([Interrupt(4)])"}
+
+stdout | test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+{"c8Timing":"qlever","phase":"loaded-window","queryId":"runtimes-readers-and-writer","invocation":14,"event":"fail","at":"2026-11-09T00:08:32.456Z","elapsedMs":30948.866040999994,"error":"ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout"}
+
+ ❯ test/c8-reads-never-write.test.ts (2 tests | 1 failed | 1 skipped) 93396ms
+   ↓ C8 on XTDB: reads never write (engine boundary) (1)
+     ↓ counts zero writes across rule queries, maintained reads, native closures and a load run
+   ❯ C8 on QLever: reads never write (engine boundary) (1)
+     × counts zero updates across rule queries, native closures and a load run 93395ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout
+ ❯ fail ../qlever/src/QleverQueryExecutor.ts:53:7
+     51|   cause instanceof DatalogValidationError || cause instanceof UnboundV…
+     52|     ? cause
+     53|     : new ReadError({ message: `QLever Datalog execution failed: ${Str…
+       |       ^
+     54| const safeCount = (value: string | undefined): number => {
+     55|   const result = Number(value ?? 0);
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42
+ ❯ ~effect/Utils/internal ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14
+ ❯ PrimitiveImpl.~effect/Effect/args ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23
+ ❯ PrimitiveImpl.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+Caused by: TimeoutError: The operation was aborted due to timeout
+ ❯ request ../qlever/src/QleverClient.ts:85:24
+ ❯ Object.query ../qlever/src/QleverClient.ts:121:23
+ ❯ try ../qlever/src/QleverQueryExecutor.ts:337:23
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 23, INDEX_SIZE_ERR: 1, DOMSTRING_SIZE_ERR: 2, HIERARCHY_REQUEST_ERR: 3, WRONG_DOCUMENT_ERR: 4, INVALID_CHARACTER_ERR: 5, NO_DATA_ALLOWED_ERR: 6, NO_MODIFICATION_ALLOWED_ERR: 7, NOT_FOUND_ERR: 8, NOT_SUPPORTED_ERR: 9, INUSE_ATTRIBUTE_ERR: 10, INVALID_STATE_ERR: 11, SYNTAX_ERR: 12, INVALID_MODIFICATION_ERR: 13, NAMESPACE_ERR: 14, INVALID_ACCESS_ERR: 15, VALIDATION_ERR: 16, TYPE_MISMATCH_ERR: 17, SECURITY_ERR: 18, NETWORK_ERR: 19, ABORT_ERR: 20, URL_MISMATCH_ERR: 21, QUOTA_EXCEEDED_ERR: 22, TIMEOUT_ERR: 23, INVALID_NODE_TYPE_ERR: 24, DATA_CLONE_ERR: 25 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 1 skipped (2)
+   Start at  19:06:58
+   Duration  93.96s (tests 100%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/lab/experiments/INT-XCJ/evidence/round4/QLever-C8-live.json
