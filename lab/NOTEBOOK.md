@@ -1587,3 +1587,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Contract 0.3.12 built (f5e7a41):** 432/432 mutations, evaluator 108/108; in review.
 - **V-P2Q round 7 FIX-FIRST:** the derived transport catalog and upgrade guard pass; a transactional read silently replaced a future
   position 6144 with 2048 and returned []. That is exactly what Q89c forbids, found the first round after the ruling.
+
+## 2026-11-09 00:16Z: all three XTDB-lane branches integrated; a QLever closure is 3x slower than when C8 was accepted
+- **INT-XCJ:** X02, C8 and J01 (default-off) are merged on int/X02-C8-J01 (ec1a815); evaluator 108/108; J01's three live tests need the
+  same expected-skip handling as C8's. Two workload pins changed (XTDB and QLever workload files); contract 0.3.12 re-pins them.
+- **C8's QLever "reads never write" control timed out twice**, localized to the Datalog ancestor closure from c8:a: 10.3 s with no load,
+  over 30.5 s with eight readers. It passed in C8's own review. Leading guess: qlever-dev has accumulated other lanes' test graphs for 25 hours
+  and the closure is not graph-scoped. If so, it is a P1 read-cost bug that shows only on a resident with realistic data volume. CX-C8-R4
+  investigates. **Learning:** shared residents drift in size; live controls need the resident's triple count in every receipt.
+- **Contract 0.3.12 FIX-FIRST:** O-OBS's registry hashed its review report instead of the original brief (Q59c). Everything else passed.
+- **K01 round 5:** 209 offline tests pass, plus a PASS audit listing every observation-to-PASS path; review round 4 audits that list.
