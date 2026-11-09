@@ -1,6 +1,6 @@
 import { instantOf } from "@triplex-build/triplex";
 import { Effect } from "effect";
-import { ReadError } from "@triplex-build/triplex/runtime";
+import { type ReadError, toReadError } from "@triplex-build/triplex/runtime";
 import type { QleverClient } from "./QleverClient.js";
 import { graphIri, operationIri, fieldIri } from "./rdf.js";
 
@@ -47,5 +47,5 @@ export const resolveQleverOperation = (
         instant: instantOf(Number(rows[0]!["stamp"]?.value)),
       };
     },
-    catch: (cause) => new ReadError({ message: "Cannot resolve QLever operation outcome", cause }),
+    catch: (cause) => toReadError(cause, "Cannot resolve QLever operation outcome"),
   });

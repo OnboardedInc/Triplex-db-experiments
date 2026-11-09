@@ -109,3 +109,50 @@ All expensive commands ran through `lab/bin/heavy.mjs`; all package caches staye
 Only positively identified RT01 client workers were signaled during failed-attempt retirement. Their process chains/signals and fresh gone-readback are retained in `attempt3-cleanup.json`, `attempt4-cleanup.json` and `cleanup-final.json`. Resident state, unknown backend data and first failures were retained. Temporary owned baseline JS/declaration directories and exact scratch templates were removed; dependency caches remain local and ignored. Tarballs, consumer source/lock, original source snapshots and checksums are retained.
 
 Before promotion: complete final-source live conformance (including 200/50 concurrency, journal/readback and available live routes), resolve/calibrate the latency guard, have contract 0.4.0 re-pin sources, and obtain independent adversarial review. Round B and seals require their own branches and gates. This builder neither merged nor pushed the branch.
+
+## Fix round 2 — QA F1–F3 and Q96b
+
+North star: P1 exact named cuts on every route; P2 journal bytes and receipts tied to the physical decision. Review authority: verify/RT01 `420f647`, findings F1–F3 against Q89c/Q90d/Q90e. Q96b additionally requires an engine measurement of the second scope scan before merge; this round supplies the requested offline measurement only and lists the live obligation.
+
+Changes: one core `toReadError` mapper is used at storage, Datalog, native (both inner and outer), interval, maintained, operation and core-cut read boundaries. It preserves exact typed basis/normal read objects and wraps other causes once. One journal encoder now handles every row kind; callers pass the physical decision instant explicitly. It omits same-physical-commit assertion times on retracts as well as assertions and restores omitted fields from the journal row on decode. Legacy v1 and older-commit assertion times remain supported. Both adapters put the empty-ID shortcut inside their common query path after basis resolution, matching their existing nonempty and empty-dependency behavior.
+
+Copied reviewer reproductions (original and adapted bytes), regression tests, source bindings and the scan-cost runner are indexed by [round2/INDEX.md](round2/INDEX.md). The pre-commit PASS audit is in that index: exact typed objects, raw/hydrated journal content, watermark observations before shortcuts, and fresh/source-bound runner checks. No code in this round emits an engine acceptance or performance PASS. Results follow after fresh gates; live G2/G6 and independent re-review remain outstanding. Acceptance files and the oracle are not edited.
+
+### Round 2 results and boundaries
+
+Final product commit: `2ade6e755cc2877e36569da6f8f44ece22229cf0`. Later round 2 commits update measurement controllers, indexes and retained evidence only. `evidence/round2-final/execution.json` records sourceUnchanged=true, the exact product commit, and all 14 phases at exit 0: builds/typechecks for core/testkit/XTDB/QLever plus both core typecheck suites. Tests: **859 core + 93 testkit + 74 XTDB + 37 QLever = 1,063 passed**, 116 engine integration cases skipped. The initial gate's sole failure was TS6133 for an unused QLever ReadError import after consolidation; its raw output is retained in `evidence/round2-initial/`.
+
+`round2/attempt2/execution.json` has error=null and sourceUnchanged=true, binding fresh runner/source/build bytes. It executes copied reproductions from review `420f647`; PROVENANCE.json verifies their exact original bytes and records adapted hashes. All four actual adapter/core offline schedules complete (XTDB and QLever, A0 and compact; deferred T8 N/A). All **32 route observations** now expose top-level BasisNotAvailable with recordedAt axis, including XTQL, SQL, SPARQL and empty public entity batches. The 12 nearby route probes wait 2000.3–2002.9 ms before refusal; immediate far-future and successful available empty batches are separately checked by the new lane unit tests. The first reproduction attempt stopped at a scan-capture fixture error because schema initialization has no CAS guard; it remains in `round2/attempt1/`, with no semantic acceptance adopted from its process exit.
+
+The ordinary same-command assert/retract reproduction and cross-ordinal journals on all four lane/encoding combinations now omit both their own recordedAt and retractedAt fields in raw changes. Hydrated public changes recover the receipt instant. Core table tests retain older assertion instants, and the original legacy-v1 decode test remains green. Two actual XTDB encoding tests additionally assert raw omissions and hydration for both single-command and nested physical groups. No accepted-oracle execution or oracle source edit was performed in this fix round; these are product content checks, followed by independent re-review.
+
+### Q96b offline scan measurement and required live G6
+
+`round2/scan-final/scan-cost.stdout` and its execution.json bind the captured **actual emitted A0 and compact ASSERTs**, source/build bytes, the exact baseline SHA256 and the input matrix. Baseline source is the preserved pre-RT01 adapter at `59e07afb7a25dfb22bca60f8d769b74651aa835a`, SHA256 `5a9b4d63a8754e974c4a270610880f3c5199a525354255ff6bf0b9c9a2d6a58e`. Its position-only guard is compared with RT01's position-plus-stamp guard. The counterfactual omits the stamp check only in the model; production CAS is unchanged.
+
+The model evaluates each emitted MAX column as a separate sequential scan over explicitly sized synthetic scope history. Expected maxima are checked on every iteration, with warmup and six alternating-order pairs per point. It counts **N versus 2N row visits per guard**. Timing below is the median pair mean in microseconds per guard, including model validation overhead; it is neither an engine plan nor a complete commit latency.
+
+| Encoding | Scope history rows | Position-only us | Position + stamp us | Model change |
+| --- | --- | --- | --- | --- |
+| a0 | 0 | 0.067 | 0.096 | 43.3% |
+| a0 | 100 | 0.499 | 0.713 | 42.9% |
+| a0 | 10000 | 43.875 | 61.587 | 40.4% |
+| a0 | 100000 | 431.213 | 631.596 | 46.5% |
+| compact | 0 | 0.084 | 0.167 | 100.1% |
+| compact | 100 | 0.461 | 0.655 | 42.1% |
+| compact | 10000 | 43.548 | 61.708 | 41.7% |
+| compact | 100000 | 436.458 | 626.938 | 43.6% |
+
+The added stamp predicate shares the existing ASSERT, so it adds no PG-wire statement; that does **not** establish zero engine cost. The offline scan model is distinct from round A's O(1) SQL transport microbench. QLever uses an exact marker/stamp predicate and has no additional MAX(stamp) history scan in this implementation. This measurement does not qualify either engine's planning, numeric storage, durability or commit latency.
+
+**Live G6 remains required before RT01 merges (Q96b).** On one exclusive XTDB slot, compare the pre-RT01 A0 build with this exact product build at fresh and 10k-history points, alternating ABAB with the same declared 5/10-fact inputs and calibrated A/A noise. Retain p50/p99, exact source/build/engine identity, historical-row counts, statement/round-trip counts and actual scan/read evidence. R39 F6 specifies 150 ten-fact commits per point; include that trace. Measure A0 and compact separately if both are proposed. No live scan cost or no-regression verdict is inferred from the JS model.
+
+### Round 2 pin, PASS audit and handoff
+
+No additional existing pinned path changes in round 2. The previously moved `packages/testkit/src/index.ts` remains the sole unique stale existing pin: old `6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988`, new `995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7`, at the three contract locations listed above. The fresh recursive scan is retained in `round2/attempt1/pins.json`. No `lab/acceptance/` or oracle delta exists against the prior builder head. The evaluator 108/108 and non-byte-identical contract result above remain historical round A evidence; neither was rerun or re-certified here.
+
+The complete round 2 content/freshness/binding audit is in `round2/INDEX.md`: the shared mapper preserves exact typed objects; the one encoder receives the required physical instant and checks raw and hydrated content; common read paths gate before empty returns; copied probes assert content rather than process success; and the scan controller verifies matrix/expected maxima, stable source/build/baseline bytes and raw-output hashes without emitting a performance PASS. Final checksum inventories bind the report, runner bytes, failures and successful attempts. The source-bound package runner retains actual commands and exits as before.
+
+No engine/container/slot lifecycle action, Docker command, live query, merge or push was performed in round 2. No root pnpm check, full pack/consumer suite, PostgreSQL/FoundationDB integration, live G2/G6, oracle re-certification or independent acceptance is claimed. No new external service was used. Raw evidence is within rule 9c's Git limits; ignored local dependency caches are excluded. **Handoff: F1–F3 fixed with fresh offline checks; independent re-review and live G2/G6 remain open, as does the contract-owner re-pin.**
+
+`round2/finalize.mjs` / `CLOSURE.json` adds the final receipt-audit site: before publishing the table/index it checks all 14 fresh phase exits and raw-log SHA256s, current package source equality with the gate's sourceAfter, current package/build bytes against the successful reproduction, and current scan/baseline bytes against the scan receipt. Its retained original runner preimage must match the scan receipt's SHA256. These are content and exact-byte bindings to those attempts, not a new semantic acceptance. It checks the empty acceptance/oracle diff and rule 9c sizes (4,438,908 raw bytes in total; no raw file exceeds 1 MB). Reconstructed intermediate runner preimages are explicitly hash-checked copies, not claims of original Git commits. The final checksum refresh includes this audit paragraph and does not change any measured/product bytes.

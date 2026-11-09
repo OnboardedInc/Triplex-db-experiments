@@ -1,0 +1,23 @@
+[
+  {
+    "reviewCommit": "420f647",
+    "path": "lab/verify/RT01/probe.ts",
+    "originalSha256": "212ab78aa310e7b40261d5b088f310cb34b9a5f0f6d54d3d20b99c2fa9c7813e",
+    "adaptedSha256": "fd1bb0bbb8b5980f304093686d26eca1e9a6fccb5b829ffc9ac8966026cfbe00",
+    "adaptation": "package import depth and evidence output destination only"
+  },
+  {
+    "reviewCommit": "420f647",
+    "path": "lab/verify/RT01/public-routes.ts",
+    "originalSha256": "9adb120076f4b6795e7f224f88016d7214b494e6586cb4943ac0ef86533d5005",
+    "adaptedSha256": "df7dc6e39598500650fec82b9f7f85178e0e8ec84c56d1a82deab846ff3633e8",
+    "adaptation": "package import depth and evidence output destination only"
+  },
+  {
+    "reviewCommit": "420f647",
+    "path": "lab/verify/RT01/journal-single.ts",
+    "originalSha256": "6a70acd39ee0b537f67483845650a6567f174a696c3c148cd8b6d838660f9080",
+    "adaptedSha256": "c0ba53c8d96e46c96bbc98c2ddc3a784be262d118433ab1e6925e4db14d4045e",
+    "adaptation": "package import depth and evidence output destination only"
+  }
+]

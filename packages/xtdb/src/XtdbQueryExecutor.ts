@@ -4,7 +4,7 @@ import { readOnlyXtdbClient, readPathBase } from "./ReadOnlyClient.js";
 import {
   QueryExecutor,
   ReadError,
-  BasisNotAvailable,
+  toReadError,
   DatalogValidationError,
   UnboundVariableError,
   type QueryExecutorService,
@@ -25,12 +25,9 @@ import { CurrentTransactions } from "./TransactionContext.js";
 import { clientWithOverlay } from "./query/overlay.js";
 
 const failure = (cause: unknown) =>
-  cause instanceof BasisNotAvailable ||
-  cause instanceof ReadError ||
-  cause instanceof DatalogValidationError ||
-  cause instanceof UnboundVariableError
+  cause instanceof DatalogValidationError || cause instanceof UnboundVariableError
     ? cause
-    : new ReadError({ message: `XTDB Datalog execution failed: ${String(cause)}`, cause });
+    : toReadError(cause, `XTDB Datalog execution failed: ${String(cause)}`);
 
 const numeric = (value: unknown): number | null => {
   if (value === null || value === undefined) return null;

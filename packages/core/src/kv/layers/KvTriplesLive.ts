@@ -554,7 +554,7 @@ const makeKvTriplesService = Effect.gen(function* () {
                   yield* transactionStore.assert(datom);
                   const triple = datomToTriple(datom);
                   asserted.push(triple);
-                  changes.push(transactionChangeFromTriple("assert", triple, txId, now, true));
+                  changes.push(transactionChangeFromTriple("assert", triple, txId, now));
                   break;
                 }
                 case "retract": {
@@ -580,13 +580,7 @@ const makeKvTriplesService = Effect.gen(function* () {
                     retractedCount++;
                     if (current) {
                       changes.push(
-                        transactionChangeFromTriple(
-                          "retract",
-                          datomToTriple(current),
-                          txId,
-                          now,
-                          true,
-                        ),
+                        transactionChangeFromTriple("retract", datomToTriple(current), txId, now),
                       );
                     }
                   }
@@ -613,13 +607,7 @@ const makeKvTriplesService = Effect.gen(function* () {
                     if (ok) {
                       retractedCount++;
                       changes.push(
-                        transactionChangeFromTriple(
-                          "retract",
-                          datomToTriple(datom),
-                          txId,
-                          now,
-                          true,
-                        ),
+                        transactionChangeFromTriple("retract", datomToTriple(datom), txId, now),
                       );
                     }
                   }
@@ -629,7 +617,7 @@ const makeKvTriplesService = Effect.gen(function* () {
             }
 
             if (!isJournalSuppressed(meta)) {
-              for (const input of metadataInputs(txId, position, now, meta, changes)) {
+              for (const input of metadataInputs(txId, position, now, meta, changes, now)) {
                 yield* transactionStore.assert(
                   tripleInputToDatom(input, yield* runtime.nextTripleId, txId, now, position),
                 );

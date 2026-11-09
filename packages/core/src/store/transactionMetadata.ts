@@ -11,9 +11,7 @@ export const transactionChangeFromTriple = (
   triple: Triple,
   transactionId: TransactionId,
   transactionInstant: number,
-  journalV2 = false,
 ): TransactionChange => ({
-  ...(journalV2 ? { v: 2 } : {}),
   op,
   tripleId: triple.id,
   entityId: triple.entityId,
@@ -22,11 +20,23 @@ export const transactionChangeFromTriple = (
   value: triple.value,
   validFrom: triple.validFrom,
   ...(Option.isSome(triple.validTo) ? { validTo: triple.validTo.value } : {}),
-  ...(!journalV2 || op === "retract" ? { recordedAt: triple.recordedAt } : {}),
-  ...(!journalV2 && op === "retract" ? { retractedAt: transactionInstant } : {}),
+  recordedAt: triple.recordedAt,
+  ...(op === "retract" ? { retractedAt: transactionInstant } : {}),
   ...(Option.isSome(triple.txId) ? { assertionTxId: triple.txId.value } : {}),
   ...(op === "retract" ? { retractionTxId: transactionId } : {}),
 });
+
+// [EXP-RT01] Why: every row kind uses one encoder, including retracts of assertions from earlier ordinals in this physical commit. Rejected: separate fast/fallback encoders (both retained own instants).
+const encodeJournalChange = (change: TransactionChange, instant: number) => {
+  const { recordedAt, retractedAt: _retractedAt, ...fields } = change;
+  return {
+    ...fields,
+    v: 2,
+    ...(change.op === "retract" && recordedAt !== undefined && recordedAt !== instant
+      ? { recordedAt }
+      : {}),
+  };
+};
 
 export const metadataInputs = (
   txId: TransactionId,
@@ -34,6 +44,7 @@ export const metadataInputs = (
   stagedAt: number,
   meta: TransactionMeta | undefined,
   changes: readonly TransactionChange[],
+  transactionInstant: number,
 ): readonly TripleInput[] => {
   const input = (attribute: string, value: TripleInput["value"]): TripleInput => ({
     entityId: txId,
@@ -54,30 +65,12 @@ export const metadataInputs = (
     ...[...new Set(changes.map((change) => change.entityId))].map((entityId) =>
       input(TxAttributes.CHANGED_ENTITY, { type: "ref", value: entityId }),
     ),
-    ...changes.map((change) => {
-      if ("v" in change && change.v === 2)
-        return input(TxAttributes.CHANGE, { type: "json", value: change });
-      // [EXP-RT01] Why: deferred stamps cannot live in fact values. Rejected: JSON rewriting at decision (backend-specific number spelling).
-      return input(TxAttributes.CHANGE, {
+    ...changes.map((change) =>
+      input(TxAttributes.CHANGE, {
         type: "json",
-        value: {
-          v: 2,
-          op: change.op,
-          tripleId: change.tripleId,
-          entityId: change.entityId,
-          attribute: change.attribute,
-          ...(change.entityType === undefined ? {} : { entityType: change.entityType }),
-          ...(change.value === undefined ? {} : { value: change.value }),
-          ...(change.validFrom === undefined ? {} : { validFrom: change.validFrom }),
-          ...(change.validTo === undefined ? {} : { validTo: change.validTo }),
-          ...(change.assertionTxId === undefined ? {} : { assertionTxId: change.assertionTxId }),
-          ...(change.retractionTxId === undefined ? {} : { retractionTxId: change.retractionTxId }),
-          ...(change.op === "retract" && change.recordedAt !== undefined
-            ? { recordedAt: change.recordedAt }
-            : {}),
-        },
-      });
-    }),
+        value: encodeJournalChange(change, transactionInstant),
+      }),
+    ),
   ];
 };
 
@@ -116,8 +109,7 @@ const decodeChange = (value: unknown, instant: number): TransactionChange | unde
       ...(fields as unknown as TransactionChange),
       ...(candidate["v"] === 2
         ? {
-            recordedAt:
-              candidate["op"] === "assert" ? instant : (candidate["recordedAt"] as number),
+            recordedAt: (candidate["recordedAt"] as number | undefined) ?? instant,
             ...(candidate["op"] === "retract" ? { retractedAt: instant } : {}),
           }
         : {}),

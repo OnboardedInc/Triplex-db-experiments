@@ -47,7 +47,7 @@ import {
   TransactionConflictError,
   ConstraintViolationError,
   PaginationCursorError,
-  BasisNotAvailable,
+  toReadError,
 } from "../errors/index.js";
 import { unsafe } from "../Branded.js";
 import * as Constraint from "../Constraint.js";
@@ -176,10 +176,7 @@ export const TriplesLive = Layer.effect(
             surface: "triples-basis",
           });
         },
-        catch: (cause) =>
-          cause instanceof BasisNotAvailable || cause instanceof ReadError
-            ? cause
-            : new ReadError({ message: "Failed to resolve read cut", cause }),
+        catch: (cause) => toReadError(cause, "Failed to resolve read cut"),
       });
     };
 
@@ -463,7 +460,7 @@ export const TriplesLive = Layer.effect(
                   triples.push(...batch);
                   changes.push(
                     ...batch.map((triple) =>
-                      transactionChangeFromTriple("assert", triple, txId, timestamp, true),
+                      transactionChangeFromTriple("assert", triple, txId, timestamp),
                     ),
                   );
                   pendingAsserts = [];
@@ -503,7 +500,6 @@ export const TriplesLive = Layer.effect(
                             rowToTriple(current),
                             txId,
                             timestamp,
-                            true,
                           ),
                         );
                       }
@@ -527,13 +523,7 @@ export const TriplesLive = Layer.effect(
                       if (yield* adapter.retract(row.id, timestamp, txId, position)) {
                         retractedCount++;
                         changes.push(
-                          transactionChangeFromTriple(
-                            "retract",
-                            rowToTriple(row),
-                            txId,
-                            timestamp,
-                            true,
-                          ),
+                          transactionChangeFromTriple("retract", rowToTriple(row), txId, timestamp),
                         );
                       }
                     }
@@ -554,13 +544,20 @@ export const TriplesLive = Layer.effect(
                 triples.push(...batch);
                 changes.push(
                   ...batch.map((triple) =>
-                    transactionChangeFromTriple("assert", triple, txId, timestamp, true),
+                    transactionChangeFromTriple("assert", triple, txId, timestamp),
                   ),
                 );
               }
 
               if (!isJournalSuppressed(meta)) {
-                for (const input of metadataInputs(txId, position, stagedAt, meta, changes)) {
+                for (const input of metadataInputs(
+                  txId,
+                  position,
+                  stagedAt,
+                  meta,
+                  changes,
+                  timestamp,
+                )) {
                   yield* adapter.insert(input, txId, timestamp, yield* nextTripleId, position);
                 }
               }

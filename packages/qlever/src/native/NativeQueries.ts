@@ -4,7 +4,7 @@ import { readOnlyQleverClient } from "../ReadOnlyClient.js";
 import type { TypeExpr } from "@triplex-build/triplex/config";
 import {
   ReadError,
-  BasisNotAvailable,
+  toReadError,
   decodeNativeParameters,
   decodeNativeRows,
   nativeEvidenceValue,
@@ -188,8 +188,7 @@ const nativeQueries = (
             return { basis, query, rawRows, steps };
           }
         },
-        catch: (cause) =>
-          new ReadError({ message: `QLever native SELECT failed: ${String(cause)}`, cause }),
+        catch: (cause) => toReadError(cause, `QLever native SELECT failed: ${String(cause)}`),
       });
       const preparedRows = yield* Effect.try(() =>
         executed.rawRows.map((row) => declaredRow(contract.row, row)),
@@ -212,9 +211,7 @@ const nativeQueries = (
       };
     }).pipe(
       Effect.mapError((cause) =>
-        cause instanceof BasisNotAvailable || cause instanceof ReadError
-          ? cause
-          : new ReadError({ message: "Invalid QLever native query contract or result", cause }),
+        toReadError(cause, "Invalid QLever native query contract or result"),
       ),
     );
   return {
