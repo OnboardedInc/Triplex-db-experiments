@@ -1714,3 +1714,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   configuration, so it is a proposal for Sam.
 - **V-DA01 round 2 FIX-FIRST:** F1 closed; a query with repeated :where or :in sections bypasses route classification (30 of 40 again).
   DA01 round 5 classifies on a canonical parse and refuses what it cannot canonicalize, with equivalent-form property tests.
+
+## 2026-11-09 01:44Z: R37: no golden scenario passes on any lane yet; RQ01 on main; RT01 starts; K01's redesign converges
+- **R37 readiness (Opus high):** lane X 0 pass / 17 fail / 3 cannot run; lane Q 20 cannot run (it never ran a scenario); lane D 18 cannot
+  run, 2 blocked on Q78e. Lane X's failures are diagnostic: A0 sends every commit through one writer, so commit bars measure queueing; no
+  read returned a wrong answer in 19 receipts. One real core defect: GS.12, an unholdable integer fails as WriteError instead of a typed error.
+  The harness cannot close any obligation yet (not W0, O-DOMAIN never called, private trace, commandId admission, CS-GS unauthored).
+  Ruled Q94b-i; Q94a (GS rung = largest each lane fits on one slot, year-one as a projection) waits for Sam.
+- **Dispatched:** EXP-W02 (harness v2 on W0, O-DOMAIN, frozen trace, G0 admission, lane D and broker selection), EXP-GS12F (typed rejection
+  of unholdable values), R38 (Opus: erasure on three lanes, the longest item on the path).
+- **RQ01 merged** (59e07af) through a testkit /route subpath so the pinned index did not move; evaluator 108/108. **RT01 round A started.**
+- **K01's redesign converges:** round 6 review passed 22 of 23 controls with one finding (G0 omitted value_identity). Before the redesign each
+  round found 3 or 4. Round 8 derives G0's columns from the schema with a test for new columns.
