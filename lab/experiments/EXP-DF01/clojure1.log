@@ -1,0 +1,11 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 66021 "CX-VA01-0314-mutations", pid 20973 "CX-DI01-final-r4", pid 90353 "CX-NSR-G0", pid 10164 "G0-qlever-20261109T072300Z-84a267 vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 66021 "CX-VA01-0314-mutations", pid 20973 "CX-DI01-final-r4", pid 90353 "CX-NSR-G0", pid 10164 "G0-qlever-20261109T072300Z-84a267 vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 66021 "CX-VA01-0314-mutations", pid 20973 "CX-DI01-final-r4", pid 90353 "CX-NSR-G0", pid 10164 "G0-qlever-20261109T072300Z-84a267 vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 66021 "CX-VA01-0314-mutations", pid 20973 "CX-DI01-final-r4", pid 90353 "CX-NSR-G0", pid 10164 "G0-qlever-20261109T072300Z-84a267 vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 66021 "CX-VA01-0314-mutations", pid 20973 "CX-DI01-final-r4", pid 90353 "CX-NSR-G0", pid 10164 "G0-qlever-20261109T072300Z-84a267 vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 11722 "CX-VA01-0314-g0-qlever", pid 20973 "CX-DI01-final-r4", pid 90353 "CX-NSR-G0", pid 10164 "G0-qlever-20261109T072300Z-84a267 vitest-host"
+Execution error (FileNotFoundException) at triplex.gateway.feed-test/eval136$loading (feed_test.clj:1).
+Could not locate datomic/api__init.class, datomic/api.clj or datomic/api.cljc on classpath.
+
+Full report at:
+/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/clojure-2595064702914303539.edn

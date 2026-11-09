@@ -40,10 +40,10 @@
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/pending-authority.md": "42f0ba89780694d876c7cb41d912a31ede858d8ef11a0ef5a916e58872c7339e",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/packages__testkit__src__index.ts.diff": "41929c2d3f25f64c0d8980f9b4fd74316c93553de357d1dc1ebc7c8cdf07a2db",
     "lab/verify/P2X2/VERIFY.md": "462456077e50a4a6a4027deb2f1e55f36361b69751323ff0f37dddee2943a159",
-    "lab/acceptance/build_contract.py": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6"
+    "lab/acceptance/build_contract.py": "0f1a4225b5efa22c08ff1afee061ae8309b28faf64df88d06359e72c150bf3b9"
   },
   "artifacts": {
-    "oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9",
+    "oracle-contract.json": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266",
     "load-contract.json": "377ef278e6452c30607612de1c5a7920a9d396e8ffbe07d58a66311b8d0e5a34",
     "budgets.json": "a8de4809bf8ff42a3ad06f5a1dab961c4e6dae74df12fc464edf0d50027abd2a",
     "capability-matrix.md": "2ead5f52687fd8d749ec5940f65a0af76e1ac235e5ebee16ea60e6928c18ee02"
@@ -3970,7 +3970,7 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6",
+        "lab/acceptance/build_contract.py": "0f1a4225b5efa22c08ff1afee061ae8309b28faf64df88d06359e72c150bf3b9",
         "lab/acceptance/oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9"
       }
     },
@@ -4101,7 +4101,7 @@
   "imagePins": {
     "datomic": {
       "image": "tx2-datomic:1.0.7745-da00",
-      "imageId": "sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf"
+      "imageId": "sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf"
     },
     "xtdb": {
       "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
@@ -31357,5 +31357,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "635a2633701dfb87bddd3cb720c1033680036e4f4d7be2d9a75dccac580dc2a3"
+  "transitiveContractSha256": "f864cf0df46b0cad16aa7678220a5f73595e2bdd17d186f8da16d6b54b8e70bd"
 }

@@ -1,0 +1,8 @@
+{
+  "label": "DIAGNOSTIC",
+  "scope": "[\"triplex-scope-v1\",\"test\",\"df01-live\",\"9b0c9fde-7703-433a-b613-bf5a099dc2e9\",0]",
+  "started": "2026-11-09T09:41:28.601Z",
+  "database": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsImRmMDEtbGl2ZSIsIjliMGM5ZmRlLTc3MDMtNDMzYS1iNjEzLWJmNWEwOTlkYzJlOSIsMF0",
+  "result": "DIAGNOSTIC-FAIL",
+  "error": "Error: Cannot invoke \"java.lang.Number.doubleValue()\" because \"x\" is null\n    at IncomingMessage.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/df01/packages/datomic/dist/DatomicClient.js:64:49)\n    at IncomingMessage.emit (node:events:531:35)\n    at endReadableNT (node:internal/streams/readable:1698:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)"
+}

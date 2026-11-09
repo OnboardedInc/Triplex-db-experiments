@@ -1,0 +1,27 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/df01
+
+ ❯ packages/testkit/test/route-equivalence-round3.test.ts (12 tests | 1 failed) 36212ms
+   × round3: retired stores cannot omit policies/cuts or silently decline purge execution 5077ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  packages/testkit/test/route-equivalence-round3.test.ts > round3: retired stores cannot omit policies/cuts or silently decline purge execution
+Error: Test timed out in 5000ms.
+If this is a long-running test, pass a timeout value as the last argument or configure it globally with "testTimeout".
+ ❯ packages/testkit/test/route-equivalence-round3.test.ts:225:1
+    223|   expect(measureRouteCoverage(options.history).complete).toBe(false);
+    224| });
+    225| it("round3: retired stores cannot omit policies/cuts or silently decli…
+       | ^
+    226|   const options = customOptions();
+    227|   const source = boundaryFixture();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  04:00:53
+   Duration  36.47s (tests 100%)
+

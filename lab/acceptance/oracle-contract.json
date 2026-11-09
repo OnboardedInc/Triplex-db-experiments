@@ -58,7 +58,7 @@
   "imagePins": {
     "datomic": {
       "image": "tx2-datomic:1.0.7745-da00",
-      "imageId": "sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf"
+      "imageId": "sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf"
     },
     "qlever": {
       "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",

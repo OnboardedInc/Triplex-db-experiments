@@ -317,14 +317,14 @@ describe("FD01 identity-only feed", () => {
       }).positions,
     ).toBe(2);
   });
-  it("marks all journal adapters A0 and Datomic native unavailable", async () => {
+  it("marks journal adapters A0 and requires a Datomic native reader", async () => {
     for (const lane of ["xtdb", "qlever", "datomic"]) {
       const adapter = journalChangeFeed(lane, lane, "0", async () => ({ transactions: [] }));
       expect(adapter.arm).toBe("A0-control");
       expect((await adapter.poll({ source: lane, token: "0" })).entries).toEqual([]);
     }
     await expect(datomicChangeFeed("d").poll({ source: "d", token: "0" })).rejects.toThrow(
-      "EXP-DF01",
+      "FeedUnavailable: Datomic log reader required",
     );
   });
   it("compares broker and A0 fixture delivery with fresh independent O-REPLAY identities", async () => {

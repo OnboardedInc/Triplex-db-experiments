@@ -6269,7 +6269,7 @@ def checks_0313():
             errors.append("Q61i: missing image must still block lane D")
     finally:
         IMAGE_PINS["datomic"] = saved_image
-    if PIN_CHANGES_0313 != audit["pins"] or IMAGE_PINS.get("datomic") != audit["pins"]["datomic"]["new"]:
+    if PIN_CHANGES_0313 != audit["pins"] or IMAGE_PINS.get("datomic") != DATOMIC_IMAGE_040:
         errors.append("Q45a/Q61i: reviewed Datomic image repin required")
     p = dict(audit["pins"]["testkit"], sha256=PIN_CHANGES_0314.get("packages/testkit/src/index.ts", {}).get("sha256"))
     if sha_file(p["path"]) != p["sha256"] or [{"path": f, "sha256": sha_file(f)} for f in ORACLES["O-TESTKIT"]["files"] if ORACLES["O-TESTKIT"]["status"] == "EXISTS"] != [{"path": p["path"], "sha256": p["sha256"]}] or CS["CS-U44"]["pinnedSourceFiles"] != [{"path": p["path"], "sha256": p["sha256"]}]:
@@ -6329,6 +6329,11 @@ def checks_0314():
     if RULING_REVIEW_0314 != audit["nativeReview"] or sha_file(RULING_REVIEW_0314["record"]) != RULING_REVIEW_0314["sha256"]:
         errors.append("Q96d: completed independent review binding required")
     return errors
+
+
+# [CX-A01-040] Why: DF01 ships the reviewed gateway image with its feed; pin it atomically (Q45a). Rejected: retaining the pre-feed image identity.
+DATOMIC_IMAGE_040 = {"image": "tx2-datomic:1.0.7745-da00", "imageId": "sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf"}
+IMAGE_PINS["datomic"] = DATOMIC_IMAGE_040
 
 
 def main():

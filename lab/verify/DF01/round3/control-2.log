@@ -1,0 +1,17 @@
+04:15:19.731 [main] DEBUG org.eclipse.jetty.util.log -- Logging to Logger[org.eclipse.jetty.util.log] via org.eclipse.jetty.util.log.Slf4jLog
+04:15:19.733 [main] INFO org.eclipse.jetty.util.log -- Logging initialized @1030ms to org.eclipse.jetty.util.log.Slf4jLog
+
+Testing deadline-cut-verify
+{"probe":"predeadline-publication-old-cut","observed":{"leadMinMs":0.98025,"leadMaxMs":1.014666,"captures":[100,100],"visibleT":105,"elapsedMs":104.028292,"page":{"fromT":"105","nextT":"105","rows":[]}}}
+
+FAIL in (empty-cut-straddles-deadline-after-predeadline-publication) (deadline_cut_verify.clj:50)
+A predeadline transaction must be observed after an empty cut crosses expiry
+expected: (= ["105"] (mapv :t (:rows page)))
+  actual: (not (= ["105"] []))
+
+FAIL in (empty-cut-straddles-deadline-after-predeadline-publication) (deadline_cut_verify.clj:51)
+expected: (= "106" (:nextT page))
+  actual: (not (= "106" "105"))
+
+Ran 1 tests containing 6 assertions.
+2 failures, 0 errors.
