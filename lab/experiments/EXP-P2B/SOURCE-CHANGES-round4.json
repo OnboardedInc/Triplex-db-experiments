@@ -1,0 +1,82 @@
+[
+  {
+    "path": "lab/experiments/EXP-P2B/round4/finalize-and-check.mjs",
+    "oldSha256": null,
+    "newSha256": "56ad1f819c3f1a38216311043efc891120cc66d07b0b3c123bc66b9e1ba2f778"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round4/finalize.py",
+    "oldSha256": null,
+    "newSha256": "6151cc7029a20581c0d1b0f322f0fc35b222373aa13858acb02f1172f3f19a56"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round4/gates.mjs",
+    "oldSha256": null,
+    "newSha256": "80040db3c1baecdb8d3db670e7862d89c829a74072b9b56e2b5d88ad6ace90fe"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round4/long-pin.mjs",
+    "oldSha256": null,
+    "newSha256": "33d73d7dae4da5a2be40ece2a8b26ca7513dbcf8b2cd733753cbfd9b8a2c0989"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round4/read-worker.mjs",
+    "oldSha256": null,
+    "newSha256": "2846f69e5a769723c4ca59b5f91559d31d8d40ae57625d17bdd566d990c4aa2c"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round4/vitest.config.mjs",
+    "oldSha256": null,
+    "newSha256": "518a2e332eb90334706a52bead94d59ce4c59d6c9398819088cb9e1ef51c63ca"
+  },
+  {
+    "path": "lab/verify/P2B/review.test.ts",
+    "oldSha256": null,
+    "newSha256": "56467fb5a4aed7e3ab4631332627a8ee958382dc158e66f54eb4cd003c889df8"
+  },
+  {
+    "path": "lab/verify/P2B/source-worker.cjs",
+    "oldSha256": null,
+    "newSha256": "f847be17e2b2350fa038e4ad13f8188037a6cbac35450edbfe077792dd7e04d9"
+  },
+  {
+    "path": "lab/verify/P2B/vitest.config.mjs",
+    "oldSha256": null,
+    "newSha256": "843606a00d9923ca50188b084b940551ca62942082d21f622153436c9a246a65"
+  },
+  {
+    "path": "packages/broker/src/StorageAdapter.ts",
+    "oldSha256": "1820764a6d0e9ca22c56515909d52f5ff6ddabd41d078c3a38c131eb07fe82f2",
+    "newSha256": "e7b19358ecb5cc1032643db44cf89a02e892b5a5cef346bf3c4eda08cb9f6a6a"
+  },
+  {
+    "path": "packages/broker/src/broker.ts",
+    "oldSha256": "2534449e1dc2caac49827323015c3ceb820b078dc4975c9e7a3a826ab7231e34",
+    "newSha256": "922aa0a4c1c63aac625f9b82b6d009c3cb28912a9681b4cfd40cd0e19dc4d972"
+  },
+  {
+    "path": "packages/broker/src/index.ts",
+    "oldSha256": "ecf5c2fbdbc8e0fee193eceb6c2651fcb7f28846756b14eeb25a3db841d8f64f",
+    "newSha256": "f686a1d01cbe42f06e56a715d82bfcd02a1b46ca0647336aadc006fb6fdefb55"
+  },
+  {
+    "path": "packages/broker/src/log.ts",
+    "oldSha256": "4d6d3eed5c7e67107b69cad804b51d16c1b63f7b715f46f7f4f7cec6dc781ead",
+    "newSha256": "62afb0897067bdc96c22fd9be5232c5675769134aa7674c20861e16388704e97"
+  },
+  {
+    "path": "packages/broker/src/reader-service.ts",
+    "oldSha256": "7730389700d4227d1c355495196e170fdafa3fc91e601b2d815f35d2f855de7c",
+    "newSha256": "b0435d08b0a4bee0d2164ea2773140cc9922857dd900de0b81f953b7f2f02f74"
+  },
+  {
+    "path": "packages/broker/src/resource-errors.ts",
+    "oldSha256": null,
+    "newSha256": "cf538540282cd5b47597b01defa0add4b8c5625de5401d1fbb17db65252cad69"
+  },
+  {
+    "path": "packages/broker/src/sqlite-worker.ts",
+    "oldSha256": "1a8f287006c873131240db2b041b235160fda1ec089369818b90f156e3e14d3a",
+    "newSha256": "715c8ec544ddb4e8758416d150e398343041e69b7e366457f032c5fe21000426"
+  }
+]

@@ -1,3 +1,4 @@
+import { DuplicatePublicationTimeout, WalCapacityExceeded } from "./resource-errors.js";
 import { BrokerWatermark } from "./reader-service.js";
 /**
  * The QLever host broker (EXP-P2Q; R17 option A under RULINGS Q31e; PLAN C2 and C3; R13 section 6).
@@ -152,6 +153,7 @@ export interface HostBrokerOptions {
   readonly applyTimeoutMs?: number;
   readonly minFreeBytes?: number;
   readonly requireFullFsync?: boolean;
+  readonly maxWalBytes?: number;
   /** Start the applier on open (default true when a replica is given). */
   readonly autoApply?: boolean;
   /** A name for the replica in typed errors (BasisNotAvailable, ReplicaUnavailable). */
@@ -291,6 +293,7 @@ export class HostBroker {
         ? {}
         : { requireFullFsync: options.requireFullFsync }),
       ...(options.takeover === undefined ? {} : { takeover: options.takeover }),
+      ...(options.maxWalBytes === undefined ? {} : { maxWalBytes: options.maxWalBytes }),
     });
     try {
       return await HostBroker.start(options, opened);
@@ -589,6 +592,13 @@ export class HostBroker {
         trace: this.options.traceStages ?? false,
       });
     } catch (cause) {
+      // [EXP-P2B-R4] Why: WAL admission and a proven body rollback have no durable decision; allow retry after maintenance.
+      // Rejected: converting a known pre-COMMIT refusal into outcome-unknown and poisoning the stream.
+      if (cause instanceof WalCapacityExceeded) {
+        for (const entry of accepted) entry.pending.reject(cause);
+        answerConflicts();
+        return;
+      }
       this.fail(
         new BrokerFailed(
           `Broker log append failed; outcome of ${accepted.length} commands unknown: ${String(cause)}`,
@@ -828,8 +838,33 @@ export class HostBroker {
   ) {
     return (await this.log.recentAsync(lsnOf(replicaPosition), selection)).filter(select);
   }
-  claimAsync(id: string) {
-    return this.log.claimAsync(id);
+  async claimAsync(id: string, waitMs = 2000) {
+    // [EXP-P2B-R4] Why: public duplicate resolution promises a readable original journal, not merely a visible SQL claim.
+    // Rejected: gating the internal log lookup (the deciding group would wait on its own publication).
+    if (!Number.isFinite(waitMs) || waitMs < 0 || waitMs > 30000)
+      throw new RangeError("Invalid duplicate deadline");
+    const started = performance.now();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      return await Promise.race([
+        (async () => {
+          const claim = await this.log.claimAsync(id);
+          if (!claim) return undefined;
+          while (claim.position > this.readerWatermark.read().position) {
+            if (this.failed) throw this.failed;
+            if (performance.now() - started >= waitMs)
+              throw new DuplicatePublicationTimeout(id, waitMs);
+            await new Promise((resolve) => setTimeout(resolve, Math.min(5, waitMs)));
+          }
+          return claim;
+        })(),
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new DuplicatePublicationTimeout(id, waitMs)), waitMs);
+        }),
+      ]);
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   }
   sweepPage(basis: number, entities: readonly string[]) {
     return this.log.sweepPage(basis, entities);

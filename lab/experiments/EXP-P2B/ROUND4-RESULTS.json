@@ -1,0 +1,169 @@
+{
+  "diagnosticOnly": true,
+  "baseHead": "ba10ebb9a119a89e9bdd532ccaa2439f268b1211",
+  "longAttempt": "long-pin-29284db8-0724-4679-b6e0-6fbcf627304f",
+  "longResultSha256": "8c8e36a1f529d50b702e3edda7b8573d468fbb9d87a571dcfe1da429434ec5c0",
+  "gate": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P2B/round4/gates-249c8e3a-5801-483c-a182-4a565fd6c445",
+  "gateResultSha256": "f2edc7c7a4e762c46dfd921aace5809d50c2aaf247c8e32307efabd8049bdda2",
+  "observations": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P2B/round4/review-2eef4e45-ed9c-491b-b86b-9db30270904f/observations.json",
+  "observationsSha256": "23d331cfb87e14a47d353557f1738ba2b802d1a1b23cdbb112c780ae4cc9385d",
+  "pin": 2048,
+  "pinDurationMs": 600006.299584,
+  "commits": 2827,
+  "reads": 2827,
+  "readLimits": 0,
+  "walRefusals": 0,
+  "peakWal": 2027072,
+  "cap": 33554432,
+  "checkpointMaxMs": 40.99650000000838,
+  "maxCommitGapMs": 429.88033399998676,
+  "feedPositions": 2828,
+  "regressions": {
+    "wal-held-reader": {
+      "writesWhileHeld": 48,
+      "payloadBytes": 25165824,
+      "sizes": [
+        13076912,
+        26203232,
+        39354272,
+        52530032,
+        65705792,
+        9883912
+      ],
+      "bytes": 0,
+      "checkpoint": {
+        "counts": {
+          "complete": 3
+        },
+        "events": [
+          {
+            "at": 1794223756330,
+            "mode": "TRUNCATE",
+            "outcome": "complete",
+            "ms": 85.46962499999972,
+            "busy": 0,
+            "log": 0,
+            "checkpointed": 0
+          },
+          {
+            "at": 1794223756330,
+            "mode": "TRUNCATE",
+            "outcome": "complete",
+            "ms": 0.039667000000008557,
+            "busy": 0,
+            "log": 0,
+            "checkpointed": 0
+          },
+          {
+            "at": 1794223756425,
+            "mode": "TRUNCATE",
+            "outcome": "complete",
+            "ms": 15.61816699999963,
+            "busy": 0,
+            "log": 0,
+            "checkpointed": 0
+          }
+        ]
+      },
+      "after": {
+        "counts": {
+          "complete": 4
+        },
+        "events": [
+          {
+            "at": 1794223756330,
+            "mode": "TRUNCATE",
+            "outcome": "complete",
+            "ms": 85.46962499999972,
+            "busy": 0,
+            "log": 0,
+            "checkpointed": 0
+          },
+          {
+            "at": 1794223756330,
+            "mode": "TRUNCATE",
+            "outcome": "complete",
+            "ms": 0.039667000000008557,
+            "busy": 0,
+            "log": 0,
+            "checkpointed": 0
+          },
+          {
+            "at": 1794223756425,
+            "mode": "TRUNCATE",
+            "outcome": "complete",
+            "ms": 15.61816699999963,
+            "busy": 0,
+            "log": 0,
+            "checkpointed": 0
+          },
+          {
+            "at": 1794223756427,
+            "mode": "TRUNCATE",
+            "outcome": "complete",
+            "ms": 0.10287500000049477,
+            "busy": 0,
+            "log": 0,
+            "checkpointed": 0
+          }
+        ]
+      },
+      "head": 51200
+    },
+    "duplicate-publication-gated": {
+      "head": 2048,
+      "shared": {
+        "epoch": 1,
+        "lsn": 2,
+        "position": 2048,
+        "stamp": 1794223757023000
+      },
+      "txId": "_tx/01M7013NPV0X4EY4SCRFF65F4S",
+      "receipt": {
+        "txId": "_tx/01M7013NPV0X4EY4SCRFF65F4S",
+        "position": 2048,
+        "instant": 1794223757023,
+        "commandId": "same-command",
+        "changes": [
+          {
+            "op": "assert",
+            "tripleId": "01M7013NPW3B4K30H61FF7232N",
+            "entityId": "subject",
+            "attribute": ":review/value",
+            "value": {
+              "type": "string",
+              "value": "first"
+            },
+            "validFrom": 1794223757020,
+            "recordedAt": 1794223757023,
+            "assertionTxId": "_tx/01M7013NPV0X4EY4SCRFF65F4S"
+          }
+        ]
+      },
+      "settled": true
+    },
+    "wal-cap-enforced": {
+      "cap": 16777216,
+      "bytes": 8190592,
+      "admitted": 5,
+      "head": 7168,
+      "retry": 8192,
+      "checkpoint": {
+        "counts": {
+          "incomplete": 1
+        },
+        "events": [
+          {
+            "at": 1794223757909,
+            "mode": "TRUNCATE",
+            "outcome": "incomplete",
+            "ms": 1.9768329999988055,
+            "busy": 0,
+            "log": 1988,
+            "checkpointed": 12
+          }
+        ]
+      }
+    }
+  }
+}

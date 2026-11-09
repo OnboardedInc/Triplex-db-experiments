@@ -1,3 +1,4 @@
+import { ReadOperationLimit } from "./resource-errors.js";
 // [EXP-P2B-R3] Why: indexed source reads execute on their caller's reader thread, never the decider.
 // Rejected: proxying each overlay row through the broker event loop (R42 tail feedback).
 import Database from "better-sqlite3";
@@ -85,79 +86,85 @@ export class BrokerReadService {
         waitedMs: 0,
       });
   };
-  private snapshot<T>(fn: (marker: StoreSnapshot) => T): T {
+  private readRows(
+    selection: Selection,
+    sources: readonly { table: string; where: string; args: number[] }[],
+  ) {
     this.watermark.checkFile(this.file);
     const start = performance.now(),
       cpu = process.threadCpuUsage(),
       published = this.watermark.read();
     try {
-      this.db.exec("BEGIN");
-      const marker = this.db
+      // [EXP-P2B-R4] Why: a JS pause after a completed marker probe must retain no SQLite read transaction.
+      // Rejected: BEGIN around marker plus rows (a logical pin would retain WAL while its worker is descheduled).
+      const probe = this.db
         .prepare("SELECT lsn,epoch,h,position,crc,size FROM marker WHERE id=1")
         .get() as StoreSnapshot;
+      if (probe.epoch !== published.epoch)
+        throw new Error("Reader source/watermark epoch or prefix mismatch");
+      const values: (string | number)[] = [],
+        clauses: string[] = [];
+      for (const source of sources) {
+        const predicates = [source.where];
+        values.push(...source.args);
+        if (selection.id !== undefined) {
+          predicates.push("id=?");
+          values.push(selection.id);
+        }
+        if (selection.entities !== undefined) {
+          if (!selection.entities.length) predicates.push("0");
+          else {
+            predicates.push(`entity IN (${selection.entities.map(() => "?").join(",")})`);
+            values.push(...selection.entities);
+          }
+        }
+        clauses.push(`SELECT row FROM ${source.table} WHERE ${predicates.join(" AND ")}`);
+      }
+      // [EXP-P2B-R4] Why: one native all() establishes and releases the snapshot before any caller JS runs.
+      // Rejected: an iterator or callback per row (can leave a transaction open across caller scheduling).
+      const result = this.db
+        .prepare(
+          `SELECT 'marker' kind,json_object('lsn',lsn,'epoch',epoch,'h',h,'position',position,'crc',crc,'size',size) payload FROM marker WHERE id=1 UNION ALL SELECT 'row',row FROM (${clauses.join(" UNION ALL ")} LIMIT 4097)`,
+        )
+        .all(...values) as { kind: string; payload: string }[];
+      const marker = JSON.parse(result[0]!.payload) as StoreSnapshot;
       if (marker.epoch !== published.epoch || marker.lsn < published.lsn)
         throw new Error("Reader source/watermark epoch or prefix mismatch");
-      const result = fn(marker);
-      this.db.exec("COMMIT");
-      return result;
-    } catch (error) {
-      try {
-        this.db.exec("ROLLBACK");
-      } catch {}
-      throw error;
+      const bytes = result.reduce((n, r) => n + Buffer.byteLength(r.payload), 0);
+      if (result.length > 4097 || bytes > 8 * 1024 * 1024 || performance.now() - start > 250)
+        throw new ReadOperationLimit(
+          "Source operation exceeded 4096 rows, 8 MiB response or 250 ms elapsed; retry the same position",
+        );
+      return { marker, rows: result.slice(1).map((r) => JSON.parse(r.payload) as TripleRow) };
     } finally {
       const used = process.threadCpuUsage(cpu);
       this.costs.calls++;
-      if (this.costs.calls % 256 === 0 && fs.existsSync(this.file + "-wal"))
-        this.costs.walBytes = Math.max(this.costs.walBytes, fs.statSync(this.file + "-wal").size);
       this.costs.cpuUs += used.user + used.system;
       this.costs.maxMs = Math.max(this.costs.maxMs, performance.now() - start);
+      if (fs.existsSync(this.file + "-wal"))
+        this.costs.walBytes = Math.max(this.costs.walBytes, fs.statSync(this.file + "-wal").size);
     }
-  }
-  private rows(table: string, selection: Selection, extra: string, args: (string | number)[]) {
-    const where = [extra],
-      values: (string | number)[] = [...args];
-    if (selection.id !== undefined) {
-      where.push("id=?");
-      values.push(selection.id);
-    }
-    if (selection.entities !== undefined) {
-      if (!selection.entities.length) return [];
-      where.push(`entity IN (${selection.entities.map(() => "?").join(",")})`);
-      values.push(...selection.entities);
-    }
-    return (
-      this.db.prepare(`SELECT row FROM ${table} WHERE ${where.join(" AND ")}`).all(...values) as {
-        row: string;
-      }[]
-    ).map((r) => JSON.parse(r.row) as TripleRow);
   }
   fromLogAsync = async (
     position: number,
     selection: Selection,
     select: (row: TripleRow) => boolean,
   ) =>
-    this.snapshot(() =>
-      this.rows("recent_rows", selection, "lsn>?", [Math.floor(position / 1024)]).filter(select),
-    );
-  // [EXP-P2B-R3] Why: recent_rows retains the complete latest version of each source row, including retirement fields.
-  // Rejected: relying on a remote in-memory overlay eviction frontier (unneeded with persisted rows).
+    this.readRows(selection, [
+      { table: "recent_rows", where: "lsn>?", args: [Math.floor(position / 1024)] },
+    ]).rows.filter(select);
+  // [EXP-P2B-R4] Why: this branch's recent_rows is retained history of record; retirement purge cannot erase an old logical cut.
+  // Rejected: importing HS01's unfinished compact layout or holding an SQLite snapshot for a pin lease.
   overlayAsync = this.fromLogAsync;
   pullAt = async (basis: H1Basis, selection: Selection) => {
     if (typeof basis !== "number" && basis.recordedAt !== undefined) throw new H1BasisUnsupported();
     const b = typeof basis === "number" ? basis : basis.recordedPosition;
     await this.awaitResolved(b);
-    return this.snapshot((marker) => ({
-      snapshot: marker,
-      basis: b,
-      eligible: b >= marker.h,
-      rows:
-        b < marker.h
-          ? []
-          : this.rows("live_rows", selection, "pos<=?", [b]).concat(
-              this.rows("retired_rows", selection, "rpos>? AND pos<=?", [b, b]),
-            ),
-    }));
+    const { marker, rows } = this.readRows(selection, [
+      { table: "live_rows", where: "pos<=?", args: [b] },
+      { table: "retired_rows", where: "rpos>? AND pos<=?", args: [b, b] },
+    ]);
+    return { snapshot: marker, basis: b, eligible: b >= marker.h, rows: b < marker.h ? [] : rows };
   };
   close() {
     this.db.close();
