@@ -142,7 +142,7 @@ const startConsumer = (rt, arm, consumerDir) => {
       const feed = new qlever.LogFeed(path.dirname(rt.broker.segmentPath));
       let cursor = store.checkpoint() ?? feed.start();
       for (;;) {
-        const page = feed.poll(cursor); stats.polls++;
+        const page = feed.pollSync(cursor); stats.polls++;
         if (page.resolutions.length > 0) {
           const effects = [];
           for (const r of page.resolutions) {
@@ -189,7 +189,7 @@ const sourcePrefix = async (rt, arm, startAfter) => {
   if (arm === 'C') {
     const feed = new qlever.LogFeed(path.dirname(rt.broker.segmentPath));
     for (let cursor = feed.start(); ; ) {
-      const page = feed.poll(cursor);
+      const page = feed.pollSync(cursor);
       if (page.resolutions.length === 0) break;
       for (const r of page.resolutions) if (r.kind === 'commit') for (const tr of r.transacts) {
         positions.push(tr.position);
@@ -566,7 +566,7 @@ const crash = async () => {
     let cursor = store.checkpoint() ?? feed.start();
     let crashed = false, drained = false;
     while (!crashed) {
-      const page = feed.poll(cursor, { maxBytes: 1 });
+      const page = feed.pollSync(cursor, { maxBytes: 1 });
       if (page.resolutions.length === 0) { drained = true; break; }
       const effects = [];
       for (const r of page.resolutions) if (r.kind === 'commit') for (const t of r.transacts) for (const s of t.subjects) effects.push({ position: t.position, subject: s });

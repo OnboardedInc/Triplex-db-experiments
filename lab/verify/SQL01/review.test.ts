@@ -130,7 +130,7 @@ describe("independent SQL01 review", () => {
       const initial = Array.from({ length: 10 }, (_, j) => row("v0-" + j, "x".repeat(6000)));
       await submit(b, "initial", initial);
       receipts.push({ basis: b.head(), ids: ids(initial) });
-      const pin = b.pinBasis(b.head(), "verifier straddles");
+      const pin = await b.pinBasis(b.head(), "verifier straddles");
       let prior = await b.fromLogAsync(0, { entities: ["hot"] }, () => true);
       const readers = Array.from({ length: 32 }, async (_, client) => {
         let k = client;
@@ -156,7 +156,7 @@ describe("independent SQL01 review", () => {
       }
       done = true; await Promise.all(readers);
       for (const wanted of receipts) expect(ids((await b.pullAt(wanted.basis, { entities: ["hot"] })).rows)).toEqual(wanted.ids);
-      pin.release();
+      await pin.release();
       expect(violations).toEqual([]);
     } finally {
       done = true;
@@ -180,7 +180,7 @@ describe("independent SQL01 review", () => {
         const feed = new LogFeed(dir);
         cursor ??= feed.start();
         for (;;) {
-          const p = feed.poll(cursor, { maxBytes: 1 });
+          const p = feed.pollSync(cursor, { maxBytes: 1 });
           if (!p.resolutions.length) break;
           pages.push({ cycle, before: cursor, after: p.cursor, kinds: p.resolutions.map(r => r.kind) });
           for (const r of p.resolutions) if (r.kind === "commit") for (const t of r.transacts) seen.push(t.position);

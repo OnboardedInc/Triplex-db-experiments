@@ -1,0 +1,172 @@
+[
+  {
+    "path": "lab/experiments/EXP-P2B/gates.mjs",
+    "oldSha256": "b34a0edf09db80dcd4d7037e84b1438b16c60eeddd1ad0073eedd8bf068186f2",
+    "newSha256": "43a33492941c7df218b6954495b177480a3376bd563dfbe5653b715a89152276"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/measure.mjs",
+    "oldSha256": "4203d56a1f43d77a8ed51b31eb756e1d39e452ac1b4b13785259f9dfb4b8eb4f",
+    "newSha256": "d3ed002c58d0f3b03dd58778fe85b4547c72b49a132f646dbfad37729af445f4"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round2/case.mjs",
+    "oldSha256": "2e5ba329739205d8e1ba7d2b2b82fafd096bdc1cdeb136852cb077d507f4def5",
+    "newSha256": "4dcc0a5bf69e26663d2a89f4bcd95b466d139bf4290e64e04eb1dc64f6517f61"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round3/analyze.py",
+    "oldSha256": null,
+    "newSha256": "e58fe127434c7a4e7431520bc4476de1997ebc8605007cc87b5462a3820ea2d2"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round3/archive.py",
+    "oldSha256": null,
+    "newSha256": "bedd0638d4446d741deb65ea5aeb3066ef9c35e5a8b1ad70242ce3b42b91d2f8"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round3/case.mjs",
+    "oldSha256": null,
+    "newSha256": "d2b12e26dedeaad53ca4081c1f54c3a159986fddf9b7240d5056708eaa3890bf"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round3/feed-worker.mjs",
+    "oldSha256": null,
+    "newSha256": "4b7acc560e75a7de8906979aafcdbaa2528d17d0a626ef01bad475de57515265"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round3/host-worker.mjs",
+    "oldSha256": null,
+    "newSha256": "8b083163d036d020f790c8851585ed49c68225616b6bb4d7321c86f8f370fb1d"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round3/manifest.py",
+    "oldSha256": null,
+    "newSha256": "afa35700a49cc27b45438f92c2e5030678bae26a879cb980e2731c7182103047"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round3/pipeline.mjs",
+    "oldSha256": null,
+    "newSha256": "14ccf7d36285b97cd39c5dc712b7e5668ec3761b060202d7b63948948744fc57"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round3/render.py",
+    "oldSha256": null,
+    "newSha256": "74c503ec89a91e9dfa60dde5e512dbf3af93883266d490aa9121076c01f686d5"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round3/run.mjs",
+    "oldSha256": null,
+    "newSha256": "e01f3418b08f60244cd80b2ccd20648bbdcd6a9cad34929f2d039e5385b0c271"
+  },
+  {
+    "path": "lab/experiments/EXP-P2B/round3/sweep.mjs",
+    "oldSha256": null,
+    "newSha256": "edde199eec116905ab30201d64d99ff1abd51d67ddcf6d15cf06eb7b4cae410e"
+  },
+  {
+    "path": "lab/experiments/EXP-P2Q-qlever-log-broker/bench/run.mjs",
+    "oldSha256": "f1bbddc3b61a30cc3fc9b38d272dae42500d5367c86f153d86eb3d057c3977da",
+    "newSha256": "b76972638de88ef2825296d6732cb126719c6e5a35db95f6a19e46504312572f"
+  },
+  {
+    "path": "packages/broker/src/broker.ts",
+    "oldSha256": "53a3c01ae2331296d6513da1a6a9af9530487af9cb1658e7982aeaa0b45d878f",
+    "newSha256": "2534449e1dc2caac49827323015c3ceb820b078dc4975c9e7a3a826ab7231e34"
+  },
+  {
+    "path": "packages/broker/src/feed.ts",
+    "oldSha256": "bcd5e6fc2af33a471aad517ea7949dbae03f65562fdaab11c2418b144d4755fd",
+    "newSha256": "37983d5b06952dd497c57f818ee17685fa86b9ba7486c0279f0bfb82bbacfb5c"
+  },
+  {
+    "path": "packages/broker/src/full-fsync.ts",
+    "oldSha256": null,
+    "newSha256": "8e9a418006c22eeaa273b90815d864236944b94881a992ee911b42016d3cbdda"
+  },
+  {
+    "path": "packages/broker/src/index.ts",
+    "oldSha256": "b8690509b6bcc452c12c900c1635f87672393dc3558ff3ad63c8478f395a5e24",
+    "newSha256": "ecf5c2fbdbc8e0fee193eceb6c2651fcb7f28846756b14eeb25a3db841d8f64f"
+  },
+  {
+    "path": "packages/broker/src/log.ts",
+    "oldSha256": "77ee52acab63b8a5b08a793f289e50a8e24bf6f375d9f13be5547a699d65bbab",
+    "newSha256": "4d6d3eed5c7e67107b69cad804b51d16c1b63f7b715f46f7f4f7cec6dc781ead"
+  },
+  {
+    "path": "packages/broker/src/reader-service.ts",
+    "oldSha256": null,
+    "newSha256": "7730389700d4227d1c355495196e170fdafa3fc91e601b2d815f35d2f855de7c"
+  },
+  {
+    "path": "packages/broker/src/sqlite-worker.ts",
+    "oldSha256": "be87559e056d1739129753b2f129ed6ef580af6b97b13bd0460b89d15fd6f259",
+    "newSha256": "1a8f287006c873131240db2b041b235160fda1ec089369818b90f156e3e14d3a"
+  },
+  {
+    "path": "packages/broker/test/async-maintenance.test.ts",
+    "oldSha256": null,
+    "newSha256": "aae6ccdb5d8f1695a1b2f1654b48056e6176cd5603475619ab435c810110223c"
+  },
+  {
+    "path": "packages/broker/test/feed-publication.test.ts",
+    "oldSha256": null,
+    "newSha256": "2f8efba6a6e7a044049690300302a385b50c72326b90fa4556f5ad17330e1fd7"
+  },
+  {
+    "path": "packages/broker/test/feed-witness-race.test.ts",
+    "oldSha256": null,
+    "newSha256": "5345094f90958e76be2e6e101cb25d940cb107d4995ee60886023b35dad2d351"
+  },
+  {
+    "path": "packages/broker/test/full-fsync-refusal.test.ts",
+    "oldSha256": null,
+    "newSha256": "1d1d7d113d1e72e725fc51f07618f63b68cb388393d76d0497d2011d0c3a7805"
+  },
+  {
+    "path": "packages/broker/test/full-fsync.test.ts",
+    "oldSha256": null,
+    "newSha256": "b639aa12ac0f1ace2081b97f505f58196dc5163f7d2cb7c8b81f2b4ae9858229"
+  },
+  {
+    "path": "packages/broker/test/reader-service.test.ts",
+    "oldSha256": null,
+    "newSha256": "39b428ee76489222680cbdd0b24688a056c970b9d2c18f66551bd024b188afd1"
+  },
+  {
+    "path": "packages/qlever/src/broker/broker.ts",
+    "oldSha256": "1213af1801e4b1f3e85011d825582ee818f65953786a5df26f179abf522fa3b1",
+    "newSha256": "f56268f516945d1b03bf928e58dc34d8d1b87e005dc58bc499735796d3702e5b"
+  },
+  {
+    "path": "packages/qlever/src/index.ts",
+    "oldSha256": "d1653f633626467bfc9cb74145bed50e69be7f0473681b0b6c375c5fc0187af3",
+    "newSha256": "c7b6c8afae927831b8228c6e4e7ea3c4305524cb117fe472f82cbc99342a4b33"
+  },
+  {
+    "path": "packages/qlever/test/broker-fixes.test.ts",
+    "oldSha256": "9306490d4f818f04966fa76bfbf594aa5c05111bf7c6ed0ed7126346f6cfd7d7",
+    "newSha256": "9fae7889ddf03dde0763e43400705c4ccb5039dd264df15934c805f3a1161a1f"
+  },
+  {
+    "path": "packages/qlever/test/broker.test.ts",
+    "oldSha256": "4ba7d5371550229050596fce5bddee242dc629f673ddb0d2fe0bfeb8fcc3eb6e",
+    "newSha256": "3cfbc74f30433c1fb6097e62b84bb39bee7064a36f8b1cf1ea308d603ef6c71f"
+  },
+  {
+    "path": "packages/qlever/test/h1-route-equivalence.test.ts",
+    "oldSha256": "ce4a34309e76e121bade147e88323462bafda4d4ad796f7a6616ef73875f2a41",
+    "newSha256": "b8f0825a98267a30714238d7244f9279e87fe7506231a4f23717a099b7e5bb68"
+  },
+  {
+    "path": "packages/qlever/test/sqlite-broker.test.ts",
+    "oldSha256": "8e0620c1716e883bdaf0787348ba2485b0ef91bf9c73eaf2158fbbf8ef41452d",
+    "newSha256": "cf7dce7c01cce1c5e1a5211177a22b4570e585da807d77b9ae38be9a7aff32c3"
+  },
+  {
+    "path": "packages/xtdb/src/index.ts",
+    "oldSha256": "748b7cc5390f48b6ab8bce237f95bacc2c65fc92a03c24e98ef81cc799611b9a",
+    "newSha256": "c05ede6b4c7f7bf388e0681cee966b2df87a8835003986a04064802eb9b8cb7e"
+  }
+]

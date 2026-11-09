@@ -16,6 +16,7 @@ export const HostBroker = {
     const { replica, ...rest } = options;
     const timeoutMs = options.applyTimeoutMs ?? 120_000;
     return Broker.open({
+      requireFullFsync: true,
       ...rest,
       ...(replica
         ? {

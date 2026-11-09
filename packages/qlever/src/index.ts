@@ -56,6 +56,7 @@ const brokerFromEnvironment = (): QleverRuntimeOptions["broker"] => {
   if (!root) throw new TypeError("QLEVER_COMMIT_PATH=broker requires QLEVER_BROKER_DIR");
   return (scopeKey, replica) =>
     HostBroker.open({
+      requireFullFsync: true,
       dir: path.join(root, createHash("sha256").update(scopeKey).digest("hex").slice(0, 32)),
       scopeKey,
       replica,

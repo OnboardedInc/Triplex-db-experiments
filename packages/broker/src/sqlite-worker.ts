@@ -32,13 +32,32 @@ const ackRead = () => {
  const f=q('SELECT crc FROM frames WHERE lsn=?').get(lsn);
  if(!f || f.crc!==crc || marker().lsn<lsn) throw Error('ACKED names a lost acknowledged frame; refusing to start');
 };
+// [EXP-P2B-R3] Why: another SQLite reader can see WAL rows before the writer's full-sync returns.
+// Rejected: using the SQL marker alone as feed publication authority (negative feed-clock witness in round 3).
+const readPublicationBuffer=()=>fs.existsSync(ackPath)?fs.readFileSync(ackPath):undefined;
+const publication = b => {
+ if(!b)return;
+ if(b.length!==32||crc32(b.subarray(0,28))!==b.readUInt32LE(28))throw Error('Publication sidecar corrupt');
+ const lsn=Number(b.readBigUInt64LE(0)),epoch=Number(b.readBigUInt64LE(8)),position=Number(b.readBigUInt64LE(16));
+ const f=q('SELECT crc,epoch FROM frames WHERE lsn=?').get(lsn),m=marker();
+ if(!f||f.crc!==b.readUInt32LE(24)||f.epoch!==epoch||m.lsn<lsn)throw Error('Publication sidecar/source mismatch');
+ let expected=0;
+ for(const entry of q('SELECT payload FROM frames WHERE kind=1 AND lsn<=? ORDER BY lsn DESC').iterate(lsn)){
+  const wire=JSON.parse(Buffer.from(entry.payload).toString('utf8'));
+  if(wire.v!==1||!Array.isArray(wire.m))throw Error('Publication frame format mismatch');
+  const positions=wire.m.flatMap(member=>member.p);
+  if(positions.length){if(positions.some(p=>!Number.isSafeInteger(p)||p<0))throw Error('Publication frame position invalid');expected=Math.max(...positions);break;}
+ }
+ if(position!==expected)throw Error('Publication sidecar position mismatch');
+ return {lsn,epoch,position};
+};
 const calibrate = () => {
  const f=path.join(path.dirname(file),'.sqlite-calibration-'+role), d=new D(f);
  durablePragmas(d); d.exec('CREATE TABLE IF NOT EXISTS calibration(n);');
  const times=[]; for(let i=0;i<12;i++){const t=performance.now();d.exec('INSERT INTO calibration VALUES(1)');times.push(performance.now()-t);} d.close();
  fs.rmSync(f,{force:true}); times.sort((a,b)=>a-b); return times[6];
 };
-let calibrationMs=0;
+let calibrationMs=0,fullFsyncProof;
 try {
  if(role==='writer') {
   lock=new D(path.join(path.dirname(file),'broker.lock'),{timeout:0}); durablePragmas(lock);
@@ -51,7 +70,9 @@ try {
  if(role!=='reader') {
   durablePragmas(db); db.pragma('journal_mode=WAL');
   calibrationMs=calibrate();
-  if(workerData.requireFullFsync && process.platform==='darwin' && calibrationMs<1) throw Error('F_FULLFSYNC calibration below 1 ms');
+  // [EXP-P2B-R3] Why: test the native volume capability on this attempt and file, before opening a stream.
+  // Rejected: elapsed-time thresholds (cannot distinguish a fast supported device from silent fallback).
+  if(workerData.requireFullFsync)fullFsyncProof=Function('file','require',workerData.fullFsyncProbeSource)(file,require);
  }
  if(role==='writer') {
   db.exec('CREATE TABLE IF NOT EXISTS frames(lsn INTEGER PRIMARY KEY,epoch INT NOT NULL,kind INT NOT NULL,offset INT NOT NULL,end INT NOT NULL,prev_crc INT NOT NULL,crc INT NOT NULL,payload BLOB NOT NULL,committed_at INT NOT NULL);'+
@@ -177,7 +198,7 @@ const handle = (op,a) => {
   if(role!=='checkpointer')throw Error('Maintenance requires checkpointer connection');
   return op==='checkpoint'?checkpoint(true):checkpointStatus();
  }
- if(op==='init')return {marker:marker(),calibrationMs};
+ if(op==='init')return {marker:marker(),calibrationMs,fullFsyncProof};
  if(op==='append')return append(a);
  if(op==='ack'){
   const m=marker();if(a.lsn!==m.lsn||a.epoch!==m.epoch||a.position!==m.position)throw Error('Publication marker mismatch');
@@ -185,6 +206,7 @@ const handle = (op,a) => {
   fs.writeFileSync(ackPath+'.tmp',b);fs.renameSync(ackPath+'.tmp',ackPath);return;
  }
  if(op==='marker')return marker();
+ if(op==='watermark')return publication(readPublicationBuffer());
  if(op==='frames')return frames(a.from,a.upto,a.maxBytes);
  if(op==='after'){
   // [EXP-SQL01] Why: epoch-only prefixes must not consume the commit batch budget.
@@ -227,7 +249,10 @@ parentPort.on('message',message=>{
    if(Atomics.load(gate,0)===1){Atomics.sub(gate,1,1);while(Atomics.load(gate,0)===1)Atomics.wait(gate,0,1,100);Atomics.add(gate,1,1);}
    try {
     if(fatal)throw Error(fatal);
-    db.exec('BEGIN');marker();result=handle(op,args);if(op!=='close')db.exec('COMMIT');
+    // [EXP-P2B-R3] Why: a snapshot must start after its publication witness was read.
+    // Rejected: reading a newer witness inside an older snapshot (maintenance repeat exposed a false mismatch).
+    const witness=op==='watermark'?readPublicationBuffer():undefined;
+    db.exec('BEGIN');marker();result=op==='watermark'?publication(witness):handle(op,args);if(op!=='close')db.exec('COMMIT');
    }catch(e){try{db.exec('ROLLBACK');}catch{}throw e;}
    finally{Atomics.sub(gate,1,1);Atomics.notify(gate,1);}
   } else result=handle(op,args);

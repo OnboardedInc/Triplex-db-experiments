@@ -51,6 +51,8 @@ run("qlever", [
   "run",
   "test/broker.test.ts",
   "test/sqlite-broker.test.ts",
+  // [EXP-P2B-R3] Why: async pin/purge migration must retain the actual H1 route corpus. Rejected: checking only adapter mocks.
+  "test/h1-route-equivalence.test.ts",
   "test/broker-fixes.test.ts",
   "test/broker-answer-errors.test.ts",
   "test/broker-request-errors.test.ts",

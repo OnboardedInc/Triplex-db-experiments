@@ -1,3 +1,4 @@
+import { BrokerWatermark } from "./reader-service.js";
 /**
  * The QLever host broker (EXP-P2Q; R17 option A under RULINGS Q31e; PLAN C2 and C3; R13 section 6).
  *
@@ -219,6 +220,7 @@ export interface BrokerStats {
   readonly replays: number;
   readonly abortedLsns: readonly number[];
   readonly fsyncCalibrationMs: number;
+  readonly fullFsyncProof?: Record<string, unknown> | undefined;
   readonly recovery: string;
   readonly applyErrors: number;
   readonly rebuilds: number;
@@ -230,6 +232,7 @@ export class HostBroker {
   // The broker's own record, rebuilt from the log at open.
   private readonly aborted: number[] = [];
   private headPosition = 0;
+  readonly readerWatermark = new BrokerWatermark();
   private lastStamp = 0;
   private publishedStamp = 0;
   private durableLsn = 0;
@@ -274,7 +277,11 @@ export class HostBroker {
   private constructor(
     private readonly options: HostBrokerOptions,
     private readonly log: HostLog,
-    private readonly recovery: { status: string; fsyncCalibrationMs: number },
+    private readonly recovery: {
+      status: string;
+      fsyncCalibrationMs: number;
+      fullFsyncProof?: Record<string, unknown>;
+    },
   ) {}
 
   static async open(options: HostBrokerOptions): Promise<HostBroker> {
@@ -301,6 +308,7 @@ export class HostBroker {
     const broker = new HostBroker(options, opened.log, {
       status: opened.recovery.status,
       fsyncCalibrationMs: opened.recovery.fsyncCalibrationMs,
+      ...(opened.recovery.fullFsyncProof ? { fullFsyncProof: opened.recovery.fullFsyncProof } : {}),
     });
     let marker: ReplicaMarker = { position: 0, epoch: 0, incarnation: "" };
     if (options.replica) marker = await broker.readReplicaMarker();
@@ -332,11 +340,18 @@ export class HostBroker {
       broker.replicaMarker = fenced;
       if (options.autoApply !== false) broker.startApplier();
     }
-    broker.log.publishWatermark({
+    await broker.log.publishWatermarkAsync({
       epoch: broker.log.epoch,
       lsn: broker.durableLsn,
       position: broker.headPosition,
     });
+    broker.readerWatermark.bind(broker.segmentPath);
+    broker.readerWatermark.publish(
+      broker.epoch,
+      broker.durableLsn,
+      broker.headPosition,
+      options.decisionStamp ? broker.publishedStamp : -1,
+    );
     return broker;
   }
 
@@ -478,7 +493,7 @@ export class HostBroker {
         break;
       }
       taken++;
-      const previous = this.log.operation(txn.operationId);
+      const previous = await this.log.operationAsync(txn.operationId);
       if (previous || staged.operations.has(txn.operationId)) {
         // Idempotent re-submit of a decided operation: answer with the original receipt (lost ACK).
         if (previous) {
@@ -495,7 +510,7 @@ export class HostBroker {
         } else conflicts.push({ pending, decision: { kind: "conflict", reason: "claim" } });
         continue;
       }
-      const conflict = this.check(txn, staged);
+      const conflict = await this.check(txn, staged);
       if (conflict) {
         this.counters.conflicts++;
         conflicts.push({ pending, decision: conflict });
@@ -596,7 +611,13 @@ export class HostBroker {
       this.counters.frames++;
       this.counters.commits += members.length;
       this.addOverlay({ lsn: frame.lsn, members });
-      this.log.publishWatermark({ epoch, lsn: frame.lsn, position: this.headPosition });
+      await this.log.publishWatermarkAsync({ epoch, lsn: frame.lsn, position: this.headPosition });
+      this.readerWatermark.publish(
+        epoch,
+        frame.lsn,
+        this.headPosition,
+        this.options.decisionStamp ? this.publishedStamp : -1,
+      );
       watermarkAt = performance.now();
     } catch (cause) {
       // V-P2Q m1: the frame is durable but the publication step failed, so no ACK may be sent. Fail the broker
@@ -667,19 +688,22 @@ export class HostBroker {
   }
 
   /** Claims and per-subject compare-and-set from the broker's record plus the group's staged prefix. */
-  private check(
+  private async check(
     txn: BrokerTransaction,
     staged: { heads: Map<string, number>; claims: Set<string>; head: number },
-  ): BrokerDecision | undefined {
+  ): Promise<BrokerDecision | undefined> {
     for (const claim of txn.claims)
-      if (this.log.claim(claim.commandId) !== undefined || staged.claims.has(claim.commandId))
+      if (
+        (await this.log.claimAsync(claim.commandId)) !== undefined ||
+        staged.claims.has(claim.commandId)
+      )
         return { kind: "conflict", reason: "claim" };
     if (txn.reads.scopeWide && staged.head > txn.sourceK)
       return { kind: "conflict", reason: "scope" };
     const guarded = new Set(txn.reads.entities);
     for (const row of txn.rows) if (!isJournalRow(row)) guarded.add(row.entity_id);
     for (const entity of guarded) {
-      const head = staged.heads.get(entity) ?? this.log.head(entity) ?? 0;
+      const head = staged.heads.get(entity) ?? (await this.log.headAsync(entity)) ?? 0;
       if (head > txn.sourceK) return { kind: "conflict", reason: "subject", entity };
     }
     return undefined;
@@ -1344,12 +1368,14 @@ export class HostBroker {
       ...this.counters,
       abortedLsns: [...this.aborted],
       fsyncCalibrationMs: this.recovery.fsyncCalibrationMs,
+      fullFsyncProof: this.recovery.fullFsyncProof,
       recovery: this.recovery.status,
       lastDeltaTotal: this.lastDeltaTotal,
     };
   }
 
   async close(): Promise<void> {
+    this.readerWatermark.close();
     this.stopping = true;
     while (this.deciding) await sleep(1);
     this.wakeApplier?.();
@@ -1358,6 +1384,7 @@ export class HostBroker {
   }
   /** Simulated crash: stop without releasing the lock or draining anything. */
   async abandon(): Promise<void> {
+    this.readerWatermark.close();
     this.stopping = true;
     this.wakeApplier?.();
     await this.log.abandon();

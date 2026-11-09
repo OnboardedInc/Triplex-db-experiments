@@ -9,3 +9,7 @@ export * from "./crc32c.js";
 export * from "./errors.js";
 export * from "./snapshot.js";
 export * from "./StorageAdapter.js";
+
+export * from "./reader-service.js";
+
+export * from "./full-fsync.js";

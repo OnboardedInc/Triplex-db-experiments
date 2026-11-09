@@ -30,7 +30,6 @@ import {
   segmentSeed,
 } from "../src/broker/frame.js";
 import { decodeCommitGroup, encodeCommitGroup } from "../src/broker/frames.js";
-import { BrokerLogError, HostLog } from "../src/broker/log.js";
 import { ORDINALS, lsnOf, ordinalOf } from "../src/broker/position.js";
 import { buildPublication } from "../src/broker/sparql.js";
 import { decodeRow, encodeRow, rowFields } from "../src/rdf.js";
@@ -349,7 +348,7 @@ describe("RULINGS Q31c falsifiers on the broker's non-dense positions", () => {
     const store = new FeedConsumerStore(consumerDir, "c1", "split", true);
     let cursor = feed.start();
     for (;;) {
-      const page = feed.poll(cursor);
+      const page = feed.pollSync(cursor);
       if (page.resolutions.length === 0) break;
       store.recordEffects(
         page.resolutions.flatMap((r) =>
@@ -389,7 +388,7 @@ describe("RULINGS Q31c falsifiers on the broker's non-dense positions", () => {
       ).toBe(4);
       expect((await rt.run(rt.adapter.getByEntity("subj:g", at(after.position)))).length).toBe(5);
       // Resume from the checkpoint at the gap: the aborted LSN is listed, then exactly the later commit.
-      const resumed = feed.poll(store.checkpoint()!);
+      const resumed = feed.pollSync(store.checkpoint()!);
       const kinds = resumed.resolutions.map((r) => r.kind);
       expect(kinds).toEqual(["epoch", "commit"]);
       const commit = resumed.resolutions[1]!;
@@ -453,7 +452,7 @@ describe("feed from the host log (R17 3, TARGETS 1.1 P3)", () => {
       let cursor = feed.start();
       const seen: number[] = [];
       for (;;) {
-        const page = feed.poll(cursor, { maxBytes: 4096 });
+        const page = feed.pollSync(cursor, { maxBytes: 4096 });
         if (page.resolutions.length === 0) break;
         for (const r of page.resolutions)
           if (r.kind === "commit")

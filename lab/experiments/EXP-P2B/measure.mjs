@@ -252,7 +252,7 @@ const readerLoops = Array.from({ length: readers }, (_, id) =>
   })(),
 );
 const drainFeed = () => {
-  const page = feed.poll(cursor);
+  const page = feed.pollSync(cursor);
   if (!page.resolutions.length) return;
   const effects = page.resolutions
     .filter((r) => r.kind === "commit")
@@ -363,7 +363,7 @@ const readAll = () => {
   let checkpoint = freshFeed.start();
   const resolutions = [];
   for (;;) {
-    const page = freshFeed.poll(checkpoint);
+    const page = freshFeed.pollSync(checkpoint);
     if (!page.resolutions.length) return resolutions;
     resolutions.push(...page.resolutions);
     checkpoint = page.cursor;

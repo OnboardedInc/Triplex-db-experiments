@@ -60,6 +60,7 @@ const brokerFromEnvironment = (): XtdbRuntimeOptions["broker"] => {
     throw new TypeError("XTDB_COMMIT_PATH=broker requires an absolute XTDB_BROKER_DIR");
   return (scopeKey, replica) =>
     HostBroker.open({
+      requireFullFsync: true,
       dir: path.join(root, createHash("sha256").update(scopeKey).digest("hex")),
       scopeKey,
       replica,

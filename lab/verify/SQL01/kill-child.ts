@@ -11,7 +11,7 @@ const feed = new LogFeed(dir);
 let cursor = JSON.parse(cursorText) ?? feed.start();
 const feedPositions: number[] = [];
 for (;;) {
-  const p = feed.poll(cursor, { maxBytes: 1 });
+  const p = feed.pollSync(cursor, { maxBytes: 1 });
   if (!p.resolutions.length) break;
   for (const r of p.resolutions) if (r.kind === "commit") for (const t of r.transacts) feedPositions.push(t.position);
   cursor = p.cursor;

@@ -7,7 +7,7 @@ import fs from "node:fs";
 import Database from "better-sqlite3";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { spawn, spawnSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import { afterAll, describe, expect, it } from "vitest";
@@ -27,7 +27,7 @@ import { makeQleverStorageAdapter } from "../src/QleverStorageAdapter.js";
 import { HostBroker, type HostBrokerOptions } from "../src/broker/broker.js";
 import type { QleverBrokerStorageAdapterService } from "../src/broker/BrokerStorageAdapter.js";
 import { BasisNotAvailable, ReplicaUnavailable } from "../src/broker/errors.js";
-import { BrokerLogError, HostLog, readWatermark } from "../src/broker/log.js";
+import { BrokerLogError, HostLog } from "../src/broker/log.js";
 import { FrameKind } from "../src/broker/frame.js";
 import { lastPositionOf, lsnOf } from "../src/broker/position.js";
 import {
@@ -64,7 +64,10 @@ class MarkerReplica implements QleverClient {
     return m ? Number(m[1]) : undefined;
   }
   async query(sparql: string) {
-    if (this.down) throw Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)"), { code: "ECONNREFUSED" });
+    if (this.down)
+      throw Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)"), {
+        code: "ECONNREFUSED",
+      });
     this.queries.push(sparql);
     if (sparql.startsWith("SELECT ?brokerPosition ?brokerEpoch")) {
       this.markerReads++;
@@ -104,8 +107,14 @@ class MarkerReplica implements QleverClient {
     return [];
   }
   async update(sparql: string) {
-    if (this.down) throw Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)"), { code: "ECONNREFUSED" });
-    if (this.rejectUpdates) throw Object.assign(new Error("socket hang up (marker replica refuses updates)"), { code: "ECONNRESET" });
+    if (this.down)
+      throw Object.assign(new Error("connect ECONNREFUSED 127.0.0.1:7070 (marker replica down)"), {
+        code: "ECONNREFUSED",
+      });
+    if (this.rejectUpdates)
+      throw Object.assign(new Error("socket hang up (marker replica refuses updates)"), {
+        code: "ECONNRESET",
+      });
     const guard =
       /COALESCE\(\?brokerPosition, "0"\) = "(\d+)" && COALESCE\(\?brokerEpoch, "0"\) = "(\d+)"/.exec(
         sparql,
@@ -961,7 +970,7 @@ describe("m1 an exception after the fsync", () => {
     const scope = `fx:${randomUUID()}`;
     const rt = await openRt(dir, scope, undefined);
     await rt.run(rt.triples.transact(ops("s:w", 1, "ok"), { commandId: "w0" }));
-    (rt.broker as any).log.publishWatermark = () => {
+    (rt.broker as any).log.publishWatermarkAsync = async () => {
       throw new Error("simulated failure after fsync");
     };
     const escaped: unknown[] = [];

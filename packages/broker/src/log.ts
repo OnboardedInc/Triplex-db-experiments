@@ -1,3 +1,4 @@
+import { FullFsyncUnavailable, fullFsyncProbeSource } from "./full-fsync.js";
 /** SQLite log of record. [EXP-SQL01] Why: R25/Q84 atomic frames, indexes and H1 with independent readers.
  * Rejected: a segment plus replayed maps (outage pulls grow with the entire command history).
  */
@@ -55,6 +56,7 @@ export interface OpenedLog {
     readonly abortedLsns: readonly number[];
     readonly brokenFile?: string;
     readonly fsyncCalibrationMs: number;
+    readonly fullFsyncProof?: Record<string, unknown>;
   };
 }
 export interface Watermark {
@@ -123,7 +125,10 @@ class Connection {
         Atomics.wait(state, 0, 0, 10);
       }
       const data = packet.message as { result: T; error?: string };
-      if (data.error) throw new BrokerLogError(data.error);
+      if (data.error)
+        throw data.error.includes("FULL_FSYNC_UNAVAILABLE")
+          ? new FullFsyncUnavailable(data.error)
+          : new BrokerLogError(data.error);
       return data.result;
     } finally {
       port1.close();
@@ -154,9 +159,11 @@ class Connection {
         cleanup();
         if (data.error)
           reject(
-            data.error.includes("H1_RECORD_TIME_UNSUPPORTED")
-              ? new H1BasisUnsupported()
-              : new BrokerLogError(data.error),
+            data.error.includes("FULL_FSYNC_UNAVAILABLE")
+              ? new FullFsyncUnavailable(data.error)
+              : data.error.includes("H1_RECORD_TIME_UNSUPPORTED")
+                ? new H1BasisUnsupported()
+                : new BrokerLogError(data.error),
           );
         else resolve(data.result);
       });
@@ -175,7 +182,7 @@ const connect = (
   file: string,
   role: string,
   gateBuffer: SharedArrayBuffer,
-  requireFullFsync = false,
+  requireFullFsync = true,
 ) =>
   new Connection(
     new Worker(sqliteWorker, {
@@ -188,7 +195,7 @@ const connect = (
           !arg.startsWith("--input-type=") &&
           args[i - 1] !== "--input-type",
       ),
-      workerData: { file, role, seed, driver, gateBuffer, requireFullFsync },
+      workerData: { file, role, seed, driver, gateBuffer, requireFullFsync, fullFsyncProbeSource },
     }),
   );
 const streams = new Map<string, HostLog>();
@@ -201,7 +208,7 @@ const readConnection = (file: string) => {
   let c = readers.get(real);
   if (!c) {
     c = connect(real, "reader", new SharedArrayBuffer(8));
-    c.sync("init");
+    // [EXP-P2B-R3] Why: worker startup precedes its message handler; queued requests see initialization failures. Rejected: blocking init RPC on a lazy async feed connection.
     readers.set(real, c);
   }
   return c;
@@ -249,10 +256,14 @@ export class HostLog {
       throw new BrokerLogError("Broker log volume below free-space floor");
     const file = path.join(dir, "broker.db"),
       gate = new SharedArrayBuffer(12),
-      writer = connect(file, "writer", gate, options.requireFullFsync);
+      writer = connect(file, "writer", gate, options.requireFullFsync !== false);
     const connections = [writer];
     try {
-      const init = await writer.request<{ marker: StoreSnapshot; calibrationMs: number }>("init");
+      const init = await writer.request<{
+        marker: StoreSnapshot;
+        calibrationMs: number;
+        fullFsyncProof?: Record<string, unknown>;
+      }>("init");
       const result = writer.sync<{ frames: LogFrame[] }>("frames", {
         from: { offset: 32, seed, nextLsn: 1 },
         upto: init.marker.lsn,
@@ -311,7 +322,7 @@ export class HostLog {
           }),
         ),
       );
-      const checkpointer = connect(file, "checkpointer", gate, options.requireFullFsync);
+      const checkpointer = connect(file, "checkpointer", gate, options.requireFullFsync !== false);
       connections.push(checkpointer);
       await checkpointer.request("init");
       const pool = [];
@@ -347,6 +358,7 @@ export class HostLog {
           tornBytes: 0,
           abortedLsns: [],
           fsyncCalibrationMs: init.calibrationMs,
+          ...(init.fullFsyncProof ? { fullFsyncProof: init.fullFsyncProof } : {}),
         },
       };
     } catch (error) {
@@ -441,6 +453,20 @@ export class HostLog {
   publishWatermark(mark: Watermark) {
     this.lookup("ack", mark);
   }
+  // [EXP-P2B-R3] Why: maintenance can queue behind a flush, so decision and publication RPCs must also yield.
+  // Rejected: asynchronous pins followed by a synchronous decision lookup waiting on the same writer.
+  publishWatermarkAsync(mark: Watermark) {
+    return this.writer.request<void>("ack", mark);
+  }
+  operationAsync(id: string) {
+    return this.pool[this.readerIndex++ % this.pool.length]!.request<Receipt | undefined>(
+      "operation",
+      id,
+    );
+  }
+  headAsync(entity: string) {
+    return this.pool[this.readerIndex++ % this.pool.length]!.request<number>("head", entity);
+  }
   claim(id: string) {
     return this.lookup<{ txId: string; position: number } | undefined>("claim", id);
   }
@@ -471,22 +497,22 @@ export class HostLog {
   checkpointStatus() {
     return this.checkpointer.request<CheckpointStatus>("checkpointStatus");
   }
-  pinBasis(basis: number, owner: string) {
+  async pinBasis(basis: number, owner: string) {
     const token = randomUUID();
-    this.lookup("pin", { token, basis, owner });
+    await this.writer.request("pin", { token, basis, owner });
     let released = false;
     return {
       basis,
-      release: () => {
+      release: async () => {
         if (!released) {
-          this.lookup("unpin", token);
+          await this.writer.request("unpin", token);
           released = true;
         }
       },
     };
   }
   purge(horizon: number) {
-    return this.lookup<{ h: number; removed: number }>("purge", horizon);
+    return this.writer.request<{ h: number; removed: number }>("purge", horizon);
   }
   async abandon() {
     if (this.closed) return;
@@ -509,7 +535,7 @@ export class HostLog {
 export const readWatermark = (dir: string): Watermark | undefined => {
   const file = path.join(dir, "broker.db");
   if (!fs.existsSync(file)) return undefined;
-  return readConnection(file).sync<StoreSnapshot>("marker");
+  return readConnection(file).sync<Watermark | undefined>("watermark");
 };
 export const segmentStart = (_file: string) => ({ offset: 32, seed, nextLsn: 1 });
 export const readFramesFrom = (
@@ -522,6 +548,44 @@ export const readFramesFrom = (
   readonly next: { offset: number; seed: number; nextLsn: number };
 } => {
   const result = readConnection(file).sync<{
+    frames: LogFrame[];
+    next: { offset: number; seed: number; nextLsn: number };
+  }>("frames", { from, upto: uptoLsn, maxBytes });
+  let crc = from.seed;
+  const frames = result.frames.map(normalize);
+  for (const f of frames) {
+    const encoded = encodeFrame({
+      lsn: f.lsn,
+      epoch: f.epoch,
+      kind: f.kind,
+      payload: f.payload,
+      prevCrc: crc,
+    });
+    if (encoded.crc !== f.crc) throw new BrokerLogError(`Feed CRC mismatch at ${f.lsn}`);
+    crc = f.crc;
+  }
+  return { ...result, frames };
+};
+
+// [EXP-P2B-R3] Why: feed requests must yield while the reader connection is busy.
+// Rejected: Atomics.wait on the broker event loop (can hide a completed commit callback).
+export const readWatermarkAsync = async (dir: string): Promise<Watermark | undefined> => {
+  const file = path.join(dir, "broker.db");
+  try {
+    await fs.promises.access(file);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
+    throw error;
+  }
+  return readConnection(file).request<Watermark | undefined>("watermark");
+};
+export const readFramesFromAsync = async (
+  file: string,
+  from: { readonly offset: number; readonly seed: number; readonly nextLsn: number },
+  uptoLsn: number,
+  maxBytes = 64 * 1024 * 1024,
+) => {
+  const result = await readConnection(file).request<{
     frames: LogFrame[];
     next: { offset: number; seed: number; nextLsn: number };
   }>("frames", { from, upto: uptoLsn, maxBytes });

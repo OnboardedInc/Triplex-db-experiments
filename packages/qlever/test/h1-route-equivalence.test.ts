@@ -99,14 +99,14 @@ it("H1 refuses T/TP at its worker boundary; the complete source answers identica
       await append(commit);
       history = { ...history, commits: [...history.commits, commit] };
     },
-    event: (event, context) => {
+    event: async (event, context) => {
       if (event !== "purge" && event !== "purge-pinned") return;
       const requested = context!.horizon;
-      const pin = context!.pinned ? log.pinBasis(requested, "CX-INT-Q") : undefined;
+      const pin = context!.pinned ? await log.pinBasis(requested, "CX-INT-Q") : undefined;
       try {
-        horizon = log.purge(requested).h;
+        horizon = (await log.purge(requested)).h;
       } finally {
-        pin?.release();
+        await pin?.release();
       }
       return {
         status: "applied",

@@ -356,7 +356,7 @@ if (!isMainThread) {
     consumer = new FeedConsumerStore(consumerDir, "r2", "atomic", true);
   let cursor = feed.start();
   const drain = () => {
-    const page = feed.poll(cursor);
+    const page = feed.pollSync(cursor);
     if (!page.resolutions.length) return;
     const effects = [];
     for (const resolution of page.resolutions)
@@ -487,7 +487,7 @@ if (!isMainThread) {
     let c = feed.start();
     const out = [];
     for (;;) {
-      const page = feed.poll(c);
+      const page = feed.pollSync(c);
       if (!page.resolutions.length) return out;
       out.push(...page.resolutions);
       c = page.cursor;

@@ -27,6 +27,8 @@ import { FrameKind } from "./frame.js";
 import { decodeCommitGroup } from "./frames.js";
 import {
   readFramesFrom,
+  readFramesFromAsync,
+  readWatermarkAsync,
   readWatermark,
   segmentStart,
   type EpochBeginPayload,
@@ -91,11 +93,11 @@ export class LogFeed {
     const start = segmentStart(this.segmentPath);
     return { lsn: start.nextLsn - 1, ...start };
   }
-  watermark(): Watermark | undefined {
+  watermarkSync(): Watermark | undefined {
     return readWatermark(this.dir);
   }
   /** Frames after the cursor up to the durable watermark, resolved (bounded by `maxBytes` read). */
-  poll(cursor: FeedCursor, options: { readonly maxBytes?: number } = {}): FeedPage {
+  pollSync(cursor: FeedCursor, options: { readonly maxBytes?: number } = {}): FeedPage {
     const watermark = readWatermark(this.dir);
     if (!watermark || watermark.lsn <= cursor.lsn) return { resolutions: [], cursor, watermark };
     const { frames, next } = readFramesFrom(
@@ -104,6 +106,33 @@ export class LogFeed {
       watermark.lsn,
       options.maxBytes ?? 8 * 1024 * 1024,
     );
+    return this.page(cursor, watermark, frames, next);
+  }
+  async poll(cursor: FeedCursor, options: { readonly maxBytes?: number } = {}): Promise<FeedPage> {
+    const watermark = await readWatermarkAsync(this.dir);
+    if (!watermark || watermark.lsn <= cursor.lsn) return { resolutions: [], cursor, watermark };
+    const { frames, next } = await readFramesFromAsync(
+      this.segmentPath,
+      { offset: cursor.offset, seed: cursor.seed, nextLsn: cursor.nextLsn },
+      watermark.lsn,
+      options.maxBytes ?? 8 * 1024 * 1024,
+    );
+    return this.page(cursor, watermark, frames, next);
+  }
+  // [EXP-P2B-R3] Why: serving paths yield by default; explicit Sync methods remain for forensic replay tools.
+  // Rejected: leaving poll synchronous by default (would quietly restore main-thread waits).
+  watermark() {
+    return readWatermarkAsync(this.dir);
+  }
+  pollAsync(cursor: FeedCursor, options: { readonly maxBytes?: number } = {}) {
+    return this.poll(cursor, options);
+  }
+  private page(
+    cursor: FeedCursor,
+    watermark: Watermark,
+    frames: readonly import("./log.js").LogFrame[],
+    next: { offset: number; seed: number; nextLsn: number },
+  ): FeedPage {
     const resolutions: FeedResolution[] = [];
     for (const frame of frames) {
       if (frame.kind === FrameKind.EPOCH_BEGIN) {

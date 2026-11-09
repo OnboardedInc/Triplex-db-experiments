@@ -93,7 +93,7 @@ describe("SQLite broker / R25", () => {
       expect(a.kind).toBe("committed");
       const basis = b.head(),
         prior = b.fromLog(0, { id: "a" }, () => true)[0]!;
-      const pin = b.pinBasis(basis, "test sweep");
+      const pin = await b.pinBasis(basis, "test sweep");
       await submit(
         b,
         "replace",
@@ -106,10 +106,10 @@ describe("SQLite broker / R25", () => {
         expect(actual.eligible).toBe(true);
         expect(ids(actual.rows)).toEqual(ids(replay(dir, cut)));
       }
-      expect(b.purgeCurrent(b.head()).h).toBe(basis);
+      expect((await b.purgeCurrent(b.head())).h).toBe(basis);
       expect(ids((await b.pullAt(basis, { entities: ["s"] })).rows)).toEqual(["a", "b"]);
-      pin.release();
-      expect(b.purgeCurrent(b.head()).h).toBe(b.head());
+      await pin.release();
+      expect((await b.purgeCurrent(b.head())).h).toBe(b.head());
       expect((await b.pullAt(basis, { entities: ["s"] })).eligible).toBe(false);
       expect((await b.pullAt(b.durable().lsn * 1024 + 1024, {})).eligible).toBe(false);
       expect(ids(b.fromLog(0, {}, () => true))).toEqual(["a", "b", "c"]);
@@ -163,7 +163,7 @@ describe("SQLite broker / R25", () => {
     try {
       await submit(b, "base", [row("base")]);
       const basis = b.head(),
-        pin = b.pinBasis(basis, "readers");
+        pin = await b.pinBasis(basis, "readers");
       let writes = 0,
         reads = 0;
       await Promise.all([
@@ -184,7 +184,7 @@ describe("SQLite broker / R25", () => {
       ]);
       expect(writes).toBe(200);
       expect(reads).toBe(1600);
-      pin.release();
+      await pin.release();
     } finally {
       await b.close();
     }

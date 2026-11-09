@@ -102,7 +102,7 @@ it("catches up past epoch-only prefixes on qlever-dev and preserves a named basi
     b.startApplier();
     expect(await b.drain(30_000)).toBe(true);
     expect(ids(await read())).toEqual(ids(initial));
-    const pin = b.pinBasis(basis, "live straddle");
+    const pin = await b.pinBasis(basis, "live straddle");
     const observations: number[] = [];
     try {
       const prior = (await b.pullAt(b.head(), { entities: ["hot"] })).rows;
@@ -115,7 +115,7 @@ it("catches up past epoch-only prefixes on qlever-dev and preserves a named basi
       const latest = await Effect.runPromise(adapter.getByEntity("hot", { validAt: 5, recordedPosition: b.head() }));
       expect(latest.every(r => r.id.startsWith("new-"))).toBe(true);
       expect(latest).toHaveLength(40);
-    } finally { pin.release(); }
+    } finally { await pin.release(); }
     out("live-epochs", { dir, scope, endpoint: "http://127.0.0.1:7070", basis, head: b.head(), reads: observations.length, observations, events, routes: (adapter as any).routes });
   } finally { await b.close(); await client.update(`DROP SILENT GRAPH ${graphIri(scope)}`); await client.close(); }
 });
@@ -138,7 +138,7 @@ it("applies a concurrently retried operation once and preserves its receipt afte
     expect(b.head()).toBe(head);
     expect(ids((await b.pullAt(head, { entities: ["hot"] })).rows)).toEqual(ids(firstRows));
     const feed = new LogFeed(dir), entries: any[] = []; let cursor = feed.start();
-    for (;;) { const p = feed.poll(cursor, { maxBytes: 1 }); if (!p.resolutions.length) break; entries.push(...p.resolutions.filter(r => r.kind === "commit")); cursor = p.cursor; }
+    for (;;) { const p = feed.pollSync(cursor, { maxBytes: 1 }); if (!p.resolutions.length) break; entries.push(...p.resolutions.filter(r => r.kind === "commit")); cursor = p.cursor; }
     expect(entries).toHaveLength(1);
     out("idempotency", { dir, answers, original, head, retry, rows: firstRows.length, commitFrames: entries.length });
   } finally { await b.close(); }

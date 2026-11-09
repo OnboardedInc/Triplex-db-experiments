@@ -55,7 +55,7 @@ for (const clients of [0, 16]) {
   };
   await write(0);
   const basis = b.head(),
-    pin = b.pinBasis(basis, "rw comparison");
+    pin = await b.pinBasis(basis, "rw comparison");
   let stop = false,
     pulls = 0,
     violations = 0;
@@ -100,7 +100,7 @@ for (const clients of [0, 16]) {
   stop = true;
   await Promise.all(readers);
   const wallMs = performance.now() - t0;
-  pin.release();
+  await pin.release();
   results.push({
     clients,
     poolThreads: 4,
