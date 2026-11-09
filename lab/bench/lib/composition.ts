@@ -68,12 +68,7 @@ export interface Assignments {
   readonly history: { lane: Lane; role: string };
   readonly analytics: { lane: Lane; role: string };
   /** Replication edges between layers (feed consumer source hash, translation generation); none in one-engine compositions. */
-  readonly replicationEdges: readonly {
-    from: string;
-    to: string;
-    consumerSourceSha256: string | null;
-    generation: string | null;
-  }[];
+  readonly replicationEdges: readonly { from: string; to: string; consumerSourceSha256: string | null; generation: string | null }[];
 }
 
 export interface CompositionHandle {
@@ -81,7 +76,7 @@ export interface CompositionHandle {
   sweepPage(
     subjects: readonly string[],
     basis: import("./w0-world.ts").PositionBasis,
-    between?: () => Promise<void>,
+    between?:()=>Promise<void>,
   ): Promise<{
     rows: readonly import("./w0-world.ts").WorldRow[];
     position: number;
@@ -120,83 +115,37 @@ function failureOf(exit: any): StoreFailure {
   const failure = exit?.cause?.failures?.[0];
   const error = failure?.error ?? failure?.defect ?? exit?.cause;
   // A defect (Die) has no typed tag: name it by its constructor so receipts say what failed.
-  const tag =
-    error?._tag ??
-    (failure?._tag === "Die"
-      ? `Defect:${error?.name ?? error?.constructor?.name ?? "Unknown"}`
-      : failure?._tag);
+  const tag = error?._tag ?? (failure?._tag === "Die" ? `Defect:${error?.name ?? error?.constructor?.name ?? "Unknown"}` : failure?._tag);
   return { ok: false, tag: String(tag ?? "Unknown"), error };
 }
 
 /** [DX-H1] One public closure call at the requested cut; split reads verify the root across the intervening ACK. */
-export async function reachPull(
-  h: Pick<TriplesHandle, "triples" | "run">,
-  root: string,
-  basis: Basis,
-  between: (() => Promise<void>) | undefined,
-  language: string,
-): Promise<PullResult> {
+export async function reachPull(h: Pick<TriplesHandle, "triples" | "run">, root: string, basis: Basis, between: (() => Promise<void>) | undefined, language: string): Promise<PullResult> {
   const T = h.triples;
   const E = (id: string) => core.EntityId.make(id);
   // [DX-H1] Why: one public reach at the same cut, including split-root verification.
   // Rejected: latest-root comparison (would confuse valid commits with snapshot violations).
-  const before: any[][] | undefined = between
-    ? await h.run(T.entities([E(root)], basis))
-    : undefined;
+  const before: any[][] | undefined = between ? await h.run(T.entities([E(root)], basis)) : undefined;
   if (between) await between();
   const result: any = await h.run(T.reach(E(root), basis));
-  const stable = (value: any): any =>
-    Array.isArray(value)
-      ? value.map(stable)
-      : value !== null && typeof value === "object"
-        ? Object.fromEntries(
-            Object.keys(value)
-              .sort()
-              .map((key) => [key, stable(value[key])]),
-          )
-        : value;
-  const canonical = (rows: readonly any[]) =>
-    JSON.stringify(rows.map((t) => JSON.stringify(stable(t))).sort());
-  if (
-    before &&
-    canonical(before[0] ?? []) !== canonical(result.triples.filter((t: any) => t.entityId === root))
-  )
+  const stable = (value: any): any => Array.isArray(value) ? value.map(stable) :
+    value !== null && typeof value === "object" ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])])) : value;
+  const canonical = (rows: readonly any[]) => JSON.stringify(rows.map(t => JSON.stringify(stable(t))).sort());
+  if (before && canonical(before[0] ?? []) !== canonical(result.triples.filter((t: any) => t.entityId === root)))
     throw new Error("reach split-root snapshot violation");
-  return {
-    triples: result.triples,
-    entities: new Set([root, ...result.triples.map((t: any) => t.entityId)]).size,
-    roundTrips: between ? 2 : 1,
-    depth: result.hops - 1,
-    route: "source",
-    language,
-    waitedMs: 0,
-  };
+  return { triples: result.triples, entities: new Set([root, ...result.triples.map((t: any) => t.entityId)]).size,
+    roundTrips: between ? 2 : 1, depth: result.hops - 1, route: "source", language, waitedMs: 0 };
 }
 
-async function publicComposition(
-  lane: Lane,
-  scope: string,
-  variant: "public" | "public-queued" | "broker-h1" | "reach" = "public",
-): Promise<CompositionHandle> {
-  const h: TriplesHandle =
-    variant === "broker-h1"
-      ? await (await import("./broker-h1.ts")).openBrokerH1(scope)
-      : await openTriples(
-          lane,
-          scope,
-          variant === "public-queued" || variant === "reach" ? { admissionQueue: true } : undefined,
-        );
+async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" | "broker-h1" | "reach" = "public"): Promise<CompositionHandle> {
+  const h: TriplesHandle = variant === "broker-h1" ? await (await import("./broker-h1.ts")).openBrokerH1(scope) : await openTriples(lane, scope, (variant === "public-queued" || variant === "reach") ? { admissionQueue: true } : undefined);
   const T = h.triples;
   const E = (id: string) => core.EntityId.make(id);
   const outcome = async <A>(effect: any): Promise<Outcome<A>> => {
     const exit = await h.runExit(effect);
     return exit._tag === "Success" ? { ok: true, value: exit.value as A } : failureOf(exit);
   };
-  const pullBody = async (
-    root: string,
-    basis: Basis,
-    between?: () => Promise<void>,
-  ): Promise<PullResult> => {
+  const pullBody = async (root: string, basis: Basis, between?: () => Promise<void>): Promise<PullResult> => {
     if (variant === "reach") return reachPull(h, root, basis, between, language);
     const seen = new Set<string>([root]);
     let frontier = [root];
@@ -219,34 +168,13 @@ async function publicComposition(
     }
     // One-engine composition: the source of truth's own query surface is the only index, eligible for
     // every basis it has published, so no wait and no fallback are possible here.
-    return {
-      triples,
-      entities: seen.size,
-      roundTrips,
-      depth: roundTrips - 1,
-      route: variant === "broker-h1" ? "host:h1" : "source",
-      language,
-      waitedMs: 0,
-    };
+    return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1, route: variant === "broker-h1" ? "host:h1" : "source", language, waitedMs: 0 };
   };
-  const pull = (root: string, basis: Basis, between?: () => Promise<void>) =>
-    variant === "broker-h1"
-      ? (h.storage as any).withCurrentPull(root, () => pullBody(root, basis, between))
-      : pullBody(root, basis, between);
-  const one = {
-    lane,
-    role: `triplex public Triples service on one engine slot${variant === "public-queued" && lane === "xtdb" ? " (XTDB adapter admissionQueue: true)" : ""}`,
-  };
-  const language =
-    lane === "xtdb"
-      ? "triplex-entities(xtdb-sql)"
-      : lane === "datomic"
-        ? "triplex-entities(datomic-datalog)"
-        : "triplex-entities(sparql)";
-  const journal =
-    lane === "datomic" && process.env.TX2_W0_POINT_JOURNAL === "1"
-      ? (await import("./w0-journal.ts")).w0Journal(h)
-      : undefined;
+  const pull = (root: string, basis: Basis, between?: () => Promise<void>) => variant === "broker-h1" ? (h.storage as any).withCurrentPull(root, () => pullBody(root,basis,between)) : pullBody(root,basis,between);
+  const one = { lane, role: `triplex public Triples service on one engine slot${variant === "public-queued" && lane === "xtdb" ? " (XTDB adapter admissionQueue: true)" : ""}` };
+  const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : lane === "datomic" ? "triplex-entities(datomic-datalog)" : "triplex-entities(sparql)";
+  const journal = lane === "datomic" && process.env.TX2_W0_POINT_JOURNAL === "1"
+    ? (await import("./w0-journal.ts")).w0Journal(h) : undefined;
   const sweep = await (await import("./w0-public.ts")).publicSweep(lane, h, journal?.page);
   const handle: CompositionHandle = {
     scopeName: scope,
@@ -255,22 +183,11 @@ async function publicComposition(
     publishOutbox: (records) =>
       import("./w0-outbox.ts").then((m) => m.publishRecords(handle, records)),
     name: variant,
-    assignments: {
-      source: one,
-      current: variant === "broker-h1" ? { lane, role: "host H1 current store" } : one,
-      history: one,
-      analytics: one,
-      replicationEdges: [],
-    },
+    assignments: { source: one, current: variant === "broker-h1" ? {lane,role:"host H1 current store"} : one, history: one, analytics: one, replicationEdges: [] },
     watermarks: async () => ({ source: await h.run(T.currentPosition()) }),
     // Triplex exposes one dense position per scope; every transact is its own engine transaction, so
     // offset = position and ordinal = 0. Epoch 0: the scope has had no epoch change.
-    coordinate: (position) => ({
-      stream: `triplex-journal:${scope}`,
-      epoch: 0,
-      offset: position,
-      ordinal: 0,
-    }),
+    coordinate: (position) => ({ stream: `triplex-journal:${scope}`, epoch: 0, offset: position, ordinal: 0 }),
     backend: h.backend,
     transact: async (operations, meta) => {
       const result = await outcome<Receipt>(T.transact(operations, meta));
@@ -282,43 +199,24 @@ async function publicComposition(
     sweepPull: pull,
     feedPage: journal?.page ?? ((after, limit) => h.run(T.transactions({ after, limit }))),
     currentPosition: () => h.run(T.currentPosition()),
-    close: async () => {
-      await sweep.close();
-      await h.close();
-    },
+    close: async () => { await sweep.close(); await h.close(); },
   };
   return handle;
 }
 
-export const COMPOSITIONS: Record<
-  string,
-  (lane: Lane, scope: string) => Promise<CompositionHandle>
-> = {
+export const COMPOSITIONS: Record<string, (lane: Lane, scope: string) => Promise<CompositionHandle>> = {
   /** In-process reference store (lib/memory.ts): diagnostic only, readers run in-thread. */
-  memory: async (lane, scope) =>
-    (await import("./memory.ts")).memoryComposition(
-      lane,
-      scope,
-      Number(process.env["TX2_MEMORY_SERVICE_MS"] ?? "1"),
-    ),
-  "broker-h1": (lane, scope) => {
-    if (lane !== "qlever") throw Error("broker-h1 is lane Q only");
-    return publicComposition(lane, scope, "broker-h1");
-  },
+  memory: async (lane, scope) => (await import("./memory.ts")).memoryComposition(lane, scope, Number(process.env["TX2_MEMORY_SERVICE_MS"] ?? "1")),
+  "broker-h1": (lane, scope) => { if(lane!=="qlever")throw Error("broker-h1 is lane Q only"); return publicComposition(lane,scope,"broker-h1"); },
   reach: (lane, scope) => publicComposition(lane, scope, "reach"),
   public: (lane, scope) => publicComposition(lane, scope, "public"),
   /** Same surfaces; on XTDB the adapter queues writes in process (admissionQueue) instead of racing the scope position CAS. */
   "public-queued": (lane, scope) => publicComposition(lane, scope, "public-queued"),
 };
 
-export async function openComposition(
-  name: string,
-  lane: Lane,
-  scope: string,
-): Promise<CompositionHandle> {
+export async function openComposition(name: string, lane: Lane, scope: string): Promise<CompositionHandle> {
   const factory = COMPOSITIONS[name];
-  if (!factory)
-    throw new Error(`unknown composition ${name}; known: ${Object.keys(COMPOSITIONS).join(", ")}`);
+  if (!factory) throw new Error(`unknown composition ${name}; known: ${Object.keys(COMPOSITIONS).join(", ")}`);
   const handle = await factory(lane, scope);
   if (lane === "datomic") {
     for (const key of ["transact", "pull", "sweepPull", "feedPage"] as const) {
