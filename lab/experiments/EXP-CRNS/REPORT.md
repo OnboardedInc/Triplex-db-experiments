@@ -339,3 +339,43 @@ passed 256/256 (exit 0, final-attempt2.tap) before this correction; those bytes 
 149-test focused suite passes; fresh source-bound final verification follows after commit.
 
 Final scheduled-writer correction hash: `lab/bin/claim.mjs`, old pre-round-3 `0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892`, new `e689373eff850daf511b95423c9b88f545979595b4445abcad7d6a52de178c46`. Acceptance remains unchanged.
+
+
+## Round 3 final verification and handoff
+
+Final tested implementation commit: `97450c878008cde8ae91c9a4b1aa8777292ffdd1`. Evaluator integrity was clean before the run.
+The final report/evidence commit leaves those evaluator and test bytes unchanged.
+
+```sh
+node lab/bin/heavy.mjs --label CX-CRNS-r3-final3 -- node --test \
+  lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs \
+  lab/bin/test/claim-ns.test.mjs lab/bin/test/claim-ns-round2.test.mjs \
+  lab/bin/test/claim-ns-round3.test.mjs lab/verify/CRNS/review.test.mjs \
+  lab/verify/CRNS/round2/review.test.mjs \
+  lab/verify/CRNS-opus/forgeries.test.mjs lab/verify/CRNS-opus/forgeries-round2.test.mjs
+```
+
+**Exit 0: 257/257 passed, zero failed/cancelled/skipped/todo; 219.719 seconds.** This includes both untouched original evaluator
+suites (108), all earlier 105 CR-NS tests, all 16 required Opus re-review variants, all 12 copied Codex re-review controls/N01, and
+16 additional round 3 cases. All former test cases remain covered; positive fixtures now use separately frozen expectations.
+The fresh reasons audit (`reasons-audit-attempt4.txt`) ran all 30 current round-1 reviewer assertions with no failure and includes
+the five property-specific refusals. Their complete-input positive controls run in the same assertion file.
+
+Evidence: `evidence/round3/final-attempt3.tap`, `verification.json`, `reasons-audit-attempt4.txt` and
+`source-hashes-release.json`. Earlier failed fixture transitions/audit and the two passing intermediate full runs remain retained
+with their exact source versions and explicit rerun reasons above; none is retroactively adopted as final-source evidence.
+Syntax, whitespace, unchanged acceptance files, evaluator integrity and source-hash readback were checked. Every evidence file is
+below 1MB and the whole retained evidence directory below 5MB. The current SHA256SUMS is refreshed; the named round1/round2
+manifests remain explicitly historical for their commits.
+
+Final receipt audit (rule 9a): `verification.json` checks the actual terminal count/failure content and records the observed exit
+0, exact heavy command, current source/test hashes, final implementation commit and fresh log digest. The tested bytes and the
+new attempt, not a prior receipt, bind the result. Its explicit scope is offline builder verification; source/slot/input ids in
+synthetic fixtures are test ids, and the receipt cannot be consumed as an NS acceptance or independent reviewer grant.
+
+Result: the Codex N01, all four high findings, five medium findings, four low findings and five stale-reason regressions are mapped
+to fixes and required tests above. No acceptance file was edited and no NS acceptance cell was closed. No Docker/engine/slot,
+live VM/production workload, production decoder/collector/oracle qualification, full package check, merge or push was performed.
+The branch is ready for separate independent round 3 review. Contract amendments/pins, the conservative concurrency/timing choices,
+production evidence adapters and A0/calibration authority admission remain with their owners; no human clarification was needed
+for this offline builder round.
