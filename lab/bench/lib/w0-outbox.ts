@@ -25,12 +25,20 @@ export async function publishRecords(
   const operations: any[] = [],
     preconditions: any[] = [],
     deliveries: any[] = [];
+  const batch = comp.pullMany
+    ? await comp.pullMany(
+        records.map((r) => "p5:outbox:" + r.subject),
+        { validAt: V_PUBLIC },
+      )
+    : undefined;
   for (const record of records) {
     const entityId = "p5:outbox:" + record.subject;
-    const old = await comp.pull(entityId, {
-      recordedAt: Number.MAX_SAFE_INTEGER,
-      validAt: V_PUBLIC,
-    });
+    const old = batch
+      ? { triples: batch.get(entityId) ?? [] }
+      : await comp.pull(entityId, {
+          recordedAt: Number.MAX_SAFE_INTEGER,
+          validAt: V_PUBLIC,
+        });
     const previous = old.triples.find((t) => t.attribute === "p5/state");
     const state = previous ? reviveState(JSON.parse(previous.value.value)) : W0.EMPTY_OUTBOX;
     const result = W0.publish(state, [record]);

@@ -88,6 +88,11 @@ export interface CompositionHandle {
     epoch: string;
     roundTrips: number;
   }>;
+  /** [EXP-P5N] Batched current-state read of many entities in one read transaction (no BFS); the outbox uses it for its 64 state entities per page. */
+  pullMany?(
+    entities: readonly string[],
+    basis: { validAt: number },
+  ): Promise<Map<string, readonly any[]>>;
   pinBasis?(position: number, owner: string): Promise<{ release(): Promise<void> }>;
   publishOutbox(
     records: readonly import("../../../packages/w0/dist/index.js").EvaluationRecord[],

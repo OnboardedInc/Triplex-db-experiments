@@ -452,6 +452,24 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
         waitedMs: 0,
       };
     },
+    // [EXP-P5N] Why: 64 outbox state pulls per page were each a full BFS on the sweep connections and queued behind 200 ms page transactions (17.8 s summed at W4).
+    // One read of the page's 64 state entities at the current head, on a pooled reader outside the sweep connections; the TripleLive preconditions in the commit still reject a stale read.
+    // Rejected: caching state in memory (a lost ACK or a restart must read the stored state).
+    pullMany: async (entities, basis) => {
+      assertBound();
+      const nativeBasis = broker.head(),
+        out = new Map<string, any[]>(entities.map((e) => [e, []]));
+      for (let o = 0; o < entities.length; o += 500) {
+        const page: any = await broker.pullAt(nativeBasis, { entities: entities.slice(o, o + 500) });
+        if (!page.eligible) throw Error("batched pull basis not eligible");
+        for (const row of page.rows) {
+          if (!(row.valid_from <= basis.validAt && (row.valid_to === null || row.valid_to > basis.validAt))) continue;
+          if (row.retracted_position !== null && row.retracted_position <= nativeBasis) continue;
+          out.get(row.entity_id)?.push(decodeHostRow(row));
+        }
+      }
+      return out;
+    },
     sweepPull: async (entity, basis) => comp.pull(entity, basis),
     publishOutbox: (records) => publishRecords(comp, records),
     feedPage: async (after, limit) => {
