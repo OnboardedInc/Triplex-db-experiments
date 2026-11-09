@@ -13,6 +13,12 @@ export interface TransactionState {
   readonly scopeKey: string;
   readonly sourceK: number;
   readonly handle: string;
+  readonly prefetch?: {
+    readonly commandId?: string;
+    readonly claim: string | null;
+    readonly rows: ReadonlyMap<string, TripleRow | null>;
+  };
+  submitted?: boolean;
   position: number;
   rows: Map<string, TripleRow>;
   claims: Map<string, DatomicClaim>;

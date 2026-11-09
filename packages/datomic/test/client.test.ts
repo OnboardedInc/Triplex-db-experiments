@@ -93,3 +93,48 @@ it("fails with a typed transport error when the configured response budget is ex
     server.close();
   }
 });
+
+// [EXP-DX1] Why: only the exact database/position of our last ACK may reuse its local peer t.
+// Rejected: position-only caching (another scope can have the same logical position).
+it("sends basisT only for its own acknowledged database and position", async () => {
+  const received: Record<string, unknown>[] = [];
+  const server = http.createServer(async (req, res) => {
+    let raw = "";
+    for await (const chunk of req) raw += chunk;
+    received.push(JSON.parse(raw));
+    res.setHeader("Content-Type", "application/json");
+    res.end(
+      JSON.stringify(
+        req.url!.endsWith("transact")
+          ? { t: { t: "long", v: "1001" }, position: { t: "long", v: "1" } }
+          : { rows: [] },
+      ),
+    );
+  });
+  server.listen(0, "127.0.0.1");
+  await once(server, "listening");
+  const address = server.address();
+  if (!address || typeof address === "string") throw Error("No address");
+  const client = new DatomicClient(`http://127.0.0.1:${address.port}`);
+  try {
+    await client.transact("s2-first", {
+      sourceK: 0,
+      position: 1,
+      operationId: "op",
+      attemptId: "attempt",
+      rows: [],
+      newIds: [],
+      claims: [],
+    });
+    await client.rows("s2-first", { basis: { recordedPosition: 1, validAt: 100 } });
+    await client.rows("s2-other", { basis: { recordedPosition: 1, validAt: 100 } });
+    await client.rows("s2-first", { basis: { recordedPosition: 0, validAt: 100 } });
+    expect(received[1]!["basisT"]).toBe("1001");
+    expect(received[2]).not.toHaveProperty("basisT");
+    expect(received[3]).not.toHaveProperty("basisT");
+  } finally {
+    client.close();
+    server.closeAllConnections();
+    server.close();
+  }
+});

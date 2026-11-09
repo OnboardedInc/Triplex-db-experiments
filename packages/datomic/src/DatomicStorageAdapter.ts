@@ -1,4 +1,6 @@
 // [EXP-DA01] Why: adapt XTDB staged SPI and savepoint/replay discipline to one Datomic transaction. Rejected: per-row commits (break atomicity).
+import { validateTagged } from "./codec.js";
+import { reachResponse } from "./reach.js";
 import { readFailure } from "./readErrors.js";
 import { randomUUID } from "node:crypto";
 import { Effect, Exit, Semaphore } from "effect";
@@ -68,6 +70,17 @@ export const makeDatomicStorageAdapter = (
   ): Effect.Effect<readonly TripleRow[], ReadError> =>
     Effect.gen(function* () {
       const state = yield* current;
+      // [EXP-DX1] Why: staged rows override prefetched rows; known absence also saves a read.
+      // Rejected: re-reading a prefetched retract target or hiding nested staged writes.
+      if (
+        state &&
+        id !== undefined &&
+        basis === undefined &&
+        (state.rows.has(id) || state.prefetch?.rows.has(id))
+      ) {
+        const row = state.rows.get(id) ?? state.prefetch?.rows.get(id);
+        return row && (history || visibleAt(row)) && matchesPattern(row, pattern) ? [row] : [];
+      }
       const rows = yield* read(() =>
         client.rows(db, {
           pattern,
@@ -118,7 +131,8 @@ export const makeDatomicStorageAdapter = (
         };
         let submitError: unknown;
         try {
-          await bounded(
+          state.submitted = true;
+          const ack = await bounded(
             client.transact(db, {
               sourceK: state.sourceK,
               position: state.position,
@@ -127,8 +141,33 @@ export const makeDatomicStorageAdapter = (
               rows: [...state.rows.values()],
               newIds: [...state.newIds],
               claims: [...state.claims.values()],
+              handle: state.handle,
+              release: true,
             }),
           );
+          // [EXP-DX1] Why: a bound transaction ACK is already a receipt; resolve only ambiguous ACKs.
+          // Rejected: unconditional operation lookup (adds a third HTTP request).
+          if (
+            ack &&
+            typeof ack === "object" &&
+            "operationId" in ack &&
+            ack.operationId === operationId &&
+            "position" in ack &&
+            "t" in ack &&
+            "datoms" in ack &&
+            Number.isSafeInteger(ack.datoms) &&
+            Number(ack.datoms) >= 0
+          ) {
+            const p = validateTagged(ack.position),
+              t = validateTagged(ack.t);
+            if (
+              p.t === "long" &&
+              Number(p.v) === state.position &&
+              t.t === "long" &&
+              BigInt(t.v) >= 0n
+            )
+              return;
+          }
         } catch (error) {
           if (
             error instanceof DatomicHttpError &&
@@ -171,7 +210,10 @@ export const makeDatomicStorageAdapter = (
 
   const withTransaction = <A, E>(
     effect: Effect.Effect<A, E>,
-    transactionOptions?: { readonly replaySafe?: boolean },
+    transactionOptions?: {
+      readonly replaySafe?: boolean;
+      readonly hint?: { readonly commandId?: string; readonly tripleIds?: readonly string[] };
+    },
   ): Effect.Effect<A, E | WriteError> =>
     Effect.suspend(() => {
       const operationId = randomUUID();
@@ -191,6 +233,7 @@ export const makeDatomicStorageAdapter = (
               scopeKey,
               sourceK: parent.sourceK,
               handle: parent.handle,
+              ...(parent.prefetch === undefined ? {} : { prefetch: parent.prefetch }),
               ...baseline,
               rows: new Map(baseline.rows),
               claims: new Map(baseline.claims),
@@ -223,7 +266,15 @@ export const makeDatomicStorageAdapter = (
             parent.newIds = child.newIds;
             return result;
           }
-          const snapshot = yield* read(() => client.begin(db)).pipe(
+          const snapshot = yield* read<{
+            handle: string;
+            position: number;
+            prefetch?: NonNullable<TransactionState["prefetch"]>;
+          }>(() =>
+            transactionOptions?.hint === undefined
+              ? client.begin(db)
+              : client.beginCommand(db, transactionOptions.hint),
+          ).pipe(
             Effect.mapError(
               (cause) => new WriteError({ message: "Cannot acquire Datomic source cut", cause }),
             ),
@@ -234,6 +285,7 @@ export const makeDatomicStorageAdapter = (
             scopeKey,
             sourceK,
             handle: snapshot.handle,
+            ...("prefetch" in snapshot ? { prefetch: snapshot.prefetch } : {}),
             position: sourceK,
             rows: new Map(),
             claims: new Map(),
@@ -267,7 +319,9 @@ export const makeDatomicStorageAdapter = (
             );
           }).pipe(
             Effect.ensuring(
-              Effect.promise(() => client.release(db, snapshot.handle)).pipe(Effect.ignore),
+              Effect.promise(() =>
+                state.submitted ? Promise.resolve() : client.release(db, snapshot.handle),
+              ).pipe(Effect.ignore),
             ),
           );
         });
@@ -325,6 +379,47 @@ export const makeDatomicStorageAdapter = (
       "blob",
     ],
     withTransaction,
+    atomicReach: true,
+    getReachTriples: (root, basis) =>
+      Effect.gen(function* () {
+        if (yield* current) return undefined;
+        const response = yield* read(() =>
+          client.request<{
+            declined?: string;
+            position: number;
+            t: string;
+            rows: unknown[];
+            entities: number;
+            visited: string[];
+          }>("POST", `/v2/db/${db}/reach`, { root, basis }),
+        );
+        if (response.declined !== undefined) {
+          client.reachDiagnostics.declines[response.declined] =
+            (client.reachDiagnostics.declines[response.declined] ?? 0) + 1;
+          return undefined;
+        }
+        return yield* Effect.try({
+          try: () => {
+            if (
+              !Number.isSafeInteger(response.position) ||
+              response.position < 0 ||
+              !/^\d+$/.test(response.t) ||
+              (basis.recordedPosition !== undefined && response.position !== basis.recordedPosition)
+            )
+              throw new Error("Fast reach basis mismatch");
+            return reachResponse(root, response);
+          },
+          catch: () => {
+            client.reachDiagnostics.faults++;
+            return undefined;
+          },
+        }).pipe(
+          Effect.matchEffect({
+            onFailure: () => Effect.succeed(undefined),
+            onSuccess: (effect) => effect,
+          }),
+        );
+      }),
     nextCommitPosition: () =>
       Effect.flatMap(requireTransaction, (state) =>
         Effect.try({
@@ -356,7 +451,11 @@ export const makeDatomicStorageAdapter = (
         const state = yield* requireTransaction;
         const pending = state.claims.get(commandId);
         if (pending !== undefined) return pending.txId;
-        const existing = yield* read(() => client.claim(db, commandId, state.sourceK)).pipe(
+        const existing = yield* read(() =>
+          state.prefetch?.commandId === commandId
+            ? Promise.resolve(state.prefetch.claim)
+            : client.claim(db, commandId, state.sourceK),
+        ).pipe(
           Effect.mapError(
             (cause) => new WriteError({ message: "Cannot read command claim", cause }),
           ),

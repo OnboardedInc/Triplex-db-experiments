@@ -2,6 +2,8 @@
   (:require [datomic.api :as d] [triplex.gateway.codec :as codec])
   (:import [java.util UUID]))
 
+(set! *warn-on-reflection* true)
+
 ;; [EXP-DA01] Why: hold an unfiltered immutable db for speculative reads. Rejected: d/with on as-of (filtered db unsupported).
 (def snapshots (atom {}))
 (def ttl-ms 120000)
@@ -59,6 +61,45 @@
            (when (:valid_to row) {:f/valid-to (finite! (:valid_to row))})
            (when (:created_by row) {:f/created-by (:created_by row)})
            (when (:entity_type row) {:f/entity-type (:entity_type row)}) value)))
+ ;; [EXP-DX1] Why: live row datoms are exact write-time wire values. Rejected: rebuilding values on every pull.
+(defn row-prefix [^String id] (str "1" (format "%04x" (.length id)) id))
+(defn row-datom [db eid ^String prefix]
+  (let [datom (first (d/seek-datoms db :eavt eid :triplex.entity/row prefix))]
+    (when (and datom (= eid (:e datom)) (= (d/entid db :triplex.entity/row) (:a datom))
+               (.startsWith ^String (:v datom) prefix)) (:v datom))))
+(defn row-updates [db rows new-ids texts scope source position]
+  (let [out (java.util.ArrayList.) times (java.util.ArrayList.) prior (:triplex.scope/max-recorded-at (d/entity db scope))
+        irregular (volatile! false)]
+    (doseq [row rows]
+      (let [fresh (contains? new-ids (:id row)) stamp (if fresh (:recorded_at row) (:retracted_at row))]
+        (when fresh
+          (.add times (double (:recorded_at row)))
+          (when (or (<= (:recorded_position row) source) (> (:recorded_position row) position)) (vreset! irregular true)))
+        (when (some? (:retracted_at row))
+          (.add times (double (:retracted_at row)))
+          (when (or (<= (:retracted_position row) source) (> (:retracted_position row) position)) (vreset! irregular true)))
+        (if fresh
+          (when (nil? (:retracted_at row))
+            (let [text (get texts (:id row)) prefix (row-prefix (:id row))]
+              (when-not (and (string? text) (.startsWith ^String text prefix)) (codec/invalid "Missing or mismatched row text"))
+              (.add out (if (or (> (.length ^String text) 8000) (and (= "ref" (:value_type row)) (= "" (:value_string row))))
+                          [:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]
+                          [:db/add (str "e:" (:entity_id row)) :triplex.entity/row text]))))
+          (let [eid (d/entid db [:triplex.entity/id (:entity_id row)]) text (row-datom db eid (row-prefix (:id row)))]
+            (when (and (= 1 (:triplex.scope/rows-version (d/entity db scope)))
+                       (not (:triplex.entity/row-overflow (d/entity db eid))) (nil? text))
+              (codec/invalid "Missing live row datom"))
+            (when text (.add out [:db/retract eid :triplex.entity/row text]))))))
+    (when (pos? (.size times))
+      (let [first-time (double (.get times 0)) maximum (volatile! (double (or prior first-time)))]
+        (doseq [time times]
+          (let [v (double time)]
+            (when (or (not= v first-time) (and prior (< v (double prior)))) (vreset! irregular true))
+            (vswap! maximum max v)))
+        (.add out [:db/add scope :triplex.scope/max-recorded-at @maximum])
+        (.add out [:db/add "datomic.tx" :triplex.tx/max-recorded-at @maximum])))
+    (when @irregular (.add out [:db/add scope :triplex.scope/irregular true]))
+    out))
 (defn tx-data [db input]
   (let [rows (mapv decode-row (get input "rows")) new-ids (set (get input "newIds"))
         fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
@@ -78,6 +119,7 @@
                    :triplex.tx/operation-id (get input "operationId")
                    :triplex.tx/id (or (:id metadata) "") :triplex.tx/recorded-at (finite! (:recorded-at metadata))}]
                  (upserts fresh) (map #(fact-map % metadata) fresh)
+                 (row-updates db rows new-ids (get input "rowTexts") scope source position)
                  (mapcat (fn [row]
                            (let [eid (d/entid db [:f/id (:id row)]) entity (when eid (d/entity db eid))]
                              (when-not (and eid (:f/live entity) (:retracted_at row)) (codec/invalid "Invalid retraction"))
@@ -101,6 +143,7 @@
     (let [report (deref (d/transact conn (tx-data db input)) 5000 ::timeout)]
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
+       :operationId (get input "operationId")
        :position (codec/encode-value "long" (get input "position")) :datoms (count (:tx-data report))})
     (catch Exception e
       (let [text (str e)]
@@ -130,7 +173,7 @@
         (if (<= p (head-position current)) current
           (let [remaining (quot (- deadline (System/nanoTime)) 1000000)]
             (when (<= remaining 0) (unavailable! "Requested position is beyond the available snapshot"))
-            (Thread/sleep (long (min 10 remaining)))
+            (Thread/sleep 1)
             (let [remaining (max 1 (quot (- deadline (System/nanoTime)) 1000000)) next (refresh remaining)]
               (when (= next ::timeout) (unavailable! "Requested position did not become available before the deadline"))
               (recur next))))))))
@@ -223,3 +266,17 @@
                                      (every? (fn [[k field]] (or (nil? (get pattern k)) (.startsWith ^String (str (get pattern k)) "?")
                                                                (= (get pattern k) (get r field))))
                                              [["entityId" :entity_id] ["attribute" :attribute] ["entityType" :entity_type]]))) rows))}))
+
+;; [EXP-DX1] Why: snapshot, claim and known by-id rows share one immutable prefetch cut.
+;; Rejected: separate claim/read HTTP calls (R51's six-round-trip commit).
+(defn begin-command! [name db input]
+  (let [snapshot (begin! name db) command (get input "commandId") ids (get input "ids" [])]
+    (try
+      (merge snapshot
+        {:t (codec/encode-value "long" (d/basis-t db))
+         :claim (when command (:triplex.claim/tx-id (d/entity db [:triplex.claim/command-id command])))
+         :rows (mapv wire-row
+                 (keep (fn [id]
+                         (when-let [eid (d/entid db [:f/id id])]
+                           (let [r (row db eid)] (when (visible? r nil false) r)))) ids))})
+      (catch Exception e (release! name (:handle snapshot)) (throw e)))))

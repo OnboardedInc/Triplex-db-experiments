@@ -2,6 +2,7 @@ import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { encodeRow, decodeRow, type WireRow } from "./protocol.js";
+import { encodeRowText } from "./rowText.js";
 import http from "node:http";
 import { stringifyExact, validateTagged, type TaggedValue } from "./codec.js";
 
@@ -50,6 +51,8 @@ export interface DatomicLogPage {
 // [EXP-DA00] Why: 256 readers plus writers must not queue on the HTTP agent (R16). Rejected: default pool limits.
 export class DatomicClient {
   readonly agent: http.Agent;
+  private lastCommit: { db: string; position: number; t: string } | undefined;
+  readonly reachDiagnostics = { faults: 0, declines: {} as Record<string, number> };
   private readonly endpoint: URL;
   constructor(
     endpoint: string,
@@ -77,6 +80,16 @@ export class DatomicClient {
     body?: unknown,
     timeoutMs = this.timeoutMs,
   ): Promise<T> {
+    // [EXP-DX1] Why: a known commit t lets lagging peers wait locally; no transactor round trip.
+    // Rejected: d/sync without t and the old ten-millisecond poll.
+    if (body && typeof body === "object" && this.lastCommit) {
+      const input = body as { basis?: { recordedPosition?: number }; position?: number };
+      if (
+        path.includes(`/db/${this.lastCommit.db}/`) &&
+        (input.basis?.recordedPosition ?? input.position) === this.lastCommit.position
+      )
+        body = { ...body, basisT: this.lastCommit.t };
+    }
     const bytes = body === undefined ? undefined : Buffer.from(stringifyExact(body));
     return new Promise<T>((resolve, reject) => {
       const req = http.request(
@@ -158,6 +171,56 @@ export class DatomicClient {
     if (!Number.isSafeInteger(position) || position < 0) throw new RangeError("Unsafe position");
     return { handle: response.handle, position };
   }
+  async beginCommand(
+    db: string,
+    hint: { readonly commandId?: string; readonly tripleIds?: readonly string[] },
+  ) {
+    const response = await this.request<{
+      handle: string;
+      position: TaggedValue;
+      t: TaggedValue;
+      claim: string | null;
+      rows: WireRow[];
+    }>("POST", `/v2/db/${db}/begin`, {
+      ...(hint.commandId === undefined ? {} : { commandId: hint.commandId }),
+      ids: hint.tripleIds ?? [],
+    });
+    const p = validateTagged(response.position);
+    const position = Number(p.v);
+    if (
+      p.t !== "long" ||
+      !Number.isSafeInteger(position) ||
+      position < 0 ||
+      typeof response.handle !== "string"
+    )
+      throw new TypeError("Invalid begin position/handle");
+    const t = validateTagged(response.t);
+    if (
+      t.t !== "long" ||
+      BigInt(t.v) < 0n ||
+      (response.claim !== null && typeof response.claim !== "string")
+    )
+      throw new TypeError("Invalid begin t/claim");
+    const rows = new Map<string, TripleRow | null>((hint.tripleIds ?? []).map((id) => [id, null]));
+    const seen = new Set<string>();
+    for (const wire of response.rows) {
+      const row = decodeRow(wire);
+      if (seen.has(row.id) || row.retracted_at !== null || row.recorded_position > position)
+        throw new TypeError("Invalid prefetched row cut");
+      seen.add(row.id);
+      if (!rows.has(row.id)) throw new TypeError("Unexpected prefetched row");
+      rows.set(row.id, row);
+    }
+    return {
+      handle: response.handle,
+      position,
+      prefetch: {
+        ...(hint.commandId === undefined ? {} : { commandId: hint.commandId }),
+        claim: response.claim,
+        rows,
+      },
+    };
+  }
   release(db: string, handle: string): Promise<unknown> {
     return this.request("POST", `/v1/db/${db}/release`, { handle }, 250);
   }
@@ -165,7 +228,7 @@ export class DatomicClient {
     const response = await this.request<{ rows: WireRow[] }>("POST", `/v1/db/${db}/read`, input);
     return response.rows.map(decodeRow);
   }
-  transact(
+  async transact(
     db: string,
     input: {
       sourceK: number;
@@ -175,12 +238,32 @@ export class DatomicClient {
       rows: readonly TripleRow[];
       newIds: readonly string[];
       claims: readonly { commandId: string; txId: string; timestamp: number }[];
+      handle?: string;
+      release?: boolean;
     },
   ): Promise<unknown> {
-    return this.request("POST", `/v1/db/${db}/transact`, {
-      ...input,
-      rows: input.rows.map(encodeRow),
-    });
+    const response = await this.request<{ t?: TaggedValue; position?: TaggedValue }>(
+      "POST",
+      `/v1/db/${db}/transact`,
+      {
+        ...input,
+        rows: input.rows.map(encodeRow),
+        rowTexts: Object.fromEntries(
+          input.rows
+            .filter((r) => input.newIds.includes(r.id) && r.retracted_at === null)
+            .map((r) => [r.id, encodeRowText(r)]),
+        ),
+      },
+    );
+    if (response.t && response.position) {
+      const p = validateTagged(response.position);
+      const position = Number(p.v);
+      const t = validateTagged(response.t);
+      if (p.t !== "long" || !Number.isSafeInteger(position) || position < 0 || t.t !== "long" || BigInt(t.v) < 0n || position !== input.position)
+        throw new TypeError("Commit basis mismatch");
+      this.lastCommit = { db, position, t: String(t.v) };
+    }
+    return response;
   }
   operation(db: string, operationId: string): Promise<{ status: "committed" | "absent" }> {
     return this.request("GET", `/v1/db/${db}/operation/${encodeURIComponent(operationId)}`);

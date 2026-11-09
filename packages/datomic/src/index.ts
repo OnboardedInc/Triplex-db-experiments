@@ -16,6 +16,7 @@ class Connection extends Context.Service<Connection, DatomicClient>()(
 // [EXP-DA01] Why: one scoped peer client is shared by writes and queries. Rejected: independent clients (lose callback overlay identity).
 export function makeDatomicRuntime(options: {
   readonly url: string;
+  readonly admissionQueue?: boolean;
   readonly maxRetries?: number;
   readonly resolutionTimeoutMs?: number;
 }): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> {

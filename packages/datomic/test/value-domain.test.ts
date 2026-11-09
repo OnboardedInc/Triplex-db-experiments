@@ -51,7 +51,15 @@ async function withDatomicFixture(
     const input = raw ? JSON.parse(raw) : {};
     const route = req.url!.split("/").at(-1);
     let answer: unknown = {};
-    if (route === "snapshot")
+    if (route === "begin")
+      answer = {
+        handle: "fixture",
+        position: { t: "long", v: String(position) },
+        t: { t: "long", v: String(position) },
+        claim: claims.get(input.commandId) ?? null,
+        rows: (input.ids ?? []).flatMap((id: string) => (rows.has(id) ? [rows.get(id)!] : [])),
+      };
+    else if (route === "snapshot")
       answer = { handle: "fixture", position: { t: "long", v: String(position) } };
     else if (route === "basis")
       answer = {
