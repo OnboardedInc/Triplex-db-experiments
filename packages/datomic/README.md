@@ -63,3 +63,15 @@ The gateway's qualification-only `route: "live"` pull uses the position-retired
 positions that are not physical transaction ends. Native EDN selecting that index
 has the same basis guard. No TypeScript runtime option selects it by default.
 G1 on Datomic also runs the seeded O-REPLAY route-equivalence fixture.
+
+The native gateway fixes its input bindings to `:in $ $rules`: `$` is the held
+Datomic value and `$rules` is an ordinary in-memory relation. Before execution,
+it classifies every database pattern, including nested conjunctions, disjunctions
+and negation. Only literal keyword attributes other than `:f/live` prove a
+history-safe route. Variable, numeric, lookup-ref and omitted attributes are
+conservatively subject to the same live-route guard, regardless of how they are
+bound. They refuse T/TP and interior position cuts with `BasisNotAvailable`;
+callers can use literal history attributes instead. This applies to vector and
+map EDN queries. Allowlisted functions cannot issue queries or pulls themselves.
+The required G1 fixture now also compares all query paths and basis families
+with history before and after retirement, retaining exact IDs and typed refusals.

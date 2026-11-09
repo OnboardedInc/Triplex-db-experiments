@@ -1,3 +1,4 @@
+import { queryRouteMatrix } from "./query-route-matrix.js";
 import { randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -32,7 +33,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("Datomic route equiv
     console.log(JSON.stringify({ kind: "datomic-test-db-created", scope, ...created }));
     const dir = path.resolve(
       process.env["DATOMIC_ROUTE_EVIDENCE_DIR"] ??
-        path.resolve(import.meta.dirname, "../../../lab/experiments/EXP-DA01/round3/oracle"),
+        path.resolve(import.meta.dirname, "../../../lab/experiments/EXP-DA01/round4/oracle"),
       `seed-${seed}-${randomUUID()}`,
     );
     fs.mkdirSync(dir, { recursive: true });
@@ -318,9 +319,12 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("Datomic route equiv
       expect(after.map((r) => r.map(canonicalRouteValue).sort())).toEqual(
         expected.map((r) => r.map(canonicalRouteValue).sort()),
       );
+      const queryMatrix = await queryRouteMatrix(client, created.db, scope, (observation) =>
+        fs.appendFileSync(readsFile, canonicalRouteValue(observation) + "\n"),
+      );
       fs.writeFileSync(
         path.join(dir, "routes.json"),
-        JSON.stringify({ seed, head, bases, outcomes, trace }, null, 2) + "\n",
+        JSON.stringify({ seed, head, bases, outcomes, trace, queryMatrix }, null, 2) + "\n",
         { flag: "wx" },
       );
       console.log(

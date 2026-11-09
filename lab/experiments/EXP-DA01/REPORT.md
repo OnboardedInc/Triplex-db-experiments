@@ -404,3 +404,95 @@ The resident is READY on the exact pinned image, holder EXP-DA01, with its volum
 12,981,252,096 bytes host free. Both oracle runs and complete row/refusal journals for each G1 route fixture are retained.
 The checksum index excludes dependency/cache directories and its own generation logs; all other retained packet files are indexed.
 Canonical `lab/runs/` receipts, original raw runs and engine build contexts remain in place. Nothing was merged or pushed.
+
+## Round 4 — close indirect live-index selection (CX-DA01)
+
+Joint review `807c46e` returned FIX-FIRST for F1. The original reviewer script and
+semantic test source are copied unchanged under `round4/reviewer/`; the local
+script changes only relative imports to run at this deeper location. Its fresh
+pre-deploy characterization reproduces 40 to 30 IDs for `ground` and `:db/ident`
+at T/TP while history returns 40. This is a defect characterization, not a PASS.
+The script captures dirty candidate source bytes as well as the distinct old
+resident identity; it does not claim the edited gateway was already deployed.
+
+The native route classifier now proves history eligibility over all database
+patterns and nested conjunction, negation and disjunction clauses. Any literal
+`:f/live`, variable, numeric, lookup-ref or omitted attribute selects the shared
+`storage/assert-subject-route!` guard before execution. Only literal other keyword
+attributes prove history safety. This deliberately refuses even a variable bound
+to `:f/subject` for unsupported cuts; using a literal history attribute is the
+supported alternative. Fixed `$ $rules` input order prevents disguising the
+Datomic database as the in-memory relation. Allowlisted scalar functions do not
+issue queries or pulls. Compiled queries, rule rounds and optional pulls continue
+to use history attributes and their existing immutable query handle.
+
+The required G1 O-REPLAY fixture now also runs `query-route-matrix.ts`: latest,
+validity boundaries, zero/old/physical/interior/future P, T and TP cuts through
+adapter pattern/batch reads, compiled queries, rules, optional projections,
+literal/ground/ident/numeric/omitted/nested/map native forms and live pull shapes.
+Every native form also executes with held and speculative database values.
+Before/after checks compare complete sorted assertion IDs against the history
+route, require typed refusal for ineligible routes, and repeat named cuts after
+ten retirements. Existing O-REPLAY full-row comparisons remain unchanged. All
+matrix observations share the six existing oracle/route evidence files, and G1
+binds the new helper source without changing its expected executed test count or
+G0 skips.
+
+The first expanded live run retained `live-first.*`: 117/118 pass, with an actual
+`attribute-not-indexed` error on the previously untested live attribute-only pull.
+Whole live enumeration now uses AEVT; per-subject VAET remains unchanged. Both
+rebuild/deploy windows and the first failure are retained. The second image's
+selftest passes 8 tests / 171 assertions; the resident is restored READY with its
+volume retained. Final gates and source-bound live validation are recorded below
+once complete.
+
+### Round 4 PASS / verdict / receipt audit (preamble 9a)
+
+This list was written before committing the changed verdict-producing code.
+
+1. **`query-route-matrix.ts` assertions.** Content: actual IDs equal the explicit
+   history control, latest has 40/30, named historical cuts retain 40, optional
+   values agree, and every ineligible outcome has `BasisNotAvailable`; arbitrary
+   exceptions cannot count as refusal. Freshness: the enclosing fixture creates a
+   new UUID database and writes this attempt's assertions, logical cuts and ten
+   retirements. Binding: every journal entry names phase, path, requested basis,
+   eligibility, expected IDs and observed IDs/error; G1 hashes this helper with the
+   fixture and binds the actual endpoint, stable resident and built exports.
+2. **`route-equivalence.test.ts` / required G1 step.** Content: existing independent
+   O-REPLAY row-byte equality and declared refusals still run, followed by the full
+   matrix; any assertion fails the one required live fixture. G1 still requires
+   exit zero, one actual pass, no failures/pending, all six evidence files, stable
+   dist and resident. Freshness: new UUID oracle directory and test database in
+   each gate attempt. Binding: exact helper/fixture/oracle preimages are included
+   in the gate receipt; route journals and expected bytes are hashed. No old PASS
+   is adopted as a fresh run and no skip/denominator is weakened.
+3. **JVM `native-route-classification` / engine selftest.** Content: actual parser
+   forms select the expected route, including both review reproductions, explicit
+   sources, numeric/lookup-ref/omitted attributes and nested/map grammar. Existing
+   engine-backed guard tests run too. Freshness: a new selftest invocation in each
+   authorized restart window. Binding: engine verifies the locally built pinned
+   image against the fresh verified context/source/config hash, then runs its
+   actual JVM; retained selftest/build/deploy logs identify these invocations.
+4. **`round4/live.mjs` validation receipt.** Content: JSON report must contain 118
+   executed passes, no failures or pending, and every one of 18 created databases
+   must have one matching successful actual delete. Source and built bytes, owner,
+   image, health, container ID and start time must be unchanged. Freshness: output
+   must not exist and log creation is exclusive; unique scope events and this
+   invocation's start/end/output SHA are retained. Binding: exact source/dist
+   fingerprints, command, slot owner and pinned image are in the receipt. Its raw
+   observation receipt is saved before assertions to preserve failures; only the
+   final `validated:true` output means all checks passed.
+5. **Copied reviewer characterization.** Content: actual before 40 / after 30 and
+   literal refusal/history 40 controls, plus actual successful delete. Freshness:
+   new UUID database and new sequential writes. Binding: original script identity,
+   local import-only adaptation, complete request/response bytes, observed old
+   gateway/owner and source snapshots. `findingReproduced` characterizes the old
+   defect and is never an acceptance verdict.
+6. **Round 4 collector / final evidence index.** Content: final-source G0, linked
+   G1 runs, actual outcome denominators, oracle and matrix bytes/refusals, live
+   validation/cleanup and resident/proof preservation must all match. Freshness:
+   select this round's exact implementation head and current attempts, not prior
+   rounds; copied raw files preserve their run IDs and times. Binding: rehash gate
+   evidence, helper/oracle sources, image/build context and retained proof bodies;
+   `FILES.json` checks every retained artifact's path, length and SHA. These checks
+   qualify the exercised regression slice only, not production or durability.
