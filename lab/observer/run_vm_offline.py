@@ -13,7 +13,7 @@ def sha(raw):return hashlib.sha256(raw).hexdigest()
 def main():
     if shutil.disk_usage(ROOT).free<5*1024**3:raise RuntimeError('host disk below 5 GiB')
     out=Path(sys.argv[1]).resolve();out.mkdir(parents=True,exist_ok=False)
-    paths=['lab/bin/engine.mjs','lab/bin/vm-observer.mjs','lab/observer/vm_normalizer.py','lab/observer/vm_watch.py','lab/observer/vm_fixture.py','lab/observer/vm_verify.py','lab/observer/test_vm.py','lab/observer/run_vm_offline.py','lab/observer/collector.py','lab/observer/capture.py','lab/observer/verify_seal.py']
+    paths=['lab/experiments/EXP-OBS01/round8/probe_round8.py','lab/bin/engine.mjs','lab/bin/vm-observer.mjs','lab/observer/vm_normalizer.py','lab/observer/vm_watch.py','lab/observer/vm_fixture.py','lab/observer/vm_verify.py','lab/observer/test_vm.py','lab/observer/run_vm_offline.py','lab/observer/collector.py','lab/observer/capture.py','lab/observer/verify_seal.py']
     pins={p:sha((ROOT/p).read_bytes()) for p in paths}
     for path in paths:
         target=out/'source'/path;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes((ROOT/path).read_bytes())

@@ -1131,3 +1131,123 @@ No VM overhead rerun, live driver integration, NS acceptance, root pnpm suite,
 merge into main or push. Open work is G03's trusted driver-record integration and
 matched-arm smoke; Q100s resolves the former decision/publication classification
 question without retrospectively promoting the failed round-6 attempt.
+
+## Round 8 — bind physical files, refuse unproven durability and inverted windows
+
+**North star:** P3 correctness: source/consumer publication brackets must describe
+the same physical store, and visibility must not be presented as durability.
+**Result:** all **20 earlier tests remain passing**, plus 3 new Python tests
+(14 Python + 9 Node total). All nine adapted reviewer probes meet their expected
+outcomes. F1/F3 are corrected; F2's unsupported durable inference is closed by
+refusal. **Live durable/P3 normalization is blocked until independently enforced
+writer/VFS sync evidence exists.** This round does not implement or qualify that
+instrumentation. No offline result is a durable/P3 or NS acceptance grant.
+
+Read review `verify/OBS01-r7` at `2f1d1f10`, its `VERIFY-round7.md`, current scope,
+North-star/protocol and main Q100b/r rows. Copied its exact probe to
+[round8/reviewer/probe_round7.py](round8/reviewer/probe_round7.py), verified equal
+to `git show 2f1d1f10:lab/verify/OBS01/probe_round7.py`; SHA256
+`17c6f471c77ba56cb225ce6e41d55add543015d067b0bf1246b89880e27e63c1`.
+[round8/probe_round8.py](round8/probe_round8.py) changes root/retention paths and
+expected outcomes, records collector errors before refusal, and supplies actual
+fixture writer-connection state. It preserves the original database replacement,
+OFF/delayed-sync and 15.9 ms send reproductions. Both copies are committed.
+
+### Findings and fixes
+
+| Finding | Change | Offline proof |
+| --- | --- | --- |
+| F1: SQLite poll connection used an old inode while WAL/final reads used a replacement pathname | `FileBinding` holds opened main/WAL/SHM descriptors, checking device/inode/link identity at bind, before/after each poll, around tails and final reads; read handles are checked against held descriptors. Rename/delete/self-move inotify events refuse. Once an ancillary object is bound it cannot disappear or change. Raw events carry identities; the parser independently rejects inconsistent/missing bindings | Actual copied open-connection replacement probe now refuses with F1 after a fresh independent reader sees replacement LSN 1. Main inode changed 176698069 → 176698080. Same-byte replacements refuse for broker and consumer bindings; main/WAL/SHM identity-mutation negatives refuse |
+| F1: bracket could shift to a later store/observation | Keep R44 formula: L is last-negative start, U first-positive end from bound file; never a later positive poll | Same-inode FULL collector control explicitly asserts L/U against its actual first positive and preceding negative polls; synthetic 400 ms later positive does not move [0,30 ns] |
+| F2: readable state inferred to be durable without writer sync proof | Pinned offline source state now includes the **actual fixture writer connection's** WAL mode, synchronous level and SQLite version. OFF/NORMAL or missing state refuses. Live VM mode always refuses pending independent writer/VFS enforcement; neither an RO default PRAGMA nor a candidate FULL declaration can qualify it | Actual OFF writer readback is 0; copied delayed-sync probe refuses F2. FULL control readback is 2 and accepts only its explicitly offline visibility fixture. NORMAL, missing state and attempted VM use with the same FULL declaration refuse |
+| F3: impossible send/window overlaps a coarse candidate stamp | Send after matched first-positive U refuses (not merely after U+5 ms); inverted stamp/window intervals refuse before overlap testing | Copied send 15.9 ms / U 10.55 ms / stamp [15,16] ms refuses F20. Send exactly U remains valid; send U+1 ns refuses. Grouped members use the latest send, so any member after U refuses |
+
+Important F2 boundary: SQLite `synchronous` is **connection-local** and is not
+recoverable from database/WAL bytes or the observer's RO connection. The reviewer
+explicitly rejects a candidate configuration flag as proof. Q100b/r additionally
+require the exact filesystem/device/flush class and implementation qualification.
+Thus `writerState` with `scope=evaluator-offline-fixture` is an evaluator fixture
+input bound by the protected case SHA; it does not authorize live durability.
+`durability_state(..., 'vm')` refuses even if the same field claims FULL. This is
+an explicit loss of unproven functionality, not a new qualified sync witness.
+Future G03 integration needs independently enforced/witnessed synchronization
+bound to writer/build, main/WAL identities and commit range, as well as its
+already-required trusted driver-send adapter. No SUT code was changed.
+
+### Gates and retention
+
+All gates/fingerprinting used `heavy.mjs` with a free-space guard above 5 GiB.
+They waited for the existing four admitted lab jobs; no slot limit was bypassed.
+Commands, each using a fresh durable attempt directory:
+
+```sh
+node lab/bin/heavy.mjs --label CX-OBS01-R8-final -- \
+  python3 -B lab/observer/run_vm_offline.py \
+  /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round8/offline02
+node lab/bin/heavy.mjs --label CX-OBS01-R8-final-probes -- \
+  python3 -B lab/experiments/EXP-OBS01/round8/probe_round8.py \
+  /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round8/probes02
+```
+
+Final offline suite: **14 Python + 9 Node**. The 11 earlier Python test methods
+remain and their original assertions pass (their fixtures now supply actual
+writer pragmas and file identities). Existing O-OBS authentication/sealed-fixture
+parser re-execution and parser-change negative still pass. Original delay plants,
+clock, WAL, schema and final-state gates remain.
+
+Final adapted reviewer ledger: path replacement **REFUSED/F1**; synchronous OFF
+**REFUSED/F2**; same-inode FULL **ACCEPTED as offline visibility only**; impossible
+send **REFUSED/F20**; WAL rewrite, reset, checksum, unknown schema and checkpoint
+rollover all **REFUSED**. FULL control's actual L/U are
+853840928800625 / 853840940074916 ns and bracket the actual commit-call interval;
+its first-positive/preceding-negative assertions pass. No precision beyond the
+measured poll/query period is claimed.
+
+`offline01` and `probes01` passed their then-current source. Extra first-positive
+and independent-read assertions were then added to the adapted probe; the first
+retention check correctly refused current-source drift. Both suites were rerun
+as `offline02`/`probes02`, whose exact final source pins match current files. All
+four attempts remain, without rewriting earlier results. The original reviewer
+probe remains byte-identical and separate from the adapted version.
+
+Durable root:
+`/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round8/`.
+[round8/INDEX.json](round8/INDEX.json) / [round8/SHA256SUMS](round8/SHA256SUMS)
+cover **239 files**, with **234 nested manifest entries** checked, complete file
+sets and read-back hashes verified. Manifest SHA256:
+`6cb918e50318e2fdcc51e742fc2627291b05c912fcead7cf8537e32117aedd98`.
+Raw database/WAL/collector chunks, per-attempt source snapshots and sealed offline
+fixtures/keys remain outside Git. No round-6/7 evidence was modified.
+
+### PASS audit (new/changed verdict and receipt sites)
+
+The unchanged round-6/7 HMAC/seal, schema/CRC/history, clock, offer binding,
+publication stamp and O-OBS rerun audit continues to apply. New/changed sites:
+
+| Site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `FileBinding.verify/check_open`, poll/tail/final paths | Exact opened descriptor versus path device/inode/link; no symlink/replacement; rename/delete refuses | Rechecked before/after queries and each byte read; descriptors held through capture | Same source main/WAL/SHM objects, not equal bytes at a later inode |
+| `file_identity` | Required identity records; no bound-object substitution/removal | Orders actual physical observations by query-end/event time, across batched poll transport | All raw records already match run/container/case/source; final identity must equal earlier bound objects |
+| `durability_state` | Actual offline fixture writer's WAL/FULL/version state required; OFF/NORMAL/missing refuses; **all VM use refuses** | Fixture state sampled from current test writer; no earlier/live profile inferred | State protected by exact source/case SHA; fixture scope cannot grant VM/P3 durability |
+| `stamp_window` / SQL01 stamp overlap | Send ≤ U, ordered stamp and window intervals, unchanged tolerances | Matched current first-positive bracket and current driver send | Every decoded offer member retains source/stream/operation/attempt/run/clock binding |
+| New Python regression gates | Same-byte replacement for both stores, altered physical IDs, source OFF/NORMAL/missing state and VM FULL declaration negative, copied inverted-window case; first-positive and boundary controls | Fresh SQLite fixtures and random run IDs; final source snapshot matches | Assertions use actual file IDs/writer pragmas and exact expected errors/output |
+| Adapted `collector_case/fixture_case/main` receipts | Actual fresh reader sees replacement; F1 collector error required; OFF writer readback/F2 required; FULL first-positive control and exact nine expected outcomes | Fresh files/threads/attempt; raw samples and pre/post source hashes | Actual run/source/member send, physical IDs, fixture writer mode; explicit offline platform adapters, no VM claim |
+| `run_vm_offline` / `round8/retain.py` | Child statuses, frozen source equality, all nine probe outcomes, original reviewer copy equality, complete manifests and read-back bytes | New final attempt IDs; earlier differing pins retained, not adopted | Exact current pins, reviewer commit source, durable roots, old/new hashes. PASS is an offline regression gate only |
+
+### Moved source hashes and limits
+
+No `lab/acceptance/` edits, contract version change or re-pin. Changed observer
+source identities (old at `c1a14ad5`; contract owner updates downstream pins):
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/observer/vm_normalizer.py` | `dea777c2aeab0060d7f1d4b13f157a54f1cdbcf6c367fb3fc63c5ea49e5f965b` | `2b564d42d860ed983b4c8cbcf33b1ff103228fc597f764791ab32496df9b0118` |
+| `lab/observer/vm_watch.py` | `ba49db1b705c07c3e1ca3da20b99f284fbb580b6a4f76c0d17f6be6353dbd7bd` | `e545745e2667a8bf1787d1951b053e65c27f951e37cce78e38a5167c6da827b2` |
+| `lab/observer/test_vm.py` | `046ec9ebbfcace452565f4e7d5bb9d0cb4f1f87d54f996790a847f5d9952fc4c` | `9c128c47999fcb00e46088a5cf22771f332be01711f4d8817956a4a5c603b531` |
+| `lab/observer/run_vm_offline.py` | `17a6fd5a0d40e52d273ddf3aca4d9ba3b1eb4e3fb191f52e324ae27d892dd429` | `10f92940f9823d4d46589abea1a10e12737757326ad10b058640769273f2b6dd` |
+
+No Docker/engine/Colima lifecycle, volume, VM run, live inotify delivery, source
+instrumentation, NS measurement, power-loss qualification, root pnpm suite, merge
+into main or push. Live durable publication remains REFUSED pending the exact
+independent sync witness above; driver/clock/overhead integration still belongs
+to G03. Offline gates do not settle those open qualifications.

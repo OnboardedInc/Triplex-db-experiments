@@ -153,3 +153,35 @@ them normalization refuses. No candidate-selectable stamp classification exists.
 The original round-6 unsealed attempt stays failed evidence. Its unmatched partial
 A/B result on a busy host is **not a valid overhead estimate**. No VM measurement
 was repeated for round 7; G03 round 5 owns matched-arm overhead measurement.
+
+## Round 8: bound files and durable-use refusal
+
+The collector holds a read descriptor for each observed main/WAL/SHM object.
+Every poll checks its device/inode binding before and after querying. Tail and
+final byte reads also compare their opened handles to those descriptors; unlink,
+replacement, symlink, rename/delete events or a changed identity refuse. Newly
+created ancillary files bind once; after binding, absence is a change. Raw poll,
+WAL and final events include identities, independently checked by the parser.
+Brackets still use the last negative start and the **first** positive end from
+that bound file; later positive polls do not move the bracket forward.
+
+`PRAGMA synchronous` is connection-local, not encoded in `broker.db` or its WAL.
+A read-only observer connection's PRAGMA and a candidate configuration field
+cannot prove the writer's synchronization. The pinned source state for an
+**offline fixture** must therefore include `writerState` with scope
+`evaluator-offline-fixture`, the actual fixture writer's `sqliteVersion` and its
+connection-read `pragmas: {journal_mode: "wal", synchronous: 2}`. OFF/NORMAL,
+missing state or implementation refuse. Fixture acceptance is visibility/parser
+coverage only, not a Q100b/r durability receipt.
+
+**Live VM durable/P3 normalization now refuses unconditionally** until an
+independent writer/VFS sync-enforcement witness is integrated and qualified for
+the exact writer, SQLite build, DB/WAL identities and commit range. This round
+adds no such instrumentation and does not accept a magic candidate-reported FULL
+flag as a substitute. The existing collector may retain visibility-only chunks;
+it cannot seal them as durable/P3 evidence through this parser. This closes F2
+by refusal, with the missing witness explicit. Future G03 integration must meet
+this requirement as well as supply trusted driver-send records.
+
+Decision sends after the matched first-positive U now refuse, even within U+5 ms.
+Inverted stamp/window intervals also refuse before interval-overlap testing.

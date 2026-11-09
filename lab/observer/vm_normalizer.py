@@ -171,6 +171,7 @@ def stamp_window(field,bracket,send_ns=None):
     kind=STAMP_KINDS[field]
     if kind=='decision':
         if type(send_ns) is not int or send_ns<0:raise ValueError('F20 decision stamp missing driver send')
+        if send_ns>bracket['U']:raise ValueError('F20 driver send after publication U')
         return send_ns,bracket['U']+5000000
     return bracket['L']-1000000,bracket['U']+5000000
 
@@ -194,6 +195,28 @@ def crosscheck(summary,stamps):
         bracket=bracket_for(summary,stamp['position'])
         lo,hi=stamp_window('observer.cr.atNs',bracket)
         if not lo<=stamp['atNs']<=hi:raise ValueError('F20 CR-INCONSISTENT')
+
+
+def file_identity(events):
+    bound={}
+    observations=[e for e in events if e['event'] in ('poll','wal','final')]
+    for event in sorted(observations,key=lambda e:e.get('endNs',e.get('atNs',0))):
+        files=event.get('files')
+        if not isinstance(files,dict) or set(files)!={'main','-wal','-shm'} or files['main'] is None:raise ValueError('F1 missing physical file binding')
+        for name,value in files.items():
+            if value is not None and (not isinstance(value,list) or len(value)!=2 or any(type(v) is not int or v<0 for v in value)):raise ValueError('F1 invalid file identity')
+            if name in bound and value!=bound[name]:raise ValueError('F1 file identity changed')
+            if value is not None:bound[name]=value
+    return bound
+
+def durability_state(source,mode):
+    # [EXP-OBS01-R8] Why: synchronous is connection-local, not recoverable from SQLite bytes.
+    # Rejected: treating the observer RO PRAGMA or candidate config as writer sync proof.
+    state=source.get('writerState',{})
+    if mode!='offline-synthetic':raise ValueError('F2 durable publication needs independent writer/VFS sync enforcement; visibility only')
+    if state.get('scope')!='evaluator-offline-fixture' or state.get('pragmas')!={'journal_mode':'wal','synchronous':2}:raise ValueError('F2 missing/non-FULL pinned writer state')
+    if not isinstance(state.get('sqliteVersion'),str) or not state['sqliteVersion']:raise ValueError('F2 writer implementation missing')
+    return state
 
 def normalize(raw):
     frames=[json.loads(line) for line in raw.splitlines()];events=[];binding=None;last=-1
@@ -234,6 +257,7 @@ def normalize(raw):
             'claim':'observer readbacks and intervals only; no NS semantic PASS'}
     for source in case['case']['sources']:
         sid=source['id'];selected=[e for e in events if e.get('source')==sid]
+        identity=file_identity(selected);durable=durability_state(source,mode)
         polls=[e for e in selected if e['event']=='poll'];summary=brackets(polls)
         captured=b''
         for event in selected:
@@ -270,6 +294,7 @@ def normalize(raw):
                 low=row['committed_at']*1000000-offset_high;high=(row['committed_at']+1)*1000000-offset_low
                 send=decision_send(events,source,row,clocks,lower,upper)
                 window_low,window_high=stamp_window('sql01.frames.committed_at',interval,send)
+                if low>high or window_low>window_high:raise ValueError('F20 inverted stamp/window interval')
                 if high<window_low or low>window_high:raise ValueError('F20 CR-INCONSISTENT SQL01 decision committed_at')
                 stamp_checks.append({'field':'frames.committed_at','kind':STAMP_KINDS['sql01.frames.committed_at'],
                     'lsn':row['lsn'],'stampLowNs':low,'stampHighNs':high,'windowLowNs':window_low,'windowHighNs':window_high})
@@ -289,7 +314,7 @@ def normalize(raw):
                 if frontiers:
                     frontier=frontiers[0];interval=bracket_for(summary,[int(frontier['epoch']),int(frontier['offset'])+1])
                     positions.extend({**row,'L':interval['L'],'U':interval['U'],'frontier':frontier} for row in affected)
-        result['stores'][sid]={'stampChecks':stamp_checks,'publication':summary,'positions':positions,'state':state,'transactions':transactions,
+        result['stores'][sid]={'fileIdentity':identity,'writerState':durable,'stampChecks':stamp_checks,'publication':summary,'positions':positions,'state':state,'transactions':transactions,
             'mainSha256':sha(main),'walSha256':sha(wal)}
     seen={}
     for event in events:

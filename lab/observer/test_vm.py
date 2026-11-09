@@ -45,11 +45,17 @@ class VmObserver(unittest.TestCase):
     def tearDown(self):self.db.close();self.consumer.close();self.temp.cleanup()
     def events(self,delay=100):
         sources=[{'id':'broker','profile':'sql01'},{'id':'consumer','profile':'fd01','consumer':'c'}]
+        for source,db in zip(sources,(self.db,self.consumer)):
+            source['writerState']={'scope':'evaluator-offline-fixture','sqliteVersion':sqlite3.sqlite_version,'pragmas':{'journal_mode':db.execute('PRAGMA journal_mode').fetchone()[0],'synchronous':db.execute('PRAGMA synchronous').fetchone()[0]}}
         case={'clockMode':'offline-synthetic','startedNs':0,'sources':sources};events=[{'event':'begin','case':case},{'event':'domain','role':'observer','domain':DOMAIN}, {'event':'clock-wall','lowerNs':0,'upperNs':0,'realNs':0}]
         for sid,main,wal,visible,base in [('broker',self.main,Path(str(self.sql)+'-wal').read_bytes(),[0,1],10000000),('consumer',self.fdmain,Path(str(self.fd)+'-wal').read_bytes(),[0,2],10000000+delay*1000000)]:
             events.extend([{'event':'poll','source':sid,'startNs':base,'endNs':base+50000,'visible':[0,0]}, {'event':'poll','source':sid,'startNs':base+500000,'endNs':base+550000,'visible':visible}, {'event':'wal','source':sid,'offset':0,'bytes':n.blob(wal)}, {'event':'final','source':sid,'main':n.blob(main),'wal':n.blob(wal)}])
         events.append({'event':'driver-send','source':'broker','stream':json.loads(self.db.execute('SELECT payload FROM frames WHERE lsn=1').fetchone()[0])['s'],'operationId':json.loads(self.db.execute('SELECT payload FROM frames WHERE lsn=1').fetchone()[0])['m'][0]['o'],'attemptId':json.loads(self.db.execute('SELECT payload FROM frames WHERE lsn=1').fetchone()[0])['m'][0]['a'],'atNs':5000000,'domain':DOMAIN})
         events.extend([{'event':'clock-wall','lowerNs':500000000,'upperNs':500000000,'realNs':500000000},{'event':'end','atNs':600000000}])
+        for event in events:
+            if event['event'] in ('poll','wal','final'):
+                path=self.sql if event['source']=='broker' else self.fd
+                event['files']={suffix or 'main':([file.stat().st_dev,file.stat().st_ino] if file.exists() else None) for suffix in ('','-wal','-shm') for file in [Path(str(path)+suffix)]}
         return [{'runId':self.run,**event} for event in events]
     def frames(self,events):
         case=events[0]['case'];result=[]
@@ -130,6 +136,35 @@ class VmObserver(unittest.TestCase):
             elif mutation=='run':offer['runId']='earlier-attempt'
             else:offer[{'operation':'operationId','attempt':'attemptId'}.get(mutation,mutation)]='other'
             with self.subTest(mutation=mutation),self.assertRaises(ValueError):n.normalize(self.frames(events))
+    def test_bound_files_refuse_replacement_source_and_consumer(self):
+        from vm_watch import FileBinding,stable
+        for path in (self.sql,self.fd):
+            binding=FileBinding(path)
+            try:
+                before=binding.verify();original=path.read_bytes();path.rename(Path(str(path)+'.old'));path.write_bytes(original)
+                with self.assertRaisesRegex(ValueError,'F1'):binding.verify()
+                with self.assertRaisesRegex(ValueError,'F1'):stable(path,binding=binding)
+                self.assertNotEqual(before['main'][1],path.stat().st_ino)
+            finally:binding.close()
+    def test_source_durability_and_file_binding_refusals(self):
+        for sync in (0,1):
+            self.db.execute('PRAGMA synchronous='+str(sync))
+            with self.assertRaisesRegex(ValueError,'F2'):n.normalize(self.frames(self.events()))
+        self.db.execute('PRAGMA synchronous=FULL')
+        events=self.events();del events[0]['case']['sources'][0]['writerState']
+        with self.assertRaisesRegex(ValueError,'F2'):n.normalize(self.frames(events))
+        for key in ('main','-wal','-shm'):
+            events=self.events();final=next(e for e in events if e['event']=='final' and e['source']=='consumer');final['files'][key]=[0,123]
+            with self.assertRaisesRegex(ValueError,'F1'):n.normalize(self.frames(events))
+        with self.assertRaisesRegex(ValueError,'F2'):n.durability_state(self.events()[0]['case']['sources'][0],'vm')
+    def test_first_positive_and_inverted_decision_window(self):
+        probe=load('review_r8',ROOT.parent/'experiments/EXP-OBS01/round8/probe_round8.py')
+        events=self.events();probe.impossible_send(self,events)
+        with self.assertRaisesRegex(ValueError,'F20 driver send after publication'):n.normalize(self.frames(events))
+        summary=n.brackets([{'startNs':0,'endNs':10,'visible':[0,0]},{'startNs':20,'endNs':30,'visible':[0,1]},{'startNs':400000000,'endNs':400000010,'visible':[0,1]}])
+        bracket=n.bracket_for(summary,[0,1]);self.assertEqual((bracket['L'],bracket['U']),(0,30))
+        with self.assertRaisesRegex(ValueError,'F20'):n.stamp_window('sql01.frames.committed_at',bracket,31)
+        self.assertEqual(n.stamp_window('sql01.frames.committed_at',bracket,30),(30,5000030))
     def test_rewritten_wal_f11_even_when_final_is_valid(self):
         tail=WalTail();raw=Path(str(self.sql)+'-wal').read_bytes();tail.update(raw)
         changed=raw[:-1]+bytes([raw[-1]^1])

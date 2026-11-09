@@ -1,0 +1,37 @@
+{
+  "changes": {
+    "lab/observer/run_vm_offline.py": {
+      "newSha256": "10f92940f9823d4d46589abea1a10e12737757326ad10b058640769273f2b6dd",
+      "oldSha256": "17a6fd5a0d40e52d273ddf3aca4d9ba3b1eb4e3fb191f52e324ae27d892dd429"
+    },
+    "lab/observer/test_vm.py": {
+      "newSha256": "9c128c47999fcb00e46088a5cf22771f332be01711f4d8817956a4a5c603b531",
+      "oldSha256": "046ec9ebbfcace452565f4e7d5bb9d0cb4f1f87d54f996790a847f5d9952fc4c"
+    },
+    "lab/observer/vm_normalizer.py": {
+      "newSha256": "2b564d42d860ed983b4c8cbcf33b1ff103228fc597f764791ab32496df9b0118",
+      "oldSha256": "dea777c2aeab0060d7f1d4b13f157a54f1cdbcf6c367fb3fc63c5ea49e5f965b"
+    },
+    "lab/observer/vm_watch.py": {
+      "newSha256": "e545745e2667a8bf1787d1951b053e65c27f951e37cce78e38a5167c6da827b2",
+      "oldSha256": "ba49db1b705c07c3e1ca3da20b99f284fbb580b6a4f76c0d17f6be6353dbd7bd"
+    }
+  },
+  "claim": "offline regression gates PASS; live durable/P3 publication REFUSED pending independent sync witness",
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round8",
+  "files": 239,
+  "manifestEntriesChecked": 234,
+  "manifestSha256": "6cb918e50318e2fdcc51e742fc2627291b05c912fcead7cf8537e32117aedd98",
+  "probeOutcomes": {
+    "checkpoint-rollover": "REFUSED",
+    "full-control": "ACCEPTED",
+    "path-replacement": "REFUSED",
+    "send-after-publication": "REFUSED",
+    "synchronous-off": "REFUSED",
+    "unknown-schema": "REFUSED",
+    "wal-checksum": "REFUSED",
+    "wal-reset": "REFUSED",
+    "wal-rewrite": "REFUSED"
+  },
+  "reviewerOriginalSha256": "17c6f471c77ba56cb225ce6e41d55add543015d067b0bf1246b89880e27e63c1"
+}

@@ -27,7 +27,7 @@ class Inotify:
         self.names={}
         try:
             for path in paths:
-                descriptor=self.lib.inotify_add_watch(self.fd,os.fsencode(path),0x00000002|0x00000004|0x00000008|0x00000100|0x00000200|0x00000080|0x00000400|0x00000800)
+                descriptor=self.lib.inotify_add_watch(self.fd,os.fsencode(path),0x00000002|0x00000004|0x00000008|0x00000040|0x00000100|0x00000200|0x00000080|0x00000400|0x00000800)
                 if descriptor<0:raise OSError(ctypes.get_errno(),'inotify_add_watch '+str(path))
                 self.names[descriptor]=str(path)
         except BaseException:self.close();raise
@@ -51,12 +51,13 @@ def clock(pid='self'):
         Path('/proc/'+str(pid)+'/timens_offsets').read_text(),os.stat('/proc/'+str(pid)+'/ns/time').st_ino)
 
 
-def stable(path,optional=False,limit=256*1024*1024):
+def stable(path,optional=False,limit=256*1024*1024,binding=None):
     file=Path(path)
     if file.is_symlink():raise ValueError('source symlink refused')
     try:
         with file.open('rb') as source:
             before=os.fstat(source.fileno())
+            if binding:binding.check_open(source,file)
             if before.st_size>limit:raise ValueError('source byte budget exhausted')
             raw=source.read(limit+1);after=os.fstat(source.fileno())
         if (before.st_dev,before.st_ino,before.st_size,before.st_mtime_ns)!=(after.st_dev,after.st_ino,after.st_size,after.st_mtime_ns) or len(raw)!=after.st_size:raise BlockingIOError('source changing')
@@ -64,6 +65,40 @@ def stable(path,optional=False,limit=256*1024*1024):
     except FileNotFoundError:
         if optional:return b''
         raise
+
+
+class FileBinding:
+    """Keep opened objects alive so replacement cannot reuse their inode numbers."""
+    def __init__(self,path):
+        self.path=str(path);self.opened={};self.lock=threading.Lock()
+        self.verify()
+    def verify(self):
+        with self.lock:
+            result={}
+            for suffix in ('','-wal','-shm'):
+                path=Path(self.path+suffix)
+                try:stat=path.lstat()
+                except FileNotFoundError:stat=None
+                if path.is_symlink():raise ValueError('F1 source symlink/replacement')
+                if suffix in self.opened:
+                    saved=os.fstat(self.opened[suffix].fileno())
+                    if stat is None or saved.st_nlink==0 or (saved.st_dev,saved.st_ino)!=(stat.st_dev,stat.st_ino):raise ValueError('F1 bound database file replaced/unlinked: '+str(path))
+                elif stat is not None:
+                    file=path.open('rb');opened=os.fstat(file.fileno())
+                    if (stat.st_dev,stat.st_ino)!=(opened.st_dev,opened.st_ino):
+                        file.close();raise ValueError('F1 file changed during bind')
+                    self.opened[suffix]=file
+                elif not suffix:raise ValueError('F1 main database missing')
+                result[suffix or 'main']=None if stat is None else [stat.st_dev,stat.st_ino]
+            return result
+    def check_open(self,file,path):
+        self.verify()
+        suffix=str(path)[len(self.path):]
+        with self.lock:
+            expected=os.fstat(self.opened[suffix].fileno());actual=os.fstat(file.fileno())
+            if (actual.st_dev,actual.st_ino)!=(expected.st_dev,expected.st_ino):raise ValueError('F1 read handle differs from bound file')
+    def close(self):
+        for file in self.opened.values():file.close()
 
 
 class WalTail:
@@ -128,8 +163,10 @@ def run(config,root,key,control,offline=False):
     def poller(source):
         connection=None
         try:
-            connection=n.readonly(source['path']);n.schema(connection,source['profile']);batch=[];until=0
+            bindings[source['id']].verify()
+            connection=n.readonly(source['path']);n.schema(connection,source['profile']);bindings[source['id']].verify();batch=[];until=0
             while not stop.is_set():
+                files=bindings[source['id']].verify()
                 start=time.monotonic_ns()
                 try:
                     connection.execute('BEGIN')
@@ -140,8 +177,8 @@ def run(config,root,key,control,offline=False):
                     else:
                         row=connection.execute('SELECT stream,epoch,offset FROM frontier WHERE consumer=?',(source['consumer'],)).fetchone()
                         visible=[int(row[1]),int(row[2])+1] if row else [0,0];extra={'stream':row[0] if row else None}
-                    connection.execute('COMMIT');end=time.monotonic_ns()
-                    batch.append({'event':'poll','source':source['id'],'startNs':start,'endNs':end,'visible':visible,**extra});first[source['id']].set()
+                    connection.execute('COMMIT');end=time.monotonic_ns();files=bindings[source['id']].verify()
+                    batch.append({'event':'poll','source':source['id'],'startNs':start,'endNs':end,'visible':visible,'files':files,**extra});first[source['id']].set()
                 except sqlite_error() as error:
                     if connection.in_transaction:connection.rollback()
                     emit({'event':'poll-error','source':source['id'],'reason':str(error),'atNs':time.monotonic_ns()})
@@ -154,16 +191,18 @@ def run(config,root,key,control,offline=False):
         except BaseException as error:fail(error,source['id'])
         finally:
             if connection:connection.close()
-    workers=[];tails={s['id']:WalTail() for s in case['sources']};initial={s['id']:stable(s['path']) for s in case['sources']}
+    workers=[];bindings={s['id']:FileBinding(s['path']) for s in case['sources']};tails={s['id']:WalTail() for s in case['sources']};initial={s['id']:stable(s['path'],binding=bindings[s['id']]) for s in case['sources']}
     watcher=Inotify(sorted({str(Path(s['path']).parent) for s in case['sources']})) if not offline else None
     def drain():
         while not messages.empty():
             event=messages.get();now=time.monotonic_ns()/1e6
             bundle.append(sid,n.packed(event),now,time.time_ns()/1e6)
     def tail(source):
+        files=bindings[source['id']].verify()
         saved=tails[source['id']]
         try:
             with Path(source['path']+'-wal').open('rb') as file:
+                bindings[source['id']].check_open(file,Path(source['path']+'-wal'))
                 before=os.fstat(file.fileno())
                 if before.st_size<len(saved.raw):raise ValueError('F11 WAL reset/truncation')
                 if before.st_size>256*1024*1024:raise ValueError('WAL byte budget')
@@ -172,8 +211,9 @@ def run(config,root,key,control,offline=False):
                 raw=saved.raw+new
         except FileNotFoundError:
             raw=b''
+        files=bindings[source['id']].verify()
         offset,data=saved.update(raw)
-        if data:emit({'event':'wal','source':source['id'],'offset':offset,'bytes':n.blob(data),'atNs':time.monotonic_ns()})
+        if data:emit({'event':'wal','source':source['id'],'offset':offset,'files':files,'bytes':n.blob(data),'atNs':time.monotonic_ns()})
     try:
         for source in case['sources']:
             tail(source);thread=threading.Thread(target=poller,args=(source,),daemon=True);thread.start();workers.append(thread)
@@ -184,6 +224,9 @@ def run(config,root,key,control,offline=False):
             if time.monotonic()-began>case.get('durationSeconds',60):break
             events=watcher.read() if watcher else (time.sleep(.01) or [])
             if events:
+                for event in events:
+                    for source in case['sources']:
+                        if event['mask']&(0x40|0x80|0x200|0x400|0x800) and (event['mask']&(0x400|0x800) or event['name'] in [Path(source['path']).name+x for x in ('','-wal','-shm')]):raise ValueError('F1 bound database rename/delete event')
                 emit({'event':'inotify','events':events})
                 for source in case['sources']:active[source['id']].set()
             for source in case['sources']:tail(source)
@@ -205,13 +248,15 @@ def run(config,root,key,control,offline=False):
     if any(worker.is_alive() for worker in workers):fail(ValueError('poll worker did not stop'))
     for source in case['sources']:
         try:
-            tail(source);main=stable(source['path']);wal=stable(source['path']+'-wal',optional=True)
+            tail(source);main=stable(source['path'],binding=bindings[source['id']]);wal=stable(source['path']+'-wal',optional=True,binding=bindings[source['id']])
             if main!=initial[source['id']]:raise ValueError('main DB checkpointed during window; NOT_ESTIMABLE')
-            if main!=stable(source['path']) or wal!=stable(source['path']+'-wal',optional=True):raise ValueError('final readback not quiescent')
-            emit({'event':'final','source':source['id'],'main':n.blob(main),'wal':n.blob(wal),'atNs':time.monotonic_ns(),'cr':source.get('cr',[])})
+            if main!=stable(source['path'],binding=bindings[source['id']]) or wal!=stable(source['path']+'-wal',optional=True,binding=bindings[source['id']]):raise ValueError('final readback not quiescent')
+            files=bindings[source['id']].verify()
+            emit({'event':'final','source':source['id'],'files':files,'main':n.blob(main),'wal':n.blob(wal),'atNs':time.monotonic_ns(),'cr':source.get('cr',[])})
         except BaseException as error:fail(error,source['id'])
     wall_clock()
     emit({'event':'end','atNs':time.monotonic_ns()});drain()
+    for binding in bindings.values():binding.close()
     if errors:raise ValueError('; '.join(errors))
     bundle.seal()
     return bundle
