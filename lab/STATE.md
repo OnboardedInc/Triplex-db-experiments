@@ -234,3 +234,9 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - **Ask Sam first (both block every NS cell):** Q99-S1 the NS rung (largest W0 rung each composition fits on one slot; year-one reported
   as a projection; NS.P5 scoped release stays at 100k), asked with Q94a; and the host half of Q60: may acceptance windows of 1 to 3 hours
   pause his default colima VM (his Onboarded stack) and other heavy host jobs, since absolute bars count only in GREEN windows.
+- 2026-11-09 07:10Z goal check: all 10 agents writing (logs updated within the last minute); usage 8%; disk 29 GiB free. Gap against
+  Sam's goal ("continue all [three lanes] in parallel"): no lane D agent is running, since R43 ranked lane D off the critical path and
+  the Datomic dev slot is parked for pool memory. R43 ranks the queue, but Sam's goal keeps lane D active, so **the next free agent goes
+  to lane D**: EXP-DF01 offline (R41 E6: the gateway route GET /v1/db/{db}/log long-poll over d/tx-range, the position-to-t map per
+  Q89d, the Triplex stamp from the transaction annotation, FD01's host SQLite consumer store, resume across excision, restart resumes
+  from the log alone) built and tested against a fake report queue, with live dev-storage runs when the pool allows.
