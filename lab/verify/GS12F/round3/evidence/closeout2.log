@@ -1,0 +1,33 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 1432 "CX-P2Q-R10-final", pid 723 "CX-P2X2-histories", pid 8023 "CX-VA01-0313-R2-mutations", pid 47720 "CX-P5A-R4-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 1432 "CX-P2Q-R10-final", pid 723 "CX-P2X2-histories", pid 8023 "CX-VA01-0313-R2-mutations", pid 47720 "CX-P5A-R4-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 1432 "CX-P2Q-R10-final", pid 723 "CX-P2X2-histories", pid 48262 "CX-OBS01-ER01S-R4-diag02", pid 47720 "CX-P5A-R4-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 1432 "CX-P2Q-R10-final", pid 723 "CX-P2X2-histories", pid 48262 "CX-OBS01-ER01S-R4-diag02", pid 47720 "CX-P5A-R4-final"
+{
+  "matrixTotals": {
+    "legacy": {
+      "legacyVectors": 199,
+      "policyRejected": 9,
+      "accepted": 190,
+      "rejected": 253,
+      "publicRejected": 759,
+      "callbacks": 0,
+      "claims": 0
+    },
+    "current": {
+      "legacyVectors": 0,
+      "policyRejected": 0,
+      "accepted": 196,
+      "rejected": 257,
+      "publicRejected": 771,
+      "callbacks": 0,
+      "claims": 0
+    }
+  },
+  "contractEqualsMain": false,
+  "contractChangedFiles": [
+    "lab/acceptance/ACCEPTANCE.md",
+    "lab/acceptance/RULINGS-PENDING.md",
+    "lab/acceptance/cases/CS-GS.json",
+    "lab/acceptance/obligations.json"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "target": "f8d1c3da0a871f4c9c724ebae09e380dbb9222a8",
+  "main": "e4850f801b8a7771a94e1b3394ecc5ddf24efb5f",
+  "acceptanceEqualsMain": false,
+  "changedPins": [
+    {
+      "path": "lab/acceptance/RULINGS-PENDING.md",
+      "old": "acdee44559d41f966606ef1ab81dc30406c91afbccd1ec2acc82c3c04e685d5f",
+      "new": "ced5c9496bcd596cce85973f91ec8f32426adc4f0d049e2ecac288a3a224ab37",
+      "published": "ced5c9496bcd596cce85973f91ec8f32426adc4f0d049e2ecac288a3a224ab37"
+    },
+    {
+      "path": "packages/testkit/src/index.ts",
+      "old": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "new": "432cec5c6aa33150c5c6f6c54091184edcaece3395ee3c809524c5502594a6d6",
+      "published": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988"
+    }
+  ]
+}

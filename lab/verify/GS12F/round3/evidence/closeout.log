@@ -1,0 +1,23 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 1432 "CX-P2Q-R10-final", pid 723 "CX-P2X2-histories", pid 8023 "CX-VA01-0313-R2-mutations", pid 8022 "CX-VA01-0313-R2-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 1432 "CX-P2Q-R10-final", pid 723 "CX-P2X2-histories", pid 8023 "CX-VA01-0313-R2-mutations", pid 8022 "CX-VA01-0313-R2-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 1432 "CX-P2Q-R10-final", pid 723 "CX-P2X2-histories", pid 8023 "CX-VA01-0313-R2-mutations", pid 8022 "CX-VA01-0313-R2-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 1432 "CX-P2Q-R10-final", pid 723 "CX-P2X2-histories", pid 8023 "CX-VA01-0313-R2-mutations", pid 8022 "CX-VA01-0313-R2-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 1432 "CX-P2Q-R10-final", pid 723 "CX-P2X2-histories", pid 8023 "CX-VA01-0313-R2-mutations", pid 8022 "CX-VA01-0313-R2-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 1432 "CX-P2Q-R10-final", pid 723 "CX-P2X2-histories", pid 8023 "CX-VA01-0313-R2-mutations", pid 31313 "CX-P5A-R4-focus2"
+fatal: path 'lab/acceptance/cases/CS-GS.json' does not exist in 'f8d1c3da0a871f4c9c724ebae09e380dbb9222a8'
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round3/closeout.py", line 12, in <module>
+    rows.append({'path':p,'mainSha256':sha(git('show',main+':'+p)),'candidateSha256':sha(git('show',target+':'+p))})
+                                                                                         ~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round3/closeout.py", line 5, in git
+    def git(*a):return subprocess.check_output(['git',*a])
+                       ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 473, in check_output
+    return run(*popenargs, stdout=PIPE, timeout=timeout, check=True,
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+               **kwargs).stdout
+               ^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['git', 'show', 'f8d1c3da0a871f4c9c724ebae09e380dbb9222a8:lab/acceptance/cases/CS-GS.json']' returned non-zero exit status 128.
