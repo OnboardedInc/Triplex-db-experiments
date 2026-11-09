@@ -2286,3 +2286,11 @@ Where each priority stands, from evidence so far (research probes and baselines;
   margin (1,320) is not yet in reach by measurement; the per-subject document fallback fails the commit guard (+0.91 ms p50).
 - **Lesson:** the gap between a microbench and the real path was in the fields and statements the microbench left out. A prediction
   needs the same answer, by full-field digest, before its speed counts.
+
+## 2026-11-09: OBS01 rounds 10-11: two clocks that agree cannot be told apart by watching them
+
+- **Round 10 (1f7d412b)** fixed round 9's five findings and R49's clock bug; review FIX-FIRST on three medium gaps (untimed WAL tails,
+  multiple ACKs, the W0 clock check).
+- **Lesson:** CLOCK_BOOTTIME minus CLOCK_MONOTONIC is accumulated suspend time, often zero on a fresh VM, so no tolerance can tell the
+  two apart by observation. Which clock a probe reads has to be proven from the program itself (its compiled helper calls), with
+  observation kept only as a transport check that may honestly say INCONCLUSIVE.

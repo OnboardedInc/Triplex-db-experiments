@@ -375,3 +375,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   memory/ext4/map-key checks coded, Dockerfile written unbuilt (libbsd0 version needs a build arg). Python 72, Node 21, reviewer fixtures
   11/11. Nothing ran in the VM; no real bpftrace has parsed the .bt files. In review (CX-VOBS7 round 2), including whether a 100 ms clock
   tolerance can catch a boot-time clock on a fresh VM.
+- 2026-11-09 OBS01 round 10 review FIX-FIRST (CX-VOBS7, e696c828): R10-F1 untimed WAL tails dropped from coverage instead of refusing;
+  R10-F2 one proven early ACK hides another ACK's DURABILITY-UNPROVEN; R10-F3 W0's clock check cannot tell boot time from monotonic when
+  suspend time is near zero (a fresh VM). The 15 timestamps themselves are confirmed nsecs(monotonic). Orchestrator decision on F3: prove
+  the clock from the compiled program (bpftrace's own dump: monotonic helper only), keep observation as a transport sanity check that
+  reports INCONCLUSIVE when the clocks are not separable. Round 11 (Sonnet) running.
