@@ -1828,3 +1828,17 @@ Where each priority stands, from evidence so far (research probes and baselines;
   scopes that only rejected and never wrote; a classifier gap for J01 to fix later (those scopes have no mode to report), not a correctness
   failure. Volumes removed, slot released.
 - **Next in the window:** K01's live two-start run and E1 (now), then EXP-P2X2, P5 A1, G03's slot run, RT01 live G2 and G6, W02 live GS.
+
+## 2026-11-09 03:47Z: R40: lane Q's 270 ms pull is seven requests and a keep-alive stall; serve current pulls from H1
+- **Where the time goes:** the A0 pull sends one SPARQL request per BFS level (7 for depth 6), each 31 to 37 ms: about 4.5 ms of
+  host-to-VM transport, a 41 to 45 ms keep-alive stall on 32% of requests (QLever never sets TCP_NODELAY; R17 found this and the fix was
+  never applied), and 12 to 18 ms of engine work for a 7-predicate star join over every assertion ever written. The delta is secondary.
+- **Options:** the cur graph 23 to 80 ms p50; H1 (the broker's SQLite store) about 1 to 2 ms p50 and 8 to 20 ms p99 by estimate, flat bytes
+  by construction, throughput per core the open risk (600 to 2,500 pulls per CPU second against 1,100); a bundle-per-root encoding about 6 ms
+  but up to 2,000 bundle rewrites per commit.
+- **Rulings Q97a-c:** current pulls come from H1 (EXP-QH1 after P2Q and SQL01 merge); QLever receipts record the connection mode, and earlier
+  QLever latencies are DIAGNOSTIC on this ground too; no multi-request QLever pull form is a P4 candidate.
+- **Started now:** EXP-QNODELAY (CX-QNODELAY) adds a connection-per-request mode to QleverClient and measures the stall, because it affects
+  every QLever read the lab has measured.
+- **Learning:** R17 found the stall weeks of plan time ago and nobody applied the fix. Research findings with a cheap fix now get a builder
+  in the same pass.
