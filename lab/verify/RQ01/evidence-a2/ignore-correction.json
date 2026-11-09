@@ -1,0 +1,359 @@
+{
+  "clean": {
+    "seed": 89001,
+    "lane": "CX-VRQ01-independent-model",
+    "reference": "offline-fold-not-independent",
+    "observations": [
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "initial",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "initial",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "append",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "append",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "purge",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "purge",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "catch-up",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "catch-up",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "cold-cache",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "cold-cache",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      }
+    ],
+    "violations": []
+  },
+  "broken": {
+    "seed": 89001,
+    "lane": "CX-VRQ01-independent-model",
+    "reference": "offline-fold-not-independent",
+    "observations": [
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "initial",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "initial",
+        "outcome": "answer:sha256:972cfbfddece9425d313d74796c1c0fd522682f4401142dcf64bfd3f167f0a22:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "append",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "append",
+        "outcome": "answer:sha256:972cfbfddece9425d313d74796c1c0fd522682f4401142dcf64bfd3f167f0a22:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "purge",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "purge",
+        "outcome": "answer:sha256:972cfbfddece9425d313d74796c1c0fd522682f4401142dcf64bfd3f167f0a22:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "catch-up",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "catch-up",
+        "outcome": "answer:sha256:972cfbfddece9425d313d74796c1c0fd522682f4401142dcf64bfd3f167f0a22:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "cold-cache",
+        "outcome": "answer:sha256:88d50f610fe93bf1af3306d25151b0bb8b808b71feaaaae5bd0d2551068a2555:count:1"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "cold-cache",
+        "outcome": "answer:sha256:972cfbfddece9425d313d74796c1c0fd522682f4401142dcf64bfd3f167f0a22:count:1"
+      }
+    ],
+    "violations": [
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "initial"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "initial",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "append"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "append",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "purge"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "purge",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "catch-up"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "catch-up",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "cold-cache"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 15,
+            "recordedPosition": 2048
+          }
+        },
+        "phase": "cold-cache",
+        "detail": "Routes disagree"
+      }
+    ]
+  }
+}

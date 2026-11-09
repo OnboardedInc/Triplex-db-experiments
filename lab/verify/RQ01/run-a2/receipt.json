@@ -1,0 +1,108 @@
+{
+  "at": "2026-11-09T00:13:39.588Z",
+  "head": "93ad96e61dc6e8898bba018ff6b8799454d28ab3",
+  "node": "v22.23.2",
+  "versions": {
+    "vitest": "5.0.4",
+    "typescript": "6.0.2"
+  },
+  "before": {
+    "lab/experiments/EXP-RQ01/gate.mjs": "1b4c2cb1cd37e27643e31965eefd3ec48fd13f8e262e34d5b43a6e607875cb93",
+    "packages/qlever/test/route-equivalence.test.ts": "8ab47376c338c8cd55b81327b1219c4d6638f628d47a16d0377026dfe577eb21",
+    "packages/testkit/CHANGELOG.md": "37de9bce29abdd880ff82168886391d2f7068407370884938c6850ef31c89191",
+    "packages/testkit/LICENSE": "7561b258d9a721a8552895d0bd432a5b52e1a4f47d4aaeb149fc43bbe6515cbc",
+    "packages/testkit/README.md": "8ba7f4428515e6712384a6330b696b09fed635d94de20d393687af656824be18",
+    "packages/testkit/package.json": "e8e1bc9ec919cd0686ca8d88b42b556b3d77936a863b6f011a939f62ca1cc4fd",
+    "packages/testkit/src/index.ts": "767d727a802740e8db2ccdc430f5aebef187f13b29c8f5ce8bedf121567c3402",
+    "packages/testkit/src/offline-route-fixtures.ts": "650ea9aae64ea7a583439098ce89b0c3d0e39f9273f1bc27d35d786d944da4c6",
+    "packages/testkit/src/route-equivalence.ts": "0cb7834a739a89b1f9daf885d8033fc1876c116186ca53a32d0c369698c2a3cc",
+    "packages/testkit/test/fixtures.test.ts": "e363aa179d6d27fffb0e5c5cdf8df03e1d1dce491dd6d02f2cf8fe5a61b32061",
+    "packages/testkit/test/route-equivalence.test.ts": "2664c22820d29b80fd345a1d0176f00984c781c092219f5e08026818b310305d",
+    "packages/testkit/tsconfig.json": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+    "packages/testkit/tsdown.config.ts": "ba70ffaca4fd8d5a2087a1e987bb63554f616f4a1865133b611533123fe99246",
+    "packages/testkit/vitest.config.ts": "951ada711e5926c4cddca0ffcbd9198e40fa11b9cdb20a6b937230b6270d9229",
+    "packages/xtdb/test/route-equivalence.test.ts": "986bc4d29addabb7fd595f503d23ab596ad1be81994d68186ed14bec2ea1acce",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+  },
+  "after": {
+    "lab/experiments/EXP-RQ01/gate.mjs": "1b4c2cb1cd37e27643e31965eefd3ec48fd13f8e262e34d5b43a6e607875cb93",
+    "packages/qlever/test/route-equivalence.test.ts": "8ab47376c338c8cd55b81327b1219c4d6638f628d47a16d0377026dfe577eb21",
+    "packages/testkit/CHANGELOG.md": "37de9bce29abdd880ff82168886391d2f7068407370884938c6850ef31c89191",
+    "packages/testkit/LICENSE": "7561b258d9a721a8552895d0bd432a5b52e1a4f47d4aaeb149fc43bbe6515cbc",
+    "packages/testkit/README.md": "8ba7f4428515e6712384a6330b696b09fed635d94de20d393687af656824be18",
+    "packages/testkit/package.json": "e8e1bc9ec919cd0686ca8d88b42b556b3d77936a863b6f011a939f62ca1cc4fd",
+    "packages/testkit/src/index.ts": "767d727a802740e8db2ccdc430f5aebef187f13b29c8f5ce8bedf121567c3402",
+    "packages/testkit/src/offline-route-fixtures.ts": "650ea9aae64ea7a583439098ce89b0c3d0e39f9273f1bc27d35d786d944da4c6",
+    "packages/testkit/src/route-equivalence.ts": "0cb7834a739a89b1f9daf885d8033fc1876c116186ca53a32d0c369698c2a3cc",
+    "packages/testkit/test/fixtures.test.ts": "e363aa179d6d27fffb0e5c5cdf8df03e1d1dce491dd6d02f2cf8fe5a61b32061",
+    "packages/testkit/test/route-equivalence.test.ts": "2664c22820d29b80fd345a1d0176f00984c781c092219f5e08026818b310305d",
+    "packages/testkit/tsconfig.json": "9f151764a1fce874852317f96f179ae45811a4446870edc2b2185cd1a7368e59",
+    "packages/testkit/tsdown.config.ts": "ba70ffaca4fd8d5a2087a1e987bb63554f616f4a1865133b611533123fe99246",
+    "packages/testkit/vitest.config.ts": "951ada711e5926c4cddca0ffcbd9198e40fa11b9cdb20a6b937230b6270d9229",
+    "packages/xtdb/test/route-equivalence.test.ts": "986bc4d29addabb7fd595f503d23ab596ad1be81994d68186ed14bec2ea1acce",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+  },
+  "sourceStillMatches": true,
+  "builderHashMatch": {
+    "packages/testkit/src/index.ts": true,
+    "packages/testkit/src/route-equivalence.ts": true,
+    "packages/testkit/src/offline-route-fixtures.ts": true,
+    "packages/testkit/test/route-equivalence.test.ts": true,
+    "packages/xtdb/test/route-equivalence.test.ts": true,
+    "packages/qlever/test/route-equivalence.test.ts": true,
+    "packages/xtdb/src/XtdbStorageAdapter.ts": true,
+    "packages/xtdb/src/codecs.ts": true,
+    "lab/experiments/EXP-RQ01/gate.mjs": true,
+    "pnpm-lock.yaml": true
+  },
+  "results": [
+    {
+      "label": "review",
+      "command": [
+        "node",
+        "--import",
+        "./lab/verify/RQ01/source-loader.mjs",
+        "lab/verify/RQ01/review.mjs",
+        "lab/verify/RQ01/evidence-a2"
+      ],
+      "status": 0,
+      "signal": null
+    },
+    {
+      "label": "original-tests",
+      "command": [
+        "node",
+        "/Users/sam/projects/triplex-db-2/node_modules/vitest/vitest.mjs",
+        "run",
+        "--configLoader",
+        "runner",
+        "--config",
+        "lab/verify/RQ01/vitest.config.mjs",
+        "--reporter=json",
+        "--outputFile=lab/verify/RQ01/run-a2/original-tests.json"
+      ],
+      "status": 0,
+      "signal": null
+    },
+    {
+      "label": "dc1-original",
+      "command": [
+        "node",
+        "lab/verify/RQ01/guard-probe.mjs",
+        "original"
+      ],
+      "status": 0,
+      "signal": null
+    },
+    {
+      "label": "dc1-repair",
+      "command": [
+        "node",
+        "lab/verify/RQ01/guard-probe.mjs",
+        "repair"
+      ],
+      "status": 0,
+      "signal": null
+    }
+  ]
+}

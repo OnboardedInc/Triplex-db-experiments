@@ -1,0 +1,3 @@
+{"controlViolations":0,"badEmptyCaught":true,"violations":10,"rules":["HE-3","HE-1"]}
+(node:70660) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

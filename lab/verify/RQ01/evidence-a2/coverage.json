@@ -1,0 +1,322 @@
+[
+  {
+    "seed": 1,
+    "commits": 40,
+    "subjects": [
+      "subject:0",
+      "subject:4",
+      "subject:2",
+      "subject:1",
+      "subject:3",
+      "subject:5"
+    ],
+    "historyKinds": {
+      "singleAssert": 10,
+      "groupAssert5to50": 5,
+      "singleRetract": 15,
+      "groupRetract": 5,
+      "cardinalityManyThenRetractOne": 9,
+      "sameSubjectReplace": 0,
+      "assertRetractSameRow": 5,
+      "sameSubjectBoundedValidEdit": 0,
+      "futureDated": 5,
+      "nestedInteriorOrdinals": 0,
+      "claimsOnlyOrPositionOnly": 0,
+      "explicitAbortedCommit": 0,
+      "controlledLateStage": 0,
+      "adjacentSameMs": 20,
+      "clockRollback": 0,
+      "crossSubjectReplace": 10,
+      "crossSubjectBoundedEdit": 5
+    },
+    "shapeCounts": {
+      "L": 1,
+      "V": 27,
+      "P": 81,
+      "T": 42,
+      "TP": 600,
+      "H": 486
+    },
+    "uniqueRequests": 1237,
+    "totalRequests": 1237,
+    "basisWitnesses": {
+      "everyCommittedP": true,
+      "everyTPlusMinusHalf": true,
+      "everyVBoundaryPlusMinusOne": true,
+      "omittedValidAt": true,
+      "futureP": true,
+      "futureT": true,
+      "allEntitiesEveryCommittedP": true,
+      "tpEarlierTThanP": true,
+      "tpLaterTThanP": true,
+      "purgeHorizonAndPredecessor": [
+        {
+          "position": 43008,
+          "present": false
+        },
+        {
+          "position": 43007,
+          "present": false
+        }
+      ],
+      "abortGapProvenance": false,
+      "interiorOrdinalProvenance": false
+    }
+  },
+  {
+    "seed": 42,
+    "commits": 40,
+    "subjects": [
+      "subject:1",
+      "subject:3",
+      "subject:5",
+      "subject:4",
+      "subject:2",
+      "subject:0"
+    ],
+    "historyKinds": {
+      "singleAssert": 10,
+      "groupAssert5to50": 5,
+      "singleRetract": 15,
+      "groupRetract": 5,
+      "cardinalityManyThenRetractOne": 10,
+      "sameSubjectReplace": 2,
+      "assertRetractSameRow": 5,
+      "sameSubjectBoundedValidEdit": 0,
+      "futureDated": 5,
+      "nestedInteriorOrdinals": 0,
+      "claimsOnlyOrPositionOnly": 0,
+      "explicitAbortedCommit": 0,
+      "controlledLateStage": 0,
+      "adjacentSameMs": 20,
+      "clockRollback": 0,
+      "crossSubjectReplace": 8,
+      "crossSubjectBoundedEdit": 5
+    },
+    "shapeCounts": {
+      "L": 1,
+      "V": 29,
+      "P": 81,
+      "T": 42,
+      "TP": 600,
+      "H": 486
+    },
+    "uniqueRequests": 1239,
+    "totalRequests": 1239,
+    "basisWitnesses": {
+      "everyCommittedP": true,
+      "everyTPlusMinusHalf": true,
+      "everyVBoundaryPlusMinusOne": true,
+      "omittedValidAt": true,
+      "futureP": true,
+      "futureT": true,
+      "allEntitiesEveryCommittedP": true,
+      "tpEarlierTThanP": true,
+      "tpLaterTThanP": true,
+      "purgeHorizonAndPredecessor": [
+        {
+          "position": 43008,
+          "present": false
+        },
+        {
+          "position": 43007,
+          "present": false
+        }
+      ],
+      "abortGapProvenance": false,
+      "interiorOrdinalProvenance": false
+    }
+  },
+  {
+    "seed": 890,
+    "commits": 40,
+    "subjects": [
+      "subject:5",
+      "subject:1",
+      "subject:3",
+      "subject:0",
+      "subject:2",
+      "subject:4"
+    ],
+    "historyKinds": {
+      "singleAssert": 10,
+      "groupAssert5to50": 5,
+      "singleRetract": 15,
+      "groupRetract": 5,
+      "cardinalityManyThenRetractOne": 10,
+      "sameSubjectReplace": 0,
+      "assertRetractSameRow": 5,
+      "sameSubjectBoundedValidEdit": 0,
+      "futureDated": 5,
+      "nestedInteriorOrdinals": 0,
+      "claimsOnlyOrPositionOnly": 0,
+      "explicitAbortedCommit": 0,
+      "controlledLateStage": 0,
+      "adjacentSameMs": 20,
+      "clockRollback": 0,
+      "crossSubjectReplace": 10,
+      "crossSubjectBoundedEdit": 5
+    },
+    "shapeCounts": {
+      "L": 1,
+      "V": 27,
+      "P": 81,
+      "T": 42,
+      "TP": 600,
+      "H": 486
+    },
+    "uniqueRequests": 1237,
+    "totalRequests": 1237,
+    "basisWitnesses": {
+      "everyCommittedP": true,
+      "everyTPlusMinusHalf": true,
+      "everyVBoundaryPlusMinusOne": true,
+      "omittedValidAt": true,
+      "futureP": true,
+      "futureT": true,
+      "allEntitiesEveryCommittedP": true,
+      "tpEarlierTThanP": true,
+      "tpLaterTThanP": true,
+      "purgeHorizonAndPredecessor": [
+        {
+          "position": 43008,
+          "present": false
+        },
+        {
+          "position": 43007,
+          "present": false
+        }
+      ],
+      "abortGapProvenance": false,
+      "interiorOrdinalProvenance": false
+    }
+  },
+  {
+    "seed": 89,
+    "commits": 40,
+    "subjects": [
+      "subject:2",
+      "subject:4",
+      "subject:0",
+      "subject:1",
+      "subject:5",
+      "subject:3"
+    ],
+    "historyKinds": {
+      "singleAssert": 10,
+      "groupAssert5to50": 5,
+      "singleRetract": 15,
+      "groupRetract": 5,
+      "cardinalityManyThenRetractOne": 10,
+      "sameSubjectReplace": 0,
+      "assertRetractSameRow": 5,
+      "sameSubjectBoundedValidEdit": 0,
+      "futureDated": 5,
+      "nestedInteriorOrdinals": 0,
+      "claimsOnlyOrPositionOnly": 0,
+      "explicitAbortedCommit": 0,
+      "controlledLateStage": 0,
+      "adjacentSameMs": 20,
+      "clockRollback": 0,
+      "crossSubjectReplace": 10,
+      "crossSubjectBoundedEdit": 5
+    },
+    "shapeCounts": {
+      "L": 1,
+      "V": 27,
+      "P": 81,
+      "T": 42,
+      "TP": 600,
+      "H": 486
+    },
+    "uniqueRequests": 1237,
+    "totalRequests": 1237,
+    "basisWitnesses": {
+      "everyCommittedP": true,
+      "everyTPlusMinusHalf": true,
+      "everyVBoundaryPlusMinusOne": true,
+      "omittedValidAt": true,
+      "futureP": true,
+      "futureT": true,
+      "allEntitiesEveryCommittedP": true,
+      "tpEarlierTThanP": true,
+      "tpLaterTThanP": true,
+      "purgeHorizonAndPredecessor": [
+        {
+          "position": 43008,
+          "present": false
+        },
+        {
+          "position": 43007,
+          "present": false
+        }
+      ],
+      "abortGapProvenance": false,
+      "interiorOrdinalProvenance": false
+    }
+  },
+  {
+    "seed": 891,
+    "commits": 40,
+    "subjects": [
+      "subject:4",
+      "subject:2",
+      "subject:3",
+      "subject:1",
+      "subject:5",
+      "subject:0"
+    ],
+    "historyKinds": {
+      "singleAssert": 10,
+      "groupAssert5to50": 5,
+      "singleRetract": 15,
+      "groupRetract": 5,
+      "cardinalityManyThenRetractOne": 10,
+      "sameSubjectReplace": 1,
+      "assertRetractSameRow": 5,
+      "sameSubjectBoundedValidEdit": 0,
+      "futureDated": 5,
+      "nestedInteriorOrdinals": 0,
+      "claimsOnlyOrPositionOnly": 0,
+      "explicitAbortedCommit": 0,
+      "controlledLateStage": 0,
+      "adjacentSameMs": 20,
+      "clockRollback": 0,
+      "crossSubjectReplace": 9,
+      "crossSubjectBoundedEdit": 5
+    },
+    "shapeCounts": {
+      "L": 1,
+      "V": 28,
+      "P": 81,
+      "T": 42,
+      "TP": 600,
+      "H": 486
+    },
+    "uniqueRequests": 1238,
+    "totalRequests": 1238,
+    "basisWitnesses": {
+      "everyCommittedP": true,
+      "everyTPlusMinusHalf": true,
+      "everyVBoundaryPlusMinusOne": true,
+      "omittedValidAt": true,
+      "futureP": true,
+      "futureT": true,
+      "allEntitiesEveryCommittedP": true,
+      "tpEarlierTThanP": true,
+      "tpLaterTThanP": true,
+      "purgeHorizonAndPredecessor": [
+        {
+          "position": 43008,
+          "present": false
+        },
+        {
+          "position": 43007,
+          "present": false
+        }
+      ],
+      "abortGapProvenance": false,
+      "interiorOrdinalProvenance": false
+    }
+  }
+]

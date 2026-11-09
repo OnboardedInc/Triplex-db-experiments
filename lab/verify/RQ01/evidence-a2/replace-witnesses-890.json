@@ -1,0 +1,542 @@
+[
+  {
+    "position": 4096,
+    "retract": [
+      {
+        "id": "row:2",
+        "row": {
+          "id": "row:2",
+          "entity_id": "subject:1",
+          "attribute": ":route/value",
+          "value_type": "string",
+          "value_string": "value:362835376",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 0,
+          "recorded_position": 0,
+          "valid_from": 0,
+          "valid_to": null,
+          "created_by": "route-fixture",
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "RouteSubject",
+          "schema_version": 1,
+          "tx_id": "tx:row:2"
+        }
+      }
+    ],
+    "assert": [
+      {
+        "id": "row:3",
+        "entity_id": "subject:5",
+        "attribute": ":route/value",
+        "value_type": "string",
+        "value_string": "value:69456482",
+        "value_number": null,
+        "value_boolean": null,
+        "value_datetime": null,
+        "value_json": null,
+        "recorded_at": 0,
+        "recorded_position": 0,
+        "valid_from": 0,
+        "valid_to": null,
+        "created_by": "route-fixture",
+        "retracted_at": null,
+        "retracted_position": null,
+        "retract_tx_id": null,
+        "entity_type": "RouteSubject",
+        "schema_version": 1,
+        "tx_id": "tx:row:3"
+      }
+    ]
+  },
+  {
+    "position": 7168,
+    "retract": [
+      {
+        "id": "row:5",
+        "row": {
+          "id": "row:5",
+          "entity_id": "subject:5",
+          "attribute": ":route/value",
+          "value_type": "string",
+          "value_string": "value:946596534",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 0,
+          "recorded_position": 0,
+          "valid_from": -30,
+          "valid_to": 37,
+          "created_by": "route-fixture",
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "RouteSubject",
+          "schema_version": 1,
+          "tx_id": "tx:row:5"
+        }
+      }
+    ],
+    "assert": [
+      {
+        "id": "row:6",
+        "entity_id": "subject:0",
+        "attribute": ":route/value",
+        "value_type": "string",
+        "value_string": "value:934129367",
+        "value_number": null,
+        "value_boolean": null,
+        "value_datetime": null,
+        "value_json": null,
+        "recorded_at": 0,
+        "recorded_position": 0,
+        "valid_from": -20,
+        "valid_to": 50,
+        "created_by": "route-fixture",
+        "retracted_at": null,
+        "retracted_position": null,
+        "retract_tx_id": null,
+        "entity_type": "RouteSubject",
+        "schema_version": 1,
+        "tx_id": "tx:row:6"
+      }
+    ]
+  },
+  {
+    "position": 12288,
+    "retract": [
+      {
+        "id": "row:10",
+        "row": {
+          "id": "row:10",
+          "entity_id": "subject:0",
+          "attribute": ":route/value",
+          "value_type": "string",
+          "value_string": "value:3897289055",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 0,
+          "recorded_position": 0,
+          "valid_from": 0,
+          "valid_to": null,
+          "created_by": "route-fixture",
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "RouteSubject",
+          "schema_version": 1,
+          "tx_id": "tx:row:10"
+        }
+      }
+    ],
+    "assert": [
+      {
+        "id": "row:11",
+        "entity_id": "subject:2",
+        "attribute": ":route/value",
+        "value_type": "string",
+        "value_string": "value:2131975401",
+        "value_number": null,
+        "value_boolean": null,
+        "value_datetime": null,
+        "value_json": null,
+        "recorded_at": 0,
+        "recorded_position": 0,
+        "valid_from": 0,
+        "valid_to": null,
+        "created_by": "route-fixture",
+        "retracted_at": null,
+        "retracted_position": null,
+        "retract_tx_id": null,
+        "entity_type": "RouteSubject",
+        "schema_version": 1,
+        "tx_id": "tx:row:11"
+      }
+    ]
+  },
+  {
+    "position": 15360,
+    "retract": [
+      {
+        "id": "row:13",
+        "row": {
+          "id": "row:13",
+          "entity_id": "subject:0",
+          "attribute": ":route/value",
+          "value_type": "string",
+          "value_string": "value:954741293",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 0,
+          "recorded_position": 0,
+          "valid_from": -30,
+          "valid_to": 36,
+          "created_by": "route-fixture",
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "RouteSubject",
+          "schema_version": 1,
+          "tx_id": "tx:row:13"
+        }
+      }
+    ],
+    "assert": [
+      {
+        "id": "row:14",
+        "entity_id": "subject:1",
+        "attribute": ":route/value",
+        "value_type": "string",
+        "value_string": "value:347925786",
+        "value_number": null,
+        "value_boolean": null,
+        "value_datetime": null,
+        "value_json": null,
+        "recorded_at": 0,
+        "recorded_position": 0,
+        "valid_from": -20,
+        "valid_to": 50,
+        "created_by": "route-fixture",
+        "retracted_at": null,
+        "retracted_position": null,
+        "retract_tx_id": null,
+        "entity_type": "RouteSubject",
+        "schema_version": 1,
+        "tx_id": "tx:row:14"
+      }
+    ]
+  },
+  {
+    "position": 20480,
+    "retract": [
+      {
+        "id": "row:18",
+        "row": {
+          "id": "row:18",
+          "entity_id": "subject:3",
+          "attribute": ":route/value",
+          "value_type": "string",
+          "value_string": "value:4145934338",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 0,
+          "recorded_position": 0,
+          "valid_from": 0,
+          "valid_to": null,
+          "created_by": "route-fixture",
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "RouteSubject",
+          "schema_version": 1,
+          "tx_id": "tx:row:18"
+        }
+      }
+    ],
+    "assert": [
+      {
+        "id": "row:19",
+        "entity_id": "subject:5",
+        "attribute": ":route/value",
+        "value_type": "string",
+        "value_string": "value:3670299268",
+        "value_number": null,
+        "value_boolean": null,
+        "value_datetime": null,
+        "value_json": null,
+        "recorded_at": 0,
+        "recorded_position": 0,
+        "valid_from": 0,
+        "valid_to": null,
+        "created_by": "route-fixture",
+        "retracted_at": null,
+        "retracted_position": null,
+        "retract_tx_id": null,
+        "entity_type": "RouteSubject",
+        "schema_version": 1,
+        "tx_id": "tx:row:19"
+      }
+    ]
+  },
+  {
+    "position": 23552,
+    "retract": [
+      {
+        "id": "row:21",
+        "row": {
+          "id": "row:21",
+          "entity_id": "subject:3",
+          "attribute": ":route/value",
+          "value_type": "string",
+          "value_string": "value:1594174456",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 0,
+          "recorded_position": 0,
+          "valid_from": -30,
+          "valid_to": 27,
+          "created_by": "route-fixture",
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "RouteSubject",
+          "schema_version": 1,
+          "tx_id": "tx:row:21"
+        }
+      }
+    ],
+    "assert": [
+      {
+        "id": "row:22",
+        "entity_id": "subject:2",
+        "attribute": ":route/value",
+        "value_type": "string",
+        "value_string": "value:1698643521",
+        "value_number": null,
+        "value_boolean": null,
+        "value_datetime": null,
+        "value_json": null,
+        "recorded_at": 0,
+        "recorded_position": 0,
+        "valid_from": -20,
+        "valid_to": 50,
+        "created_by": "route-fixture",
+        "retracted_at": null,
+        "retracted_position": null,
+        "retract_tx_id": null,
+        "entity_type": "RouteSubject",
+        "schema_version": 1,
+        "tx_id": "tx:row:22"
+      }
+    ]
+  },
+  {
+    "position": 28672,
+    "retract": [
+      {
+        "id": "row:26",
+        "row": {
+          "id": "row:26",
+          "entity_id": "subject:0",
+          "attribute": ":route/value",
+          "value_type": "string",
+          "value_string": "value:1808360969",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 0,
+          "recorded_position": 0,
+          "valid_from": 0,
+          "valid_to": null,
+          "created_by": "route-fixture",
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "RouteSubject",
+          "schema_version": 1,
+          "tx_id": "tx:row:26"
+        }
+      }
+    ],
+    "assert": [
+      {
+        "id": "row:27",
+        "entity_id": "subject:4",
+        "attribute": ":route/value",
+        "value_type": "string",
+        "value_string": "value:4041720099",
+        "value_number": null,
+        "value_boolean": null,
+        "value_datetime": null,
+        "value_json": null,
+        "recorded_at": 0,
+        "recorded_position": 0,
+        "valid_from": 0,
+        "valid_to": null,
+        "created_by": "route-fixture",
+        "retracted_at": null,
+        "retracted_position": null,
+        "retract_tx_id": null,
+        "entity_type": "RouteSubject",
+        "schema_version": 1,
+        "tx_id": "tx:row:27"
+      }
+    ]
+  },
+  {
+    "position": 31744,
+    "retract": [
+      {
+        "id": "row:29",
+        "row": {
+          "id": "row:29",
+          "entity_id": "subject:2",
+          "attribute": ":route/value",
+          "value_type": "string",
+          "value_string": "value:3255782663",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 0,
+          "recorded_position": 0,
+          "valid_from": -30,
+          "valid_to": 22,
+          "created_by": "route-fixture",
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "RouteSubject",
+          "schema_version": 1,
+          "tx_id": "tx:row:29"
+        }
+      }
+    ],
+    "assert": [
+      {
+        "id": "row:30",
+        "entity_id": "subject:5",
+        "attribute": ":route/value",
+        "value_type": "string",
+        "value_string": "value:498471420",
+        "value_number": null,
+        "value_boolean": null,
+        "value_datetime": null,
+        "value_json": null,
+        "recorded_at": 0,
+        "recorded_position": 0,
+        "valid_from": -20,
+        "valid_to": 50,
+        "created_by": "route-fixture",
+        "retracted_at": null,
+        "retracted_position": null,
+        "retract_tx_id": null,
+        "entity_type": "RouteSubject",
+        "schema_version": 1,
+        "tx_id": "tx:row:30"
+      }
+    ]
+  },
+  {
+    "position": 36864,
+    "retract": [
+      {
+        "id": "row:34",
+        "row": {
+          "id": "row:34",
+          "entity_id": "subject:1",
+          "attribute": ":route/value",
+          "value_type": "string",
+          "value_string": "value:1882042660",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 0,
+          "recorded_position": 0,
+          "valid_from": 0,
+          "valid_to": null,
+          "created_by": "route-fixture",
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "RouteSubject",
+          "schema_version": 1,
+          "tx_id": "tx:row:34"
+        }
+      }
+    ],
+    "assert": [
+      {
+        "id": "row:35",
+        "entity_id": "subject:3",
+        "attribute": ":route/value",
+        "value_type": "string",
+        "value_string": "value:3171092982",
+        "value_number": null,
+        "value_boolean": null,
+        "value_datetime": null,
+        "value_json": null,
+        "recorded_at": 0,
+        "recorded_position": 0,
+        "valid_from": 0,
+        "valid_to": null,
+        "created_by": "route-fixture",
+        "retracted_at": null,
+        "retracted_position": null,
+        "retract_tx_id": null,
+        "entity_type": "RouteSubject",
+        "schema_version": 1,
+        "tx_id": "tx:row:35"
+      }
+    ]
+  },
+  {
+    "position": 39936,
+    "retract": [
+      {
+        "id": "row:37",
+        "row": {
+          "id": "row:37",
+          "entity_id": "subject:5",
+          "attribute": ":route/value",
+          "value_type": "string",
+          "value_string": "value:3539267978",
+          "value_number": null,
+          "value_boolean": null,
+          "value_datetime": null,
+          "value_json": null,
+          "recorded_at": 0,
+          "recorded_position": 0,
+          "valid_from": -30,
+          "valid_to": 21,
+          "created_by": "route-fixture",
+          "retracted_at": null,
+          "retracted_position": null,
+          "retract_tx_id": null,
+          "entity_type": "RouteSubject",
+          "schema_version": 1,
+          "tx_id": "tx:row:37"
+        }
+      }
+    ],
+    "assert": [
+      {
+        "id": "row:38",
+        "entity_id": "subject:0",
+        "attribute": ":route/value",
+        "value_type": "string",
+        "value_string": "value:1646719035",
+        "value_number": null,
+        "value_boolean": null,
+        "value_datetime": null,
+        "value_json": null,
+        "recorded_at": 0,
+        "recorded_position": 0,
+        "valid_from": -20,
+        "valid_to": 50,
+        "created_by": "route-fixture",
+        "retracted_at": null,
+        "retracted_position": null,
+        "retract_tx_id": null,
+        "entity_type": "RouteSubject",
+        "schema_version": 1,
+        "tx_id": "tx:row:38"
+      }
+    ]
+  }
+]

@@ -1,0 +1,64 @@
+{
+  "at": "2026-11-09T00:14:45.380Z",
+  "head": "93ad96e61dc6e8898bba018ff6b8799454d28ab3",
+  "before": {
+    "packages/xtdb/src/XtdbStorageAdapter.ts": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560",
+    "packages/xtdb/src/codecs.ts": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+    "packages/xtdb/test/route-equivalence.test.ts": "986bc4d29addabb7fd595f503d23ab596ad1be81994d68186ed14bec2ea1acce",
+    "packages/qlever/test/route-equivalence.test.ts": "8ab47376c338c8cd55b81327b1219c4d6638f628d47a16d0377026dfe577eb21",
+    "packages/testkit/src/route-equivalence.ts": "0cb7834a739a89b1f9daf885d8033fc1876c116186ca53a32d0c369698c2a3cc",
+    "packages/testkit/src/offline-route-fixtures.ts": "650ea9aae64ea7a583439098ce89b0c3d0e39f9273f1bc27d35d786d944da4c6",
+    "lab/verify/RQ01/empty-without-flag.mjs": "561dcc97c3e2c29d3c2f0457f37fd0d9397eab5833932eab77b39384729139ea",
+    "lab/verify/RQ01/lane.config.ts": "009c38c2b150cff9ca905abdaf49ffc21cf10f6c0759041da59184b8e97a7771",
+    "lab/verify/RQ01/supplement.mjs": "601d7c4f5e76a45ccb104a2d1f8368afc4790f0fefe3f354dc138e6a1fabc30a",
+    "lab/verify/RQ01/source-loader.mjs": "768f9dd918dcd32f2c8be71860f79ab966f10b26788df02f34c346c9b0cd8dd7",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+    "/Users/sam/projects/triplex-db-2/lab/research/R31-route-equivalence.md": "b564958f72d84b37ec645bb52ab1f06b4b9783def74a445431eee4e111d8bbe6",
+    "/Users/sam/projects/triplex-db-2/lab/acceptance/RULINGS-PENDING.md": "8dec81913c52e843c29d6679d66a68fc524c93f20674eb9106b68ee3c52a85ce"
+  },
+  "after": {
+    "packages/xtdb/src/XtdbStorageAdapter.ts": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560",
+    "packages/xtdb/src/codecs.ts": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+    "packages/xtdb/test/route-equivalence.test.ts": "986bc4d29addabb7fd595f503d23ab596ad1be81994d68186ed14bec2ea1acce",
+    "packages/qlever/test/route-equivalence.test.ts": "8ab47376c338c8cd55b81327b1219c4d6638f628d47a16d0377026dfe577eb21",
+    "packages/testkit/src/route-equivalence.ts": "0cb7834a739a89b1f9daf885d8033fc1876c116186ca53a32d0c369698c2a3cc",
+    "packages/testkit/src/offline-route-fixtures.ts": "650ea9aae64ea7a583439098ce89b0c3d0e39f9273f1bc27d35d786d944da4c6",
+    "lab/verify/RQ01/empty-without-flag.mjs": "561dcc97c3e2c29d3c2f0457f37fd0d9397eab5833932eab77b39384729139ea",
+    "lab/verify/RQ01/lane.config.ts": "009c38c2b150cff9ca905abdaf49ffc21cf10f6c0759041da59184b8e97a7771",
+    "lab/verify/RQ01/supplement.mjs": "601d7c4f5e76a45ccb104a2d1f8368afc4790f0fefe3f354dc138e6a1fabc30a",
+    "lab/verify/RQ01/source-loader.mjs": "768f9dd918dcd32f2c8be71860f79ab966f10b26788df02f34c346c9b0cd8dd7",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+    "/Users/sam/projects/triplex-db-2/lab/research/R31-route-equivalence.md": "b564958f72d84b37ec645bb52ab1f06b4b9783def74a445431eee4e111d8bbe6",
+    "/Users/sam/projects/triplex-db-2/lab/acceptance/RULINGS-PENDING.md": "8dec81913c52e843c29d6679d66a68fc524c93f20674eb9106b68ee3c52a85ce"
+  },
+  "sourceStillMatches": true,
+  "results": [
+    {
+      "label": "empty-without-flag",
+      "command": [
+        "node",
+        "--import",
+        "./lab/verify/RQ01/source-loader.mjs",
+        "lab/verify/RQ01/empty-without-flag.mjs"
+      ],
+      "status": 0,
+      "signal": null
+    },
+    {
+      "label": "offline-lanes",
+      "command": [
+        "node",
+        "/Users/sam/projects/triplex-db-2/node_modules/vitest/vitest.mjs",
+        "run",
+        "--configLoader",
+        "runner",
+        "--config",
+        "lab/verify/RQ01/lane.config.ts",
+        "--reporter=json",
+        "--outputFile=lab/verify/RQ01/run-a3/offline-lanes.json"
+      ],
+      "status": 1,
+      "signal": null
+    }
+  ]
+}

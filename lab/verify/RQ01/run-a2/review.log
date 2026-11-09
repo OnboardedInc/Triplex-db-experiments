@@ -1,0 +1,86 @@
+[
+  {
+    "test": "drop-retraction",
+    "caught": true,
+    "cleanViolations": 0,
+    "violations": 10,
+    "rules": [
+      "HE-1",
+      "HE-2"
+    ]
+  },
+  {
+    "test": "drop-same-ms-tie",
+    "caught": true,
+    "cleanViolations": 0,
+    "violations": 10,
+    "rules": [
+      "HE-1",
+      "HE-2"
+    ]
+  },
+  {
+    "test": "future-old-data",
+    "caught": true,
+    "cleanViolations": 0,
+    "violations": 14,
+    "rules": [
+      "HE-3",
+      "HE-1",
+      "HE-5"
+    ]
+  },
+  {
+    "test": "empty-ineligible",
+    "caught": true,
+    "cleanViolations": 0,
+    "violations": 15,
+    "rules": [
+      "HE-6",
+      "HE-3",
+      "HE-1"
+    ]
+  },
+  {
+    "test": "ignore-correction",
+    "caught": true,
+    "cleanViolations": 0,
+    "violations": 10,
+    "rules": [
+      "HE-1",
+      "HE-2"
+    ]
+  },
+  {
+    "test": "generator-coverage",
+    "path": "coverage.json"
+  },
+  {
+    "test": "real-correction-mutant",
+    "generatedGateUnexpectedlyPassed": true,
+    "generatedObservations": 12390,
+    "witnessViolations": 10
+  },
+  {
+    "test": "empty-request-gate",
+    "unexpectedlyPassed": true,
+    "observations": 0
+  },
+  {
+    "test": "retirement-metadata-reproducibility",
+    "rules": [
+      "HE-5"
+    ],
+    "violations": 8
+  },
+  {
+    "test": "D-C1-Q89a",
+    "violations": 20,
+    "rules": [
+      "HE-5"
+    ],
+    "positiveGateRejected": true
+  }
+]
+(node:29692) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

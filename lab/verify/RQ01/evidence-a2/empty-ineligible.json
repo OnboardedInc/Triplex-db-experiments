@@ -1,0 +1,419 @@
+{
+  "clean": {
+    "seed": 89001,
+    "lane": "CX-VRQ01-independent-model",
+    "reference": "offline-fold-not-independent",
+    "observations": [
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "purge",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "purge",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache",
+        "outcome": "refuse:BasisNotAvailable"
+      }
+    ],
+    "violations": []
+  },
+  "broken": {
+    "seed": 89001,
+    "lane": "CX-VRQ01-independent-model",
+    "reference": "offline-fold-not-independent",
+    "observations": [
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial",
+        "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append",
+        "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "purge",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "purge",
+        "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up",
+        "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache",
+        "outcome": "refuse:BasisNotAvailable"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache",
+        "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+      }
+    ],
+    "violations": [
+      {
+        "rule": "HE-6",
+        "detail": "Ineligible flag reached caller",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial"
+      },
+      {
+        "rule": "HE-3",
+        "detail": "Ineligible route answered",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "initial"
+      },
+      {
+        "rule": "HE-6",
+        "detail": "Ineligible flag reached caller",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append"
+      },
+      {
+        "rule": "HE-3",
+        "detail": "Ineligible route answered",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "append"
+      },
+      {
+        "rule": "HE-6",
+        "detail": "Ineligible flag reached caller",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "purge"
+      },
+      {
+        "rule": "HE-3",
+        "detail": "Ineligible route answered",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "purge"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "purge"
+      },
+      {
+        "rule": "HE-6",
+        "detail": "Ineligible flag reached caller",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up"
+      },
+      {
+        "rule": "HE-3",
+        "detail": "Ineligible route answered",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "catch-up"
+      },
+      {
+        "rule": "HE-6",
+        "detail": "Ineligible flag reached caller",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache"
+      },
+      {
+        "rule": "HE-3",
+        "detail": "Ineligible route answered",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedPosition": 999999
+          }
+        },
+        "phase": "cold-cache"
+      }
+    ]
+  }
+}

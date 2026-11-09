@@ -1,0 +1,10 @@
+{
+  "seed": 42,
+  "lane": "CX-VRQ01-independent-model",
+  "reference": "offline-fold-not-independent",
+  "observations": {
+    "count": 12390,
+    "sha256": "61ee9b7304a8e31aa839a05f5026ac10d9006de64ed66cf7e5b7b6a4a21cce7a"
+  },
+  "violations": []
+}

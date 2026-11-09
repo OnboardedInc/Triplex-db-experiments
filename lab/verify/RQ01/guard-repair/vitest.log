@@ -1,0 +1,26 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rq01
+
+ ❯ lab/verify/RQ01/guard-repair/case.probe.ts (1 test | 1 failed) 4ms
+   × known-failing Q89a / R31 D-C1: the same T answer changes after a late staged commit 3ms
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  19:13:39
+   Duration  95ms (transform 47%, import 29%, tests 15%, worker 9%)
+
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lab/verify/RQ01/guard-repair/case.probe.ts > known-failing Q89a / R31 D-C1: the same T answer changes after a late staged commit
+AssertionError: expected 0 to be greater than 0
+ ❯ lab/verify/RQ01/guard-repair/case.probe.ts:24:38
+     22|     // [EXP-RQ01] Why: assert the defect is observed until Q89a; unexp…
+     23|     // Rejected: it.skip/it.fails (could hide harness failure or unrel…
+     24|     expect(result.violations.length).toBeGreaterThan(0);
+       |                                      ^
+     25|     expect(result.violations.every((v) => v.rule === "HE-5")).toBe(tru…
+     26|     expect(new Set(result.violations.map((v) => v.route))).toEqual(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
