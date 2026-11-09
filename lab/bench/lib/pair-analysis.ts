@@ -9,7 +9,7 @@
  * grade. The coordinator and the recompute command both call `analysePair`; nothing else computes these numbers.
  */
 import { Histogram } from "./hist.ts";
-import { applyRules, calibOf, type NoiseConfig, type RoundNoise, type RuleResult } from "./noise.ts";
+import { applyRules, hardRuleFailures, calibOf, type NoiseConfig, type RoundNoise, type RuleResult } from "./noise.ts";
 import {
   DECISIVE, aaFalsePositiveRate, decide, pairedRatios, planRounds, roundLogRatios, sd, signFlipP, slotBias, windowGrade,
   type Claim, type PairBlock, type RatioCI, type Verdict,
@@ -29,6 +29,8 @@ export const METRICS = {
 export type MetricName = keyof typeof METRICS;
 
 export interface PairInput {
+  /** Absent on historical evidence: preserve its exact recomputation shape. */
+  readonly gradingVersion?: 2;
   readonly mode: "aa" | "ab";
   readonly rounds: readonly { id: string; kind: "aa" | "ab"; preflight: boolean }[];
   /** histograms[`R03.A.commitAll`] etc., exactly as the drivers serialized them. */
@@ -158,7 +160,10 @@ export function analysePair(input: PairInput) {
   const amberRounds = input.rounds.filter((r) => !excluded[r.id]?.length && ruleResults[r.id]?.amber.length).length;
   const usableNoise = input.noise.filter((n) => !excluded[n.id]?.length);
   const partitioned = usableNoise.length > 0 && usableNoise.every((n) => n.partitioned === true);
+  const hardRuleHistory = Object.entries(ruleResults).flatMap(([id, r]) => hardRuleFailures(id, r, cfg.rules));
+  for (const r of input.rounds) if (!ruleResults[r.id]) hardRuleHistory.push({ roundId: r.id, ruleIds: ["signals-missing"] });
   const grade = windowGrade({
+    contract: "paired-r22", hardRuleHistory,
     sdP50, sdRounds: useAA ? primary.aa.rounds : primary?.allRounds?.rounds ?? 0, sdSource: useAA ? "aa" : "all",
     rounds: roundsTotal, excluded: excludedCount, amberRounds, partitioned,
     target: cfg.claims.superiority, defaultRounds: cfg.rounds.default, maxRounds: cfg.rounds.max,
@@ -183,6 +188,7 @@ export function analysePair(input: PairInput) {
       metrics, planner,
     },
     noise: {
+      ...(input.gradingVersion === 2 ? { gradingContract: "paired-r22", hardRuleHistory } : {}),
       aa: { sdLogP50: aaSd, sdLogP99: primary?.aa?.sdLogP99 ?? null, rounds: primary?.aa?.rounds ?? 0, slotBiasP50: primary?.aa?.slotBiasP50 ?? null, slotBiasP99: primary?.aa?.slotBiasP99 ?? null, ...(aaSd === null ? { why: input.mode === "aa" ? "p50 not identified in enough A/A rounds" : "no A/A rounds in this run" } : {}) },
       exclusions: excluded,
       rules: Object.fromEntries(Object.entries(ruleResults).map(([id, r]) => [id, { excluded: r.excluded, amber: r.amber, notApplied: r.notApplied, values: Object.fromEntries(Object.entries(r.values).map(([k, v]) => [k, round4(v)])) }])),

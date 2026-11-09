@@ -259,7 +259,7 @@ async function gateG0(run) {
   const engineCases = await run.step('node-test-engine-cases', 'node', ['--test', '--test-reporter=tap', 'qualification/workloads/test_engine_cases.mjs']);
   tapOutcome(run, 'node-test-engine-cases', path.join(REPO, engineCases.stdout), counts);
   // [EXP-N01] NS driver unit tests: trace determinism and frozen schedule, histogram accuracy, scheduled-time latency, world counts, feed consumer.
-  const bench = await run.step('node-test-ns-bench', 'node', ['--test', '--test-reporter=tap', 'lab/bench/test/bench.test.ts', 'lab/bench/test/paired.test.ts', 'lab/bench/test/noise.test.ts']);
+  const bench = await run.step('node-test-ns-bench', 'node', ['--test', '--test-reporter=tap', 'lab/bench/test/bench.test.ts', 'lab/bench/test/paired.test.ts', 'lab/bench/test/noise.test.ts', 'lab/bench/test/single.test.ts']);
   tapOutcome(run, 'node-test-ns-bench', path.join(REPO, bench.stdout), counts);
   for (const step of [nodeQual, engineCases, bench]) if (step.code !== 0) run.reason(`${step.name} exited ${step.code}`);
   const validate = await run.step('oracle-validate-workloads', 'python3', ['-B', 'qualification/workloads/validate_workloads.py']);

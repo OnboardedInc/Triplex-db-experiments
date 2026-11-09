@@ -38,6 +38,7 @@ stands; each bar has its own pass/miss in `ns.bars`; a missed bar is a fitness r
 | `lib/paired.ts` | Paired statistics: pooled-quantile ratios with a round bootstrap, censoring, s_d, slot bias, sign flip, decisions, planner, window grade. |
 | `lib/noise.ts` | Round plan, host sampler, VM agent (one `colima ssh`), calibration spin, hiccup meter, round summaries, rules (`lab/config/noise.json`). |
 | `lib/rounds.ts` | Per-round histograms: commit, commitAll and commitCensored over every offered command, read probe, per-second goodput and max. |
+| `lib/single-analysis.ts` | Q100k sequential same-arm timing-grade helper for G03; retains all hard-rule history; no runner or acceptance admission. |
 | `lib/pair-analysis.ts` | The one function that turns rounds and noise into a PAIR receipt's `stats` and `noise`. |
 
 ## Paired rounds (PAIR-0, EXP-M01; R22, RULINGS Q60)
@@ -184,3 +185,5 @@ position). It refuses any query it does not recognize. The driver's `--seed-mani
 equals the manifest's last position before it starts. 10k rung (ns-v2): 384,785 assertions (closed form matches),
 1,031 commands, 24,550,838 quads, 6.74 GB decompressed, 150 MB gzipped. Not yet indexed or read back on a live QLever:
 `-F nq` on QLever 0.6.0 and the first pulls on the indexed scope are the first checks when a QLever slot is free.
+
+Paired R22 GREEN can survive hard-rule exclusions; it never substitutes for Q100k single-arm timing GREEN. See the runbook for Q100l single-arm NS capacity and the unresolved three-median preflight sample count. New duet evidence uses gradingVersion 2 to retain hard-rule history; historical evidence retains its original recomputation shape.

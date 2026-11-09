@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 65352 "CX-CHECKJS-r2-final", pid 20247 "CX-DI01-final-r5", pid 60523 "CX-NSR-G0-2", pid 73872 "G0-qlever-20261109T073033Z-9a41f5 vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 2459 "CX-P2B-R3-build5d", pid 20247 "CX-DI01-final-r5", pid 60523 "CX-NSR-G0-2", pid 73872 "G0-qlever-20261109T073033Z-9a41f5 vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 8044 "CX-M01R-r2-tests", pid 20247 "CX-DI01-final-r5", pid 60523 "CX-NSR-G0-2", pid 73872 "G0-qlever-20261109T073033Z-9a41f5 vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 64012 "CX-RT01-live2-G6", pid 20247 "CX-DI01-final-r5", pid 60523 "CX-NSR-G0-2", pid 73872 "G0-qlever-20261109T073033Z-9a41f5 vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 64012 "CX-RT01-live2-G6", pid 20247 "CX-DI01-final-r5", pid 60523 "CX-NSR-G0-2", pid 73872 "G0-qlever-20261109T073033Z-9a41f5 vitest-testkit"
+[lab] heavy: waiting for one of 4 slots; held by pid 64012 "CX-RT01-live2-G6", pid 20247 "CX-DI01-final-r5", pid 24197 "CX-CHECKJS-r2-final", pid 24282 "CX-VA01-0314-R2-seal"
