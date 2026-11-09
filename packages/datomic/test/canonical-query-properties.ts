@@ -80,19 +80,21 @@ export async function canonicalQueryProperties(
     for (let seed = 0; seed < 4; seed++) {
       const s = `?s${seed}`,
         t = `?t${seed}`,
-        base = `base${seed}`,
-        inner = `inner${seed}`,
-        outer = `outer${seed}`;
+        m = `?m${seed}`,
+        rule = `reach${seed}`;
       const rules = [
-        { name: base, body: [[s, ":matrix", t]] },
-        { name: inner, body: [[s, ":matrix", t]] },
-        { name: inner, body: [[base, s, t]] },
-        { name: outer, body: [[s, ":matrix", t]] },
-        { name: outer, body: [[inner, s, t]] },
+        { name: rule, body: [[s, ":matrix", t]] },
+        {
+          name: rule,
+          body: [
+            [s, ":matrix", m],
+            [rule, m, t],
+          ],
+        },
       ];
       if (seed % 2) rules.reverse();
       const response = await Effect.runPromise(
-        q.execute({ find: [t], where: [[outer, s, t]], rules }, false, cut.basis),
+        q.execute({ find: [t], where: [[rule, s, t]], rules }, false, cut.basis),
       );
       expect(response.results.map((r) => String(r[t])).sort()).toEqual(expected);
       record({

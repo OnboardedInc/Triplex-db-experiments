@@ -674,3 +674,15 @@ error, not a parser acceptance result. The corrected generated rule chains give
 each named rule its required base plus the nested rule definition. Native
 canonical surfaces reached before that failure matched their routes and IDs;
 only a full subsequent successful run qualifies the property fixture.
+
+`live-second.*` retains a second fixture rejection (117/118): merely supplying
+bases does not make cross-rule composition supported. Inspection of core
+`validateRules` confirms the public contract permits base definitions plus the
+specific binary self-recursive pattern, and explicitly excludes cross-rule calls.
+The final generator uses that supported self-recursive shape with aliased
+variables and reversed base/recursive definition order. Its matrix subjects have
+self edges, so expected closure is exactly the history subject/ID set. This tests
+canonicalization across nested rule rounds; it does not claim new cross-rule
+composition support. The previously described generated multi-name chains were
+fixture attempts and did not produce qualifying results. No core contract is
+relaxed to make the test pass.
