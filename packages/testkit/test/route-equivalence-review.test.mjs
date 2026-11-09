@@ -9,6 +9,7 @@ import {
   generateRouteBases,
   routeHead,
   routeFuture,
+  routeBasisRefusal,
   routeRow,
   routeShape,
   RouteRefusal,
@@ -97,18 +98,39 @@ const modelFixture = (mode = "", contract = "snapshot") => {
       read: async (request) => {
         const activeMode = id === "injected" ? mode : "";
         if (activeMode === "empty-without-flag")
-          return { rows: [], taken: id, basis: { ...request.basis, ...(request.basis.recordedAt === undefined ? {} : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }) } };
+          return {
+            rows: [],
+            taken: id,
+            basis: {
+              ...request.basis,
+              ...(request.basis.recordedAt === undefined
+                ? {}
+                : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }),
+            },
+          };
         if (activeMode === "empty-ineligible")
-          return { rows: [], eligible: false, taken: id, basis: { ...request.basis, ...(request.basis.recordedAt === undefined ? {} : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }) } };
-        if (
-          routeFuture(request, history) &&
-          activeMode !== "future-old-data"
-        )
-          throw new RouteRefusal("BasisNotAvailable", "Future position");
+          return {
+            rows: [],
+            eligible: false,
+            taken: id,
+            basis: {
+              ...request.basis,
+              ...(request.basis.recordedAt === undefined
+                ? {}
+                : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }),
+            },
+          };
+        if (routeFuture(request, history) && activeMode !== "future-old-data")
+          throw routeBasisRefusal(request, history, id);
         return {
           rows: modelRows(history, request, activeMode, contract),
           taken: id,
-          basis: { ...request.basis, ...(request.basis.recordedAt === undefined ? {} : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }) },
+          basis: {
+            ...request.basis,
+            ...(request.basis.recordedAt === undefined
+              ? {}
+              : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }),
+          },
         };
       },
     })),
@@ -386,7 +408,10 @@ it("Q89a / D-C1 stays known-failing after Q89i metadata repair", async () => {
     fixture: makeOfflineRouteFixture("qlever"),
     ...options,
   });
-  assert(result.violations.length > 0 && result.violations.every((v) => ["HE-5", "HE-8"].includes(v.rule)));
+  assert(
+    result.violations.length > 0 &&
+      result.violations.every((v) => ["HE-5", "HE-8"].includes(v.rule)),
+  );
   await assert.rejects(() =>
     makeRouteEquivalenceCases({ fixture: makeOfflineRouteFixture("qlever"), ...options })[0].run(),
   );

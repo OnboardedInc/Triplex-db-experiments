@@ -6,7 +6,7 @@ import {
   snapshotRouteRows,
   routeHead,
   routeRetentionHorizons,
-  RouteRefusal,
+  routeBasisRefusal,
   type RouteFixture,
   type RouteHistory,
   type RouteRequest,
@@ -129,8 +129,7 @@ export const makeOfflineRouteFixture = (
       },
       read: async (request) => {
         const position = request.basis.recordedPosition ?? routeHead(history);
-        if (routeFuture(request, history))
-          throw new RouteRefusal("BasisNotAvailable", "Future position");
+        if (routeFuture(request, history)) throw routeBasisRefusal(request, history, forced);
         let candidates = source;
         if (forced === "Q1-replica") candidates = replica;
         if (forced === "Q2-overlay") {

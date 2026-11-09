@@ -74,9 +74,32 @@ export const decideRouteCommit = (
 };
 export const routeWatermark = (history: RouteHistory): number =>
   Math.max(0, ...history.commits.map((commit) => commit.instant));
+export const routeUnavailableAxis = (
+  request: RouteRequest,
+  history: RouteHistory,
+): "recordedPosition" | "recordedAt" | undefined =>
+  (request.basis.recordedPosition ?? 0) > routeHead(history)
+    ? "recordedPosition"
+    : (request.basis.recordedAt ?? 0) > routeWatermark(history)
+      ? "recordedAt"
+      : undefined;
 export const routeFuture = (request: RouteRequest, history: RouteHistory): boolean =>
-  (request.basis.recordedPosition ?? 0) > routeHead(history) ||
-  (request.basis.recordedAt ?? 0) > routeWatermark(history);
+  routeUnavailableAxis(request, history) !== undefined;
+export const routeBasisRefusal = (
+  request: RouteRequest,
+  history: RouteHistory,
+  surface = "offline-route",
+): RouteRefusal => {
+  const axis = routeUnavailableAxis(request, history);
+  if (!axis) throw new Error("The route basis is available");
+  return new RouteRefusal("BasisNotAvailable", "Future basis", {
+    axis,
+    required: request.basis[axis]!,
+    observed: axis === "recordedAt" ? routeWatermark(history) : routeHead(history),
+    waitedMs: 0,
+    surface,
+  });
+};
 
 export interface RouteHistory {
   readonly seed: number;
@@ -110,11 +133,24 @@ export type RouteRefusalTag =
   | "SnapshotExpired"
   | "DatalogValidationError";
 export class RouteRefusal extends Error {
+  readonly axis?: "recordedPosition" | "recordedAt";
+  readonly required?: number;
+  readonly observed?: number;
+  readonly waitedMs?: number;
+  readonly surface?: string;
   constructor(
     readonly _tag: RouteRefusalTag,
     message: string,
+    details?: {
+      axis: "recordedPosition" | "recordedAt";
+      required: number;
+      observed: number;
+      waitedMs: number;
+      surface: string;
+    },
   ) {
     super(message);
+    Object.assign(this, details);
   }
 }
 export interface RouteAnswer {
@@ -240,7 +276,7 @@ export const replayRouteAnswer = (
     recordedPosition: position = routeHead(history),
     validAt = history.now,
   } = request.basis;
-  if (position > routeHead(history)) throw new RouteRefusal("BasisNotAvailable", "Future position");
+  if (routeFuture(request, history)) throw routeBasisRefusal(request, history);
   const rows = foldRouteHistory(history).filter(
     (row) =>
       (request.entityId === undefined || row.entity_id === request.entityId) &&
@@ -821,6 +857,18 @@ export const runRouteEquivalence = async (
           });
         } catch (error) {
           const tag = error instanceof Error && "_tag" in error ? error._tag : undefined;
+          const axis = routeUnavailableAxis(request, history);
+          if (
+            axis &&
+            tag === "BasisNotAvailable" &&
+            (typeof error !== "object" ||
+              error === null ||
+              !("axis" in error) ||
+              error.axis !== axis ||
+              !("required" in error) ||
+              error.required !== request.basis[axis])
+          )
+            fail("HE-3", "Future-basis refusal omitted or changed its axis/required cut");
           if (eligible || !route.refusals.includes(tag as RouteRefusalTag))
             fail("HE-3", `Undeclared refusal: ${String(error)}`);
           observations.push({

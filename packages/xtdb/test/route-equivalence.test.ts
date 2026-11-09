@@ -8,6 +8,7 @@ import {
   replayRouteAnswer,
   routeHead,
   routeFuture,
+  routeBasisRefusal,
   routeWatermark,
   RouteRefusal,
   runRouteEquivalence,
@@ -30,7 +31,10 @@ const fixture = (guardFuture = true): RouteFixture => {
       sql: string,
       params: readonly unknown[] = [],
     ) => {
-      if (sql.includes("FROM tx_meta")) return [{ position: routeHead(history), stamp: stampOf(routeWatermark(history)) }] as unknown as T[];
+      if (sql.includes("FROM tx_meta"))
+        return [
+          { position: routeHead(history), stamp: stampOf(routeWatermark(history)) },
+        ] as unknown as T[];
       if (!sql.includes("FROM tx_assertions FOR ALL VALID_TIME"))
         throw new Error(`Unexpected SQL ${sql}`);
       taken = "X1-adapter";
@@ -114,7 +118,7 @@ const fixture = (guardFuture = true): RouteFixture => {
           // The offline guard is explicit: A0 itself does not yet reject future positions (R31 D-X1).
           // It is tested unguarded below; this guard is not evidence that Q89c is implemented in XTDB.
           if (guardFuture && routeFuture(request, history))
-            throw new RouteRefusal("BasisNotAvailable", "Offline driver refuses future cut");
+            throw routeBasisRefusal(request, history, "X1-adapter");
           const basis = { ...request.basis, validAt: request.basis.validAt ?? history.now };
           const answer = await Effect.runPromise(
             adapter.query(
@@ -122,7 +126,16 @@ const fixture = (guardFuture = true): RouteFixture => {
               basis,
             ),
           );
-          return { rows: answer, taken, basis: { ...request.basis, ...(request.basis.recordedAt === undefined ? {} : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }) } };
+          return {
+            rows: answer,
+            taken,
+            basis: {
+              ...request.basis,
+              ...(request.basis.recordedAt === undefined
+                ? {}
+                : { recordedPosition: request.basis.recordedPosition ?? routeHead(history) }),
+            },
+          };
         },
       },
     ],

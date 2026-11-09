@@ -202,3 +202,16 @@ describe("EXP-RQ01 route-equivalence gate (offline only)", () => {
     expect(pendingRouteAdapters.map((a) => a.status)).toEqual(["unimplemented", "unimplemented"]);
   });
 });
+
+it("future T refusals carry and bind the recordedAt axis", async () => {
+  const fixture = makeOfflineRouteFixture("xtdb"),
+    history = generateRouteHistory(1, 16);
+  const time = Math.max(...history.commits.map((commit) => commit.instant)) + 1;
+  await fixture.reset(history);
+  await fixture.routes[0]!.force();
+  await expect(fixture.routes[0]!.read({ basis: { recordedAt: time } })).rejects.toMatchObject({
+    _tag: "BasisNotAvailable",
+    axis: "recordedAt",
+    required: time,
+  });
+});
