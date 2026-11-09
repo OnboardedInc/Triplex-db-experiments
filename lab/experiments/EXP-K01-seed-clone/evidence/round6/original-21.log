@@ -1,0 +1,138 @@
+TAP version 13
+# (node:31136) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Q83d: two settled cuts accept already compacted L1 coverage without consulting stale live_tables
+ok 1 - Q83d: two settled cuts accept already compacted L1 coverage without consulting stale live_tables
+  ---
+  duration_ms: 4.514917
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (busy)
+ok 2 - Q83d: refuse a pre-settle clone source (busy)
+  ---
+  duration_ms: 1.140667
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (missing-table)
+ok 3 - Q83d: refuse a pre-settle clone source (missing-table)
+  ---
+  duration_ms: 0.818
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (garbage)
+ok 4 - Q83d: refuse a pre-settle clone source (garbage)
+  ---
+  duration_ms: 0.802792
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (wrong-block)
+ok 5 - Q83d: refuse a pre-settle clone source (wrong-block)
+  ---
+  duration_ms: 0.701042
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (missing-gauge)
+ok 6 - Q83d: refuse a pre-settle clone source (missing-gauge)
+  ---
+  duration_ms: 0.794125
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (changing-catalog)
+ok 7 - Q83d: refuse a pre-settle clone source (changing-catalog)
+  ---
+  duration_ms: 1.015084
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (no-upload)
+ok 8 - Q83d: refuse a pre-settle clone source (no-upload)
+  ---
+  duration_ms: 1.151708
+  type: 'test'
+  ...
+# Subtest: Q83d: refuse a pre-settle clone source (lag)
+ok 9 - Q83d: refuse a pre-settle clone source (lag)
+  ---
+  duration_ms: 1.163041
+  type: 'test'
+  ...
+# Subtest: Q83d: busy observations reset the three-reading streak
+ok 10 - Q83d: busy observations reset the three-reading streak
+  ---
+  duration_ms: 1.230917
+  type: 'test'
+  ...
+# Subtest: Q83e: a later stable replay watermark is provisional until stopped-tail proof
+ok 11 - Q83e: a later stable replay watermark is provisional until stopped-tail proof
+  ---
+  duration_ms: 0.847708
+  type: 'test'
+  ...
+# Subtest: settle: a failed block cut reports failure without a silent second attempt
+ok 12 - settle: a failed block cut reports failure without a silent second attempt
+  ---
+  duration_ms: 0.536792
+  type: 'test'
+  ...
+# Subtest: settle: a failed snapshot propagates once without retry
+ok 13 - settle: a failed snapshot propagates once without retry
+  ---
+  duration_ms: 0.6225
+  type: 'test'
+  ...
+# Subtest: R30: the second checkpoint must preserve the settled trie digest
+ok 14 - R30: the second checkpoint must preserve the settled trie digest
+  ---
+  duration_ms: 2.608792
+  type: 'test'
+  ...
+# Subtest: F3: Q83d block tx_id must equal the current node completed-tx gauge
+ok 15 - F3: Q83d block tx_id must equal the current node completed-tx gauge
+  ---
+  duration_ms: 0.680625
+  type: 'test'
+  ...
+# Subtest: R30: reference start rejects live rows, wrong resume, catalog drift, or busy compaction
+ok 16 - R30: reference start rejects live rows, wrong resume, catalog drift, or busy compaction
+  ---
+  duration_ms: 2.779209
+  type: 'test'
+  ...
+# Subtest: R30: Log4j race and slow/forced stops refuse; a flagged clean stop accepts
+ok 17 - R30: Log4j race and slow/forced stops refuse; a flagged clean stop accepts
+  ---
+  duration_ms: 0.216125
+  type: 'test'
+  ...
+# Subtest: clone: an exact copy accepts and a one-byte storage change refuses C1 before starting
+ok 18 - clone: an exact copy accepts and a one-byte storage change refuses C1 before starting
+  ---
+  duration_ms: 2.365166
+  type: 'test'
+  ...
+# Subtest: verify: sampled content, layout, history, and position changes each refuse
+ok 19 - verify: sampled content, layout, history, and position changes each refuse
+  ---
+  duration_ms: 0.543667
+  type: 'test'
+  ...
+# Subtest: F1: an exceptional re-verification must revoke the previous PASS before the driver can consume it
+ok 20 - F1: an exceptional re-verification must revoke the previous PASS before the driver can consume it
+  ---
+  duration_ms: 2.074083
+  type: 'test'
+  ...
+# Subtest: F2: the live runner must stop after T1 returns an unclean-stop verdict even with process exit 0
+ok 21 - F2: the live runner must stop after T1 returns an unclean-stop verdict even with process exit 0
+  ---
+  duration_ms: 0.787458
+  type: 'test'
+  ...
+1..21
+# tests 21
+# suites 0
+# pass 21
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 128.548625

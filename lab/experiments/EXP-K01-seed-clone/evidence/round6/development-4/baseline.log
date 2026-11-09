@@ -1,0 +1,259 @@
+TAP version 13
+# Subtest: trace: same inputs give byte-identical events; a different seed differs
+ok 1 - trace: same inputs give byte-identical events; a different seed differs
+  ---
+  duration_ms: 43.073459
+  type: 'test'
+  ...
+# Subtest: trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+ok 2 - trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+  ---
+  duration_ms: 7.751291
+  type: 'test'
+  ...
+# Subtest: trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+ok 3 - trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+  ---
+  duration_ms: 10.268083
+  type: 'test'
+  ...
+# Subtest: histogram: percentiles within 1/128 of exact nearest-rank values
+ok 4 - histogram: percentiles within 1/128 of exact nearest-rank values
+  ---
+  duration_ms: 24.643541
+  type: 'test'
+  ...
+# Subtest: scheduler: latency is measured from the scheduled time, including queueing behind the subject
+ok 5 - scheduler: latency is measured from the scheduled time, including queueing behind the subject
+  ---
+  duration_ms: 328.352167
+  type: 'test'
+  ...
+# Subtest: scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+ok 6 - scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+  ---
+  duration_ms: 94.550625
+  type: 'test'
+  ...
+# Subtest: world: hop classes, frozen P4 buckets and closed-form counts match materialization
+ok 7 - world: hop classes, frozen P4 buckets and closed-form counts match materialization
+  ---
+  duration_ms: 70.555542
+  type: 'test'
+  ...
+# Subtest: model: valid-time aware digests equal the materialized world at (R, V)
+ok 8 - model: valid-time aware digests equal the materialized world at (R, V)
+  ---
+  duration_ms: 1.09825
+  type: 'test'
+  ...
+# Subtest: feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+ok 9 - feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+  ---
+  duration_ms: 89.600708
+  type: 'test'
+  ...
+# Subtest: clone check: an identical fingerprint passes C3-C8
+ok 10 - clone check: an identical fingerprint passes C3-C8
+  ---
+  duration_ms: 1.110708
+  type: 'test'
+  ...
+# Subtest: clone check: each kind of difference fails its own check only
+ok 11 - clone check: each kind of difference fails its own check only
+  ---
+  duration_ms: 0.9565
+  type: 'test'
+  ...
+# Subtest: clone check: canonical digests ignore key order and EXPLAIN times
+ok 12 - clone check: canonical digests ignore key order and EXPLAIN times
+  ---
+  duration_ms: 1.470083
+  type: 'test'
+  ...
+# Subtest: seed path: driver, QLever bulk index, XTDB seed-writer, unverified, clone bound to its manifest and readiness
+ok 13 - seed path: driver, QLever bulk index, XTDB seed-writer, unverified, clone bound to its manifest and readiness
+  ---
+  duration_ms: 1.946125
+  type: 'test'
+  ...
+# Subtest: clone check: missing evidence on both sides fails closed
+ok 14 - clone check: missing evidence on both sides fails closed
+  ---
+  duration_ms: 0.156375
+  type: 'test'
+  ...
+# Subtest: seed identity: refuse changed generators and stale or expanded adapter builds
+ok 15 - seed identity: refuse changed generators and stale or expanded adapter builds
+  ---
+  duration_ms: 10.855958
+  type: 'test'
+  ...
+# Subtest: published block discovery: empty is empty, gaps are preserved, malformed paths refuse
+ok 16 - published block discovery: empty is empty, gaps are preserved, malformed paths refuse
+  ---
+  duration_ms: 0.231
+  type: 'test'
+  ...
+# Subtest: Q83d: fast compaction covers the new block with L1 tries before the first poll
+ok 17 - Q83d: fast compaction covers the new block with L1 tries before the first poll
+  ---
+  duration_ms: 0.710208
+  type: 'test'
+  ...
+# Subtest: pool admits the two dev engines when only they run
+ok 18 - pool admits the two dev engines when only they run
+  ---
+  duration_ms: 1.94575
+  type: 'test'
+  ...
+# Subtest: pool counts external research probes and refuses with their names
+ok 19 - pool counts external research probes and refuses with their names
+  ---
+  duration_ms: 0.521542
+  type: 'test'
+  ...
+# Subtest: an uncapped external container counts as the whole VM (fail closed)
+ok 20 - an uncapped external container counts as the whole VM (fail closed)
+  ---
+  duration_ms: 0.082875
+  type: 'test'
+  ...
+# Subtest: a reserved container counts once even while it also runs
+ok 21 - a reserved container counts once even while it also runs
+  ---
+  duration_ms: 0.073166
+  type: 'test'
+  ...
+# Subtest: disk forecast refuses past the 50 GiB used limit
+ok 22 - disk forecast refuses past the 50 GiB used limit
+  ---
+  duration_ms: 0.124042
+  type: 'test'
+  ...
+# Subtest: slotInfo rejects forbidden and probe ports and names containers and volumes
+ok 23 - slotInfo rejects forbidden and probe ports and names containers and volumes
+  ---
+  duration_ms: 0.329458
+  type: 'test'
+  ...
+# Subtest: withDirLock serializes and breaks a lock whose owner pid is dead
+ok 24 - withDirLock serializes and breaks a lock whose owner pid is dead
+  ---
+  duration_ms: 224.935416
+  type: 'test'
+  ...
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] heavy: waiting for one of 2 slots; held by pid 87027 "a", pid 87027 "b"
+# Subtest: withPool read-modify-writes the ledger atomically across processes
+ok 25 - withPool read-modify-writes the ledger atomically across processes
+  ---
+  duration_ms: 582.572375
+  type: 'test'
+  ...
+# Subtest: reconcile drops only reservations with no container and a dead reserving pid
+ok 26 - reconcile drops only reservations with no container and a dead reserving pid
+  ---
+  duration_ms: 0.650708
+  type: 'test'
+  ...
+# Subtest: heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+ok 27 - heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+  ---
+  duration_ms: 124.676709
+  type: 'test'
+  ...
+# Subtest: object store is content addressed and refuses dependency caches and secret-like names
+ok 28 - object store is content addressed and refuses dependency caches and secret-like names
+  ---
+  duration_ms: 1.083375
+  type: 'test'
+  ...
+# Subtest: language classification: pure XTQL, pure SQL, hybrid, strict substeps
+ok 29 - language classification: pure XTQL, pure SQL, hybrid, strict substeps
+  ---
+  duration_ms: 0.257292
+  type: 'test'
+  ...
+# Subtest: verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+ok 30 - verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+  ---
+  duration_ms: 0.253208
+  type: 'test'
+  ...
+# Subtest: caseLanguages lists every substep language in order
+ok 31 - caseLanguages lists every substep language in order
+  ---
+  duration_ms: 0.328834
+  type: 'test'
+  ...
+# Subtest: contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+ok 32 - contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+  ---
+  duration_ms: 0.563625
+  type: 'test'
+  ...
+# Subtest: second-writer guard refuses a second container on a slot volume unless its config is read-only
+ok 33 - second-writer guard refuses a second container on a slot volume unless its config is read-only
+  ---
+  duration_ms: 0.488792
+  type: 'test'
+  ...
+# Subtest: second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+ok 34 - second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+  ---
+  duration_ms: 0.30875
+  type: 'test'
+  ...
+# Subtest: follower config must be read-only and read the writer's own log and storage paths
+ok 35 - follower config must be read-only and read the writer's own log and storage paths
+  ---
+  duration_ms: 0.249375
+  type: 'test'
+  ...
+# Subtest: follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+ok 36 - follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+  ---
+  duration_ms: 5.375833
+  type: 'test'
+  ...
+# Subtest: cpusets parse against the VM and unpinned containers overlap everything
+ok 37 - cpusets parse against the VM and unpinned containers overlap everything
+  ---
+  duration_ms: 0.190958
+  type: 'test'
+  ...
+# Subtest: golden key: canonical over its inputs, changes with any seed or engine input, ignores slot placement
+ok 38 - golden key: canonical over its inputs, changes with any seed or engine input, ignores slot placement
+  ---
+  duration_ms: 0.836042
+  type: 'test'
+  ...
+# Subtest: host disk floor: a copy that would leave less than 5 GiB is refused (Q74f)
+ok 39 - host disk floor: a copy that would leave less than 5 GiB is refused (Q74f)
+  ---
+  duration_ms: 0.189042
+  type: 'test'
+  ...
+# Subtest: clean stop needs both lines, no forced halt, exit 143 within ten seconds
+ok 40 - clean stop needs both lines, no forced halt, exit 143 within ten seconds
+  ---
+  duration_ms: 0.288333
+  type: 'test'
+  ...
+# Subtest: volume listings parse, hash every field, fail closed on truncation, and diff for P-e
+ok 41 - volume listings parse, hash every field, fail closed on truncation, and diff for P-e
+  ---
+  duration_ms: 0.633
+  type: 'test'
+  ...
+1..41
+# tests 41
+# suites 0
+# pass 41
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1040.584209

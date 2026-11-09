@@ -1,0 +1,244 @@
+TAP version 13
+# Subtest: recursive codec content (nested-good)
+ok 1 - recursive codec content (nested-good)
+  ---
+  duration_ms: 1.464208
+  type: 'test'
+  ...
+# Subtest: recursive codec content (metadata-bad-tag)
+ok 2 - recursive codec content (metadata-bad-tag)
+  ---
+  duration_ms: 0.222041
+  type: 'test'
+  ...
+# Subtest: recursive codec content (temporal-bad-tag)
+ok 3 - recursive codec content (temporal-bad-tag)
+  ---
+  duration_ms: 0.177209
+  type: 'test'
+  ...
+# Subtest: recursive codec content (temporal-wrong-wire)
+ok 4 - recursive codec content (temporal-wrong-wire)
+  ---
+  duration_ms: 0.08925
+  type: 'test'
+  ...
+# Subtest: recursive codec content (utf8)
+ok 5 - recursive codec content (utf8)
+  ---
+  duration_ms: 0.129084
+  type: 'test'
+  ...
+# Subtest: recursive codec content (enum)
+ok 6 - recursive codec content (enum)
+  ---
+  duration_ms: 0.06875
+  type: 'test'
+  ...
+# Subtest: recursive codec content (duplicate-cut)
+ok 7 - recursive codec content (duplicate-cut)
+  ---
+  duration_ms: 0.18275
+  type: 'test'
+  ...
+# Subtest: recursive codec content (unknown-trie)
+ok 8 - recursive codec content (unknown-trie)
+  ---
+  duration_ms: 0.082667
+  type: 'test'
+  ...
+# Subtest: recursive codec content (unknown-temporal)
+ok 9 - recursive codec content (unknown-temporal)
+  ---
+  duration_ms: 0.274
+  type: 'test'
+  ...
+# Subtest: recursive codec content (wrong-trie-wire)
+ok 10 - recursive codec content (wrong-trie-wire)
+  ---
+  duration_ms: 0.337709
+  type: 'test'
+  ...
+# Subtest: recursive codec content (out-of-range-int32)
+ok 11 - recursive codec content (out-of-range-int32)
+  ---
+  duration_ms: 0.144166
+  type: 'test'
+  ...
+# Subtest: cut body binds the intended checkpoint index
+ok 12 - cut body binds the intended checkpoint index
+  ---
+  duration_ms: 0.187375
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses duplicates
+ok 13 - C1 exact tree preimage refuses duplicates
+  ---
+  duration_ms: 0.209583
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses bad-size
+ok 14 - C1 exact tree preimage refuses bad-size
+  ---
+  duration_ms: 0.049167
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses bad-mode
+ok 15 - C1 exact tree preimage refuses bad-mode
+  ---
+  duration_ms: 0.039875
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses bad-owner
+ok 16 - C1 exact tree preimage refuses bad-owner
+  ---
+  duration_ms: 0.029625
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses missing-hash
+ok 17 - C1 exact tree preimage refuses missing-hash
+  ---
+  duration_ms: 0.053875
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses duplicate-hash
+ok 18 - C1 exact tree preimage refuses duplicate-hash
+  ---
+  duration_ms: 0.141333
+  type: 'test'
+  ...
+# Subtest: conditional release preserves replacement owner (same)
+ok 19 - conditional release preserves replacement owner (same)
+  ---
+  duration_ms: 8.540083
+  type: 'test'
+  ...
+# Subtest: conditional release preserves replacement owner (new-generation)
+ok 20 - conditional release preserves replacement owner (new-generation)
+  ---
+  duration_ms: 6.380125
+  type: 'test'
+  ...
+# Subtest: conditional release preserves replacement owner (new-operation)
+ok 21 - conditional release preserves replacement owner (new-operation)
+  ---
+  duration_ms: 6.793625
+  type: 'test'
+  ...
+# Subtest: conditional release preserves replacement owner (new-holder)
+ok 22 - conditional release preserves replacement owner (new-holder)
+  ---
+  duration_ms: 5.806208
+  type: 'test'
+  ...
+# Subtest: failed teardown retains revoked receipts (remove)
+ok 23 - failed teardown retains revoked receipts (remove)
+  ---
+  duration_ms: 12.248166
+  type: 'test'
+  ...
+# Subtest: failed teardown retains revoked receipts (absence-read)
+ok 24 - failed teardown retains revoked receipts (absence-read)
+  ---
+  duration_ms: 11.5595
+  type: 'test'
+  ...
+# Subtest: failed teardown retains revoked receipts (pool)
+ok 25 - failed teardown retains revoked receipts (pool)
+  ---
+  duration_ms: 12.270209
+  type: 'test'
+  ...
+# Subtest: resource observation refuses infinite
+ok 26 - resource observation refuses infinite
+  ---
+  duration_ms: 0.179625
+  type: 'test'
+  ...
+# Subtest: resource observation refuses negative-copy
+ok 27 - resource observation refuses negative-copy
+  ---
+  duration_ms: 0.033583
+  type: 'test'
+  ...
+# Subtest: resource observation refuses missing
+ok 28 - resource observation refuses missing
+  ---
+  duration_ms: 0.032834
+  type: 'test'
+  ...
+# Subtest: resource observation refuses unsafe
+ok 29 - resource observation refuses unsafe
+  ---
+  duration_ms: 0.027166
+  type: 'test'
+  ...
+# Subtest: golden receipt cannot survive volume generation replacement (clean)
+ok 30 - golden receipt cannot survive volume generation replacement (clean)
+  ---
+  duration_ms: 0.78425
+  type: 'test'
+  ...
+# Subtest: golden receipt cannot survive volume generation replacement (changed)
+ok 31 - golden receipt cannot survive volume generation replacement (changed)
+  ---
+  duration_ms: 0.872541
+  type: 'test'
+  ...
+# Subtest: golden receipt cannot survive volume generation replacement (missing)
+ok 32 - golden receipt cannot survive volume generation replacement (missing)
+  ---
+  duration_ms: 0.296708
+  type: 'test'
+  ...
+# Subtest: restart lifecycle clears only its own successful operation (clean)
+ok 33 - restart lifecycle clears only its own successful operation (clean)
+  ---
+  duration_ms: 21.259833
+  type: 'test'
+  ...
+# Subtest: restart lifecycle clears only its own successful operation (failed)
+ok 34 - restart lifecycle clears only its own successful operation (failed)
+  ---
+  duration_ms: 13.347
+  type: 'test'
+  ...
+# Subtest: restart lifecycle clears only its own successful operation (superseded)
+ok 35 - restart lifecycle clears only its own successful operation (superseded)
+  ---
+  duration_ms: 27.769375
+  type: 'test'
+  ...
+# Subtest: engine readiness ignores partial successful HTTP text (clean)
+ok 36 - engine readiness ignores partial successful HTTP text (clean)
+  ---
+  duration_ms: 0.553833
+  type: 'test'
+  ...
+# Subtest: engine readiness ignores partial successful HTTP text (exit)
+ok 37 - engine readiness ignores partial successful HTTP text (exit)
+  ---
+  duration_ms: 0.299292
+  type: 'test'
+  ...
+# Subtest: engine readiness ignores partial successful HTTP text (signal)
+ok 38 - engine readiness ignores partial successful HTTP text (signal)
+  ---
+  duration_ms: 0.237333
+  type: 'test'
+  ...
+# Subtest: engine readiness ignores partial successful HTTP text (error)
+ok 39 - engine readiness ignores partial successful HTTP text (error)
+  ---
+  duration_ms: 0.222875
+  type: 'test'
+  ...
+1..39
+# tests 39
+# suites 0
+# pass 39
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 231.246083

@@ -1,0 +1,538 @@
+[
+  {
+    "kind": "listing",
+    "fault": "none",
+    "actualHiddenHashes": [
+      "0682c5f2076f099c34cfdd15a9e063849ed437a49677e6fcc5b4198c76575be5",
+      "9d6f965ac832e40a5df6c06afe983e3b449c07b843ff51ce76204de05c690d11"
+    ],
+    "accepted": false,
+    "runs": [
+      {
+        "name": "src",
+        "exit": 0,
+        "signal": null,
+        "spawnError": null,
+        "stdout": "@@stat\n./hidden|8|644|501|20\n./visible|4|644|501|20\n@@sha\n0682c5f2076f099c34cfdd15a9e063849ed437a49677e6fcc5b4198c76575be5  ./hidden\n0967115f2813a3541eaef77de9d9d5773f1c0c04314b0bbfe4ff3b3b1c55b5d5  ./visible\n@@end\n",
+        "stderr": "",
+        "tree": {
+          "files": [
+            {
+              "path": "./hidden",
+              "bytes": 8,
+              "mode": "644",
+              "uid": "501",
+              "gid": "20",
+              "sha256": "0682c5f2076f099c34cfdd15a9e063849ed437a49677e6fcc5b4198c76575be5"
+            },
+            {
+              "path": "./visible",
+              "bytes": 4,
+              "mode": "644",
+              "uid": "501",
+              "gid": "20",
+              "sha256": "0967115f2813a3541eaef77de9d9d5773f1c0c04314b0bbfe4ff3b3b1c55b5d5"
+            }
+          ],
+          "count": 2,
+          "bytes": 12,
+          "treeSha256": "2c7f9fd1fdbff0306b98af372234948cfceed94b68956b76370240d3df2c9765"
+        },
+        "error": null
+      },
+      {
+        "name": "dst",
+        "exit": 0,
+        "signal": null,
+        "spawnError": null,
+        "stdout": "@@stat\n./hidden|9|644|501|20\n./visible|4|644|501|20\n@@sha\n9d6f965ac832e40a5df6c06afe983e3b449c07b843ff51ce76204de05c690d11  ./hidden\n0967115f2813a3541eaef77de9d9d5773f1c0c04314b0bbfe4ff3b3b1c55b5d5  ./visible\n@@end\n",
+        "stderr": "",
+        "tree": {
+          "files": [
+            {
+              "path": "./hidden",
+              "bytes": 9,
+              "mode": "644",
+              "uid": "501",
+              "gid": "20",
+              "sha256": "9d6f965ac832e40a5df6c06afe983e3b449c07b843ff51ce76204de05c690d11"
+            },
+            {
+              "path": "./visible",
+              "bytes": 4,
+              "mode": "644",
+              "uid": "501",
+              "gid": "20",
+              "sha256": "0967115f2813a3541eaef77de9d9d5773f1c0c04314b0bbfe4ff3b3b1c55b5d5"
+            }
+          ],
+          "count": 2,
+          "bytes": 13,
+          "treeSha256": "f8a494e02ed3759f71be73bf6bbb44a41295c2a43c29bcf47def3ca022a94a0f"
+        },
+        "error": null
+      }
+    ]
+  },
+  {
+    "kind": "listing",
+    "fault": "stat",
+    "actualHiddenHashes": [
+      "0682c5f2076f099c34cfdd15a9e063849ed437a49677e6fcc5b4198c76575be5",
+      "9d6f965ac832e40a5df6c06afe983e3b449c07b843ff51ce76204de05c690d11"
+    ],
+    "accepted": false,
+    "runs": [
+      {
+        "name": "src",
+        "exit": 1,
+        "signal": null,
+        "spawnError": null,
+        "stdout": "",
+        "stderr": "stat: injected read failure ./hidden\n",
+        "tree": null,
+        "error": "listing output is truncated (no @@end)"
+      },
+      {
+        "name": "dst",
+        "exit": 1,
+        "signal": null,
+        "spawnError": null,
+        "stdout": "",
+        "stderr": "stat: injected read failure ./hidden\n",
+        "tree": null,
+        "error": "listing output is truncated (no @@end)"
+      }
+    ]
+  },
+  {
+    "kind": "listing",
+    "fault": "sha",
+    "actualHiddenHashes": [
+      "0682c5f2076f099c34cfdd15a9e063849ed437a49677e6fcc5b4198c76575be5",
+      "9d6f965ac832e40a5df6c06afe983e3b449c07b843ff51ce76204de05c690d11"
+    ],
+    "accepted": false,
+    "runs": [
+      {
+        "name": "src",
+        "exit": 1,
+        "signal": null,
+        "spawnError": null,
+        "stdout": "",
+        "stderr": "sha256sum: injected read failure ./hidden\n",
+        "tree": null,
+        "error": "listing output is truncated (no @@end)"
+      },
+      {
+        "name": "dst",
+        "exit": 1,
+        "signal": null,
+        "spawnError": null,
+        "stdout": "",
+        "stderr": "sha256sum: injected read failure ./hidden\n",
+        "tree": null,
+        "error": "listing output is truncated (no @@end)"
+      }
+    ]
+  },
+  {
+    "kind": "listing",
+    "fault": "both",
+    "actualHiddenHashes": [
+      "0682c5f2076f099c34cfdd15a9e063849ed437a49677e6fcc5b4198c76575be5",
+      "9d6f965ac832e40a5df6c06afe983e3b449c07b843ff51ce76204de05c690d11"
+    ],
+    "accepted": false,
+    "runs": [
+      {
+        "name": "src",
+        "exit": 1,
+        "signal": null,
+        "spawnError": null,
+        "stdout": "",
+        "stderr": "stat: injected read failure ./hidden\n",
+        "tree": null,
+        "error": "listing output is truncated (no @@end)"
+      },
+      {
+        "name": "dst",
+        "exit": 1,
+        "signal": null,
+        "spawnError": null,
+        "stdout": "",
+        "stderr": "stat: injected read failure ./hidden\n",
+        "tree": null,
+        "error": "listing output is truncated (no @@end)"
+      }
+    ]
+  },
+  {
+    "kind": "listing",
+    "fault": "enumeration",
+    "actualHiddenHashes": [
+      "0682c5f2076f099c34cfdd15a9e063849ed437a49677e6fcc5b4198c76575be5",
+      "9d6f965ac832e40a5df6c06afe983e3b449c07b843ff51ce76204de05c690d11"
+    ],
+    "accepted": false,
+    "runs": [
+      {
+        "name": "src",
+        "exit": 1,
+        "signal": null,
+        "spawnError": null,
+        "stdout": "",
+        "stderr": "find: injected directory read failure\n",
+        "tree": null,
+        "error": "listing output is truncated (no @@end)"
+      },
+      {
+        "name": "dst",
+        "exit": 1,
+        "signal": null,
+        "spawnError": null,
+        "stdout": "",
+        "stderr": "find: injected directory read failure\n",
+        "tree": null,
+        "error": "listing output is truncated (no @@end)"
+      }
+    ]
+  },
+  {
+    "kind": "singlecut-cleanup",
+    "variant": "removed",
+    "present": false,
+    "receipt": {
+      "format": "tx2-k01-singlecut-probe/1",
+      "volume": "tx2-k01-singlecut-1794185133987",
+      "at": "2026-11-09T00:45:33.987Z",
+      "diagnosticOnly": true,
+      "before": {},
+      "settled": {
+        "settled": true,
+        "after": {}
+      },
+      "afterCut": {},
+      "stop": {
+        "verdict": {
+          "ok": true
+        }
+      },
+      "offline": {
+        "ok": true
+      },
+      "error": "injected copy helper failure after snapshot creation",
+      "snapshotRemoved": true,
+      "cleanup": {
+        "removal": {
+          "kind": "single-cut removal",
+          "binding": {
+            "volume": "tx2-k01-singlecut-1794185133987"
+          },
+          "attempt": "5c972cbc-e108-4b2a-9376-2b7951aa8727",
+          "at": "2026-11-09T00:45:33.987Z",
+          "state": "complete",
+          "value": "removed"
+        },
+        "absence": {
+          "kind": "single-cut absence",
+          "binding": {
+            "volume": "tx2-k01-singlecut-1794185133987"
+          },
+          "attempt": "be4a1f77-6bce-4627-b5ef-110c1a93da10",
+          "at": "2026-11-09T00:45:33.987Z",
+          "state": "complete",
+          "value": true
+        }
+      }
+    },
+    "calls": [
+      {
+        "args": [
+          "volume",
+          "create",
+          "--label",
+          "tx2.managed-by=lab/bin/engine.mjs",
+          "--label",
+          "tx2.diagnostic=K01-R30-T6",
+          "tx2-k01-singlecut-1794185133987"
+        ]
+      },
+      {
+        "args": [
+          "volume",
+          "rm",
+          "tx2-k01-singlecut-1794185133987"
+        ]
+      },
+      {
+        "args": [
+          "volume",
+          "ls",
+          "--filter",
+          "name=^tx2-k01-singlecut-1794185133987$",
+          "--format",
+          "{{.Name}}"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "singlecut-cleanup",
+    "variant": "still-present",
+    "present": true,
+    "receipt": {
+      "format": "tx2-k01-singlecut-probe/1",
+      "volume": "tx2-k01-singlecut-1794185133988",
+      "at": "2026-11-09T00:45:33.988Z",
+      "diagnosticOnly": true,
+      "before": {},
+      "settled": {
+        "settled": true,
+        "after": {}
+      },
+      "afterCut": {},
+      "stop": {
+        "verdict": {
+          "ok": true
+        }
+      },
+      "offline": {
+        "ok": true
+      },
+      "error": "injected copy helper failure after snapshot creation",
+      "snapshotRemoved": false,
+      "cleanup": {
+        "removal": {
+          "kind": "single-cut removal",
+          "binding": {
+            "volume": "tx2-k01-singlecut-1794185133988"
+          },
+          "attempt": "8d065b04-d32e-4357-964b-338bea6ece92",
+          "at": "2026-11-09T00:45:33.988Z",
+          "state": "failed",
+          "error": "missing text observation",
+          "cause": {}
+        },
+        "absence": {
+          "kind": "single-cut absence",
+          "binding": {
+            "volume": "tx2-k01-singlecut-1794185133988"
+          },
+          "attempt": "000119b9-d5ad-4c74-8baa-08b71b4a681f",
+          "at": "2026-11-09T00:45:33.988Z",
+          "state": "failed",
+          "error": "Error: snapshot still present",
+          "cause": {}
+        }
+      }
+    },
+    "calls": [
+      {
+        "args": [
+          "volume",
+          "create",
+          "--label",
+          "tx2.managed-by=lab/bin/engine.mjs",
+          "--label",
+          "tx2.diagnostic=K01-R30-T6",
+          "tx2-k01-singlecut-1794185133988"
+        ]
+      },
+      {
+        "args": [
+          "volume",
+          "rm",
+          "tx2-k01-singlecut-1794185133988"
+        ]
+      },
+      {
+        "args": [
+          "volume",
+          "ls",
+          "--filter",
+          "name=^tx2-k01-singlecut-1794185133988$",
+          "--format",
+          "{{.Name}}"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "singlecut-cleanup",
+    "variant": "inspect-failed",
+    "present": true,
+    "receipt": {
+      "format": "tx2-k01-singlecut-probe/1",
+      "volume": "tx2-k01-singlecut-1794185133989",
+      "at": "2026-11-09T00:45:33.989Z",
+      "diagnosticOnly": true,
+      "before": {},
+      "settled": {
+        "settled": true,
+        "after": {}
+      },
+      "afterCut": {},
+      "stop": {
+        "verdict": {
+          "ok": true
+        }
+      },
+      "offline": {
+        "ok": true
+      },
+      "error": "injected copy helper failure after snapshot creation",
+      "snapshotRemoved": false,
+      "cleanup": {
+        "removal": {
+          "kind": "single-cut removal",
+          "binding": {
+            "volume": "tx2-k01-singlecut-1794185133989"
+          },
+          "attempt": "639a3433-0451-462b-aa7d-3f1d51233d44",
+          "at": "2026-11-09T00:45:33.989Z",
+          "state": "failed",
+          "error": "missing text observation",
+          "cause": {}
+        },
+        "absence": {
+          "kind": "single-cut absence",
+          "binding": {
+            "volume": "tx2-k01-singlecut-1794185133989"
+          },
+          "attempt": "78d86530-6a55-4046-a83f-52663b856ad0",
+          "at": "2026-11-09T00:45:33.989Z",
+          "state": "failed",
+          "error": "volume list read failed",
+          "cause": {}
+        }
+      }
+    },
+    "calls": [
+      {
+        "args": [
+          "volume",
+          "create",
+          "--label",
+          "tx2.managed-by=lab/bin/engine.mjs",
+          "--label",
+          "tx2.diagnostic=K01-R30-T6",
+          "tx2-k01-singlecut-1794185133989"
+        ]
+      },
+      {
+        "args": [
+          "volume",
+          "rm",
+          "tx2-k01-singlecut-1794185133989"
+        ]
+      },
+      {
+        "args": [
+          "volume",
+          "ls",
+          "--filter",
+          "name=^tx2-k01-singlecut-1794185133989$",
+          "--format",
+          "{{.Name}}"
+        ]
+      }
+    ]
+  },
+  {
+    "kind": "admission",
+    "name": "NaN",
+    "value": "NaN",
+    "result": {
+      "ok": false,
+      "reasons": [
+        "invalid byte/cap observation: NaN"
+      ],
+      "observation": {
+        "kind": "pool resource observations",
+        "binding": {
+          "container": "fixture"
+        },
+        "attempt": "fe864951-4460-4e7b-a59e-9946a78fa469",
+        "at": "2026-11-09T00:45:33.990Z",
+        "state": "failed",
+        "error": "invalid byte/cap observation: NaN",
+        "cause": {}
+      },
+      "external": [],
+      "holders": []
+    }
+  },
+  {
+    "kind": "admission",
+    "name": "infinite",
+    "value": "Infinity",
+    "result": {
+      "ok": false,
+      "reasons": [
+        "invalid byte/cap observation: Infinity"
+      ],
+      "observation": {
+        "kind": "pool resource observations",
+        "binding": {
+          "container": "fixture"
+        },
+        "attempt": "cecdc690-6cfa-490c-b78a-2548b33512c4",
+        "at": "2026-11-09T00:45:33.990Z",
+        "state": "failed",
+        "error": "invalid byte/cap observation: Infinity",
+        "cause": {}
+      },
+      "external": [],
+      "holders": []
+    }
+  },
+  {
+    "kind": "admission",
+    "name": "negative",
+    "value": "-1",
+    "result": {
+      "ok": false,
+      "reasons": [
+        "invalid byte/cap observation: -1"
+      ],
+      "observation": {
+        "kind": "pool resource observations",
+        "binding": {
+          "container": "fixture"
+        },
+        "attempt": "c1bca4b3-4fde-4fe9-86f1-05fa6d6c2ee4",
+        "at": "2026-11-09T00:45:33.991Z",
+        "state": "failed",
+        "error": "invalid byte/cap observation: -1",
+        "cause": {}
+      },
+      "external": [],
+      "holders": []
+    }
+  },
+  {
+    "kind": "admission",
+    "name": "missing",
+    "value": "undefined",
+    "result": {
+      "ok": false,
+      "reasons": [
+        "invalid byte/cap observation: undefined"
+      ],
+      "observation": {
+        "kind": "pool resource observations",
+        "binding": {
+          "container": "fixture"
+        },
+        "attempt": "2600ee32-7765-4cfc-8702-2ce9b2513c2f",
+        "at": "2026-11-09T00:45:33.991Z",
+        "state": "failed",
+        "error": "invalid byte/cap observation: undefined",
+        "cause": {}
+      },
+      "external": [],
+      "holders": []
+    }
+  }
+]

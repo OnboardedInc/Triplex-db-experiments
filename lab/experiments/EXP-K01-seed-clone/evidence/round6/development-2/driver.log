@@ -1,0 +1,153 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 84142 "CX-A01-0312-R3-G0", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 84142 "CX-A01-0312-R3-G0", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+{
+  "at": "2026-11-09T00:37:54.248Z",
+  "head": "1c10c826961f1fcc6278c11b343b6514528ec522",
+  "offlineOnly": true,
+  "hostDisk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 2989558,
+    "bavail": 2989558,
+    "files": 131275806,
+    "ffree": 119582320
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/bin/engine.mjs": "d6e7e619a01c87a685ca1c30be9d4533a19d221080663ba083c1fc7289f52811",
+    "lab/bin/owner-state.mjs": "8cf0c4be727bbdd03968415f0e11a85f822acdef061d555e4045d0080cb70ebb",
+    "lab/bin/xtdb-log.mjs": "d251668c35b570120cc2c69c27b68af6d1854a0a80751b91b794f10329a2da62",
+    "lab/bench/clone-check.ts": "9d2686059f6766671f4bd1d8b22908eb594e54a3720bd01b435acc521af3783f",
+    "lab/bench/lib/clone.ts": "0586d0a5c94c0d1442e7ccde29c3a8da35e225e8b2246a92968e5ea9cd3ed85c",
+    "lab/bench/lib/bulk.ts": "4bfc7dc4276087637c1ecf5fd441b97d3a18ba1f06e0b5f2e57b97b3302bd306",
+    "lab/experiments/EXP-K01-seed-clone/round2-live.mjs": "a0afcb3ad9df3c330b44059753638a6b242650978dbd222a24ed95010cac48dc",
+    "lab/verify/K01/freshness.test.mjs": "7e7ec0f90682fb276dbdab441aab3b889b08d45d3a491ed038942eebd017f83d",
+    "lab/verify/K01/round4.test.mjs": "5dcf10ee489d962a6b142db88b0a02e5ec7262961501549a8aef9a99ce606fc1",
+    "lab/verify/K01/tail-fixtures.mjs": "29bec6c80a2330c88e5539e20517f96e5471a6aeb6e691cf22f7cc03fd512abd",
+    "lab/verify/K01/run-round6.mjs": "e0ff2ee8eafb421bb553924c6b06349b047e0d7a20c12de5d6fb9ca7d8050ec2",
+    "lab/bin/lib.mjs": "87edbc09252bcb6d9a8eedd0d9e920caff754187dbd14af5f2d92f5b287705a3",
+    "lab/bin/observation.ts": "cf7960182e9f7090162db4870178602cb96f8f7717993e2e01dc8e5bbac57d57",
+    "lab/verify/K01/observation-context.mjs": "652f0e8294315e9e0cb3241b249d78bd7ed46d8e6746539bfc72feb7d39fb351",
+    "lab/verify/K01/pass-audit-review.test.mjs": "7dc4985df47101c5f059c5df01e8cd865678116f2cde0fd354b72cac054ebeb9",
+    "lab/verify/K01/q83e-review.test.mjs": "2b4006dd7f2f3591cc6fb375fe60346b36f9db0be4bcf6e7e3df9b1867cfd19e",
+    "lab/verify/K01/round5.test.mjs": "de6aa4f7e8f844715d89f2e023fa1982c5b5eba57b7c6beb561232afd7aa18b6",
+    "lab/verify/K01/offline.test.mjs": "6f1b3e99b328bb583dfe3f334ef958a5223a18f139367bc23c20200315f414c6",
+    "lab/verify/K01/round3.test.mjs": "09351450380233a5ed637b435c626a0db6ae339161b0b5d5920378427978840a",
+    "lab/bench/test/clone.test.ts": "4a0fd68fe8c9c4d9582f0f331d156045e9d29252aa4346198d9d24ba4b7e9651"
+  },
+  "runs": [
+    {
+      "label": "baseline",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/clone.test.ts"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1078,
+      "sha256": "6e09d258a85e1580ddb757cbcc3682f8f0d8dcfda65538ffbdba8dcfabd1a5ea"
+    },
+    {
+      "label": "original-21",
+      "args": [
+        "--test",
+        "lab/verify/K01/offline.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 155,
+      "sha256": "0be9b93b04a4eb00bd1f1858993c513414d5de95541e1ddfc9848ceae94f158f"
+    },
+    {
+      "label": "round3-23",
+      "args": [
+        "--test",
+        "lab/verify/K01/round3.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 128,
+      "sha256": "256cc3daa7a9893a21cc33691c3a6c66e792c6e96c3200da428e521d0a9e3be2"
+    },
+    {
+      "label": "freshness-14",
+      "args": [
+        "--test",
+        "lab/verify/K01/freshness.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 160,
+      "sha256": "7b72d826b52561eda4b3feaa4c2c6afec706bc66ea2eecedb3fc5e02a0952541"
+    },
+    {
+      "label": "round4",
+      "args": [
+        "--test",
+        "lab/verify/K01/round4.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 529,
+      "sha256": "d182505b47858d50e6eba0c22f1a08c672af32e307b961dbffe176da967c23f7"
+    },
+    {
+      "label": "reviewer-36",
+      "args": [
+        "--test",
+        "lab/verify/K01/q83e-review.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 409,
+      "sha256": "bd667ba0394cafbc0592a32c2a4c6e31baebb3b3dbb693aee954e03883754c11"
+    },
+    {
+      "label": "round5",
+      "args": [
+        "--test",
+        "lab/verify/K01/round5.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 249,
+      "sha256": "5d64d86f4f8775189c4ae3c2dc81374f3eeeb2609675850f8b2c8a1a659eeb35"
+    },
+    {
+      "label": "reviewer-13",
+      "args": [
+        "--test",
+        "lab/verify/K01/pass-audit-review.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 3233,
+      "sha256": "8b2ac54e432937946f38828f06d2ba7bd1c62f4191541a08b0992102b0b27840"
+    },
+    {
+      "label": "types",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1240,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}
