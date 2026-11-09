@@ -1,0 +1,43 @@
+{
+  "atEpoch": 1794193160.948642,
+  "freeBefore": 5271085056,
+  "freeAfter": 5267329024,
+  "removed": [
+    {
+      "path": "node_modules/.pnpm/@cloudflare+workerd-darwin-arm64@1.20260918.1",
+      "files": 3,
+      "bytes": 128712196,
+      "listingSha256": "946575aee7ae12722dea39143b256d9063e8360bbb6845bedc20e77791d7c1a8",
+      "reason": "Disposable provisioning/workerd dependencies outside all G0 package scripts; exact lock and owned store retained. No root/cloud gate claimed."
+    },
+    {
+      "path": "node_modules/.pnpm/@cloudflare+workerd-darwin-arm64@1.20261006.1",
+      "files": 3,
+      "bytes": 130768388,
+      "listingSha256": "e77c92d3776acd700a0d2d114def64dd87b20289ba5d846679d4e9b7586cfc34",
+      "reason": "Disposable provisioning/workerd dependencies outside all G0 package scripts; exact lock and owned store retained. No root/cloud gate claimed."
+    },
+    {
+      "path": "node_modules/.pnpm/workerd@1.20260918.1",
+      "files": 7,
+      "bytes": 133678613,
+      "listingSha256": "2f8a61e35269af76b09c3fdd8d1a19a21a90c5f8089229a929ca45abc39813a1",
+      "reason": "Disposable provisioning/workerd dependencies outside all G0 package scripts; exact lock and owned store retained. No root/cloud gate claimed."
+    },
+    {
+      "path": "node_modules/.pnpm/workerd@1.20261006.1",
+      "files": 7,
+      "bytes": 135761396,
+      "listingSha256": "209a0e109aab0905e7df5feccc6857cbef162a097ceb0d858f750f59ea43cad5",
+      "reason": "Disposable provisioning/workerd dependencies outside all G0 package scripts; exact lock and owned store retained. No root/cloud gate claimed."
+    },
+    {
+      "path": "node_modules/.pnpm/alchemy@2.0.0-beta.80_@effect+platform-node@4.0.3_effect@4.0.3_redis@6.2.1__@effect+sql_f300a3882a89ac5591483e7ec8a72890",
+      "files": 52348,
+      "bytes": 142109967,
+      "listingSha256": "4cce50d3fedf5ce1874f0ee3a8eef08e36654f0cb0bb6f74dc24bcf845eaec19",
+      "reason": "Disposable provisioning/workerd dependencies outside all G0 package scripts; exact lock and owned store retained. No root/cloud gate claimed."
+    }
+  ],
+  "sourceAndStoreUntouched": true
+}

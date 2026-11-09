@@ -1,0 +1,1 @@
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/runs/G0/G0-datomic-20261109T031658Z-e9eea9/vitest-core.json

@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 85185 "CX-A01-0313-evaluator", pid 85245 "CX-A01-0313-mutations", pid 1643 "CX-P2Q-R9-live-retry", pid 92402 "CX-GS12F-R3-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 85185 "CX-A01-0313-evaluator", pid 85245 "CX-A01-0313-mutations", pid 1643 "CX-P2Q-R9-live-retry", pid 92402 "CX-GS12F-R3-final"
+[lab] G0-datomic-20261109T030610Z-9c2dfd: raw output runs/G0/G0-datomic-20261109T030610Z-9c2dfd
+FAIL G0 datomic scope=full executed=1253 pass=1252 fail=1 skip=66
+  reason: 1 failed tests
+receipt: lab/runs/G0/G0-datomic-20261109T030610Z-9c2dfd.json

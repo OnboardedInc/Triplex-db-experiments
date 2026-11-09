@@ -1,5 +1,7 @@
 # Contract 0.3.13
 
+**Result: candidate built; all requested gates pass on `c3ea3537`. Independent review pending.**
+
 North star: the correctness floor for P1–P5: named-cut reads, atomic writes, content-bound seed reuse and valid golden-scenario evidence. Goals and targets: lab/SCOPE.md, lab/NORTH-STAR.md, lab/TARGETS.md. Builder CX-A01-0312; independent review remains required.
 
 ## Source and atomic pin review
@@ -58,3 +60,36 @@ Heavy admissions are held whenever host free disk is below 5 GiB. Two evaluator/
 Evaluator attempt 1 on `076f1732` completed **105/108**, three failures. The added early `documentCore` GS guard suppressed the expected structural-document result/reasons. Removed that extra guard: document-only admission already has overall DIAGNOSTIC and cannot close or compare anything, while Q94e remains enforced in Python/JS executing admission and GS contract blockers. The required evaluator test files and assertions remain byte-identical. The new mixed-claim regression checks the actual executing hold; the initial failed assertion output remains `evaluator-attempt1.tap`. This narrows the implementation to the ruling's acceptance/comparison boundary without weakening the ruling.
 
 First XTDB G0 passed 1,218/1,218 with 137 expected skips on `076f1732`. First Datomic G0 `G0-datomic-20261109T030610Z-9c2dfd` executed 1,253 tests: 1,252 passed and one testkit route-equivalence test exceeded its existing 5,000 ms timeout; 66 skips were expected, zero unexpected. The exact failure and raw outputs are retained. No assertion, timeout, test inventory or package source changed for its retry. Final G0 reruns after the source correction will use these attempts as `--previous`; the Datomic retry runs after the other own heavy suites finish to reduce contention.
+
+## Final results
+
+**Candidate built; every requested gate passes.** Final tested code source: **`c3ea35374ff8cbd8b3a476c70368ea56f2713395`**. Atomic integration/re-pin commit: **`260d46c715ddd6465894869eeceab08059fcf4ef`**, whose parents are dispatch main `15927efed3a6dd48d620b19bd0201fe862344b33` and integration `6e5dde9778ac689f18bf039aa760969c506a0272`. Follow-up commits correct mutation targets and the GS document-only boundary. The final receipt commit adds report/evidence only. [Atomic pin proof](evidence-0.3.13/atomic-pin-proof.json), [source and hashes](evidence-0.3.13/source-and-hashes.json).
+
+| Gate | Final result | Evidence |
+| --- | --- | --- |
+| Generator --verify | All six outputs byte-identical, including after the Q47d pending-authority probe | [verify-final-source.txt](evidence-0.3.13/verify-final-source.txt) |
+| Contract tests | **18/18 PASS** | [contract-tests-c3ea.txt](evidence-0.3.13/contract-tests-c3ea.txt) |
+| New JS policy tests | **3/3 PASS**, including every GS executing kind and mixed claims | [screening-js-c3ea.txt](evidence-0.3.13/screening-js-c3ea.txt) |
+| Contract mutations | **494/494 caught**, zero misses; catalog 582, retired 88 | [negtest-final.txt](evidence-0.3.13/negtest-final.txt) |
+| Required evaluator | **108/108 PASS**, zero failures/skips/cancellations/todo; both original test files/assertions unchanged | [evaluator-final.tap](evidence-0.3.13/evaluator-final.tap) |
+| XTDB G0 | **1218/1218 PASS**, 137 expected skips, zero unexpected/failures; scope full | [final receipt](evidence-0.3.13/G0-xtdb-final-receipt.json), [raw](evidence-0.3.13/G0-xtdb-final-raw/) |
+| Datomic G0 | **1253/1253 PASS**, 66 expected skips, zero unexpected/failures; scope full | [final receipt](evidence-0.3.13/G0-datomic-final-receipt.json), [raw](evidence-0.3.13/G0-datomic-final-raw/) |
+| Pending authority | Q47d PASS; both forbidden controls detected, original outputs restored | [q47d-final.txt](evidence-0.3.13/q47d-final.txt) |
+| Original instruction provenance | Five oracle plus two world entries PASS; fixed external oracle pins and registry unchanged | [brief-audit.json](evidence-0.3.13/brief-audit.json) |
+| Prior real-payload regressions | **5/5 PASS** | [real-payloads.txt](evidence-0.3.13/real-payloads.txt) |
+
+Fifty mutation catalog entries were added. Every new ruling has a literal-weakening and dropped-consumer control; additional controls cover amendments, revival of retired rules, D versus D-prime, deadlines, two-start publication, QLever delta policy, GS diagnostic holds, the image and every testkit projection. The 88 retired controls consist of the prior 81, six controls for Q83d/e/frontier precedence that Q93 explicitly retires, and the old pre-DA00 prohibition against pinning Datomic. None is counted as executed or caught. Effective amended rules retain active negative controls.
+
+Final G0 attempts are `G0-xtdb-20261109T031500Z-f3d20d` and `G0-datomic-20261109T031658Z-e9eea9`, each linked with `--previous`. Both bind `c3ea3537`, identical executed-source identity `c589a74205b308cd84a22ad09a290ad43fbe01c2f990b7c47d0106abdfac05e0`, zero source diff bytes, and no modified or untracked executed-source inputs. The worktree had out-of-scope evidence/report paths, so the receipts honestly mark it dirty; optional stash snapshots are null. This is not claimed as a clean-tree snapshot. All **41 XTDB and 48 Datomic retained object references** rehash correctly. Datomic's eight repeated parent-grant references point to the captured heavy-owner bytes; that immutable object is committed under G0-resource-objects rather than incorrectly re-reading today's reusable lock path.
+
+All long suites, G0 and the install used heavy.mjs. Final G0 runs were sequential after this task's other heavy suites completed. The version-local pnpm shim executes the packages' unchanged declared build/typecheck scripts and installed Vitest, adds the Datomic package to the prior shim's supported set, and queries pnpm 10.11.0 with the owned store. All live integration flags and TRIPLEX_COMMIT_ENCODING were unset. No test timeout, assertion, expected-skip inventory or gate implementation was adjusted to obtain the rerun PASS. The first Datomic timeout remains linked and visible; it is not erased by the later PASS.
+
+Transitive contract hash: **`b54ce77a391736254ab76c51d9d147010ca99df5645f0b87e32e4d14049b9c3c`**. Generator SHA-256: **`07c98812ec83fe8a7e32dd09418d40522b48b3dc53e2d5f3df6f7007288d98e5`**. Source hashes match before/after every final gate. [validation-summary.json](evidence-0.3.13/validation-summary.json) is reproduced by [validate-evidence.py](evidence-0.3.13/validate-evidence.py), which checks actual result content, exact attempt/source bindings and retained raw/resource-object hashes; it revalidates these historical receipts and does not run or grant new engine acceptance. Its authority inputs and every evidence file are included in SHA256SUMS. New evidence stays below both bulky limits (largest file under 1 MB; whole evidence directory under 5 MB), so no new bulky raw directory is added to Git. Imported DA01 bulky evidence remains in its already-indexed durable folders.
+
+Contract pin-level counts remain **157 total / 40 closable / 117 blocked**. Datomic's surface becomes **153 / 38 pin-level closable / 115 blocked** after removal of its image blocker. These are potential pin-level counts, not achieved closure or fresh engine qualification. Forty-four unique pending IDs remain, including every requested hold. No obligation is closed by this contract build.
+
+## Limits and open questions
+
+Independent contract delta review remains outstanding. Q78e, Q86g, Q89/Q90, Q92, Q94a and Q95 remain pending; G03 executing-isolation pins remain deferred. Q91/Q93/Q94 policies are requirements for later implementations/qualification, not a claim that QG1, K01, W0-1.2 or P5 round C has qualified. The historical reviewer suite's obsolete null-image method remains a documented failure; all required current-version gates pass.
+
+No engine/container lifecycle, live Datomic/XTDB/QLever G1/G2, production durability probe, storage migration, tenant-isolation/erasure qualification, benchmark, root pnpm check, package publication, push or merge into actual main was performed. INT-D's prior unrelated unbuilt-CLI pack-check limitation is not resolved or relabelled by this task. Every failed gate attempt listed above is retained for the separate reviewer.

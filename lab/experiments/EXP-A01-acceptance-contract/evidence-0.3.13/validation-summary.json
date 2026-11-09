@@ -1,0 +1,191 @@
+{
+  "testedSource": "c3ea35374ff8cbd8b3a476c70368ea56f2713395",
+  "sourceHashesStable": true,
+  "atomicMerge": "260d46c715ddd6465894869eeceab08059fcf4ef",
+  "mainMerged": "15927efed3a6dd48d620b19bd0201fe862344b33",
+  "integrationMerged": "6e5dde9778ac689f18bf039aa760969c506a0272",
+  "version": "0.3.13",
+  "transitiveHash": "b54ce77a391736254ab76c51d9d147010ca99df5645f0b87e32e4d14049b9c3c",
+  "generatorVerify": "all six outputs byte-identical",
+  "contractTests": 18,
+  "jsPolicyTests": 3,
+  "mutationCatalog": 582,
+  "activeMutations": 494,
+  "caught": 494,
+  "missed": 0,
+  "retiredControls": 88,
+  "newLiteralAndConsumerControls": {
+    "Q91a": [
+      "CAUGHT Q91a literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q91a consumer dropped: Q91a: required literal consumer missing or weakened"
+    ],
+    "Q91b": [
+      "CAUGHT Q91b literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q91b consumer dropped: Q91b: required literal consumer missing or weakened"
+    ],
+    "Q91c": [
+      "CAUGHT Q91c literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q91c consumer dropped: Q91c: required literal consumer missing or weakened"
+    ],
+    "Q91d": [
+      "CAUGHT Q91d literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q91d consumer dropped: Q91d: required literal consumer missing or weakened"
+    ],
+    "Q93a": [
+      "CAUGHT Q93a literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q93a consumer dropped: Q93a: required literal consumer missing or weakened"
+    ],
+    "Q93b": [
+      "CAUGHT Q93b literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q93b consumer dropped: Q93b: required literal consumer missing or weakened"
+    ],
+    "Q94b": [
+      "CAUGHT Q94b literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q94b consumer dropped: Q94b: required literal consumer missing or weakened"
+    ],
+    "Q94c": [
+      "CAUGHT Q94c literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q94c consumer dropped: Q94c: required literal consumer missing or weakened"
+    ],
+    "Q94d": [
+      "CAUGHT Q94d literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q94d consumer dropped: Q94d: required literal consumer missing or weakened"
+    ],
+    "Q94e": [
+      "CAUGHT Q94e literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q94e consumer dropped: Q94e: required literal consumer missing or weakened"
+    ],
+    "Q94f": [
+      "CAUGHT Q94f literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q94f consumer dropped: Q94f: required literal consumer missing or weakened"
+    ],
+    "Q94g": [
+      "CAUGHT Q94g literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q94g consumer dropped: Q94g: required literal consumer missing or weakened"
+    ],
+    "Q94h": [
+      "CAUGHT Q94h literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q94h consumer dropped: Q94h: required literal consumer missing or weakened"
+    ],
+    "Q94i": [
+      "CAUGHT Q94i literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q94i consumer dropped: Q94i: required literal consumer missing or weakened"
+    ],
+    "Q93c": [
+      "CAUGHT Q93c literal weakened: 0.3.13: every newly compiled ruling must match original literal authority",
+      "CAUGHT Q93c consumer dropped: Q93c: required literal consumer missing or weakened"
+    ]
+  },
+  "evaluator": {
+    "pass": 108,
+    "fail": 0,
+    "skipped": 0,
+    "assertionsWeakened": false
+  },
+  "g0": [
+    {
+      "lane": "xtdb",
+      "runId": "G0-xtdb-20261109T031500Z-f3d20d",
+      "previous": "G0-xtdb-20261109T030300Z-b9127b",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1218,
+        "pass": 1218,
+        "fail": 0,
+        "skip": 137,
+        "expectedSkip": 137,
+        "unexpectedSkip": 0
+      },
+      "sourceHead": "c3ea35374ff8cbd8b3a476c70368ea56f2713395",
+      "sourceTreeId": "c589a74205b308cd84a22ad09a290ad43fbe01c2f990b7c47d0106abdfac05e0",
+      "sourceDiffBytes": 0,
+      "stashCommit": null,
+      "verifiedObjects": 41
+    },
+    {
+      "lane": "datomic",
+      "runId": "G0-datomic-20261109T031658Z-e9eea9",
+      "previous": "G0-datomic-20261109T030610Z-9c2dfd",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1253,
+        "pass": 1253,
+        "fail": 0,
+        "skip": 66,
+        "expectedSkip": 66,
+        "unexpectedSkip": 0
+      },
+      "sourceHead": "c3ea35374ff8cbd8b3a476c70368ea56f2713395",
+      "sourceTreeId": "c589a74205b308cd84a22ad09a290ad43fbe01c2f990b7c47d0106abdfac05e0",
+      "sourceDiffBytes": 0,
+      "stashCommit": null,
+      "verifiedObjects": 48
+    }
+  ],
+  "q47d": "PASS",
+  "pendingIds": [
+    "Q51b",
+    "Q73a",
+    "Q73b",
+    "Q78e",
+    "Q81b",
+    "Q81c",
+    "Q86g",
+    "Q89a",
+    "Q89b",
+    "Q89c",
+    "Q89d",
+    "Q89e",
+    "Q89f",
+    "Q89g",
+    "Q89h",
+    "Q89i",
+    "Q90a",
+    "Q90b",
+    "Q90c",
+    "Q90d",
+    "Q90e",
+    "Q90f",
+    "Q90g",
+    "Q92a",
+    "Q92b",
+    "Q92c",
+    "Q92d",
+    "Q92e",
+    "Q92f",
+    "Q92g",
+    "Q92h",
+    "Q92i",
+    "Q92j",
+    "Q92k",
+    "Q94a",
+    "Q95a",
+    "Q95b",
+    "Q95c",
+    "Q95d",
+    "Q95e",
+    "Q95f",
+    "Q95g",
+    "Q95h",
+    "Q95"
+  ],
+  "closability": {
+    "total": 157,
+    "closable": 40,
+    "blocked": 117
+  },
+  "datomicPinLevelCounts": {
+    "total": 153,
+    "closable": 38,
+    "blocked": 115
+  },
+  "firstFailuresPreserved": [
+    "negtest-initial.txt",
+    "evaluator-attempt1.tap",
+    "G0-datomic-attempt1-receipt.json"
+  ],
+  "historicalReviewerSuite": "34 methods pass; one pre-DA00 null-image method fails 153 subtests as its premise is superseded; not counted as a passing gate",
+  "rawEvidenceBytes": 2930667,
+  "largestEvidenceBytes": 272437,
+  "allNewEvidenceBelowBulkyLimits": true
+}
