@@ -1,0 +1,63 @@
+== audit4-forgeries.mjs
+B0 baseline world is RECOMPUTED for P3 and P3+P2 (fixture sa  ::  ok  ::  RECOMPUTED:  || RECOMPUTED: 
+B1 removing WAL/CR/resume floors refuses  ::  ok  ::  RECOMPUTED:  || REFUSED: CR-CROSSCHECK-MISSING | CR-CROSSCHECK-MISSING | CR-CROSSCHECK-MISSING | CR-CROSSCHECK-MISSING | CR-CROSSCHECK-MISSING | CR-CROSSCHECK-MISSING
+R1 truncated chunk chain is refused  ::  ok  ::  -
+R2 receipt to a different tx on retry is refused (IDEMPOTENC  ::  ok  ::  REFUSED: TRACE-OFFERS-MISMATCH | SOURCE-CONTENT-MISMATCH(c0) | DUPLICATE-COMMIT(c0) | SOURCE-CONTENT-MISMATCH(c0) | SOURCE-CONTENT-MISMATCH(c1) | SOURCE-CONTENT-MISMATCH(c2) | EVENT-ID-DUPLICATE(EVENT-ID-DUPLICATE: missing/duplicate eventId) | ACK-BEFORE-PUBLICATION(c0) | IDEMPOTENCY-RECEIPT-MISMATCH
+R3 ACK before source bracket L is refused when P2 is request  ::  ok  ::  REFUSED: ACK-BEFORE-PUBLICATION(c0)
+R4 duplicate effect row with identical key is refused  ::  ok  ::  REFUSED: WAL-NOT-ESTIMABLE(normalized rows disagree with decoded WAL) | NS-P3-VISIBLE-DUP-EFFECTS-MAX
+O1 P2/P3: the same command committed twice in the source (re  ::  ok  ::  REFUSED: SOURCE-CONTENT-MISMATCH(c0) | DUPLICATE-COMMIT(c0) | SOURCE-CONTENT-MISMATCH(c0)
+O2 P2: typed error ACKed in 1 ms while the command commits 4  ::  ok  ::  REFUSED: ERROR-BUT-COMMITTED(c0) | VALID-COMMAND-REJECTED(c0) | NS-P2-LATENCY(5-10)
+O3 P2: a duplicate retry answered with a typed error instead  ::  ok  ::  REFUSED: TRACE-OFFERS-MISMATCH | EVENT-ID-DUPLICATE(EVENT-ID-DUPLICATE: missing/duplicate eventId) | ERROR-BUT-COMMITTED(c0) | VALID-COMMAND-REJECTED(c0) | NS-P2-LATENCY(5-10)
+O4 P3: a second visible effect for the same (position, subje  ::  ok  ::  REFUSED: WAL-NOT-ESTIMABLE(normalized rows disagree with decoded WAL) | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH
+O4 P3: a second visible effect for the same (position, subje  ::  ok  ::  REFUSED: WAL-NOT-ESTIMABLE(normalized rows disagree with decoded WAL) | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH
+O5 P3: source entry order (offset) contradicting cursor orde  ::  ok  ::  REFUSED: NS-P3-ORDER-VIOLATIONS-MAX(source cursor disagrees with offset order) | NS-P3-ORDER-VIOLATIONS-MAX(source cursor disagrees with offset order)
+O5b P3: a position whose coordinates disagree with its entry  ::  ok  ::  REFUSED: CONSUMER-IDENTITY-MISMATCH(source epoch disagrees with pinned mapping) | NS-P3-ORDER-VIOLATIONS-MAX(source cursor disagrees with offset order) | CONSUMER-IDENTITY-MISMATCH(source epoch disagrees with pinned mapping) | NS-P3-ORDER-VIOLATIONS-MAX(source cursor disagrees with offset order) | CONSUMER-IDENTITY-MISMATCH(source epoch disagrees with pinned mapping) | NS-P3-ORDER-VIOLATIONS-MAX(source cursor disagrees with offset order) | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH
+O6a P3 only: candidate typed-rejects 2 of 3 valid commands,   ::  ok  ::  REFUSED: TRACE-OFFERS-MISMATCH | LAG-SAMPLES-SHORT | TIMING-UNJUDGED | EVENT-ID-DUPLICATE(EVENT-ID-DUPLICATE: missing/duplicate eventId) | OFFER-KIND-MISSING | SOURCE-CONTENT-MISMATCH(c1) | VALID-COMMAND-NOT-PUBLISHED(c1) | VALID-COMMAND-REJECTED(c1) | OFFER-KIND-MISSING | SOURCE-CONTENT-MISMATCH(c2) | VALID-COMMAND-NOT-PUBLISHED(c2) | VALID-COMMAND-REJECTED(c2)
+O6b P3 only: ACK before publication (lag start moved late by  ::  ok  ::  REFUSED: ACK-BEFORE-PUBLICATION(c0)
+O7 P3: a RECOMPUTED result carries resume-from-checkpoint ev  ::  ok  ::  RECOMPUTED:  || REFUSED: P3-RESUME-MISSING
+O8 P3: fault witnesses that each replay one arbitrary entry   ::  ok  ::  REFUSED: FAULT-WITNESS-INVALID(replay disagrees with recovered WAL range)
+O9 P3: a commit published after window end that never reache  ::  ok  ::  REFUSED: NS-P3-EVERY-POSITION-ACCOUNTED(no durable consumer bracket "3") | CR-CROSSCHECK-MISSING | LAG-SAMPLES-SHORT(scheduled command published outside window; infini) | NS-P3-LAG-P99-MS | ACK-BEFORE-PUBLICATION(c2)
+O12 P3: lag "with 256 readers" accepted while reads[] is emp  ::  ok  ::  REFUSED: READER-LEVEL-MISMATCH | COMPANION-UNBOUND | P3-RESUME-MISSING | READER-RATE-SHORT
+O16 oracle "prefix" stops at the position being evaluated  ::  ok  ::  REFUSED: COMPANION-UNBOUND | P3-RESUME-MISSING
+O17 P2/P3: committed change subject differing from the offer  ::  ok  ::  REFUSED: SOURCE-CONTENT-MISMATCH(c0)
+O18/O25 broker-frame/2: self-made CRC frames whose bytes are  ::  ok  ::  RECOMPUTED:  || RECOMPUTED:  || REFUSED: SOURCE-NOT-VERIFIED(source bytes could not be decoded)
+O22 P2: ACK inside a 150 ms wide publication bracket is acce  ::  ok  ::  REFUSED: BRACKET-TOO-WIDE | ACK-ORDER-UNDECIDED
+L0 ladder fixture sanity: met  ::  ok  ::  -
+O10 P1: a hops-6 read answered with the hops-3 answer is a v  ::  ok  ::  -
+O11 P1: a "1024-reader" window whose reads all come from one  ::  ok  ::  -
+O24 P1: recovery window matched although neither the 1024 wi  ::  ok  ::  -
+O29a P1: writer p99 at 256 readers of 120 ms passes because   ::  ok  ::  -
+O13 P4: history-flatness pulls without any answer check are   ::  ok  ::  -
+O14 P5: the "during sweep" traffic segment may be a byte cop  ::  ok  ::  -
+== audit4-forgeries-round2.mjs
+C0 round 2 baseline is RECOMPUTED with resume and met  ::  ok  ::  RECOMPUTED: 
+V-O7 crash companion whose 9 witnesses crash at t=0 (before   ::  ok  ::  REFUSED: P3-RESUME-MISSING
+V-O6 P3 only: 4 reader loops whose every answer is wrong sat  ::  ok  ::  REFUSED: NS-P1-VIOLATIONS-MAX
+V-O6c P3 only: publication deferred past window end is invis  ::  ok  ::  REFUSED: LAG-POPULATION-UNBOUND | LAG-SAMPLES-SHORT | LAG-SAMPLES-SHORT(scheduled command published outside window; infini) | NS-P3-LAG-P99-MS | COMPANION-UNBOUND | P3-RESUME-MISSING
+V-O6c control: same deferral with lag minimum = commit count  ::  ok  ::  REFUSED: LAG-SAMPLES-SHORT(scheduled command published outside window; infini) | NS-P3-LAG-P99-MS
+V-O2 an oracle-invalid command (kind invalid) that the candi  ::  ok  ::  REFUSED: COMMAND-VALIDITY-PIN-MISMATCH(c1) | INVALID-COMMAND-PUBLISHED(c1)
+V-O2b P2: a command published before it was offered (pre-app  ::  ok  ::  REFUSED: PUBLISHED-BEFORE-OFFER(c0)
+V-O3 a kind=duplicate retry answered with a typed error (uni  ::  ok  ::  REFUSED: TRACE-OFFERS-MISMATCH | RETRY-ORIGIN-MISSING | ERROR-BUT-COMMITTED(c0) | VALID-COMMAND-REJECTED(c0) | IDEMPOTENCY-RECEIPT-MISMATCH(c0) | NS-P2-LATENCY(5-10)
+V-O1 a duplicate signal offered under a fresh commandId comm  ::  ok  ::  REFUSED: TRACE-OFFERS-MISMATCH | SOURCE-CONTENT-MISMATCH(c0dup) | SOURCE-CONTENT-MISMATCH(c0dup) | COMMAND-VALIDITY-PIN-MISMATCH(c0dup) | RETRY-ORIGIN-MISSING
+V-O4 duplicate effect under a whitespace-variant consumer la  ::  ok  ::  REFUSED: WAL-NOT-ESTIMABLE(normalized rows disagree with decoded WAL) | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH
+V-O5/O17 two in-flight commands for one subject commit in re  ::  ok  ::  REFUSED: TRACE-OFFERS-MISMATCH | SOURCE-CONTENT-MISMATCH(c1) | SOURCE-CONTENT-MISMATCH(c0) | SUBJECT-OFFER-ORDER-MISMATCH
+V-O10 a decimal-string basis against coordinate-object posit  ::  ok  ::  -
+V-O13 depth-10 pulls answered with the depth-1 answer are re  ::  ok  ::  -
+V-O29 P1: zero-reader writer p99 slowed to 48 ms lets 60 ms   ::  ok  ::  -
+V-O14 P5: baseline writer slowed to 49 ms lets 73 ms during   ::  ok  ::  -
+NF2 a crash-only bundle evaluated as a primary returns RECOM  ::  ok  ::  -
+== audit4-forgeries-round3.mjs
+D0 round 3 baseline: P3 and P3+P2 RECOMPUTED with met  ::  ok  ::  RECOMPUTED:  || RECOMPUTED: 
+W-H1 P3: 4 loops that each complete one correct read per sec  ::  ok  ::  REFUSED: NS-P1-LATENCY | READER-RATE-SHORT
+W-H1 P3+P2: 4 loops that each complete one correct read per   ::  ok  ::  REFUSED: NS-P1-LATENCY | READER-RATE-SHORT
+W-H2 a planned crash injection whose witness is absent (e.g.  ::  ok  ::  REFUSED: P3-RESUME-MISSING
+W-H3 RESIDUAL: publication revealed exactly at send (L = sen  ::  ok  ::  RECOMPUTED: 
+W-H4 control: c0 visible before c1 is offered, c1 committed   ::  ok  ::  REFUSED: COMMAND-VALIDITY-PIN-MISMATCH(c1) | INVALID-COMMAND-PUBLISHED(c1)
+W-H4 c0 committed first in source order but its visibility h  ::  ok  ::  REFUSED: COMMAND-VALIDITY-PIN-MISMATCH(c1) | INVALID-COMMAND-PUBLISHED(c1)
+== audit4-forgeries-round4.mjs
+E0 round 4 baseline: P3 and P3+P2 RECOMPUTED with met  ::  ok  ::  RECOMPUTED:  || RECOMPUTED: 
+W-H1r4 P3: parked reads keep 4 loops "running" while the sto  ::  FAIL parked readers; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"c  ::  RECOMPUTED: 
+W-H1r4 P3+P2: parked reads keep 4 loops "running" while the   ::  FAIL parked readers; RECOMPUTED with bars {"sourcePrefixEnumerated":true,"everyPositionAccounted":true,"c  ::  RECOMPUTED: 
+W-H2r4 every planned injection witnessed, but each cgroup-go  ::  FAIL crashes of the wrong process prove consumer resume; RECOMPUTED with bars {"sourcePrefixEnumerated":t  ::  RECOMPUTED: 
+W-H4r4 c1 (valid only once c0 exists, different subject) com  ::  ok  ::  REFUSED: COMMAND-VALIDITY-PIN-MISMATCH(c1) | INVALID-COMMAND-PUBLISHED(c1)
+W-H4r4 control: same causal oracle, c0 committed before c1:   ::  ok  ::  RECOMPUTED: 

@@ -1,0 +1,16 @@
+Round 4 fix-introduced attack hypotheses, written from REPORT/SCHEMA round 4 text only, before reading the claim.mjs round 4
+diff (2026-11-09).
+Q1 Reader floor (W-H1 fix): the floor is completions per loop per one-second bin, and latency is barred at p99 only. A
+   candidate can answer about 100 reads per loop fast in the first ~10 ms of each second, then park one read until the end of
+   the second. The floor and p99 hold, requests never overlap, relay concurrency stays at the level, yet the store is idle for
+   ~97% of every second while lag is measured. Only a p99.9 or max-latency bar, or a sub-second activity check, sees it.
+Q2 Crash witness (W-H2 fix): the cgroup-gone event names an injectionId and a time but, as described, not which process or
+   cgroup died. A witness proves "something was killed", not that the consumer was the target.
+Q3 Validity (W-H4 fix): validity is now a frozen per-command boolean that the oracle must agree with. A compare-and-set race
+   whose winner depends on the candidate's commit order cannot be represented by a static flag; an honest candidate that lets
+   the other racer win is refused. This is a false-refusal design issue, not a forgery.
+Q4 Validity (W-H4 fix): a cross-subject causal dependency (c1 valid only after c0) committed in reverse source order should
+   now refuse through the prefix-before-position oracle disagreeing with the frozen flag. Check that the code refuses it and
+   with which code.
+Q5 Calibration identity: candidateId and authority labels in the calibration payload are self-declared text; only a registry
+   can make them authoritative (acknowledged as Q103c).
