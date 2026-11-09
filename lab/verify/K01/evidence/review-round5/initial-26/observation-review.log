@@ -1,0 +1,598 @@
+TAP version 13
+# (node:31496) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: actual cloneCheck subprocess preserves valid observations: settle
+not ok 1 - actual cloneCheck subprocess preserves valid observations: settle
+  ---
+  duration_ms: 53.1665
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:21:69'
+  failureType: 'testCodeFailure'
+  error: |-
+    successful JSON child must be accepted using real configured stdio
+    + actual - expected
+    
+    + {
+    +   message: 'clone-check response: missing text observation',
+    +   observation: {
+    +     at: '2026-11-09T00:50:36.776Z',
+    +     attempt: '4c609fc6-491b-4565-bcff-0fd9ffd658ed',
+    +     binding: {
+    +       args: [
+    +         'settle'
+    +       ]
+    +     },
+    +     cause: Error: missing text observation
+    +         at text (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:19:38)
+    +         at processOutput (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:32:45)
+    +         at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:55
+    +         at observe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:11:87)
+    +         at processObservation (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:10)
+    +         at cloneCheck (evalmachine.<anonymous>:3:19)
+    +         at TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:30:18)
+    +         at Test.runInAsyncScope (node:async_hooks:214:14)
+    +         at Test.run (node:internal/test_runner/test:1047:25)
+    +         at Test.start (node:internal/test_runner/test:944:17),
+    +     error: 'missing text observation',
+    +     kind: 'clone-check response',
+    +     state: 'failed'
+    +   }
+    + }
+    - undefined
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  actual:
+    message: 'clone-check response: missing text observation'
+    observation:
+      kind: 'clone-check response'
+      binding:
+        args:
+          0: 'settle'
+      attempt: '4c609fc6-491b-4565-bcff-0fd9ffd658ed'
+      at: '2026-11-09T00:50:36.776Z'
+      state: 'failed'
+      error: 'missing text observation'
+      cause:
+      error: 'missing text observation'
+      stack: |-
+        text (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:19:38)
+        processOutput (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:32:45)
+        file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:55
+        observe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:11:87)
+        processObservation (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:10)
+        cloneCheck (evalmachine.<anonymous>:3:19)
+        TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:30:18)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Test.start (node:internal/test_runner/test:944:17)
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:33:140)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: actual cloneCheck subprocess preserves valid observations: freeze
+not ok 2 - actual cloneCheck subprocess preserves valid observations: freeze
+  ---
+  duration_ms: 50.825708
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:21:69'
+  failureType: 'testCodeFailure'
+  error: |-
+    successful JSON child must be accepted using real configured stdio
+    + actual - expected
+    
+    + {
+    +   message: 'clone-check response: missing text observation',
+    +   observation: {
+    +     at: '2026-11-09T00:50:36.829Z',
+    +     attempt: 'a304e1ae-54ca-40d7-a2c3-3c301f7c6a97',
+    +     binding: {
+    +       args: [
+    +         'freeze'
+    +       ]
+    +     },
+    +     cause: Error: missing text observation
+    +         at text (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:19:38)
+    +         at processOutput (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:32:45)
+    +         at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:55
+    +         at observe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:11:87)
+    +         at processObservation (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:10)
+    +         at cloneCheck (evalmachine.<anonymous>:3:19)
+    +         at TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:30:18)
+    +         at Test.runInAsyncScope (node:async_hooks:214:14)
+    +         at Test.run (node:internal/test_runner/test:1047:25)
+    +         at Test.processPendingSubtests (node:internal/test_runner/test:744:18),
+    +     error: 'missing text observation',
+    +     kind: 'clone-check response',
+    +     state: 'failed'
+    +   }
+    + }
+    - undefined
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  actual:
+    message: 'clone-check response: missing text observation'
+    observation:
+      kind: 'clone-check response'
+      binding:
+        args:
+          0: 'freeze'
+      attempt: 'a304e1ae-54ca-40d7-a2c3-3c301f7c6a97'
+      at: '2026-11-09T00:50:36.829Z'
+      state: 'failed'
+      error: 'missing text observation'
+      cause:
+      error: 'missing text observation'
+      stack: |-
+        text (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:19:38)
+        processOutput (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:32:45)
+        file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:55
+        observe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:11:87)
+        processObservation (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:10)
+        cloneCheck (evalmachine.<anonymous>:3:19)
+        TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:30:18)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:33:140)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: actual cloneCheck subprocess preserves valid observations: verify
+not ok 3 - actual cloneCheck subprocess preserves valid observations: verify
+  ---
+  duration_ms: 48.080166
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:21:69'
+  failureType: 'testCodeFailure'
+  error: |-
+    successful JSON child must be accepted using real configured stdio
+    + actual - expected
+    
+    + {
+    +   message: 'clone-check response: missing text observation',
+    +   observation: {
+    +     at: '2026-11-09T00:50:36.877Z',
+    +     attempt: '18f1860e-7efd-411c-ab8a-bd777fccf022',
+    +     binding: {
+    +       args: [
+    +         'verify'
+    +       ]
+    +     },
+    +     cause: Error: missing text observation
+    +         at text (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:19:38)
+    +         at processOutput (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:32:45)
+    +         at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:55
+    +         at observe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:11:87)
+    +         at processObservation (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:10)
+    +         at cloneCheck (evalmachine.<anonymous>:3:19)
+    +         at TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:30:18)
+    +         at Test.runInAsyncScope (node:async_hooks:214:14)
+    +         at Test.run (node:internal/test_runner/test:1047:25)
+    +         at Test.processPendingSubtests (node:internal/test_runner/test:744:18),
+    +     error: 'missing text observation',
+    +     kind: 'clone-check response',
+    +     state: 'failed'
+    +   }
+    + }
+    - undefined
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  actual:
+    message: 'clone-check response: missing text observation'
+    observation:
+      kind: 'clone-check response'
+      binding:
+        args:
+          0: 'verify'
+      attempt: '18f1860e-7efd-411c-ab8a-bd777fccf022'
+      at: '2026-11-09T00:50:36.877Z'
+      state: 'failed'
+      error: 'missing text observation'
+      cause:
+      error: 'missing text observation'
+      stack: |-
+        text (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:19:38)
+        processOutput (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:32:45)
+        file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:55
+        observe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:11:87)
+        processObservation (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bin/observation.ts:37:10)
+        cloneCheck (evalmachine.<anonymous>:3:19)
+        TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:30:18)
+        Test.runInAsyncScope (node:async_hooks:214:14)
+        Test.run (node:internal/test_runner/test:1047:25)
+        Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:33:140)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: actual cloneCheck subprocess preserves valid observations: child-failure
+ok 4 - actual cloneCheck subprocess preserves valid observations: child-failure
+  ---
+  duration_ms: 46.55775
+  type: 'test'
+  ...
+# Subtest: driver owner observation refuses malformed present file: json-null
+not ok 5 - driver owner observation refuses malformed present file: json-null
+  ---
+  duration_ms: 0.980625
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:35:269'
+  failureType: 'testCodeFailure'
+  error: 'present malformed owner must be a failed observation, not unverified/writer provenance'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:43:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: driver owner observation refuses malformed present file: empty-object
+not ok 6 - driver owner observation refuses malformed present file: empty-object
+  ---
+  duration_ms: 0.411125
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:35:269'
+  failureType: 'testCodeFailure'
+  error: 'present malformed owner must be a failed observation, not unverified/writer provenance'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:43:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: driver owner observation refuses malformed present file: empty-holder
+not ok 7 - driver owner observation refuses malformed present file: empty-holder
+  ---
+  duration_ms: 0.405125
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:35:269'
+  failureType: 'testCodeFailure'
+  error: 'present malformed owner must be a failed observation, not unverified/writer provenance'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:43:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: driver owner observation refuses malformed present file: missing-holder
+not ok 8 - driver owner observation refuses malformed present file: missing-holder
+  ---
+  duration_ms: 0.307542
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:35:269'
+  failureType: 'testCodeFailure'
+  error: 'present malformed owner must be a failed observation, not unverified/writer provenance'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:43:15)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: driver owner observation refuses malformed present file: valid-writer
+ok 9 - driver owner observation refuses malformed present file: valid-writer
+  ---
+  duration_ms: 0.4995
+  type: 'test'
+  ...
+# Subtest: driver owner observation refuses malformed present file: absent
+ok 10 - driver owner observation refuses malformed present file: absent
+  ---
+  duration_ms: 0.401459
+  type: 'test'
+  ...
+# Subtest: C8 required plan field cannot become matching absence: page_count
+not ok 11 - C8 required plan field cannot become matching absence: page_count
+  ---
+  duration_ms: 0.45975
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:46:117'
+  failureType: 'testCodeFailure'
+  error: 'required source-schema fields must fail before hashing or C8 comparison'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:56:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: C8 required plan field cannot become matching absence: row_count
+not ok 12 - C8 required plan field cannot become matching absence: row_count
+  ---
+  duration_ms: 0.281375
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:46:117'
+  failureType: 'testCodeFailure'
+  error: 'required source-schema fields must fail before hashing or C8 comparison'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:56:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: C8 required plan field cannot become matching absence: depth
+not ok 13 - C8 required plan field cannot become matching absence: depth
+  ---
+  duration_ms: 0.090084
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:46:117'
+  failureType: 'testCodeFailure'
+  error: 'required source-schema fields must fail before hashing or C8 comparison'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:56:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: C8 required plan field cannot become matching absence: op
+not ok 14 - C8 required plan field cannot become matching absence: op
+  ---
+  duration_ms: 0.077083
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:46:117'
+  failureType: 'testCodeFailure'
+  error: 'required source-schema fields must fail before hashing or C8 comparison'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:56:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: C8 required plan field cannot become matching absence: scan_source
+not ok 15 - C8 required plan field cannot become matching absence: scan_source
+  ---
+  duration_ms: 0.078167
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:46:117'
+  failureType: 'testCodeFailure'
+  error: 'required source-schema fields must fail before hashing or C8 comparison'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:56:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: C8 required plan field cannot become matching absence: scan_files_used
+not ok 16 - C8 required plan field cannot become matching absence: scan_files_used
+  ---
+  duration_ms: 0.07175
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:46:117'
+  failureType: 'testCodeFailure'
+  error: 'required source-schema fields must fail before hashing or C8 comparison'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:56:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: C8 required plan field cannot become matching absence: scan_rows_read
+not ok 17 - C8 required plan field cannot become matching absence: scan_rows_read
+  ---
+  duration_ms: 0.067375
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:46:117'
+  failureType: 'testCodeFailure'
+  error: 'required source-schema fields must fail before hashing or C8 comparison'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:56:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: C8 non-scan attributes may be explicitly null while counters remain present
+ok 18 - C8 non-scan attributes may be explicitly null while counters remain present
+  ---
+  duration_ms: 0.046291
+  type: 'test'
+  ...
+# Subtest: CLI process result retains semantic status: ok-false, heldOpen=false
+ok 19 - CLI process result retains semantic status: ok-false, heldOpen=false
+  ---
+  duration_ms: 27.147625
+  type: 'test'
+  ...
+# Subtest: CLI process result retains semantic status: ok-false, heldOpen=true
+not ok 20 - CLI process result retains semantic status: ok-false, heldOpen=true
+  ---
+  duration_ms: 228.5615
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:65:200'
+  failureType: 'testCodeFailure'
+  error: |-
+    remaining handles must not convert a semantic failure into exit zero
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:72:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: CLI process result retains semantic status: settled-false, heldOpen=false
+ok 21 - CLI process result retains semantic status: settled-false, heldOpen=false
+  ---
+  duration_ms: 26.069291
+  type: 'test'
+  ...
+# Subtest: CLI process result retains semantic status: settled-false, heldOpen=true
+not ok 22 - CLI process result retains semantic status: settled-false, heldOpen=true
+  ---
+  duration_ms: 230.097042
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:65:200'
+  failureType: 'testCodeFailure'
+  error: |-
+    remaining handles must not convert a semantic failure into exit zero
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:72:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: CLI process result retains semantic status: verdict-fail, heldOpen=false
+ok 23 - CLI process result retains semantic status: verdict-fail, heldOpen=false
+  ---
+  duration_ms: 30.592959
+  type: 'test'
+  ...
+# Subtest: CLI process result retains semantic status: verdict-fail, heldOpen=true
+not ok 24 - CLI process result retains semantic status: verdict-fail, heldOpen=true
+  ---
+  duration_ms: 229.768209
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:65:200'
+  failureType: 'testCodeFailure'
+  error: |-
+    remaining handles must not convert a semantic failure into exit zero
+    
+    0 !== 1
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 1
+  actual: 0
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/observation-review.test.mjs:72:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: CLI process result retains semantic status: pass, heldOpen=false
+ok 25 - CLI process result retains semantic status: pass, heldOpen=false
+  ---
+  duration_ms: 27.731333
+  type: 'test'
+  ...
+# Subtest: CLI process result retains semantic status: pass, heldOpen=true
+ok 26 - CLI process result retains semantic status: pass, heldOpen=true
+  ---
+  duration_ms: 228.566417
+  type: 'test'
+  ...
+1..26
+# tests 26
+# suites 0
+# pass 9
+# fail 17
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1325.436375

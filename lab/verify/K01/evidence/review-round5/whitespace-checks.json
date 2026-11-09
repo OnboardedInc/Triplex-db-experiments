@@ -1,0 +1,32 @@
+{
+  "note": "Retain raw Node assertion-diff whitespace; authored source/report passes.",
+  "checks": [
+    {
+      "label": "full-staged-whitespace",
+      "args": [
+        "git",
+        "diff",
+        "--cached",
+        "--check"
+      ],
+      "exit": 2,
+      "stdout": "lab/verify/K01/evidence/review-round5/initial-26/observation-review.log:14: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/initial-26/observation-review.log:42: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/initial-26/observation-review.log:87: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/initial-26/observation-review.log:115: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/initial-26/observation-review.log:162: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/initial-26/observation-review.log:190: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/initial-26/observation-review.log:497: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/initial-26/observation-review.log:499: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/initial-26/observation-review.log:529: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/initial-26/observation-review.log:531: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/initial-26/observation-review.log:561: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/initial-26/observation-review.log:563: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:14: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:42: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:87: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:115: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:162: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:190: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:518: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:520: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:550: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:552: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:582: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round5/observation-review.log:584: trailing whitespace.\n+    \n",
+      "stderr": ""
+    },
+    {
+      "label": "authored-whitespace",
+      "args": [
+        "git",
+        "diff",
+        "--cached",
+        "--check",
+        "--",
+        "lab/verify/K01",
+        ":(exclude)lab/verify/K01/evidence/**"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}

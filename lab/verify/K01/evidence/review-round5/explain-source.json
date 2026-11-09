@@ -1,0 +1,194 @@
+{
+  "head": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+  "status": "",
+  "sources": [
+    {
+      "path": "core/src/main/clojure/xtdb/query.clj",
+      "sha256": "13286d1ac1b34a3b5698bb979ef8b8fbad62b4a10bd1abdfad9a7f583a86d797",
+      "excerpt": [
+        {
+          "line": 231,
+          "text": ""
+        },
+        {
+          "line": 232,
+          "text": "(def ^:private explain-analyze-types"
+        },
+        {
+          "line": 233,
+          "text": "  (LinkedHashMap. ^Map (identity {\"depth\" #xt/type :utf8"
+        },
+        {
+          "line": 234,
+          "text": "                                  \"op\" #xt/type :keyword"
+        },
+        {
+          "line": 235,
+          "text": "                                  ;; struct (not transit) so it renders as JSON over pgwire \u2014 readable in Metabase"
+        },
+        {
+          "line": 236,
+          "text": "                                  \"attributes\" #xt/type [:? :struct {\"scan_db\" :utf8, \"scan_source\" :utf8"
+        },
+        {
+          "line": 237,
+          "text": "                                                                     \"scan_files_pruned\" :i64, \"scan_files_used\" :i64"
+        },
+        {
+          "line": 238,
+          "text": "                                                                     \"scan_pages_pruned\" :i64, \"scan_pages_used\" :i64"
+        },
+        {
+          "line": 239,
+          "text": "                                                                     \"scan_rows_read\" :i64}]"
+        },
+        {
+          "line": 240,
+          "text": "                                  \"total_time\" #xt/type [:duration :micro]"
+        },
+        {
+          "line": 241,
+          "text": "                                  \"self_time\" #xt/type [:duration :micro]"
+        },
+        {
+          "line": 242,
+          "text": "                                  ;; null for a branch the plan never advanced \u2014 a LIMIT 0 above it, or an unreferenced CTE"
+        },
+        {
+          "line": 243,
+          "text": "                                  \"time_to_first_page\" #xt/type [:? :duration :micro]"
+        },
+        {
+          "line": 244,
+          "text": "                                  \"page_count\" #xt/type :i64"
+        },
+        {
+          "line": 245,
+          "text": "                                  \"row_count\" #xt/type :i64"
+        },
+        {
+          "line": 246,
+          "text": "                                  \"pushdowns\" #xt/type [:? :transit]})))"
+        }
+      ]
+    },
+    {
+      "path": "core/src/main/kotlin/xtdb/query/ExplainAnalyze.kt",
+      "sha256": "a33462edcdf290073b6b708884113e3332bb332a310e04a76addc9d171e95dee",
+      "excerpt": [
+        {
+          "line": 7,
+          "text": "    val pageCount: Int"
+        },
+        {
+          "line": 8,
+          "text": "    val timeToFirstPage: Duration?"
+        },
+        {
+          "line": 9,
+          "text": "    /** Time in this cursor's `tryAdvance`, including its subtree but excluding the consumer's `accept`. */"
+        },
+        {
+          "line": 10,
+          "text": "    val totalTime: Duration"
+        },
+        {
+          "line": 11,
+          "text": "    val pushdowns: Map<String, Any>?"
+        },
+        {
+          "line": 12,
+          "text": "    val cursorAttributes: ScanAttributes?"
+        },
+        {
+          "line": 13,
+          "text": ""
+        },
+        {
+          "line": 14,
+          "text": "    /**"
+        },
+        {
+          "line": 15,
+          "text": "     * A scan's counters as `EXPLAIN ANALYZE` reports them, taken once the cursor is consumed."
+        },
+        {
+          "line": 16,
+          "text": "     *"
+        },
+        {
+          "line": 17,
+          "text": "     * The key names [toMap] produces are the field names of the `attributes` struct in"
+        },
+        {
+          "line": 18,
+          "text": "     * `xtdb.query/explain-analyze-types`, so the two have to be changed together."
+        },
+        {
+          "line": 19,
+          "text": "     */"
+        },
+        {
+          "line": 20,
+          "text": "    data class ScanAttributes("
+        },
+        {
+          "line": 21,
+          "text": "        val db: String, val source: String,"
+        },
+        {
+          "line": 22,
+          "text": "        val filesPruned: Long, val filesUsed: Long,"
+        },
+        {
+          "line": 23,
+          "text": "        val pagesPruned: Long, val pagesUsed: Long,"
+        },
+        {
+          "line": 24,
+          "text": "        val rowsRead: Long,"
+        },
+        {
+          "line": 25,
+          "text": "    ) {"
+        },
+        {
+          "line": 26,
+          "text": "        fun toMap(): Map<String, Any> ="
+        },
+        {
+          "line": 27,
+          "text": "            mapOf("
+        },
+        {
+          "line": 28,
+          "text": "                \"scan_db\" to db, \"scan_source\" to source,"
+        },
+        {
+          "line": 29,
+          "text": "                \"scan_files_pruned\" to filesPruned, \"scan_files_used\" to filesUsed,"
+        },
+        {
+          "line": 30,
+          "text": "                \"scan_pages_pruned\" to pagesPruned, \"scan_pages_used\" to pagesUsed,"
+        },
+        {
+          "line": 31,
+          "text": "                \"scan_rows_read\" to rowsRead,"
+        },
+        {
+          "line": 32,
+          "text": "            )"
+        },
+        {
+          "line": 33,
+          "text": "    }"
+        },
+        {
+          "line": 34,
+          "text": "}"
+        }
+      ]
+    }
+  ]
+}

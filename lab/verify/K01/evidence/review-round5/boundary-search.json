@@ -1,0 +1,1665 @@
+{
+  "note": "Search aid used with manual containing-function and producer-consumer tracing; not a completeness proof.",
+  "matches": [
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 44,
+      "text": "const conf = config.lanes.xtdb?.follower;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 45,
+      "text": "if (info.lane !== 'xtdb' || !conf) fail('USAGE', 'followers exist only for the xtdb lane (slots.json lanes.xtdb.follower)');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 48,
+      "text": "const profileName = opts['follower-profile'] ?? null;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 49,
+      "text": "const profile = profileName ? conf.profiles?.[profileName] : {};"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 50,
+      "text": "if (!profile) fail('USAGE', `unknown follower profile ${profileName}; slots.json has ${Object.keys(conf.profiles ?? {}).join(', ') || 'none'}`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 55,
+      "text": "endpoint: info.laneConf.urlTemplate.replace('{port}', String(port)), memBytes: profile.memBytes ?? conf.memBytes, cpus: conf.cpus,"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 56,
+      "text": "javaOpts: profile.javaOpts ?? conf.javaOpts, profile: profileName,"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 57,
+      "text": "volumeMode: conf.volumeMode, configFile: path.join(CONFIG_DIR, profile.configFile ?? conf.configFile), configSource: profile.configFile ?? conf.configFile, diskForecastBytes: 0,"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 128,
+      "text": "...(info.role === 'follower' ? ['--label', 'tx2.role=follower', '--label', `tx2.follows=${info.writer}`, '--label', `tx2.follower-profile=${info.profile ?? 'default'}`] : []),"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 172,
+      "text": "if (!c?.State.Running) return { ok: false, why: `container ${c ? c.State.Status : 'absent'}` };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 174,
+      "text": "const health = c.State.Health?.Status;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 176,
+      "text": "if (info.role === 'follower' || health !== 'healthy' || !open) return { ok: health === 'healthy' && open, why: `health=${health} pgwire=${open ? 'open' : 'closed'}` };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 178,
+      "text": "return { ok: started.status === 200, why: `health=${health} pgwire=open started=${started.status ?? 'exec-failed'}${started.status === 200 ? '' : ` ${started.body.slice(0, 120)}`}` };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 183,
+      "text": "return { ok: response.ok, why: `sparql HTTP ${response.status}` };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 184,
+      "text": "} catch (error) { return { ok: false, why: `sparql ${error.cause?.code ?? error.message}` }; }"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 197,
+      "text": "fail('ENGINE', `${info.container} not ready after ${timeoutMs / 1000}s (${last?.why})`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 216,
+      "text": "try { fs.mkdirSync(info.lockDir); created = true; } catch (error) { if (error.code !== 'EEXIST') throw error; }"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 222,
+      "text": "fail('REFUSED', `${info.lane}-${info.slot} is held by \"${owner.holder}\" (${owner.experiment ?? 'no experiment'}) since ${owner.createdAt}`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 223,
+      "text": "if (['REMOVING', 'STOPPING', 'STARTING'].includes(owner.lifecycle?.state)) fail('REFUSED', 'slot teardown is in progress');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 228,
+      "text": "endpoint: info.endpoint, port: info.port, generation: randomUUID(), holder, experiment: experiment ?? null, pid: process.pid, worktree: REPO, createdAt: now(),"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 242,
+      "text": "if (!current || !expectedOwner || current.generation !== expectedOwner.generation || current.holder !== expectedOwner.holder || current.createdAt !== expectedOwner.createdAt || current.lifecycle?.token !== expectedOwner.lifecycle?.token)"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 253,
+      "text": "// [EXP-K01-R6] Why: Lifecycle optional chains below are refusal guards or explicit legacy metadata, not replacement runtime reads; catches retain or release only after complete absence observation and never return success. Rejected: converting a failed observation into successful content."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 262,
+      "text": "if (opts.fresh || !existing?.State.Running) {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 264,
+      "text": "if (!owner || owner.generation !== slot.owner.generation || owner.holder !== holder || owner.createdAt !== slot.owner.createdAt || owner.lifecycle?.token !== slot.owner.lifecycle?.token) fail('REFUSED', 'slot generation changed before start');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 271,
+      "text": "if (existing && !opts.fresh && existing.Config.Labels?.['tx2.config-sha256'] !== eff.sha256)"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 272,
+      "text": "fail('REFUSED', `${info.container} runs config ${existing.Config.Labels?.['tx2.config-sha256']?.slice(0, 12)} but slots.json now gives ${eff.sha256.slice(0, 12)}; rerun with --fresh to recreate (wipes the volume)`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 273,
+      "text": "if (existing?.State.Running && !opts.fresh) {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 291,
+      "text": "throw new LabError('REFUSED', `pool refuses ${info.container}: ${verdict.reasons.join('; ')}. Holding: ${verdict.holders.join(', ') || 'nothing'}`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 295,
+      "text": "diskForecastBytes: info.diskForecastBytes, holder, experiment: opts.exp ?? null, pid: process.pid, state: 'starting', reservedAt: now(),"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 329,
+      "text": "if (!owner || owner.generation !== slot.owner.generation || owner.holder !== holder || owner.lifecycle?.token !== slot.owner.lifecycle?.token) fail('REFUSED', 'slot lifecycle changed during start');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 335,
+      "text": "} catch (error) {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 341,
+      "text": "} catch (error) {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 357,
+      "text": "// [EXP-K01-R5] Why: revocation must precede physical teardown, including its pool-lock wait. Rejected: releasing only after removal (an in-flight verifier can publish PASS for the gone container)."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 360,
+      "text": "if (!current || !owner || current.generation !== owner.generation || current.holder !== owner.holder || current.createdAt !== owner.createdAt) fail('REFUSED', 'slot generation changed before teardown');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 363,
+      "text": "current.volumeContent.verificationHistory = [...(current.volumeContent.verificationHistory ?? []), current.volumeContent.readiness].filter(Boolean);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 370,
+      "text": "if (!existing.Config.Labels?.['tx2.managed-by']) fail('REFUSED', `${info.container} was not started by lab/bin/engine.mjs; not stopping it`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 384,
+      "text": "ledger.retainedVolumes = (ledger.retainedVolumes ?? []).filter(entry => entry.volume !== info.volume);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 386,
+      "text": "ledger.retainedVolumes.push({ volume: info.volume, holder, note: opts.note ?? 'retained by engine down (default)', at: now(), bytes: volumeBytes(config, info.volume) });"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 402,
+      "text": "// [EXP-K01-R6] Why: follower catch paths only reconcile reservations and rethrow; lifecycle defaults do not create observation PASS. Rejected: successful fallback after failed startup."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 410,
+      "text": "const ready = writer?.State.Running ? await probe(info) : null;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 411,
+      "text": "if (!ready?.ok) fail('REFUSED', `writer ${info.container} is not ready (${ready?.why ?? 'not running'}); R19 1.7: start the follower after the writer has created its logs`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 413,
+      "text": "const writerConfig = writer.Mounts.find(mount => mount.Destination === '/etc/xtdb/config.yaml')?.Source;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 414,
+      "text": "if (!writerConfig || !fs.existsSync(writerConfig)) fail('REFUSED', `cannot read the config file ${info.container} runs (${writerConfig ?? 'no /etc/xtdb/config.yaml mount'})`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 417,
+      "text": "const writerCpuset = writer.HostConfig.CpusetCpus || null;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 418,
+      "text": "if (writerCpuset || fol.cpusetCpus) {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 420,
+      "text": "if (shared.length) fail('REFUSED', `follower cpuset ${fol.cpusetCpus ?? '(unpinned)'} shares CPUs ${shared.join(',')} with writer cpuset ${writerCpuset ?? '(unpinned)'}`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 423,
+      "text": "if (existing?.State.Running && existing.Config.Labels?.['tx2.config-sha256'] === eff.sha256) {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 436,
+      "text": "if (!verdict.ok) throw new LabError('REFUSED', `pool refuses ${fol.container}: ${verdict.reasons.join('; ')}. Holding: ${verdict.holders.join(', ') || 'nothing'}`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 440,
+      "text": "diskForecastBytes: 0, holder, experiment: opts.exp ?? owner.experiment ?? null, pid: process.pid, state: 'starting', reservedAt: now(),"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 455,
+      "text": "} catch (error) {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 470,
+      "text": "if (existing.Config.Labels?.['tx2.role'] !== 'follower') fail('REFUSED', `${fol.container} is not a harness follower; not stopping it`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 500,
+      "text": "const HOST_DISK_PATH = process.env.TX2_HOST_DISK_PATH ?? path.dirname(path.dirname(new URL(DOCKER_HOST).pathname));"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 520,
+      "text": "if (!seedInputs || !imageId || !systemConfigSha256) fail('USAGE', 'goldenKey needs seedInputs, imageId and systemConfigSha256');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 531,
+      "text": "return { ok: valid && afterBytes >= floorBytes, freeBytes, copyBytes, afterBytes, floorBytes,"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 537,
+      "text": "if (freeBytes > totalBytes || totalBytes === 0) throw Error('inconsistent host disk observation');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 549,
+      "text": "const stoppedLine = String(log).split('\\n').reverse().find(line => line.includes('Node stopped.')) ?? null;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 558,
+      "text": "return { ok: reasons.length === 0, componentLines, stoppedLine: stoppedLine?.trim().slice(0, 300) ?? null, exitCode, oomKilled: !!oomKilled, reasons };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 577,
+      "text": "export const emptyTmpScript = dir => `tmp=$(find ${dir}/buffers -path '*/.tmp/*' ! -type d -print); test -z \"$tmp\" || { echo 'non-empty .tmp refused' >&2; exit 1; }`;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 596,
+      "text": "sed 's|.*/b||;s|.binpb$||' \"$work/blocks\" > \"$work/names\";"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 601,
+      "text": "// [EXP-K01-R6] Why: Decoder errors below are retained failed observations with ok:false; no partial listing/tail can set ok without the complete helper and decoded proof. Rejected: converting a failed observation into successful content."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 605,
+      "text": "if (!Number.isSafeInteger(expected.cutIndex) || expected.cutIndex < 0) fail('REFUSED', 'offline freeze requires intended cut index');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 607,
+      "text": "if (!Number.isSafeInteger(offset) || offset < 0) fail('REFUSED', 'invalid block-cut offset');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 619,
+      "text": "catch (error) { maintenance = { ok: false, error: error.message, frontiers }; }"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 620,
+      "text": "return { ok: maintenance.ok && canonicalJson(blocks) === canonicalJson(expected.listing), maintenance, sourceTailBase64, tails: tails.trim().split('\\n'), blocks, expected: expected.listing, raw };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 633,
+      "text": "if (extra !== undefined || !p?.startsWith('./') || seen.has(p) || !/^(0|[1-9][0-9]*)$/.test(bytes) || !Number.isSafeInteger(Number(bytes)) || !/^[0-7]{3,4}$/.test(mode) || !/^[0-9]+$/.test(uid) || !/^[0-9]+$/.test(gid)) fail('ENGINE', 'invalid or duplicate file stat in tree preimage');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 643,
+      "text": "if (section !== 'end' || phase !== 3) fail('ENGINE', 'listing output is truncated (no @@end)');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 644,
+      "text": "const files = stat.map(f => ({ ...f, sha256: sha.get(f.path) ?? null })).sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 645,
+      "text": "if (files.some(f => !f.sha256) || sha.size !== files.length) fail('ENGINE', 'listing stat and sha256 sections disagree');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 653,
+      "text": "const changed = [...a.keys()].filter(p => b.has(p) && (a.get(p).sha256 !== b.get(p).sha256 || a.get(p).bytes !== b.get(p).bytes || a.get(p).mode !== b.get(p).mode || a.get(p).uid !== b.get(p).uid || a.get(p).gid !== b.get(p).gid));"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 658,
+      "text": "return { changed, added, removed, changedOutsideLogs, storageImmutable: changedOutsideLogs.length === 0 && removed.length === 0 };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 674,
+      "text": "if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('missing clone-check response object');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 688,
+      "text": "if (!c?.State.Running) fail('REFUSED', `${info.container} is not running`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 690,
+      "text": "if (c.Config.Labels?.['tx2.config-sha256'] !== eff.sha256) fail('REFUSED', `${info.container} runs config ${c.Config.Labels?.['tx2.config-sha256']?.slice(0, 12)}, not the effective ${eff.sha256.slice(0, 12)}`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 713,
+      "text": "if (!current || current.holder !== held.holder || current.generation !== held.generation || current.createdAt !== held.createdAt || current.lifecycle?.token !== held.lifecycle?.token || current.lifecycle?.state === 'REMOVING') fail('REFUSED', 'slot generation changed before stop');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 716,
+      "text": "current.volumeContent.verificationHistory = [...(current.volumeContent.verificationHistory ?? []), current.volumeContent.readiness].filter(Boolean);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 723,
+      "text": "if (!before.Id || !before.State?.StartedAt || !Number.isFinite(Date.parse(before.State.StartedAt))) fail('REFUSED', 'current stop inspect has no valid start identity');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 724,
+      "text": "if (!before.Config.Labels?.['tx2.managed-by']) fail('REFUSED', `${info.container} was not started by lab/bin/engine.mjs`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 729,
+      "text": "if (!after?.State) fail('ENGINE', 'current stopped-container inspect failed');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 730,
+      "text": "if (after.Id !== before.Id || after.State.StartedAt !== before.State.StartedAt) fail('REFUSED', 'container start identity changed while stopping');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 731,
+      "text": "if (after?.State.Running) fail('ENGINE', `${info.container} still running after docker stop -t 60`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 733,
+      "text": "const logRead = { status: logs.status, signal: logs.signal ?? null, error: logs.error?.message ?? null, stdout: logs.stdout ?? '', stderr: logs.stderr ?? '' };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 734,
+      "text": "const verdict = stopVerdict({ log: `${logs.stdout ?? ''}\\n${logs.stderr ?? ''}`, exitCode: after.State.ExitCode, oomKilled: after.State.OOMKilled, stopMs: before.State.Running ? stopMs : null });"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 740,
+      "text": "if (!current || current.generation !== stopping.generation || current.holder !== stopping.holder || current.lifecycle?.token !== stopping.lifecycle.token) fail('REFUSED', 'slot lifecycle changed during stop');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 746,
+      "text": "if (opts.print !== false) { process.stdout.write(JSON.stringify(out, null, 2) + '\\n'); if (proof.state !== 'complete') process.exitCode = 1; }"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 754,
+      "text": "// [EXP-K01-R6] Why: Missing semantic fields below refuse or throw; catch paths retain the original failure and cleanup observation, and never publish a golden from defaults. Rejected: converting a failed observation into successful content."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 761,
+      "text": "if (manifest.format !== 'tx2-xtdb-seed/1' || manifest.lane !== 'xtdb') fail('REFUSED', `${manifestFile} is ${manifest.format}/${manifest.lane}, not an XTDB seed manifest`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 762,
+      "text": "if (!manifest.result?.complete) fail('REFUSED', `the seed in ${manifestFile} is incomplete (${manifest.result?.seededSubjects}/${manifest.subjects})`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 797,
+      "text": "settled.qualified = true; settled.proofStage = 'STOPPED_TAIL_VERIFIED'; settled.tailProof = offline.maintenance;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 804,
+      "text": "const creation = { format: 'tx2-golden-creation/1', invocation: String(opts.invocation ?? creationId), creationId, volume, created: false, at: now() };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 809,
+      "text": "if (createdVolume.Labels?.['tx2.creation-id'] !== creationId) fail('REFUSED', 'golden creation ownership differs; do not remove it');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 820,
+      "text": "} catch (error) { error.cleanup = observe('failed golden copy cleanup', { volume }, () => docker(['volume', 'rm', volume]), text); throw error; }"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 841,
+      "text": "if (!freeze.ok || freeze.c4?.position !== manifest.result.lastPosition || !referenceStop.verdict.ok || timings.freezeS >= 600 ||"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 842,
+      "text": "end.live.total !== 0 || end.snapshot.trie.sha256 !== settled.after.trie.sha256 ||"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 843,
+      "text": "end.snapshot.gauges.jobsAvailable !== 0 || end.snapshot.gauges.lagMsgId !== 0 ||"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 844,
+      "text": "end.snapshot.gauges.latestCompletedTxId !== settled.after.gauges.latestCompletedTxId ||"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 845,
+      "text": "end.snapshot.gauges.latestProcessedMsgId !== settled.after.gauges.latestProcessedMsgId ||"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 846,
+      "text": "end.snapshot.gauges.latestSubmittedMsgId !== settled.after.gauges.latestSubmittedMsgId ||"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 855,
+      "text": "const pick = name => dst.files.find(f => f.path === name)?.sha256 ?? null;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 857,
+      "text": "format: GOLDEN_RECORD_FORMAT, key: k.key, key8: k.key8, keyInputs: k.inputs, volume, createdAt: now(), holder: defaultHolder(opts), experiment: opts.exp ?? null,"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 858,
+      "text": "manifest: { path: path.relative(REPO, manifestFile), sha256: sha256File(manifestFile), scope: manifest.scope, subjects: manifest.subjects, lastPosition: manifest.result.lastPosition, seedWallS: manifest.capture?.wallS ?? null },"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 861,
+      "text": "copy: { sourceBytes, goldenBytes, files: dst.count, fileBytes: dst.bytes, treeSha256: dst.treeSha256, logSha256: pick('./log/LOG'), replicaLogSha256: pick('./log/REPLICA_LOG'), filesFile: path.relative(REPO, filesFile), filesSha256: sha256File(filesFile), sourceMatches: true },"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 870,
+      "text": "ledger.goldens = (ledger.goldens ?? []).filter(g => g.volume !== volume);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 876,
+      "text": "} catch (error) {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 877,
+      "text": "Object.assign(attempt, { failedAt: now(), error: String(error.message ?? error), observation: error.observation, cleanup: error.cleanup });"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 883,
+      "text": "/** One-cut sacrificial copy for R30 T3/T6, never a qualified golden or screening source. */"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 925,
+      "text": "if (!attempt.beforeWrite.ok || !attempt.beforeWrite.c8?.plan?.sha256) fail('REFUSED', 'T6 before-write fingerprint is incomplete');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 928,
+      "text": "if (!attempt.afterWrite.ok || !attempt.afterWrite.c8?.plan?.sha256) fail('REFUSED', 'T6 after-write fingerprint is incomplete');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 929,
+      "text": "save({ t6PlanChanged: attempt.beforeWrite.c8?.plan?.sha256 !== attempt.afterWrite.c8?.plan?.sha256 });"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 930,
+      "text": "} catch (error) {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 933,
+      "text": "save({ error: String(error.message ?? error) });"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 943,
+      "text": "save({ snapshotRemoved: removal.state === 'complete' && absence.state === 'complete', cleanup });"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 954,
+      "text": "// [EXP-K01-R4] Why: persisted flags cannot substitute for the stopped bytes or their current frontier binding. Rejected: trusting qualified:true after the tail or snapshot has changed."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 955,
+      "text": "const frontiers = record.settle?.frontiers, after = record.settle?.after;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 956,
+      "text": "if (!record.settle?.qualified || !frontiers || canonicalJson(frontiers) !== canonicalJson(after?.frontiers) ||"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 957,
+      "text": "frontiers.M !== after?.gauges?.latestProcessedMsgId || frontiers.M !== after?.gauges?.latestSubmittedMsgId || frontiers.T !== after?.gauges?.latestCompletedTxId)"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 958,
+      "text": "fail('REFUSED', 'golden has no qualified stopped-tail F/M/T evidence');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 959,
+      "text": "if (!Number.isSafeInteger(after.cutIndex) || after.cutIndex < 0 || !after.blocks?.some(b => Number(b.latest_processed_msg_id) === frontiers.F && Number(b.tx_id) === frontiers.T && parseInt(b.block_idx.slice(1), 16) === after.cutIndex)) fail('REFUSED', 'golden cut is not bound to its checkpoint block');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 961,
+      "text": "const proof = verifyMaintenanceTail(Buffer.from(offline?.sourceTailBase64 ?? '', 'base64'), frontiers, after.cutIndex);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 962,
+      "text": "if (!offline?.ok || canonicalJson(proof) !== canonicalJson(offline.maintenance)) fail('REFUSED', 'golden stopped-tail proof changed');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 969,
+      "text": "if (!record.creation?.creationId || JSON.parse(vol)[0].Labels?.['tx2.creation-id'] !== record.creation.creationId) fail('REFUSED', 'golden volume generation differs from its creation receipt');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 970,
+      "text": "if (JSON.parse(vol)[0].Labels?.['tx2.seed-key'] !== record.key) fail('REFUSED', `${record.volume} is labelled with another key`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 972,
+      "text": "if (!fs.existsSync(manifestFile) || sha256File(manifestFile) !== record.manifest.sha256) fail('REFUSED', `seed manifest ${record.manifest.path} is missing or changed since the golden was made`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 987,
+      "text": "if (systemConfigSha256 !== record.keyInputs.engine.systemConfigSha256 || info.laneConf.imageId !== record.keyInputs.engine.imageId)"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1005,
+      "text": "} catch (error) { error.cleanup = observe('failed clone copy cleanup', { volume: info.volume }, () => docker(['volume', 'rm', info.volume]), text); throw error; }"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1007,
+      "text": "copy.c1 = { pass: listing.treeSha256 === record.copy.treeSha256, expected: record.copy.treeSha256, observed: listing.treeSha256, files: listing.count, expectedFiles: record.copy.files };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1024,
+      "text": "if (!latest || latest.generation !== owner.generation || latest.holder !== owner.holder || latest.lifecycle && latest.lifecycle.state !== 'RUNNING') fail('REFUSED', 'clone lifecycle changed before publication');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1029,
+      "text": "process.stderr.write(`[lab] ${info.container} cloned from ${record.volume}: copy ${copy.copyS.toFixed(1)} s, C1 PASS (${copy.files} files), docker run to /healthz/started ${owner.volumeContent.timings.runToStartedS.toFixed(1)} s\\n`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1034,
+      "text": "/** C2-C8 on a cloned slot against its golden's freeze record; the verdict lands in owner.json (the driver requires PASS). */"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1035,
+      "text": "// [EXP-K01-R6] Why: Optional fields below are refusal/ownership guards and historical metadata only; errors revoke this attempt, never substitute an earlier PASS. Rejected: converting a failed observation into successful content."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1039,
+      "text": "const content = owner?.volumeContent;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1040,
+      "text": "if (owner?.lifecycle && owner.lifecycle.state !== 'RUNNING') fail('REFUSED', 'slot lifecycle is not running; current receipts are revoked');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1041,
+      "text": "if (content?.kind !== 'clone') fail('REFUSED', `${info.lane}-${info.slot} holds no clone (owner.json volumeContent)`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1045,
+      "text": "// [EXP-K01-R3] Why: every new verification revokes admission before fallible checks. Rejected: retaining a previous PASS until the new process returns (an exception leaves stale admission usable)."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1048,
+      "text": "content.verificationHistory = [...(content.verificationHistory ?? []), ...(previousReadiness ? [previousReadiness] : [])];"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1053,
+      "text": "if (!current || current.lifecycle && current.lifecycle.state !== 'RUNNING' || current.generation !== owner.generation || current.holder !== owner.holder || identity(current.volumeContent) !== identity(content) || JSON.stringify(current.volumeContent.readiness) !== JSON.stringify(previousReadiness)) throw new Error('verification superseded before revocation');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1059,
+      "text": "if (running?.c && running.c.Id !== content.containerId) throw new Error('clone container identity changed before verification');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1062,
+      "text": "if (!['PASS', 'FAIL'].includes(verdict.verdict) || !['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'].every(k => typeof verdict.checks?.[k]?.pass === 'boolean') ||"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1063,
+      "text": "(verdict.verdict === 'PASS' && Object.values(verdict.checks).some(check => check.pass !== true))) throw new Error('incomplete or inconsistent verification verdict');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1065,
+      "text": "if (running?.c && (fresh.c.Id !== running.c.Id || fresh.c.State.StartedAt !== running.c.State.StartedAt)) throw new Error('clone restarted during verification');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1070,
+      "text": "if (latest?.lifecycle && latest.lifecycle.state !== 'RUNNING' || latest?.generation !== owner.generation || latest?.holder !== owner.holder || latest?.volumeContent?.readiness?.attemptId !== attemptId) throw new Error('verification superseded by another slot operation');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1072,
+      "text": "latest.volumeContent.readiness = { verdict: verdict.verdict, attemptId, at: now(), checksS: (Date.now() - t) / 1000, file: path.relative(REPO, file), sha256: receiptSha256, certificateSha256: identity(content), verifiedContainerId: fresh?.c?.Id, verifiedStartedAt: fresh?.c?.State.StartedAt, failed: Object.entries(verdict.checks).filter(([, v]) => !v.pass).map(([k]) => k) };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1073,
+      "text": "if (fresh?.c) latest.volumeContent.startedAt = fresh.c.State.StartedAt;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1077,
+      "text": "process.stderr.write(`[lab] ${info.container} readiness ${verdict.verdict} (${latest.volumeContent.readiness.failed.join(', ') || 'C1-C8 pass'}) in ${latest.volumeContent.readiness.checksS.toFixed(1)} s; ${path.relative(REPO, file)}\\n`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1079,
+      "text": "} catch (error) {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1080,
+      "text": "const refusal = { verdict: 'ERROR', attemptId, at: now(), error: String(error.message ?? error) };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1083,
+      "text": "// [EXP-K01-R6] Why: a failed failure-receipt write is itself recorded as error metadata; current readiness still becomes ERROR, never PASS. Rejected: resurrecting earlier evidence."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1084,
+      "text": "catch (receiptError) { receipt = { receiptWriteError: String(receiptError.message ?? receiptError) }; }"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1085,
+      "text": "// [EXP-K01-R3] Why: only this attempt may replace its readiness, including a failed PASS publication. Rejected: overwriting a newer attempt or resurrecting the historical PASS after an error."
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1087,
+      "text": "const initialRevocationFailed = latest?.volumeContent && identity(latest.volumeContent) === identity(content) && JSON.stringify(latest.volumeContent.readiness) === JSON.stringify(previousReadiness);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1088,
+      "text": "if ((!latest?.lifecycle || latest.lifecycle.state === 'RUNNING') && latest?.generation === owner.generation && latest?.holder === owner.holder && (latest?.volumeContent?.readiness?.attemptId === attemptId || initialRevocationFailed)) {"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1096,
+      "text": "if (result.verdict !== 'PASS') fail('ENGINE', `${info.container} is not ready: ${Object.entries(result.checks).filter(([, v]) => !v.pass).map(([k]) => k).join(', ')} failed (Q74d)`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1104,
+      "text": "if (c?.State.Running) fail('REFUSED', `${info.container} is running; stop it first (a listing of a live Local log is torn)`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1119,
+      "text": "if (!volume || !/^tx2-golden-xtdb-[0-9a-f]{8}$/.test(volume)) fail('USAGE', 'golden-rm needs --golden-record FILE or --volume tx2-golden-xtdb-<key8>');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1121,
+      "text": "if (vol && JSON.parse(vol)[0].Labels?.['tx2.golden'] !== '1') fail('REFUSED', `${volume} is not labelled tx2.golden=1`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1122,
+      "text": "if (vol && opts['creation-id'] && JSON.parse(vol)[0].Labels?.['tx2.creation-id'] !== opts['creation-id']) fail('REFUSED', 'golden does not belong to this creation receipt');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1127,
+      "text": "await withPool(async ledger => { ledger.goldens = (ledger.goldens ?? []).filter(g => g.volume !== volume); });"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1181,
+      "text": "const checks = rows.map(row => ({ ...row, pass: row.status === 'ok' && (TOOLCHECK_EXPECT[row.name]?.(row.output) ?? true) }));"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1183,
+      "text": "const result = { image: config.lanes.xtdb.image, at: now(), pass: missing.length === 0 && checks.every(c => c.pass), missing, checks };"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1185,
+      "text": "if (!result.pass) process.exitCode = 1;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1198,
+      "text": "const ready = c?.running ? await probe(info) : null;"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1226,
+      "text": "for (const entry of ledger.retainedVolumes ?? []) console.log(`  retained volume ${entry.volume} ${fmtBytes(entry.bytes)} holder=${entry.holder} note=${entry.note}`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1228,
+      "text": "for (const entry of ledger.goldens ?? []) console.log(`  golden volume ${entry.volume} ${fmtBytes(entry.bytes)} key=${entry.key.slice(0, 12)} holder=${entry.holder}`);"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1242,
+      "text": "if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1248,
+      "text": "complete(processObservation('follower log', { container: fol.container }, spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), fol.container]), { encoding: 'utf8' }), out => { process.stdout.write(out.stdout); process.stderr.write(out.stderr); return true; }));"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1256,
+      "text": "if (!readOwner(info) || inspect(info.container)?.State.Running) fail('REFUSED', 'offline requires a held, stopped slot');"
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "line": 1270,
+      "text": "complete(processObservation('slot log', { container: info.container }, spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), info.container]), { encoding: 'utf8' }), out => { process.stdout.write(out.stdout); process.stderr.write(out.stderr); return true; }));"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 20,
+      "text": "} catch (error) { throw new Error(`cannot locate shared git state: ${error.message}`); }"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 22,
+      "text": "export const LOCKS = process.env.TX2_LOCKS_DIR ?? path.join(MAIN, 'lab/locks');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 23,
+      "text": "export const ENGINE_DIR = process.env.TX2_ENGINE_DIR ?? path.join(MAIN, 'runs/engines');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 48,
+      "text": "// [EXP-K01-R6] Why: ENOENT is an explicit absent-file state for optional ledger/owner metadata; malformed bytes and other read failures still throw. Rejected: a catch-all empty object."
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 49,
+      "text": "catch (error) { if (error.code === 'ENOENT' && fallback !== undefined) return fallback; throw error; }"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 67,
+      "text": "if (!Number.isSafeInteger(pid) || pid < 1) return false;"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 70,
+      "text": "catch (error) { if (error.code === 'EPERM') return true; if (error.code === 'ESRCH') return false; throw error; }"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 89,
+      "text": "} catch (error) {"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 92,
+      "text": "const age = Date.now() - (fs.statSync(dir, { throwIfNoEntry: false })?.mtimeMs ?? Date.now());"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 93,
+      "text": "if ((owner && !pidAlive(owner.pid)) || (!owner && age > 30_000)) {"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 97,
+      "text": "if (Date.now() - started > timeoutMs) fail('LOCK_TIMEOUT', `Timed out waiting for ${label} held by pid ${owner?.pid}`);"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 98,
+      "text": "if (!announced && !quiet) { process.stderr.write(`[lab] waiting for ${label} (held by pid ${owner?.pid})\\n`); announced = true; }"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 108,
+      "text": "try { fs.renameSync(dir, aside); } catch (error) { if (error.code === 'ENOENT') return; throw error; }"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 143,
+      "text": "return ['-H', process.env.TX2_DOCKER_HOST ?? DOCKER_HOST, ...args];"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 154,
+      "text": "if (names.length !== 1 || names[0] !== name) fail('DOCKER', 'container enumeration does not bind exact name');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 157,
+      "text": "if (!Array.isArray(rows) || rows.length !== 1 || !rows[0].Id || typeof rows[0].State?.Running !== 'boolean' || !rows[0].Config || !rows[0].HostConfig) throw Error('incomplete container inspect');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 164,
+      "text": "if (names.length !== 1 || names[0] !== name) fail('DOCKER', 'volume enumeration does not bind exact name');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 167,
+      "text": "if (!Array.isArray(rows) || rows.length !== 1 || rows[0].Name !== name || !rows[0].Labels) throw Error('incomplete volume inspect');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 181,
+      "text": "health: info.State.Health?.Status ?? null,"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 186,
+      "text": "labels: info.Config.Labels ?? {},"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 203,
+      "text": "cpuPercent: forecast(Number(/^([0-9]+(?:\\.[0-9]+)?)%$/.exec(row.CPUPerc)?.[1])),"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 209,
+      "text": "if (lines.length !== 2 || !/^Filesystem\\s/.test(lines[0])) throw Error('incomplete df observation');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 211,
+      "text": "if (f.length !== 6 || !f.slice(1,4).every(x => /^[0-9]+$/.test(x))) throw Error('invalid df byte fields');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 213,
+      "text": "if (totalBytes === 0 || usedBytes > totalBytes || availableBytes > totalBytes || usedBytes + availableBytes > totalBytes) throw Error('inconsistent df observation');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 245,
+      "text": "parent = { value: m[2] ?? '', children: new Map() };"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 252,
+      "text": "parent.children.set(m[1], m[2] ?? '');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 268,
+      "text": "try { return parseFlatYaml(text).get('readOnlyDatabases')?.value === 'true'; } catch { return false; }"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 283,
+      "text": "if (parsed.state !== 'complete') return { ok: false, others, readOnly: false, observation: parsed, reason: parsed.error };"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 284,
+      "text": "const readOnly = parsed.value.get('readOnlyDatabases')?.value === 'true';"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 285,
+      "text": "if (others.length === 0 || readOnly) return { ok: true, others, readOnly };"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 287,
+      "text": "ok: false, others, readOnly,"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 308,
+      "text": "try { writer = parseFlatYaml(writerText); } catch (error) { reasons.push(`writer config: ${error.message}`); }"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 309,
+      "text": "try { follower = parseFlatYaml(followerText); } catch (error) { reasons.push(`follower config: ${error.message}`); }"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 310,
+      "text": "if (follower && follower.get('readOnlyDatabases')?.value !== 'true') reasons.push('follower config does not set top-level readOnlyDatabases: true');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 311,
+      "text": "if (writer && writer.get('readOnlyDatabases')?.value === 'true') reasons.push('writer config is read-only, so nothing would write the log');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 314,
+      "text": "if (!w || !f || !w.children.has('path') || !f.children.has('path') || w.value !== f.value || w.children.get('path') !== f.children.get('path'))"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 315,
+      "text": "reasons.push(`${key} is ${f?.value} ${f?.children.get('path')} on the follower but ${w?.value} ${w?.children.get('path')} on the writer`);"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 317,
+      "text": "if (follower && follower.get('healthz')?.children.get('port') !== '8080') reasons.push('follower healthz.port must be 8080 (the harness health check)');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 318,
+      "text": "return { ok: reasons.length === 0, reasons };"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 331,
+      "text": "const from = Number(m[1]), to = Number(m[2] ?? m[1]);"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 332,
+      "text": "if (from > to || to >= vmCpus) fail('USAGE', `cpuset ${text} is outside the VM's CPUs 0-${vmCpus - 1}`);"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 357,
+      "text": "if (!config.vm.memBytes || !config.pool.memLimitBytes || !config.pool.diskUsedLimitBytes) throw Error('missing positive resource capacity');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 363,
+      "text": "if (validation.state === 'failed') return { ok: false, reasons: [validation.error], observation: validation, external: [], holders: [] };"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 367,
+      "text": "container: c.name, external: true, memBytes: (c.memBytes === null || c.memBytes === 0) ? config.vm.memBytes : c.memBytes, nanoCpus: c.nanoCpus, uncapped: !c.memBytes,"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 382,
+      "text": "return { ok: reasons.length === 0, reasons, memUsed, memAfter, diskForecast, diskAfter, external, holders };"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 401,
+      "text": "if (exists.has(entry.container) || pidAlive(entry.pid)) return true;"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 413,
+      "text": "return args.holder ?? process.env.TX2_HOLDER ?? `worktree:${REPO}`;"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 419,
+      "text": "catch (error) { if (error.code === 'ENOENT') return null; throw error; }"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 422,
+      "text": "if (!owner || typeof owner !== 'object' || Array.isArray(owner) || typeof owner.holder !== 'string' || !owner.holder) throw Error('incomplete slot owner');"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 429,
+      "text": "// [EXP-K01-R6] Why: optional git failure is used only for historical stash metadata; canonical diff/head/file identity still requires successful reads. Rejected: using optional stash output as source PASS."
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 432,
+      "text": "catch (error) { if (allowFail) return null; throw error; }"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 453,
+      "text": "const stashCommit = dirty ? git(['stash', 'create'], { allowFail: true }) || null : null;"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 471,
+      "text": "const sourceTreeId = sha256(JSON.stringify({ headTree, diffSha256, untracked: untrackedFiles.map(f => [f.path, f.sha256 ?? null]) }));"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 543,
+      "text": "if (next === undefined || next.startsWith('--')) options[key] = true;"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 551,
+      "text": "fn().catch(error => {"
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "line": 556,
+      "text": "process.exitCode = error.code === 'REFUSED' ? 3 : 1;"
+    },
+    {
+      "file": "lab/bin/observation.ts",
+      "line": 1,
+      "text": "// [EXP-K01-R6] Why: incomplete acquisition must remain failure through parsing and verdict publication. Rejected: null/empty defaults and independent PASS bits (erase producer failures)."
+    },
+    {
+      "file": "lab/bin/observation.ts",
+      "line": 12,
+      "text": "catch (error) { return Object.freeze({ ...identity, state: \"failed\" as const, error: error instanceof Error ? error.message : String(error), cause: error }); }"
+    },
+    {
+      "file": "lab/bin/observation.ts",
+      "line": 15,
+      "text": "if (!observation || observation.state !== \"complete\") throw new ObservationFailure(observation);"
+    },
+    {
+      "file": "lab/bin/observation.ts",
+      "line": 23,
+      "text": "if (typeof raw !== \"number\" || !Number.isSafeInteger(raw) || raw < 0) throw Error(`invalid byte/cap observation: ${String(raw)}`);"
+    },
+    {
+      "file": "lab/bin/observation.ts",
+      "line": 27,
+      "text": "if (typeof raw !== \"number\" || !Number.isFinite(raw) || raw < 0 || raw > Number.MAX_SAFE_INTEGER) throw Error(`invalid forecast: ${String(raw)}`);"
+    },
+    {
+      "file": "lab/bin/observation.ts",
+      "line": 31,
+      "text": "if (!raw || raw.status !== 0 || raw.signal !== null || raw.error) throw Object.assign(Error(\"command did not complete successfully\"), { raw });"
+    },
+    {
+      "file": "lab/bin/observation.ts",
+      "line": 44,
+      "text": "if (!raw || raw.ok !== true) throw Error(\"required semantic proof failed\");"
+    },
+    {
+      "file": "lab/bin/observation.ts",
+      "line": 50,
+      "text": "catch (error) { return Object.freeze({ ...identity, state: \"failed\" as const, error: error instanceof Error ? error.message : String(error), cause: error }); }"
+    },
+    {
+      "file": "lab/bin/observation.ts",
+      "line": 53,
+      "text": "if (raw === null || raw === undefined || raw === \"\" || ![\"number\", \"bigint\", \"string\"].includes(typeof raw)) throw Error(\"missing numeric SQL observation\");"
+    },
+    {
+      "file": "lab/bin/observation.ts",
+      "line": 55,
+      "text": "if (!Number.isSafeInteger(n) || n < 0 || typeof raw === \"bigint\" && BigInt(n) !== raw || typeof raw === \"string\" && !/^[0-9]+$/.test(raw)) throw Error(\"invalid numeric SQL observation\");"
+    },
+    {
+      "file": "lab/bin/observation.ts",
+      "line": 59,
+      "text": "if (!Array.isArray(raw) || raw.some(r => !r || typeof r !== \"object\" || Array.isArray(r))) throw Error(\"incomplete SQL row set\");"
+    },
+    {
+      "file": "lab/bin/owner-state.mjs",
+      "line": 4,
+      "text": "// [EXP-K01-R6] Why: An undefined transition return explicitly means no mutation; next/current fallback never supplies missing runtime evidence, and callers require current attempt identity before PASS. Rejected: converting a failed observation into successful content."
+    },
+    {
+      "file": "lab/bin/owner-state.mjs",
+      "line": 11,
+      "text": "return next ?? current;"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 20,
+      "text": "else if (wire === 2) { const length = Number(varint()); if (!Number.isSafeInteger(length) || length > bytes.length - p) throw new Error('truncated protobuf body'); data = bytes.subarray(p, p + length); p += length; }"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 21,
+      "text": "else if (wire === 1 || wire === 5) { const length = wire === 1 ? 8 : 4; if (p + length > bytes.length) throw new Error('truncated protobuf scalar'); data = bytes.subarray(p, p + length); p += length; }"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 42,
+      "text": "const declared = schemas[name][f.number], type = declared?.replace(/\\*$/, '');"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 43,
+      "text": "if (!type || (seen.has(f.number) && !declared.endsWith('*'))) throw new Error(`unknown or duplicate ${name} field ${f.number}`);"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 48,
+      "text": "else if (type === 'state' && f.data > 2n || type === 'mode' && f.data > 1n || type === 'bool' && f.data > 1n) throw new Error(`unsupported ${name} enum/bool`);"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 53,
+      "text": "if (name === 'DatabaseConfig' && ([1,2,3].filter(n=>seen.has(n)).length > 1 || [4,5,6].filter(n=>seen.has(n)).length > 1)) throw new Error('ambiguous database config');"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 62,
+      "text": "if (top.length !== 1 || top[0].wire !== 2) throw new Error('ambiguous source message');"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 68,
+      "text": "if (cutIndex !== undefined && (cutIndex < 0n || cutIndex > BigInt(Number.MAX_SAFE_INTEGER))) throw new Error('invalid expected_block_idx');"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 74,
+      "text": "const { F, M, T } = frontiers ?? {};"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 75,
+      "text": "if (![F, M, T].every(v => Number.isSafeInteger(v) && v >= 0) || F > M) throw new Error('invalid F/M/T frontiers');"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 83,
+      "text": "if (bytes.length - p < 21 || bytes[p] !== 30) throw new Error('invalid LocalLog frame separator/header');"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 85,
+      "text": "if (size < 1 || end > bytes.length) throw new Error('truncated LocalLog frame');"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 95,
+      "text": "if (!frames.length || frames.at(-1).id !== M) throw new Error('stopped source tail does not end at M');"
+    },
+    {
+      "file": "lab/bin/xtdb-log.mjs",
+      "line": 96,
+      "text": "return { ok: true, frontiers: { F, M, T }, sourceTailSha256: sha(bytes), bytes: bytes.length, maintenanceMessages: frames.length - 1, frames };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 14,
+      "text": "*         C3-C8 compared with the golden's freeze record. verdict PASS only if all eight pass."
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 36,
+      "text": "if (![\"settle\", \"freeze\", \"verify\", \"start-check\", \"diagnostic\", \"probe-write\"].includes(mode ?? \"\") || !url || !container) {"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 38,
+      "text": "process.exit(2);"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 43,
+      "text": "// [EXP-K01-R6] Why: a diagnostic failure must fail the command too. Rejected: exit zero with ok:false/FAIL that an outer process might mistake for completed proof."
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 46,
+      "text": "if (value?.ok === false || value?.settled === false || value?.verdict === \"FAIL\") process.exitCode = 1;"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 115,
+      "text": "if (!Number.isSafeInteger(before.gauges.latestCompletedTxId) || before.gauges.latestCompletedTxId! < 0)"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 116,
+      "text": "return { settled: false, reason: \"initial completed transaction gauge is missing or invalid\", before, phases };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 121,
+      "text": "if (finishBlock.status !== 200) return { settled: false, reason: `finish-block #${phase} failed`, before, phases };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 129,
+      "text": "const coverage = blockTrieCoverage(reading.trie.rows, block?.block_idx ?? \"\", requiredTables);"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 141,
+      "text": "log(`finish-block #${phase}: jobs ${g.jobsAvailable}, block ${block?.block_idx ?? \"pending\"}, stable ${streak}/3`);"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 143,
+      "text": "if (!Number.isSafeInteger(g.latestCompletedTxId) || g.latestCompletedTxId !== before.gauges.latestCompletedTxId)"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 144,
+      "text": "return { settled: false, reason: `current completed transaction ${g.latestCompletedTxId} differs from frozen seed ${before.gauges.latestCompletedTxId} or is invalid`, before, phases };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 147,
+      "text": "if (!evidence.after) return { settled: false, reason: `finish-block #${phase} evidence did not settle`, before, phases };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 150,
+      "text": "return { settled: true, qualified: false, proofStage: \"AWAITING_STOPPED_TAIL\", frontiers: (previous as any).frontiers, waitedS: (Date.now() - started) / 1000, before, phases, after: previous };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 157,
+      "text": "return proofReads[name] = { observation: processObservation(\"startup \" + name, { container, args }, r, out => out), status: r.status, signal: r.signal ?? null, error: r.error?.message ?? null, stdout: r.stdout ?? \"\", stderr: r.stderr ?? \"\" };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 162,
+      "text": "if (!success(initial) || !identity || !Number.isFinite(Date.parse(identity))) return { ok: false, reason: \"current startup inspect failed or returned invalid identity\", proofReads, polls: [] };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 171,
+      "text": "const resume = [...text.matchAll(/resuming after (\\d+)/g)].at(-1)?.[1] ?? null;"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 172,
+      "text": "const expectedMsgId = expected.frontiers?.M ?? expected.gauges.latestProcessedMsgId;"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 174,
+      "text": "return { ok: success(out) && success(final) && final.stdout.trim() === identity && started.status === 200 && resume !== null && Number(resume) === expectedMsgId && polls.every(p =>"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 192,
+      "text": "const observation = await observeAsync(\"fingerprint \" + name, { container, scope: manifest.scope }, fn, value => { if (value === null || value === undefined) throw Error(\"missing fingerprint value\"); return value; });"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 204,
+      "text": "if (!latest.length || !txs || num(txs.n) === 0 || !txs.min_st || !txs.max_st || !failed) throw Error(\"incomplete transaction catalog observation\");"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 205,
+      "text": "return { latestCompletedTxs: JSON.parse(canonical(latest)), txs: { n: num(txs?.n), minSystemTime: txs?.min_st ? new Date(txs.min_st).toISOString() : null, maxSystemTime: txs?.max_st ? new Date(txs.max_st).toISOString() : null, maxId: num(txs?.max_id), notCommitted: num(failed?.n) } };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 208,
+      "text": "const position = num((await q(\"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?\", [scopeKey]))[0]?.position);"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 211,
+      "text": "counts[table] = num((await q(`SELECT COUNT(*) AS n FROM ${table} FOR ALL VALID_TIME WHERE scope_key = ?`, [scopeKey]))[0]?.n);"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 218,
+      "text": "history[table] = num((await q(`SELECT COUNT(*) AS n FROM ${table} FOR ALL SYSTEM_TIME FOR ALL VALID_TIME WHERE scope_key = ?`, [scopeKey]))[0]?.n);"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 219,
+      "text": "const distinct = num((await q(\"SELECT COUNT(DISTINCT system_time) AS n FROM xt.txs FOR ALL VALID_TIME\"))[0]?.n);"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 228,
+      "text": "const trieStats = { rows: trie.length, sha256: digest(trie), levels: Object.entries(trie.reduce((m: any, r) => ((m[`${r[2]}/${r[3]}`] = (m[`${r[2]}/${r[3]}`] ?? 0) + 1), m), {})) };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 251,
+      "text": "return { ok: errors.length === 0, at: new Date().toISOString(), url, container, scopeKey, c3, c4, c5, c6, c7, c8, observations, timingsMs: timings, errors };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 257,
+      "text": "const recordFile = path.resolve(opt(\"golden-record\") ?? \"\");"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 263,
+      "text": "const content = owner?.volumeContent, copy = content?.copy, c1 = copy?.c1;"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 264,
+      "text": "// [EXP-K01-R5] Why: a current certificate can still contain contradictory hashes. Rejected: recertifying the old C1 PASS bit without comparing its exact pre-start tree evidence."
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 265,
+      "text": "const hashes = [record.copy?.treeSha256, copy?.treeSha256, c1?.expected, c1?.observed];"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 267,
+      "text": "pass: content?.kind === \"clone\" && content.goldenVolume === record.volume && content.key === record.key &&"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 268,
+      "text": "typeof copy?.creationId === \"string\" && copy.creationId.length > 0 && c1?.pass === true &&"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 270,
+      "text": "expected: record.copy?.treeSha256, observed: { treeSha256: copy?.treeSha256, c1 },"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 274,
+      "text": "checks[\"C2\"] = { pass: started.status === 200 && alive.status === 200, observed: { started, alive }, expected: { started: 200, alive: 200 } };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 287,
+      "text": "if (!obs.ok) for (const k of [\"C3\", \"C4\", \"C5\", \"C6\", \"C7\", \"C8\"]) if (obs.errors.some((e) => e.startsWith(k.toLowerCase()))) checks[k] = { ...checks[k]!, pass: false, note: `${checks[k]!.note}; error: ${obs.errors.find((e) => e.startsWith(k.toLowerCase()))}` };"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 288,
+      "text": "const verdict = obs.ok === true && Object.values(checks).every((c) => c.pass) ? \"PASS\" : \"FAIL\";"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 301,
+      "text": "else if (mode === \"freeze\") print(await fingerprint(readJson(opt(\"manifest\") ?? \"\")));"
+    },
+    {
+      "file": "lab/bench/clone-check.ts",
+      "line": 306,
+      "text": "setTimeout(() => process.exit(0), 200).unref();"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 28,
+      "text": "const a = typeof r.attributes === \"string\" ? JSON.parse(r.attributes) : (r.attributes ?? null);"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 31,
+      "text": "scan: a ? { source: a.scan_source ?? null, filesPruned: a.scan_files_pruned == null ? null : sqlNumber(a.scan_files_pruned), filesUsed: a.scan_files_used == null ? null : sqlNumber(a.scan_files_used), pagesPruned: a.scan_pages_pruned == null ? null : sqlNumber(a.scan_pages_pruned), pagesUsed: a.scan_pages_used == null ? null : sqlNumber(a.scan_pages_used), rowsRead: a.scan_rows_read == null ? null : sqlNumber(a.scan_rows_read) } : null,"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 39,
+      "text": "const rows = [...triples].map((t) => [t.id, t.entityId, t.attribute, t.value, t.validFrom ?? null, t.validTo ?? null]).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 43,
+      "text": "export interface Check { pass: boolean; expected?: unknown; observed?: unknown; note?: string; ms?: number }"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 55,
+      "text": "pass: !!freeze.c3 && !!obs.c3 && eq(freeze.c3, obs.c3),"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 58,
+      "text": "const positionOk = obs.c4?.position === manifest.result.lastPosition && freeze.c4?.position === manifest.result.lastPosition;"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 60,
+      "text": "pass: positionOk && eq(freeze.c4, obs.c4),"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 64,
+      "text": "out[\"C5\"] = { pass: !!freeze.c5 && !!obs.c5 && eq(freeze.c5, obs.c5), expected: freeze.c5, observed: obs.c5, note: \"history row counts over all system and valid time, distinct tx system times\" };"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 66,
+      "text": "pass: typeof freeze.c6?.sha256 === \"string\" && freeze.c6.sha256.length > 0 && freeze.c6.sha256 === obs.c6?.sha256 && Array.isArray(freeze.c6?.liveTables?.rows) && Array.isArray(obs.c6?.liveTables?.rows) && eq(freeze.c6.liveTables.rows, obs.c6.liveTables.rows),"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 67,
+      "text": "expected: { sha256: freeze.c6?.sha256, trieStats: freeze.c6?.trieStats?.sha256, blockFiles: freeze.c6?.blockFiles?.sha256, liveTables: freeze.c6?.liveTables?.rows },"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 68,
+      "text": "observed: { sha256: obs.c6?.sha256, trieStats: obs.c6?.trieStats?.sha256, blockFiles: obs.c6?.blockFiles?.sha256, liveTables: obs.c6?.liveTables?.rows },"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 71,
+      "text": "const polls: number[] = obs.c7?.polls;"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 72,
+      "text": "out[\"C7\"] = { pass: Array.isArray(polls) && polls.length >= 3 && polls.every((v) => v === 0), expected: [0, 0, 0], observed: polls, note: \"compactor.jobs.available, three readings 5 s apart\" };"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 74,
+      "text": "pass: typeof freeze.c8?.resultSha256 === \"string\" && freeze.c8.resultSha256.length > 0 && typeof freeze.c8?.plan?.sha256 === \"string\" && freeze.c8.plan.sha256.length > 0 && freeze.c8.resultSha256 === obs.c8?.resultSha256 && freeze.c8.plan.sha256 === obs.c8?.plan?.sha256,"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 75,
+      "text": "expected: { resultSha256: freeze.c8?.resultSha256, planSha256: freeze.c8?.plan?.sha256, subjects: freeze.c8?.subjects?.length },"
+    },
+    {
+      "file": "lab/bench/lib/clone.ts",
+      "line": 76,
+      "text": "observed: { resultSha256: obs.c8?.resultSha256, planSha256: obs.c8?.plan?.sha256, subjects: obs.c8?.subjects?.length, plan: obs.c8?.plan?.sha256 === freeze.c8?.plan?.sha256 ? undefined : obs.c8?.plan?.rows },"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 24,
+      "text": "positions: [], state: state as any, versionIds: new Map(m.result.versionIds), recorded: m.recorded ?? [],"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 33,
+      "text": "*                record that engine.mjs clone writes names a golden of this manifest and a PASS readiness verdict),"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 35,
+      "text": "* A clone of another manifest's golden, or one whose readiness is not PASS, throws: such a run must not start."
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 40,
+      "text": "if (m.lane === \"qlever\") return { kind: \"bulk-index\", seededBy: \"bulk-index\", manifest: manifestFile, manifestSha256, nqSha256: m.nq?.sha256 ?? null, quads: m.nq?.quads ?? null };"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 42,
+      "text": "// [EXP-K01-R6] Why: optional capture metadata below is display-only; missing owner is explicitly unverified, and missing clone certificate fields refuse Q74d. Rejected: treating display defaults as clone PASS."
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 43,
+      "text": "const base = { kind: \"seed-manifest\", manifest: manifestFile, manifestSha256, scope: m.scope, seedWallS: m.capture?.wallS ?? null, seedStartedAt: m.capture?.startedAt ?? null };"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 45,
+      "text": "if (owner !== null && (typeof owner !== \"object\" || Array.isArray(owner))) throw new Error(\"invalid slot owner observation\");"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 49,
+      "text": "if (c !== undefined && c?.kind !== \"clone\") throw new Error(\"unsupported slot volume content observation\");"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 53,
+      "text": "if (c.readiness?.verdict !== \"PASS\" || c.copy?.c1?.pass !== true || !/^[0-9a-f]{64}$/.test(c.copy?.treeSha256 ?? \"\") || c.copy.c1.expected !== c.copy.treeSha256 || c.copy.c1.observed !== c.copy.treeSha256 || !c.copy.creationId || c.readiness.certificateSha256 !== cloneCertificateHash(c) || c.readiness.verifiedContainerId !== c.containerId || c.readiness.verifiedStartedAt !== c.startedAt)"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 54,
+      "text": "throw new Error(`RULINGS Q74d: the clone of ${c.goldenVolume} on this slot has readiness/copy certificate ${c.readiness?.verdict ?? \"none\"}; run lab/bin/engine.mjs verify`);"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 57,
+      "text": "golden: { key: c.key, volume: c.goldenVolume, record: c.goldenRecord, recordSha256: c.goldenRecordSha256, freezeSha256: c.freezeSha256, clonedAt: c.clonedAt, containerId: c.containerId, startedAt: c.startedAt, copy: { copyS: c.copy?.copyS, treeSha256: c.copy?.treeSha256, c1: c.copy?.c1?.pass ?? null }, timings: c.timings, readiness: c.readiness },"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 64,
+      "text": "if (!inputs?.generator || !inputs?.adapter?.dist) throw new Error(\"Q74a: XTDB seed inputs are missing\");"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 68,
+      "text": "if (!file.startsWith(path.resolve(root) + path.sep) || !fs.existsSync(file) || sha(fs.readFileSync(file)) !== expected)"
+    },
+    {
+      "file": "lab/bench/lib/bulk.ts",
+      "line": 80,
+      "text": "if (!expected || expected.files !== files.length || expected.sha256 !== sha(lines.join(\"\")))"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 8,
+      "text": "const attemptName = process.env.TX2_K01_ATTEMPT ?? 'round2';"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 24,
+      "text": "fs.writeFileSync(file + '.stdout', r.stdout ?? '');"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 25,
+      "text": "fs.writeFileSync(file + '.stderr', r.stderr ?? '');"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 29,
+      "text": "try { if (JSON.parse(r.stdout).verdict?.ok !== true) semanticFailure = 'required clean-stop proof failed'; }"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 30,
+      "text": "catch { semanticFailure = 'required clean-stop proof is unreadable'; }"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 32,
+      "text": "fs.writeFileSync(file + '.result.json', JSON.stringify({ args, semanticFailure, observation: processObservation('runner command', { args, holder, attemptTag }, r, out => out), exit: r.status, signal: r.signal, error: r.error?.message, elapsedS: (Date.now() - t) / 1000 }, null, 2) + '\\n');"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 34,
+      "text": "// [EXP-K01-R6] Why: optional commands are retained failed observations only for admission retry, the explicit negative T2 control, or cleanup aggregation below; none is a PASS. Rejected: silent successful fallback."
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 35,
+      "text": "if ((r.status !== 0 || r.signal || r.error) && !optional) throw new Error(`${label} failed: ${r.stderr?.slice(-1000)}`);"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 48,
+      "text": "const retained = readJson(POOL_FILE(), {}).retainedVolumes?.find(v => v.volume === 'tx2-xtdb-s1-data' && v.holder !== holder);"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 50,
+      "text": "if (fs.existsSync(seedDir) || fs.existsSync(singlecutDir)) throw new Error('current output directory already exists; use a fresh invocation');"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 102,
+      "text": "} catch (error) { firstFailure = error; throw error; } finally {"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 105,
+      "text": "const cleanup = (...args) => { const r = engine(...args); if (r.status !== 0 || r.signal || r.error) cleanupFailures.push(args[0]); };"
+    },
+    {
+      "file": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "line": 108,
+      "text": "if (currentOwner?.holder === holder) cleanup('cleanup-source-clone', 'down', ['--remove-volume'], { optional: true });"
+    }
+  ]
+}

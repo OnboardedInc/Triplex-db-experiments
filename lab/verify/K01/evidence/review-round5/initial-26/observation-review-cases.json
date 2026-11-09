@@ -1,0 +1,750 @@
+[
+  {
+    "kind": "cloneCheck",
+    "mode": "settle",
+    "stub": "process.stdout.write(JSON.stringify({ok:true,mode:process.argv[2]}));if(process.argv[2]==='child-failure')process.exitCode=1;\n",
+    "raw": {
+      "status": 0,
+      "signal": null,
+      "stdout": "{\"ok\":true,\"mode\":\"settle\"}",
+      "stderr": null,
+      "error": null
+    },
+    "error": {
+      "message": "clone-check response: missing text observation",
+      "observation": {
+        "kind": "clone-check response",
+        "binding": {
+          "args": [
+            "settle"
+          ]
+        },
+        "attempt": "4c609fc6-491b-4565-bcff-0fd9ffd658ed",
+        "at": "2026-11-09T00:50:36.776Z",
+        "state": "failed",
+        "error": "missing text observation",
+        "cause": {}
+      }
+    }
+  },
+  {
+    "kind": "cloneCheck",
+    "mode": "freeze",
+    "stub": "process.stdout.write(JSON.stringify({ok:true,mode:process.argv[2]}));if(process.argv[2]==='child-failure')process.exitCode=1;\n",
+    "raw": {
+      "status": 0,
+      "signal": null,
+      "stdout": "{\"ok\":true,\"mode\":\"freeze\"}",
+      "stderr": null,
+      "error": null
+    },
+    "error": {
+      "message": "clone-check response: missing text observation",
+      "observation": {
+        "kind": "clone-check response",
+        "binding": {
+          "args": [
+            "freeze"
+          ]
+        },
+        "attempt": "a304e1ae-54ca-40d7-a2c3-3c301f7c6a97",
+        "at": "2026-11-09T00:50:36.829Z",
+        "state": "failed",
+        "error": "missing text observation",
+        "cause": {}
+      }
+    }
+  },
+  {
+    "kind": "cloneCheck",
+    "mode": "verify",
+    "stub": "process.stdout.write(JSON.stringify({ok:true,mode:process.argv[2]}));if(process.argv[2]==='child-failure')process.exitCode=1;\n",
+    "raw": {
+      "status": 0,
+      "signal": null,
+      "stdout": "{\"ok\":true,\"mode\":\"verify\"}",
+      "stderr": null,
+      "error": null
+    },
+    "error": {
+      "message": "clone-check response: missing text observation",
+      "observation": {
+        "kind": "clone-check response",
+        "binding": {
+          "args": [
+            "verify"
+          ]
+        },
+        "attempt": "18f1860e-7efd-411c-ab8a-bd777fccf022",
+        "at": "2026-11-09T00:50:36.877Z",
+        "state": "failed",
+        "error": "missing text observation",
+        "cause": {}
+      }
+    }
+  },
+  {
+    "kind": "cloneCheck",
+    "mode": "child-failure",
+    "stub": "process.stdout.write(JSON.stringify({ok:true,mode:process.argv[2]}));if(process.argv[2]==='child-failure')process.exitCode=1;\n",
+    "raw": {
+      "status": 1,
+      "signal": null,
+      "stdout": "{\"ok\":true,\"mode\":\"child-failure\"}",
+      "stderr": null,
+      "error": null
+    },
+    "error": {
+      "message": "clone-check response: command did not complete successfully",
+      "observation": {
+        "kind": "clone-check response",
+        "binding": {
+          "args": [
+            "child-failure"
+          ]
+        },
+        "attempt": "5b006e7e-f237-4b2c-9f64-4ccb50e63b18",
+        "at": "2026-11-09T00:50:36.924Z",
+        "state": "failed",
+        "error": "command did not complete successfully",
+        "cause": {
+          "raw": {
+            "status": 1,
+            "signal": null,
+            "output": [
+              null,
+              "{\"ok\":true,\"mode\":\"child-failure\"}",
+              null
+            ],
+            "pid": 31663,
+            "stdout": "{\"ok\":true,\"mode\":\"child-failure\"}",
+            "stderr": null
+          }
+        }
+      }
+    }
+  },
+  {
+    "kind": "driver-owner",
+    "name": "json-null",
+    "owner": null,
+    "result": {
+      "kind": "seed-manifest",
+      "manifest": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/tmp/observation-review/owner-a8HdaD/manifest.json",
+      "manifestSha256": "afc641ec9622959690b703b66af358ad270806992ebe6e888dbfa842ac0e40f5",
+      "scope": "fixture",
+      "seedWallS": null,
+      "seedStartedAt": null,
+      "seededBy": "unverified",
+      "note": "no slot owner record (TRIPLEX_LAB_SLOT_OWNER): what the slot volume holds is not bound"
+    }
+  },
+  {
+    "kind": "driver-owner",
+    "name": "empty-object",
+    "owner": {},
+    "result": {
+      "kind": "seed-manifest",
+      "manifest": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/tmp/observation-review/owner-AJtZ5S/manifest.json",
+      "manifestSha256": "afc641ec9622959690b703b66af358ad270806992ebe6e888dbfa842ac0e40f5",
+      "scope": "fixture",
+      "seedWallS": null,
+      "seedStartedAt": null,
+      "seededBy": "seed-writer"
+    }
+  },
+  {
+    "kind": "driver-owner",
+    "name": "empty-holder",
+    "owner": {
+      "holder": ""
+    },
+    "result": {
+      "kind": "seed-manifest",
+      "manifest": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/tmp/observation-review/owner-eKxbMZ/manifest.json",
+      "manifestSha256": "afc641ec9622959690b703b66af358ad270806992ebe6e888dbfa842ac0e40f5",
+      "scope": "fixture",
+      "seedWallS": null,
+      "seedStartedAt": null,
+      "seededBy": "seed-writer"
+    }
+  },
+  {
+    "kind": "driver-owner",
+    "name": "missing-holder",
+    "owner": {
+      "lifecycle": {
+        "state": "RUNNING"
+      }
+    },
+    "result": {
+      "kind": "seed-manifest",
+      "manifest": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/tmp/observation-review/owner-4kS9Hf/manifest.json",
+      "manifestSha256": "afc641ec9622959690b703b66af358ad270806992ebe6e888dbfa842ac0e40f5",
+      "scope": "fixture",
+      "seedWallS": null,
+      "seedStartedAt": null,
+      "seededBy": "seed-writer"
+    }
+  },
+  {
+    "kind": "driver-owner",
+    "name": "valid-writer",
+    "owner": {
+      "holder": "fixture-holder",
+      "lifecycle": {
+        "state": "RUNNING"
+      }
+    },
+    "result": {
+      "kind": "seed-manifest",
+      "manifest": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/tmp/observation-review/owner-yrQJB0/manifest.json",
+      "manifestSha256": "afc641ec9622959690b703b66af358ad270806992ebe6e888dbfa842ac0e40f5",
+      "scope": "fixture",
+      "seedWallS": null,
+      "seedStartedAt": null,
+      "seededBy": "seed-writer"
+    }
+  },
+  {
+    "kind": "driver-owner",
+    "name": "absent",
+    "result": {
+      "kind": "seed-manifest",
+      "manifest": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/tmp/observation-review/owner-Pnj1OV/manifest.json",
+      "manifestSha256": "afc641ec9622959690b703b66af358ad270806992ebe6e888dbfa842ac0e40f5",
+      "scope": "fixture",
+      "seedWallS": null,
+      "seedStartedAt": null,
+      "seededBy": "unverified",
+      "note": "no slot owner record (TRIPLEX_LAB_SLOT_OWNER): what the slot volume holds is not bound"
+    }
+  },
+  {
+    "kind": "plan-required-field",
+    "field": "page_count",
+    "row": {
+      "depth": "->",
+      "op": "scan",
+      "row_count": 9,
+      "attributes": {
+        "scan_db": "xtdb",
+        "scan_source": "tx_assertions",
+        "scan_files_pruned": 1,
+        "scan_files_used": 3,
+        "scan_pages_pruned": 2,
+        "scan_pages_used": 7,
+        "scan_rows_read": 120
+      }
+    },
+    "result": {
+      "producer": {
+        "kind": "fingerprint c8",
+        "binding": {
+          "source": "current fixture"
+        },
+        "attempt": "bdda2ccd-9c3e-4d71-9764-aa4a015fe7d3",
+        "at": "2026-11-09T00:50:36.928Z",
+        "state": "complete",
+        "value": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "plan": {
+            "rows": [
+              {
+                "depth": "->",
+                "op": "scan",
+                "pageCount": null,
+                "rowCount": 9,
+                "scan": {
+                  "source": "tx_assertions",
+                  "filesPruned": 1,
+                  "filesUsed": 3,
+                  "pagesPruned": 2,
+                  "pagesUsed": 7,
+                  "rowsRead": 120
+                }
+              }
+            ],
+            "sha256": "f51b263302c66418c189442db6bfb5b0bbca59187ddb87967abde46e8fa9a94c"
+          }
+        }
+      },
+      "c8": {
+        "pass": true,
+        "expected": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "f51b263302c66418c189442db6bfb5b0bbca59187ddb87967abde46e8fa9a94c"
+        },
+        "observed": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "f51b263302c66418c189442db6bfb5b0bbca59187ddb87967abde46e8fa9a94c"
+        },
+        "note": "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows"
+      }
+    }
+  },
+  {
+    "kind": "plan-required-field",
+    "field": "row_count",
+    "row": {
+      "depth": "->",
+      "op": "scan",
+      "page_count": 4,
+      "attributes": {
+        "scan_db": "xtdb",
+        "scan_source": "tx_assertions",
+        "scan_files_pruned": 1,
+        "scan_files_used": 3,
+        "scan_pages_pruned": 2,
+        "scan_pages_used": 7,
+        "scan_rows_read": 120
+      }
+    },
+    "result": {
+      "producer": {
+        "kind": "fingerprint c8",
+        "binding": {
+          "source": "current fixture"
+        },
+        "attempt": "6bfae4b8-e3cf-4d5a-b9de-a60e6aed6c2f",
+        "at": "2026-11-09T00:50:36.928Z",
+        "state": "complete",
+        "value": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "plan": {
+            "rows": [
+              {
+                "depth": "->",
+                "op": "scan",
+                "pageCount": 4,
+                "rowCount": null,
+                "scan": {
+                  "source": "tx_assertions",
+                  "filesPruned": 1,
+                  "filesUsed": 3,
+                  "pagesPruned": 2,
+                  "pagesUsed": 7,
+                  "rowsRead": 120
+                }
+              }
+            ],
+            "sha256": "2c8ad2f1223b7ca3bb959886dd8daf03468e64dee4d59f9cf5ad46ba5fc11ae9"
+          }
+        }
+      },
+      "c8": {
+        "pass": true,
+        "expected": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "2c8ad2f1223b7ca3bb959886dd8daf03468e64dee4d59f9cf5ad46ba5fc11ae9"
+        },
+        "observed": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "2c8ad2f1223b7ca3bb959886dd8daf03468e64dee4d59f9cf5ad46ba5fc11ae9"
+        },
+        "note": "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows"
+      }
+    }
+  },
+  {
+    "kind": "plan-required-field",
+    "field": "depth",
+    "row": {
+      "op": "scan",
+      "page_count": 4,
+      "row_count": 9,
+      "attributes": {
+        "scan_db": "xtdb",
+        "scan_source": "tx_assertions",
+        "scan_files_pruned": 1,
+        "scan_files_used": 3,
+        "scan_pages_pruned": 2,
+        "scan_pages_used": 7,
+        "scan_rows_read": 120
+      }
+    },
+    "result": {
+      "producer": {
+        "kind": "fingerprint c8",
+        "binding": {
+          "source": "current fixture"
+        },
+        "attempt": "1502c05f-cb8c-44d2-9f26-171a21f22ff9",
+        "at": "2026-11-09T00:50:36.928Z",
+        "state": "complete",
+        "value": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "plan": {
+            "rows": [
+              {
+                "op": "scan",
+                "pageCount": 4,
+                "rowCount": 9,
+                "scan": {
+                  "source": "tx_assertions",
+                  "filesPruned": 1,
+                  "filesUsed": 3,
+                  "pagesPruned": 2,
+                  "pagesUsed": 7,
+                  "rowsRead": 120
+                }
+              }
+            ],
+            "sha256": "4893c667c7981ad5629188f62bce4d06271926fc0934875b3b7ba0768d3ede56"
+          }
+        }
+      },
+      "c8": {
+        "pass": true,
+        "expected": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "4893c667c7981ad5629188f62bce4d06271926fc0934875b3b7ba0768d3ede56"
+        },
+        "observed": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "4893c667c7981ad5629188f62bce4d06271926fc0934875b3b7ba0768d3ede56"
+        },
+        "note": "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows"
+      }
+    }
+  },
+  {
+    "kind": "plan-required-field",
+    "field": "op",
+    "row": {
+      "depth": "->",
+      "page_count": 4,
+      "row_count": 9,
+      "attributes": {
+        "scan_db": "xtdb",
+        "scan_source": "tx_assertions",
+        "scan_files_pruned": 1,
+        "scan_files_used": 3,
+        "scan_pages_pruned": 2,
+        "scan_pages_used": 7,
+        "scan_rows_read": 120
+      }
+    },
+    "result": {
+      "producer": {
+        "kind": "fingerprint c8",
+        "binding": {
+          "source": "current fixture"
+        },
+        "attempt": "1507aa07-b546-4025-9647-02aa46ef56c8",
+        "at": "2026-11-09T00:50:36.928Z",
+        "state": "complete",
+        "value": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "plan": {
+            "rows": [
+              {
+                "depth": "->",
+                "pageCount": 4,
+                "rowCount": 9,
+                "scan": {
+                  "source": "tx_assertions",
+                  "filesPruned": 1,
+                  "filesUsed": 3,
+                  "pagesPruned": 2,
+                  "pagesUsed": 7,
+                  "rowsRead": 120
+                }
+              }
+            ],
+            "sha256": "39b23479199d34d5608e485a29499e126a3995147bc3714928a77263aa835a00"
+          }
+        }
+      },
+      "c8": {
+        "pass": true,
+        "expected": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "39b23479199d34d5608e485a29499e126a3995147bc3714928a77263aa835a00"
+        },
+        "observed": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "39b23479199d34d5608e485a29499e126a3995147bc3714928a77263aa835a00"
+        },
+        "note": "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows"
+      }
+    }
+  },
+  {
+    "kind": "plan-required-field",
+    "field": "scan_source",
+    "row": {
+      "depth": "->",
+      "op": "scan",
+      "page_count": 4,
+      "row_count": 9,
+      "attributes": {
+        "scan_db": "xtdb",
+        "scan_files_pruned": 1,
+        "scan_files_used": 3,
+        "scan_pages_pruned": 2,
+        "scan_pages_used": 7,
+        "scan_rows_read": 120
+      }
+    },
+    "result": {
+      "producer": {
+        "kind": "fingerprint c8",
+        "binding": {
+          "source": "current fixture"
+        },
+        "attempt": "b2875ff3-2301-49b4-9165-20fc2c9c7c20",
+        "at": "2026-11-09T00:50:36.929Z",
+        "state": "complete",
+        "value": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "plan": {
+            "rows": [
+              {
+                "depth": "->",
+                "op": "scan",
+                "pageCount": 4,
+                "rowCount": 9,
+                "scan": {
+                  "source": null,
+                  "filesPruned": 1,
+                  "filesUsed": 3,
+                  "pagesPruned": 2,
+                  "pagesUsed": 7,
+                  "rowsRead": 120
+                }
+              }
+            ],
+            "sha256": "1a441f0a49741853cd58468d5907d1005119e1a7a5fb34aa1cbd79a3391d75b2"
+          }
+        }
+      },
+      "c8": {
+        "pass": true,
+        "expected": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "1a441f0a49741853cd58468d5907d1005119e1a7a5fb34aa1cbd79a3391d75b2"
+        },
+        "observed": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "1a441f0a49741853cd58468d5907d1005119e1a7a5fb34aa1cbd79a3391d75b2"
+        },
+        "note": "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows"
+      }
+    }
+  },
+  {
+    "kind": "plan-required-field",
+    "field": "scan_files_used",
+    "row": {
+      "depth": "->",
+      "op": "scan",
+      "page_count": 4,
+      "row_count": 9,
+      "attributes": {
+        "scan_db": "xtdb",
+        "scan_source": "tx_assertions",
+        "scan_files_pruned": 1,
+        "scan_pages_pruned": 2,
+        "scan_pages_used": 7,
+        "scan_rows_read": 120
+      }
+    },
+    "result": {
+      "producer": {
+        "kind": "fingerprint c8",
+        "binding": {
+          "source": "current fixture"
+        },
+        "attempt": "150da658-042c-4eb3-b3ac-99708d40266a",
+        "at": "2026-11-09T00:50:36.929Z",
+        "state": "complete",
+        "value": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "plan": {
+            "rows": [
+              {
+                "depth": "->",
+                "op": "scan",
+                "pageCount": 4,
+                "rowCount": 9,
+                "scan": {
+                  "source": "tx_assertions",
+                  "filesPruned": 1,
+                  "filesUsed": null,
+                  "pagesPruned": 2,
+                  "pagesUsed": 7,
+                  "rowsRead": 120
+                }
+              }
+            ],
+            "sha256": "01425d338d06d5713f74aa04f9884abfc9167319937ff28ed227b21254d05ddf"
+          }
+        }
+      },
+      "c8": {
+        "pass": true,
+        "expected": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "01425d338d06d5713f74aa04f9884abfc9167319937ff28ed227b21254d05ddf"
+        },
+        "observed": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "01425d338d06d5713f74aa04f9884abfc9167319937ff28ed227b21254d05ddf"
+        },
+        "note": "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows"
+      }
+    }
+  },
+  {
+    "kind": "plan-required-field",
+    "field": "scan_rows_read",
+    "row": {
+      "depth": "->",
+      "op": "scan",
+      "page_count": 4,
+      "row_count": 9,
+      "attributes": {
+        "scan_db": "xtdb",
+        "scan_source": "tx_assertions",
+        "scan_files_pruned": 1,
+        "scan_files_used": 3,
+        "scan_pages_pruned": 2,
+        "scan_pages_used": 7
+      }
+    },
+    "result": {
+      "producer": {
+        "kind": "fingerprint c8",
+        "binding": {
+          "source": "current fixture"
+        },
+        "attempt": "a30a0df7-029e-4dfc-be08-e8cebbc5960a",
+        "at": "2026-11-09T00:50:36.929Z",
+        "state": "complete",
+        "value": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "plan": {
+            "rows": [
+              {
+                "depth": "->",
+                "op": "scan",
+                "pageCount": 4,
+                "rowCount": 9,
+                "scan": {
+                  "source": "tx_assertions",
+                  "filesPruned": 1,
+                  "filesUsed": 3,
+                  "pagesPruned": 2,
+                  "pagesUsed": 7,
+                  "rowsRead": null
+                }
+              }
+            ],
+            "sha256": "adf15d32a333316a21437f1b8429ba894b47f73d5c8f5721ada646c408f1bb40"
+          }
+        }
+      },
+      "c8": {
+        "pass": true,
+        "expected": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "adf15d32a333316a21437f1b8429ba894b47f73d5c8f5721ada646c408f1bb40"
+        },
+        "observed": {
+          "resultSha256": "b6bcb34dcbe7bcc77254a08656f6ad9b842b1259b6331f746498992e38149f2e",
+          "planSha256": "adf15d32a333316a21437f1b8429ba894b47f73d5c8f5721ada646c408f1bb40"
+        },
+        "note": "fixed subjects' pull result digest at the manifest basis, and the probe query's EXPLAIN ANALYZE files, pages and rows"
+      }
+    }
+  },
+  {
+    "kind": "CLI-exit",
+    "name": "ok-false",
+    "heldOpen": false,
+    "program": "const print = (value     ) => {\n  process.stdout.write(JSON.stringify(value, (_k, v) => (typeof v === \"bigint\" ? v.toString() : v), 2) + \"\\n\");\n  if (value?.ok === false || value?.settled === false || value?.verdict === \"FAIL\") process.exitCode = 1;\n};\n\n\n\nprint({\"ok\":false});\nsetTimeout(() => process.exit(0), 200).unref();\n",
+    "status": 1,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"ok\": false\n}\n",
+    "stderr": ""
+  },
+  {
+    "kind": "CLI-exit",
+    "name": "ok-false",
+    "heldOpen": true,
+    "program": "const print = (value     ) => {\n  process.stdout.write(JSON.stringify(value, (_k, v) => (typeof v === \"bigint\" ? v.toString() : v), 2) + \"\\n\");\n  if (value?.ok === false || value?.settled === false || value?.verdict === \"FAIL\") process.exitCode = 1;\n};\n\n\nconst keeper=setInterval(()=>{},1000);setTimeout(()=>clearInterval(keeper),350);\nprint({\"ok\":false});\nsetTimeout(() => process.exit(0), 200).unref();\n",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"ok\": false\n}\n",
+    "stderr": ""
+  },
+  {
+    "kind": "CLI-exit",
+    "name": "settled-false",
+    "heldOpen": false,
+    "program": "const print = (value     ) => {\n  process.stdout.write(JSON.stringify(value, (_k, v) => (typeof v === \"bigint\" ? v.toString() : v), 2) + \"\\n\");\n  if (value?.ok === false || value?.settled === false || value?.verdict === \"FAIL\") process.exitCode = 1;\n};\n\n\n\nprint({\"settled\":false});\nsetTimeout(() => process.exit(0), 200).unref();\n",
+    "status": 1,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"settled\": false\n}\n",
+    "stderr": ""
+  },
+  {
+    "kind": "CLI-exit",
+    "name": "settled-false",
+    "heldOpen": true,
+    "program": "const print = (value     ) => {\n  process.stdout.write(JSON.stringify(value, (_k, v) => (typeof v === \"bigint\" ? v.toString() : v), 2) + \"\\n\");\n  if (value?.ok === false || value?.settled === false || value?.verdict === \"FAIL\") process.exitCode = 1;\n};\n\n\nconst keeper=setInterval(()=>{},1000);setTimeout(()=>clearInterval(keeper),350);\nprint({\"settled\":false});\nsetTimeout(() => process.exit(0), 200).unref();\n",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"settled\": false\n}\n",
+    "stderr": ""
+  },
+  {
+    "kind": "CLI-exit",
+    "name": "verdict-fail",
+    "heldOpen": false,
+    "program": "const print = (value     ) => {\n  process.stdout.write(JSON.stringify(value, (_k, v) => (typeof v === \"bigint\" ? v.toString() : v), 2) + \"\\n\");\n  if (value?.ok === false || value?.settled === false || value?.verdict === \"FAIL\") process.exitCode = 1;\n};\n\n\n\nprint({\"verdict\":\"FAIL\"});\nsetTimeout(() => process.exit(0), 200).unref();\n",
+    "status": 1,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"verdict\": \"FAIL\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "kind": "CLI-exit",
+    "name": "verdict-fail",
+    "heldOpen": true,
+    "program": "const print = (value     ) => {\n  process.stdout.write(JSON.stringify(value, (_k, v) => (typeof v === \"bigint\" ? v.toString() : v), 2) + \"\\n\");\n  if (value?.ok === false || value?.settled === false || value?.verdict === \"FAIL\") process.exitCode = 1;\n};\n\n\nconst keeper=setInterval(()=>{},1000);setTimeout(()=>clearInterval(keeper),350);\nprint({\"verdict\":\"FAIL\"});\nsetTimeout(() => process.exit(0), 200).unref();\n",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"verdict\": \"FAIL\"\n}\n",
+    "stderr": ""
+  },
+  {
+    "kind": "CLI-exit",
+    "name": "pass",
+    "heldOpen": false,
+    "program": "const print = (value     ) => {\n  process.stdout.write(JSON.stringify(value, (_k, v) => (typeof v === \"bigint\" ? v.toString() : v), 2) + \"\\n\");\n  if (value?.ok === false || value?.settled === false || value?.verdict === \"FAIL\") process.exitCode = 1;\n};\n\n\n\nprint({\"ok\":true});\nsetTimeout(() => process.exit(0), 200).unref();\n",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"ok\": true\n}\n",
+    "stderr": ""
+  },
+  {
+    "kind": "CLI-exit",
+    "name": "pass",
+    "heldOpen": true,
+    "program": "const print = (value     ) => {\n  process.stdout.write(JSON.stringify(value, (_k, v) => (typeof v === \"bigint\" ? v.toString() : v), 2) + \"\\n\");\n  if (value?.ok === false || value?.settled === false || value?.verdict === \"FAIL\") process.exitCode = 1;\n};\n\n\nconst keeper=setInterval(()=>{},1000);setTimeout(()=>clearInterval(keeper),350);\nprint({\"ok\":true});\nsetTimeout(() => process.exit(0), 200).unref();\n",
+    "status": 0,
+    "signal": null,
+    "error": null,
+    "stdout": "{\n  \"ok\": true\n}\n",
+    "stderr": ""
+  }
+]

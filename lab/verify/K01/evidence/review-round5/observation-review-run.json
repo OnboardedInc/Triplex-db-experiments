@@ -1,0 +1,53 @@
+{
+  "at": "2026-11-09T00:51:50.806Z",
+  "head": "891aef6a33acd7e0d281ef1432c8a86d8f57ec99",
+  "offlineOnly": true,
+  "hostDisk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 4145736,
+    "bavail": 4145736,
+    "files": 177738296,
+    "ffree": 165829440
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/bin/engine.mjs": "941adccd48b3c491295121a7e71bac857d6e76c5483fee1d7fa74ee9ba9b7c10",
+    "lab/bin/owner-state.mjs": "485aff6227951888ca339e3c2ac31286786ddd1fd7c1d9e17b759f67b319168b",
+    "lab/bin/xtdb-log.mjs": "2b163f9edcce419c1a0bf3b7be33c0151b22730ddf7c437fe81a2a84f56d5f08",
+    "lab/bench/clone-check.ts": "5fc93cf8dac5cabc4918218811d495894cffc948cd696707689ccd644dd36a01",
+    "lab/bench/lib/clone.ts": "9bb4f359f64c1ff2e0323d562316db4cf1e99afe9e2d5accce675915fe252772",
+    "lab/bench/lib/bulk.ts": "8ec75c9eee07e6d0aa665cbe809aad06247db55bc9d4c7c4e5b46b80cee1dbee",
+    "lab/experiments/EXP-K01-seed-clone/round2-live.mjs": "8ef4c33f8e2288b5418cdffadd5922f37cb095839bf5792e5c38e158e9e76dde",
+    "lab/verify/K01/freshness.test.mjs": "7e7ec0f90682fb276dbdab441aab3b889b08d45d3a491ed038942eebd017f83d",
+    "lab/verify/K01/round4.test.mjs": "3dfd63d60e4496fa02f60fdc7c15cf98718fe53b3df912f1292bbdd13eb6613c",
+    "lab/verify/K01/tail-fixtures.mjs": "29bec6c80a2330c88e5539e20517f96e5471a6aeb6e691cf22f7cc03fd512abd",
+    "lab/verify/K01/run-observation-review.mjs": "a15833868c92b7a38c388dd1e4c6ae1f2c4802d97a913727dd7ff289617f597a",
+    "lab/verify/K01/observation-review.test.mjs": "504c3144825653b89d8412438d3adfebfbd590c5fd38e65be6d5fb2992b14d4c",
+    "lab/bin/lib.mjs": "c85cf92bc48c21c64d6a9cd8d4d707de8e6cb141e642c5cca0280c70d762e70a",
+    "lab/bin/observation.ts": "cea67b8ca1dddca568b36696644ec7c69720110b5742d2972d6012fb40685b9c",
+    "lab/verify/K01/observation-context.mjs": "16d9430be8a1c8b2ed9f6c1dde3d3d5252282247788ea89a4310e4f52c5f9df3",
+    "lab/verify/K01/pass-audit-review.test.mjs": "7dc4985df47101c5f059c5df01e8cd865678116f2cde0fd354b72cac054ebeb9",
+    "lab/verify/K01/round6.test.mjs": "27004d7f2c07940950c32fc0713c698d5c37a42deb38703d9eab310de4c5406e",
+    "lab/verify/K01/q83e-review.test.mjs": "2b4006dd7f2f3591cc6fb375fe60346b36f9db0be4bcf6e7e3df9b1867cfd19e",
+    "lab/verify/K01/round5.test.mjs": "de6aa4f7e8f844715d89f2e023fa1982c5b5eba57b7c6beb561232afd7aa18b6",
+    "lab/verify/K01/offline.test.mjs": "6f1b3e99b328bb583dfe3f334ef958a5223a18f139367bc23c20200315f414c6",
+    "lab/verify/K01/round3.test.mjs": "09351450380233a5ed637b435c626a0db6ae339161b0b5d5920378427978840a",
+    "lab/bench/test/clone.test.ts": "4a0fd68fe8c9c4d9582f0f331d156045e9d29252aa4346198d9d24ba4b7e9651"
+  },
+  "runs": [
+    {
+      "label": "observation-review",
+      "args": [
+        "--test",
+        "lab/verify/K01/observation-review.test.mjs"
+      ],
+      "exit": 1,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1683,
+      "sha256": "4f32a507bd09e3dcf7cb2c6b3efe72b05a24bc7cb3d1a449d9f09bdee4ed11f7"
+    }
+  ]
+}

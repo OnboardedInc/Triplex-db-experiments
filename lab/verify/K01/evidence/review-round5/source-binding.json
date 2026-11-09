@@ -1,0 +1,69 @@
+{
+  "builderCommit": "d35fc4b4c63f140a7f56fbaa61e7a6a2536fc3ad",
+  "mergeCommit": "891aef6a33acd7e0d281ef1432c8a86d8f57ec99",
+  "records": [
+    {
+      "path": "lab/bin/engine.mjs",
+      "sha256": "941adccd48b3c491295121a7e71bac857d6e76c5483fee1d7fa74ee9ba9b7c10",
+      "builderMatches": true,
+      "fullRunMatches": true,
+      "independentRunMatches": true
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "sha256": "c85cf92bc48c21c64d6a9cd8d4d707de8e6cb141e642c5cca0280c70d762e70a",
+      "builderMatches": true,
+      "fullRunMatches": true,
+      "independentRunMatches": true
+    },
+    {
+      "path": "lab/bin/observation.ts",
+      "sha256": "cea67b8ca1dddca568b36696644ec7c69720110b5742d2972d6012fb40685b9c",
+      "builderMatches": true,
+      "fullRunMatches": true,
+      "independentRunMatches": true
+    },
+    {
+      "path": "lab/bin/owner-state.mjs",
+      "sha256": "485aff6227951888ca339e3c2ac31286786ddd1fd7c1d9e17b759f67b319168b",
+      "builderMatches": true,
+      "fullRunMatches": true,
+      "independentRunMatches": true
+    },
+    {
+      "path": "lab/bin/xtdb-log.mjs",
+      "sha256": "2b163f9edcce419c1a0bf3b7be33c0151b22730ddf7c437fe81a2a84f56d5f08",
+      "builderMatches": true,
+      "fullRunMatches": true,
+      "independentRunMatches": true
+    },
+    {
+      "path": "lab/bench/clone-check.ts",
+      "sha256": "5fc93cf8dac5cabc4918218811d495894cffc948cd696707689ccd644dd36a01",
+      "builderMatches": true,
+      "fullRunMatches": true,
+      "independentRunMatches": true
+    },
+    {
+      "path": "lab/bench/lib/clone.ts",
+      "sha256": "9bb4f359f64c1ff2e0323d562316db4cf1e99afe9e2d5accce675915fe252772",
+      "builderMatches": true,
+      "fullRunMatches": true,
+      "independentRunMatches": true
+    },
+    {
+      "path": "lab/bench/lib/bulk.ts",
+      "sha256": "8ec75c9eee07e6d0aa665cbe809aad06247db55bc9d4c7c4e5b46b80cee1dbee",
+      "builderMatches": true,
+      "fullRunMatches": true,
+      "independentRunMatches": true
+    },
+    {
+      "path": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "sha256": "8ef4c33f8e2288b5418cdffadd5922f37cb095839bf5792e5c38e158e9e76dde",
+      "builderMatches": true,
+      "fullRunMatches": true,
+      "independentRunMatches": true
+    }
+  ]
+}
