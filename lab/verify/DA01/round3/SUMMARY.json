@@ -1,0 +1,140 @@
+{
+  "at": "2026-11-09T02:24:58.673Z",
+  "reviewer": "CX-VDA01-R3",
+  "candidate": "89c31355ec63d4dc01a337ec73ef4ef394b77293",
+  "reviewMerge": "87124a17fca92f1aa0d432c0aba429cce6241007",
+  "verdict": "ACCEPT",
+  "acceptanceScope": "lane D adapter merge only; default-off for final acceptance until DA04; Q88a durability DIAGNOSTIC",
+  "findings": [],
+  "priorFindingsClosed": {
+    "R1F1": true,
+    "R2F1": true,
+    "reproduction": "CX-VDA01-native-92732828-5876-47c6-b0ed-bd19ebc7bbcd.json"
+  },
+  "tests": {
+    "baselinePass": 128,
+    "focusedPass": 3,
+    "finalPass": 131,
+    "fail": 0,
+    "skipped": 0
+  },
+  "independentMatrix": {
+    "attempt": "matrix-22a0eedb-1294-4cae-95e3-92b74256bc99",
+    "observations": 916,
+    "answers": 768,
+    "typedRefusals": 148,
+    "paginationStraddle": true
+  },
+  "generatedProperties": {
+    "attempt": "R3-surfaces-75660d2a-bf49-4ab1-af0d-f63b6dfd5716",
+    "surfaceVariants": 19,
+    "cuts": 8,
+    "families": 2,
+    "phases": 2,
+    "equivalentObservations": 608,
+    "surfaceAnswers": 418,
+    "surfaceBasisRefusals": 190,
+    "surfaceUnsupportedRefusals": 0,
+    "unsupportedInputObservations": 150,
+    "supportedRuleAnswers": 48,
+    "typedCrossRuleRefusals": 8,
+    "total": 814
+  },
+  "conformance": {
+    "file": "CX-VDA01-conformance-976c1c92-7c4b-40b7-9a91-649ced531301.json",
+    "current": 44,
+    "secondOpening": 44,
+    "completeSuite": true,
+    "cleaned": 89
+  },
+  "context": {
+    "at": "2026-11-09T02:19:39.123Z",
+    "expectedBuildInputs": "ff1b91d51131c8860e732fb23cea7acdd24f5356b03c31dab105b4730bedaf34",
+    "scratch": "lab/verify/DA01/round3/context-scratch-5ECIVA",
+    "checks": [
+      {
+        "context": "lab/verify/DA01/round3/context-scratch-5ECIVA/fresh-0",
+        "files": 812,
+        "manifestSha256": "570a9a720f8f3adcd2f921f4e5cd91b5c69c93aa40f95a9c657871fe782596a7",
+        "reusedRefused": true,
+        "extraFileRefused": true,
+        "symlinkRefused": true,
+        "emptyDirectoryRefused": true,
+        "changedBytesRefused": true
+      },
+      {
+        "context": "lab/verify/DA01/round3/context-scratch-5ECIVA/fresh-1",
+        "files": 812,
+        "manifestSha256": "570a9a720f8f3adcd2f921f4e5cd91b5c69c93aa40f95a9c657871fe782596a7",
+        "reusedRefused": true,
+        "extraFileRefused": true,
+        "symlinkRefused": true,
+        "emptyDirectoryRefused": true,
+        "changedBytesRefused": true
+      }
+    ],
+    "imageRebuilt": false,
+    "reproducibleStaging": true,
+    "scratchRemoved": true
+  },
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "ebddb75ea2e100bb041459130017a2dd39f516bdee58ea37b9fd782f5fd11c92"
+  },
+  "owner": {
+    "format": "tx2-slot-owner/1",
+    "lane": "datomic",
+    "slot": "dev",
+    "mode": "resident",
+    "container": "tx2-datomic-dev",
+    "volume": "tx2-datomic-dev-data",
+    "endpoint": "http://127.0.0.1:8470",
+    "port": 8470,
+    "holder": "EXP-DA01",
+    "experiment": "EXP-DA01",
+    "pid": 59564,
+    "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01",
+    "createdAt": "2026-11-09T01:36:18.574Z"
+  },
+  "preservation": [
+    {
+      "db": "s-5a377987b021d5401900564fbae6a1ee",
+      "status": 200,
+      "body": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    },
+    {
+      "db": "s-f43d78e756286da105c6aa52db4e63e5",
+      "status": 200,
+      "body": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    }
+  ],
+  "limits": [
+    "No production/durability/P1-P5/scale/erasure/tenancy acceptance",
+    "Native % rules, cross-rule composition and native nested-map pull projections refuse; they are not newly supported",
+    "Public TemporalBasis lacks arbitrary P; SPI and captured pagination positions tested",
+    "Unsealed future record time remains Q89a/Q90 work",
+    "No engine lifecycle, Docker access, fresh image build, root-wide checks or fresh package consumer"
+  ]
+}

@@ -9,7 +9,7 @@ import { DatomicClient } from '../../../packages/datomic/src/DatomicClient.js';
 import { makeDatomicStorageAdapter } from '../../../packages/datomic/src/DatomicStorageAdapter.js';
 import { makeDatomicQueryExecutor } from '../../../packages/datomic/src/DatomicQueryExecutor.js';
 
-export const authority = JSON.parse(fs.readFileSync('lab/experiments/EXP-DA01/round4/SUMMARY.json', 'utf8'));
+export const authority = JSON.parse(fs.readFileSync(process.env.DA01_AUTHORITY_SUMMARY ?? 'lab/experiments/EXP-DA01/round4/SUMMARY.json', 'utf8'));
 const ownerPath = '/Users/sam/projects/triplex-db-2/lab/locks/datomic-dev/owner.json';
 const sha = (b: Buffer | string) => createHash('sha256').update(b).digest('hex');
 export const run = Effect.runPromise;
@@ -25,13 +25,13 @@ export async function fixture(label: string, body: (f: {
   record: (v: unknown) => void;
 }) => Promise<void>) {
   const attempt = `${label}-${randomUUID()}`;
-  const dir = path.join('lab/verify/DA01/round2/attempts', attempt);
+  const dir = path.join(process.env.DA01_REVIEW_OUTPUT ?? 'lab/verify/DA01/round2', 'attempts', attempt);
   fs.mkdirSync(dir, { recursive: true });
   const owner = fs.readFileSync(ownerPath, 'utf8'), sources = fingerprint();
   const client = new DatomicClient(authority.owner.endpoint, 35000);
   const health = await client.health(); expect(health).toEqual(authority.health);
   const record = (v: unknown) => fs.appendFileSync(path.join(dir, 'observations.jsonl'), JSON.stringify({ at: new Date().toISOString(), attempt, value: v }) + '\n');
-  fs.writeFileSync(path.join(dir, 'inputs.json'), JSON.stringify({ attempt, startedAt: new Date().toISOString(), head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), health, owner: JSON.parse(owner), sources, reviewerSources: Object.fromEntries(fs.readdirSync(import.meta.dirname).filter(f => f.startsWith('round2-')).map(f => [f, sha(fs.readFileSync(path.join(import.meta.dirname, f)))])) }, null, 2) + '\n', { flag: 'wx' });
+  fs.writeFileSync(path.join(dir, 'inputs.json'), JSON.stringify({ attempt, startedAt: new Date().toISOString(), head: execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), health, owner: JSON.parse(owner), sources, reviewerSources: Object.fromEntries(fs.readdirSync(import.meta.dirname).filter(f => /^round[23]-/.test(f)).map(f => [f, sha(fs.readFileSync(path.join(import.meta.dirname, f)))])) }, null, 2) + '\n', { flag: 'wx' });
   const original = client.request.bind(client);
   client.request = async function <A>(method: 'GET' | 'POST', p: string, input?: unknown, timeout?: number): Promise<A> {
     try { const result = await original<A>(method, p, input, timeout); record({ method, path: p, input, result }); return result; }

@@ -1,0 +1,103 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 88310 "CX-P5A-R2-G4-live-10k", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 88310 "CX-P5A-R2-G4-live-10k", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 38749 "CX-VDA01-R3-baseline", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 38749 "CX-VDA01-R3-baseline", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 38749 "CX-VDA01-R3-baseline", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 10985 "CX-P5A-R2-reference-timer-tests", pid 54365 "CX-RT01-check3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 63974 "CX-RT01-Q-live2", pid 9239 "CX-GS12F-pack", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 63974 "CX-RT01-Q-live2", pid 37895 "CX-P5A-R2-10k-final", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 63974 "CX-RT01-Q-live2", pid 37895 "CX-P5A-R2-10k-final", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 63974 "CX-RT01-Q-live2", pid 37895 "CX-P5A-R2-10k-final", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 63974 "CX-RT01-Q-live2", pid 37895 "CX-P5A-R2-10k-final", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 63974 "CX-RT01-Q-live2", pid 37895 "CX-P5A-R2-10k-final", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 63974 "CX-RT01-Q-live2", pid 37895 "CX-P5A-R2-10k-final", pid 17078 "CX-RT01-X-live2"
+{"phase":"suite","name":"complete unchanged suite","status":"PASS"}
+{"phase":"current","name":"actor due-work ranges preserve numeric aliases, visibility, ordering, and limits","status":"PASS"}
+{"phase":"current","name":"Datalog reads are bounded by default and cursors traverse the complete snapshot","status":"PASS"}
+{"phase":"current","name":"historical cursor pages intersect recorded time and the commit snapshot","status":"PASS"}
+{"phase":"current","name":"recursive relations support cursor pagination and optional total counts","status":"PASS"}
+{"phase":"current","name":"assert then get and match return the fact","status":"PASS"}
+{"phase":"current","name":"same-value facts in one batch keep distinct identities","status":"PASS"}
+{"phase":"current","name":"datalog query finds asserted facts","status":"PASS"}
+{"phase":"current","name":"datalog projections preserve scalar types without guessing from text","status":"PASS"}
+{"phase":"current","name":"datalog deduplicates flattened scalar families before grouping and pagination","status":"PASS"}
+{"phase":"current","name":"datalog constant projections retain their scalar values through pagination","status":"PASS"}
+{"phase":"current","name":"datalog pattern constants use flattened scalar identity in filters","status":"PASS"}
+{"phase":"current","name":"datalog value joins compare every scalar family","status":"PASS"}
+{"phase":"current","name":"datalog equality predicates compare numeric values as numbers","status":"PASS"}
+{"phase":"current","name":"datalog equality keeps identity bindings string-typed","status":"PASS"}
+{"phase":"current","name":"ordered Datalog predicates accept only numeric scalar families","status":"PASS"}
+{"phase":"current","name":"datalog reverse lookup matches an explicitly typed ref constant","status":"PASS"}
+{"phase":"current","name":"datalog joins a variable bound from a ref in value position","status":"PASS"}
+{"phase":"current","name":"datalog supports multi-hop joins over ref edges","status":"PASS"}
+{"phase":"current","name":"datalog recursive rules compute the same transitive closure","status":"PASS"}
+{"phase":"current","name":"datalog rule patterns unify repeated variables","status":"PASS"}
+{"phase":"current","name":"datalog aggregations group, filter, and order consistently","status":"PASS"}
+{"phase":"current","name":"datalog having preserves typed group and aggregate equality","status":"PASS"}
+{"phase":"current","name":"datalog aggregates preserve duplicate rows and define empty and distinct results","status":"PASS"}
+{"phase":"current","name":"datalog conjunctions establish bindings independent of clause order","status":"PASS"}
+{"phase":"current","name":"datalog rejects invalid and unbound queries with backend-neutral typed errors","status":"PASS"}
+{"phase":"current","name":"wrapped filters preserve scalar types and SQL null semantics","status":"PASS"}
+{"phase":"current","name":"Datalog ordering and pagination preserve mixed scalar order","status":"PASS"}
+{"phase":"current","name":"datalog untyped strings match string and ref values while typed refs stay exact","status":"PASS"}
+{"phase":"current","name":"transact records provenance datoms","status":"PASS"}
+{"phase":"current","name":"conditional transactions are atomic and journal their changes","status":"PASS"}
+{"phase":"current","name":"entity transaction history is indexed, complete, and snapshot-stable","status":"PASS"}
+{"phase":"current","name":"graph constraints reject invalid post-states across valid time","status":"PASS"}
+{"phase":"current","name":"dependency state is attribute-scoped and schedules temporal edges","status":"PASS"}
+{"phase":"current","name":"derivation materialization uses indexed dependency freshness","status":"PASS"}
+{"phase":"current","name":"graph constraints agree across storage backends","status":"PASS"}
+{"phase":"current","name":"consumer checkpoints advance atomically and remain queryable","status":"PASS"}
+{"phase":"current","name":"retractByPattern respects entityType","status":"PASS"}
+{"phase":"current","name":"reserved Triplex namespaces reject ordinary writes atomically","status":"PASS"}
+{"phase":"current","name":"transaction journals cannot be retracted through ordinary writes","status":"PASS"}
+{"phase":"current","name":"direct and Datalog reads share one bitemporal basis","status":"PASS"}
+{"phase":"current","name":"historical corrections preserve what was previously recorded","status":"PASS"}
+{"phase":"current","name":"batch entity reads preserve association, missing entries, and temporal basis","status":"PASS"}
+{"phase":"current","name":"retract is coherent across write and datalog paths","status":"PASS"}
+{"phase":"current","name":"paged queries use deterministic snapshot-stable cursors","status":"PASS"}
+{"phase":"reopen","name":"actor due-work ranges preserve numeric aliases, visibility, ordering, and limits","status":"PASS"}
+{"phase":"reopen","name":"Datalog reads are bounded by default and cursors traverse the complete snapshot","status":"PASS"}
+{"phase":"reopen","name":"historical cursor pages intersect recorded time and the commit snapshot","status":"PASS"}
+{"phase":"reopen","name":"recursive relations support cursor pagination and optional total counts","status":"PASS"}
+{"phase":"reopen","name":"assert then get and match return the fact","status":"PASS"}
+{"phase":"reopen","name":"same-value facts in one batch keep distinct identities","status":"PASS"}
+{"phase":"reopen","name":"datalog query finds asserted facts","status":"PASS"}
+{"phase":"reopen","name":"datalog projections preserve scalar types without guessing from text","status":"PASS"}
+{"phase":"reopen","name":"datalog deduplicates flattened scalar families before grouping and pagination","status":"PASS"}
+{"phase":"reopen","name":"datalog constant projections retain their scalar values through pagination","status":"PASS"}
+{"phase":"reopen","name":"datalog pattern constants use flattened scalar identity in filters","status":"PASS"}
+{"phase":"reopen","name":"datalog value joins compare every scalar family","status":"PASS"}
+{"phase":"reopen","name":"datalog equality predicates compare numeric values as numbers","status":"PASS"}
+{"phase":"reopen","name":"datalog equality keeps identity bindings string-typed","status":"PASS"}
+{"phase":"reopen","name":"ordered Datalog predicates accept only numeric scalar families","status":"PASS"}
+{"phase":"reopen","name":"datalog reverse lookup matches an explicitly typed ref constant","status":"PASS"}
+{"phase":"reopen","name":"datalog joins a variable bound from a ref in value position","status":"PASS"}
+{"phase":"reopen","name":"datalog supports multi-hop joins over ref edges","status":"PASS"}
+{"phase":"reopen","name":"datalog recursive rules compute the same transitive closure","status":"PASS"}
+{"phase":"reopen","name":"datalog rule patterns unify repeated variables","status":"PASS"}
+{"phase":"reopen","name":"datalog aggregations group, filter, and order consistently","status":"PASS"}
+{"phase":"reopen","name":"datalog having preserves typed group and aggregate equality","status":"PASS"}
+{"phase":"reopen","name":"datalog aggregates preserve duplicate rows and define empty and distinct results","status":"PASS"}
+{"phase":"reopen","name":"datalog conjunctions establish bindings independent of clause order","status":"PASS"}
+{"phase":"reopen","name":"datalog rejects invalid and unbound queries with backend-neutral typed errors","status":"PASS"}
+{"phase":"reopen","name":"wrapped filters preserve scalar types and SQL null semantics","status":"PASS"}
+{"phase":"reopen","name":"Datalog ordering and pagination preserve mixed scalar order","status":"PASS"}
+{"phase":"reopen","name":"datalog untyped strings match string and ref values while typed refs stay exact","status":"PASS"}
+{"phase":"reopen","name":"transact records provenance datoms","status":"PASS"}
+{"phase":"reopen","name":"conditional transactions are atomic and journal their changes","status":"PASS"}
+{"phase":"reopen","name":"entity transaction history is indexed, complete, and snapshot-stable","status":"PASS"}
+{"phase":"reopen","name":"graph constraints reject invalid post-states across valid time","status":"PASS"}
+{"phase":"reopen","name":"dependency state is attribute-scoped and schedules temporal edges","status":"PASS"}
+{"phase":"reopen","name":"derivation materialization uses indexed dependency freshness","status":"PASS"}
+{"phase":"reopen","name":"graph constraints agree across storage backends","status":"PASS"}
+{"phase":"reopen","name":"consumer checkpoints advance atomically and remain queryable","status":"PASS"}
+{"phase":"reopen","name":"retractByPattern respects entityType","status":"PASS"}
+{"phase":"reopen","name":"reserved Triplex namespaces reject ordinary writes atomically","status":"PASS"}
+{"phase":"reopen","name":"transaction journals cannot be retracted through ordinary writes","status":"PASS"}
+{"phase":"reopen","name":"direct and Datalog reads share one bitemporal basis","status":"PASS"}
+{"phase":"reopen","name":"historical corrections preserve what was previously recorded","status":"PASS"}
+{"phase":"reopen","name":"batch entity reads preserve association, missing entries, and temporal basis","status":"PASS"}
+{"phase":"reopen","name":"retract is coherent across write and datalog paths","status":"PASS"}
+{"phase":"reopen","name":"paged queries use deterministic snapshot-stable cursors","status":"PASS"}
+{"report":"lab/verify/DA01/round3/CX-VDA01-conformance-976c1c92-7c4b-40b7-9a91-649ced531301.json","executed":88,"suite":"PASS","cleanup":89}

@@ -1,0 +1,25 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 88310 "CX-P5A-R2-G4-live-10k", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 88310 "CX-P5A-R2-G4-live-10k", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 38749 "CX-VDA01-R3-baseline", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 38749 "CX-VDA01-R3-baseline", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 38749 "CX-VDA01-R3-baseline", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 10985 "CX-P5A-R2-reference-timer-tests", pid 54365 "CX-RT01-check3", pid 17078 "CX-RT01-X-live2"
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+409 !== 200
+
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da01/lab/verify/DA01/native-repro.mjs:65:10
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 409,
+  expected: 200,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2

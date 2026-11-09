@@ -1,0 +1,48 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 1056 "CX-RT01-G2", pid 37623 "CX-P5A-R2-1k-final", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 1056 "CX-RT01-G2", pid 37623 "CX-P5A-R2-1k-final", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 1056 "CX-RT01-G2", pid 37623 "CX-P5A-R2-1k-final", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 1056 "CX-RT01-G2", pid 37623 "CX-P5A-R2-1k-final", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 1056 "CX-RT01-G2", pid 37623 "CX-P5A-R2-1k-final", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 1056 "CX-RT01-G2", pid 37623 "CX-P5A-R2-1k-final", pid 44217 "CX-RT01-X-bounded"
+[lab] heavy: waiting for one of 4 slots; held by pid 63442 "CX-VK01-round7-stable-source", pid 1056 "CX-RT01-G2", pid 37623 "CX-P5A-R2-1k-final", pid 44217 "CX-RT01-X-bounded"
+{
+  "verdict": "ACCEPT",
+  "candidate": "89c31355ec63d4dc01a337ec73ef4ef394b77293",
+  "tests": {
+    "baselinePass": 128,
+    "focusedPass": 3,
+    "finalPass": 131,
+    "fail": 0,
+    "skipped": 0
+  },
+  "matrix": {
+    "attempt": "matrix-22a0eedb-1294-4cae-95e3-92b74256bc99",
+    "observations": 916,
+    "answers": 768,
+    "typedRefusals": 148,
+    "paginationStraddle": true
+  },
+  "properties": {
+    "attempt": "R3-surfaces-75660d2a-bf49-4ab1-af0d-f63b6dfd5716",
+    "surfaceVariants": 19,
+    "cuts": 8,
+    "families": 2,
+    "phases": 2,
+    "equivalentObservations": 608,
+    "surfaceAnswers": 418,
+    "surfaceBasisRefusals": 190,
+    "surfaceUnsupportedRefusals": 0,
+    "unsupportedInputObservations": 150,
+    "supportedRuleAnswers": 48,
+    "typedCrossRuleRefusals": 8,
+    "total": 814
+  },
+  "conformance": {
+    "file": "CX-VDA01-conformance-976c1c92-7c4b-40b7-9a91-649ced531301.json",
+    "current": 44,
+    "secondOpening": 44,
+    "completeSuite": true,
+    "cleaned": 89
+  },
+  "files": 71
+}

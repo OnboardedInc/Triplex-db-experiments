@@ -1,0 +1,4 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 88310 "CX-P5A-R2-G4-live-10k", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 88310 "CX-P5A-R2-G4-live-10k", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+[lab] heavy: waiting for one of 4 slots; held by pid 95931 "CX-G03-r4-claim-2", pid 88310 "CX-P5A-R2-G4-live-10k", pid 84741 "CX-GS12F-gates-attempt3", pid 17078 "CX-RT01-X-live2"
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da01/lab/verify/DA01/round3/baseline-tests.json

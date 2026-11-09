@@ -1,0 +1,10 @@
+commit 87124a17fca92f1aa0d432c0aba429cce6241007
+Merge: 85dfc548 89c31355
+Author:     Sam <sam@Sams-MacBook-Pro.local>
+AuthorDate: Sun Nov 8 21:00:29 2026 -0500
+Commit:     Sam <sam@Sams-MacBook-Pro.local>
+CommitDate: Sun Nov 8 21:00:29 2026 -0500
+
+    merge DA01 canonical query candidate for round-three review
+    
+    Co-Authored-By: Codex gpt-6.1-sol <noreply@openai.com>
