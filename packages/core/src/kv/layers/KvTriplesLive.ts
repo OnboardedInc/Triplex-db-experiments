@@ -66,6 +66,7 @@ import { TxAttributes } from "../../utils/id.js";
 import { finishPagination, preparePagination, wrapDatalogQuery } from "../../Pagination.js";
 import * as ContentIds from "../../content/ContentId.js";
 import { unsafe } from "../../Branded.js";
+import { reachBy } from "../../store/reach.js";
 import { transactionsForEntity } from "../../store/entityTransactionHistory.js";
 import { encodeEntityPageCursor, prepareEntityPage } from "../../EntityPage.js";
 
@@ -694,7 +695,12 @@ const makeKvTriplesService = Effect.gen(function* () {
 
     entities: (entityIds, basis) =>
       Effect.gen(function* () {
-        const resolved = resolveTemporalBasis(basis, yield* runtime.now);
+        // [EXP-QH1-R4] Why: one record position for every entity of the call; a commit between two scans would otherwise mix cuts.
+        // Rejected: a lock around the scans (blocks writers, P1).
+        const resolved: ResolvedTemporalBasis = {
+          ...resolveTemporalBasis(basis, yield* runtime.now),
+          recordedPosition: yield* currentKvCommitPosition(kvBackend),
+        };
         return yield* Effect.forEach(entityIds, (entityId) =>
           hexaStore
             .scanCollectTemporalAsync({ entity: entityId }, resolved)
@@ -705,6 +711,31 @@ const makeKvTriplesService = Effect.gen(function* () {
           Effect.fail(
             new ReadError({ message: `Batch entity read failed: ${String(e)}`, cause: e }),
           ),
+        ),
+      ),
+
+    reach: (root, basis) =>
+      Effect.gen(function* () {
+        // [EXP-QH1-R4] Why: the exact record position is captured once, before the first level, and every level scans at it, so a
+        // commit between levels yields the whole old or the whole new graph. The commit counter and the datoms of a commit are
+        // written in one backend transaction, so a scan at position P never sees half of a later commit.
+        // Rejected: a lock around the walk (blocks writers, P1); recordedAt as the pin (same-timestamp commits share it).
+        const resolved: ResolvedTemporalBasis = {
+          ...resolveTemporalBasis(basis, yield* runtime.now),
+          recordedPosition: yield* currentKvCommitPosition(kvBackend),
+        };
+        return yield* reachBy(
+          (ids) =>
+            Effect.forEach(ids, (entityId) =>
+              hexaStore
+                .scanCollectTemporalAsync({ entity: entityId }, resolved)
+                .pipe(Effect.map((datoms) => datoms.map(datomToTriple))),
+            ),
+          root,
+        );
+      }).pipe(
+        Effect.catch((e) =>
+          Effect.fail(new ReadError({ message: `Reach failed: ${String(e)}`, cause: e })),
         ),
       ),
 

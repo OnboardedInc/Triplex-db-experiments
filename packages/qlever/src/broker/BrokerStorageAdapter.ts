@@ -24,6 +24,9 @@ import {
  * 5. The CAS read set is recorded per transaction (P2X, R18 3.1 item 1): reads confined to known entities
  *    are guarded per subject; any other read escalates the commit to the scope-wide guard.
  */
+import { AsyncLocalStorage } from "node:async_hooks";
+import { h1Entity, h1Rows, wholePullTuples, type H1Tuple } from "./h1.js";
+import { H1SnapshotExpired } from "./log.js";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Exit } from "effect";
 import { isPatternVariable, type ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -39,6 +42,7 @@ import {
   type StorageAdapterService,
   type TripleRow,
 } from "@triplex-build/triplex/runtime";
+import type { Triple } from "@triplex-build/triplex";
 import type { QleverClient } from "../QleverClient.js";
 import {
   assertionIri,
@@ -59,7 +63,7 @@ import { ReplicaUnavailable, isUnreachable, type BasisSurface } from "./errors.j
 const readConstructor = createReadConstructor();
 export const isQleverBrokerRead = readConstructor.isRead;
 
-export type BrokerReadRoute = "replica" | "overlay" | "log";
+export type BrokerReadRoute = "replica" | "overlay" | "log" | "h1";
 export interface BrokerReadEvent {
   readonly route: BrokerReadRoute;
   readonly basis: number;
@@ -69,6 +73,8 @@ export interface BrokerReadEvent {
   readonly staged: boolean;
 }
 export interface BrokerAdapterOptions {
+  readonly currentRoute?: "h1";
+  readonly onPull?: (event: import("./h1.js").WholePull["counters"]) => void;
   readonly maxRetries?: number;
   /**
    * Deadline for any read that must wait for its basis: the replica for Datalog, dependencyState and native
@@ -201,6 +207,7 @@ export class QleverBrokerConflict extends WriteError {
 }
 
 export interface QleverBrokerStorageAdapterService extends StorageAdapterService {
+  readonly withCurrentPull: <A>(root: string, body: () => Promise<A>, basis?: number) => Promise<A>;
   readonly sourceView: Effect.Effect<
     | {
         readonly sourcePosition: number;
@@ -225,13 +232,42 @@ export const makeQleverBrokerStorageAdapter = (
   const key = Symbol(scopeKey);
   // Q58a default deadline: 2 s for any read that must wait for a basis.
   const basisWaitMs = options.basisWaitMs ?? options.publicationWaitMs ?? 2_000;
-  const routes: Record<BrokerReadRoute, number> = { replica: 0, overlay: 0, log: 0 };
+  const routes: Record<BrokerReadRoute, number> = { replica: 0, overlay: 0, log: 0, h1: 0 };
   const storeRead = <A>(read: () => Promise<A>) =>
     Effect.tryPromise({
       try: read,
       catch: (cause) => new ReadError({ message: "Broker store read failed", cause }),
     });
 
+  // [EXP-QH1] Why: each invocation owns its cache, even overlapping pulls at identical cuts.
+  // Rejected: a process/global LRU (can cross scope, basis or pull lifetime).
+  type Prefetch = {
+    readonly rows: Map<string, H1Tuple[]>;
+    readonly known: Set<string>;
+    readonly owners: Set<string>;
+  };
+  const loadPrefetch = async (b: number, roots: readonly string[]): Promise<Prefetch> => {
+    const answer = await broker.wholePullAt(b, roots, options.onPull !== undefined);
+    const tuples = wholePullTuples(answer);
+    options.onPull?.({ ...answer.counters, rows: tuples.length });
+    const rows = new Map<string, H1Tuple[]>();
+    for (const tuple of tuples) {
+      const entity = tuple[14]?.row.entity_id ?? tuple[2];
+      const bucket = rows.get(entity);
+      if (bucket) bucket.push(tuple);
+      else rows.set(entity, [tuple]);
+    }
+    return { rows, known: new Set(answer.entities), owners: new Set(answer.owners) };
+  };
+  const unresolved = (all: Prefetch, id: string) =>
+    !all.rows.has(id) && !all.known.has(id) && !all.owners.has(id.split("/")[0]!);
+  const pullContext = new AsyncLocalStorage<{
+    root: string;
+    basis?: number;
+    cache: Map<number, Promise<Prefetch>>;
+  }>();
+  const withCurrentPull = <A>(root: string, body: () => Promise<A>, basis?: number) =>
+    pullContext.run({ root, ...(basis === undefined ? {} : { basis }), cache: new Map() }, body);
   const current = Effect.map(Transactions, (states) => states.get(key));
   const required = Effect.flatMap(current, (state) =>
     state === undefined
@@ -246,7 +282,9 @@ export const makeQleverBrokerStorageAdapter = (
     requested: number | undefined,
     surface: BasisSurface,
   ) => {
-    const b = requested ?? sourceK ?? broker.head();
+    const context = sourceK === undefined ? pullContext.getStore() : undefined;
+    const b = requested ?? sourceK ?? context?.basis ?? broker.head();
+    if (context && context.basis === undefined) context.basis = b;
     if (sourceK === undefined) await broker.awaitResolved(b, basisWaitMs, surface);
     else
       await awaitSnapshotBasis({
@@ -318,6 +356,32 @@ export const makeQleverBrokerStorageAdapter = (
         (entities === undefined || entities.includes(row.entity_id)) &&
         matches(row, pattern);
       const t0 = performance.now();
+      if (
+        options.currentRoute === "h1" &&
+        !state &&
+        !history &&
+        basis?.recordedAt === undefined &&
+        scoped.entities !== undefined
+      ) {
+        const pinned = yield* storeRead(() => broker.pullAt(b, scoped));
+        if (pinned.eligible) {
+          const rows = snapshotRows(
+            pinned.rows.filter((row) => select(row) && visibleAt(row, b, basis)),
+            b,
+            basis,
+          ).toSorted((a, z) => a.recorded_at - z.recorded_at || a.id.localeCompare(z.id));
+          routes.h1++;
+          options.onRead?.({
+            route: "h1",
+            basis: b,
+            replicaPosition: 0,
+            rows: rows.length,
+            ms: performance.now() - t0,
+            staged: false,
+          });
+          return rows;
+        }
+      }
       const replica = yield* Effect.tryPromise({
         try: async (signal) => {
           const bindings = await client.query(
@@ -675,6 +739,132 @@ export const makeQleverBrokerStorageAdapter = (
   const explicit = (_first: unknown, basis?: ResolvedTemporalBasis) => basis;
   const reads = readConstructor.snapshot(
     {
+      getEntityTriples: {
+        run: (ids: readonly string[], basis: ResolvedTemporalBasis) =>
+          Effect.gen(function* () {
+            if (options.currentRoute !== "h1" || basis.recordedAt !== undefined || (yield* current))
+              return undefined;
+            const b = yield* storeRead(() =>
+              readBasis(undefined, basis.recordedPosition, "repository"),
+            );
+            const context = pullContext.getStore();
+            const started = performance.now();
+            const answer = yield* Effect.tryPromise({
+              try: async () => {
+                let pending = context?.cache.get(b);
+                if (!pending) {
+                  pending = loadPrefetch(b, context ? [context.root] : ids);
+                  context?.cache.set(b, pending);
+                }
+                const all = await pending;
+                const missing = ids.filter((id) => unresolved(all, id));
+                // Unexpected non-BFS callers still get exact rows, in a new same-cut fetch.
+                if (missing.length) {
+                  const extra = await loadPrefetch(b, missing);
+                  for (const [id, rows] of extra.rows) all.rows.set(id, rows);
+                  for (const id of extra.known) all.known.add(id);
+                  for (const id of extra.owners) all.owners.add(id);
+                }
+                const selected = [...new Set(ids)].flatMap((id) => all.rows.get(id) ?? []);
+                const decoded = h1Rows(selected, basis);
+                return new Map(ids.map((id) => [id, decoded.get(id) ?? []]));
+              },
+              catch: (cause) =>
+                cause instanceof H1SnapshotExpired
+                  ? cause
+                  : new ReadError({ message: "H1 pull failed", cause }),
+            }).pipe(
+              Effect.catch((error) =>
+                error instanceof H1SnapshotExpired ? Effect.succeed(undefined) : Effect.fail(error),
+              ),
+            );
+            if (answer) {
+              routes.h1++;
+              options.onRead?.({
+                route: "h1",
+                basis: b,
+                replicaPosition: 0,
+                rows: [...answer.values()].reduce((n, a) => n + a.length, 0),
+                ms: performance.now() - started,
+                staged: false,
+              });
+            }
+            return answer;
+          }),
+        basis: explicit,
+        rawHistory: false,
+      },
+      getReachTriples: {
+        // [EXP-QH1-R3] Why: one worker operation, one decode pass and one Effect run answer a whole subject pull; the closure is walked
+        // in plain JS over the prefetched tuples, each entity decoded (valid-time cut, domain check, ordering) exactly when reached.
+        // Rejected: the per-level getEntityTriples loop for whole pulls (every level re-entered the kernel, the mask and the ALS cache).
+        run: (root: string, basis: ResolvedTemporalBasis) =>
+          Effect.gen(function* () {
+            if (options.currentRoute !== "h1" || basis.recordedAt !== undefined || (yield* current))
+              return undefined;
+            const b = yield* storeRead(() =>
+              readBasis(undefined, basis.recordedPosition, "repository"),
+            );
+            const started = performance.now();
+            const answer = yield* Effect.tryPromise({
+              try: async () => {
+                const all = await loadPrefetch(b, [root]);
+                const seen = new Set<string>([root]);
+                const triples: Triple[] = [];
+                let level = [root],
+                  hops = 0;
+                while (level.length > 0) {
+                  hops++;
+                  // An entity the worker neither returned nor covered by a whole owner gets one exact same-cut fetch (rare).
+                  const missing = level.filter((id) => unresolved(all, id));
+                  if (missing.length) {
+                    const extra = await loadPrefetch(b, missing);
+                    for (const [id, rows] of extra.rows) all.rows.set(id, rows);
+                    for (const id of extra.known) all.known.add(id);
+                    for (const id of extra.owners) all.owners.add(id);
+                  }
+                  const next: string[] = [];
+                  for (const id of level) {
+                    const tuples = all.rows.get(id);
+                    if (tuples === undefined) continue;
+                    const body = h1Entity(tuples, basis);
+                    for (const t of body) {
+                      triples.push(t);
+                      if (t.value.type === "ref" && !seen.has(t.value.value)) {
+                        seen.add(t.value.value);
+                        next.push(t.value.value);
+                      }
+                    }
+                  }
+                  level = next;
+                }
+                return { triples, hops };
+              },
+              catch: (cause) =>
+                cause instanceof H1SnapshotExpired
+                  ? cause
+                  : new ReadError({ message: "H1 pull failed", cause }),
+            }).pipe(
+              Effect.catch((error) =>
+                error instanceof H1SnapshotExpired ? Effect.succeed(undefined) : Effect.fail(error),
+              ),
+            );
+            if (answer) {
+              routes.h1++;
+              options.onRead?.({
+                route: "h1",
+                basis: b,
+                replicaPosition: 0,
+                rows: answer.triples.length,
+                ms: performance.now() - started,
+                staged: false,
+              });
+            }
+            return answer;
+          }),
+        basis: explicit,
+        rawHistory: false,
+      },
       getById: {
         run: (id: string) =>
           Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null),
@@ -688,13 +878,11 @@ export const makeQleverBrokerStorageAdapter = (
       },
       getByEntities: {
         run: (ids: readonly string[], basis?: ResolvedTemporalBasis) =>
-          Effect.map(
-            queryRows({}, basis, false, undefined, [...new Set(ids)]),
-            (rows) =>
-              new Map(
-                [...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)]),
-              ),
-          ),
+          Effect.map(queryRows({}, basis, false, undefined, [...new Set(ids)]), (rows) => {
+            const buckets = new Map([...new Set(ids)].map((id) => [id, [] as TripleRow[]]));
+            for (const row of rows) buckets.get(row.entity_id)?.push(row);
+            return buckets;
+          }),
         basis: explicit,
         rawHistory: false,
       },
@@ -714,6 +902,7 @@ export const makeQleverBrokerStorageAdapter = (
   );
   reads satisfies Omit<
     QleverBrokerStorageAdapterService,
+    | "withCurrentPull"
     | "broker"
     | "routes"
     | "resolveQueryBasis"
@@ -735,6 +924,7 @@ export const makeQleverBrokerStorageAdapter = (
   >;
   return exactReadService<QleverBrokerStorageAdapterService>()({
     ...reads,
+    withCurrentPull,
     snapshotReadPolicy,
     // [CX-A01-0314-R2] Why: broker writes target QLever, so preflight must use its exact integer range. Rejected: a missing domain that widens admission to signed 64-bit.
     valueDomain: ValueDomains.qlever,
@@ -786,6 +976,21 @@ export const makeQleverBrokerStorageAdapter = (
       ),
     currentCommitPosition: () =>
       Effect.flatMap(current, (state) => Effect.succeed(state ? state.sourceK : broker.head())),
+    // [EXP-QH1-R4] Why: a public pull captures its record position once and reads every level at it (readBasis honors an explicit
+    // position). Outside a transaction and outside a withCurrentPull context that is the broker head now; inside such a context it is the
+    // context's own cut (the first read pins it, as readBasis does), so an explicit caller pin is not overridden. Inside a transaction
+    // it is undefined: reads already use the transaction's snapshot, and an explicit committed position would hide its staged rows.
+    // Rejected: currentCommitPosition here (inside a transaction it names the pre-transaction snapshot and visibleA0 hides staged rows).
+    pullPosition: () =>
+      Effect.flatMap(current, (state) =>
+        Effect.sync(() => {
+          if (state) return undefined;
+          const context = pullContext.getStore();
+          if (!context) return broker.head();
+          context.basis ??= broker.head();
+          return context.basis;
+        }),
+      ),
     claimCommand: (id, txId, timestamp) =>
       Effect.flatMap(required, (state) =>
         Effect.tryPromise({
@@ -829,6 +1034,9 @@ export const makeQleverBrokerStorageAdapter = (
     initialize: () =>
       Effect.tryPromise({
         try: async () => {
+          // [EXP-QH1] Why: the broker opened and verified H1 already; a detached current store needs no replica health check.
+          // Rejected: requiring a live replica to initialize the default-off host current route.
+          if (options.currentRoute === "h1") return;
           await client.query("SELECT ?s WHERE { ?s ?p ?o } LIMIT 1");
         },
         catch: (cause) =>

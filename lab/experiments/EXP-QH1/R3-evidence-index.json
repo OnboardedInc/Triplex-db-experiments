@@ -1,0 +1,161 @@
+{
+  "round": 3,
+  "branch": "exp/QH1-h1-pulls",
+  "base": "173831eb",
+  "headAtIndexTime": "4b066bc98bdeacc6c602bcb164bb8e85eb9caf35",
+  "commits": {
+    "steps1to3": "8beae888",
+    "step4Attempt": "e2a9f785",
+    "step4Revert": "a77adeb7",
+    "step4bAndCacheKey": "4b066bc9"
+  },
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/QH1-R3",
+  "arms": {
+    "final": {
+      "coreDist": "f7c0495a7259244a848fd253fec5b7c08eb235797e31cd273c2365d2cc1c261b",
+      "qleverDist": "761d0ef5e8669b4107b3e475d0de3cf1ba32c0d565f0c128baed3e1aef9536a5"
+    },
+    "s1": {
+      "coreDist": "cdaab008f8473e75451c4dd9dfbfe71e7d8ff13ff3cc650988e5b1f36f7b329c",
+      "qleverDist": "9e881786bbd1e87f4ee625adcc271ac5bbf916a577e806621a8f9826dab81989"
+    },
+    "s2": {
+      "coreDist": "fa7dedf94b6b99cf3e9f043b32ca458c6cea759f16f3c66d1d8a5e216dc0f340",
+      "qleverDist": "9800d9f44808d9ecc9eab709f3d9d26ad4c47869e555b8663eae1dd5d5c77d3f"
+    },
+    "s3": {
+      "coreDist": "fa7dedf94b6b99cf3e9f043b32ca458c6cea759f16f3c66d1d8a5e216dc0f340",
+      "qleverDist": "b1dcce0971ada250e5427cd0afe8e5795950cb33e1247a7fbcf7fa9a2a947c73"
+    },
+    "s4": {
+      "coreDist": "fa7dedf94b6b99cf3e9f043b32ca458c6cea759f16f3c66d1d8a5e216dc0f340",
+      "qleverDist": "9463ce349beb824b3271d46fd0ff66fbe221ab082e1f31593bfd26f28fcc15ae"
+    },
+    "s4b": {
+      "coreDist": "fa7dedf94b6b99cf3e9f043b32ca458c6cea759f16f3c66d1d8a5e216dc0f340",
+      "qleverDist": "531f47590379514d3ce290a0f7b50f5140ecb41214d63975e5654b1088fb8709"
+    },
+    "s5": {
+      "coreDist": "fa7dedf94b6b99cf3e9f043b32ca458c6cea759f16f3c66d1d8a5e216dc0f340",
+      "qleverDist": "75939810086f37d5de13629ca75a94cd90371f58f1e8019e5fc86352c3f4bd3d"
+    },
+    "s5b": {
+      "coreDist": "fa7dedf94b6b99cf3e9f043b32ca458c6cea759f16f3c66d1d8a5e216dc0f340",
+      "qleverDist": "700eef098d3af07a55feb115dc13668e1622b0b0df863cc57a844090b1542f00"
+    }
+  },
+  "abab": {
+    "s12-c1": {
+      "summary": "abab/s12-c1-summary.json",
+      "schedule": "abab/s12-c1/schedule.json"
+    },
+    "s12-c4": {
+      "summary": "abab/s12-c4-summary.json",
+      "schedule": "abab/s12-c4/schedule.json"
+    },
+    "s3-c1": {
+      "summary": "abab/s3-c1-summary.json",
+      "schedule": "abab/s3-c1/schedule.json"
+    },
+    "s3-c4": {
+      "summary": "abab/s3-c4-summary.json",
+      "schedule": "abab/s3-c4/schedule.json"
+    },
+    "s4-c1": {
+      "summary": "abab/s4-c1-summary.json",
+      "schedule": "abab/s4-c1/schedule.json"
+    },
+    "s4-c4": {
+      "summary": "abab/s4-c4-summary.json",
+      "schedule": "abab/s4-c4/schedule.json"
+    },
+    "cmp1-c1": {
+      "summary": "abab/cmp1-c1-summary.json",
+      "schedule": "abab/cmp1-c1/schedule.json"
+    },
+    "cmp1-c4": {
+      "summary": "abab/cmp1-c4-summary.json",
+      "schedule": "abab/cmp1-c4/schedule.json"
+    },
+    "cmp2-c1": {
+      "summary": "abab/cmp2-c1-summary.json",
+      "schedule": "abab/cmp2-c1/schedule.json"
+    },
+    "cmp2-c4": {
+      "summary": "abab/cmp2-c4-summary.json",
+      "schedule": "abab/cmp2-c4/schedule.json"
+    },
+    "final-c1": {
+      "summary": "abab/final-c1-summary.json",
+      "schedule": "abab/final-c1/schedule.json"
+    },
+    "final-c4": {
+      "summary": "abab/final-c4-summary.json",
+      "schedule": "abab/final-c4/schedule.json"
+    }
+  },
+  "replay": {
+    "reference": "replay/ref-baseline.txt (today path, HS01 build, 100,000 requests)",
+    "results": {
+      "final": {
+        "compared": 100000,
+        "mismatches": 0
+      },
+      "s1": {
+        "compared": 100000,
+        "mismatches": 0
+      },
+      "s2": {
+        "compared": 100000,
+        "mismatches": 0
+      },
+      "s3": {
+        "compared": 100000,
+        "mismatches": 0
+      },
+      "s4": {
+        "compared": 100000,
+        "mismatches": 0
+      }
+    }
+  },
+  "gatesFinalExitCodes": {
+    "core-typecheck": 0,
+    "qlever-typecheck": 0,
+    "qh1-vitest": 0,
+    "mutants": 0,
+    "core-suite": 0,
+    "qlever-suite": 0,
+    "sql01-offline": 0,
+    "intq-h1routes": 0,
+    "typecheck-http": 0,
+    "typecheck-host": 0,
+    "typecheck-cloudflare": 0,
+    "typecheck-testkit": 0,
+    "typecheck-sqlite": 0,
+    "typecheck-postgres": 0,
+    "typecheck-xtdb": 0,
+    "typecheck-datomic": 0,
+    "typecheck-foundationdb": 0,
+    "typecheck-duckdb": 0,
+    "typecheck-w0": 0,
+    "typecheck-sql": 0,
+    "writer1": 0,
+    "writer2": 1,
+    "writer3": 0,
+    "writer4": 0,
+    "writer5": 1,
+    "writer6": 0,
+    "writer7": 0,
+    "replay-final": 0,
+    "replay-compare": 0
+  },
+  "profile": "prof-final-summary.json (V8 per-thread CPU profiles, shares only)",
+  "stepsNotKept": [
+    "steps-not-kept/s4-dictionary-ids.patch",
+    "steps-not-kept/s5-h1.patch",
+    "steps-not-kept/s5b-h1.patch"
+  ],
+  "stores": "store-baseline and store-candidate are APFS clones of QH1-R2 working stores (not hashed)",
+  "notes": "Exit codes are command receipts; semantic verdicts are in the logs named in REPORT.md Round 3."
+}

@@ -85,6 +85,7 @@ export {
   type EntityTransactionPage,
   type DependencyState,
   type EntityPage,
+  type ReachResult,
   type QueryOptions,
   type PagedQueryOptions,
   type QueryResponse,

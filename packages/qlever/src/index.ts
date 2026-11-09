@@ -220,7 +220,10 @@ export { makeFreshConnectionClient } from "./broker/http.js";
 export {
   HostLog,
   BrokerLogError,
+  FeedRetentionExpired,
   H1BasisUnsupported,
+  H1SnapshotExpired,
+  H1BasisNotAvailable,
   type H1Basis,
   readWatermark,
   readFramesFrom,

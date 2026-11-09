@@ -579,6 +579,14 @@ export const makeXtdbStorageAdapter = (
       Effect.flatMap(current, (state) =>
         state === undefined ? committedPosition() : Effect.succeed(state.position),
       ),
+    // [EXP-QH1-R5] Why: a public pull (Triples.reach) reads every level at one committed position (tx_meta.position, read once at the
+    // pull's start); queryRows turns a basis position into `recorded_position <= ?` / `retracted_position > ?` on every level, so a commit
+    // between levels cannot mix cuts. Inside a transaction reads already use min(sourceK, ...) and must see the staged rows, so no
+    // position is offered. Rejected: currentCommitPosition (inside a transaction it names the staged position); a per-pull lock (P1).
+    pullPosition: () =>
+      Effect.flatMap(current, (state) =>
+        state === undefined ? committedPosition() : Effect.succeed(undefined),
+      ),
     claimCommand: (commandId, txId, timestamp) =>
       Effect.gen(function* () {
         const state = yield* requireTransaction;

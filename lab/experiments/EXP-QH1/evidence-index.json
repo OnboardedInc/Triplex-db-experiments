@@ -1,0 +1,890 @@
+{
+  "status": "DIAGNOSTIC",
+  "acceptanceClaim": false,
+  "base": "2f7b42d6",
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1",
+  "manifest": {
+    "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/MANIFEST-d93488c5-1f1c-450b-ac99-3b61e43b7c19.sha256",
+    "sha256": "051523aded5e0eec1295f69d1fd8de060befc1276f978ba64756ca5fca230577",
+    "files": 2644,
+    "excludes": [
+      "dependency caches/node_modules",
+      "this active collector attempt",
+      "manifest self references"
+    ],
+    "coverageNote": "Sealed before final static audits; supplemental execution receipts and the new static script preimage are included in SHA256SUMS separately."
+  },
+  "analysis": {
+    "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/analysis-bound.json",
+    "sha256": "0667cfa8fa5ee21a6ad331610022475e267ab6d22b48dce13cecdb9f488f7aa5"
+  },
+  "sample": {
+    "independentOraclePulls": 100000,
+    "fixtureRoots": 30,
+    "availableReferenceCuts": 180,
+    "sampledDistinctCuts": 90,
+    "tenKRowRouteComparisons": 10000,
+    "rowRouteDifferences": 0
+  },
+  "attempts": [
+    {
+      "label": "baseline-G0",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/baseline-G0-131fffb3-46cc-4c29-ae96-14a5d4829a72",
+      "receiptSha256": "63946429d9ee0066d8aee6617a884a9c21cc478289148cb5c44c278618be88ad",
+      "start": "2026-11-09T11:41:15.768Z",
+      "end": "2026-11-09T11:41:33.010Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": null,
+      "logSha256": "e82f52ce96f9724d2c1eaa384a8c6f55d10c7ab74d841e9abb57d08d6c7cebcd",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-baseline-G0",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/experiments/EXP-QH1/bench.ts",
+        "baseline",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/baseline-w0-10k/store",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/baseline-G0.json",
+        "10000"
+      ]
+    },
+    {
+      "label": "baseline-G0-retry",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/baseline-G0-retry-cc452ffb-6c08-4155-a989-32a9865aa9ed",
+      "receiptSha256": "76c02ceb96b8036d31a600ae2588fd7701b9d669205ddfea7589a4139183c5cd",
+      "start": "2026-11-09T11:42:58.340Z",
+      "end": "2026-11-09T11:45:01.395Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "f9209e00d8c612295bdcd85b76fca4dcc159edd96379a4835d0213c8ab5500d8",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-baseline-G0-retry",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/experiments/EXP-QH1/bench.ts",
+        "baseline",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/baseline-w0-10k/store",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/baseline-G0.json",
+        "10000"
+      ]
+    },
+    {
+      "label": "baseline-build",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/baseline-build-afb74747-5540-4a08-abe4-4f200e8ddd5e",
+      "receiptSha256": "7ed128345b9696e37c82dd832f32b0e325471e12f3ee3cfce40fdaf79f7b521e",
+      "start": "2026-11-09T11:18:17.483Z",
+      "end": "2026-11-09T11:18:32.490Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": null,
+      "logSha256": "76357f15a5671de1f0d34f8076eade38ca2a20589c214fabb89058e0a14f87c9",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-base-build",
+        "--",
+        "node",
+        "lab/experiments/EXP-HS01/build.mjs"
+      ]
+    },
+    {
+      "label": "baseline-seed",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/baseline-seed-a7180d64-916d-4a3d-bbef-4357bd4f6a85",
+      "receiptSha256": "3401225ac9db609d882cde8d84547e0fbcab134f482bbf3e3fe134062bffac83",
+      "start": "2026-11-09T11:18:39.513Z",
+      "end": "2026-11-09T11:41:15.280Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "61baffc8f2d8a940c6ca1fbcf70f07c99031ccbc69bf7bafdff84f12109e9287",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-baseline-seed",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-seed.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/baseline-w0-10k",
+        "10000"
+      ]
+    },
+    {
+      "label": "candidate-G0-G5",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/candidate-G0-G5-487cc29e-12be-4d3c-9d7d-9df270f394a5",
+      "receiptSha256": "26762c05bd549c9773f56e5b0b34dcd29858e5b72f00e5c50c1e2ec8b981bb25",
+      "start": "2026-11-09T11:51:14.255Z",
+      "end": "2026-11-09T11:56:08.548Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-objects",
+      "logSha256": "de5e3e5170b8344c4fdab68c6b100d7f0b6220c0c7a2dbfe35878216c13c2a2c",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-candidate-G0-G5",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/experiments/EXP-QH1/bench.ts",
+        "candidate",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/candidate-w0-10k/store",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/candidate-G0-G5.json",
+        "10000"
+      ]
+    },
+    {
+      "label": "candidate-build",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/candidate-build-903dc23d-49e0-4b72-bed2-79e0ef62f3ac",
+      "receiptSha256": "7fa6809f44974b384b0aa3b6fe9d193ab00ab93713c8d2341c2b20a035653861",
+      "start": "2026-11-09T11:45:02.325Z",
+      "end": "2026-11-09T11:45:19.594Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": null,
+      "logSha256": "b85f582febf695e815925697a1d786e90bc07894131702cf8e64a9c057c18767",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-candidate-build",
+        "--",
+        "node",
+        "lab/experiments/EXP-HS01/build.mjs"
+      ]
+    },
+    {
+      "label": "candidate-build-a2",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/candidate-build-a2-98d07b4f-28da-4e0a-871d-d38251bce395",
+      "receiptSha256": "517788a73c3e5455df98d7c7b971d262ea06759ebd952cea276dc87c1470f354",
+      "start": "2026-11-09T11:46:07.961Z",
+      "end": "2026-11-09T11:46:59.939Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-objects",
+      "logSha256": "cbc253e4f66ebb73c425577e1c446e9339ed528239deb62c32f72d8290e88308",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-candidate-build-a2",
+        "--",
+        "node",
+        "lab/experiments/EXP-HS01/build.mjs"
+      ]
+    },
+    {
+      "label": "codec-final-count",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/codec-final-count-280f4957-853d-459e-8785-00a7e3c82f44",
+      "receiptSha256": "a567578e0838d3d08e8607aa5fb060d58275cb09eb1d8958bb23a79352943e63",
+      "start": "2026-11-09T11:58:12.317Z",
+      "end": "2026-11-09T11:59:56.614Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-objects",
+      "logSha256": "77c0fa8808f0bd20e561033d1d8b58530c0ead4c1a2ffb4bd9a3b32595006f83",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-codec-final",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "codec.test.ts"
+      ]
+    },
+    {
+      "label": "codec-first",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/codec-first-89ff7430-5a42-40e6-a2e1-a91e455c9e12",
+      "receiptSha256": "4f43749b0207a3adb5f7c54da7e61b54464c6fd1b76803936d1972af1266fcef",
+      "start": "2026-11-09T11:24:18.841Z",
+      "end": "2026-11-09T11:24:35.499Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": null,
+      "logSha256": "fa7c082f08248d97fcf95c7c5f83fc676d85700567a117a93bf0468c3688b063",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-codec",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "codec.test.ts"
+      ]
+    },
+    {
+      "label": "codec-second",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/codec-second-f916cc7b-44c9-4789-904f-5c2992581618",
+      "receiptSha256": "a0eeec4db3db72d35c40efa6cf5a8dbcdbf8759c6ec59098a7c0233966d5c9b7",
+      "start": "2026-11-09T11:25:23.315Z",
+      "end": "2026-11-09T11:25:28.863Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": null,
+      "logSha256": "e950d38c6b33c322739635fe2641ad6217a1d14fd524c7cfb28285824e5dd879",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-codec2",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "codec.test.ts"
+      ]
+    },
+    {
+      "label": "core-suite-a1",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/core-suite-a1-37141742-1924-4873-a4d6-d8a2f8490e7f",
+      "receiptSha256": "9653c9e1cc0096203b3aacf2c8adb20a29ea531adb8c3cbbb0bbe03955c1cd38",
+      "start": "2026-11-09T11:43:23.333Z",
+      "end": "2026-11-09T11:44:54.369Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "7ec2bb9f20c36b5c4432fdb262662a9565cdbc5e72333e71c22ed6dbb218c2c9",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-core",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/core",
+        "--maxWorkers=1",
+        "--no-file-parallelism"
+      ]
+    },
+    {
+      "label": "core-typecheck",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/core-typecheck-b7371d25-6179-44d1-8841-88c0550f0df9",
+      "receiptSha256": "22551eea4f5cfb15e00e722b46d84b134b8645e1870ea741477e02b24c14aacf",
+      "start": "2026-11-09T11:29:44.418Z",
+      "end": "2026-11-09T11:41:03.064Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "ca57f6912f802b9d16745b5d882c02b079af5af04c8025cf38ce1ee7e7ffbd1c",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-core-typecheck",
+        "--",
+        "node_modules/.bin/tsc",
+        "--noEmit",
+        "-p",
+        "packages/core/tsconfig.json"
+      ]
+    },
+    {
+      "label": "fixture-clone",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/fixture-clone-171a6b26-3db2-4c93-b2fb-3e23f95b5005",
+      "receiptSha256": "3f960d85de9193fde5041cddba0d982d8aa57d3a853f21508b894009f01fa3ee",
+      "start": "2026-11-09T11:47:00.345Z",
+      "end": "2026-11-09T11:51:13.828Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-objects",
+      "logSha256": "9968eb7d61fc0a0626ec42157377a412933108775ef0065d986caaeda29bf3b9",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-fixture-clone",
+        "--",
+        "node",
+        "lab/experiments/EXP-QH1/migrate-fixture.mjs"
+      ]
+    },
+    {
+      "label": "frozen-source-gates",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/frozen-source-gates-50e77446-76e3-4029-8512-645e96ddc08e",
+      "receiptSha256": "2a08845a2fce3f397c522a0c7a3880a27d558bea2afd0802531b74bb4225ec3a",
+      "start": "2026-11-09T11:54:03.929Z",
+      "end": "2026-11-09T11:54:48.548Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-objects",
+      "logSha256": "d94559c0ea2649b5d646379b9553341aa44e8093c860e289c360636ea7d87e1c",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-frozen-gates",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts"
+      ]
+    },
+    {
+      "label": "mutants-a1",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/mutants-a1-42d978bc-abbd-4250-9b97-da0524438071",
+      "receiptSha256": "3465f69b10535b6c39a6450d58c82f2d63b0768d20c02a66574372bb834dd2d2",
+      "start": "2026-11-09T11:39:34.303Z",
+      "end": "2026-11-09T11:41:25.534Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "8a3b2b2cc9fff1ecf850d45a41e9f0e1b74965585ac99c36b6e94dea80f1693b",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-mutants",
+        "--",
+        "node",
+        "lab/experiments/EXP-QH1/mutants.mjs"
+      ]
+    },
+    {
+      "label": "mutants-a2",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/mutants-a2-cb88806d-c536-480b-b736-df53f3131582",
+      "receiptSha256": "e23a13e69f1df5298161e7b35c76bb00582ba4f9b5b852186a2dfbca332716cc",
+      "start": "2026-11-09T11:43:55.290Z",
+      "end": "2026-11-09T11:45:06.669Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": null,
+      "logSha256": "3dfea4fe66bf5411c0564af0bf1149d419d5fc050ec70e4819ea7cc21d3c1214",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-mutants2",
+        "--",
+        "node",
+        "lab/experiments/EXP-QH1/mutants.mjs"
+      ]
+    },
+    {
+      "label": "oreplay-first",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/oreplay-first-9180075d-2b63-4f8f-8a9a-cdc6b4ee8132",
+      "receiptSha256": "892567fb1b3d66813eddbce47474f36ed420ce332cfb503ef019bacaad31a899",
+      "start": "2026-11-09T11:31:51.570Z",
+      "end": "2026-11-09T11:33:16.926Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "7b5deb080e749b22407d7e34438190981479aacdd93ba3d9dcbc261d2fcb68de",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-oreplay",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "oreplay.test.ts"
+      ]
+    },
+    {
+      "label": "oreplay-second",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/oreplay-second-8c51c979-9f4b-47c9-b1ca-89c2e0e26395",
+      "receiptSha256": "edf6e521a2b9f98423efe8fce258278839dfb5903ae9038b12676c2ea8b2b0cd",
+      "start": "2026-11-09T11:34:59.153Z",
+      "end": "2026-11-09T11:41:35.161Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "54771d45c72c4487be4679a102a22d4269243fc450522eb7f020d67405e97180",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-oreplay2",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "oreplay.test.ts"
+      ]
+    },
+    {
+      "label": "pack",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/pack-9d4b23b4-0872-4be6-8b20-241fa4e68d22",
+      "receiptSha256": "d2489ff7783041bceaa54afe87ad80f7f9ca86f85f6e7d8b6f86809080ef8347",
+      "start": "2026-11-09T12:00:17.898Z",
+      "end": "2026-11-09T12:01:01.360Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-objects",
+      "logSha256": "886fb4a8050c440b6d59bad74b28b6afe1080ee0685bc4ac5e9e2580e766a174",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-pack",
+        "--",
+        "node",
+        "lab/bin/check-packages.mjs"
+      ]
+    },
+    {
+      "label": "pack-build",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/pack-build-1bf5f7da-a7c9-4004-ae8a-358e38e5a7f9",
+      "receiptSha256": "1545414f6e48842e9af96ad1c19ab68a5ffebe6c484b3d927008a0aca41dfab3",
+      "start": "2026-11-09T11:56:09.271Z",
+      "end": "2026-11-09T12:00:17.553Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-objects",
+      "logSha256": "a4917ad3e3c71128233286594ab28778f7d372f490d57ffa963eca8289c40459",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-pack-build",
+        "--",
+        "node",
+        "--input-type=module",
+        "--eval",
+        "\nimport fs from 'node:fs';import path from 'node:path';import {execFileSync}from 'node:child_process';\nconst root=process.cwd(),exclude=JSON.parse(fs.readFileSync('lab/config/pack-exclusions.json')),items=new Map();\nfor(const e of fs.readdirSync('packages')){const p=path.join('packages',e,'package.json');if(!fs.existsSync(p))continue;const m=JSON.parse(fs.readFileSync(p));if(!exclude[m.name])items.set(m.name,{dir:path.dirname(p),m});}\nconst done=new Set();function build(name){if(done.has(name))return;const x=items.get(name);for(const dep of Object.keys({...x.m.dependencies,...x.m.devDependencies}))if(items.has(dep))build(dep);execFileSync('/bin/sh',['-c',x.m.scripts.build],{cwd:x.dir,env:{...process.env,PATH:path.join(root,'node_modules/.bin')+':'+process.env.PATH},stdio:'inherit'});done.add(name);}for(const name of items.keys())build(name);\n"
+      ]
+    },
+    {
+      "label": "public-first",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/public-first-09e0df1b-2b62-48a2-9839-a1139693764c",
+      "receiptSha256": "740798554934e397e3becc924fcb54039f357aa832441e46506f2a8aec555594",
+      "start": "2026-11-09T11:38:26.424Z",
+      "end": "2026-11-09T11:41:29.111Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "1ea471baa2244b39aad16433cbc26bfdb149a363437789d1aa62e014ed4e3dc4",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-public",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "public.test.ts"
+      ]
+    },
+    {
+      "label": "qlever-suite-a1",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/qlever-suite-a1-60d8813f-4c23-4635-abdc-c6586b109a7a",
+      "receiptSha256": "c941d420d189e56179302531440f02c08c4593f537010b5ba047817022dcf424",
+      "start": "2026-11-09T11:43:15.231Z",
+      "end": "2026-11-09T11:46:40.739Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "3a53d19fbe3ef3a1deabf36c572960316ff6e1eb4df12eccb65c885acce1eced",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-qlever",
+        "--",
+        "env",
+        "QLEVER_INTEGRATION=0",
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/qlever",
+        "--maxWorkers=1",
+        "--no-file-parallelism"
+      ]
+    },
+    {
+      "label": "route-first",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/route-first-51ab0bc2-c6ef-4f85-b4eb-d5e3701643f3",
+      "receiptSha256": "b25878a9d8b262d44dc52752450161aab11535cafaf18821d517ea71155abe3a",
+      "start": "2026-11-09T11:27:18.930Z",
+      "end": "2026-11-09T11:27:24.586Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": null,
+      "logSha256": "c77f97f16f1d34990297db814245085a0c6651d0212f583a82259917bd24189a",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-route",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "route.test.ts"
+      ]
+    },
+    {
+      "label": "route-second",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/route-second-33f80100-f97a-45d4-bec5-2b1826547048",
+      "receiptSha256": "2318b8c1b22067e981edc1518ecc720b81e523947e402d4fbd378b5b789f4528",
+      "start": "2026-11-09T11:28:02.400Z",
+      "end": "2026-11-09T11:32:39.906Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "230ae48e3633fc5b56faf888117487baba72a0b9e58d790a63f752d1e8a67db9",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-route2",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "route.test.ts"
+      ]
+    },
+    {
+      "label": "source-all-a1",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-all-a1-8b541eda-2395-41a1-9492-d22515fac031",
+      "receiptSha256": "922e0eb423519a262f3c237c4aaa98b3aaa8f08ce4a5e46fec8dab1f95b0cb3e",
+      "start": "2026-11-09T11:36:23.557Z",
+      "end": "2026-11-09T11:40:00.326Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "4aa182b9e71f78c95a93774ce49720ebee8a8c74863a9317a86accdb2e9f93e9",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-source-all",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts"
+      ]
+    },
+    {
+      "label": "source-all-a2",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-all-a2-b8995280-911c-47b6-bff2-218183756589",
+      "receiptSha256": "bcb7c53a122fd4accba5a913571597172e0eed8b3b1c9b868e6bb6245d00cda9",
+      "start": "2026-11-09T11:42:25.041Z",
+      "end": "2026-11-09T11:42:59.630Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "f919605e217b85fd48fb8b357699c85e711115953df21c31a29be81df1d0f180",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-source-all2",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts"
+      ]
+    },
+    {
+      "label": "source-all-a3",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-all-a3-50c2ec76-2a67-404f-94f3-057a4878f3d9",
+      "receiptSha256": "b693dff44d460a8b12a269604d87e196f540bab27d3bd87fdc0236d3ce1d598d",
+      "start": "2026-11-09T11:43:55.289Z",
+      "end": "2026-11-09T11:45:30.516Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "sourceObjects": null,
+      "logSha256": "7b5ac746a73a80d7e1392d5fe9e2c13bb4a3b0208610a2dfe0d34548eb68c9a0",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-source-all3",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts"
+      ]
+    },
+    {
+      "label": "source-domain",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-domain-ce49852c-d467-478b-a809-7a3ef2de444d",
+      "receiptSha256": "0f5fe4a97dfcf49bf750199b16c9a6e5dba97c2503a9f54533dea1a98c72ab9b",
+      "start": "2026-11-09T11:22:37.069Z",
+      "end": "2026-11-09T11:24:30.865Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "319516b7dcb2ca39a0093422f44df1aad5356d24840287f0e06f78bbae8a2314",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-domain",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "domain.test.ts"
+      ]
+    },
+    {
+      "label": "source-final",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-final-294ba8f2-5fed-4d14-ab22-311a1128a7ea",
+      "receiptSha256": "cc8acda965e469a3b64d68d83e797fd128414cc114b5549cbc286f47874e302f",
+      "start": "2026-11-09T11:46:53.073Z",
+      "end": "2026-11-09T11:53:53.442Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-objects",
+      "logSha256": "141cf3b39b9885e89b1a69742dc98c78778a26782167207291148dca10db0884",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-source-final",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts"
+      ]
+    },
+    {
+      "label": "sql01-offline-a1",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/sql01-offline-a1-3d7dcd1b-8a01-4675-acc8-c0425dd9f2ad",
+      "receiptSha256": "5c938e5d6000ea50f53d0abac4e21335b9338b3fdae040207473a97bdcecf835",
+      "start": "2026-11-09T11:43:24.428Z",
+      "end": "2026-11-09T11:47:14.392Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "8e047ecf53fa713a77180e356edbc8b6dba9d7526404a06e170bd868cb2c2f73",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-sql01",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/SQL01/vitest.config.ts",
+        "-t",
+        "^(?!.*qlever-dev)"
+      ]
+    },
+    {
+      "label": "sql01-offline-a2",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/sql01-offline-a2-6c90d12b-ed53-4fce-b74d-6fc13932fef7",
+      "receiptSha256": "742f7dc01c32b63ae2019adaf0ed4cdb70afcdf4bb8b187ecb9963e73ac09338",
+      "start": "2026-11-09T11:48:41.746Z",
+      "end": "2026-11-09T11:53:13.823Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/source-objects",
+      "logSha256": "a3d6546b0a9f0332c8357564401e7e3b8fd45b01a68d970d8cb9ea329fd3c473",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-sql01-retry",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/SQL01/vitest.config.ts",
+        "-t",
+        "^(?!.*qlever-dev)"
+      ]
+    },
+    {
+      "label": "writer-first",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/writer-first-6ee38c99-7787-401a-8bbd-027565ea340e",
+      "receiptSha256": "86dfffa456b606793549d0f25205fc84816a53994ca7de14b19ce025d4b8f5a9",
+      "start": "2026-11-09T11:30:22.079Z",
+      "end": "2026-11-09T11:41:20.027Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "sourceObjects": null,
+      "logSha256": "39695bbb85de994b437334879f3796ed46e7c582613dbf4a99b256b6bf9b22f5",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-QH1-writer",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "writer.test.ts"
+      ]
+    }
+  ],
+  "limits": [
+    "full four-arm G0 attribution incomplete",
+    "G5 CPU screen fails",
+    "final frozen G7 p99 ratio fails",
+    "no W0-rung independent-oracle qualification",
+    "no writer-on/100k/depth-10/20-percent-expired qualification",
+    "no VM acceptance or independent review",
+    "five declaration files regenerated after measurements; every measured runtime JS/map byte retained"
+  ],
+  "supplementalAttempts": [
+    {
+      "label": "evidence-collection",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/evidence-collection-7b6095e8-ed39-41e9-94be-9d33434f445d",
+      "receiptSha256": "2173604b11505a820376f4c05b364755ae8a046dc73da00840ac6fafed23f5e9",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true
+    },
+    {
+      "label": "final-static",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/final-static-7665b01f-0f0f-41d8-bc2b-48ce6d9cf365",
+      "receiptSha256": "7c3fca59431239079eaf0e05d6e98721b03cfa47c0e55db723e3a3b4e013d711",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "note": "NO-OP: stdin was closed by run.mjs; no static verification is inferred from this exit zero."
+    },
+    {
+      "label": "final-static-a2",
+      "path": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QH1/final-static-a2-9c6296f8-094c-4c70-abb0-8e68b2537e65",
+      "receiptSha256": "1c579bf963a56de5a2bd091cff3582a7ae7a2def33ae27cd2b187e2a19978e37",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true
+    }
+  ],
+  "hs01Followup": {
+    "observedAt": "2026-11-09T12:08:04.503029+00:00",
+    "branchHead": "e81c16df816bfce8d0aa2b548a779fa05ca0c0fb",
+    "status": "Active round 2 additions; no final R2 report/handoff available at the final check. Final-head integration remains pending."
+  }
+}
