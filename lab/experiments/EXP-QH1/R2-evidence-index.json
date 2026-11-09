@@ -1,0 +1,14 @@
+{
+  "round": 2,
+  "evidenceDir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/QH1-R2",
+  "manifest": "lab/experiments/EXP-QH1/R2-SHA256SUMS (same content as QH1-R2/SHA256SUMS; excludes the two working store clones store-baseline and store-candidate, which brokers mutated by appending epoch frames)",
+  "abab1Counts": "abab-c1 (5 rounds, baseline,rows,h1,L0,L1,L2; summary abab-c1-summary.json)",
+  "abab4Clients": "abab-c4 (3 rounds, baseline,h1,L0,L2, 4 clients)",
+  "ababL3": "abab-l3 (5 rounds, baseline,h1,L0,L3)",
+  "stages": "stages.json (final, 300 roots, 7 reps), stages-run1.json (first run, 3 reps)",
+  "profiles": "prof/h1, prof/baseline (.cpuprofile per thread) and *-analysis.json",
+  "threads": "ps/*.json (ps -M per-thread seconds)",
+  "coverage": "cov/ (NODE_V8_COVERAGE, h1 arm, 300 pulls)",
+  "cpucheck": "cpucheck.json",
+  "arms": "arms/arms.json (dist tree hashes of the baseline and candidate builds used)"
+}
