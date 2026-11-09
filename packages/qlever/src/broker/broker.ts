@@ -142,6 +142,8 @@ export interface HostBrokerOptions {
   readonly applyTimeoutMs?: number;
   readonly minFreeBytes?: number;
   readonly frameRetention?: { readonly tailFrames: number };
+  /** [EXP-P4N] Serve whole pulls from a derived per-owner document file (`current.db`); default off. */
+  readonly currentDocs?: boolean;
   readonly requireFullFsync?: boolean;
   /** Start the applier on open (default true when a replica is given). */
   readonly autoApply?: boolean;
@@ -270,6 +272,7 @@ export class HostBroker {
         : { requireFullFsync: options.requireFullFsync }),
       ...(options.frameRetention === undefined ? {} : { frameRetention: options.frameRetention }),
       ...(options.takeover === undefined ? {} : { takeover: options.takeover }),
+      ...(options.currentDocs === undefined ? {} : { currentDocs: options.currentDocs }),
     });
     try {
       return await HostBroker.start(options, opened);
@@ -713,6 +716,12 @@ export class HostBroker {
   }
   wholePullAt(basis: number, roots: readonly string[], bytes = false) {
     return this.log.wholePull(basis, roots, bytes);
+  }
+  docStats() {
+    return this.log.docStats();
+  }
+  prefillCurrent(roots: readonly string[], concurrency?: number) {
+    return this.log.prefillCurrent(roots, concurrency);
   }
   checkpoint() {
     return this.log.checkpoint();

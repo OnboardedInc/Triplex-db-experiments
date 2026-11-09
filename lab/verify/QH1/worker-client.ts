@@ -8,7 +8,9 @@ import { MessageChannel, Worker } from "node:worker_threads";
 import { encodeCommitGroup } from "../../../packages/qlever/src/broker/frames.js";
 import { encodeFrame, FrameKind } from "../../../packages/qlever/src/broker/frame.js";
 import { fresh } from "./helpers.js";
-export const openWorker = async (source: string) => {
+// [EXP-P4N] Why: `docs` opens current.db beside the store in the worker (a writer-role worker serves whole pulls too, which is how the oracle
+// and mutation tests drive the document path with real frame bytes). Rejected: a second worker harness for documents.
+export const openWorker = async (source: string, options: { docs?: boolean } = {}) => {
   const dir = fresh();
   fs.mkdirSync(dir, { recursive: true });
   const worker = new Worker(source, {
@@ -21,6 +23,7 @@ export const openWorker = async (source: string) => {
       role: "writer",
       seed: 123,
       gateBuffer: new SharedArrayBuffer(12),
+      ...(options.docs ? { docsFile: path.join(dir, "current.db") } : {}),
     },
   });
   const call = (op: string, args?: unknown): Promise<any> =>

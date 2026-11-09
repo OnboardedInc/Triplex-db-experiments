@@ -260,6 +260,7 @@ const connect = (
   role: string,
   gateBuffer: SharedArrayBuffer,
   requireFullFsync = false,
+  docsFile?: string,
 ) =>
   new Connection(
     new Worker(sqliteWorker, {
@@ -277,7 +278,7 @@ const connect = (
           !arg.startsWith("--max-semi-space-size") &&
           arg !== "--single-threaded-gc",
       ),
-      workerData: { file, role, seed, driver, gateBuffer, requireFullFsync },
+      workerData: { file, role, seed, driver, gateBuffer, requireFullFsync, docsFile },
     }),
   );
 const hostStores = new WeakMap<HostLog, Connection>();
@@ -323,6 +324,8 @@ export class HostLog {
       readonly requireFullFsync?: boolean;
       readonly takeover?: boolean;
       readonly frameRetention?: { readonly tailFrames: number };
+      /** [EXP-P4N] Serve whole pulls from per-owner documents in a derived `current.db` beside the store (default off). */
+      readonly currentDocs?: boolean;
     } = {},
   ): Promise<OpenedLog> {
     const tailFrames = options.frameRetention?.tailFrames ?? Infinity;
@@ -428,7 +431,15 @@ export class HostLog {
       await checkpointer.request("init");
       const pool = [];
       for (let i = 0; i < 4; i++) {
-        const c = connect(file, "reader", gate);
+        // [EXP-P4N] Why (step c'): only reader connections open current.db; the writer, checkpointer and commit path never touch it, so a
+        // document file can be deleted or stale without any effect on commits. Rejected: filling in the commit path (R46: +0.91 ms p50).
+        const c = connect(
+          file,
+          "reader",
+          gate,
+          false,
+          options.currentDocs ? path.join(dir, "current.db") : undefined,
+        );
         connections.push(c);
         await c.request("init");
         pool.push(c);
@@ -603,6 +614,33 @@ export class HostLog {
     return this.pool[this.readerIndex++ % this.pool.length]!.requestOnPort<
       import("./h1.js").WholePull
     >("wholePull", { basis, roots, bytes });
+  }
+  /** Document counters summed over the reader pool (hits, absent, stale, behind, fills, busy skips, errors). */
+  async docStats(): Promise<Record<string, number>> {
+    const all = await Promise.all(
+      this.pool.map((c) => c.request<Record<string, number>>("docStats")),
+    );
+    const sum: Record<string, number> = {};
+    for (const one of all) for (const [k, v] of Object.entries(one)) sum[k] = (sum[k] ?? 0) + v;
+    return sum;
+  }
+  /**
+   * [EXP-P4N] Why: a prefill is the ordinary read-through path run once per root at the head (no separate writer of documents, so it
+   * cannot disagree with what a pull would have stored). Rejected: a bulk owner walk with its own SQL (a second encoder to qualify).
+   */
+  async prefillCurrent(roots: readonly string[], concurrency = 8): Promise<{ pulls: number }> {
+    const head = (await this.pool[0]!.request<{ position: number }>("marker")).position;
+    let next = 0;
+    await Promise.all(
+      Array.from({ length: concurrency }, async () => {
+        for (;;) {
+          const i = next++;
+          if (i >= roots.length) return;
+          await this.wholePull(head, [roots[i]!]);
+        }
+      }),
+    );
+    return { pulls: roots.length };
   }
   async pull(basis: H1Basis, selection: Selection): Promise<PinnedPull> {
     // [CX-INT-Q] Why: Q89b requires refusal before position retirement drops rows needed at T.

@@ -62,6 +62,8 @@ it("REAL values and extreme doubles round trip bit-exactly through the whole-pul
     dir: fresh(),
     scopeKey: "QH1-real",
     minFreeBytes: 0,
+    // [EXP-P4N] Why: P4N_DOCS=1 reruns this exact test through current.db documents (the first read fills, the repeats are served from documents).
+    ...(process.env.P4N_DOCS === "1" ? { currentDocs: true } : {}),
   });
   const client: any = {
     query: async () => {
@@ -125,8 +127,13 @@ it("REAL values and extreme doubles round trip bit-exactly through the whole-pul
         if (bits(reals.get("c:" + j)!) !== bits(values[j]!)) mismatches++;
       expect(mismatches).toBe(0);
     };
+    // With documents on, the first read fills and the second is served from the documents; both must be bit-exact.
+    const first = await runtime.runPromise(T.reach(E("root"), { validAt: 1000 }));
+    check(first.triples);
     const reach = await runtime.runPromise(T.reach(E("root"), { validAt: 1000 }));
     check(reach.triples);
+    if (process.env.P4N_DOCS === "1")
+      expect((await ((broker as any).log as HostLog).docStats()).hit).toBeGreaterThan(0);
     expect(reach.hops).toBe(2);
     // The per-level route (the public BFS over T.entities) must agree.
     const children = values.map((_, j) => E("c:" + j));
@@ -144,6 +151,7 @@ it("REAL record times and valid-from offsets round trip bit-exactly through the 
     dir: fresh(),
     scopeKey: "QH1-realtime",
     minFreeBytes: 0,
+    ...(process.env.P4N_DOCS === "1" ? { currentDocs: true } : {}),
   });
   const log = (broker as any).log as HostLog;
   const client: any = {
@@ -177,12 +185,16 @@ it("REAL record times and valid-from offsets round trip bit-exactly through the 
     await append(log, rows);
     // The rows go straight to the log; publish the durable LSN the way a commit would so the adapter's basis gate passes.
     (broker as any).durableLsn = log.nextLsn - 1;
-    const result = await Effect.runPromise(
-      adapter.getReachTriples!("t:root", {
-        validAt: 1e16,
-        recordedPosition: 2048,
-      }),
-    );
+    const reachOnce = () =>
+      Effect.runPromise(
+        adapter.getReachTriples!("t:root", {
+          validAt: 1e16,
+          recordedPosition: 2048,
+        }),
+      );
+    await reachOnce(); // fills the documents when they are on; the compared read below is then served from them
+    const result = await reachOnce();
+    if (process.env.P4N_DOCS === "1") expect((await log.docStats()).hit).toBeGreaterThan(0);
     expect(result).toBeDefined();
     const byId = new Map(result!.triples.map((t) => [t.id, t]));
     expect(byId.size).toBe(instants.length);

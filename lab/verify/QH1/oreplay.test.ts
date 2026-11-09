@@ -41,7 +41,7 @@ it("G4: 100000 sampled H1w pulls have zero differences against fresh O-REPLAY", 
     );
   if (mutant === "purge")
     source = source.replace("if(b<m.h)throw Error('H1_SNAPSHOT_EXPIRED');", "");
-  const client = await openWorker(source),
+  const client = await openWorker(source, { docs: process.env.P4N_DOCS === "1" }),
     commands: any[] = [],
     receipts: any[] = [],
     entities = new Set<string>(),

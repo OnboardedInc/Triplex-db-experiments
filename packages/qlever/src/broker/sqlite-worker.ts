@@ -11,7 +11,8 @@ const path = require('node:path');
 const D = require(workerData.driver);
 const { file, role, seed, gateBuffer } = workerData;
 const gate = new Int32Array(gateBuffer);
-let db, lock, fatal, timer, passiveTimer;
+let db, lock, fatal, timer, passiveTimer, cdb;
+const docStats={hit:0,absent:0,stale:0,behind:0,fills:0,fillBusy:0,fillErrors:0};
 const checkpointEvents=[], checkpointCounts={};
 const checkpointStatus=()=>({counts:{...checkpointCounts},events:[...checkpointEvents]});
 const recordCheckpoint=(mode,outcome,start,result={})=>{
@@ -53,6 +54,16 @@ try {
  if(version[0]<3 || (version[0]===3 && (version[1]<51 || (version[1]===51 && version[2]<3)))) throw Error('SQLite >= 3.51.3 required');
  db.pragma('fullfsync=ON'); db.pragma('checkpoint_fullfsync=ON');
  if(role==='reader')db.pragma('mmap_size=268435456');
+ // [EXP-P4N] Why (step c'): current.db is a derived, unsynced cache of per-owner answers, never the source of truth and deletable at any time.
+ // WAL with synchronous OFF and the default PASSIVE auto-checkpoint only (no RESTART or TRUNCATE ever), so a long read of it never blocks a
+ // writer of it for more than a skipped fill. Fills use busy_timeout 0 and skip on BUSY. Rejected: writing documents in the commit transaction
+ // (R46: commit p50 +0.91 ms, WAL 2.1x) and a store-synchronous documents table (every fill would take the store's write lock).
+ if(workerData.docsFile){
+  cdb=new D(workerData.docsFile,{timeout:5000});
+  cdb.pragma('journal_mode=WAL');cdb.pragma('synchronous=OFF');cdb.pragma('journal_size_limit=67108864');cdb.pragma('mmap_size=268435456');
+  cdb.exec('CREATE TABLE IF NOT EXISTS docs(o INT NOT NULL,e INT NOT NULL,pd INT NOT NULL,erz INT NOT NULL,fmt INT NOT NULL,own TEXT NOT NULL,ent TEXT NOT NULL,rows TEXT NOT NULL,txs TEXT NOT NULL,attrs TEXT NOT NULL,strs TEXT NOT NULL,refs TEXT NOT NULL,PRIMARY KEY(o,e)) WITHOUT ROWID');
+  cdb.pragma('busy_timeout=0');
+ }
  if(role!=='reader') {
   durablePragmas(db); db.pragma('journal_mode=WAL');
   calibrationMs=calibrate();
@@ -229,6 +240,9 @@ const h1Rows=(sel,T)=>q('SELECT json_group_array('+h1RowWith(T)+') FROM ('+h1Uni
 // cached per writer epoch and schema key); a larger table sends only the entries the fetch uses. Measured standalone on W0 (32 attributes, 2
 // strings): used-entry statements 49 and 77 us, cached whole tables 5 us. Rejected: a used-entry UNION of creators and types (151 us, two scans).
 const dictCache=new Map();
+const DOC_FMT=1;
+const docGet=cdb&&cdb.prepare('SELECT pd,erz,fmt,own,ent,rows,txs,attrs,strs,refs FROM docs WHERE o=? AND e=?');
+const docPut=cdb&&cdb.prepare('INSERT INTO docs VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(o,e) DO UPDATE SET pd=excluded.pd,erz=excluded.erz,fmt=excluded.fmt,own=excluded.own,ent=excluded.ent,rows=excluded.rows,txs=excluded.txs,attrs=excluded.attrs,strs=excluded.strs,refs=excluded.refs WHERE excluded.pd>docs.pd OR excluded.erz<>docs.erz OR excluded.fmt<>docs.fmt');
 const h1Fetch=sel=>{
  const u='(SELECT a,pos,c,y FROM ('+h1Union(sel)+'))';
  const mk=T=>({
@@ -278,6 +292,38 @@ const wholePull = a => {
   for(const [v,x] of refs){const target=x!==null?unverb(x):null;if(target){if(target.value_type==='ref')out.push(target.value_string);}else out.push(entName(v));}
   return out;
  };
+ // [EXP-P4N] Why (step c'): one unit is the owner (e=0) or one external entity, exactly the fetches the row path makes. A unit's document holds
+ // the fetch texts and the external ref target names found in its rows. lastChange(o) is the largest position or retirement position of any
+ // row of the owner (facts, journal, history pos and rpos) in THIS read snapshot; a document stamped pd is the unit's current answer for every
+ // basis b >= pd while nothing newer exists, so it is served only when pd equals lastChange(o) of the pull's own snapshot, lastChange <= b, the
+ // store's erasure counter (PRAGMA user_version, bumped by any erasure) equals the one it was filled under, and the owner and entity names match
+ // the key. The two files need no shared snapshot because the store's snapshot proves the document current. A miss runs the row path and, only
+ // when lastChange <= b (the rows are the current ones), stores the document. Rejected: invalidating from the feed (a pull can arrive between
+ // publication and the invalidation), serving by subject and basis only (does not know about later commits), and filling at a past basis.
+ const lastChange=cdb&&q('SELECT max(coalesce((SELECT max(pos) FROM facts WHERE o=@o),0),coalesce((SELECT max(pos) FROM journal WHERE o=@o),0),coalesce((SELECT max(pos) FROM history WHERE o=@o),0),coalesce((SELECT max(rpos) FROM history WHERE o=@o),0))').pluck();
+ const unit=(o,e,on,en)=>{
+  let l=0,z=0;
+  if(cdb){
+   l=lastChange.get({o});z=q('PRAGMA user_version').pluck().get();
+   if(l<=b){
+    const d=docGet.get(o,e);
+    if(d&&d.pd===l&&d.erz===z&&d.fmt===DOC_FMT&&d.own===on&&d.ent===en){
+     docStats.hit++;
+     if(d.rows.length>2)parts.push({rows:d.rows,txs:d.txs,attrs:d.attrs,strs:d.strs});
+     return JSON.parse(d.refs);
+    }
+    if(d)docStats.stale++;else docStats.absent++;
+   }else docStats.behind++;
+  }
+  const args=e===0?{o,b}:{o,b,e};
+  const rows=(e===0?ownerRows:entityRows)(args);statements+=5;
+  const out=collect(rows,(e===0?ownerRefs:entityRefs).all(args));
+  if(cdb&&l<=b){
+   try{docPut.run(o,e,l,z,DOC_FMT,on,en,rows.rows,rows.txs,rows.attrs,rows.strs,JSON.stringify(out));docStats.fills++;}
+   catch(err){if(err&&(err.code==='SQLITE_BUSY'||err.code==='SQLITE_LOCKED'))docStats.fillBusy++;else docStats.fillErrors++;}
+  }
+  return out;
+ };
  // The first touch of an owner by a requested root fetches the whole owner (clustering hint); any entity reached by a ref is fetched by exact (owner, entity)
  // unless its owner is already complete. Refs found from rows are exact misses, so the owner rule never decides reachability.
  let roots=true;
@@ -289,12 +335,10 @@ const wholePull = a => {
    if(o===undefined||owners.has(o))continue;
    if(roots){
     owners.add(o);ownerNames.push(on);
-    const rows=ownerRows({o,b});statements+=5;
-    next.push(...collect(rows,ownerRefs.all({o,b})));
+    next.push(...unit(o,0,on,''));
    }else{
     const e=entId(entity);if(e===undefined)continue;
-    const rows=entityRows({o,b,e});statements+=5;
-    next.push(...collect(rows,entityRefs.all({o,b,e})));
+    next.push(...unit(o,e,on,entity));
    }
   }
   roots=false;
@@ -303,13 +347,14 @@ const wholePull = a => {
  return {snapshot:publicMarker(m),basis:b,entities:[...seen],owners:ownerNames,parts,counters:{hops,rows:0,bytes:a.bytes?parts.reduce((n,p)=>n+Buffer.byteLength(p.rows)+Buffer.byteLength(p.txs)+Buffer.byteLength(p.attrs)+Buffer.byteLength(p.strs),0):0,statements}};
 };
 const handle = (op,a) => {
- if(op==='close'){clearInterval(timer);clearInterval(passiveTimer);db?.close();lock?.close();return;}
+ if(op==='close'){clearInterval(timer);clearInterval(passiveTimer);db?.close();cdb?.close();lock?.close();return;}
  if(fatal)throw Error(fatal);
  if(op==='checkpoint' || op==='checkpointStatus'){
   if(role!=='checkpointer')throw Error('Maintenance requires checkpointer connection');
   return op==='checkpoint'?checkpoint(true):checkpointStatus();
  }
  if(op==='threadCpu')return process.threadCpuUsage();
+ if(op==='docStats')return {...docStats};
  if(op==='init')return {marker:marker(),calibrationMs};
  if(op==='append')return append(a);
  if(op==='ack'){

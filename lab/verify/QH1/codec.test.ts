@@ -7,7 +7,10 @@ import { h1Rows, wholePullTuples } from "../../../packages/qlever/src/broker/h1.
 import { decodeValueColumns, ValueDomains } from "../../../packages/core/src/ValueDomain.js";
 import { row, append, fresh, base } from "./helpers.js";
 it("G4c: 100000 persisted values preserve exact payloads or the same typed rejection", async () => {
-  const { log } = await HostLog.open(fresh(), { minFreeBytes: 0 });
+  const { log } = await HostLog.open(fresh(), {
+    minFreeBytes: 0,
+    ...(process.env.P4N_DOCS === "1" ? { currentDocs: true } : {}),
+  });
   const bytes = new DataView(new ArrayBuffer(8));
   let seed = 7419;
   const random = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0);
@@ -77,11 +80,14 @@ it("G4c: 100000 persisted values preserve exact payloads or the same typed rejec
       await append(log, rows);
     }
     for (let k = 0; k < 400; k++) {
+      if (process.env.P4N_DOCS === "1") await log.wholePull(101798, ["s:" + k]); // fill, so the compared read is a hit
       const answer = await log.wholePull(101798, ["s:" + k]);
       const { tuples, dict } = wholePullTuples(answer);
       expect(tuples.length).toBe(250);
       for (const t of tuples) {
-        const normal = outcome(() => [...h1Rows([t], { validAt: 100 }, dict).values()][0]![0]!.value);
+        const normal = outcome(
+          () => [...h1Rows([t], { validAt: 100 }, dict).values()][0]![0]!.value,
+        );
         if (normal.error) rejected++;
         const id = t[12]?.row.id ?? (t[0] ? undefined : t[1]);
         // Tuple ids are also checked against the row route's exact decoded ids.

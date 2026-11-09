@@ -1,121 +1,155 @@
-// [EXP-P4N] Why: P2 guard for the new read path under Q104a. Arms are matched 10-fact commits to three fresh writer workers, interleaved
-// with a rotating order: `off` (round 3 final's retained sqlite-worker), `on` (this worktree's worker, new read path) and `twin` (a second
-// copy of `off`, the A/A control). At least 1,000 commits per arm after warmup, at least 3 rounds (each round fresh stores), one pooled
-// bootstrap (5,000 draws over matched commit triples) for the p99 ratios. A p99 counts as a regression only when the bootstrap lower
-// bound of on/off exceeds 1 plus the A/A band (the largest |twin/off - 1| over rounds and the twin/off bootstrap bound). The p50 delta
-// is reported with its bootstrap interval. The result file is written before any assertion. This is a storage-worker diagnostic on a
-// shared host, not application P2. Rejected: one run of 350 commits (QH1 round 3: same-code control spanned 0.85 to 2.23).
+// [EXP-P4N-R2] Why (review F1, F2): P2 guard under Q104a as a reproducible PAIR-0 measurement. Three arms per round, matched 10-fact commits with a
+// rotating order, a fresh store per arm per round, 1,050 commits per arm per round (50 warmup dropped), 12 rounds (PAIR-0 needs at least 8 for an
+// interval; more rounds raise the resolvable s_d limit). The raw per-round matched latencies are written to `p2raw/round-NN.json` BEFORE any verdict
+// is computed, with the bindings (HEAD, arm sources, node, attempt id) in `p2-bindings.json`; `p2verdict.ts` turns them into PASS, FAIL or
+// INCONCLUSIVE and `p2-recompute.ts` reproduces the verdict from the raw files. The test passes only on PASS (an INCONCLUSIVE window or a failed bar
+// fails it visibly). Modes (P4N_P2_MODE): `worker` = round 3's retained writer worker against this tree's worker, A/A twin of the first (commit path,
+// no readers); `fills` = this tree's HostLog with current.db documents off against on, readers pulling the hot owners concurrently with every commit
+// (the (c') guard: fills and hits run beside the commit), A/A twin of off. Rejected: judging the p99 on a bootstrap over pooled commits and a band
+// from the largest twin departure (round 1), and a verdict that ignores the p50 bar.
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { it, expect } from "vitest";
 import { candidateWorkerSource } from "./p2guard-arms.js";
-import { sqliteWorker as current } from "../../../packages/qlever/src/broker/sqlite-worker.js";
-import { base, row } from "./helpers.js";
+import { sqliteWorker as treeWorker } from "../../../packages/qlever/src/broker/sqlite-worker.js";
+import { HostLog } from "../../../packages/qlever/src/broker/log.js";
+import { append, base, fresh, row } from "./helpers.js";
 import { openWorker } from "./worker-client.js";
-const ROUNDS = Number(process.env.P4N_ROUNDS ?? 5),
+import { p2Verdict, Q104A, type P2Round } from "../../experiments/EXP-P4N/g5/p2verdict.ts";
+const MODE = process.env.P4N_P2_MODE ?? "worker";
+const ROUNDS = Number(process.env.P4N_ROUNDS ?? 12),
   COMMITS = Number(process.env.P4N_COMMITS ?? 1050),
   WARM = 50;
-const q = (a: number[], p: number) => [...a].sort((x, y) => x - y)[Math.floor((a.length - 1) * p)]!;
-it("P2 guard: commit latency with the new read path on versus off (Q104a)", async () => {
-  const offSource = await candidateWorkerSource();
-  const perRound: any[] = [];
-  const triples: [number, number, number][] = [];
+const sha = (s: string) => createHash("sha256").update(s).digest("hex");
+type Arm = {
+  commit: (rows: any[], i: number) => Promise<void>;
+  close: () => Promise<void>;
+  stats?: () => Promise<Record<string, number>>;
+};
+const workerArm = async (source: string): Promise<Arm> => {
+  const w = await openWorker(source);
+  return { commit: async (rows) => void (await w.append(rows)), close: () => w.close() };
+};
+const HOT = 8;
+const logArm = async (docs: boolean): Promise<Arm> => {
+  const { log } = await HostLog.open(fresh(), {
+    minFreeBytes: 0,
+    ...(docs ? { currentDocs: true } : {}),
+  });
+  // seed the hot owners so documents have something to hold
+  await append(
+    log,
+    Array.from({ length: HOT * 20 }, (_, k) => row(k + 1, `h:${k % HOT}`, 2048)),
+  );
+  let head = 2048;
+  return {
+    commit: async (rows, i) => {
+      // readers pull the hot owners at the previous head while this commit is in flight (misses fill documents, hits read them)
+      const pulls = [0, 3, 5].map((d) =>
+        log.wholePull(head, [`h:${(i + d) % HOT}`]).catch(() => undefined),
+      );
+      await append(log, rows);
+      head = Math.max(...rows.map((r) => r.recorded_position));
+      await Promise.all(pulls);
+    },
+    close: () => log.close(),
+    stats: () => log.docStats(),
+  };
+};
+it(`P2 guard (${MODE}): commit latency with the new path on versus off under Q104a`, async () => {
+  const dir = path.join(base, "p2raw");
+  fs.mkdirSync(dir, { recursive: true });
+  const offSource = MODE === "worker" ? await candidateWorkerSource() : "";
+  const arms = async () =>
+    MODE === "worker"
+      ? {
+          off: await workerArm(offSource),
+          on: await workerArm(treeWorker),
+          twin: await workerArm(offSource),
+        }
+      : { off: await logArm(false), on: await logArm(true), twin: await logArm(false) };
+  const rounds: P2Round[] = [];
   for (let round = 0; round < ROUNDS; round++) {
-    const a = await openWorker(offSource),
-      b = await openWorker(current),
-      t = await openWorker(offSource);
-    const arms = { off: a, on: b, twin: t } as const;
-    const lat: Record<string, number[]> = { off: [], on: [], twin: [] };
+    const a = await arms();
+    const lat: Record<"off" | "on" | "twin", number[]> = { off: [], on: [], twin: [] };
+    let docStatsOn: Record<string, number> | undefined;
     try {
       for (let i = 0; i < COMMITS + WARM; i++) {
+        const pos = (i + 3) * 1024;
         const rows = Array.from({ length: 10 }, (_, j) =>
-          row(i * 10 + j, `s:${i % 100}/child:${j}`, (i + 1) * 1024),
+          row(
+            1000 + i * 10 + j,
+            MODE === "worker" ? `s:${i % 100}/child:${j}` : `h:${i % HOT}`,
+            pos,
+          ),
         );
-        const order = (
-          (i + round) % 3 === 0
-            ? ["off", "on", "twin"]
-            : (i + round) % 3 === 1
-              ? ["on", "twin", "off"]
-              : ["twin", "off", "on"]
-        ) as (keyof typeof arms)[];
+        const order = (["off", "on", "twin"] as const).map(
+          (_, k, all) => all[(k + i + round) % 3]!,
+        );
         for (const name of order) {
           const t0 = performance.now();
-          await arms[name].append(rows);
-          if (i >= WARM) lat[name]!.push(performance.now() - t0);
+          await a[name].commit(rows, i);
+          if (i >= WARM) lat[name].push(performance.now() - t0);
         }
       }
     } finally {
-      await a.close();
-      await b.close();
-      await t.close();
+      docStatsOn = a.on.stats ? await a.on.stats() : undefined;
+      await a.off.close();
+      await a.on.close();
+      await a.twin.close();
     }
-    for (let i = 0; i < COMMITS; i++) triples.push([lat.off![i]!, lat.on![i]!, lat.twin![i]!]);
-    perRound.push({
-      round,
-      commits: COMMITS,
-      off: { p50: q(lat.off!, 0.5), p99: q(lat.off!, 0.99) },
-      on: { p50: q(lat.on!, 0.5), p99: q(lat.on!, 0.99) },
-      twin: { p50: q(lat.twin!, 0.5), p99: q(lat.twin!, 0.99) },
-      p99RatioOnOff: q(lat.on!, 0.99) / q(lat.off!, 0.99),
-      p99RatioTwinOff: q(lat.twin!, 0.99) / q(lat.off!, 0.99),
-      p50DeltaOnOff: q(lat.on!, 0.5) - q(lat.off!, 0.5),
-      p50DeltaTwinOff: q(lat.twin!, 0.5) - q(lat.off!, 0.5),
-    });
-  }
-  let seed = 0x9e3779b9;
-  const rnd = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296;
-  const draws: Record<string, number[]> = {
-    p99OnOff: [],
-    p99TwinOff: [],
-    p50DeltaOnOff: [],
-    p50DeltaTwinOff: [],
-  };
-  for (let d = 0; d < 5000; d++) {
-    const pick = Array.from(
-      { length: triples.length },
-      () => triples[Math.floor(rnd() * triples.length)]!,
+    const raw: P2Round & { docStatsOn?: Record<string, number> } = {
+      docStatsOn,
+      id: "R" + String(round).padStart(2, "0"),
+      off: lat.off,
+      on: lat.on,
+      twin: lat.twin,
+    };
+    fs.writeFileSync(
+      path.join(dir, `round-${String(round).padStart(2, "0")}.json`),
+      JSON.stringify(raw),
     );
-    const off = pick.map((x) => x[0]),
-      on = pick.map((x) => x[1]),
-      twin = pick.map((x) => x[2]);
-    draws.p99OnOff!.push(q(on, 0.99) / q(off, 0.99));
-    draws.p99TwinOff!.push(q(twin, 0.99) / q(off, 0.99));
-    draws.p50DeltaOnOff!.push(q(on, 0.5) - q(off, 0.5));
-    draws.p50DeltaTwinOff!.push(q(twin, 0.5) - q(off, 0.5));
+    rounds.push(raw);
   }
-  const ci = (a: number[]) => ({ lo: q(a, 0.025), median: q(a, 0.5), hi: q(a, 0.975) });
-  const off = triples.map((x) => x[0]),
-    on = triples.map((x) => x[1]),
-    twin = triples.map((x) => x[2]);
-  const aaBand = Math.max(
-    ...perRound.map((r) => Math.abs(r.p99RatioTwinOff - 1)),
-    ci(draws.p99TwinOff!).hi - 1,
-    1 - ci(draws.p99TwinOff!).lo,
+  fs.writeFileSync(
+    path.join(base, "p2-bindings.json"),
+    JSON.stringify(
+      {
+        attempt: path.basename(base),
+        mode: MODE,
+        head: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
+        dirty:
+          execFileSync("git", ["status", "--porcelain", "packages/qlever/src"], {
+            encoding: "utf8",
+          }).trim() || null,
+        offWorkerSha256: MODE === "worker" ? sha(offSource) : null,
+        onWorkerSha256: sha(treeWorker),
+        node: process.version,
+        rounds: ROUNDS,
+        commitsPerArmPerRound: COMMITS - WARM,
+        rule: Q104A,
+        at: new Date().toISOString(),
+      },
+      null,
+      2,
+    ),
   );
-  const result = {
-    diagnostic: true,
-    rule: "Q104a: >= 1,000 commits per arm, >= 3 A/A rounds, bootstrap; regression only if the on/off p99 interval lower bound exceeds 1 + A/A band",
-    rounds: ROUNDS,
-    commitsPerArmPerRound: COMMITS,
-    commitsPerArmTotal: triples.length,
-    pooled: {
-      off: { p50: q(off, 0.5), p99: q(off, 0.99) },
-      on: { p50: q(on, 0.5), p99: q(on, 0.99) },
-      twin: { p50: q(twin, 0.5), p99: q(twin, 0.99) },
-    },
-    p99RatioOnOff: { point: q(on, 0.99) / q(off, 0.99), bootstrap95: ci(draws.p99OnOff!) },
-    p99RatioTwinOff: { point: q(twin, 0.99) / q(off, 0.99), bootstrap95: ci(draws.p99TwinOff!) },
-    p50DeltaOnOffMs: { point: q(on, 0.5) - q(off, 0.5), bootstrap95: ci(draws.p50DeltaOnOff!) },
-    p50DeltaTwinOffMs: {
-      point: q(twin, 0.5) - q(off, 0.5),
-      bootstrap95: ci(draws.p50DeltaTwinOff!),
-    },
-    aaBand,
-    regression: ci(draws.p99OnOff!).lo > 1 + aaBand,
-    resolvable: aaBand <= 0.1,
-    perRound,
-  };
-  fs.writeFileSync(path.join(base, "p2guard.json"), JSON.stringify(result, null, 2));
-  console.log(JSON.stringify({ ...result, perRound: undefined }));
-  expect(result.regression).toBe(false);
-}, 1_800_000);
+  const result = p2Verdict(rounds);
+  fs.writeFileSync(
+    path.join(base, "p2-verdict.json"),
+    JSON.stringify({ mode: MODE, result }, null, 2),
+  );
+  console.log(
+    JSON.stringify({
+      mode: MODE,
+      verdict: result.verdict,
+      reasons: result.reasons,
+      p50DeltaMs: result.p50.deltaMs,
+      p99: result.p99,
+      aa: result.aa,
+    }),
+  );
+  expect(result.verdict, result.reasons.join("; ")).toBe("PASS");
+}, 3_600_000);

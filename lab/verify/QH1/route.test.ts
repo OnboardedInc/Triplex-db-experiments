@@ -23,6 +23,16 @@ import { h1Rows, h1TupleId, wholePullTuples } from "../../../packages/qlever/src
 it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat", async () => {
   const broker = await HostBroker.open({ dir: fresh(), scopeKey: "qh1-rq01", minFreeBytes: 0 });
   const log = (broker as any).log;
+  // [EXP-P4N] Why (step c'): route QH1d is the raw worker route of a second log fed the same commits with current.db documents on, so the
+  // document path (hit, stale, absent and fill) is graded by the same retention, purge and basis equivalence as QH1w. Rejected: grading
+  // documents only with their own mutation replay (RQ01 requires every registered route to be checked beside the source route).
+  const brokerD = await HostBroker.open({
+    dir: fresh(),
+    scopeKey: "qh1-rq01d",
+    minFreeBytes: 0,
+    currentDocs: true,
+  });
+  const logD = (brokerD as any).log;
   // [EXP-QH1-R3] Why: the whole-pull adapter operation is a separate H1 route and is registered beside the raw worker route.
   // Rejected: assuming the worker route's verdict covers the adapter's own decode, cut and cache handling.
   const adapter = makeQleverBrokerStorageAdapter(
@@ -56,6 +66,7 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
       latest.set(r.id, r);
     }
     await append(log, rs);
+    await append(logD, rs);
     // The fixture writes frames straight to the log (positions are the route history's own); the adapter route reads through the
     // broker's resolved prefix, so publish the new durable LSN the way a commit would. Rejected: broker.submit (it assigns positions).
     (broker as any).durableLsn = log.nextLsn - 1;
@@ -86,10 +97,13 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
     event: (event, context) => {
       if (event !== "purge" && event !== "purge-pinned") return;
       const pin = context!.pinned ? log.pinBasis(context!.horizon, "QH1") : undefined;
+      const pinD = context!.pinned ? logD.pinBasis(context!.horizon, "QH1") : undefined;
       try {
         horizon = log.purge(context!.horizon).h;
+        logD.purge(context!.horizon);
       } finally {
         pin?.release();
+        pinD?.release();
       }
       return {
         status: "applied",
@@ -97,7 +111,7 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
         retirement: { horizon, pinned: context!.pinned },
       };
     },
-    routes: ["QH1w", "QH1r", "source"].map((id) => ({
+    routes: ["QH1w", "QH1r", "QH1d", "source"].map((id) => ({
       id,
       contract: "snapshot" as const,
       retention: {
@@ -192,7 +206,7 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
               r.entityId === undefined
                 ? [...new Set([...latest.values()].map((r) => r.entity_id))]
                 : [r.entityId];
-            const whole = await log.wholePull(b, roots),
+            const whole = await (id === "QH1d" ? logD : log).wholePull(b, roots),
               { tuples, dict } = wholePullTuples(whole);
             const triples = [
               ...h1Rows(tuples, { validAt: r.basis.validAt ?? history.now }, dict).values(),
@@ -252,8 +266,13 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
   try {
     const result = await runRouteEquivalence({ fixture, history: generateRouteHistory(89, 16) });
     expect(result.violations).toEqual([]);
+    // The document route must actually have served and filled documents, or its verdict says nothing about them.
+    const stats = await logD.docStats();
+    expect(stats.fills).toBeGreaterThan(0);
+    expect(stats.hit).toBeGreaterThan(0);
   } finally {
     await broker.close();
+    await brokerD.close();
   }
 }, 120000);
 

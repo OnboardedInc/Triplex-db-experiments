@@ -11,7 +11,12 @@ import { fresh, append, row } from "./helpers.js";
 import { HostLog } from "../../../packages/qlever/src/broker/log.js";
 import { h1Rows, wholePullTuples } from "../../../packages/qlever/src/broker/h1.js";
 it("public T.entities uses one prefetch operation for a whole pull and preserves duplicate input semantics", async () => {
-  const broker = await HostBroker.open({ dir: fresh(), scopeKey: "QH1-public", minFreeBytes: 0 });
+  const broker = await HostBroker.open({
+    dir: fresh(),
+    scopeKey: "QH1-public",
+    minFreeBytes: 0,
+    ...(process.env.P4N_DOCS === "1" ? { currentDocs: true } : {}),
+  });
   let pulls = 0,
     replicaReads = 0;
   const client: any = {
