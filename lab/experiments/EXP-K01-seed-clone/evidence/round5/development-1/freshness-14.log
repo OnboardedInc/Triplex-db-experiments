@@ -1,0 +1,96 @@
+TAP version 13
+# (node:31215) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: control: fresh evidence publishes PASS and query exceptions revoke it
+ok 1 - control: fresh evidence publishes PASS and query exceptions revoke it
+  ---
+  duration_ms: 5.236708
+  type: 'test'
+  ...
+# Subtest: control: a newer failure visible before the final owner read is preserved
+ok 2 - control: a newer failure visible before the final owner read is preserved
+  ---
+  duration_ms: 1.448459
+  type: 'test'
+  ...
+# Subtest: R2-F2: a newer failure after the final owner read must not be replaced by an older PASS
+ok 3 - R2-F2: a newer failure after the final owner read must not be replaced by an older PASS
+  ---
+  duration_ms: 0.963625
+  type: 'test'
+  ...
+# Subtest: R2-F3: current clone binding must override earlier C1 evidence (current-copy-failed)
+ok 4 - R2-F3: current clone binding must override earlier C1 evidence (current-copy-failed)
+  ---
+  duration_ms: 1.986125
+  type: 'test'
+  ...
+# Subtest: R2-F3: current clone binding must override earlier C1 evidence (current-golden-changed)
+ok 5 - R2-F3: current clone binding must override earlier C1 evidence (current-golden-changed)
+  ---
+  duration_ms: 1.910125
+  type: 'test'
+  ...
+# Subtest: R2-F1: blocked admission cannot clean up a prior run's golden (published-record)
+ok 6 - R2-F1: blocked admission cannot clean up a prior run's golden (published-record)
+  ---
+  duration_ms: 0.873042
+  type: 'test'
+  ...
+# Subtest: R2-F1: blocked admission cannot clean up a prior run's golden (unpublished-attempt)
+ok 7 - R2-F1: blocked admission cannot clean up a prior run's golden (unpublished-attempt)
+  ---
+  duration_ms: 0.405375
+  type: 'test'
+  ...
+# Subtest: control: blocked admission cannot clean up a prior run's golden (none)
+ok 8 - control: blocked admission cannot clean up a prior run's golden (none)
+  ---
+  duration_ms: 0.324416
+  type: 'test'
+  ...
+# Subtest: control: startup proof rejects a failed current none command
+ok 9 - control: startup proof rejects a failed current none command
+  ---
+  duration_ms: 1.852291
+  type: 'test'
+  ...
+# Subtest: R2-F4: startup proof rejects a failed current inspect command
+ok 10 - R2-F4: startup proof rejects a failed current inspect command
+  ---
+  duration_ms: 0.758791
+  type: 'test'
+  ...
+# Subtest: R2-F4: startup proof rejects a failed current logs command
+ok 11 - R2-F4: startup proof rejects a failed current logs command
+  ---
+  duration_ms: 0.556042
+  type: 'test'
+  ...
+# Subtest: control: clean-stop proof rejects a failed current log command (false)
+ok 12 - control: clean-stop proof rejects a failed current log command (false)
+  ---
+  duration_ms: 0.808666
+  type: 'test'
+  ...
+# Subtest: R2-F4: clean-stop proof rejects a failed current log command (true)
+ok 13 - R2-F4: clean-stop proof rejects a failed current log command (true)
+  ---
+  duration_ms: 0.446292
+  type: 'test'
+  ...
+# Subtest: Q83e watermark control: maintenance-only stopped bytes qualify the later M
+ok 14 - Q83e watermark control: maintenance-only stopped bytes qualify the later M
+  ---
+  duration_ms: 2.119084
+  type: 'test'
+  ...
+1..14
+# tests 14
+# suites 0
+# pass 14
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 116.176541

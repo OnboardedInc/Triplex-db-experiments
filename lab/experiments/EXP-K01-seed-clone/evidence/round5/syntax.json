@@ -1,0 +1,104 @@
+[
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/bin/engine.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/bin/xtdb-log.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/bin/owner-state.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/experiments/EXP-K01-seed-clone/round2-live.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/verify/K01/q83e-review.test.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/verify/K01/round5.test.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/verify/K01/run-round5.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/verify/K01/run-review-round3.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "node",
+      "--check",
+      "lab/verify/K01/tail-fixtures.mjs"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "args": [
+      "git",
+      "show",
+      "--format=",
+      "--check",
+      "5e7b68f85b810fbd5525aab56c99296d2350d2a0"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  }
+]

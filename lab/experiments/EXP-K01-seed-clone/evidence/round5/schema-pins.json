@@ -1,0 +1,9 @@
+{
+  "xtdbHead": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+  "files": {
+    "core/src/main/kotlin/xtdb/api/log/SourceMessage.kt": "e4747a78fced0b99bf3fa631a5f07571c122507e8e1ee8cb0b31162283691f97",
+    "core/src/main/kotlin/xtdb/api/log/LocalLog.kt": "39f86a5215d46e8c294386b0c508ca21c5dfd808cd7a8b285dac6450b94d2763",
+    "core/src/main/proto/xtdb/log/proto/log.proto": "d11f43c05efafaa17ac59d9d0d174d1621628c7295c2158595a8628c80ee94a5",
+    "core/src/main/proto/xtdb/database/proto/db.proto": "824455d3b943ad40393f576401099ce82b82cfc8c74330f755097b188b7a8eaa"
+  }
+}

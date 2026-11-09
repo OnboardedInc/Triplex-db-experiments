@@ -10,7 +10,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { cloneCertificateHash } from '../../bench/lib/clone.ts';
 import { seedPathOf } from '../../bench/lib/bulk.ts';
 const root = path.resolve(import.meta.dirname, '../../..');
@@ -31,17 +31,17 @@ for (const variation of ['truncated','trailer','beyond-M','wrong-M','epoch','unk
  });
 }
 test('Q83e permits F=M with a complete cut anchor and no post-cut messages',()=>{
- const bytes=frame(100,[3,10,2,8,0]); const p=verifyMaintenanceTail(bytes,{F:100,M:100,T:99});assert.equal(p.maintenanceMessages,0);
+ const bytes=frame(100,[3,10,2,16,0]); const p=verifyMaintenanceTail(bytes,{F:100,M:100,T:99});assert.equal(p.maintenanceMessages,0);
 });
 test('Q83e validates every intervening message rather than only the last',()=>{
- const cut=frame(100,[3,10,2,8,0]), tx=frame(126,[3,50,0]), last=frame(150,[3,18,0]);
+ const cut=frame(100,[3,10,2,16,0]), tx=frame(126,[3,50,0]), last=frame(150,[3,18,0]);
  assert.throws(()=>verifyMaintenanceTail(Buffer.concat([cut,tx,last]),{F:100,M:150,T:99}),/non-maintenance Tx/);
 });
 test('current certificate changes revoke driver admission after a prior PASS',()=>{
  const dir=fs.mkdtempSync(path.join(tempRoot,'binding-')); const mf=path.join(dir,'manifest.json'),of=path.join(dir,'owner.json');
  try {
  fs.writeFileSync(mf,'{}'); const sha=createHash('sha256').update('{}').digest('hex');
- const base={kind:'clone',containerId:'container',startedAt:'start',key:'key',goldenVolume:'golden',goldenRecord:'golden.json',manifestSha256:sha,copy:{creationId:'copy-A',treeSha256:'tree',c1:{pass:true,expected:'tree',observed:'tree'}},readiness:{verdict:'PASS',verifiedContainerId:'container',verifiedStartedAt:'start'}};
+ const base={kind:'clone',containerId:'container',startedAt:'start',key:'key',goldenVolume:'golden',goldenRecord:'golden.json',manifestSha256:sha,copy:{creationId:'copy-A',treeSha256:'a'.repeat(64),c1:{pass:true,expected:'a'.repeat(64),observed:'a'.repeat(64)}},readiness:{verdict:'PASS',verifiedContainerId:'container',verifiedStartedAt:'start'}};
  base.readiness.certificateSha256=cloneCertificateHash(base);
  for(const variation of ['clean','golden','pass','expected','observed','copy-id','tree','start']){
   const c=structuredClone(base);
@@ -86,9 +86,9 @@ for(const variation of ['clean','inspect-signal','inspect-error','logs-signal','
 }
 for(const variation of ['clean','signal','error','inspect-missing','identity-changed']){
  test(`stop acquisition rejects incomplete current evidence (${variation})`,async()=>{
-  let n=0;
+  let n=0; const stopOwner={holder:'fixture'};
   const {stopSlot}=vm.runInNewContext(section(engine,'async function stopSlot(config, info, opts)','/**\n * Golden')+';({stopSlot})',{
-   Date,readOwner:()=>({holder:'fixture'}),requireHeldXtdbSlot:()=>{},inspect:()=>{
+   Date,randomUUID,updateOwner:async(_info,action)=>action(stopOwner),readOwner:()=>({holder:'fixture'}),requireHeldXtdbSlot:()=>{},inspect:()=>{
     if(++n===2&&variation==='inspect-missing')return null;
     return{Id:n===2&&variation==='identity-changed'?'other':'container',Config:{Labels:{'tx2.managed-by':'lab/bin/engine.mjs'}},State:{Running:n===1,ExitCode:143,StartedAt:'2000-01-01T00:00:00Z',FinishedAt:'2000-01-01T00:00:01Z'}};
    },docker:()=>'',dockerArgs:a=>a,spawnSync:()=>({status:0,signal:variation==='signal'?'SIGTERM':null,error:variation==='error'?new Error('log read failed'):undefined,stdout:'Stopping node...\nNode stopped.\n',stderr:''}),stopVerdict,
@@ -115,7 +115,7 @@ for(const valid of [true,false]){
 for(const variation of ['clean','tail','frontier','gauge','reference']){
  test(`loading a golden rechecks persisted stopped bytes (${variation})`,()=>{
   const f=maintenanceFixture(),offline={ok:true,sourceTailBase64:f.bytes.toString('base64'),maintenance:verifyMaintenanceTail(f.bytes,f.frontiers)};
-  const record={settle:{qualified:true,frontiers:{...f.frontiers},after:{frontiers:{...f.frontiers},gauges:{latestProcessedMsgId:f.frontiers.M,latestSubmittedMsgId:f.frontiers.M,latestCompletedTxId:f.frontiers.T}}},offline:structuredClone(offline),referenceOffline:structuredClone(offline),format:'golden',keyInputs:{seedInputs:{},engine:{}},key:'key'};
+  const record={settle:{qualified:true,frontiers:{...f.frontiers},after:{cutIndex:0,blocks:[{block_idx:'00',latest_processed_msg_id:f.frontiers.F,tx_id:f.frontiers.T}],frontiers:{...f.frontiers},gauges:{latestProcessedMsgId:f.frontiers.M,latestSubmittedMsgId:f.frontiers.M,latestCompletedTxId:f.frontiers.T}}},offline:structuredClone(offline),referenceOffline:structuredClone(offline),format:'golden',keyInputs:{seedInputs:{},engine:{}},key:'key'};
   if(variation==='tail')record.offline.sourceTailBase64=maintenanceFixture(true).bytes.toString('base64');
   if(variation==='frontier')record.settle.after.frontiers.M++;
   if(variation==='gauge')record.settle.after.gauges.latestProcessedMsgId++;

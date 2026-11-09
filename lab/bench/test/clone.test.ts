@@ -64,7 +64,7 @@ test("seed path: driver, QLever bulk index, XTDB seed-writer, unverified, clone 
   assert.equal(seedPathOf(xtdb, mf, undefined).seededBy, "unverified");
   fs.writeFileSync(owner, JSON.stringify({ holder: "K01" }));
   assert.equal(seedPathOf(xtdb, mf, owner).seededBy, "seed-writer");
-  const content = { kind: "clone", goldenVolume: "tx2-golden-xtdb-abcd1234", key: "k", manifestSha256: sha, containerId: "c", startedAt: "start", readiness: { verdict: "PASS", certificateSha256: "", verifiedContainerId: "c", verifiedStartedAt: "start" }, copy: { copyS: 1, treeSha256: "t", c1: { pass: true } } };
+  const content = { kind: "clone", goldenVolume: "tx2-golden-xtdb-abcd1234", key: "k", manifestSha256: sha, containerId: "c", startedAt: "start", readiness: { verdict: "PASS", certificateSha256: "", verifiedContainerId: "c", verifiedStartedAt: "start" }, copy: { copyS: 1, creationId: "copy-id", treeSha256: "a".repeat(64), c1: { pass: true, expected: "a".repeat(64), observed: "a".repeat(64) } } };
   content.readiness.certificateSha256 = cloneCertificateHash(content);
   fs.writeFileSync(owner, JSON.stringify({ holder: "K01", volumeContent: content }));
   const p = seedPathOf(xtdb, mf, owner);

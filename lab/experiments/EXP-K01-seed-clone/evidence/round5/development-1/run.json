@@ -1,0 +1,122 @@
+{
+  "at": "2026-11-09T00:06:41.414Z",
+  "head": "9254ec3b055e1b5ebd049947792d0ed868a13415",
+  "offlineOnly": true,
+  "hostDisk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 3347026,
+    "bavail": 3347026,
+    "files": 145436903,
+    "ffree": 133881040
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/bin/engine.mjs": "a613b349fd6b20f65235558149ff020253487c4e532836153751a3d98858527b",
+    "lab/bin/owner-state.mjs": "8cf0c4be727bbdd03968415f0e11a85f822acdef061d555e4045d0080cb70ebb",
+    "lab/bin/xtdb-log.mjs": "d251668c35b570120cc2c69c27b68af6d1854a0a80751b91b794f10329a2da62",
+    "lab/bench/clone-check.ts": "4b51d2e6311dc1c0a2b02d7ce1770bffa46135a960921cb1ec2b3f0fda184836",
+    "lab/bench/lib/clone.ts": "b62f5f0f0cb69c3b073f4393b020d28ced626ed186b3bf92d6799b5444154715",
+    "lab/bench/lib/bulk.ts": "0e14cd1f0392cdaca3191aeee051b1c18e443742b55b8078d89c6fdf9d83c0df",
+    "lab/experiments/EXP-K01-seed-clone/round2-live.mjs": "a0afcb3ad9df3c330b44059753638a6b242650978dbd222a24ed95010cac48dc",
+    "lab/verify/K01/freshness.test.mjs": "76471f4164817d4c7c48d491425f54582c9987fbbbefb2dcfa649909689971f3",
+    "lab/verify/K01/round4.test.mjs": "a6755e2d27855ec9327720e1c389444d02c4e54f50d0b6bab8f44848577b03f4",
+    "lab/verify/K01/tail-fixtures.mjs": "29bec6c80a2330c88e5539e20517f96e5471a6aeb6e691cf22f7cc03fd512abd",
+    "lab/verify/K01/run-round5.mjs": "a2e1cee947d09744a03d129716a5b9eadd004006507f805c2e7750feb964d778",
+    "lab/verify/K01/q83e-review.test.mjs": "2c6939d92c628d7a6a6da3253cc67d3f7783dff6124fd668169368c7eef46e7c",
+    "lab/verify/K01/offline.test.mjs": "c864874412124341d3ce33b4516a66a959ffdb47d204ad7019a32dfb55b76e12",
+    "lab/verify/K01/round3.test.mjs": "cc4cfb42e4a26b5ad5fe323c71311a3772002df82db24ae839441e9da79c1c87",
+    "lab/bench/test/clone.test.ts": "4a0fd68fe8c9c4d9582f0f331d156045e9d29252aa4346198d9d24ba4b7e9651"
+  },
+  "runs": [
+    {
+      "label": "baseline",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/clone.test.ts"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1038,
+      "sha256": "a90be95c7d7c1fc847fd919a8f98c91e1bf486c8757ad506c4d079ac925d7302"
+    },
+    {
+      "label": "original-21",
+      "args": [
+        "--test",
+        "lab/verify/K01/offline.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 160,
+      "sha256": "73bede942892635b135a90840f015e25da198cb9db12e2933d0e1243bba94a48"
+    },
+    {
+      "label": "round3-23",
+      "args": [
+        "--test",
+        "lab/verify/K01/round3.test.mjs"
+      ],
+      "exit": 1,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 130,
+      "sha256": "788ba42e13ba3177b670c7e8831abfd29425ac91bacaa585da97449b28f989df"
+    },
+    {
+      "label": "freshness-14",
+      "args": [
+        "--test",
+        "lab/verify/K01/freshness.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 149,
+      "sha256": "2003c0591026df0cd4193a01873da2b13ee5723dff75faa421e77e77babc9278"
+    },
+    {
+      "label": "round4",
+      "args": [
+        "--test",
+        "lab/verify/K01/round4.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 469,
+      "sha256": "85949438a071cc5b63c8b3ed9c945eb5982f2d5b43e77cf2e566134a62e2a5e0"
+    },
+    {
+      "label": "reviewer-36",
+      "args": [
+        "--test",
+        "lab/verify/K01/q83e-review.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 370,
+      "sha256": "7f453173681849e8ade3cf6b33aad1e8eaea2f8b6f5ce2345678c35da60503f3"
+    },
+    {
+      "label": "types",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1312,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

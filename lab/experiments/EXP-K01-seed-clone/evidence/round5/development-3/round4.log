@@ -1,0 +1,222 @@
+TAP version 13
+# Subtest: Q83e maintenance tail qualifies distinct F/M/T
+ok 1 - Q83e maintenance tail qualifies distinct F/M/T
+  ---
+  duration_ms: 1.800666
+  type: 'test'
+  ...
+# Subtest: Q83e application transaction refuses even with unchanged observed T
+ok 2 - Q83e application transaction refuses even with unchanged observed T
+  ---
+  duration_ms: 0.47075
+  type: 'test'
+  ...
+# Subtest: Q83e refuses truncated stopped bytes
+ok 3 - Q83e refuses truncated stopped bytes
+  ---
+  duration_ms: 0.160625
+  type: 'test'
+  ...
+# Subtest: Q83e refuses trailer stopped bytes
+ok 4 - Q83e refuses trailer stopped bytes
+  ---
+  duration_ms: 0.155417
+  type: 'test'
+  ...
+# Subtest: Q83e refuses beyond-M stopped bytes
+ok 5 - Q83e refuses beyond-M stopped bytes
+  ---
+  duration_ms: 0.16075
+  type: 'test'
+  ...
+# Subtest: Q83e refuses wrong-M stopped bytes
+ok 6 - Q83e refuses wrong-M stopped bytes
+  ---
+  duration_ms: 0.162167
+  type: 'test'
+  ...
+# Subtest: Q83e refuses epoch stopped bytes
+ok 7 - Q83e refuses epoch stopped bytes
+  ---
+  duration_ms: 0.050875
+  type: 'test'
+  ...
+# Subtest: Q83e refuses unknown stopped bytes
+ok 8 - Q83e refuses unknown stopped bytes
+  ---
+  duration_ms: 0.073541
+  type: 'test'
+  ...
+# Subtest: Q83e refuses application-legacy stopped bytes
+ok 9 - Q83e refuses application-legacy stopped bytes
+  ---
+  duration_ms: 0.386916
+  type: 'test'
+  ...
+# Subtest: Q83e refuses anchor-tx stopped bytes
+ok 10 - Q83e refuses anchor-tx stopped bytes
+  ---
+  duration_ms: 0.457416
+  type: 'test'
+  ...
+# Subtest: Q83e permits F=M with a complete cut anchor and no post-cut messages
+ok 11 - Q83e permits F=M with a complete cut anchor and no post-cut messages
+  ---
+  duration_ms: 0.2725
+  type: 'test'
+  ...
+# Subtest: Q83e validates every intervening message rather than only the last
+ok 12 - Q83e validates every intervening message rather than only the last
+  ---
+  duration_ms: 0.123917
+  type: 'test'
+  ...
+# Subtest: current certificate changes revoke driver admission after a prior PASS
+ok 13 - current certificate changes revoke driver admission after a prior PASS
+  ---
+  duration_ms: 2.284875
+  type: 'test'
+  ...
+# Subtest: real cross-process owner lock preserves newer ERROR (A-then-B)
+ok 14 - real cross-process owner lock preserves newer ERROR (A-then-B)
+  ---
+  duration_ms: 276.248583
+  type: 'test'
+  ...
+# (node:21006) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: real cross-process owner lock preserves newer ERROR (B-then-A)
+ok 15 - real cross-process owner lock preserves newer ERROR (B-then-A)
+  ---
+  duration_ms: 56.95075
+  type: 'test'
+  ...
+# Subtest: startup acquisition binds completed current reads (clean)
+ok 16 - startup acquisition binds completed current reads (clean)
+  ---
+  duration_ms: 1.499292
+  type: 'test'
+  ...
+# Subtest: startup acquisition binds completed current reads (inspect-signal)
+ok 17 - startup acquisition binds completed current reads (inspect-signal)
+  ---
+  duration_ms: 0.628833
+  type: 'test'
+  ...
+# Subtest: startup acquisition binds completed current reads (inspect-error)
+ok 18 - startup acquisition binds completed current reads (inspect-error)
+  ---
+  duration_ms: 0.381041
+  type: 'test'
+  ...
+# Subtest: startup acquisition binds completed current reads (logs-signal)
+ok 19 - startup acquisition binds completed current reads (logs-signal)
+  ---
+  duration_ms: 0.396833
+  type: 'test'
+  ...
+# Subtest: startup acquisition binds completed current reads (logs-error)
+ok 20 - startup acquisition binds completed current reads (logs-error)
+  ---
+  duration_ms: 0.476834
+  type: 'test'
+  ...
+# Subtest: startup acquisition binds completed current reads (empty)
+ok 21 - startup acquisition binds completed current reads (empty)
+  ---
+  duration_ms: 0.353125
+  type: 'test'
+  ...
+# Subtest: startup acquisition binds completed current reads (invalid)
+ok 22 - startup acquisition binds completed current reads (invalid)
+  ---
+  duration_ms: 0.492792
+  type: 'test'
+  ...
+# Subtest: startup acquisition binds completed current reads (changed)
+ok 23 - startup acquisition binds completed current reads (changed)
+  ---
+  duration_ms: 0.502917
+  type: 'test'
+  ...
+# Subtest: stop acquisition rejects incomplete current evidence (clean)
+ok 24 - stop acquisition rejects incomplete current evidence (clean)
+  ---
+  duration_ms: 1.167708
+  type: 'test'
+  ...
+# Subtest: stop acquisition rejects incomplete current evidence (signal)
+ok 25 - stop acquisition rejects incomplete current evidence (signal)
+  ---
+  duration_ms: 0.364792
+  type: 'test'
+  ...
+# Subtest: stop acquisition rejects incomplete current evidence (error)
+ok 26 - stop acquisition rejects incomplete current evidence (error)
+  ---
+  duration_ms: 0.285541
+  type: 'test'
+  ...
+# Subtest: stop acquisition rejects incomplete current evidence (inspect-missing)
+ok 27 - stop acquisition rejects incomplete current evidence (inspect-missing)
+  ---
+  duration_ms: 0.265375
+  type: 'test'
+  ...
+# Subtest: stop acquisition rejects incomplete current evidence (identity-changed)
+ok 28 - stop acquisition rejects incomplete current evidence (identity-changed)
+  ---
+  duration_ms: 0.290834
+  type: 'test'
+  ...
+# Subtest: runner cleanup uses only its exact current creation receipt (true)
+ok 29 - runner cleanup uses only its exact current creation receipt (true)
+  ---
+  duration_ms: 1.045167
+  type: 'test'
+  ...
+# Subtest: runner cleanup uses only its exact current creation receipt (false)
+ok 30 - runner cleanup uses only its exact current creation receipt (false)
+  ---
+  duration_ms: 0.450458
+  type: 'test'
+  ...
+# Subtest: loading a golden rechecks persisted stopped bytes (clean)
+ok 31 - loading a golden rechecks persisted stopped bytes (clean)
+  ---
+  duration_ms: 0.636125
+  type: 'test'
+  ...
+# Subtest: loading a golden rechecks persisted stopped bytes (tail)
+ok 32 - loading a golden rechecks persisted stopped bytes (tail)
+  ---
+  duration_ms: 0.299
+  type: 'test'
+  ...
+# Subtest: loading a golden rechecks persisted stopped bytes (frontier)
+ok 33 - loading a golden rechecks persisted stopped bytes (frontier)
+  ---
+  duration_ms: 0.345333
+  type: 'test'
+  ...
+# Subtest: loading a golden rechecks persisted stopped bytes (gauge)
+ok 34 - loading a golden rechecks persisted stopped bytes (gauge)
+  ---
+  duration_ms: 0.905458
+  type: 'test'
+  ...
+# Subtest: loading a golden rechecks persisted stopped bytes (reference)
+ok 35 - loading a golden rechecks persisted stopped bytes (reference)
+  ---
+  duration_ms: 0.523
+  type: 'test'
+  ...
+1..35
+# tests 35
+# suites 0
+# pass 35
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 453.050292

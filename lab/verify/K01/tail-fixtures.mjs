@@ -6,7 +6,7 @@ export function frame(offset, payload) {
   return out;
 }
 export function maintenanceFixture(application = false, F = 201, T = 100) {
-  const cut = frame(F, [3, 10, 2, 8, 0]);
+  const cut = frame(F, [3, 10, 2, 16, 0]);
   const M = F + cut.length;
   const after = frame(M, application ? [3, 50, 0] : [3, 18, 0]);
   return { bytes: Buffer.concat([cut, after]), frontiers: { F, M, T } };
