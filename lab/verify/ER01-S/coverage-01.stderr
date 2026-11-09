@@ -1,0 +1,19 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 26896 "CX-RT01-evaluator-final", pid 30441 "CX-QG1-phase1-attempt2", pid 83103 "CX-P5A-R2-10k-final-guard"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 26896 "CX-RT01-evaluator-final", pid 30441 "CX-QG1-phase1-attempt2", pid 83103 "CX-P5A-R2-10k-final-guard"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 26896 "CX-RT01-evaluator-final", pid 30441 "CX-QG1-phase1-attempt2", pid 83103 "CX-P5A-R2-10k-final-guard"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 13557 "CX-P2Q-R9-final", pid 60857 "CX-INT-D-route-equivalence", pid 83103 "CX-P5A-R2-10k-final-guard"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 13557 "CX-P2Q-R9-final", pid 60857 "CX-INT-D-route-equivalence", pid 83103 "CX-P5A-R2-10k-final-guard"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 13557 "CX-P2Q-R9-final", pid 60857 "CX-INT-D-route-equivalence", pid 83103 "CX-P5A-R2-10k-final-guard"
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/coverage.py", line 211, in <module>
+    main()
+    ~~~~^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/coverage.py", line 190, in main
+    run('keys-' + encoding, changed, [('K', loc, 'PASS') for loc in ('d-keys-heap', 'd-keys-toast', 'd-keys-wal')],
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        {'encoding': encoding, 'claim': 'generic key encoding diagnostic; not native TOAST/pglz'})
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/coverage.py", line 56, in run
+    assert lookup[(scan, loc)]['status'] == status, (name, scan, loc, lookup[(scan, loc)])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ('keys-gzip', 'K', 'd-keys-heap', {'keyKind': 'wrapped', 'location': 'd-keys-heap', 'observations': {'before': [{'controlHits': 1, 'epoch': 1, 'targetHits': 1}, {'controlHits': 1, 'epoch': 2, 'targetHits': 1}], 'rotate': [{'controlHits': 1, 'epoch': 1, 'targetHits': 1}, {'controlHits': 1, 'epoch': 2, 'targetHits': 1}], 'shred': [{'controlHits': 1, 'epoch': 1, 'targetHits': 0}, {'controlHits': 1, 'epoch': 2, 'targetHits': 0}]}, 'scan': 'K', 'status': 'FAIL'})

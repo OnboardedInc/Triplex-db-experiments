@@ -1,0 +1,31 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 63825 "CX-QG1-build-attempt2", pid 42667 "CX-VGS12F-review", pid 16807 "CX-INT-D-G0-xtdb"
+test_changed_crypto_runtime_is_refused (__main__.Scanners.test_changed_crypto_runtime_is_refused) ... ok
+test_d_aad_plaintext_and_envelope_corruption_refuse (__main__.Scanners.test_d_aad_plaintext_and_envelope_corruption_refuse) ... ok
+test_d_backup_undoes_shred_and_blocks_pass (__main__.Scanners.test_d_backup_undoes_shred_and_blocks_pass) ... ok
+test_d_deleted_sqlite_row_survives_in_old_wal_frames (__main__.Scanners.test_d_deleted_sqlite_row_survives_in_old_wal_frames) ... ok
+test_d_recovers_key_and_epoch_from_physical_pg_and_kms_wal (__main__.Scanners.test_d_recovers_key_and_epoch_from_physical_pg_and_kms_wal) ... ok
+test_d_stale_backup_and_stale_kms_undo_rotation (__main__.Scanners.test_d_stale_backup_and_stale_kms_undo_rotation) ... ok
+test_d_stale_wrapped_key_without_destroyed_epoch_cannot_open (__main__.Scanners.test_d_stale_wrapped_key_without_destroyed_epoch_cannot_open) ... ok
+test_d_wrong_root_incomplete_backup_and_unsupported_store_refuse (__main__.Scanners.test_d_wrong_root_incomplete_backup_and_unsupported_store_refuse) ... ok
+test_each_key_location_detects_residual_key (__main__.Scanners.test_each_key_location_detects_residual_key) ... ok
+test_each_plaintext_location_detects_planted_secret (__main__.Scanners.test_each_plaintext_location_detects_planted_secret) ... ok
+test_each_removing_cipher_location_detects_retained_envelope (__main__.Scanners.test_each_removing_cipher_location_detects_retained_envelope) ... ok
+test_frame_content_freshness_binding_negatives_refuse (__main__.Scanners.test_frame_content_freshness_binding_negatives_refuse) ... ok
+test_frozen_normalizer_replays_without_adjacent_imports (__main__.Scanners.test_frozen_normalizer_replays_without_adjacent_imports) ... ok
+test_fsst_escapes_unicode_long_external_and_corruptions (__main__.Scanners.test_fsst_escapes_unicode_long_external_and_corruptions) ... ok
+test_fsst_known_real_index_literal_and_manifest (__main__.Scanners.test_fsst_known_real_index_literal_and_manifest) ... ok
+test_g_s1_all_reachable_location_fixture_controls (__main__.Scanners.test_g_s1_all_reachable_location_fixture_controls) ... ok
+test_g_s2_blind_vocabulary_refuses_with_and_without_target (__main__.Scanners.test_g_s2_blind_vocabulary_refuses_with_and_without_target) ... ok
+test_g_s3_live_control_opens_erased_key_and_epoch_removed (__main__.Scanners.test_g_s3_live_control_opens_erased_key_and_epoch_removed) ... ok
+test_no_positive_control_is_refused_per_location (__main__.Scanners.test_no_positive_control_is_refused_per_location) ... ok
+test_obs_bundle_seal_recomputation (__main__.Scanners.test_obs_bundle_seal_recomputation) ... ok
+test_p_key_and_inventory_bindings_cannot_be_omitted (__main__.Scanners.test_p_key_and_inventory_bindings_cannot_be_omitted) ... ok
+test_plaintext_encoding_profiles_find_controls_and_leaks (__main__.Scanners.test_plaintext_encoding_profiles_find_controls_and_leaks) ... ok
+test_read_only_capture_unchanged_and_refuses_symlink_or_partial (__main__.Scanners.test_read_only_capture_unchanged_and_refuses_symlink_or_partial) ... ok
+test_unknown_native_encodings_and_unreachable_locations_refuse (__main__.Scanners.test_unknown_native_encodings_and_unreachable_locations_refuse) ... ok
+test_vocabulary_twin_only_in_codebook_does_not_qualify (__main__.Scanners.test_vocabulary_twin_only_in_codebook_does_not_qualify) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 25.158s
+
+OK

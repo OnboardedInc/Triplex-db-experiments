@@ -1,0 +1,23 @@
+baseline: PASS
+plaintext-start: FAIL
+plaintext-end: FAIL
+plaintext-page: FAIL
+keys-start: REFUSED
+keys-end: REFUSED
+keys-page: REFUSED
+blind-fsst: REFUSED
+unknown-d-undocumented-segment: REFUSED
+unknown-d-undocumented-wal: REFUSED
+unknown-jvm-node-heap-lru: REFUSED
+unknown-freed-vm-filesystem-blocks: REFUSED
+unknown-freed-host-apfs-blocks: REFUSED
+sqlite-overflow-plaintext: PASS
+sqlite-overflow-envelope: PASS
+plaintext-gzip: PASS
+plaintext-record-fragments: PASS
+physical-overflow-key: PASS
+new-wrapper-d-keys-heap: PASS
+new-wrapper-d-keys-toast: PASS
+new-wrapper-d-keys-wal: PASS
+stale-backup: FAIL
+{"output": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VER01S/attempt-01", "scenarioCount": 22, "files": 4036, "bytes": 24013409, "summarySha256": "379736885ca98f4dcec9b73ff9afb1adb2261cd6775cea7c4c63fbfadf78c731", "manifestSha256": "dc261650a838249549dc4f85aa0ddb16b9f2d27d8ab615b57ee094acd6f64988", "verdict": "FIX-FIRST"}

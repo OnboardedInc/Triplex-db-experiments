@@ -1,0 +1,6 @@
+envelope-start: FAIL
+envelope-end: FAIL
+envelope-page: FAIL
+new-wrapper-old-wal-UTF-8: FAIL
+new-wrapper-old-wal-UTF-16le: PASS
+envelope-gzip: PASS

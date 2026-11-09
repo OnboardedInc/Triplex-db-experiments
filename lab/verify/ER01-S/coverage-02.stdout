@@ -1,0 +1,10 @@
+envelope-start: FAIL
+envelope-end: FAIL
+envelope-page: FAIL
+new-wrapper-old-wal-UTF-8: FAIL
+new-wrapper-old-wal-UTF-16le: PASS
+envelope-gzip: PASS
+keys-gzip: PASS
+envelope-fragments: PASS
+keys-fragments: PASS
+{"output": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VER01S/coverage-02", "scenarioCount": 9, "files": 1570, "bytes": 9152959, "summarySha256": "417944ac3a2b63c43f5bc3e3b0d9684aac007cca53e63009dd9ad43dc9e4519e", "manifestSha256": "7a40cb81dcacf7e69a859cd28f25f38297f3182bf3ae477d7175df75db56b764"}
