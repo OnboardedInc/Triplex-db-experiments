@@ -57,6 +57,13 @@ export function sqlTransport() {
   const client: any = {
     query: async (sql: string, params: any[] = []) => {
       calls.push({ kind: "query", sql, params });
+      if (sql.includes("information_schema") && sql.includes("c.xt_type"))
+        return ["tx_meta", "tx_assertions"].flatMap((table_name) =>
+          db
+            .prepare(`PRAGMA table_info(${table_name})`)
+            .all()
+            .map((row: any) => ({ table_name, column_name: row.name, xt_type: "dynamic" })),
+        );
       if (sql.includes("information_schema.tables")) return [];
       try {
         return run(sql, params);

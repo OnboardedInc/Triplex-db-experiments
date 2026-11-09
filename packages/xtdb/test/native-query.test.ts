@@ -1,3 +1,4 @@
+import { recordCatalog } from "./fixtures/record-catalog.js";
 import { describe, expect, it } from "vitest";
 import { Cause, Effect, Exit } from "effect";
 import { integer } from "@triplex-build/triplex";
@@ -28,8 +29,11 @@ const fixture = (rows: Record<string, unknown>[] = [{ count: "922337203685477580
       _basis?: XtdbBasis,
       options?: XtdbQueryOptions,
     ) => {
+      if (sql.includes("information_schema")) return recordCatalog() as T[];
       calls.push({ sql, params, ...(options ? { options } : {}) });
-      return (sql.includes("tx_meta") ? [{ position: "9", stamp: "100250" }] : rows) as unknown as T[];
+      return (sql.includes("tx_meta")
+        ? [{ position: "9", stamp: "100250" }]
+        : rows) as unknown as T[];
     },
     submit: async () => {
       throw new Error("Native reads must not submit application mutations");

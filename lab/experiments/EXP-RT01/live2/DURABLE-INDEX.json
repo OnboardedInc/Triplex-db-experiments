@@ -1,0 +1,13 @@
+{
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live2",
+  "files": 839,
+  "bytes": 70393302,
+  "inventory": "ARTIFACTS.json",
+  "inventorySha256": "028c32da3b61e18867fbfebc2d000099f26c121d9608af71ebe4f23fe3f8446e",
+  "manifestSha256": "e1045fbb4fea4d883a53ffbd4e193f34e1e0d3fc33ee91f230f3cfc5f80ef286",
+  "retentionRunnerSha256": "688c3d2846a3e966046e90cf84afdca414be625c36cf971ae04a4d9d60f32ec6",
+  "semanticReceipt": "RESULT.json",
+  "G2": "BUILDER_GATE_PASS",
+  "G6": "FAIL_REGRESSION_STOPPED",
+  "independentReview": false
+}

@@ -775,7 +775,7 @@ export const makeXtdbStorageAdapter = (
     initialize: () =>
       Effect.tryPromise({
         try: async () => {
-          await readXtdbCut(client, scopeKey);
+          await readXtdbCut(client, scopeKey, undefined, undefined, { refreshCatalog: true });
           await client.submit([
             {
               sql: `CREATE TABLE tx_assertions (_id, scope_key, ${assertionColumns.join(", ")}, value_identity)`,

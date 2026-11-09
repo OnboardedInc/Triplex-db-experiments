@@ -1,3 +1,4 @@
+import { recordCatalog } from "./fixtures/record-catalog.js";
 import { it, expect } from "vitest";
 import { Effect } from "effect";
 import { TypeExpr } from "@triplex-build/triplex/config";
@@ -13,6 +14,7 @@ for (const near of [false, true])
     let queries = 0;
     const client = {
       query: async (query: string) => {
+        if (query.includes("information_schema")) return recordCatalog();
         queries++;
         if (!query.includes("tx_meta") && !query.startsWith("SELECT ?position"))
           throw new Error("Answer query before availability");

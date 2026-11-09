@@ -1,3 +1,4 @@
+import { recordCatalog } from "./fixtures/record-catalog.js";
 import { xtqlStatement } from "../src/native/Sources.js";
 import { appendFileSync } from "node:fs";
 import { triplesConformanceCases } from "@triplex-build/triplex-testkit";
@@ -14,7 +15,10 @@ import { makeXtdbQueryExecutor } from "../src/XtdbQueryExecutor.js";
 import { readXtdbCut } from "../src/RecordCut.js";
 
 it("refuses an XTDB legacy scope before decided writes", async () => {
-  const client = { query: async () => [{ position: 1 }] } as unknown as XtdbClient;
+  const client = {
+    query: async (sql: string) =>
+      sql.includes("information_schema") ? recordCatalog(false) : [{ position: 1 }],
+  } as unknown as XtdbClient;
   await expect(readXtdbCut(client, "legacy")).rejects.toMatchObject({ _tag: "MigrationError" });
 });
 describe.skipIf(process.env["XTDB_INTEGRATION"] !== "1")("EXP-RT01 XTDB A0", () => {

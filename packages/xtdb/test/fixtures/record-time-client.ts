@@ -1,3 +1,4 @@
+import { recordCatalog } from "./record-catalog.js";
 import {
   XtdbTransactionRejected,
   type XtdbClient,
@@ -26,6 +27,8 @@ export const makeRecordTimeClient = (): XtdbClient => {
       params: readonly unknown[] = [],
     ) => {
       const scope = params[0];
+      if (sql.includes("information_schema"))
+        return (tables.has("tx_meta") ? recordCatalog() : []) as T[];
       if (sql.includes("FROM tx_meta")) return values("tx_meta", scope) as T[];
       if (sql.includes("FROM tx_attempts"))
         return values("tx_attempts", scope).filter(

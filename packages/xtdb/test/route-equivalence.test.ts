@@ -1,3 +1,4 @@
+import { recordCatalog } from "./fixtures/record-catalog.js";
 import { stampOf } from "@triplex-build/triplex";
 import { Effect } from "effect";
 import { expect, it } from "vitest";
@@ -32,6 +33,7 @@ const fixture = (guardFuture = true, pending = false): RouteFixture => {
       sql: string,
       params: readonly unknown[] = [],
     ) => {
+      if (sql.includes("information_schema")) return recordCatalog() as T[];
       if (sql.includes("FROM tx_meta"))
         return [
           { position: routeHead(history), stamp: stampOf(routeWatermark(history)) },

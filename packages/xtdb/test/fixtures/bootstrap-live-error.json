@@ -1,0 +1,6 @@
+{
+  "source": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live-window/g2-attempt1/progress.jsonl",
+  "sha256": "3adc22489cd6bdd22353034cac8304c3d60aeb8af660bc3d69b053041f9f098d",
+  "query": "SELECT position, stamp FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?",
+  "error": "PostgresError: Errors planning SQL statement:\n  - Table not found: tx_meta\n  - Column not found: scope_key\n  - Column not found: position\n  - Column not found: stamp"
+}

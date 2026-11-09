@@ -1,3 +1,4 @@
+import { readRecordCatalog } from "./RecordCatalog.js";
 import { sourceCutQuery } from "./native/Sources.js";
 import {
   gateRecordBasis,
@@ -13,36 +14,61 @@ export const readXtdbCut = async (
   scope: string,
   signal?: AbortSignal,
   language?: "xtql" | "xtdb-sql",
+  options: { readonly refreshCatalog?: boolean } = {},
 ): Promise<RecordCut> => {
-  // [EXP-RT01] Why: an older node may not have a stamp column even for a fresh scope. Rejected: creating schema before checking legacy data (would write before refusal).
-  let rows: Record<string, unknown>[];
-  try {
-    rows = await client.query(
-      language
-        ? sourceCutQuery(language).query
-        : "SELECT position, stamp FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?",
-      [scope],
-      undefined,
-      {
-        ...(signal ? { signal } : {}),
-        timeoutMs: 30000,
-        ...(language ? { parameterSyntax: "postgresql" as const } : {}),
-      },
-    );
-  } catch (error) {
-    if (!(error instanceof Error) || !error.message.includes("Column not found: stamp"))
-      throw error;
-    rows = await client.query(
-      "SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?",
-      [scope],
-      undefined,
-      { ...(signal ? { signal } : {}), timeoutMs: 30000 },
-    );
-  }
+  const catalog = await readRecordCatalog(client, signal, options.refreshCatalog);
+  const meta = catalog.get("tx_meta");
+  const migration = () =>
+    new MigrationError({
+      version: 2,
+      name: "record-stamp",
+      message: "Scope predates decided record stamps; re-seed",
+    });
+  const emptyCut = async (): Promise<RecordCut> => {
+    // [EXP-RT01] Why: only a fresh inventory can certify physical absence; the positive schema cache is solely a query-shape optimization. Rejected: reusing cached absence after a later first insert.
+    const assertions = (await readRecordCatalog(client, signal, true)).get("tx_assertions");
+    if (assertions) {
+      // [EXP-RT01] Why: missing metadata must not bless orphaned legacy assertions. Rejected: calling every missing-meta scope fresh without reading its existing data.
+      const scoped = assertions.has("scope_key");
+      const counts = await client.query(
+        `SELECT COUNT(*) AS n FROM tx_assertions FOR ALL VALID_TIME${scoped ? " WHERE scope_key = ?" : ""}`,
+        scoped ? [scope] : [],
+        undefined,
+        { ...(signal ? { signal } : {}), timeoutMs: 30000 },
+      );
+      const count = counts[0]?.["n"];
+      if (
+        counts.length !== 1 ||
+        (typeof count !== "number" && typeof count !== "string") ||
+        !Number.isSafeInteger(Number(count)) ||
+        Number(count) < 0
+      )
+        throw new TypeError("Invalid legacy assertion count");
+      if (Number(count) > 0) throw migration();
+    }
+    return { position: 0, recordedAt: 0 };
+  };
+  if (!meta) return emptyCut();
+  if (!meta.has("scope_key") || !meta.has("position")) throw migration();
+  const stamped = meta.has("stamp");
+  const rows = await client.query(
+    stamped && language
+      ? sourceCutQuery(language).query
+      : `SELECT position${stamped ? ", stamp" : ""} FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?`,
+    [scope],
+    undefined,
+    {
+      ...(signal ? { signal } : {}),
+      timeoutMs: 30000,
+      ...(stamped && language ? { parameterSyntax: "postgresql" as const } : {}),
+    },
+  );
+  if (!rows.length) return emptyCut();
+  if (!stamped) throw migration();
   const position = Number(rows[0]?.["position"] ?? 0);
   if (!Number.isSafeInteger(position) || position < 0)
     throw new TypeError("Unsafe source position");
-  if (position && rows[0]?.["stamp"] == null)
+  if (rows[0]?.["stamp"] == null)
     throw new MigrationError({
       version: 2,
       name: "record-stamp",

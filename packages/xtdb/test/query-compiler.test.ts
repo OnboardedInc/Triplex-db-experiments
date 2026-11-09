@@ -1,3 +1,4 @@
+import { recordCatalog } from "./fixtures/record-catalog.js";
 import { describe, expect, it } from "vitest";
 import { Cause, Effect, Exit } from "effect";
 import { makeXtdbQueryExecutor } from "../src/XtdbQueryExecutor.js";
@@ -61,7 +62,12 @@ describe("XTDB compiler", () => {
   });
   it("returns a recoverable typed refusal from the public executor", async () => {
     const client = {
-      query: async (sql: string) => sql.includes("tx_meta") ? [{ position: 1, stamp: 1000 }] : [{ value_type: "integer" }],
+      query: async (sql: string) =>
+        sql.includes("information_schema")
+          ? recordCatalog()
+          : sql.includes("tx_meta")
+            ? [{ position: 1, stamp: 1000 }]
+            : [{ value_type: "integer" }],
       submit: async () => {
         throw new Error("unexpected submit");
       },
@@ -138,14 +144,24 @@ describe("XTDB compiler", () => {
     );
     expect(result.sql).not.toContain("RECURSIVE");
     expect(result.sql).not.toContain("tx_query_relations");
-    expect(result.sql).toMatch(/"ancestor" AS \(SELECT p\[1\] AS arg1, p\[2\] AS arg2, 0 AS depth FROM UNNEST\(\$\d+\) AS u\(p\)\)/);
+    expect(result.sql).toMatch(
+      /"ancestor" AS \(SELECT p\[1\] AS arg1, p\[2\] AS arg2, 0 AS depth FROM UNNEST\(\$\d+\) AS u\(p\)\)/,
+    );
     expect(result.params).toContainEqual([
       ["a", "b"],
       ["a", "c"],
     ]);
     expect(result.params).not.toContain(100);
     expect(() =>
-      compileXtdb({ find: ["?y"], where: [["ancestor", "a", "?y"]], rules: [{ name: "ancestor", body: [["?x", ":parent", "?y"]] }] }, "s", {}),
+      compileXtdb(
+        {
+          find: ["?y"],
+          where: [["ancestor", "a", "?y"]],
+          rules: [{ name: "ancestor", body: [["?x", ":parent", "?y"]] }],
+        },
+        "s",
+        {},
+      ),
     ).toThrow(/evaluated rule relations/);
   });
 

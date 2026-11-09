@@ -1,0 +1,94 @@
+{
+  "schema": "rt01-live-round2/1",
+  "sealedAt": "2026-11-09T07:43:56.522Z",
+  "parentHead": "d7f8def2902faea0a0da63da27e5d4f048202f98",
+  "node": "v22.23.2",
+  "productTests": 1106,
+  "offlineSkipped": 116,
+  "diagnostic": {
+    "grantsAcceptance": false,
+    "orderedFailures": 6
+  },
+  "G2": {
+    "builderGate": "PASS",
+    "caseAssertions": 197,
+    "sharedCases": 88,
+    "availableRoutes": 42,
+    "schedules": 24,
+    "independentReview": false
+  },
+  "G6": {
+    "verdict": "FAIL_REGRESSION",
+    "firstFailure": {
+      "stage": "AB:0:a0:10",
+      "activity": "scan:rt01-g6:h0:a0:10:B",
+      "error": "AssertionError [ERR_ASSERTION]: G6 regression AB:0:a0:10 p50: ratio 1.2924997122461452 > 1.0556242643730596",
+      "stack": "AssertionError [ERR_ASSERTION]: G6 regression AB:0:a0:10 p50: ratio 1.2924997122461452 > 1.0556242643730596\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/lab/experiments/EXP-RT01/live2/g6.mjs:390:18\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)"
+    },
+    "point": {
+      "A": {
+        "n": 150,
+        "p50": 70.03383300000132,
+        "p99": 131.17566599999554
+      },
+      "B": {
+        "n": 150,
+        "p50": 90.5187089999963,
+        "p99": 159.36870900000213
+      },
+      "ratios": {
+        "p50": 1.2924997122461452,
+        "p99": 1.214925861325587
+      },
+      "tolerance": {
+        "p50": 0.05562426437305956,
+        "p99": 0.13535303138974264
+      }
+    },
+    "laterPoints": "NOT_RUN_STOP_FIRST_FAILURE",
+    "history10k": false
+  },
+  "engine": {
+    "id": "7e1ff4f2d76824a45d52ca464939e1f4c563891b0c373d4b8d3e3b55075813a6",
+    "image": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "memory": 3758096384,
+    "cpu": 2000000000
+  },
+  "cleanup": "VERIFIED_OWN_RESOURCES_REMOVED",
+  "stalePin": {
+    "path": "packages/testkit/src/index.ts",
+    "mainSha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+    "branchSha256": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7",
+    "forkSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+    "classification": "RT01-change",
+    "pins": [
+      {
+        "path": "packages/testkit/src/index.ts",
+        "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+        "location": "/pinChanges0313/testkit"
+      },
+      {
+        "path": "packages/testkit/src/index.ts",
+        "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+        "location": "/oracleFilesPinned/O-TESTKIT/0"
+      },
+      {
+        "path": "packages/testkit/src/index.ts",
+        "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+        "location": "/caseSets/CS-U44/pinnedSourceFiles/0"
+      },
+      {
+        "path": "packages/testkit/src/index.ts",
+        "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+        "location": "/caseSourcesPinned/CS-U44/0"
+      }
+    ]
+  },
+  "sealSha256": "b6ed91e5dadcae706e825073a10865b947a93c475d1d4ae8a406dac746720dc8",
+  "unit": {
+    "testSha256": "1ac324af3decd7a8f53c294aae561d12c00b47339205725fa1e4fc8707f67699",
+    "counterSha256": "fa090fb43110754d7bef05af5bcb84c47c65798592eb074e47d80e24f7eb09e6",
+    "logSha256": "06c1263fc5f164494c8300de8dd192e50a7449911cf631ff5142bc4f474f9690"
+  },
+  "livePromotion": false
+}
