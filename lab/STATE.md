@@ -401,3 +401,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   the reviewer's reference but were not checked against a primary header. Orchestrator decisions for round 12 (Sonnet): adopt a dump only
   on a successful compile; one complete compiled section, every call parsed or UNPARSED-CALL, every helper on an explicit allow-list;
   helper ids derived at W0 from the running kernel's BTF (/sys/kernel/btf/vmlinux, enum bpf_func_id), no header download.
+- 2026-11-09 HS01 round 2 review FIX-FIRST (CX-VHS01, verify 3d0d3a6a): the oversized-frame stall is fixed and 217.06 / 308.09 B/fact,
+  G6, G7, 80-stop recovery and evaluator 108 are confirmed; one P2 regression: a bare-number purgeFrames(2) sets an infinite byte floor
+  and purges nothing. HS01 round 3 (Sonnet): the one-line fix, entity dictionary stored once, integer binds (exact REAL round-trip kept),
+  and R47's journal record behind an option OFF by default (Q107-S is Sam's), measured on W0 and ULID ids with the option off and on.
+  P5B round 3 keeps building on a9ebe759 and picks up the fix by merge later.
