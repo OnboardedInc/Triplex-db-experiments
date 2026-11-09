@@ -210,6 +210,7 @@ bash lab/experiments/EXP-DX1/stack/down.sh tx2-dxh1-example
 
 The wrapper takes the lab heavy token and measurement lock, limits each hold to under 15 minutes,
 and writes to durable evidence under `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H1/runs/`.
+Use `run.sh both` to run public then reach consecutively under one shared 14m30s deadline.
 It defaults to 400 subjects and 20-second development levels; additional driver flags override these.
 Use a fresh stack prefix for a fresh database. Volumes are retained unless `down.sh --volumes` is requested.
 
