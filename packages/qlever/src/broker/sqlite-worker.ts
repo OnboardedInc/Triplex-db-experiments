@@ -204,14 +204,21 @@ const sn=x=>"CASE WHEN typeof("+x+")='integer' AND "+x+" BETWEEN -90071992547409
 const safeText=x=>"CASE WHEN typeof("+x+")='blob' THEN NULL ELSE "+x+" END";
 const h1Cols='o,e,id,a,pos,t,v,vf,vto,c,y,sv,x';
 const h1Union=sel=>['facts','journal','history'].map(t=>'SELECT '+h1Cols+' FROM '+t+' WHERE '+sel+(t==='history'?' AND rpos>@b':'')+' AND pos<=@b').join(' UNION ALL ');
-const h1Row="json_array(typeof(f.id)='blob',CASE WHEN typeof(f.id)='blob' THEN hex(f.id) ELSE f.id END,"+safeText('e.name')+","+safeText('a.name')+",f.t,CASE WHEN f.t IN (1,3) THEN "+sn('f.v')+" WHEN f.t=5 THEN "+safeText('ref.name')+" WHEN f.t=7 THEN NULL ELSE f.v END,"+sn('tx.at')+",f.pos,"+sn('(tx.at+f.vf)')+",CASE WHEN f.vto IS NULL THEN NULL ELSE "+sn('f.vto')+" END,"+safeText('c.s')+","+safeText('y.s')+","+sn('coalesce(f.sv,1)')+","+safeText('te.name')+",json(CASE WHEN f.x IS NOT NULL THEN CAST(f.x AS TEXT) WHEN f.t=7 OR (f.t IN (1,3) AND typeof(f.v) NOT IN ('real','integer')) THEN qh_fallback(f.id) ELSE NULL END))";
-const h1Joins=' f JOIN ents e ON e.eid=f.e JOIN attrs a ON a.aid=f.a JOIN txs tx ON tx.pos=f.pos JOIN ents te ON te.eid=tx.tx LEFT JOIN strs c ON c.sid=f.c LEFT JOIN strs y ON y.sid=f.y LEFT JOIN ents ref ON f.t=5 AND ref.eid=f.v';
-const h1Rows=sel=>q('SELECT json_group_array('+h1Row+') FROM ('+h1Union(sel)+')'+h1Joins).pluck();
+// [EXP-QH1-R3] Why (step 4): rows carry dictionary ids; names are resolved on the main thread from a cache and fetched by the names op
+// only on a miss, so SQL does no per-row name joins (7 per row) and the text carries ints instead of repeated names. Timestamps cross as
+// the transaction position and the offset (main adds the transaction instant to it, the same IEEE addition the row route performs).
+// Rejected: per-row name joins (round 2: 183 us of joins plus about 100 us of text and parse per pull).
+const h1Row="json_array(typeof(f.id)='blob',CASE WHEN typeof(f.id)='blob' THEN hex(f.id) ELSE f.id END,f.e,f.a,f.t,CASE WHEN f.t IN (1,3) THEN "+sn('f.v')+" WHEN f.t=7 THEN NULL ELSE f.v END,f.pos,"+sn('f.vf')+",CASE WHEN f.vto IS NULL THEN NULL ELSE "+sn('f.vto')+" END,f.c,f.y,"+sn('coalesce(f.sv,1)')+",json(CASE WHEN f.x IS NOT NULL THEN CAST(f.x AS TEXT) WHEN f.t=7 OR (f.t IN (1,3) AND typeof(f.v) NOT IN ('real','integer')) THEN qh_fallback(f.id) ELSE NULL END))";
+const h1Rows=sel=>q('SELECT json_group_array('+h1Row+') FROM ('+h1Union(sel)+') f').pluck();
 // All refs are followed as a superset, even expired refs: valid-time filtering stays in the adapter. Refs from verbatim rows (x) are found by JS.
 const h1Refs=(sel,skip)=>q('SELECT DISTINCT f.v,f.x FROM ('+h1Union(sel)+') f WHERE (f.t=5 AND f.x IS NULL'+skip+') OR f.x IS NOT NULL').raw();
 // Dictionary rows are immutable once committed and a reader sees only committed rows, so positive name lookups never go stale.
 // Misses are never cached (a later commit may add the name). The maps are bounded by clearing.
 const entIds=new Map(),entNames=new Map();
+// [EXP-QH1-R3] Why: the same (writer epoch, schema_version) key the main-thread dictionary uses; when it changes, every name cache here
+// (including HS01's id-to-name map) is dropped before use, because a rebuilt dictionary can reuse ids. Rejected: caches that outlive a key change.
+let cacheKey='';
+const syncCaches=m=>{const key=m.epoch+':'+q('PRAGMA schema_version').pluck().get();if(key!==cacheKey){cacheKey=key;entIds.clear();entNames.clear();names.clear();}return key;};
 const entId=s=>{let x=entIds.get(s);if(x===undefined){x=q('SELECT eid FROM ents WHERE name=?').pluck().get(textKey(s));if(x===undefined)return undefined;if(entIds.size>=200000)entIds.clear();entIds.set(s,x);}return x;};
 const entName=id=>{let x=entNames.get(id);if(x===undefined){x=name('ents',id);if(entNames.size>=200000)entNames.clear();entNames.set(id,x);}return x;};
 const wholePull = a => {
@@ -220,6 +227,7 @@ const wholePull = a => {
  if(!Number.isSafeInteger(b)||b<0)throw Error('Invalid basis');
  if(b<m.h)throw Error('H1_SNAPSHOT_EXPIRED');
  if(b>m.position)throw Error('H1_BASIS_NOT_AVAILABLE');
+ const schemaKey=syncCaches(m);
  const parts=[],seen=new Set(),owners=new Set(),ownerNames=[];let frontier=a.roots,hops=0,statements=0;
  const ownerRows=h1Rows('o=@o'),entityRows=h1Rows('o=@o AND e=@e');
  const ownerRefs=h1Refs('o=@o'," AND f.v NOT IN (SELECT e FROM facts WHERE o=@o)"),entityRefs=h1Refs('o=@o AND e=@e','');
@@ -251,7 +259,15 @@ const wholePull = a => {
   roots=false;
   frontier=next.filter(e=>!seen.has(e));
  }
- return {snapshot:publicMarker(m),basis:b,entities:[...seen],owners:ownerNames,parts,counters:{hops,rows:0,bytes:a.bytes?parts.reduce((n,p)=>n+Buffer.byteLength(p),0):0,statements}};
+ return {snapshot:publicMarker(m),schema:Number(schemaKey.slice(schemaKey.indexOf(':')+1)),basis:b,entities:[...seen],owners:ownerNames,parts,counters:{hops,rows:0,bytes:a.bytes?parts.reduce((n,p)=>n+Buffer.byteLength(p),0):0,statements}};
+};
+// Dictionary entries are immutable once committed, so this read needs no snapshot; names that are blobs (lone surrogates) cross as NULL
+// and only occur in rows that carry their own verbatim envelope.
+const dictNames=a=>{
+ syncCaches(marker());
+ const list=(t,ids)=>ids.length?q('SELECT json_group_array(json_array('+dictId(t)+','+safeText(dictCol(t))+')) FROM '+t+' WHERE '+dictId(t)+' IN (SELECT value FROM json_each(?))').pluck().get(JSON.stringify(ids)):'[]';
+ return {ents:list('ents',a.ents),attrs:list('attrs',a.attrs),strs:list('strs',a.strs),
+  txs:a.txs.length?q("SELECT json_group_array(json_array(tx.pos,"+sn('tx.at')+","+safeText('te.name')+")) FROM txs tx JOIN ents te ON te.eid=tx.tx WHERE tx.pos IN (SELECT value FROM json_each(?))").pluck().get(JSON.stringify(a.txs)):'[]'};
 };
 const handle = (op,a) => {
  if(op==='close'){clearInterval(timer);clearInterval(passiveTimer);db?.close();lock?.close();return;}
@@ -322,6 +338,7 @@ const handle = (op,a) => {
   return {h,removed:0};
  }).immediate();
  if(op==='wholePull')return wholePull(a);
+ if(op==='names')return dictNames(a);
  if(op==='pull')return pull(a);
  throw Error('Unknown SQLite request '+op);
 };

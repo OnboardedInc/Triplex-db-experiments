@@ -19,7 +19,7 @@ import {
 } from "@triplex-build/triplex-testkit/route";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { append, row, fresh } from "./helpers.js";
-import { h1Rows, h1TupleId, wholePullTuples } from "../../../packages/qlever/src/broker/h1.js";
+import { h1Rows, h1TupleId } from "../../../packages/qlever/src/broker/h1.js";
 it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat", async () => {
   const broker = await HostBroker.open({ dir: fresh(), scopeKey: "qh1-rq01", minFreeBytes: 0 });
   const log = (broker as any).log;
@@ -184,12 +184,11 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
               r.entityId === undefined
                 ? [...new Set([...latest.values()].map((r) => r.entity_id))]
                 : [r.entityId];
-            const whole = await log.wholePull(b, roots),
-              tuples = wholePullTuples(whole);
+            const { tuples, dictionary } = await log.h1Pull(b, roots);
             const triples = [
-              ...h1Rows(tuples, { validAt: r.basis.validAt ?? history.now }).values(),
+              ...h1Rows(tuples, { validAt: r.basis.validAt ?? history.now }, dictionary).values(),
             ].flat();
-            const positions = new Map(tuples.map((t: any) => [h1TupleId(t), t[7]]));
+            const positions = new Map(tuples.map((t: any) => [h1TupleId(t), t[6]]));
             rows = triples.map((t) => {
               const columns: any = {
                 value_string: null,

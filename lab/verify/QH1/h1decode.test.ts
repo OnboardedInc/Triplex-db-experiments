@@ -2,6 +2,7 @@
 // exactly the answers of the code it replaced. Rejected: trusting the 100,000-pull digest alone (W0 ids are all uppercase and tied).
 import { it, expect } from "vitest";
 import {
+  H1Dictionary,
   h1Entity,
   h1IdFromHex,
   h1IdFromHexReference,
@@ -33,6 +34,16 @@ it("fast base32 id conversion equals the reference for edge and 300,000 random i
   expect(h1IdFromHex("0A0B")).toBe(h1IdFromHexReference("0A0B"));
 });
 
+// Tuple layout: [blob, id, entity, attribute, kind, value, position, validFromOffset, validTo, creator, entityType, schemaVersion, verbatim].
+// The dictionary maps the position to the record time, so a tuple's record time is chosen through its position.
+const dict = new H1Dictionary();
+dict.ents.set(10, "e");
+dict.attrs[3] = ":a";
+const positionFor = (at: number | string) => {
+  const pos = 1000 + dict.txs.size;
+  dict.txs.set(pos, { at: Number(at), tx: "tx" });
+  return pos;
+};
 const tuple = (
   id: string,
   blob: boolean,
@@ -42,18 +53,16 @@ const tuple = (
   const t: any[] = [
     blob ? 1 : 0,
     id,
-    "e",
-    ":a",
+    10,
+    3,
     0,
     "v",
-    recordedAt,
-    1,
+    positionFor(recordedAt),
     0,
     null,
     null,
     null,
     1,
-    "tx",
     null,
   ];
   for (const [k, v] of Object.entries(extra)) t[Number(k)] = v;
@@ -61,7 +70,7 @@ const tuple = (
 };
 const basis = { validAt: 10 };
 const reference = (tuples: any[]) =>
-  sortTriples(tuples.map((t) => h1Decode(t, basis)!).filter(Boolean));
+  sortTriples(tuples.map((t) => h1Decode(t, basis, dict)!).filter(Boolean));
 
 it("the ordered fast path returns the row route's order, including ties, descending record times, lowercase and punctuation ids", () => {
   const cases: any[][] = [
@@ -76,12 +85,6 @@ it("the ordered fast path returns the row route's order, including ties, descend
     [tuple("a", false, 5), tuple("B", false, 5)],
     // punctuation
     [tuple("A_1", false, 5), tuple("A1", false, 5), tuple("A-1", false, 5)],
-    // REAL record time as text
-    [
-      tuple("A", false, "5.5"),
-      tuple("B", false, 5.25),
-      tuple("C", false, "5.25"),
-    ],
     // blob ids converted from hex
     [
       tuple("0142127424000000000000000000000F", true, 5),
@@ -98,7 +101,7 @@ it("the ordered fast path returns the row route's order, including ties, descend
     ],
   ];
   for (const tuples of cases)
-    expect(h1Entity(tuples, basis).map((t) => t.id)).toEqual(
+    expect(h1Entity(tuples, basis, dict).map((t) => t.id)).toEqual(
       reference(tuples).map((t) => t.id),
     );
   // random shuffles over a mixed alphabet
@@ -113,23 +116,30 @@ it("the ordered fast path returns the row route's order, including ties, descend
       for (let j = 0; j < len; j++) id += alphabet[next() % alphabet.length];
       return tuple(id + i, false, next() % 3);
     });
-    expect(h1Entity(tuples, basis).map((t) => t.id)).toEqual(
+    expect(h1Entity(tuples, basis, dict).map((t) => t.id)).toEqual(
       reference(tuples).map((t) => t.id),
     );
   }
 });
 
 it("integer and REAL-text numeric fields decode to the same numbers", () => {
-  const a = h1Decode(tuple("A", false, 5, { 8: 7, 9: 11 }), basis)!;
-  const b = h1Decode(tuple("A", false, "5.0", { 8: "7.0", 9: "11.0" }), basis)!;
+  const a = h1Decode(tuple("A", false, 5, { 7: 2, 8: 11 }), basis, dict)!;
+  const b = h1Decode(
+    tuple("A", false, "5.0", { 7: "2.0", 8: "11.0" }),
+    basis,
+    dict,
+  )!;
   expect([a.recordedAt, a.validFrom]).toEqual([b.recordedAt, b.validFrom]);
-  expect(h1Decode(tuple("A", false, 5, { 8: 11 }), basis)).toBeUndefined();
+  expect(a.validFrom).toBe(7);
+  expect(h1Decode(tuple("A", false, 5, { 7: 6 }), basis, dict)).toBeUndefined();
   expect(
-    h1Decode(tuple("A", false, 5, { 8: 7, 9: 10 }), basis),
+    h1Decode(tuple("A", false, 5, { 7: 2, 8: 7 }), basis, dict),
   ).toBeUndefined();
   const real = h1Decode(
-    tuple("A", false, "1000.0000000000001", { 8: "1000.0000000000001" }),
+    tuple("A", false, "1000.0000000000001", { 7: "0.25" }),
     { validAt: 2000 },
+    dict,
   )!;
   expect(real.recordedAt).toBe(1000.0000000000001);
+  expect(real.validFrom).toBe(1000.0000000000001 + 0.25);
 });

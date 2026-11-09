@@ -11,7 +11,9 @@ import {
 } from "@triplex-build/triplex/runtime";
 
 export interface WholePull {
-  readonly snapshot: { readonly position: number; readonly h: number };
+  readonly snapshot: { readonly position: number; readonly h: number; readonly epoch: number };
+  /** SQLite schema_version of the reader connection; part of the dictionary cache key. */
+  readonly schema: number;
   readonly basis: number;
   /** Entities the worker visited (they may have no rows at the cut). */
   readonly entities: readonly string[];
@@ -103,9 +105,93 @@ const types = ["string", "number", "boolean", "datetime", "json", "ref", "intege
 // [EXP-QH1-R3] Why: SQL emits integer timestamps and integer values as JSON numbers and only REAL as exact %!.17g text, so the
 // common case needs no Number() call. Rejected: Number() on every field (about 39 us per pull for values that are already numbers).
 const num = (x: any): number => (typeof x === "number" ? x : Number(x));
+
+/** Names for dictionary ids, as the worker's `names` op returns them (JSON texts of [id, name] pairs; blob names are null). */
+export interface NamesRequest {
+  readonly ents: readonly number[];
+  readonly attrs: readonly number[];
+  readonly strs: readonly number[];
+  readonly txs: readonly number[];
+}
+export interface NamesAnswer {
+  readonly ents: string;
+  readonly attrs: string;
+  readonly strs: string;
+  readonly txs: string;
+}
+export class H1DictionaryStale extends Error {
+  readonly reason = "h1-dictionary-stale" as const;
+}
+/**
+ * [EXP-QH1-R3] Why: the main thread resolves dictionary ids to names from this cache and asks a reader only for misses.
+ * Dictionary rows are immutable once committed and a reader sees committed rows only, so a positive entry never goes stale while the
+ * store is the same. The cache is therefore owned by one HostLog (one store, one writer epoch) and keyed by (writer epoch, SQLite
+ * schema_version) taken from every answer: a different key drops everything before any id of that answer is resolved, as does growth
+ * past `limit` entries and an explicit `reset()`. Rejected: a process-global cache (two stores would alias ids), and trusting entries
+ * across a key change (a rebuilt dictionary can reuse ids for other names).
+ */
+export class H1Dictionary {
+  key = "";
+  /** Number of times the cache was dropped (key change, growth bound or explicit reset). */
+  generation = 0;
+  readonly ents = new Map<number, string | null>();
+  readonly attrs: (string | null | undefined)[] = [];
+  readonly strs: (string | null | undefined)[] = [];
+  readonly txs = new Map<number, { readonly at: number; readonly tx: string | null }>();
+  constructor(readonly limit = 400_000) {}
+  reset(key = "") {
+    this.key = key;
+    this.generation++;
+    this.ents.clear();
+    this.attrs.length = 0;
+    this.strs.length = 0;
+    this.txs.clear();
+  }
+  get size() {
+    return this.ents.size + this.txs.size + this.attrs.length + this.strs.length;
+  }
+  /** Ids the tuples need that the cache lacks. Rows with a verbatim envelope carry their own names and need none. */
+  missing(tuples: readonly H1Tuple[]): NamesRequest | undefined {
+    let ents: Set<number> | undefined, attrs: Set<number> | undefined, strs: Set<number> | undefined, txs: Set<number> | undefined;
+    for (const t of tuples) {
+      if (t[12]) continue;
+      if (!this.ents.has(t[2])) (ents ??= new Set()).add(t[2]);
+      if (this.attrs[t[3]] === undefined) (attrs ??= new Set()).add(t[3]);
+      if (t[4] === 5 && !this.ents.has(t[5])) (ents ??= new Set()).add(t[5]);
+      if (t[9] !== null && this.strs[t[9]] === undefined) (strs ??= new Set()).add(t[9]);
+      if (t[10] !== null && this.strs[t[10]] === undefined) (strs ??= new Set()).add(t[10]);
+      if (!this.txs.has(t[6])) (txs ??= new Set()).add(t[6]);
+    }
+    if (!ents && !attrs && !strs && !txs) return undefined;
+    return { ents: [...(ents ?? [])], attrs: [...(attrs ?? [])], strs: [...(strs ?? [])], txs: [...(txs ?? [])] };
+  }
+  apply(answer: NamesAnswer) {
+    for (const [id, name] of JSON.parse(answer.ents) as [number, string | null][]) this.ents.set(id, name);
+    for (const [id, name] of JSON.parse(answer.attrs) as [number, string | null][]) this.attrs[id] = name;
+    for (const [id, name] of JSON.parse(answer.strs) as [number, string | null][]) this.strs[id] = name;
+    for (const [pos, at, tx] of JSON.parse(answer.txs) as [number, number | string, string | null][])
+      this.txs.set(pos, { at: num(at), tx });
+  }
+}
+/** Make sure `dict` can name every id in `tuples`: drop on a key change, fetch misses, repeat until none (a concurrent drop re-misses). */
+export const resolveDictionary = async (
+  dict: H1Dictionary,
+  tuples: readonly H1Tuple[],
+  key: string,
+  fetchNames: (request: NamesRequest) => Promise<NamesAnswer>,
+): Promise<void> => {
+  if (dict.key !== key || dict.size > dict.limit) dict.reset(key);
+  for (let round = 0; ; round++) {
+    const request = dict.missing(tuples);
+    if (request === undefined) return;
+    if (round >= 3) throw new H1DictionaryStale("H1 dictionary did not converge");
+    dict.apply(await fetchNames(request));
+  }
+};
+
 /** One tuple to one Triple, or undefined when it is not visible at `basis.validAt`. Values pass the read-side domain check. */
-export const h1Decode = (t: H1Tuple, basis: ResolvedTemporalBasis): Triple | undefined => {
-  const fallback = t[14];
+export const h1Decode = (t: H1Tuple, basis: ResolvedTemporalBasis, dict: H1Dictionary): Triple | undefined => {
+  const fallback = t[12];
   if (fallback) {
     const row = fallback.row as TripleRow;
     for (const [key, tag] of fallback.special)
@@ -128,42 +214,55 @@ export const h1Decode = (t: H1Tuple, basis: ResolvedTemporalBasis): Triple | und
       retractTxId: Option.none(),
     } as Triple;
   }
-  const validFrom = num(t[8]);
-  const rawTo = t[9];
+  const tx = dict.txs.get(t[6]);
+  const entityId = dict.ents.get(t[2]);
+  const attribute = dict.attrs[t[3]];
+  if (tx === undefined || entityId == null || attribute == null)
+    throw new H1DictionaryStale("H1 dictionary entry missing");
+  const recordedAt = tx.at;
+  const validFrom = recordedAt + num(t[7]);
+  const rawTo = t[8];
   if (validFrom > basis.validAt || (rawTo !== null && num(rawTo) <= basis.validAt)) return undefined;
   const kind = t[4];
   const type = types[kind] ?? (kind === 8 ? "number" : "datetime");
-  const payload =
-    kind === 8
-      ? t[7]
-      : kind === 9
-        ? num(t[6])
-        : kind === 1 || kind === 3
-          ? num(t[5])
-          : kind === 2
-            ? t[5] === 1
-              ? true
-              : t[5] === 0
-                ? false
-                : undefined
-            : kind === 4
-              ? JSON.parse(t[5])
-              : t[5];
-  const value = decodedPrimitiveValue(type, payload, storedValueDomain(ValueDomains.qlever, t[3]));
-  const schemaVersion = num(t[12]);
+  let payload: unknown;
+  if (kind === 5) {
+    payload = dict.ents.get(t[5]);
+    if (payload == null) throw new H1DictionaryStale("H1 dictionary entry missing");
+  } else
+    payload =
+      kind === 8
+        ? t[6]
+        : kind === 9
+          ? recordedAt
+          : kind === 1 || kind === 3
+            ? num(t[5])
+            : kind === 2
+              ? t[5] === 1
+                ? true
+                : t[5] === 0
+                  ? false
+                  : undefined
+              : kind === 4
+                ? JSON.parse(t[5])
+                : t[5];
+  const value = decodedPrimitiveValue(type, payload, storedValueDomain(ValueDomains.qlever, attribute));
+  const createdBy = t[9] === null ? null : dict.strs[t[9]];
+  const entityType = t[10] === null ? null : dict.strs[t[10]];
+  const schemaVersion = num(t[11]);
   return {
     id: t[0] ? idFromHex(t[1]) : t[1],
-    entityId: t[2],
-    attribute: t[3],
+    entityId,
+    attribute,
     value,
-    recordedAt: num(t[6]),
+    recordedAt,
     validFrom,
     validTo: rawTo === null ? Option.none() : Option.some(num(rawTo)),
-    createdBy: t[10] ? Option.some(t[10]) : Option.none(),
+    createdBy: createdBy ? Option.some(createdBy) : Option.none(),
     retractedAt: Option.none(),
-    entityType: t[11] ? Option.some(t[11]) : Option.none(),
+    entityType: entityType ? Option.some(entityType) : Option.none(),
     schemaVersion: schemaVersion ? Option.some(schemaVersion) : Option.none(),
-    txId: t[13] ? Option.some(t[13]) : Option.none(),
+    txId: tx.tx ? Option.some(tx.tx) : Option.none(),
     retractTxId: Option.none(),
   } as Triple;
 };
@@ -175,12 +274,12 @@ export const sortTriples = (bucket: Triple[]) =>
 // [0-9A-Z] compare identically by code unit and by localeCompare; any other id (lowercase, punctuation) falls back to the real sort.
 // Rejected: comparing every pair with localeCompare (the cost being removed), and trusting row order without checking it.
 const plainId = /^[0-9A-Z]*$/;
-const entityBody = (tuples: readonly H1Tuple[], basis: ResolvedTemporalBasis): Triple[] => {
+const entityBody = (tuples: readonly H1Tuple[], basis: ResolvedTemporalBasis, dict: H1Dictionary): Triple[] => {
   const body: Triple[] = [];
   let exact = true;
   let prev: Triple | undefined;
   for (const t of tuples) {
-    const triple = h1Decode(t, basis);
+    const triple = h1Decode(t, basis, dict);
     if (triple === undefined) continue;
     if (exact) {
       if (!t[0] && !plainId.test(triple.id)) exact = false;
@@ -195,21 +294,27 @@ const entityBody = (tuples: readonly H1Tuple[], basis: ResolvedTemporalBasis): T
   if (!exact && body.length > 1) sortTriples(body);
   return body;
 };
-const entityOf = (t: H1Tuple): string => t[14]?.row.entity_id ?? t[2];
+/** The entity a tuple belongs to: its verbatim row's name, else the dictionary name of its entity id. */
+export const h1EntityOf = (t: H1Tuple, dict: H1Dictionary): string => {
+  const name = t[12] ? t[12].row.entity_id : dict.ents.get(t[2]);
+  if (name == null) throw new H1DictionaryStale("H1 dictionary entry missing");
+  return name;
+};
 export const h1Rows = (
   tuples: readonly H1Tuple[],
   basis: ResolvedTemporalBasis,
+  dict: H1Dictionary,
 ): ReadonlyMap<string, readonly Triple[]> => {
   const byEntity = new Map<string, H1Tuple[]>();
   for (const t of tuples) {
-    const key = entityOf(t);
+    const key = h1EntityOf(t, dict);
     const bucket = byEntity.get(key);
     if (bucket) bucket.push(t);
     else byEntity.set(key, [t]);
   }
   const result = new Map<string, Triple[]>();
   for (const [key, bucket] of byEntity) {
-    const body = entityBody(bucket, basis);
+    const body = entityBody(bucket, basis, dict);
     if (body.length) result.set(key, body);
   }
   return result;
