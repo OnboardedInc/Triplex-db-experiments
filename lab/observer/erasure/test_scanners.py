@@ -375,6 +375,22 @@ class Scanners(unittest.TestCase):
                 self.assertEqual(d['status'], 'FAIL', d)
                 self.assertTrue(d['observations']['rotate'][0]['opened'])
 
+    def test_closure_depth_exhaustion_refuses_the_physical_source_range(self):
+        from fixtures import fixture_record_file
+        from formats import fixture_records
+        changed=copy.deepcopy(self.payloads)
+        encoded=base64.b64decode(self.spec['plain']['target'])
+        for _ in range(5):encoded=base64.b64encode(encoded)
+        blobs, _, _=fixture_records(changed['rotate']['host-log'])
+        changed['rotate']['host-log']=fixture_record_file(blobs+[encoded])
+        with patch.dict(self.ns,{'VIEW_DEPTH_LIMIT':2}):
+            result=self.normalize(payloads=changed)
+        scan=self.verdict(result,'P','host-log')
+        self.assertEqual(scan['status'],'REFUSED',scan)
+        coverage=scan['coverage']['rotate']['host-log']
+        self.assertEqual(coverage['unparsedBytes'],coverage['size'])
+        self.assertTrue(any('budget' in r['reason'] for r in coverage['unparsedRanges']))
+
     def test_d_wrong_root_incomplete_backup_and_unsupported_store_refuse(self):
         for mutation in ('root', 'backup', 'format', 'row'):
             with self.subTest(mutation=mutation):

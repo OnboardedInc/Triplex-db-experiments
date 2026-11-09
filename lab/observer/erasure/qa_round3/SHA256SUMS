@@ -1,0 +1,15 @@
+653d726214aa86d68a3be406f517f53c0e5c5366bddd6f73d34970dbb0312974  /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/ER01-S-round3/final01/SHA256SUMS
+80a04a0991369744e8474d1e98efd16466fca58b61b1d2d00120ae22b25310ae  /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VER01S/round3/baseline-01/SHA256SUMS
+27eae5d02113a5b02f002df81954e6ec97473a90fc7c94a4e4296c3ab75e308a  /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VER01S/round3/probe-01/SHA256SUMS
+f5e60b5979cd44f2a6529fa9c8e862acaea267f3f0be19b65f35e87c6bead242  /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VER01S/round3/validation-01/SHA256SUMS
+999680041d49fb01d3f53e11658a5cdaf3b53d2709e3f52a77a5323ab7665b39  /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VER01S/round3/native-envelope-01/SHA256SUMS
+32ad2d492ac5816acdd189de589e3df5a547a48962957d36f657017f5cf3f7a8  /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round3/INDEX.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round3/baseline.stderr
+e141aef0bb345acf97ef445469ca38ad83cf12c88bdeb8d5d8d7e01b20c7b119  /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round3/baseline.stdout
+50f590dc4b7507a091304afd3a075083bb00ebf128bfd076f73571e2a9c8c105  /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round3/finish.py
+fe0daeb13b94aa55f565512c4b2b44c42c840b6f4970d48805ca61690108fbee  /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round3/native_envelope.py
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round3/probe-01.stderr
+43b450ff8536fafaab940ab8d2092737867ece5a4fc25a52cc5a10d53a20c10c  /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round3/probe-01.stdout
+cd76cd05d954cac9128ba2e092c986031b2f60084b4dca90525c4920b3fbf1cd  /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round3/probe.py
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round3/validation-01.stderr
+5e787448bbe5f6bea27bec8dd415f17bd75ec426241f3f6030fcf5b59691b971  /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round3/validation-01.stdout

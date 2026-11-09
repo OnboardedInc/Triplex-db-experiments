@@ -10,6 +10,7 @@ import struct
 import zlib
 
 MAX_DECODED = 16 * 1024 * 1024
+VIEW_DEPTH_LIMIT = 32
 
 
 def sqlite_varint(raw, start):
@@ -465,23 +466,27 @@ def postgres_toast(raw, declarations):
     return blobs, [], report
 
 
-def supplemental_views(raw):
+def supplemental_views(raw, depth_limit=None, wal_main=None, toast_values=None, native_origin=None):
     """Bounded additive closure: parsing and escaping never replace physical bytes."""
+    if depth_limit is None: depth_limit = VIEW_DEPTH_LIMIT
     blobs, values, issues = [], [], []
-    seen, queue, total = {raw}, [(raw, 0)], len(raw)
+    seen, queue, total = {raw}, [(raw, 0, True)], len(raw)
     decoder = json.JSONDecoder()
     candidates = 0
-    def add(value, depth):
+    def add(value, depth, native_child=False):
         nonlocal total
         if isinstance(value, str):
             try: value = value.encode('utf8')
             except UnicodeError:
                 issues.append('unresolved Unicode surrogate in escaping view'); return
         if value in seen: return
-        if depth > 32 or len(seen) >= 4096 or total + len(value) > MAX_DECODED * 4:
+        if depth > depth_limit or len(seen) >= 4096 or total + len(value) > MAX_DECODED * 4:
             issues.append('escaping view recursion/byte budget exceeded'); return
         seen.add(value); total += len(value)
-        blobs.append(value); queue.append((value, depth))
+        blobs.append(value)
+        framed_parent = any(data.startswith(prefix) and value.startswith(prefix)
+            for prefix in (b'SQLite format 3\x00', b'ER01REC2\x00', b'7\x7f\x06\x82', b'7\x7f\x06\x83'))
+        queue.append((value, depth, native_child or not framed_parent))
     def leaves(value, depth):
         if depth > 64:
             issues.append('JSON leaf nesting budget exceeded'); return
@@ -506,11 +511,37 @@ def supplemental_views(raw):
         if token[0] in 'uUx': return chr(int(token[1:], 16))
         if token[0] in '01234567': return chr(int(token, 8))
         return {'a':'\a','b':'\b','f':'\f','n':'\n','r':'\r','t':'\t','v':'\v'}.get(token, token)
-    for data, level in queue:
+    for data, level, native_required in queue:
         texts = [data.decode('utf8', errors='ignore')]
         for codec in ('utf-16le', 'utf-16be', 'utf-32le', 'utf-32be'):
-            for shift in range(4 if '32' in codec else 2): texts.append(data[shift:].decode(codec, errors='ignore'))
+            for shift in range(4 if '32' in codec else 2):
+                text = data[shift:].decode(codec, errors='ignore')
+                texts.append(text)
+                # [EXP-ER01-S-R4] Why: recognizable Unicode scalar views need all decoders too.
+                # Rejected: using UTF-16 only for JSON/token searches (URL layers then stay hidden).
+                if text and data != native_origin and text.encode(codec) == data[shift:] and not data.startswith((b'SQLite format 3\x00', b'ER01REC2\x00', b'7\x7f\x06\x82', b'7\x7f\x06\x83')) and (data.startswith((b'\xff\xfe', b'\xfe\xff', b'\x00\x00\xfe\xff')) or
+                    (len(data) >= 4 and data.count(b'\x00') > 0 and data.count(b'\x00') >= len(data) // 4 and
+                     sum(char.isprintable() or char.isspace() or char == '\x00' for char in text) >= len(text) * .9)):
+                    add(text.removeprefix('\ufeff'), level + 1)
         for text in texts:
+            # [EXP-ER01-S-R4] Why: inverse scalar encodings must re-enter every decoder.
+            # Rejected: searching only the expected needle's one-layer encoded spelling.
+            scalar_tokens = [match.group(0) for match in re.finditer(r'[A-Za-z0-9+/_-]+={0,2}', text)]
+            scalar_tokens.extend(re.sub(r'[\t\r\n ]+', '', match.group(0)) for match in
+                re.finditer(r'[A-Za-z0-9+/_-]+(?:[\t\r\n ]+[A-Za-z0-9+/_-]+)+={0,2}', text))
+            for token in scalar_tokens:
+                if len(token) < 4 or len(token.rstrip('=')) % 4 == 1: continue
+                try:
+                    encoded = token.encode('ascii')
+                    decoded = base64.b64decode(encoded + b'=' * (-len(encoded) % 4), altchars=b'-_', validate=True)
+                    canonical = base64.b64encode(decoded).rstrip(b'=')
+                    if canonical == encoded.rstrip(b'=').replace(b'-', b'+').replace(b'_', b'/'):
+                        add(decoded, level + 1)
+                except (ValueError, UnicodeError): pass
+            for match in re.finditer(r'[0-9a-fA-F]+', text):
+                token = match.group(0)
+                if len(token) >= 2 and len(token) % 2 == 0:
+                    add(bytes.fromhex(token), level + 1)
             for at, char in enumerate(text):
                 if char not in '{["': continue
                 candidates += 1
@@ -527,11 +558,61 @@ def supplemental_views(raw):
                     add(decoded, level + 1)
                 except (ValueError, UnicodeError):
                     issues.append('invalid backslash/Unicode escaping view')
+        # [EXP-ER01-S-R4] Why: byte escapes encode UTF-8 octets, not Latin-1 Unicode scalars.
+        # Rejected: only re-encoding \xHH as a Unicode character (changes multibyte values).
+        byte_escape = re.compile(rb"\\(?:x[0-9a-fA-F]{2}|[0-7]{1,3}|[abfnrtv\\'\"/])")
+        def byte_unescape(match):
+            token = match.group(0)[1:]
+            if token[:1] == b'x': return bytes([int(token[1:], 16)])
+            if token[:1] in b'01234567': return bytes([int(token, 8) & 255])
+            return {b'a':b'\a',b'b':b'\b',b'f':b'\f',b'n':b'\n',b'r':b'\r',b't':b'\t',b'v':b'\v'}.get(token, token)
+        if byte_escape.search(data): add(byte_escape.sub(byte_unescape, data), level + 1)
         if re.search(rb'%[0-9a-fA-F]{2}', data):
             add(unquote_to_bytes(data), level + 1)
             if b'+' in data: add(unquote_to_bytes(data.replace(b'+', b' ')), level + 1)
         if re.search(rb'=(?:[0-9a-fA-F]{2}|\r?\n)', data):
             add(quopri.decodestring(data), level + 1)
+        # [EXP-ER01-S-R4] Why: scalar layers may enclose a native record or framing layer.
+        # Rejected: restarting only escape decoders after decoding base64/hex.
+        try:
+            native = None
+            if data.startswith(b'SQLite format 3\x00'): native = sqlite_database(data)
+            elif data.startswith(b'ER01REC2\x00'): native = fixture_records(data)
+            elif data[:4] in (b'7\x7f\x06\x82', b'7\x7f\x06\x83'):
+                if wal_main is None: raise ValueError('encoded WAL lacks evaluator-bound main-file context')
+                native = sqlite_wal(data, wal_main)
+            elif len(data) >= 8192 and len(data) % 8192 == 0 and data[18:20] == b'\x04\x20':
+                if toast_values is None: raise ValueError('encoded TOAST lacks evaluator-bound descriptors')
+                native = postgres_toast(data, toast_values)
+            if native is not None:
+                decoded, records, coverage = native
+                values.extend(records)
+                for value in decoded: add(value, level + 1, native_child=True)
+                if coverage['unparsedBytes'] and native_required: issues.append('nested native image has unparsed ranges')
+        except (ValueError, IndexError, UnicodeError) as error:
+            if native_required: issues.append('nested native decode incomplete: ' + str(error))
+        try:
+            for order in ('little', 'big'):
+                if len(data) >= 4 and int.from_bytes(data[:4], order) == len(data) - 4:
+                    add(data[4:], level + 1)
+            if data:
+                length, start = sqlite_varint(data, 0)
+                if length == len(data) - start: add(data[start:], level + 1)
+            if any(byte >= 128 for byte in data):
+                position, integers = 0, bytearray()
+                while position < len(data):
+                    number, shift = 0, 0
+                    while True:
+                        if position >= len(data) or shift > 7: raise ValueError('not a byte-array varint')
+                        byte = data[position]; position += 1
+                        number |= (byte & 127) << shift
+                        if byte < 128: break
+                        shift += 7
+                    if number > 255: raise ValueError('not a byte-array varint')
+                    integers.append(number)
+                add(bytes(integers), level + 1)
+        except (ValueError, IndexError, UnicodeError) as error:
+            pass
         offset = 0
         while True:
             at = data.find(b'\x1f\x8b\x08', offset)
@@ -570,7 +651,11 @@ def analyze_files(files, spec):
     for file_id, item in spec['inventory'].items():
         raw = files[file_id]
         blobs, rows, errors = [raw], [], []
-        extra, objects, issues = supplemental_views(raw)
+        companion = next((key for key, entry in spec['inventory'].items()
+            if item['path'].endswith('-wal') and entry['path'] == item['path'].removesuffix('-wal')), None)
+        context = {'native_origin': raw if item['codec'] == 'qlever-fsst-squared-le64/0.6' else None, 'wal_main': files[companion] if companion is not None else None,
+            'toast_values': item.get('toastValues', item.get('toastValuesByPhase', {}).get(spec.get('_phase')))}
+        extra, objects, issues = supplemental_views(raw, **context)
         blobs.extend(extra); rows.extend(objects); errors.extend(issues)
         report = byte_partition(raw, [], ['unsupported codec/layout: ' + item['codec']])
         try:
@@ -607,7 +692,7 @@ def analyze_files(files, spec):
                 raise ValueError('unsupported codec/layout: ' + codec)
             blobs.extend(decoded); rows.extend(records)
             for value in decoded:
-                additions, objects, failed = supplemental_views(value)
+                additions, objects, failed = supplemental_views(value, **context)
                 blobs.extend(additions); rows.extend(objects); errors.extend(failed)
         except (ValueError, KeyError, TypeError, IndexError, UnicodeError, struct.error) as error:
             errors.append(str(error))

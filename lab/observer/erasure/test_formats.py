@@ -68,6 +68,13 @@ class Formats(unittest.TestCase):
                     self.assertIn(list(row),rows)
                     self.assertEqual(coverage['unparsedBytes'],0,coverage)
                     self.assertTrue(coverage['historicalCellPointerRanges'])
+                    from formats import supplemental_views
+                    for encode in (base64.b64encode, lambda value:value.hex().encode()):
+                        views, recovered, errors=supplemental_views(encode(wal),wal_main=main)
+                        self.assertFalse(errors,errors)
+                        self.assertIn(list(row),recovered)
+                        _, _, errors=supplemental_views(encode(wal))
+                        self.assertTrue(any('main-file context' in error for error in errors))
                     for bad in (wal[:-1],wal[:40]+bytes([wal[40]^1])+wal[41:]):
                         with self.assertRaises(ValueError): sqlite_wal(bad,main)
                 finally: db.close()
@@ -121,12 +128,78 @@ class Formats(unittest.TestCase):
             views, _, errors = supplemental_views('"secret-\\ud83d\\ude00"'.encode(codec))
             self.assertFalse(errors,errors)
             self.assertIn(marker,views)
+        views, _, errors = supplemental_views(b'prefix ' + base64.b64encode(b'"secret-\\ud83d\\ude00"') + b' suffix')
+        self.assertFalse(errors, errors)
+        self.assertTrue(any(marker in view for view in views))
         _, _, errors = supplemental_views(b'"\\ud800"')
         self.assertTrue(errors)
         value=b'secret'
         for _ in range(34): value=value.replace(b'%',b'%25') if b'%' in value else b'%73ecret'
         _, _, errors=supplemental_views(value)
         self.assertTrue(any('budget' in error for error in errors))
+
+    def test_every_ordered_pair_of_scalar_and_native_layers(self):
+        from formats import supplemental_views
+        from fixtures import fixture_record_file
+        marker = b'!pair-secret!'
+        def leb(raw):
+            return b''.join(bytes([byte]) if byte < 128 else bytes([(byte & 127) | 128, byte >> 7]) for byte in raw)
+        layers = {
+            'json': lambda raw: json.dumps(raw.decode(), ensure_ascii=True).encode(),
+            'backslash': lambda raw: b''.join(('\\x%02x'%b).encode() for b in raw),
+            'url': lambda raw: b''.join(('%%%02X'%b).encode() for b in raw),
+            'quoted-printable': lambda raw: b''.join(('=%02X'%b).encode() for b in raw),
+            'base64': base64.b64encode,
+            'base64url': lambda raw: base64.urlsafe_b64encode(raw).rstrip(b'='),
+            'hex': lambda raw: raw.hex().encode(),
+            'length-le': lambda raw: len(raw).to_bytes(4,'little') + raw,
+            'length-be': lambda raw: len(raw).to_bytes(4,'big') + raw,
+            'varints': leb,
+            'native-record': lambda raw: fixture_record_file([raw]),
+            'utf16le':lambda raw:raw.decode().encode('utf-16le'),
+            'utf16be':lambda raw:raw.decode().encode('utf-16be'),
+            'utf32le':lambda raw:raw.decode().encode('utf-32le'),
+            'utf32be':lambda raw:raw.decode().encode('utf-32be'),
+        }
+        for outer, encode_outer in layers.items():
+            for inner, encode_inner in layers.items():
+                with self.subTest(outer=outer, inner=inner):
+                    try: encoded=encode_outer(encode_inner(marker))
+                    except UnicodeError: continue
+                    views, _, errors=supplemental_views(encoded)
+                    self.assertFalse(errors,errors)
+                    self.assertTrue(any(marker in view for view in [encoded]+views),(outer,inner))
+
+    def test_closure_bound_refuses_only_when_new_view_would_be_lost(self):
+        from formats import supplemental_views
+        value=b'!secret!'
+        for _ in range(3): value=base64.b64encode(value)
+        views, _, errors=supplemental_views(value,depth_limit=2)
+        self.assertTrue(any('budget' in error for error in errors))
+        self.assertNotIn(b'!secret!',views)
+        views, _, errors=supplemental_views(value,depth_limit=32)
+        self.assertFalse(errors,errors)
+        self.assertIn(b'!secret!',views)
+
+    def test_utf8_and_folded_base64_layer_pairs(self):
+        from formats import supplemental_views
+        marker='pair-secret-😀-end'.encode()
+        layers={
+            'json':lambda raw:json.dumps(raw.decode(),ensure_ascii=True).encode(),
+            'byte-escape':lambda raw:b''.join(('\\x%02x'%b).encode() for b in raw),
+            'url':lambda raw:b''.join(('%%%02X'%b).encode() for b in raw),
+            'qp':lambda raw:b''.join(('=%02X'%b).encode() for b in raw),
+            'base64':base64.b64encode,
+            'base64url':lambda raw:base64.urlsafe_b64encode(raw).rstrip(b'='),
+            'hex':lambda raw:raw.hex().encode(),
+            'folded-base64':lambda raw:b'\r\n'.join(base64.b64encode(raw)[i:i+16] for i in range(0,len(base64.b64encode(raw)),16)),
+        }
+        for outer, encode in layers.items():
+            for inner, nested in layers.items():
+                with self.subTest(outer=outer,inner=inner):
+                    views, _, issues=supplemental_views(encode(nested(marker)))
+                    self.assertTrue(all(issue=='invalid backslash/Unicode escaping view' for issue in issues),issues)
+                    self.assertTrue(any(marker in view for view in views),(outer,inner))
 
     def test_fixture_record_tail_is_unparsed(self):
         from fixtures import fixture_record_file
