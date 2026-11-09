@@ -1994,3 +1994,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   - **The disk guard stopped P5 A1** below 5 GiB; housekeeping restored 9.8 GiB.
 - **Scorecard:** every P1-P5 cell is still OPEN. Each accepted result is offline or diagnostic; promotion waits on contract 0.4.0, G03's executing gate and live windows. That ordering needs a written critical path.
 - **Dispatched (Opus 5.5 high):** R42, P2 commit latency for a Node broker under 256 readers (placement, event-loop contention, SQLite fsync durability and cost on macOS and Linux); R43, the critical path from today's accepted work to the first PASS cell on the scorecard.
+
+## 2026-11-09: K01 smoke run reaches D/L and D'; VM trim returns 33 GiB
+
+- **K01 round 13 (9b764517):** the diagnostic smoke run walked every G0 step and recorded two failures, both missing imports, fixed offline; source restarts matched D/L and a fresh seed matched D'. One smoke run found what would have been two more full live runs. Clone qualification and publication are still unverified.
+- **Disk:** host free space was falling again (7.2 GiB) because the VM's disk image kept the blocks of every removed volume. fstrim inside the triplex2 VM returned 32.9 GiB; host free is 40 GiB. **Lesson:** removing a volume frees space inside the VM, not on the host; trim after slot runs.
+
+## 2026-11-09: P2B round 2: moving readers to a worker brings commit p50 to 7.32 ms; RT01 live window starts
+
+- **P2B 5c8f30fa (7,200 commits, n=200 per band, 142 tests):** reader event-loop contention confirmed. 10-fact offer-to-ACK with 256 readers went from p50/p99 226.38/712.45 ms (readers in the broker's thread) to 7.32/55.42 ms (readers in a worker); a first isolated run gave 6.68/21.90 ms. Queue wait fell from 65 ms to 0.008 ms median. Readers now default to a worker.
+- **The remaining tail:** the p99 sample spent 39.11 ms in scheduling delay; the slowest sample spent 39.17 ms in SQLite's COMMIT with full fsync. The host runs many agents, so part of the tail is host noise. P2B round 3 waits for R42 (placement, fsync durability and cost).
+- **First P2 median under the bar on any lane at 256 readers,** diagnostic only (in memory, no live XTDB).
+- **RT01 round 5 (554bf7d2):** N1 fixed; PIN-CHANGES-0.4.0.md written. RT01 now has xtdb-s1 for live G2 (diagnosing the earlier timeouts first) and G6 with a calibrated A/A window. K01's full live run follows after its offline review.

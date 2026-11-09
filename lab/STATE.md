@@ -215,3 +215,9 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - Repo-wide pack gate blocked by DuckDB TS4023 declaration errors (packages/duckdb effect-storage.ts:112, TypeDomains.ts:17), so
   check-packages.mjs rejects the DuckDB tarball. DuckDB belongs to another team (SCOPE 4.3): do not edit it. Queued small task: give the
   lab its own pack gate over lab-owned packages, which reports DuckDB's status separately as out of scope rather than hiding it.
+- 2026-11-09 disk rule: the triplex2 VM's disk image does not shrink when volumes are removed. `colima ssh -p triplex2 -- sudo fstrim -av`
+  returned 32.9 GiB (image 59 GiB to 26 GiB; host free 7.2 GiB to 40 GiB). Run it after any slot run that removes volumes, and whenever
+  host free space is below 15 GiB, then `docker context use colima` (memory: triplex2-docker-context). It is safe with containers running.
+- 2026-11-09 K01 round 13 (9b764517): typed catalog checks for tables the seed does not write; a diagnostic smoke run found two missing
+  imports (fixed offline); source restarts matched D/L, a fresh seed matched D'. CX-VK01 reviews; then the full live run. P5 A1 waits for
+  K01's native G0 handoff, then reruns (disk is no longer the constraint).
