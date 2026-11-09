@@ -88,7 +88,12 @@ describe("EXP-RQ01 route-equivalence gate (offline only)", () => {
       fixture,
       history: f1,
       scope: { shapes: ["TP"] },
-      requests: [f1Request],
+      requests: [
+        f1Request,
+        ...[3072, 3071, 5120, 5119].map((recordedPosition) => ({
+          basis: { validAt: 3000, recordedPosition },
+        })),
+      ],
     });
     expect(replayRouteAnswer(f1, f1Request)).toHaveLength(40);
     expect(result.violations).toEqual(

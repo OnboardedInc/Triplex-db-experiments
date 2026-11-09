@@ -3,10 +3,12 @@ import {
   foldRouteHistory,
   snapshotRouteRows,
   routeHead,
+  routeRetentionHorizons,
   RouteRefusal,
   type RouteFixture,
   type RouteHistory,
   type RouteRequest,
+  type RouteRetentionCut,
 } from "./route-equivalence.js";
 
 /**
@@ -62,7 +64,25 @@ export const makeOfflineRouteFixture = (
       cache.clear();
     },
     append: (commit) => {
-      history = { ...history, commits: [...history.commits, commit] };
+      history = {
+        ...history,
+        commits: [...history.commits, commit],
+        ...(history.attempts && commit.receipt
+          ? {
+              attempts: [
+                ...history.attempts,
+                {
+                  id: commit.receipt.attemptId,
+                  status: "committed" as const,
+                  position: commit.position,
+                  stagedAt: commit.instant,
+                  stagedOrder: Math.max(...history.attempts.map((a) => a.stagedOrder)) + 1,
+                  decidedOrder: Math.max(...history.attempts.map((a) => a.decidedOrder)) + 1,
+                },
+              ],
+            }
+          : {}),
+      };
       source = foldRouteHistory(history);
       cache.clear();
     },
@@ -77,11 +97,24 @@ export const makeOfflineRouteFixture = (
       return {
         status: "model-applied",
         reason: "Offline semantic event only; not engine qualification",
+        ...(event === "purge" || event === "purge-pinned"
+          ? { retirement: { horizon, pinned: event === "purge-pinned" } }
+          : {}),
       };
     },
     routes: ids.map((id) => ({
       id,
       contract: "snapshot",
+      retention: {
+        kind: id === "Q4-pre-fix-H1" ? "position-retired" : "complete",
+        plan: (current, extension): readonly RouteRetentionCut[] => {
+          const [pinned, unpinned] = routeRetentionHorizons(current, extension.position);
+          return [
+            { id: "pinned", event: "purge-pinned", horizon: pinned!, pinned: true },
+            { id: "unpinned", event: "purge", horizon: unpinned!, pinned: false },
+          ];
+        },
+      },
       eligible: (request, current) => (request.basis.recordedPosition ?? 0) <= routeHead(current),
       refusals: ["BasisNotAvailable"],
       force: () => {

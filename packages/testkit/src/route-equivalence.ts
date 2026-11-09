@@ -1,3 +1,4 @@
+import { validateRouteHistory } from "./route-history-grammar.js";
 import { requireRouteCoverage } from "./route-coverage.js";
 import { Sha256 } from "@triplex-build/triplex/content";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
@@ -41,7 +42,7 @@ export interface RouteCommit {
     readonly position: number;
     readonly instant: number;
   };
-  readonly nested?: { readonly callback: string; readonly ordinal: number };
+  readonly nested?: { readonly callback: string; readonly ordinal: number; readonly size: number };
   readonly claims?: readonly string[];
 }
 export interface RouteHistory {
@@ -62,10 +63,13 @@ export type RouteEvent =
 export interface RouteEventContext {
   readonly horizon: number;
   readonly pinned: boolean;
+  readonly routes?: readonly string[];
+  readonly cutId?: string;
 }
 export interface RouteEventOutcome {
   readonly status: "model-applied" | "applied" | "pending";
   readonly reason: string;
+  readonly retirement?: { readonly horizon: number; readonly pinned: boolean };
 }
 export type RouteRefusalTag =
   | "BasisNotAvailable"
@@ -88,11 +92,33 @@ export interface RouteAnswer {
 export interface RouteDriver {
   readonly id: string;
   readonly contract: RouteResultContract;
+  readonly retention: {
+    readonly kind: "complete" | "position-retired";
+    readonly plan: (history: RouteHistory, extension: RouteCommit) => readonly RouteRetentionCut[];
+  };
   /** False declares that this route cannot serve this exact basis in this snapshot. */
   readonly eligible: (request: RouteRequest, history: RouteHistory) => boolean;
   readonly refusals: readonly RouteRefusalTag[];
   readonly force: () => void | Promise<void>;
   readonly read: (request: RouteRequest) => Promise<RouteAnswer>;
+}
+export interface RouteRetentionCut {
+  readonly id: string;
+  readonly event: "purge-pinned" | "purge";
+  readonly horizon: number;
+  readonly pinned: boolean;
+}
+export interface RouteExecutionPlan {
+  readonly history: RouteHistory;
+  readonly extension: RouteCommit;
+  readonly extensionAttempt: RouteAttempt | null;
+  readonly requests: readonly RouteRequest[];
+  readonly policies: readonly {
+    readonly route: string;
+    readonly kind: "complete" | "position-retired";
+    readonly cuts: readonly RouteRetentionCut[];
+  }[];
+  readonly digest: string;
 }
 export interface RouteFixture {
   readonly lane: string;
@@ -146,6 +172,7 @@ export const routeHead = (history: RouteHistory): number => history.commits.at(-
 
 /** Offline fold only; independent O-REPLAY remains a separate qualification gate. */
 export const foldRouteHistory = (history: RouteHistory): readonly TripleRow[] => {
+  validateRouteHistory(history);
   const rows = new Map<string, TripleRow>();
   for (const commit of history.commits)
     for (const write of commit.writes) {
@@ -252,7 +279,7 @@ export const generateRouteHistory = (seed = 1, count = 40): RouteHistory => {
   const commits: RouteCommit[] = [];
   const attempts: RouteAttempt[] = [];
   const add = (writes: RouteWrite[], index: number, extra: Partial<RouteCommit> = {}) => {
-    const position = (index + 1) * 1024 + (index % 16 === 9 ? 1 : 0);
+    const position = index % 16 === 9 ? index * 1024 + 1 : (index + 1) * 1024;
     const instant =
       1000 + Math.floor(index / 2) - (index % 16 === 14 ? 2 : index % 16 === 15 ? 3 : 0);
     const id = `attempt:${index}`;
@@ -361,7 +388,11 @@ export const generateRouteHistory = (seed = 1, count = 40): RouteHistory => {
       case 8:
       case 9:
         add([{ op: "assert", row }], index, {
-          nested: { callback: `callback:${Math.floor(index / 16)}`, ordinal: (index % 16) - 7 },
+          nested: {
+            callback: `callback:${Math.floor(index / 16)}`,
+            size: 2,
+            ordinal: (index % 16) - 7,
+          },
         });
         break;
       case 10:
@@ -400,7 +431,9 @@ export const generateRouteHistory = (seed = 1, count = 40): RouteHistory => {
         add([{ op: "assert", row }], index);
     }
   }
-  return { seed, now: 2000, commits, attempts };
+  const history = { seed, now: 2000, commits, attempts };
+  validateRouteHistory(history, true);
+  return history;
 };
 
 export const routeRetentionHorizons = (
@@ -416,6 +449,7 @@ export const generateRouteBases = (
   full = false,
   horizons: readonly number[] = routeRetentionHorizons(history),
 ): readonly RouteRequest[] => {
+  validateRouteHistory(history);
   const positions = [
     ...new Set([
       0,
@@ -482,6 +516,7 @@ export interface RouteEquivalenceResult {
   readonly seed: number;
   readonly lane: string;
   readonly reference: string;
+  readonly plan: RouteExecutionPlan;
   readonly observations: readonly RouteObservation[];
   readonly coverage: {
     readonly requiredShapes: readonly RouteShape[];
@@ -497,7 +532,7 @@ export interface RouteEquivalenceResult {
 }
 
 /** Returns all failures, including expected defect fixtures; callers must assert violations explicitly. */
-export const runRouteEquivalence = async (options: {
+export interface RouteEquivalenceOptions {
   readonly fixture: RouteFixture;
   readonly history: RouteHistory;
   readonly requests?: readonly RouteRequest[];
@@ -513,27 +548,114 @@ export const runRouteEquivalence = async (options: {
       contract: RouteResultContract,
     ) => readonly TripleRow[] | Promise<readonly TripleRow[]>;
   };
-}): Promise<RouteEquivalenceResult> => {
+}
+
+const freezeCopy = <T>(value: T): T => {
+  const freeze = (input: unknown): void => {
+    if (input !== null && typeof input === "object") {
+      for (const child of Object.values(input)) freeze(child);
+      Object.freeze(input);
+    }
+  };
+  const copy = structuredClone(value);
+  freeze(copy);
+  return copy;
+};
+
+// [EXP-RQ01] Why: one immutable plan binds driver policies, custom append and exact request bytes.
+// Rejected: recomputing default horizons after execution (certified the wrong purge plan).
+export const makeRouteExecutionPlan = (options: RouteEquivalenceOptions): RouteExecutionPlan => {
+  if (
+    !options.fixture.routes.length ||
+    options.fixture.routes.some((r) => !r.id) ||
+    new Set(options.fixture.routes.map((r) => r.id)).size !== options.fixture.routes.length
+  )
+    throw new Error("Routes must be nonempty and have unique IDs");
+  const history = freezeCopy(options.history);
+  validateRouteHistory(history);
+  let extension = freezeCopy(
+    options.extension ?? {
+      position: routeHead(history) + 2048,
+      instant: Math.max(...history.commits.map((c) => c.instant)) + 10,
+      writes: [{ op: "assert" as const, row: routeRow("extension", "extension", "new") }],
+    },
+  );
+  let extensionAttempt: RouteAttempt | null = null;
+  if (history.attempts !== undefined) {
+    const attemptId = extension.receipt?.attemptId ?? `extension:${extension.position}`;
+    extension = freezeCopy({
+      ...extension,
+      receipt: extension.receipt ?? {
+        attemptId,
+        position: extension.position,
+        instant: extension.instant,
+      },
+    });
+    extensionAttempt = {
+      id: attemptId,
+      status: "committed",
+      position: extension.position,
+      stagedAt: extension.instant,
+      stagedOrder: Math.max(...history.attempts.map((a) => a.stagedOrder)) + 1,
+      decidedOrder: Math.max(...history.attempts.map((a) => a.decidedOrder)) + 1,
+    };
+  }
+  validateRouteHistory({
+    ...history,
+    commits: [...history.commits, extension],
+    ...(extensionAttempt ? { attempts: [...history.attempts!, extensionAttempt] } : {}),
+  });
+  const policies = options.fixture.routes.map((route) => {
+    if (!route.retention || !["complete", "position-retired"].includes(route.retention.kind))
+      throw new Error(`Route ${route.id} must declare its retention policy`);
+    const cuts = freezeCopy(
+      route.retention.kind === "complete" && options.scope
+        ? []
+        : route.retention.plan(history, extension),
+    );
+    if (route.retention.kind === "position-retired" && !cuts.length)
+      throw new Error(`Retired route ${route.id} must declare retirement cuts`);
+    if (new Set(cuts.map((c) => c.id)).size !== cuts.length)
+      throw new Error(`Duplicate retention cut IDs: ${route.id}`);
+    for (const cut of cuts)
+      if (
+        !cut.id ||
+        !Number.isSafeInteger(cut.horizon) ||
+        cut.horizon <= 0 ||
+        cut.horizon > extension.position ||
+        (cut.event !== "purge" && cut.event !== "purge-pinned") ||
+        cut.pinned !== (cut.event === "purge-pinned")
+      )
+        throw new Error(`Invalid retention cut: ${route.id}`);
+    return { route: route.id, kind: route.retention.kind, cuts };
+  });
+  const horizons = policies.flatMap((p) => p.cuts.map((c) => c.horizon));
+  const requests = freezeCopy(options.requests ?? generateRouteBases(history, false, horizons));
+  if (!requests.length) throw new Error("Route gate requires nonempty requests");
+  for (const policy of policies)
+    for (const cut of policy.cuts)
+      for (const position of [cut.horizon, cut.horizon - 1])
+        if (!requests.some((r) => routeShape(r) === "P" && r.basis.recordedPosition === position))
+          throw new Error(`Missing retention boundary ${position} for ${policy.route}/${cut.id}`);
+  const content = { history, extension, extensionAttempt, policies, requests };
+  return freezeCopy({ ...content, digest: Sha256.hex(canonicalRouteValue(content)) });
+};
+
+export const runRouteEquivalence = async (
+  options: RouteEquivalenceOptions,
+): Promise<RouteEquivalenceResult> => {
   const { fixture } = options;
   if (
     !fixture.routes.length ||
     new Set(fixture.routes.map((r) => r.id)).size !== fixture.routes.length
   )
     throw new Error("Routes must be nonempty and have unique IDs");
-  let history = options.history;
+  const plan = makeRouteExecutionPlan(options);
+  let history = plan.history;
   for (const route of fixture.routes)
     if (route.contract !== "snapshot" && route.contract !== "raw-lifetime")
       throw new Error(`Route ${route.id} must declare its result contract`);
-  const extension = options.extension ?? {
-    position: routeHead(history) + 2048,
-    instant: Math.max(...history.commits.map((c) => c.instant)) + 10,
-    writes: [{ op: "assert" as const, row: routeRow("extension", "extension", "new") }],
-  };
-  const horizons = routeRetentionHorizons(history, extension.position);
-  const requests = (options.requests ?? generateRouteBases(history, false, horizons)).map(
-    (request) => Object.freeze({ ...request, basis: Object.freeze({ ...request.basis }) }),
-  );
-  if (!requests.length) throw new Error("Route gate requires nonempty requests");
+  const { extension, requests } = plan;
   const requiredShapes = options.scope?.shapes ?? (["L", "V", "P", "T", "TP", "H"] as const);
   const minimumPerShape = options.scope?.minimumPerShape ?? 1;
   if (
@@ -661,11 +783,34 @@ export const runRouteEquivalence = async (options: {
   };
   await phase("initial", false);
   await fixture.append(extension);
-  history = { ...history, commits: [...history.commits, extension] };
+  history = {
+    ...history,
+    commits: [...history.commits, extension],
+    ...(plan.extensionAttempt ? { attempts: [...history.attempts!, plan.extensionAttempt] } : {}),
+  };
   await phase("append", true);
+  const retirementEvents = new Map<string, { cut: RouteRetentionCut; routes: string[] }>();
+  for (const policy of plan.policies)
+    for (const cut of policy.cuts) {
+      const key = canonicalRouteValue(cut);
+      const entry = retirementEvents.get(key) ?? { cut, routes: [] };
+      entry.routes.push(policy.route);
+      retirementEvents.set(key, entry);
+    }
+  for (const { cut, routes } of retirementEvents.values()) {
+    const context = { horizon: cut.horizon, pinned: cut.pinned, routes, cutId: cut.id };
+    const outcome = await fixture.event(cut.event, context);
+    if (
+      !outcome ||
+      !["applied", "model-applied"].includes(outcome.status) ||
+      outcome.retirement?.horizon !== cut.horizon ||
+      outcome.retirement.pinned !== cut.pinned
+    )
+      throw new Error(`Retention event did not confirm planned boundary ${cut.id}`);
+    events.push({ event: cut.event, context, outcome });
+    await phase(cut.event, true);
+  }
   for (const event of [
-    "purge-pinned",
-    "purge",
     "evict-overlay",
     "catch-up",
     "cold-cache",
@@ -673,10 +818,7 @@ export const runRouteEquivalence = async (options: {
     "flush",
     "compaction",
   ] as const) {
-    const context = {
-      horizon: event === "purge-pinned" ? horizons[0]! : horizons[1]!,
-      pinned: event === "purge-pinned",
-    };
+    const context = { horizon: extension.position, pinned: false };
     const outcome = (await fixture.event(event, context)) ?? {
       status: "pending" as const,
       reason: "Driver supplied no event evidence",
@@ -688,6 +830,7 @@ export const runRouteEquivalence = async (options: {
     seed: history.seed,
     lane: fixture.lane,
     reference: options.reference?.name ?? "offline-fold-not-independent",
+    plan,
     observations,
     coverage: { requiredShapes, minimumPerShape, shapes },
     events,
@@ -700,7 +843,8 @@ export const makeRouteEquivalenceCases = (options: Parameters<typeof runRouteEqu
     name: `${options.fixture.lane} route equivalence seed ${options.history.seed}`,
     run: async () => {
       const result = await runRouteEquivalence(options);
-      if (!options.scope) requireRouteCoverage(options.history, options.requests);
+      if (!options.scope)
+        requireRouteCoverage(result.plan.history, result.plan.requests, result.plan);
       if (result.violations.length)
         throw new Error(
           JSON.stringify({

@@ -1,7 +1,10 @@
+import { validateRouteHistory } from "./route-history-grammar.js";
+import { Sha256 } from "@triplex-build/triplex/content";
 import {
   generateRouteBases,
   routeHead,
-  routeRetentionHorizons,
+  canonicalRouteValue,
+  type RouteExecutionPlan,
   routeShape,
   type RouteHistory,
   type RouteRequest,
@@ -31,7 +34,9 @@ export const requiredRouteHistoryKinds = [
 export const measureRouteCoverage = (
   history: RouteHistory,
   requests: readonly RouteRequest[] = generateRouteBases(history),
+  plan?: RouteExecutionPlan,
 ) => {
+  validateRouteHistory(history);
   const kinds = Object.fromEntries(requiredRouteHistoryKinds.map((kind) => [kind, 0])) as Record<
     (typeof requiredRouteHistoryKinds)[number],
     number
@@ -92,12 +97,11 @@ export const measureRouteCoverage = (
       receiptValid &&
       commit.nested &&
       commit.nested.ordinal > 1 &&
-      commit.position % 1024 !== 0 &&
       history.commits.some(
         (c) =>
           c.nested?.callback === commit.nested!.callback &&
           c.nested.ordinal < commit.nested!.ordinal &&
-          c.position < commit.position,
+          c.position === commit.position - 1,
       )
     )
       kinds.nestedOrdinal++;
@@ -165,15 +169,32 @@ export const measureRouteCoverage = (
   const rows = history.commits.flatMap((c) =>
     c.writes.flatMap((w) => (w.op === "assert" ? [w.row] : [])),
   );
-  const horizons = routeRetentionHorizons(history);
+  const retention =
+    plan?.policies.flatMap((policy) =>
+      policy.cuts.map((cut) => ({
+        route: policy.route,
+        ...cut,
+        requested: [cut.horizon, cut.horizon - 1].every((p) => positions.includes(p)),
+      })),
+    ) ?? [];
+  const horizons = [...new Set(retention.map((cut) => cut.horizon))];
+  if (plan) {
+    const { digest, ...content } = plan;
+    if (
+      digest !== Sha256.hex(canonicalRouteValue(content)) ||
+      canonicalRouteValue(history) !== canonicalRouteValue(plan.history) ||
+      canonicalRouteValue(requests) !== canonicalRouteValue(plan.requests)
+    )
+      throw new Error("Coverage execution plan binding mismatch");
+  }
   const cuts = {
     everyPosition: history.commits.every((c) => positions.includes(c.position)),
     nestedReceipts: history.commits
       .filter((c) => c.nested)
       .every((c) => positions.includes(c.position)),
     abortGaps: aborted.length > 0 && aborted.every((a) => positions.includes(a.position + 1)),
-    pinnedHorizon: [horizons[0]!, horizons[0]! - 1].every((p) => positions.includes(p)),
-    unpinnedHorizon: [horizons[1]!, horizons[1]! - 1].every((p) => positions.includes(p)),
+    pinnedHorizon: retention.filter((cut) => cut.pinned).every((cut) => cut.requested),
+    unpinnedHorizon: retention.filter((cut) => !cut.pinned).every((cut) => cut.requested),
     everyRecordBoundary: history.commits.every((c) =>
       [-0.5, 0, 0.5].every((d) => times.includes(c.instant + d)),
     ),
@@ -215,6 +236,7 @@ export const measureRouteCoverage = (
     ]),
   );
   const missing = [
+    ...(plan ? [] : ["executionPlan"]),
     ...requiredRouteHistoryKinds.filter((kind) => kinds[kind] < 1),
     ...Object.entries(cuts)
       .filter(([, present]) => !present)
@@ -238,13 +260,22 @@ export const measureRouteCoverage = (
     })),
     abortedAttempts: aborted,
     retentionHorizons: horizons,
+    retentionBoundaries: retention,
+    planDigest: plan?.digest ?? null,
+    binding: plan ? "exact-execution-plan" : "structural-only-no-retention-claim",
     pendingEngineEvents: ["index-job", "flush", "compaction"],
     complete: missing.length === 0,
   };
 };
 
-export const requireRouteCoverage = (history: RouteHistory, requests?: readonly RouteRequest[]) => {
-  const coverage = measureRouteCoverage(history, requests);
+export const requireRouteCoverage = (
+  history: RouteHistory,
+  requests?: readonly RouteRequest[],
+  plan?: RouteExecutionPlan,
+) => {
+  validateRouteHistory(history);
+  if (!plan) throw new Error("Coverage requires an exact execution plan");
+  const coverage = measureRouteCoverage(history, requests ?? plan.requests, plan);
   if (!coverage.complete) throw new Error(`Missing R31 coverage: ${coverage.missing.join(", ")}`);
   return coverage;
 };

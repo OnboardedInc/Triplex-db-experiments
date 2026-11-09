@@ -1,0 +1,9 @@
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/lab/experiments/EXP-RQ01/retention-probe.mjs:81
+    throw new Error("Boundary mutant/control content mismatch");
+          ^
+
+Error: Boundary mutant/control content mismatch
+    at retentionProbe (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/lab/experiments/EXP-RQ01/retention-probe.mjs:81:11)
+    at async file:///Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/lab/experiments/EXP-RQ01/coverage.mjs:59:23
+
+Node.js v22.23.2
