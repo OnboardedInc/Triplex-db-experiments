@@ -2156,3 +2156,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Contract items, recorded as pending rulings Q103a-c:** the frozen trace is secret from the candidate (pre-applying it is otherwise indistinguishable from a fast engine); crash runs are indistinguishable from main runs; calibration records never come from the candidate under test.
 - **The reviewer's verdict:** acceptable for offline P2 and P3 arithmetic once the three highs are fixed, but not for NS PASS until the production decoders, oracles and calibration registry are qualified components rather than test stand-ins.
 - **Lesson:** each round closes the planted cases and their nearest variants; the remaining attacks move from "forge a value" to "control what is observable" (timing, visibility, which run is which), which only the run's architecture (R44's boundary, Q103) can close.
+
+## 2026-11-09: RT01 live round 3: the marker-row stamp fixes A0; a one-pair A/A band fails compact p99
+
+- **43f9d590:** G2 passes. G6: both fresh ten-fact points pass (round 2 had A0 p50 +29.25%), so the marker-row stamp removed the native A0 regression. The run stopped at compact five-fact p99 +39.32% against a 0.237% band. Steady-state statements and round trips are identical in both builds (6 A0 / 5 compact statements; 13 / 12 cycles).
+- **The band was unsound:** it came from one A/A pair, and a nearest-rank p99 at n=150 is the second-highest sample. The receipt stays FAILED under its frozen rule. Ruling Q104a (pending): no-regression gates use M01's PAIR-0 grading over at least three A/A rounds, p99 only at n >= 1,000 or with a bootstrap interval, the rule fixed before B. RT01 round 7 builds that rule and diagnoses the compact path offline; the rerun follows DF01's live window.
+- **Lesson:** preregistering a rule protects against widening it after the fact, but not against a rule that is wrong. A noise band needs repeated A/A rounds, and tail percentiles need samples sized for the tail.
+- **Lane D:** CX-DF01 has the pool for its live window on datomic-dev (diagnostic on dev storage, Q88a).
