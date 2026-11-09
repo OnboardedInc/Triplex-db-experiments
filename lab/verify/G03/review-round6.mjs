@@ -1,9 +1,10 @@
 // [CX-VG03-56] Why: probe exact reviewed modules with trusted offline data. Rejected: modifying the runner or presenting stubs as VM observations.
+// [EXP-G03-R7a] Why: this is the reviewer's round-6 reproduction (copied from verify/G03-r6, d31569ec) with the F1/F2 assertions inverted: every case that was accepted at 95b0593c must now refuse. Exit 0 means every reproduction refuses. Run with --experimental-vm-modules. Rejected: deleting or weakening the reproductions.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHmac,createHash} from 'node:crypto';
-import {verifyObserver,verifyHr,checkSmoke} from '../../bin/ns-run.mjs';
+import {verifyObserver,verifyHr,checkSmoke,trustedTerminal} from '../../bin/ns-run.mjs';
 import {canonicalAnswer,readEvidence} from '../../bench/ns-driver/answer.mjs';
 import {hookedPage} from '../../bench/ns-driver/fault.mjs';
 import {FaultInjector,FAULT_POINTS} from '../../bin/ns-fault.mjs';
@@ -14,25 +15,25 @@ const results=[];
 const record=(name,data)=>results.push({name,...data});
 const key=Buffer.alloc(32,7),binding={runId:'CX-VG03-56-offline',sourceCommit:'a'.repeat(40),evaluatorCommit:'b'.repeat(40),sourceSha256:'c'.repeat(64),inputsSha256:'d'.repeat(64),driverBundleSha256:'e'.repeat(64),slot:'OFFLINE-SYNTHETIC'};
 
-// [CX-VG03-56] Why: the final durable readback is consumed by checkSmoke but is outside the authenticated poll stream. Rejected: changing signed bytes or supplying a new key.
-const raw=JSON.stringify({schema:'ns-observer/1',runId:binding.runId,sequence:0,previous:'0'.repeat(64),polls:[]});
-const hmac=createHmac('sha256',key).update(raw).digest('hex');
-const seal={schema:'ns-observer-seal/1',runId:binding.runId,chunks:1,head:hmac,final:{consumer:{marker:0,entries:[]}},periodNs:[500000]};
-const observer=new Map([['polls.ndjson',Buffer.from(JSON.stringify({raw,hmac})+'\n')],['seal.json',Buffer.from(JSON.stringify(seal))]]);
-verifyObserver(observer,key,binding.runId);
-seal.final.consumer={marker:123,entries:[[123,'fabricated-final-effect',999]]};seal.periodNs=[1];
-observer.set('seal.json',Buffer.from(JSON.stringify(seal)));
-assert.deepEqual(verifyObserver(observer,key,binding.runId).seal.final.consumer,seal.final.consumer);
-record('F1 modified final DR and period accepted',{reproduced:true,pollBytesUnchanged:true,keyUnchanged:true,acceptedFinal:seal.final,acceptedPeriods:seal.periodNs});
+// [CX-VG03-56] Why: the final durable readback is consumed by checkSmoke, so it must be inside the authenticated chain. Rejected: changing signed bytes or supplying a new key.
 const domain={bootId:'7a064e31-8ca0-47a5-926f-d2de8d786302',primitive:'CLOCK_MONOTONIC',offsets:{monotonic:['0','0'],boottime:['0','0']}};
+function chain(final,periodNs,extra={}){let head='0'.repeat(64);const lines=[{sequence:0,polls:[]},{sequence:1,polls:[],final,periodNs}].map(b=>{const raw=JSON.stringify({schema:'ns-observer/1',runId:binding.runId,previous:head,domain,...b});const hmac=createHmac('sha256',key).update(raw).digest('hex');head=hmac;return JSON.stringify({raw,hmac})});
+ return new Map([['polls.ndjson',Buffer.from(lines.join('\n')+'\n')],['seal.json',Buffer.from(JSON.stringify({schema:'ns-observer-seal/1',runId:binding.runId,chunks:2,head,domain,final,periodNs,...extra}))]])}
+const emptyFinal={source:{marker:0,subjects:[],entries:[]},consumer:{marker:0,subjects:[],entries:[]}};
+const observer=chain(emptyFinal,[500000]);
+verifyObserver(observer,key,binding.runId);
+const forged=JSON.parse(observer.get('seal.json'));forged.final.consumer={marker:123,subjects:[],entries:[[123,'fabricated-final-effect',999]]};forged.periodNs=[1];
+observer.set('seal.json',Buffer.from(JSON.stringify(forged)));
+assert.throws(()=>verifyObserver(observer,key,binding.runId),/observer seal/);
+record('F1 modified final DR and period refused',{refused:true,pollBytesUnchanged:true,keyUnchanged:true});
 const trace=[{command:{id:'one',subject:'subject-0',value:7}}];
+const cleanTerminal=trustedTerminal({runId:binding.runId,exec:{status:0}});
 const diagnosticEvents=[{kind:'driver-runtime',data:{permissionModel:true,bundleSha256:binding.driverBundleSha256}},{kind:'offer',data:{command:trace[0].command,response:{commandId:'one',status:'committed',receipt:{position:'1'}},sentAtNs:'10',ackAtNs:'20'}},{kind:'ryow',data:{request:{subject:'subject-0',basis:'1'},answerSha256:hash(Buffer.from(canonicalAnswer({subject:'subject-0',value:7,basis:'1'})))}},{kind:'end',data:{error:null}}].map(e=>({...e,domain}));
-seal.domain=domain;seal.final={source:{marker:1,subjects:[['subject-0',7]],entries:[[1,'subject-0',7]]},consumer:{marker:0,entries:[]}};
-observer.set('seal.json',Buffer.from(JSON.stringify(seal)));
-assert.throws(()=>checkSmoke(diagnosticEvents,verifyObserver(observer,key,binding.runId),trace,1,binding),/frontier/);
-seal.final.consumer={marker:1,entries:[[1,'subject-0',7]]};observer.set('seal.json',Buffer.from(JSON.stringify(seal)));
-assert.equal(checkSmoke(diagnosticEvents,verifyObserver(observer,key,binding.runId),trace,1,binding).status,'DIAGNOSTIC');
-record('F1 failed consumer becomes accepted fixture consistency',{reproduced:true,onlyFinalReadbackChanged:true,qualification:false});
+const bad=chain({source:{marker:1,subjects:[['subject-0',7]],entries:[[1,'subject-0',7]]},consumer:{marker:0,subjects:[],entries:[]}},[500000]);
+assert.throws(()=>checkSmoke(diagnosticEvents,verifyObserver(bad,key,binding.runId),trace,1,binding,cleanTerminal),/frontier/);
+const fixed=JSON.parse(bad.get('seal.json'));fixed.final.consumer={marker:1,subjects:[['subject-0',7]],entries:[[1,'subject-0',7]]};bad.set('seal.json',Buffer.from(JSON.stringify(fixed)));
+assert.throws(()=>verifyObserver(bad,key,binding.runId),/observer seal/);
+record('F1 failed consumer cannot become accepted by editing only the final readback',{refused:true});
 
 // [CX-VG03-56] Why: mutate a signed event to contrast the unauthenticated final readback with the actual HR integrity control. Rejected: equating whitespace with changed measurement content.
 const body={schema:'ns-hr/1',binding,sequence:0,previous:'0'.repeat(64),events:[{kind:'end',data:{error:null}}]};
@@ -71,10 +72,15 @@ const driver=new vm.SourceTextModule(source,{context,identifier:driverPath.href}
 await driver.link(async spec=>{const values=exportsByModule[spec];assert.ok(values,'unexpected dependency '+spec);return new vm.SyntheticModule(Object.keys(values),function(){for(const [k,v]of Object.entries(values))this.setExport(k,v)},{context})});
 await driver.evaluate();
 await assert.rejects(driver.namespace.runNS({offline:true,readers:0,output:'offline',keyFile:'offline',binding,trace:trace.map(o=>({...o,atMs:0})),endpoints:{consumer:{},broker:{},readers:{}}}),/OFFLINE-PLANTED-HOOK-FAILURE/);
-assert.equal(rows.at(-1).kind,'end');assert.equal(rows.at(-1).data.error,null);assert.ok(savedSeal);
+assert.equal(rows.at(-1).kind,'end');assert.equal(rows.at(-1).data.error,'OFFLINE-PLANTED-HOOK-FAILURE');assert.ok(savedSeal);
 assert.equal(handshakes,3);assert.equal(mainInjector.finish().handshakes,3);
-assert.equal(checkSmoke(rows,verifyObserver(observer,key,binding.runId),trace,1,binding).status,'DIAGNOSTIC');
-record('F2 hook exception seals clean end',{reproduced:true,end:rows.at(-1),handshakesAcceptedByRealInjector:handshakes,actualDriverRowsPassCheckSmoke:true,sourceSha256:hash(source),stubbedDependencies:true,realHookedPage:true,coordinatorExitGuard:'manual inspection: ns-run.mjs:115-131 records result.status but never rejects it'});
+// The driver process would exit nonzero; the coordinator's own exec status (not the events) decides, and replay refuses first.
+const matching=verifyObserver(chain({source:{marker:1,subjects:[['subject-0',7]],entries:[[1,'subject-0',7]]},consumer:{marker:1,subjects:[['subject-0',7]],entries:[[1,'subject-0',7]]}},[1]),key,binding.runId);
+for(const exec of [{status:1},{status:null},{status:137}])assert.throws(()=>checkSmoke(rows,matching,trace,1,binding,trustedTerminal({runId:binding.runId,exec})),/DRIVER-EXIT-NONZERO/);
+// A clean end event with a nonzero exit (the round-6 shape) also refuses, whatever the end event says.
+const cleanEndRows=rows.map(r=>r.kind==='end'?{...r,data:{error:null}}:r);
+assert.throws(()=>checkSmoke(cleanEndRows,matching,trace,1,binding,trustedTerminal({runId:binding.runId,exec:{status:1}})),/DRIVER-EXIT-NONZERO/);
+record('F2 hook exception records its error and replay refuses',{refused:true,end:rows.at(-1),handshakesAcceptedByRealInjector:handshakes,sourceSha256:hash(source),stubbedDependencies:true,realHookedPage:true});
 
 const target={role:'consumer',name:'offline-consumer',id:'1'.repeat(64),volume:'offline-state'};
 for(const [name,kill]of [['missing proof',{}],['wrong target',{id:'2'.repeat(64),removed:target.name,signal:'SIGKILL',cgroupGone:true}]]){

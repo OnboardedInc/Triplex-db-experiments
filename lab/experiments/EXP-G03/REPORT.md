@@ -555,3 +555,59 @@ Evidence index: `round6/INDEX.json`; checksums: `round6/SHA256SUMS`; exact offli
 
 
 Final evidence-tool audit (rule 9a): `round6/verify-evidence.mjs` recomputes terminal TAP pass/fail/skip/cancel counts against INDEX, checks the unchanged fault-witness predicate using schemas read from the explicit merged-main commit (no moving ref), verifies all nine witness objects and 18 DR links, exact run/source/input/slot bindings, distinct attempt/hook nonces, old target and same-volume new-container proof metadata, actual replay digest, three observed repetitions per point, and every SHA256SUMS entry. Freshness is the primary v2 producer's one run ID and per-injection nonces, not an earlier producer's counts; binding is checked across index/witness/events/snapshots and the explicit authority commit. The tool reports DIAGNOSTIC/qualification:false and does not certify the synthetic proof metadata as a real kernel observation. Both suite processes' exit status 0 was observed before summarizing them; cleanup inventories are actual engine.mjs readbacks, not inferred from tests passing. `evidence-verification.json` is the retained verifier output.
+
+
+## Round 7a: reviewer's two High findings (F1, F2)
+
+Source: `lab/verify/G03/VERIFY-round6.md` (FIX-FIRST, d31569ec). Offline only; no engine, slot or Docker use. Base `95b0593c`, code commit `ef1a9216`. No QUALIFIED or PASS grant is added; every result stays DIAGNOSTIC.
+
+### F1: observer final readbacks and periods are now authenticated
+
+- `ns/observer.py` writes the final source/consumer readbacks and `periodNs` as the last record of its existing HMAC chain (same key, runId, previous head, domain). `seal.json` is only a copy.
+- `verifyObserver` requires exactly one final record, last in the chain, with no poll rows after it; requires the domain to be constant across chunks; requires `seal.json` to have exactly the expected keys and every field (head, chunks, runId, domain, final, periodNs) to equal the authenticated values; and returns a seal rebuilt from authenticated values only. Truncating the final record fails even with a matching head.
+- `runBoxedNS` records `sha256` of every exported driver/observer/source/consumer file at capture, before any verification (`raw-<run>/terminal.json`, `capture`, plus `captureSha256` in stage 13), for later CR-NS ingestion to compare. The CR-NS ingestion itself is still unwired (round 7b/later).
+
+### F2: failed driver completion cannot reach replay
+
+- `driver.mjs` records every exception on its own path (hook, consumer stop, synchronous code, teardown) in the terminal `end` event. A clean end (`error:null`) now exists only if the run produced its result with no recorded failure; otherwise `DRIVER-INCOMPLETE` or the error message.
+- `runBoxedNS` builds a `ns-terminal/1` record from the coordinator's own `docker exec` status and the fault injector's `finish()` outcome (not from driver events). Raw bytes are still stopped, exported and digested first (failed attempts keep their evidence), then `requireCleanTerminal` refuses a nonzero or null exit status or a failed fault stream before `verifyHr`/`checkSmoke`. `checkSmoke` takes the terminal as a required sixth argument and refuses before reading any event.
+- `smoke.mjs` no longer runs the obsolete `docker context use colima` (rule 10).
+- Limitation: the exit-status branch of `runBoxedNS` is covered by the pure `trustedTerminal`/`requireCleanTerminal`/`checkSmoke` tests and the reviewer's real-driver reproduction; a live boxed coordinator run with a failing driver was not performed (offline round).
+
+### Regressions
+
+- `lab/verify/G03/review-round6.mjs`: the reviewer's reproduction copied with F1/F2 assertions inverted. The unmodified original now fails at its first formerly accepted step (`observer final record missing`); the inverted copy exits 0 (`round7a/review-round6-refusal.json`). With the old driver restored it fails (`end.error` null), confirming the control is live.
+- `ns/round7a.test.mjs` (25 tests): a seal-only edit of each consumed field (12 cases), the reviewer's fabricated-consumer case, in-chain edit without key, re-sign with another key, truncation, rows after final, second final, wrong run/key, domain change; the real `observer.py` (paths redirected, fsync for fdatasync on macOS) verified end to end and then edited; terminal refusals (missing, foreign run, nonzero, signal, hook failure, forged source) before events are read; the real-driver reproduction run as a subprocess.
+- The existing `obs()` fixture in `offline.test.mjs` was updated to the real two-record shape; its assertions were not removed or weakened.
+
+### Gates (committed tree `ef1a9216`)
+
+- Full suite: **268/268**, zero failures, zero skips (`round7a/committed-suites.tap`): 108 evaluator fixtures, plus 160 NS components. Previously 242; the difference is the 25 new tests plus one more fault check added in round 6.
+- NS components: **160/160** (`round7a/ns-suites.tap`): lab 22 + box/policy 15 + offline 50 + fault 48 + round7a 25. Previously 135.
+- Evaluator fixtures 108/108 on a committed tree; no protected EVALUATOR_FILES entry changed.
+- `build_contract.py --verify` passes and `lab/acceptance` equals main snapshot `1b40aeba` (no diff).
+- Reviewer reproductions refuse (above).
+
+### PASS / receipt audit (rule 9a)
+
+Each site that turns observations into a verdict, with content / freshness / binding:
+
+- `verifyObserver` (observer evidence): content = HMAC over every record including final readbacks and periods, exact seal copy equality; freshness = runId in each record plus per-run random key; binding = same key, runId, previous-head chain and constant domain.
+- `trustedTerminal` / `requireCleanTerminal` (driver completion): content = exact exit status 0 and `faultFinish.ok === true`; freshness = produced from this run's exec result; binding = `runId` equal to the run binding and `source:'coordinator-exec'`.
+- `checkSmoke`: unchanged content checks (named-cut answers, offers/receipts, final source/consumer state against the trace); now additionally bound to a clean terminal and an authenticated final record.
+- `verifyHr`: unchanged (end `error:null` plus HMAC chain, run binding); the end event is no longer sufficient on its own.
+- Capture digests: content = sha256 of exported bytes, freshness = taken this attempt before verification, binding = path under the run's raw directory; not yet consumed by CR-NS.
+- Reviewer script / regression tests: positive assertions only follow the refusal assertions; stubs are trusted offline models and are disclosed in that script.
+
+Rule 9b: `lab/acceptance` untouched. Pinned-file hashes (none is an acceptance input pin; `round7a/pin-changes.json`):
+
+| Path | Old sha256 | New sha256 |
+| --- | --- | --- |
+| lab/bench/ns-driver/driver.mjs | b7fda0b06a410976d12261614a989c2f4a7549bd42be3afdc9f1a44c1eec3abe | 687061d04c64e2a12becd8f28cb7787840842724739352c71c39847df102c8bb |
+| lab/bin/ns-run.mjs | 8ba7f0dd3868ff4f70b5e8957ee07e698bcd0b6ec1dcd6e96ba4813838d862d5 | 93f2267c8e9682bfc9f922be332b288f1be5be94a17bdbf8400c72f17f897ef4 |
+| lab/experiments/EXP-G03/ns/observer.py | a5fb217a8ebecdde5ad52e8550e3dbe19d9ce8d491dc3a7aad073cfd1f18f735 | d89731b984a0b4dc978d9721fcec58b3f68764e3a4ca84290940b991bdcb8aaa |
+| lab/experiments/EXP-G03/ns/smoke.mjs | 683d7e3a87cf62eabf1029ceaf7d120dd1fb314b20bcab9b0e9b65a41499bb9b | 7ac90c5d7fe4cb6056308bba41ea9344f307363afdd72d0b17a181584816bd7b |
+
+The driver bundle hash changes with driver.mjs; the next contract builder must re-pin it. Rule 9c: all round-7a evidence is under 1 MB; durable copies and SHA256SUMS are in `/Users/sam/Claude/Projects/triplex-db-2/evidence/G03-R7/`. Index: `round7a/INDEX.json`, `round7a/SHA256SUMS`.
+
+Not done: R48 sync-witness integration (round 7b), any live boxed or VM run, CR-NS ingestion, production normalizers.

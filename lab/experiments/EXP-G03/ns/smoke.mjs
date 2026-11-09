@@ -5,6 +5,7 @@ const {options:o}=parseArgs(process.argv.slice(2));if(!o.out)throw Error('--out 
 const out=path.resolve(o.out);fs.mkdirSync(out,{recursive:true});if(fs.readdirSync(out).length)throw Error('new attempt needs empty output');
 const source=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();if(execFileSync('git',['status','--porcelain','--untracked-files=no'],{encoding:'utf8'}).trim())throw Error('commit source first');
 const disk=fs.statfsSync(REPO);if(disk.bavail*disk.bsize<5*1024**3)throw Error('disk <5 GiB');
+// [EXP-G03-R7a] Why: rule 10 forbids `docker context use colima` (the context no longer exists); the lab VM is reached only through DOCKER_HOST. Rejected: keeping the step and tolerating its failure.
 const holder='CX-G03-R5',run=randomBytes(8).toString('hex'),store=`tx2-g03-${run}-store`,events=[],attempts=[];let entered=false,box,cleanupError;
 const engine=(action,args=[])=>{const r=spawnSync(process.execPath,['lab/bin/engine.mjs','box',action,'--run',run,'--holder',holder,'--controller-pid',String(process.pid),...args],{encoding:'utf8',timeout:180000});if(r.status!==0)throw Error(r.stderr||r.stdout);return JSON.parse(r.stdout)};
 const base={imageId:'sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575',buildInputsSha256:'60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334',store,storeListingSha256:sha256(Buffer.from('[]')),walkMemoryBytes:536870912};
@@ -40,6 +41,6 @@ try{
 finally{
  try{box?.close();if(entered)engine('remove-volume',['--name',store])}catch(e){cleanupError=String(e);process.exitCode=2}
  canary.close();
- if(entered){for(const [cmd,args,name]of [['colima',['ssh','-p','triplex2','--','sudo','fstrim','-av'],'trim'],['docker',['context','use','colima'],'context']]){const r=spawnSync(cmd,args,{encoding:'utf8',timeout:180000});fs.writeFileSync(path.join(out,name+'.json'),JSON.stringify({status:r.status,stdout:r.stdout,stderr:r.stderr}));if(r.status!==0)process.exitCode=2}}
+ if(entered){for(const [cmd,args,name]of [['colima',['ssh','-p','triplex2','--','sudo','fstrim','-av'],'trim']]){const r=spawnSync(cmd,args,{encoding:'utf8',timeout:180000});fs.writeFileSync(path.join(out,name+'.json'),JSON.stringify({status:r.status,stdout:r.stdout,stderr:r.stderr}));if(r.status!==0)process.exitCode=2}}
  fs.writeFileSync(path.join(out,'terminal.json'),JSON.stringify({source,events,cleanupError,remaining:box?.resources,status:'DIAGNOSTIC',qualification:false},null,2));console.log(JSON.stringify({events,cleanupError,remaining:box?.resources}));
 }

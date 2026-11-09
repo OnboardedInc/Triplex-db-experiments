@@ -47,10 +47,15 @@ with Path('/out/polls.ndjson').open('x') as output:
         if seq%100==0: output.flush()
         time.sleep(max(0,(.00025 if cfg.get('active',True) else .05)-(time.monotonic_ns()-t)/1e9))
         if time.monotonic()>end: raise RuntimeError('observer stop timeout')
+    # [EXP-G03-R7a] Why: final readbacks and measured periods are observations the claim consumes, so they are one more record in the same HMAC chain (key, runId, previous head), written after the stop signal. Rejected: an unauthenticated seal.json copy (F1: edited readbacks passed verifyObserver).
+    final={}
+    for name,c in zip(['source','consumer'],connections):
+        final[name]=dict(marker=c.execute('SELECT lsn FROM marker').fetchone()[0],subjects=c.execute('SELECT subject,value FROM subjects ORDER BY subject').fetchall(),entries=c.execute('SELECT position,subject,value FROM entries ORDER BY position').fetchall())
+        c.close()
+    body=dict(schema='ns-observer/1',runId=cfg['runId'],sequence=seq,previous=head,domain=domain,polls=[],final=final,periodNs=periods)
+    raw=json.dumps(body,separators=(',',':'));head=hmac.new(key,raw.encode(),hashlib.sha256).hexdigest()
+    output.write(json.dumps(dict(raw=raw,hmac=head))+'\n');seq+=1
     output.flush();os.fdatasync(output.fileno())
-final={}
-for name,c in zip(['source','consumer'],connections):
-    final[name]=dict(marker=c.execute('SELECT lsn FROM marker').fetchone()[0],subjects=c.execute('SELECT subject,value FROM subjects ORDER BY subject').fetchall(),entries=c.execute('SELECT position,subject,value FROM entries ORDER BY position').fetchall())
-    c.close()
+# seal.json is a convenience copy; verifyObserver requires every field to equal the authenticated final record.
 Path('/out/seal.json').write_text(json.dumps(dict(schema='ns-observer-seal/1',runId=cfg['runId'],chunks=seq,head=head,domain=domain,periodNs=periods,final=final)))
 print(json.dumps(dict(runId=cfg['runId'],chunks=seq,head=head)))

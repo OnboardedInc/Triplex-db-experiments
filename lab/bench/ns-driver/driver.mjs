@@ -82,7 +82,8 @@ export async function runNS(c) {
     };
   }
   let stopping = false,
-    failed;
+    failed,
+    thrown;
   const completions = new Map(),
     answers = [],
     accounting = [];
@@ -186,13 +187,25 @@ export async function runNS(c) {
       consumer,
       completions: [...completions.values()],
     };
+  } catch (e) {
+    // [EXP-G03-R7a] Why: any exception on the driver's own path (hook, consumer stop, sync code) must reach the terminal event. Rejected: recording only reader/offer failures (F2: a hook throw sealed error:null).
+    thrown = e;
+    throw e;
   } finally {
-    stopping = true;
-    control.close();
-    await Promise.allSettled(pending);
-    await Promise.all(loops);
-    meter.disable();
-    events.write("end", { error: failed?.message ?? null });
+    let teardown;
+    try {
+      stopping = true;
+      control.close();
+      await Promise.allSettled(pending);
+      await Promise.all(loops);
+      meter.disable();
+    } catch (e) {
+      teardown = e;
+      failed ??= e;
+    }
+    const error = failed ?? thrown ?? teardown;
+    // A clean end exists only when the run completed (result assigned) with no recorded failure.
+    events.write("end", { error: error ? String(error.message ?? error) : result ? null : "DRIVER-INCOMPLETE" });
     const seal = events.seal();
     fs.writeFileSync(path.join(c.output, "seal.json"), JSON.stringify(seal) + "\n", { flag: "wx" });
   }
