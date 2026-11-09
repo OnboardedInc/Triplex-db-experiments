@@ -1,0 +1,10 @@
+{
+  "readAt": "2026-11-09T09:56:15.378Z",
+  "path": "/Users/sam/projects/triplex-db-2/lab/acceptance/RULINGS-PENDING.md",
+  "sha256": "67f11fd638f62601d1a0368ab2e4726c142f89cfc8af09a840c64beb727ad0ad",
+  "rows": [
+    "| Q100k (orchestrator; refines Q60e, Q99b) | **Windows for single-arm NS runs:** GREEN needs R22's pre-registered signal rules (hard rules unbroken, at most a third of rounds excluded) and sequential A/A rounds of equal burst phase on the same arm within R22's s_d limits, provisional until M01 calibrates a sequential limit. Timing bars are judged only in GREEN windows; count bars (gaps, order, duplicates, accounting, prefix, affected set, crash outcomes) in any window. Acceptance starts only after a GREEN pre-flight; three failed deferrals of 30 minutes stop with HOST-NOT-QUIET. An unjudged or timing-INVALID receipt is not a failed acceptance receipt under VA12. No threshold changes | Q60e; VA12; R22 4; R44 6 |",
+    "| Q104a (orchestrator, from EXP-RT01 live round 3) | **No-regression gates (G6 and similar) use a statistically sound rule fixed before the B runs.** A tolerance band from one A/A pair is not a noise estimate: RT01's compact five-fact p99 band was 0.237% from two 150-sample arms, where a nearest-rank p99 at n=150 is the second-highest sample. From now on: the band comes from M01's PAIR-0 grading (accepted, verify/M01-rebase 3a354133) over at least three A/A rounds, giving s_d per metric; p50 is judged at n >= 150 per arm; p99 is judged only at n >= 1,000 per arm or with a bootstrap 95% interval of the B/A ratio whose lower bound must exceed 1 + the A/A band to count as a regression; the window grade (Q100k) applies. A receipt failed under an earlier frozen rule stays FAILED and is kept; a rerun under the new rule is a new receipt, never a replacement | EXP-RT01 43f9d590 live3-run; M01 PAIR-0; Q100k; R22 |"
+  ],
+  "role": "Read-only ruling capture; lab/acceptance unchanged"
+}

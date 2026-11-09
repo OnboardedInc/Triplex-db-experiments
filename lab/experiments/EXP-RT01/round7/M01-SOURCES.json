@@ -1,0 +1,36 @@
+{
+  "commit": "99d9641d4d6f385ab3b3fade7e9e78680a8850b4",
+  "sources": [
+    {
+      "path": "lab/bench/lib/paired.ts",
+      "copy": "m01/paired.ts",
+      "sha256": "fb90bee1fd3e4ddc06827a458a5ead56af455b6f840a26f705a88092f713b78c"
+    },
+    {
+      "path": "lab/bench/lib/noise.ts",
+      "copy": "m01/noise.ts",
+      "sha256": "5391f874926b46c8af366ee8ab929f2ce8e86c4cdc06075b696a3aecec195fb1"
+    },
+    {
+      "path": "lab/bench/lib/hist.ts",
+      "copy": "m01/hist.ts",
+      "sha256": "983e89c62b6b73ec6730c2e8b0a3325d5528897a786e59ed02fb4e6814754aed"
+    },
+    {
+      "path": "lab/bench/lib/rng.ts",
+      "copy": "m01/rng.ts",
+      "sha256": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50"
+    },
+    {
+      "path": "lab/bench/lib/single-analysis.ts",
+      "copy": "m01/single-analysis.ts",
+      "sha256": "b001cb169c173ae0fbfe2926329d687e63f1f2ce14c37bb94386a6db0b8c8d9e"
+    },
+    {
+      "path": "lab/config/noise.json",
+      "copy": "m01/noise.json",
+      "sha256": "6f00fb518c71a95a2b25661efe7affcb9ed9838c4e36b6cb79a2231460fc8190"
+    }
+  ],
+  "reason": "Byte-exact accepted PAIR-0/Q100k implementation; no sibling-source imports or modifications"
+}

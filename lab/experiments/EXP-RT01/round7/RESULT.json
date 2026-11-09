@@ -1,0 +1,15 @@
+{
+  "schema": "rt01-round7-closure/1",
+  "at": "2026-11-09T09:57:20.680Z",
+  "result": "OFFLINE_RULE_TESTS_PASS_LIVE_NOT_RUN",
+  "offlineAttempt": "offline4",
+  "tests": 17,
+  "phases": 13,
+  "sourceSnapshotSha256": "38164372e26ae16c074b5ff4cccb17391494b531c611f53927de9c9cfc4d6b47",
+  "sourceHead": "43f9d590b767a6808b3a582255400272c56f6ea9",
+  "diagnosisSha256": "7dc5de1b7dd1e659960f2aee46970fe9b5159035c2a660bfafea6a9bac63e37d",
+  "priorLiveResult": "FAIL_UNCHANGED",
+  "priorLiveResultSha256": "77e3700733780f96ab9b4b07840e6f82536107559a87184e506f98216dbdcbff",
+  "liveRun": false,
+  "limits": "Prepared G6 controller/recorders not executed live. Historical native baseline guard plan absent; no causal performance fix claimed."
+}
