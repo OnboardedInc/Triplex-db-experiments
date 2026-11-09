@@ -396,6 +396,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("revision cache tran
       const expected = await runtime.runPromise(
         StorageAdapter.reachBy((ids) => triples.entities(ids as never, { validAt: 0 }), "root"),
       );
+      const beforeConcurrent = client.reachDiagnostics.refMisses;
       const concurrent = await Promise.all(
         Array.from({ length: 50 }, () =>
           Effect.runPromise(a.getReachTriples!("root", { validAt: 0 })),
@@ -404,6 +405,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("revision cache tran
       concurrent.forEach((result) => expect(result).toEqual(expected));
       const transitions = {
         concurrentPulls: 50,
+        concurrentRefMisses: client.reachDiagnostics.refMisses - beforeConcurrent,
         refMisses: client.reachDiagnostics.refMisses,
         resets: client.reachDiagnostics.resets,
       };

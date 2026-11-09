@@ -31,7 +31,11 @@ elif mode=='retraction':
 elif mode=='recorded': old='r (get basis "recordedAt")';new='r nil'
 elif mode=='rev': old='(distinct (map :entity_id rows))';new='(distinct (map :entity_id (filter #(contains? new-ids (:id %)) rows)))'
 else:
- p=root/'packages/datomic/src/reach.ts';old='if (row.validFrom > basis.validAt || (Option.isSome(row.validTo) && row.validTo.value <= basis.validAt)) continue;';new='if (false) continue;'
+ p=root/'packages/datomic/src/reach.ts';old='''if (
+          row.validFrom > basis.validAt ||
+          (Option.isSome(row.validTo) && row.validTo.value <= basis.validAt)
+        )
+          continue;''';new='if (false) continue;'
 s=p.read_text();assert s.count(old)==1,(mode,s.count(old));p.write_text(s.replace(old,new))
 PY
   reload
