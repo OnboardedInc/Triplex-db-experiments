@@ -132,27 +132,33 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("row-datom reach equ
             ];
             for (const basis of bases) {
               const root = `e${rand() % 8}`;
-              const response = await client.request<{ declined?: string; closures?: [string,string[]][] }>(
-                "POST",
-                `/v2/db/${db}/reach`,
-                { root, basis },
-              );
+              const response = await client.request<{
+                declined?: string;
+                closures?: [string, string[]][];
+              }>("POST", `/v2/db/${db}/reach`, { root, basis });
               const fast = await Effect.runPromise(a.getReachTriples!(root, basis));
               // [DX-B2-N2] Why: every generated cut exercises inline, references and a shared page.
               // Rejected: checking only head reads (would miss older-revision cache errors).
-              const fresh = new DatomicClient(process.env["DATOMIC_GATEWAY_URL"] ?? "http://127.0.0.1:8490");
+              const fresh = new DatomicClient(
+                process.env["DATOMIC_GATEWAY_URL"] ?? "http://127.0.0.1:8490",
+              );
               const freshAdapter = makeDatomicStorageAdapter(fresh, scope);
               let inline;
-              try { inline = await Effect.runPromise(freshAdapter.getReachTriples!(root, basis)); }
-              finally { fresh.close(); }
+              try {
+                inline = await Effect.runPromise(freshAdapter.getReachTriples!(root, basis));
+              } finally {
+                fresh.close();
+              }
               const warm = await Effect.runPromise(a.getReachTriples!(root, basis));
               const pageRoots = [root, `e${rand() % 8}`];
               const page = await Effect.runPromise(a.getReachTriplesMany!(pageRoots, basis));
               comparisons++;
               if (response.declined) {
                 declines[response.declined] = (declines[response.declined] ?? 0) + 1;
-                expect(fast).toBeUndefined(); expect(inline).toBeUndefined();
-                expect(warm).toBeUndefined(); expect(page).toBeUndefined();
+                expect(fast).toBeUndefined();
+                expect(inline).toBeUndefined();
+                expect(warm).toBeUndefined();
+                expect(page).toBeUndefined();
               } else {
                 expect(fast).toBeDefined();
                 oracleBasis = basis;
@@ -163,11 +169,22 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("row-datom reach equ
                   console.log(
                     JSON.stringify({ scenario, commit, root, basis, response, fast, oracle }),
                   );
-                const visited = new Set([root, ...oracle.triples.map(t => t.entityId), ...oracle.triples.flatMap(t => t.value.type === "ref" ? [t.value.value] : [])]);
+                const visited = new Set([
+                  root,
+                  ...oracle.triples.map((t) => t.entityId),
+                  ...oracle.triples.flatMap((t) => (t.value.type === "ref" ? [t.value.value] : [])),
+                ]);
                 expect(new Set(response.closures?.[0]?.[1])).toEqual(visited);
-                expect(fast).toEqual(oracle); expect(inline).toEqual(oracle); expect(warm).toEqual(oracle);
+                expect(fast).toEqual(oracle);
+                expect(inline).toEqual(oracle);
+                expect(warm).toEqual(oracle);
                 expect(page?.[0]).toEqual(oracle);
-                const otherOracle = await runtime.runPromise(StorageAdapter.reachBy((ids) => triples.entities(ids as never, basis), pageRoots[1]!));
+                const otherOracle = await runtime.runPromise(
+                  StorageAdapter.reachBy(
+                    (ids) => triples.entities(ids as never, basis),
+                    pageRoots[1]!,
+                  ),
+                );
                 expect(page?.[1]).toEqual(otherOracle);
                 accepted++;
               }
@@ -178,13 +195,20 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("row-datom reach equ
           await client.delete(scope);
         }
       }
-      const results = { comparisons, accepted, answerComparisons: accepted * 5, refMisses: client.reachDiagnostics.refMisses, declines, seed: "0x19870219" };
+      const results = {
+        comparisons,
+        accepted,
+        answerComparisons: accepted * 5,
+        refMisses: client.reachDiagnostics.refMisses,
+        declines,
+        seed: "0x19870219",
+      };
       console.log(JSON.stringify(results));
       if (process.env["DX1_RESULTS"])
         writeFileSync(process.env["DX1_RESULTS"], JSON.stringify(results, null, 2));
       expect(accepted).toBeGreaterThan(2000);
       expect(client.reachDiagnostics.faults).toBe(0);
-      console.log(JSON.stringify({refMisses:client.reachDiagnostics.refMisses}));
+      console.log(JSON.stringify({ refMisses: client.reachDiagnostics.refMisses }));
     } finally {
       client.close();
     }
@@ -202,36 +226,69 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("irregular SPI posit
         const a = makeDatomicStorageAdapter(client, scope);
         try {
           await Effect.runPromise(a.initialize());
-          await Effect.runPromise(a.withTransaction(Effect.gen(function* () {
-            const p = yield* a.nextCommitPosition();
-            yield* a.insert({entityId:"root",attribute:":dx/guard",value:{type:"string",value:"guarded"},validFrom:0},"_tx/00000000000000000000000001",100,"row",mode === "lower" ? 0 : mode === "upper" ? p+1 : p);
-          })));
-          if (mode === "retirement") await Effect.runPromise(a.withTransaction(Effect.gen(function* () {
-            const p = yield* a.nextCommitPosition();
-            yield* a.retract("row",200,"_tx/00000000000000000000000002",p+1);
-          })));
-          expect(await Effect.runPromise(a.getReachTriples!("root",{validAt:200}))).toBeUndefined();
+          await Effect.runPromise(
+            a.withTransaction(
+              Effect.gen(function* () {
+                const p = yield* a.nextCommitPosition();
+                yield* a.insert(
+                  {
+                    entityId: "root",
+                    attribute: ":dx/guard",
+                    value: { type: "string", value: "guarded" },
+                    validFrom: 0,
+                  },
+                  "_tx/00000000000000000000000001",
+                  100,
+                  "row",
+                  mode === "lower" ? 0 : mode === "upper" ? p + 1 : p,
+                );
+              }),
+            ),
+          );
+          if (mode === "retirement")
+            await Effect.runPromise(
+              a.withTransaction(
+                Effect.gen(function* () {
+                  const p = yield* a.nextCommitPosition();
+                  yield* a.retract("row", 200, "_tx/00000000000000000000000002", p + 1);
+                }),
+              ),
+            );
+          expect(
+            await Effect.runPromise(a.getReachTriples!("root", { validAt: 200 })),
+          ).toBeUndefined();
           expect(client.reachDiagnostics.declines["irregular"]).toBeGreaterThan(0);
-        } finally { await client.delete(scope); }
+        } finally {
+          await client.delete(scope);
+        }
       }
-    } finally { client.close(); }
-  },30000);
+    } finally {
+      client.close();
+    }
+  }, 30000);
 });
 
 // [DX-B2-N2] Why: exercise revision changes, concurrent reference delivery and reset recovery against actual fallback bytes.
 // Rejected: endpoint status checks (cannot detect a stale shared row).
 describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("revision cache transitions", () => {
   it("keeps shared changes, retraction-only commits, old cuts and 50 concurrent cold pulls exact", async () => {
-    const client = new DatomicClient(process.env["DATOMIC_GATEWAY_URL"] ?? "http://127.0.0.1:8490", 20000);
+    const client = new DatomicClient(
+      process.env["DATOMIC_GATEWAY_URL"] ?? "http://127.0.0.1:8490",
+      20000,
+    );
     const scope = DatabaseScope.test(`dx2-cache-${randomUUID()}`);
     const a = makeDatomicStorageAdapter(client, scope);
     let oracleBasis: ResolvedTemporalBasis | undefined;
-    const runtime = ManagedRuntime.make(Runtime.define({
-      name: "dx2-cache", storage: Layer.succeed(StorageAdapter, {
-        ...a, getByEntities: (ids, basis) => a.getByEntities(ids, oracleBasis ?? basis),
-      }),
-      queries: Layer.succeed(QueryExecutor, makeDatomicQueryExecutor(client, scope)),
-    }).layer({scope, capabilities: Capabilities.none}));
+    const runtime = ManagedRuntime.make(
+      Runtime.define({
+        name: "dx2-cache",
+        storage: Layer.succeed(StorageAdapter, {
+          ...a,
+          getByEntities: (ids, basis) => a.getByEntities(ids, oracleBasis ?? basis),
+        }),
+        queries: Layer.succeed(QueryExecutor, makeDatomicQueryExecutor(client, scope)),
+      }).layer({ scope, capabilities: Capabilities.none }),
+    );
     const replies: any[] = [];
     const original = client.request.bind(client);
     client.request = async (...args) => {
@@ -240,62 +297,126 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("revision cache tran
       return result as never;
     };
     let p = 0;
-    const commit = async (time: number, additions: {id:string; entity:string; value:any; from?:number}[], retracts: string[] = []) => {
-      await Effect.runPromise(a.withTransaction(Effect.gen(function* () {
-        p = yield* a.nextCommitPosition();
-        for (const id of retracts) yield* a.retract(id, time, `_tx/${String(p).padStart(26,"0")}`, p);
-        for (const row of additions) yield* a.insert({entityId:row.entity,attribute:":test/value",value:row.value,validFrom:row.from ?? 0},`_tx/${String(p).padStart(26,"0")}`,time,row.id,p);
-      })));
+    const commit = async (
+      time: number,
+      additions: { id: string; entity: string; value: any; from?: number }[],
+      retracts: string[] = [],
+    ) => {
+      await Effect.runPromise(
+        a.withTransaction(
+          Effect.gen(function* () {
+            p = yield* a.nextCommitPosition();
+            for (const id of retracts)
+              yield* a.retract(id, time, `_tx/${String(p).padStart(26, "0")}`, p);
+            for (const row of additions)
+              yield* a.insert(
+                {
+                  entityId: row.entity,
+                  attribute: ":test/value",
+                  value: row.value,
+                  validFrom: row.from ?? 0,
+                },
+                `_tx/${String(p).padStart(26, "0")}`,
+                time,
+                row.id,
+                p,
+              );
+          }),
+        ),
+      );
       return p;
     };
     try {
       const triples = await runtime.runPromise(Triples);
       const old = await commit(100, [
-        {id:"root-shared",entity:"root",value:{type:"ref",value:"shared"}},
-        {id:"root-fixed",entity:"root",value:{type:"ref",value:"fixed"}},
-        {id:"shared-1",entity:"shared",value:{type:"string",value:"before"}},
-        {id:"future",entity:"shared",value:{type:"ref",value:"future-target"},from:100},
-        {id:"fixed-1",entity:"fixed",value:{type:"json",value:{nested:["immutable"]}}},
+        { id: "root-shared", entity: "root", value: { type: "ref", value: "shared" } },
+        { id: "root-fixed", entity: "root", value: { type: "ref", value: "fixed" } },
+        { id: "shared-1", entity: "shared", value: { type: "string", value: "before" } },
+        {
+          id: "future",
+          entity: "shared",
+          value: { type: "ref", value: "future-target" },
+          from: 100,
+        },
+        {
+          id: "fixed-1",
+          entity: "fixed",
+          value: { type: "json", value: { nested: ["immutable"] } },
+        },
       ]);
       const check = async (basis: ResolvedTemporalBasis) => {
         oracleBasis = basis;
-        const expected = await runtime.runPromise(StorageAdapter.reachBy(ids => triples.entities(ids as never,basis),"root"));
-        const actual = await Effect.runPromise(a.getReachTriples!("root",basis));
-        if (JSON.stringify(actual) !== JSON.stringify(expected)) console.log(JSON.stringify({basis,replies:replies.slice(-3),actual,expected}));
+        const expected = await runtime.runPromise(
+          StorageAdapter.reachBy((ids) => triples.entities(ids as never, basis), "root"),
+        );
+        const actual = await Effect.runPromise(a.getReachTriples!("root", basis));
+        if (JSON.stringify(actual) !== JSON.stringify(expected))
+          console.log(JSON.stringify({ basis, replies: replies.slice(-3), actual, expected }));
         expect(actual).toEqual(expected);
-        expect(await Effect.runPromise(a.getReachTriplesMany!(["root","shared","absent"],basis))).toEqual([
+        expect(
+          await Effect.runPromise(a.getReachTriplesMany!(["root", "shared", "absent"], basis)),
+        ).toEqual([
           expected,
-          await runtime.runPromise(StorageAdapter.reachBy(ids => triples.entities(ids as never,basis),"shared")),
-          {triples:[],hops:1},
+          await runtime.runPromise(
+            StorageAdapter.reachBy((ids) => triples.entities(ids as never, basis), "shared"),
+          ),
+          { triples: [], hops: 1 },
         ]);
       };
-      await check({validAt:0,recordedPosition:old});
-      await check({validAt:0,recordedPosition:old});
-      if (process.env["DX2_EXPECT_RESET"] !== "1") expect(replies.some(r => r.entities?.some((e:any[]) => e.length === 2))).toBe(true);
-      await commit(200,[{id:"shared-2",entity:"shared",value:{type:"string",value:"after"}}],["shared-1"]);
-      await check({validAt:100,recordedPosition:p});
-      await check({validAt:0,recordedPosition:old});
-      await check({validAt:100,recordedPosition:p});
-      await commit(300,[],["shared-2"]);
-      await check({validAt:100,recordedPosition:p});
-      const cached = await Effect.runPromise(a.getReachTriples!("root",{validAt:0}));
-      const json = cached!.triples.find(t => t.value.type === "json")!;
-      expect(Object.isFrozen(json)).toBe(true); expect(Object.isFrozen(json.value)).toBe(true);
-      expect(() => { (json.value as any).value.nested[0] = "changed"; }).toThrow();
+      await check({ validAt: 0, recordedPosition: old });
+      await check({ validAt: 0, recordedPosition: old });
+      if (process.env["DX2_EXPECT_RESET"] !== "1")
+        expect(replies.some((r) => r.entities?.some((e: any[]) => e.length === 2))).toBe(true);
+      await commit(
+        200,
+        [{ id: "shared-2", entity: "shared", value: { type: "string", value: "after" } }],
+        ["shared-1"],
+      );
+      await check({ validAt: 100, recordedPosition: p });
+      await check({ validAt: 0, recordedPosition: old });
+      await check({ validAt: 100, recordedPosition: p });
+      await commit(300, [], ["shared-2"]);
+      await check({ validAt: 100, recordedPosition: p });
+      const cached = await Effect.runPromise(a.getReachTriples!("root", { validAt: 0 }));
+      const json = cached!.triples.find((t) => t.value.type === "json")!;
+      expect(Object.isFrozen(json)).toBe(true);
+      expect(Object.isFrozen(json.value)).toBe(true);
+      expect(() => {
+        (json.value as any).value.nested[0] = "changed";
+      }).toThrow();
       // Deliberately lose the client copy while the gateway retains its reference state.
       client.reachCache.clear();
       const before = client.reachDiagnostics.refMisses;
-      await check({validAt:0,recordedPosition:p});
-      if (process.env["DX2_EXPECT_RESET"] !== "1") expect(client.reachDiagnostics.refMisses).toBeGreaterThan(before);
-      client.reachCache.clear(); client.reachSession = randomUUID(); oracleBasis = {validAt:0};
-      const expected = await runtime.runPromise(StorageAdapter.reachBy(ids => triples.entities(ids as never,{validAt:0}),"root"));
-      const concurrent = await Promise.all(Array.from({length:50}, () => Effect.runPromise(a.getReachTriples!("root",{validAt:0}))));
-      concurrent.forEach(result => expect(result).toEqual(expected));
-      const transitions = {concurrentPulls:50,refMisses:client.reachDiagnostics.refMisses,resets:client.reachDiagnostics.resets};
+      await check({ validAt: 0, recordedPosition: p });
+      if (process.env["DX2_EXPECT_RESET"] !== "1")
+        expect(client.reachDiagnostics.refMisses).toBeGreaterThan(before);
+      client.reachCache.clear();
+      client.reachSession = randomUUID();
+      oracleBasis = { validAt: 0 };
+      const expected = await runtime.runPromise(
+        StorageAdapter.reachBy((ids) => triples.entities(ids as never, { validAt: 0 }), "root"),
+      );
+      const concurrent = await Promise.all(
+        Array.from({ length: 50 }, () =>
+          Effect.runPromise(a.getReachTriples!("root", { validAt: 0 })),
+        ),
+      );
+      concurrent.forEach((result) => expect(result).toEqual(expected));
+      const transitions = {
+        concurrentPulls: 50,
+        refMisses: client.reachDiagnostics.refMisses,
+        resets: client.reachDiagnostics.resets,
+      };
       console.log(JSON.stringify(transitions));
-      if (process.env["DX2_TRANSITION_RESULTS"]) writeFileSync(process.env["DX2_TRANSITION_RESULTS"],JSON.stringify(transitions));
-      if (process.env["DX2_EXPECT_RESET"] === "1") expect(client.reachDiagnostics.resets).toBeGreaterThan(0);
+      if (process.env["DX2_TRANSITION_RESULTS"])
+        writeFileSync(process.env["DX2_TRANSITION_RESULTS"], JSON.stringify(transitions));
+      if (process.env["DX2_EXPECT_RESET"] === "1")
+        expect(client.reachDiagnostics.resets).toBeGreaterThan(0);
       expect(client.reachDiagnostics.faults).toBe(0);
-    } finally { await runtime.dispose(); await client.delete(scope); client.close(); }
-  },60000);
+    } finally {
+      await runtime.dispose();
+      await client.delete(scope);
+      client.close();
+    }
+  }, 60000);
 });

@@ -1,9 +1,21 @@
 import { Option } from "effect";
-import { unsafe, type Triple, type ResolvedTemporalBasis, type ReachResult } from "@triplex-build/triplex";
-import { decodeValueColumns, storedValueDomain, ValueDomains } from "@triplex-build/triplex/runtime";
+import {
+  unsafe,
+  type Triple,
+  type ResolvedTemporalBasis,
+  type ReachResult,
+} from "@triplex-build/triplex";
+import {
+  decodeValueColumns,
+  storedValueDomain,
+  ValueDomains,
+} from "@triplex-build/triplex/runtime";
 import { decodeRowTextColumns } from "./rowText.js";
 
-export interface CachedEntity { readonly rev: number; readonly rows: readonly Triple[] }
+export interface CachedEntity {
+  readonly rev: number;
+  readonly rows: readonly Triple[];
+}
 export interface ReachWire {
   declined?: string;
   position: number;
@@ -28,13 +40,19 @@ export function decodeEntity(id: string, rev: number, wire: unknown[]): CachedEn
     // Validate the value domain exactly once; retain the decoded value in the cached Triple.
     const value = decodeValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute));
     return freeze({
-      id: row.id, entityId: row.entity_id, attribute: row.attribute, value,
-      recordedAt: row.recorded_at, validFrom: row.valid_from,
+      id: row.id,
+      entityId: row.entity_id,
+      attribute: row.attribute,
+      value,
+      recordedAt: row.recorded_at,
+      validFrom: row.valid_from,
       validTo: row.valid_to === null ? Option.none() : Option.some(row.valid_to),
       createdBy: row.created_by ? Option.some(row.created_by) : Option.none(),
-      retractedAt: Option.none(), entityType: row.entity_type ? Option.some(row.entity_type) : Option.none(),
+      retractedAt: Option.none(),
+      entityType: row.entity_type ? Option.some(row.entity_type) : Option.none(),
       schemaVersion: row.schema_version ? Option.some(row.schema_version) : Option.none(),
-      txId: row.tx_id ? Option.some(unsafe.transactionId(row.tx_id)) : Option.none(), retractTxId: Option.none(),
+      txId: row.tx_id ? Option.some(unsafe.transactionId(row.tx_id)) : Option.none(),
+      retractTxId: Option.none(),
     } as Triple);
   });
   rows.sort((a, b) => a.recordedAt - b.recordedAt || a.id.localeCompare(b.id));
@@ -44,10 +62,15 @@ export function decodeEntity(id: string, rev: number, wire: unknown[]): CachedEn
 }
 // [DX-B2-N2] Why: the core's BFS ordering depends on recordedAt/id order, not EAVT order.
 // Rejected: concatenating gateway entities in datom visit order (changes ref visitation).
-export function reachResponse(root: string, entities: ReadonlyMap<string, CachedEntity>, basis: ResolvedTemporalBasis): ReachResult {
+export function reachResponse(
+  root: string,
+  entities: ReadonlyMap<string, CachedEntity>,
+  basis: ResolvedTemporalBasis,
+): ReachResult {
   const seen = new Set<string>([root]);
   const triples: Triple[] = [];
-  let todo = [root], hops = 0;
+  let todo = [root],
+    hops = 0;
   while (todo.length) {
     hops++;
     const next: string[] = [];
@@ -55,10 +78,15 @@ export function reachResponse(root: string, entities: ReadonlyMap<string, Cached
       const entity = entities.get(id);
       if (!entity) throw new TypeError("Fast reach entity coverage mismatch");
       for (const row of entity.rows) {
-        if (row.validFrom > basis.validAt || (Option.isSome(row.validTo) && row.validTo.value <= basis.validAt)) continue;
+        if (
+          row.validFrom > basis.validAt ||
+          (Option.isSome(row.validTo) && row.validTo.value <= basis.validAt)
+        )
+          continue;
         triples.push(row);
         if (row.value.type === "ref" && !seen.has(row.value.value)) {
-          seen.add(row.value.value); next.push(row.value.value);
+          seen.add(row.value.value);
+          next.push(row.value.value);
         }
       }
     }

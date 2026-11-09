@@ -1,4 +1,9 @@
-import { decodeValueColumns, storedValueDomain, ValueDomains, type TripleRow } from "@triplex-build/triplex/runtime";
+import {
+  decodeValueColumns,
+  storedValueDomain,
+  ValueDomains,
+  type TripleRow,
+} from "@triplex-build/triplex/runtime";
 import { assertionColumns } from "./rows.js";
 import { decodeRow, encodeRow } from "./protocol.js";
 

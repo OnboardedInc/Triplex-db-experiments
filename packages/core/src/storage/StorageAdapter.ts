@@ -39,7 +39,8 @@ export interface StorageAdapterService {
   // [DX-B2-N2] Why: sweep pages share one immutable snapshot and shared decoded entities.
   // Rejected: a required member (other adapters retain their existing pull path).
   readonly getReachTriplesMany?: (
-    roots: readonly string[], basis: ResolvedTemporalBasis,
+    roots: readonly string[],
+    basis: ResolvedTemporalBasis,
   ) => Effect.Effect<readonly import("../store/Triples.js").ReachResult[] | undefined, ReadError>;
   // [EXP-QH1-R4] Why: a whole-pull read (Triples.reach) that falls back level by level must read every level at one exact record
   // position, captured once at its start. Whether the adapter has such a position to offer depends on the caller's transaction:

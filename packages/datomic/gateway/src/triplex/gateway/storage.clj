@@ -1,5 +1,5 @@
 (ns triplex.gateway.storage
-  (:require [datomic.api :as d] [triplex.gateway.codec :as codec])
+  (:require [datomic.api :as d] [triplex.gateway.codec :as codec] [triplex.gateway.reach :as reach])
   (:import [java.util UUID]))
 
 (set! *warn-on-reflection* true)
@@ -11,7 +11,7 @@
   (let [handle (str (UUID/randomUUID)) now (System/currentTimeMillis)]
     (swap! snapshots #(assoc (into {} (filter (fn [[_ v]] (> (:expires v) now)) %)) handle
                             {:name name :db db :expires (+ now ttl-ms)}))
-    {:handle handle :position (codec/encode-value "long" (:triplex.scope/position (d/entity db (d/q '[:find ?s . :where [?s :triplex.scope/key]] db))))}))
+    {:handle handle :position (codec/encode-value "long" (:triplex.scope/position (d/entity db (:scope (reach/config name db)))))}))
 (defn release! [name handle]
   (when (= name (:name (@snapshots handle))) (swap! snapshots dissoc handle))
   {:released true})
@@ -103,11 +103,14 @@
         (.add out [:db/add "datomic.tx" :triplex.tx/max-recorded-at @maximum])))
     (when @irregular (.add out [:db/add scope :triplex.scope/irregular true]))
     out))
-(defn tx-data [db input]
+(defn tx-data
+  ([db input]
+   (let [^datomic.Datom scope (first (d/datoms db :aevt :triplex.scope/key))]
+     (tx-data db input (.e scope))))
+  ([db input scope]
   (let [rows (mapv decode-row (get input "rows")) new-ids (set (get input "newIds"))
         fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
         source (safe-position (get input "sourceK")) position (safe-position (get input "position"))
-        scope (d/q '[:find ?s . :where [?s :triplex.scope/key]] db)
         claims (get input "claims")
         sample (or (first fresh) (first old))
         ;; [EXP-DA01] Why: claims-only and position-only commits still require complete tx annotations. Rejected: deriving metadata only from assertion rows (loses claim receipts).
@@ -135,17 +138,21 @@
                  (map (fn [claim] {:db/id (str "c:" (get claim "commandId"))
                                   :triplex.claim/command-id (get claim "commandId")
                                   :triplex.claim/tx "datomic.tx"
-                                  :triplex.claim/tx-id (get claim "txId")}) claims))))))
-(defn commit! [conn db input]
+                                  :triplex.claim/tx-id (get claim "txId")}) claims)))))))
+(defn commit! [name conn db input]
   (when (d/entid db [:triplex.tx/operation-id (get input "operationId")])
     (throw (ex-info "Operation already committed" {:status 409 :code "OperationDuplicate"})))
-  (let [scope (d/q '[:find ?s . :where [?s :triplex.scope/key]] db)]
+  (let [scope (:scope (reach/config name db))]
     (when-not (= (:triplex.scope/position (d/entity db scope)) (get input "sourceK"))
       (throw (ex-info "Source cut changed" {:status 409 :code "CasConflict"}))))
   (try
-    (let [report (deref (d/transact conn (tx-data db input)) 5000 ::timeout)]
+    (let [data (tx-data db input (:scope (reach/config name db)))
+          start (System/nanoTime)
+          report (deref (d/transact conn data) 5000 ::timeout)
+          transact-micros (quot (- (System/nanoTime) start) 1000)]
       (when (= report ::timeout) (throw (ex-info "Commit outcome unknown" {:status 503 :code "OutcomeUnknown"})))
       {:t (codec/encode-value "long" (d/basis-t (:db-after report)))
+       :transactMicros transact-micros
        :operationId (get input "operationId")
        :position (codec/encode-value "long" (get input "position")) :datoms (count (:tx-data report))})
     (catch Exception e
@@ -162,10 +169,15 @@
     (if-let [p (:triplex.tx/position entity)]
       {:status "committed" :position (codec/encode-value "long" p) :t (codec/encode-value "long" (d/tx->t (:db/id entity)))}
       {:status "absent"}) {:status "absent"}))
-(defn head-position [db]
-  (let [^datomic.Datom scope (first (d/datoms db :aevt :triplex.scope/key))
-        ^datomic.Datom position (first (d/datoms db :eavt (.e scope) :triplex.scope/position))]
-    (.v position)))
+(defn head-position
+  ([db]
+   (let [^datomic.Datom scope (first (d/datoms db :aevt :triplex.scope/key))
+         ^datomic.Datom position (first (d/datoms db :eavt (.e scope) :triplex.scope/position))]
+     (.v position)))
+  ([name db]
+   (let [cfg (reach/config name db)
+         ^datomic.Datom position (first (d/datoms db :eavt (:scope cfg) (:position cfg)))]
+     (.v position))))
 (defn unavailable! [message]
   (throw (ex-info message {:status 409 :code "BasisNotAvailable"})))
 ;; [EXP-DA01] Why: future cuts must wait for publication, never silently answer from the head (Q89c/d). Rejected: treating P >= head as latest.
