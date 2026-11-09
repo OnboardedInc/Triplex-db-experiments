@@ -1994,3 +1994,8 @@ Where each priority stands, from evidence so far (research probes and baselines;
   - **The disk guard stopped P5 A1** below 5 GiB; housekeeping restored 9.8 GiB.
 - **Scorecard:** every P1-P5 cell is still OPEN. Each accepted result is offline or diagnostic; promotion waits on contract 0.4.0, G03's executing gate and live windows. That ordering needs a written critical path.
 - **Dispatched (Opus 5.5 high):** R42, P2 commit latency for a Node broker under 256 readers (placement, event-loop contention, SQLite fsync durability and cost on macOS and Linux); R43, the critical path from today's accepted work to the first PASS cell on the scorecard.
+
+## 2026-11-09: K01 smoke run reaches D/L and D'; VM trim returns 33 GiB
+
+- **K01 round 13 (9b764517):** the diagnostic smoke run walked every G0 step and recorded two failures, both missing imports, fixed offline; source restarts matched D/L and a fresh seed matched D'. One smoke run found what would have been two more full live runs. Clone qualification and publication are still unverified.
+- **Disk:** host free space was falling again (7.2 GiB) because the VM's disk image kept the blocks of every removed volume. fstrim inside the triplex2 VM returned 32.9 GiB; host free is 40 GiB. **Lesson:** removing a volume frees space inside the VM, not on the host; trim after slot runs.
