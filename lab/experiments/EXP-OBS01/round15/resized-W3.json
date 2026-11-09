@@ -1,0 +1,30 @@
+{
+  "window": "W3",
+  "minutes": 20,
+  "readers": 256,
+  "rate": 100,
+  "session": {
+    "mode": "w3",
+    "dir": [
+      265289745,
+      3175790
+    ],
+    "profileViolations": [],
+    "attachedWallMs": 1794238993089,
+    "writerId": "8f47336bd59e834ea545b88600b2b6ec3d5cc8c90ab1900ad5bfe244620d063c",
+    "writerCgroupId": 9015,
+    "witnessCpuPercent": {
+      "samples": 79,
+      "mean": 1.7010126582278484,
+      "max": 2.48
+    },
+    "streamCheck": {
+      "status": 0,
+      "stdout": "{\"attachNs\":333806039563,\"cpus\":3,\"detachNs\":1540189986164,\"events\":935983,\"lostEvents\":0}",
+      "stderr": ""
+    },
+    "pass": true
+  },
+  "pass": true,
+  "claim": "zero lost events over the load (per-CPU sequence check, not bpftrace stderr); witness container mean CPU under 0.1 core"
+}

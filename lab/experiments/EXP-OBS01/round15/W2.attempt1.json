@@ -1,0 +1,101 @@
+{
+  "window": "W2",
+  "cost": {
+    "intervals": [
+      {
+        "from": 175292592885266,
+        "to": 175292613705199,
+        "commits": 48,
+        "deltaNs": 931227,
+        "deltaCalls": 737,
+        "perCommitNs": 19400.5625
+      },
+      {
+        "from": 175292613705199,
+        "to": 175292634473632,
+        "commits": 48,
+        "deltaNs": 983588,
+        "deltaCalls": 737,
+        "perCommitNs": 20491.416666666668
+      },
+      {
+        "from": 175292634473632,
+        "to": 175292657052491,
+        "commits": 24,
+        "deltaNs": 678491,
+        "deltaCalls": 378,
+        "perCommitNs": 28270.458333333332
+      },
+      {
+        "from": 175292657052491,
+        "to": 175292681527067,
+        "commits": 52,
+        "deltaNs": 1067410,
+        "deltaCalls": 796,
+        "perCommitNs": 20527.115384615383
+      },
+      {
+        "from": 175292681527067,
+        "to": 175292702303875,
+        "commits": 45,
+        "deltaNs": 1004461,
+        "deltaCalls": 690,
+        "perCommitNs": 22321.355555555554
+      },
+      {
+        "from": 175292702303875,
+        "to": 175292723512893,
+        "commits": 50,
+        "deltaNs": 1000750,
+        "deltaCalls": 766,
+        "perCommitNs": 20015
+      },
+      {
+        "from": 175292723512893,
+        "to": 175292744352327,
+        "commits": 47,
+        "deltaNs": 974337,
+        "deltaCalls": 738,
+        "perCommitNs": 20730.574468085106
+      },
+      {
+        "from": 175292744352327,
+        "to": 175292768904362,
+        "commits": 49,
+        "deltaNs": 974554,
+        "deltaCalls": 737,
+        "perCommitNs": 19888.85714285714
+      },
+      {
+        "from": 175292768904362,
+        "to": 175292789608669,
+        "commits": 49,
+        "deltaNs": 973906,
+        "deltaCalls": 758,
+        "perCommitNs": 19875.632653061224
+      },
+      {
+        "from": 175292789608669,
+        "to": 175292810629895,
+        "commits": 9,
+        "deltaNs": 203914,
+        "deltaCalls": 138,
+        "perCommitNs": 22657.11111111111
+      }
+    ],
+    "p99PerCommitNs": 28270.458333333332,
+    "maxPerCommitNs": 28270.458333333332,
+    "meanPerCommitNs": 20885.12589073634,
+    "samples": 14,
+    "intervalCount": 10,
+    "gateNs": 100000,
+    "pass": true
+  },
+  "judge": {
+    "status": 0,
+    "stdout": "{\"codes\":[],\"globalCodes\":[],\"mismatches\":[],\"primary\":null,\"problems\":[]}",
+    "stderr": ""
+  },
+  "pass": true,
+  "claim": "added kernel time per commit from BPF run-time counters (gate p99 <= 100 us); the writer p99 ABBA report is separate and not gated"
+}

@@ -1,0 +1,200 @@
+=== 2026-11-09T15:12:20Z
+host: load averages: 8.09 7.56 8.27
+vm: 0.50 0.94 1.08 1/315 3019236 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; G0-xtdb-20261109T143549Z-f698e1 vitest-core; 
+containers: tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:12:51Z
+host: load averages: 20.18 10.33 9.24
+vm: 10.28 3.08 1.78 82/685 3021074 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; QH1-R4; G0-xtdb-20261109T143549Z-f698e1 vitest-core; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:13:22Z
+host: load averages: 19.70 11.15 9.57
+vm: 29.22 8.75 3.73 48/683 3021412 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; G0-xtdb-20261109T143549Z-f698e1 vitest-core; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:13:54Z
+host: load averages: 16.17 11.21 9.66
+vm: 32.50 11.83 4.95 5/684 3021741 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; G0-xtdb-20261109T143549Z-f698e1 vitest-core; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:14:24Z
+host: load averages: 22.63 13.15 10.41
+vm: 49.44 17.51 7.03 73/685 3022061 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:14:56Z
+host: load averages: 24.40 14.43 10.96
+vm: 47.58 20.61 8.43 66/682 3022357 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:15:28Z
+host: load averages: 22.61 14.87 11.23
+vm: 53.93 24.83 10.23 53/683 3022908 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-g03-bb2756e8def10112-toolchain tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:15:59Z
+host: load averages: 21.26 15.44 11.59
+vm: 76.92 34.06 13.87 48/706 3024443 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:16:31Z
+host: load averages: 17.13 14.98 11.56
+vm: 60.06 33.95 14.47 42/707 3028047 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: ecstatic_pascal tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:17:02Z
+host: load averages: 17.15 15.11 11.72
+vm: 55.67 35.09 15.45 53/699 3032405 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-g03-bb2756e8def10112-case-db3662 tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:17:34Z
+host: load averages: 15.46 14.91 11.76
+vm: 54.27 37.40 16.98 14/710 3036600 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-g03-6188bd5561780b74-case-e921f7 tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:18:05Z
+host: load averages: 14.37 14.75 11.83
+vm: 46.88 37.18 17.55 32/691 3041415 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:18:36Z
+host: load averages: 19.23 15.68 12.26
+vm: 45.63 37.49 18.26 46/694 3046327 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:19:08Z
+host: load averages: 17.82 15.61 12.35
+vm: 45.00 38.13 19.18 117/705 3050469 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:19:40Z
+host: load averages: 18.47 15.99 12.61
+vm: 33.71 36.18 19.14 177/707 3053276 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:20:11Z
+host: load averages: 17.89 16.24 12.83
+vm: 27.16 34.50 19.14 5/691 3057236 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: kind_neumann tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:20:42Z
+host: load averages: 16.82 16.09 12.89
+vm: 37.73 36.14 20.16 55/712 3061808 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-g03-8a68d9dbc97cf0ae-case-9fead1-proof tx2-g03-acffa70434118b27-case-5f1097 tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:21:13Z
+host: load averages: 15.99 16.01 12.97
+vm: 46.23 38.24 21.44 107/703 3066102 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-g03-acffa70434118b27-case-196582-proof tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:21:44Z
+host: load averages: 14.43 15.61 12.95
+vm: 39.99 37.30 21.65 25/690 3070895 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; P4N-R1-baseline; CX-VG03-56-R7C-full; 
+containers: tx2-g03-8a68d9dbc97cf0ae-case-94a54c tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:22:15Z
+host: load averages: 13.13 15.21 12.90
+vm: 31.23 35.41 21.52 10/693 3075810 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; QH1-R4; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:22:46Z
+host: load averages: 14.02 15.18 12.96
+vm: 31.90 35.10 21.86 94/694 3080925 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; G0-xtdb-20261109T151422Z-827a67 typecheck; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:23:17Z
+host: load averages: 23.11 17.23 13.78
+vm: 48.76 39.24 23.74 80/715 3082765 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; G0-xtdb-20261109T151422Z-827a67 vitest-testkit; CX-VG03-56-R7C-full; 
+containers: zealous_goldwasser tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:23:51Z
+host: load averages: 25.78 18.57 14.41
+vm: 66.52 44.73 26.08 39/709 3085151 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; G0-xtdb-20261109T151422Z-827a67 vitest-testkit; CX-VG03-56-R7C-full; 
+containers: suspicious_jang tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:24:22Z
+host: load averages: 33.71 21.21 15.51
+vm: 80.36 50.05 28.52 61/718 3086894 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; G0-xtdb-20261109T151422Z-827a67 vitest-testkit; CX-VG03-56-R7C-full; 
+containers: tx2-g03-acffa70434118b27-case-ae8986-proof tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:24:57Z
+host: load averages: 32.24 22.20 16.10
+vm: 72.01 50.82 29.46 60/696 3089660 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; G0-xtdb-20261109T151422Z-827a67 vitest-testkit; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:25:28Z
+host: load averages: 28.88 22.50 16.43
+vm: 48.91 47.39 29.10 22/716 3094774 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-HS01-seed-w0-1000-off; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:25:59Z
+host: load averages: 23.14 21.67 16.33
+vm: 38.05 44.87 28.84 36/710 3100466 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-HS01-seed-w0-1000-off; CX-VG03-56-R7C-full; 
+containers: tx2-g03-8a68d9dbc97cf0ae-case-6c1fc5-proof tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:26:29Z
+host: load averages: 21.26 21.41 16.45
+vm: 28.03 41.73 28.30 7/700 3105717 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-HS01-seed-w0-1000-off; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:27:00Z
+host: load averages: 19.42 20.97 16.46
+vm: 19.36 38.33 27.60 24/700 3111066 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-HS01-seed-w0-1000-off; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:27:31Z
+host: load averages: 17.05 20.22 16.35
+vm: 15.29 35.58 27.02 2/695 3116445 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-HS01-kill80; CX-VG03-56-R7C-full; 
+containers: tx2-g03-acffa70434118b27-case-d59da7 tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:28:02Z
+host: load averages: 15.77 19.65 16.28
+vm: 12.43 32.92 26.41 18/699 3121194 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-HS01-kill80; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:28:33Z
+host: load averages: 14.73 19.04 16.17
+vm: 16.00 31.56 26.20 71/697 3124033 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-HS01-kill80; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:29:04Z
+host: load averages: 14.31 18.42 16.06
+vm: 12.18 29.14 25.56 7/712 3127045 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-HS01-seed-w0-1000-on; CX-VG03-56-R7C-full; 
+containers: tx2-g03-13761194fa353d7d-toolchain tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:29:34Z
+host: load averages: 13.75 17.91 15.96
+vm: 10.65 27.20 25.03 1/708 3132213 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-HS01-seed-w0-1000-on; CX-VG03-56-R7C-full; 
+containers: tx2-g03-b0c4f6c04e4a3e93-case-6bc961 tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:30:05Z
+host: load averages: 16.96 18.22 16.13
+vm: 24.72 29.30 25.81 100/722 3136737 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-HS01-seed-w0-1000-on; CX-VG03-56-R7C-full; 
+containers: intelligent_shtern tx2-g03-13761194fa353d7d-case-3ea911 tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:30:36Z
+host: load averages: 16.38 18.00 16.13
+vm: 36.87 32.14 26.89 4/699 3140867 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-HS01-seed-w0-1000-on; CX-VG03-56-R7C-full; 
+containers: tx2-g03-13761194fa353d7d-case-aa26b1 tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:31:07Z
+host: load averages: 16.13 17.82 16.12
+vm: 46.05 34.64 27.88 24/724 3146158 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-VG03-56-R7C-evaluator; CX-VG03-56-R7C-full; 
+containers: tx2-g03-13761194fa353d7d-case-884a8e-proof tx2-g03-f143dd919d512eb0-case-8d902e tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:31:39Z
+host: load averages: 15.39 17.47 16.07
+vm: 55.33 38.84 29.57 40/713 3151008 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-VG03-56-R7C-evaluator; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:32:10Z
+host: load averages: 14.52 17.07 15.97
+vm: 43.81 37.59 29.44 69/695 3156779 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-VG03-56-R7C-evaluator; CX-VG03-56-R7C-full; 
+containers: tx2-sw-reader-e9037cb0-w3-7 tx2-sw-reader-e9037cb0-w3-6 tx2-sw-reader-e9037cb0-w3-5 tx2-sw-reader-e9037cb0-w3-4 tx2-sw-reader-e9037cb0-w3-3 tx2-sw-reader-e9037cb0-w3-2 tx2-sw-reader-e9037cb0-w3-1 tx2-sw-reader-e9037cb0-w3-0 tx2-sw-writer-e9037cb0-w3 tx2-sw-witness-e9037cb0-w3 tx2-qlever-dev tx2-xtdb-dev 
+=== 2026-11-09T15:32:40Z
+host: load averages: 14.04 16.75 15.89
+vm: 28.39 34.45 28.66 3/339 3164502 cpus=6
+heavy: P5B-R3-B1r2; OBS01-W; CX-VG03-56-R7C-evaluator; CX-VG03-56-R7C-full; 
+containers: tx2-g03-01463a899b4fbec5-case-17c3de tx2-qlever-dev tx2-xtdb-dev 

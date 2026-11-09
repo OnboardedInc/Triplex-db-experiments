@@ -1765,3 +1765,117 @@ Builder Claude Sonnet 5.5, from `exp/OBS01-observer` at `6785096a`. Offline only
 | `lab/observer/test_round12.mjs` | `4b0ea66e822cc8cb27d99b547def1edad78618c6840dd628cd2874b17815dc16` | `8a487c5edf8ae6ef99dcdcdb2f1b60943778c0ed999d191cccf79313f88f65f9` |
 
 - **Not run:** no VM, Docker, network or real bpftrace; the `.bt` grammar is lexed by this file's own rules (bpftrace's real lexer is not consulted), so an exotic literal form could still be misread, but any case the lexer cannot close refuses.
+
+## Round 15: live W0-W3
+
+Builder Claude Sonnet 5.5, from `exp/OBS01-observer` at `6d31fc70`. First live run of the sync witness in the triplex2 VM (kernel `6.8.0-117-generic` aarch64, cgroup v2, Docker cgroupfs driver). Docker only through `DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock`, images by local ID (bpftrace `sha256:06f6223590f5...2efbf25`, python `sha256:e48f59cdba69...ed90`), no pull, no download. The docker context stayed `default`. Heavy jobs through `heavy.mjs --label OBS01-W`. Durable evidence (out of git): `/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01-W/` (`SHA256SUMS`, 311 files, 403 MB+). In git: `lab/experiments/EXP-OBS01/round15/` (result JSON, load snapshots, `EVIDENCE-SHA256SUMS` and the pre-resize `EVIDENCE-SHA256SUMS.pre-resize`, which was re-verified intact after the host crash), `lab/observer/golden/`.
+
+### Environment changes during the round (read before the numbers)
+
+- **VM resize.** The host crashed and was reset at 10:34 (after W0 attempt 6, W1, W2 x2 and W3 attempt 1 had finished). The VM was then resized by Sam to **8 CPU, 20 GiB, 100 GiB** (`lab/config/slots.json` updated). Every result below tagged **[6 CPU / 12 GiB]** was taken before the resize; results tagged **[8 CPU / 20 GiB]** after it. Nothing was lost: the pre-crash evidence files were verified against `SHA256SUMS`, and the shared residents `tx2-xtdb-dev` and `tx2-qlever-dev` were found exited (255) after the crash; I did not touch them.
+- **Load.** Overhead and W3 numbers were taken while other heavy jobs ran (diagnostic only). Heavy-slot occupancy and load are in `load-w2.txt`, `load-w3.txt`, `resized-load-w3.txt`. [6 CPU] W3: host load average 14 to 34, VM load average 28 to 80 (256 reader threads), other holders `P5B-R3-*`, `P4N-R1-*`, `CX-VG03-56-R7C-full`, `QH1-R4`, `G0-xtdb-*`, `CX-HS01-*`. [8 CPU] W3: host 6 to 34, VM 0.2 to 20; holders `CX-VG03-56-R7C-full-recovery`, `QH1-R4`, `P4N-R1-sa-abab`, `CX-HS01-*`, and G03 case containers ran in the VM during the window. The probe checks "no G03/NSR/P-TINY container" at the start of each window only; one attempt (W0 attempt 3) was refused `NOT-RUN` by that check and was repeated when it cleared.
+- **Offline suites after the flag fix and again at the final head:** `test_vm` 14/14, `test_syncwitness` 18/18, `test_round10` 40/40, `test_round11` 20/20, `test_engine` 25/25, `test_round12` 25/25.
+
+### Known fix: the compile flag
+
+`bpftrace --help` in the r49 image lists `-d` ("dry run" debug info) and `-dd` (verbose) with no argument. `-d all` fails: bpftrace reads `all` as the program file ("failed to open file 'all'"). `COMPILE_FLAGS` is now `['-d']` (commit `2446793d`). **Which output holds the compiled program:** `-d` prints the AST after five passes (parser, ConfigAnalyser, Semantic, NodeCounter, ResourceAnalyser) and then one LLVM IR module, byte-identical to the "After optimization" module that `-dd` prints (the module that is loaded); `-dd` adds the "Before optimization" module. Neither prints BPF disassembly (no `Disassembly of section`). `-d` was chosen (229 KB; `-dd` is 379 KB). Samples of both and the stderr: `evidence/OBS01-W/flag-check/`.
+
+### W0: environment and clock step. PASS [6 CPU] (attempt 6) and PASS [8 CPU] (re-check)
+
+Gating items (Q109a) all pass: static source check (15 `nsecs(monotonic)` sites, `other: []`); image `sha256sum` of the pinned `.bt` equals the harness hash (`e68cd5cb...b248`); `bpftrace --version` exactly `bpftrace v0.20.2`; version, hash, BTF-read and compile processes exit 0, no signal, no timeout; non-empty dump recorded in full; zero forbidden clock-helper name tokens.
+
+| Item | Result |
+| --- | --- |
+| `kernel.perf_event_paranoid` | **4**; `unprivileged_bpf_disabled` 2; lockdown `[none]` |
+| Attach with CAP_BPF + CAP_PERFMON only | **yes**: a `tracepoint:ext4:ext4_sync_file_exit` probe attached and ran (`@x: 1`) and the full witness (fentry/fexit/tracepoints) attached; no CAP_SYS_ADMIN, no CAP_SYS_RESOURCE |
+| ext4 built in | yes: `/sys/kernel/btf/ext4` absent; all four fentry/fexit probes list (as `kfunc:`/`kretfunc:`, see divergence 4) |
+| Memory peak vs 256 MiB | 140,533,760 to 140,550,144 B (about 134 MiB, 52% of the cap; gate 80%), 0 OOM kills, `BPFTRACE_MAX_MAP_KEYS=65536`. Measured on the W0 200-commit session only, not under W3 load |
+| BTF `/sys/kernel/btf/vmlinux` | 6,968,159 B, sha256 `70d2c194...cff87`, 153,519 types, ENUM kind; the same on both VM sizes |
+| Helper ids from the kernel enum | `bpf_ktime_get_ns` **5**, `bpf_jiffies64` **118**, `bpf_ktime_get_boot_ns` **125**, `bpf_ktime_get_coarse_ns` **160**, `bpf_ktime_get_tai_ns` **208**: equal to the reference values. Full enum: `golden/bpf-func-id-enum.kernel-6.8.0-117.json` |
+| Helper ids in the compiled IR (my own count, not the parser's) | 1 map_lookup 66, 2 map_update 25, 3 map_delete 13, **5 ktime_get_ns 15**, 8 smp_processor_id 24, 14 pid_tgid 43, 80 cgroup_id 8, 113 probe_read_kernel 18, 130 ringbuf_output 22; ids 118/125/160/208 absent; 15 probe functions (BEGIN, 12 probes, END = the 15 source blocks). So bpftrace 0.20.2 uses the ring buffer (id 130), not perf_event_output (25) |
+| Clock transport check | `INCONCLUSIVE` (separation -1.7 to -12 us against about 100 ms uncertainty); not a pass, not a block, as designed |
+| Attach session (200 FULL commits) | judged clean: codes `[]`, mismatches `[]` |
+
+**Golden dump:** `lab/observer/golden/vm_syncwitness.bpftrace-0.20.2-d.dump.txt`, 229,093 B, **sha256 `b35312b41cb000e625dfcd15c748a7a4e9db98a0226e26d1f67dd67621a94309`** (equals `dumpFileSha256` in `W0.json`; the layout is `--- stdout ---`, stdout, `--- stderr ---`, stderr, as hashed by the harness; stdout alone `eb8a3583...e7b4`; the text the verdict scanned `73c9cb2b...1b3`). The [8 CPU] re-check produced the **same dump hash and the same BTF hash**. Exact command and counts: `golden/MANIFEST.json`:
+`bpftrace -d /program/vm_syncwitness.bt 1 2 3 4` in the pinned image under `--cap-drop ALL --cap-add BPF --cap-add PERFMON --ulimit memlock=-1:-1`, entrypoint `bpftrace`, `BPFTRACE_MAX_MAP_KEYS=65536`, read-only `/sys/kernel/btf` and `/sys/kernel/tracing`, the `.bt` mounted read-only, the `harden()` options of `vm-observer.mjs`, `docker start -a`, 120 s kill.
+**Structured parser diagnostic verdict on the golden dump: `pass: false`, 745 reasons, no gating effect (Q109a).** It reports `no "Disassembly of section" start marker`, then one `UNPARSED-CALL` for each AST line such as `call: printf :: type[none, ctx: 0]` and `call: nsecs ...`; `sections: []`, `helperCalls: {}`, `monotonicCalls: 0`. The parser never reached the LLVM IR calls. The reviewer deciding whether to promote the parser to gating needs a parser for the IR form (`call i64 inttoptr (i64 N to ptr)(...)` inside the 15 `define`s), not for BPF disassembly: 0.20.2 does not print the latter.
+
+### W1: planted writers against the real witness. PASS 11/11 [6 CPU]
+
+1000 commits per mode, each judged by `vm_syncwitness.py` and compared against the whole expected refusal (`mismatches: []` in every mode). Not re-run after the resize (the codes depend on kernel behaviour, not on VM size).
+
+| Mode | Observed codes (primary first) | Expected |
+| --- | --- | --- |
+| `full` (fsync every commit) | none | none |
+| `syncfs` | none | none |
+| `normal` (synchronous NORMAL: sync after the ACK) | `ACK-BEFORE-DURABLE` (1000/1000) | same |
+| `off` | `SYNC-MISSING` (1000/1000) | same |
+| `mmap` | `UNWITNESSED-WRITE`, `SYNC-MISSING`; global `UNWITNESSED-WRITE`; `ext4_page_mkwrite` seen on the bound inode | same: the round 10 prediction (no write record for an mmap writer) is **confirmed** in a real kernel |
+| `neighbor-sync` (foreign cgroup syncs) | `SYNC-MISSING` (1000/1000) | same |
+| `sync-other-file` (sibling file) | `SYNC-MISSING` (1000/1000) | same |
+| `full-then-off`, `ack-early`, `sync-before-write` (999 `ACK-BEFORE-DURABLE`, 1 `SYNC-MISSING`), `range-only` | as the tables in `vm_planted_writer.EXPECTED_CODES` | same |
+
+### W2: per-commit kernel cost (R48 estimate 5 to 60 us; gate p99 <= 100 us). PASS in all three runs
+
+Cost = `run_time_ns` delta over `run_cnt` delta of the witness's BPF programs (`kernel.bpf_stats_enabled=1` for the window, restored), divided by the commits in each 20 ms interval; "p99" is nearest-rank over those interval means (an interval holds 24 to 48 commits, so this is a p99 of 20 ms averages, not of single commits). 15.36 to 15.39 program runs per commit in all runs.
+
+| Run | VM | Intervals / commits | Weighted mean per commit | Median | p90 | Max interval = p99 | Per program run |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `w1w2-attempt1` | [6 CPU / 12 GiB] | 10 / 421 | **20.9 us** | 20.5 | 22.7 | 28.3 us | 1,358 ns |
+| `w2-attempt2` (host load 7.4 to 8, 4 heavy slots held) | [6 CPU / 12 GiB] | 51 / 818 | 33.8 us | 32.3 | 51.0 | 81.2 us | 2,198 ns |
+| `resized/w0w2-attempt1` | [8 CPU / 20 GiB] | 40 / 764 | **25.9 us** | 25.0 | 33.3 | 53.2 us | 1,686 ns |
+
+**Answer: about 21 to 34 us added kernel time per commit (weighted mean), inside the R48 estimate; the worst 20 ms interval reached 81 us under load, still under the 100 us gate.** The spread between runs is host contention, so these are diagnostic. The writer p99 ABBA overhead report was not run (not gated).
+
+### W3: trace completeness under load (256 readers, 100 commits/s for 20 min). PASS in both runs
+
+120,000 commits, 8 containers x 32 reader threads. Per-CPU sequence check (`stream-check`), not bpftrace stderr; mean witness CPU gate below 10% of one core.
+
+| Run | VM | Events | Lost events | Witness CPU mean / max | Writer commits late | Trace |
+| --- | --- | --- | --- | --- | --- | --- |
+| `w3-attempt1` | [6 CPU / 12 GiB] | 928,067 (7.7 per commit) | **0** | 2.53% / 15.75% | 16,091 of 120,000 | 69.6 MB |
+| `resized/w3-attempt1` | [8 CPU / 20 GiB] | 935,983 (7.8 per commit) | **0** | 1.70% / 2.48% | 2,124 of 120,000 | 66.4 MB |
+
+The load-generating writer fell behind its 100/s schedule far more on 6 CPU (13.4% late) than on 8 CPU (1.8%), so the 6-CPU run was an overload test of the VM and the witness still lost nothing. W3 checks completeness only; it does not run the per-commit judge (`judge: false`) and does not read memory peak.
+
+### Divergences from the brief and from rounds 9 to 14
+
+1. **The 0.20.2 flag and dump.** `-d all` was wrong (above). The real dump has no BPF disassembly, so the round 12 structured parser cannot pass on it (diagnostic only).
+2. **Harness bugs found live and fixed (none changes a gate, none weakens a check):** (a) bpftrace 0.20.2 buffers `-o FILE` output even with `-B none`, so the `SW1|B|` record never reached the file and the attach wait refused at 20 s although the program had attached (checked by hand: SIGINT flushed `SW1|B|` and `SW1|Z|`). The witness now runs `sh -c 'exec bpftrace -q -B none "$@" > /witness/trace.txt'`; `exec` keeps bpftrace as PID 1 so SIGINT still reaches it. `verifyWitnessProfile` does not check the entrypoint; caps, mounts, network, memory are unchanged. (b) bpftrace prints `ERROR ... couldn't set RLIMIT_MEMLOCK` when its container's hard limit is low, and the normalizer correctly refuses any bpftrace `ERROR` line (`TRACE-INCOMPLETE`); the cause is removed with `--ulimit memlock=-1:-1` on the witness and the one-shot bpftrace containers (the 256 MiB memory cgroup still bounds BPF memory; no CAP_SYS_RESOURCE; the parser rule is untouched). (c) the Docker cgroupfs driver puts a container at `/sys/fs/cgroup/docker/<id>` not `docker-<id>.scope`; `vmCgroupId` and `vmCgroupDir` accept both (the match must still be unique). (d) the failure text of an attach refusal now includes the container's stderr. (e) a refusing window keeps its partial facts (`W0-partial.json`) and the next window still runs; W1 records a refused mode and runs the others. The 11 W1 modes and W0 are judged by the unchanged normalizer.
+3. **Attempts.** W0 took six attempts: 1 (attach wait, bug a), 2 (still unbuffered), 3 (`NOT-RUN`, a G03 container was running), 4 (cgroup path, bug c), 5 (FAIL: ext4 listing alias and the memlock ERROR, bugs b and divergence 4), 6 PASS. All six are kept in the evidence directory; attempts 1 to 5 are not passes.
+4. **`bpftrace -l` spelling.** 0.20.2 lists the four fentry/fexit probes as `kfunc:vmlinux:ext4_sync_fs`, `kretfunc:vmlinux:ext4_sync_fs`, `kfunc:vmlinux:ext4_page_mkwrite`, `kretfunc:vmlinux:ext4_file_write_iter`. `ext4BuiltinVerdict` accepts the exact name or exactly that alias pair (tests added: a different function name and a wrong-direction alias still refuse). The program itself uses `fentry`/`fexit` and attached.
+5. **Recorded but not gated:** `facts.ext4Tracepoints` is `false` for all six names because the harness tests `/sys/kernel/tracing/events/ext4/<name>` as a non-root VM user; I did not investigate the cause (tracepoint attach under the witness profile succeeded). The clock transport check is `INCONCLUSIVE`. W2 numbers vary by 1.6x between runs.
+6. **Process.** I ran two short manual containers outside the engine ledger: bpftrace `-d`/`-dd`/`-d all` against the pinned image and a diagnostic witness container (holder `OBS01-W`, removed, volume removed) to find the buffering cause. Both were in the triplex2 VM, no port, no residents touched; engine rule 3 prefers the ledger, so this is disclosed.
+
+### Rule 9a audit (every place this round turns observations into a PASS or verdict)
+
+| Site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `clockPrimitiveVerdict` gate (unchanged) | source lex, exact version, four clean exits, non-empty dump, zero forbidden tokens in the dump bytes | compile run in this W0 window; dump written and hashed in this attempt | `.bt` hash read before and after equals the image's `sha256sum`; `dumpFileSha256` equals the golden file's hash |
+| `ext4BuiltinVerdict` (changed) | each listed line equals the probe name or its `kfunc:`/`kretfunc:` alias; `/sys/kernel/btf/ext4` absent | `-l` output of this window | keyed by probe string and image; **weak:** a listing proves a symbol exists, not that the attached probe is that function (the attach session covers that) |
+| `perf` / `memory` / `mapKeys` (unchanged) | integer paranoid level, `memory.peak`, `oom_kill`, configured keys | read from the running witness's cgroup in the W0 session | witness container id and cgroup directory (`/sys/fs/cgroup/docker/<id>`) |
+| W0 attach session verdict (unchanged judge) | the normalizer's judgement of the kernel trace against the WAL bytes of 200 commits (zero codes) | volumes, containers and trace created in this session | store directory (dev, inode), writer cgroup id read from the VM, witness container id |
+| W1 `compare` (unchanged) | whole refusal set, primary, run-level codes and every commit's outcome per mode | one fresh session per mode | the mode's planted writer, store directory and cgroup id |
+| W2 gate | `run_time_ns`/`run_cnt` deltas and commit instants; p99 <= 100 us | sampled during this session with `bpf_stats_enabled=1` | witness PID's program fds; commit instants from this session's `ops.json`. **Weak:** p99 is over 20 ms interval means; the clock for samples and ACKs is the VM's |
+| W3 gate | per-CPU sequence stream check (zero lost) and mean witness CPU < 10% | trace and `docker stats` samples of this session | trace file from this session's witness volume. **Weak:** no commit judgement and no memory peak in W3 |
+| `golden/MANIFEST.json` | hashes computed from the stored files; counts from the stored dump; diagnostic verdict copied from `W0.json` | produced after W0 attempt 6 and its hash re-checked against the [8 CPU] re-run | dump hash equals `dumpFileSha256` in both `W0.json` files |
+| Evidence manifest | `shasum -a 256` of every file under `evidence/OBS01-W` | regenerated after the last run; the pre-crash manifest verified intact first | file paths relative to the evidence root |
+
+### Moved source hashes
+
+No `lab/acceptance` path pins any changed file (checked with grep); the contract is unchanged.
+
+| Path | Old SHA256 (`6d31fc70`) | New SHA256 |
+| --- | --- | --- |
+| `lab/bin/clock-proof.mjs` | `2d91d6fdb354527a6ea386dc4a4977bb5ae4f3220510baa6f817629e989f7a39` | `2b3c7086785969c8779cd133d0c84264eb982d11cd6f6e89a48cb2c85c13c69b` |
+| `lab/bin/sync-witness.mjs` | `4f75e3244f4f6123391abcfd7df29309492a8689bb6c2081c53f1d9a81396a59` | `3b9f9778df54b3a0df16f33d4a5e14af8b42f23aef201dc67fb617c695a101e4` |
+| `lab/observer/test_engine.mjs` | `662452af9c8218e70c4b48056ae534fe221a791840f874ca9feded9f03628301` | `5c83c99211872fd392f8ad2054cdf650e6786141958eee4c734d1bd3dccb8fed` |
+| `lab/observer/VM.md` | `2b741641c49ec03a092389b23fbe209a7a13239cfe3dd0c66ec0169cf727a2b8` | `f8a6df6d4b90588acdfa309613bc701e2af0014db08f86277b7edb393e181ef0` |
+
+`vm_syncwitness.bt` (`e68cd5cb...b248`) and the normalizer are unchanged.
+
+### What did not run
+
+- **W4** (guest crash) is not implemented. The writer-p99 ABBA overhead comparison was not run. W1 was not re-run on the resized VM. The structured parser was not promoted or changed. No NS workload, no other image, no host power-loss durability, no reader/relay/driver domain: this round is probe windows only and does not accept the witness for NS claims.
+- W3 did not run the per-commit judge or record witness memory under load; W2/W3 were taken with other heavy jobs running.
+- Not verified: why `ext4Tracepoints` directory tests are false; whether `-B none` plus a shell PID 1 changes witness CPU in a way a long NS run would notice (W3 CPU was 1.7% to 2.5% with it).

@@ -1,0 +1,429 @@
+{
+  "window": "W2",
+  "cost": {
+    "intervals": [
+      {
+        "from": 175337771722829,
+        "to": 175337793225230,
+        "commits": 9,
+        "deltaNs": 252588,
+        "deltaCalls": 143,
+        "perCommitNs": 28065.333333333332
+      },
+      {
+        "from": 175337793225230,
+        "to": 175337814022168,
+        "commits": 7,
+        "deltaNs": 237715,
+        "deltaCalls": 105,
+        "perCommitNs": 33959.28571428572
+      },
+      {
+        "from": 175337814022168,
+        "to": 175337835190776,
+        "commits": 11,
+        "deltaNs": 350122,
+        "deltaCalls": 176,
+        "perCommitNs": 31829.272727272728
+      },
+      {
+        "from": 175337835190776,
+        "to": 175337855994797,
+        "commits": 9,
+        "deltaNs": 303252,
+        "deltaCalls": 135,
+        "perCommitNs": 33694.666666666664
+      },
+      {
+        "from": 175337855994797,
+        "to": 175337876979487,
+        "commits": 8,
+        "deltaNs": 227418,
+        "deltaCalls": 120,
+        "perCommitNs": 28427.25
+      },
+      {
+        "from": 175337876979487,
+        "to": 175337897879884,
+        "commits": 8,
+        "deltaNs": 253582,
+        "deltaCalls": 128,
+        "perCommitNs": 31697.75
+      },
+      {
+        "from": 175337897879884,
+        "to": 175337918630239,
+        "commits": 10,
+        "deltaNs": 276624,
+        "deltaCalls": 150,
+        "perCommitNs": 27662.4
+      },
+      {
+        "from": 175337918630239,
+        "to": 175337939412178,
+        "commits": 9,
+        "deltaNs": 262749,
+        "deltaCalls": 146,
+        "perCommitNs": 29194.333333333332
+      },
+      {
+        "from": 175337939412178,
+        "to": 175337960150699,
+        "commits": 8,
+        "deltaNs": 250118,
+        "deltaCalls": 120,
+        "perCommitNs": 31264.75
+      },
+      {
+        "from": 175337960150699,
+        "to": 175337981423932,
+        "commits": 6,
+        "deltaNs": 185960,
+        "deltaCalls": 77,
+        "perCommitNs": 30993.333333333332
+      },
+      {
+        "from": 175337981423932,
+        "to": 175338002251412,
+        "commits": 10,
+        "deltaNs": 323219,
+        "deltaCalls": 171,
+        "perCommitNs": 32321.9
+      },
+      {
+        "from": 175338002251412,
+        "to": 175338023237268,
+        "commits": 13,
+        "deltaNs": 369333,
+        "deltaCalls": 184,
+        "perCommitNs": 28410.23076923077
+      },
+      {
+        "from": 175338023237268,
+        "to": 175338044101041,
+        "commits": 13,
+        "deltaNs": 390381,
+        "deltaCalls": 217,
+        "perCommitNs": 30029.30769230769
+      },
+      {
+        "from": 175338044101041,
+        "to": 175338066472237,
+        "commits": 7,
+        "deltaNs": 517002,
+        "deltaCalls": 92,
+        "perCommitNs": 73857.42857142857
+      },
+      {
+        "from": 175338066472237,
+        "to": 175338087609802,
+        "commits": 10,
+        "deltaNs": 500042,
+        "deltaCalls": 171,
+        "perCommitNs": 50004.2
+      },
+      {
+        "from": 175338087609802,
+        "to": 175338108809076,
+        "commits": 12,
+        "deltaNs": 508588,
+        "deltaCalls": 167,
+        "perCommitNs": 42382.333333333336
+      },
+      {
+        "from": 175338108809076,
+        "to": 175338130769771,
+        "commits": 8,
+        "deltaNs": 323920,
+        "deltaCalls": 137,
+        "perCommitNs": 40490
+      },
+      {
+        "from": 175338130769771,
+        "to": 175338151801544,
+        "commits": 11,
+        "deltaNs": 437618,
+        "deltaCalls": 173,
+        "perCommitNs": 39783.454545454544
+      },
+      {
+        "from": 175338151801544,
+        "to": 175338175111578,
+        "commits": 9,
+        "deltaNs": 369543,
+        "deltaCalls": 120,
+        "perCommitNs": 41060.333333333336
+      },
+      {
+        "from": 175338175111578,
+        "to": 175338196940314,
+        "commits": 8,
+        "deltaNs": 541963,
+        "deltaCalls": 143,
+        "perCommitNs": 67745.375
+      },
+      {
+        "from": 175338196940314,
+        "to": 175338219459511,
+        "commits": 9,
+        "deltaNs": 421203,
+        "deltaCalls": 135,
+        "perCommitNs": 46800.333333333336
+      },
+      {
+        "from": 175338219459511,
+        "to": 175338240345366,
+        "commits": 8,
+        "deltaNs": 327284,
+        "deltaCalls": 131,
+        "perCommitNs": 40910.5
+      },
+      {
+        "from": 175338240345366,
+        "to": 175338261367389,
+        "commits": 9,
+        "deltaNs": 382172,
+        "deltaCalls": 121,
+        "perCommitNs": 42463.555555555555
+      },
+      {
+        "from": 175338261367389,
+        "to": 175338285302219,
+        "commits": 35,
+        "deltaNs": 1005542,
+        "deltaCalls": 555,
+        "perCommitNs": 28729.77142857143
+      },
+      {
+        "from": 175338285302219,
+        "to": 175338306603535,
+        "commits": 28,
+        "deltaNs": 763241,
+        "deltaCalls": 415,
+        "perCommitNs": 27258.60714285714
+      },
+      {
+        "from": 175338306603535,
+        "to": 175338327688809,
+        "commits": 32,
+        "deltaNs": 811421,
+        "deltaCalls": 490,
+        "perCommitNs": 25356.90625
+      },
+      {
+        "from": 175338327688809,
+        "to": 175338350151672,
+        "commits": 25,
+        "deltaNs": 803132,
+        "deltaCalls": 383,
+        "perCommitNs": 32125.28
+      },
+      {
+        "from": 175338350151672,
+        "to": 175338371674865,
+        "commits": 25,
+        "deltaNs": 819299,
+        "deltaCalls": 383,
+        "perCommitNs": 32771.96
+      },
+      {
+        "from": 175338371674865,
+        "to": 175338395683528,
+        "commits": 22,
+        "deltaNs": 901542,
+        "deltaCalls": 352,
+        "perCommitNs": 40979.181818181816
+      },
+      {
+        "from": 175338395683528,
+        "to": 175338416817218,
+        "commits": 24,
+        "deltaNs": 687831,
+        "deltaCalls": 353,
+        "perCommitNs": 28659.625
+      },
+      {
+        "from": 175338416817218,
+        "to": 175338439234957,
+        "commits": 23,
+        "deltaNs": 818747,
+        "deltaCalls": 371,
+        "perCommitNs": 35597.69565217391
+      },
+      {
+        "from": 175338439234957,
+        "to": 175338460339814,
+        "commits": 10,
+        "deltaNs": 577168,
+        "deltaCalls": 158,
+        "perCommitNs": 57716.8
+      },
+      {
+        "from": 175338460339814,
+        "to": 175338482313675,
+        "commits": 18,
+        "deltaNs": 715049,
+        "deltaCalls": 264,
+        "perCommitNs": 39724.944444444445
+      },
+      {
+        "from": 175338482313675,
+        "to": 175338504571288,
+        "commits": 11,
+        "deltaNs": 892748,
+        "deltaCalls": 166,
+        "perCommitNs": 81158.90909090909
+      },
+      {
+        "from": 175338504571288,
+        "to": 175338525835145,
+        "commits": 17,
+        "deltaNs": 663081,
+        "deltaCalls": 266,
+        "perCommitNs": 39004.76470588235
+      },
+      {
+        "from": 175338525835145,
+        "to": 175338546988336,
+        "commits": 16,
+        "deltaNs": 661882,
+        "deltaCalls": 261,
+        "perCommitNs": 41367.625
+      },
+      {
+        "from": 175338546988336,
+        "to": 175338571519251,
+        "commits": 13,
+        "deltaNs": 720627,
+        "deltaCalls": 195,
+        "perCommitNs": 55432.846153846156
+      },
+      {
+        "from": 175338571519251,
+        "to": 175338593632863,
+        "commits": 3,
+        "deltaNs": 153128,
+        "deltaCalls": 45,
+        "perCommitNs": 51042.666666666664
+      },
+      {
+        "from": 175338593632863,
+        "to": 175338614977930,
+        "commits": 19,
+        "deltaNs": 581878,
+        "deltaCalls": 293,
+        "perCommitNs": 30625.157894736843
+      },
+      {
+        "from": 175338614977930,
+        "to": 175338636706623,
+        "commits": 12,
+        "deltaNs": 628456,
+        "deltaCalls": 181,
+        "perCommitNs": 52371.333333333336
+      },
+      {
+        "from": 175338636706623,
+        "to": 175338658609692,
+        "commits": 19,
+        "deltaNs": 693788,
+        "deltaCalls": 303,
+        "perCommitNs": 36515.15789473684
+      },
+      {
+        "from": 175338658609692,
+        "to": 175338680206260,
+        "commits": 27,
+        "deltaNs": 683739,
+        "deltaCalls": 413,
+        "perCommitNs": 25323.666666666668
+      },
+      {
+        "from": 175338680206260,
+        "to": 175338701488701,
+        "commits": 31,
+        "deltaNs": 899704,
+        "deltaCalls": 460,
+        "perCommitNs": 29022.709677419356
+      },
+      {
+        "from": 175338701488701,
+        "to": 175338722281057,
+        "commits": 25,
+        "deltaNs": 609712,
+        "deltaCalls": 385,
+        "perCommitNs": 24388.48
+      },
+      {
+        "from": 175338722281057,
+        "to": 175338743220621,
+        "commits": 23,
+        "deltaNs": 568825,
+        "deltaCalls": 367,
+        "perCommitNs": 24731.521739130436
+      },
+      {
+        "from": 175338743220621,
+        "to": 175338764034060,
+        "commits": 13,
+        "deltaNs": 499618,
+        "deltaCalls": 203,
+        "perCommitNs": 38432.153846153844
+      },
+      {
+        "from": 175338764034060,
+        "to": 175338785183583,
+        "commits": 30,
+        "deltaNs": 809013,
+        "deltaCalls": 443,
+        "perCommitNs": 26967.1
+      },
+      {
+        "from": 175338785183583,
+        "to": 175338805927147,
+        "commits": 28,
+        "deltaNs": 794121,
+        "deltaCalls": 444,
+        "perCommitNs": 28361.464285714286
+      },
+      {
+        "from": 175338805927147,
+        "to": 175338826714294,
+        "commits": 26,
+        "deltaNs": 713455,
+        "deltaCalls": 402,
+        "perCommitNs": 27440.576923076922
+      },
+      {
+        "from": 175338826714294,
+        "to": 175338848695988,
+        "commits": 32,
+        "deltaNs": 749854,
+        "deltaCalls": 494,
+        "perCommitNs": 23432.9375
+      },
+      {
+        "from": 175338848695988,
+        "to": 175338869649469,
+        "commits": 19,
+        "deltaNs": 423459,
+        "deltaCalls": 280,
+        "perCommitNs": 22287.315789473683
+      }
+    ],
+    "p99PerCommitNs": 81158.90909090909,
+    "maxPerCommitNs": 81158.90909090909,
+    "meanPerCommitNs": 33817.18337408313,
+    "samples": 54,
+    "intervalCount": 51,
+    "gateNs": 100000,
+    "pass": true
+  },
+  "judge": {
+    "status": 0,
+    "stdout": "{\"codes\":[],\"globalCodes\":[],\"mismatches\":[],\"primary\":null,\"problems\":[]}",
+    "stderr": ""
+  },
+  "pass": true,
+  "claim": "added kernel time per commit from BPF run-time counters (gate p99 <= 100 us); the writer p99 ABBA report is separate and not gated"
+}

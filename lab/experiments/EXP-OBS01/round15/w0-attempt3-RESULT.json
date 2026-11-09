@@ -1,0 +1,12 @@
+{
+  "status": "NOT-RUN",
+  "reason": "free disk <=10 GiB, G03/NSR/P-TINY busy, or an exclusive slot is held",
+  "check": {
+    "available": false,
+    "freeBytes": 27054755840,
+    "busy": [
+      "tx2-g03-23e80a1fc6012252-case-e8b863"
+    ],
+    "exclusiveHeld": []
+  }
+}

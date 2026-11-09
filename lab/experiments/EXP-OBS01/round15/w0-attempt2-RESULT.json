@@ -1,0 +1,15 @@
+{
+  "status": "REFUSED",
+  "failure": "W0: Error: witness did not attach (TRACE-INCOMPLETE): ERROR: Unknown error -1: couldn't set RLIMIT_MEMLOCK for bpftrace. If your program is not loading, you can try \"ulimit -l 8192\" to fix the problem\n",
+  "windows": [
+    {
+      "window": "W0",
+      "pass": false,
+      "refused": "Error: witness did not attach (TRACE-INCOMPLETE): ERROR: Unknown error -1: couldn't set RLIMIT_MEMLOCK for bpftrace. If your program is not loading, you can try \"ulimit -l 8192\" to fix the problem\n"
+    }
+  ],
+  "python": "sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90",
+  "bpftrace": "sha256:06f6223590f518a903c90d7dec383a2ee9fa669f80000013b5a004d2a2efbf25",
+  "nonce": "0b41f061",
+  "claim": "probe windows only; no NS acceptance and no host power-loss durability"
+}

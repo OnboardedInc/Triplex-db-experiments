@@ -1,0 +1,456 @@
+{
+  "refused": "Error: witness did not attach (TRACE-INCOMPLETE): ERROR: Unknown error -1: couldn't set RLIMIT_MEMLOCK for bpftrace. If your program is not loading, you can try \"ulimit -l 8192\" to fix the problem\n",
+  "facts": {
+    "uname": "Linux colima-triplex2 6.8.0-117-generic #117-Ubuntu SMP PREEMPT_DYNAMIC Thu May  7 17:26:37 UTC 2026 aarch64 aarch64 aarch64 GNU/Linux",
+    "btf": "-r--r--r-- 1 root root 6968159 Nov  9 07:28 /sys/kernel/btf/vmlinux",
+    "lockdown": "[none] integrity confidentiality",
+    "unprivilegedBpf": "2",
+    "bpfStats": "0",
+    "perfEventParanoid": "4",
+    "ext4BtfPresent": false,
+    "cgroupFs": "cgroup2fs",
+    "maxMapKeys": 65536,
+    "perfRbPages": 1024,
+    "ext4Tracepoints": [
+      [
+        "ext4_sync_file_enter",
+        false
+      ],
+      [
+        "ext4_sync_file_exit",
+        false
+      ],
+      [
+        "ext4_sync_fs",
+        false
+      ],
+      [
+        "ext4_truncate_enter",
+        false
+      ],
+      [
+        "ext4_punch_hole",
+        false
+      ],
+      [
+        "ext4_zero_range",
+        false
+      ]
+    ]
+  },
+  "listing": {
+    "fexit:vmlinux:ext4_file_write_iter": "kretfunc:vmlinux:ext4_file_write_iter",
+    "fentry:vmlinux:ext4_page_mkwrite": "kfunc:vmlinux:ext4_page_mkwrite",
+    "fentry:vmlinux:ext4_sync_fs": "kfunc:vmlinux:ext4_sync_fs",
+    "fexit:vmlinux:ext4_sync_fs": "kretfunc:vmlinux:ext4_sync_fs",
+    "tracepoint:syscalls:sys_enter_syncfs": "tracepoint:syscalls:sys_enter_syncfs",
+    "tracepoint:syscalls:sys_exit_sync": "tracepoint:syscalls:sys_exit_sync"
+  },
+  "tracepointAttach": {
+    "ok": true,
+    "detail": "ERROR: Unknown error -1: couldn't set RLIMIT_MEMLOCK for bpftrace. If your program is not loading, you can try \"ulimit -l 8192\" to fix the problem",
+    "exitCode": 0
+  },
+  "clock": {
+    "status": 0,
+    "stderr": "ERROR: Unknown error -1: couldn't set RLIMIT_MEMLOCK for bpftrace. If your program is not loading, you can try \"ulimit -l 8192\" to fix the problem\n",
+    "unparsed": 0,
+    "samples": [
+      {
+        "bootNs": 174919082264911,
+        "monotonicNs": 174919082264827,
+        "receivedAfterNs": 174919082741286,
+        "receivedBootNs": 174919082740536,
+        "receivedNs": 174919082728786
+      },
+      {
+        "bootNs": 174919101436149,
+        "monotonicNs": 174919101436149,
+        "receivedAfterNs": 174919101948733,
+        "receivedBootNs": 174919101947858,
+        "receivedNs": 174919101937525
+      },
+      {
+        "bootNs": 174919118027717,
+        "monotonicNs": 174919118027592,
+        "receivedAfterNs": 174919118597801,
+        "receivedBootNs": 174919118595759,
+        "receivedNs": 174919118588759
+      },
+      {
+        "bootNs": 174919138397790,
+        "monotonicNs": 174919138397707,
+        "receivedAfterNs": 174919138703374,
+        "receivedBootNs": 174919138702832,
+        "receivedNs": 174919138698249
+      },
+      {
+        "bootNs": 174919157985404,
+        "monotonicNs": 174919157985238,
+        "receivedAfterNs": 174919158489655,
+        "receivedBootNs": 174919158488613,
+        "receivedNs": 174919158477988
+      },
+      {
+        "bootNs": 174919178216603,
+        "monotonicNs": 174919178216561,
+        "receivedAfterNs": 174919178567436,
+        "receivedBootNs": 174919178566561,
+        "receivedNs": 174919178560770
+      },
+      {
+        "bootNs": 174919198098634,
+        "monotonicNs": 174919198098509,
+        "receivedAfterNs": 174919198607135,
+        "receivedBootNs": 174919198606468,
+        "receivedNs": 174919198600760
+      },
+      {
+        "bootNs": 174919218106998,
+        "monotonicNs": 174919218106873,
+        "receivedAfterNs": 174919218686124,
+        "receivedBootNs": 174919218685083,
+        "receivedNs": 174919218679208
+      },
+      {
+        "bootNs": 174919237930696,
+        "monotonicNs": 174919237930571,
+        "receivedAfterNs": 174919238251197,
+        "receivedBootNs": 174919238250072,
+        "receivedNs": 174919238245155
+      },
+      {
+        "bootNs": 174919257957186,
+        "monotonicNs": 174919257956977,
+        "receivedAfterNs": 174919258236020,
+        "receivedBootNs": 174919258235311,
+        "receivedNs": 174919258230061
+      },
+      {
+        "bootNs": 174919277963967,
+        "monotonicNs": 174919277963800,
+        "receivedAfterNs": 174919278520801,
+        "receivedBootNs": 174919278519010,
+        "receivedNs": 174919278496301
+      },
+      {
+        "bootNs": 174919297931457,
+        "monotonicNs": 174919297931415,
+        "receivedAfterNs": 174919298344291,
+        "receivedBootNs": 174919298343458,
+        "receivedNs": 174919298337083
+      },
+      {
+        "bootNs": 174919317938864,
+        "monotonicNs": 174919317938697,
+        "receivedAfterNs": 174919318981074,
+        "receivedBootNs": 174919318979949,
+        "receivedNs": 174919318973615
+      },
+      {
+        "bootNs": 174919338001395,
+        "monotonicNs": 174919338001229,
+        "receivedAfterNs": 174919338301062,
+        "receivedBootNs": 174919338300562,
+        "receivedNs": 174919338296146
+      },
+      {
+        "bootNs": 174919358019510,
+        "monotonicNs": 174919358019343,
+        "receivedAfterNs": 174919358521178,
+        "receivedBootNs": 174919358520469,
+        "receivedNs": 174919358514386
+      },
+      {
+        "bootNs": 174919377955375,
+        "monotonicNs": 174919377955333,
+        "receivedAfterNs": 174919378414834,
+        "receivedBootNs": 174919378414001,
+        "receivedNs": 174919378407167
+      },
+      {
+        "bootNs": 174919398117865,
+        "monotonicNs": 174919398117823,
+        "receivedAfterNs": 174919398471157,
+        "receivedBootNs": 174919398470449,
+        "receivedNs": 174919398465366
+      },
+      {
+        "bootNs": 174919417973313,
+        "monotonicNs": 174919417973271,
+        "receivedAfterNs": 174919418329772,
+        "receivedBootNs": 174919418328689,
+        "receivedNs": 174919418320647
+      },
+      {
+        "bootNs": 174919437936511,
+        "monotonicNs": 174919437936345,
+        "receivedAfterNs": 174919440323515,
+        "receivedBootNs": 174919440322723,
+        "receivedNs": 174919440315932
+      },
+      {
+        "bootNs": 174919458378710,
+        "monotonicNs": 174919458378669,
+        "receivedAfterNs": 174919458826128,
+        "receivedBootNs": 174919458825669,
+        "receivedNs": 174919458820378
+      },
+      {
+        "bootNs": 174919479097785,
+        "monotonicNs": 174919479097701,
+        "receivedAfterNs": 174919479505494,
+        "receivedBootNs": 174919479504994,
+        "receivedNs": 174919479500202
+      },
+      {
+        "bootNs": 174919502486155,
+        "monotonicNs": 174919502486072,
+        "receivedAfterNs": 174919502916614,
+        "receivedBootNs": 174919502915739,
+        "receivedNs": 174919502909406
+      },
+      {
+        "bootNs": 174919521518477,
+        "monotonicNs": 174919521518352,
+        "receivedAfterNs": 174919522088811,
+        "receivedBootNs": 174919522087811,
+        "receivedNs": 174919522083227
+      },
+      {
+        "bootNs": 174919541838634,
+        "monotonicNs": 174919541838509,
+        "receivedAfterNs": 174919542189093,
+        "receivedBootNs": 174919542188593,
+        "receivedNs": 174919542184551
+      },
+      {
+        "bootNs": 174919560407538,
+        "monotonicNs": 174919560407538,
+        "receivedAfterNs": 174919560925580,
+        "receivedBootNs": 174919560924955,
+        "receivedNs": 174919560919664
+      },
+      {
+        "bootNs": 174919581994697,
+        "monotonicNs": 174919581994697,
+        "receivedAfterNs": 174919582422698,
+        "receivedBootNs": 174919582421989,
+        "receivedNs": 174919582416948
+      },
+      {
+        "bootNs": 174919599285141,
+        "monotonicNs": 174919599285099,
+        "receivedAfterNs": 174919599797058,
+        "receivedBootNs": 174919599796392,
+        "receivedNs": 174919599791267
+      },
+      {
+        "bootNs": 174919622395344,
+        "monotonicNs": 174919622395302,
+        "receivedAfterNs": 174919622734720,
+        "receivedBootNs": 174919622733636,
+        "receivedNs": 174919622729470
+      },
+      {
+        "bootNs": 174919637934702,
+        "monotonicNs": 174919637934577,
+        "receivedAfterNs": 174919638299203,
+        "receivedBootNs": 174919638298619,
+        "receivedNs": 174919638293744
+      },
+      {
+        "bootNs": 174919658214526,
+        "monotonicNs": 174919658214526,
+        "receivedAfterNs": 174919658524193,
+        "receivedBootNs": 174919658523568,
+        "receivedNs": 174919658518526
+      },
+      {
+        "bootNs": 174919678213557,
+        "monotonicNs": 174919678213557,
+        "receivedAfterNs": 174919678548516,
+        "receivedBootNs": 174919678547683,
+        "receivedNs": 174919678542808
+      },
+      {
+        "bootNs": 174919698028255,
+        "monotonicNs": 174919698028047,
+        "receivedAfterNs": 174919698504964,
+        "receivedBootNs": 174919698504048,
+        "receivedNs": 174919698498131
+      },
+      {
+        "bootNs": 174919718604538,
+        "monotonicNs": 174919718604329,
+        "receivedAfterNs": 174919719230664,
+        "receivedBootNs": 174919719229039,
+        "receivedNs": 174919719222789
+      },
+      {
+        "bootNs": 174919740315655,
+        "monotonicNs": 174919740315530,
+        "receivedAfterNs": 174919740820031,
+        "receivedBootNs": 174919740819573,
+        "receivedNs": 174919740814323
+      },
+      {
+        "bootNs": 174919762180940,
+        "monotonicNs": 174919762180815,
+        "receivedAfterNs": 174919762768107,
+        "receivedBootNs": 174919762767316,
+        "receivedNs": 174919762760024
+      },
+      {
+        "bootNs": 174919780519594,
+        "monotonicNs": 174919780519469,
+        "receivedAfterNs": 174919780979719,
+        "receivedBootNs": 174919780979219,
+        "receivedNs": 174919780974928
+      },
+      {
+        "bootNs": 174919801910877,
+        "monotonicNs": 174919801910794,
+        "receivedAfterNs": 174919802693712,
+        "receivedBootNs": 174919802693087,
+        "receivedNs": 174919802685254
+      },
+      {
+        "bootNs": 174919819986614,
+        "monotonicNs": 174919819986448,
+        "receivedAfterNs": 174919820921116,
+        "receivedBootNs": 174919820919657,
+        "receivedNs": 174919820911991
+      },
+      {
+        "bootNs": 174919838141143,
+        "monotonicNs": 174919838141143,
+        "receivedAfterNs": 174919838711561,
+        "receivedBootNs": 174919838711102,
+        "receivedNs": 174919838706352
+      },
+      {
+        "bootNs": 174919862678723,
+        "monotonicNs": 174919862678640,
+        "receivedAfterNs": 174919863118807,
+        "receivedBootNs": 174919863118016,
+        "receivedNs": 174919863112807
+      },
+      {
+        "bootNs": 174919879198666,
+        "monotonicNs": 174919879198541,
+        "receivedAfterNs": 174919879618500,
+        "receivedBootNs": 174919879617875,
+        "receivedNs": 174919879613542
+      },
+      {
+        "bootNs": 174919902463828,
+        "monotonicNs": 174919902463786,
+        "receivedAfterNs": 174919902911787,
+        "receivedBootNs": 174919902911079,
+        "receivedNs": 174919902903829
+      },
+      {
+        "bootNs": 174919920206189,
+        "monotonicNs": 174919920206023,
+        "receivedAfterNs": 174919920549398,
+        "receivedBootNs": 174919920548606,
+        "receivedNs": 174919920543731
+      },
+      {
+        "bootNs": 174919937961092,
+        "monotonicNs": 174919937960967,
+        "receivedAfterNs": 174919938574052,
+        "receivedBootNs": 174919938573427,
+        "receivedNs": 174919938568302
+      },
+      {
+        "bootNs": 174919958704833,
+        "monotonicNs": 174919958704792,
+        "receivedAfterNs": 174919959150126,
+        "receivedBootNs": 174919959149542,
+        "receivedNs": 174919959144251
+      },
+      {
+        "bootNs": 174919978098572,
+        "monotonicNs": 174919978098406,
+        "receivedAfterNs": 174919978710657,
+        "receivedBootNs": 174919978709698,
+        "receivedNs": 174919978702657
+      },
+      {
+        "bootNs": 174919997943479,
+        "monotonicNs": 174919997943395,
+        "receivedAfterNs": 174919998238479,
+        "receivedBootNs": 174919998237729,
+        "receivedNs": 174919998231521
+      },
+      {
+        "bootNs": 174920017944052,
+        "monotonicNs": 174920017943927,
+        "receivedAfterNs": 174920018259719,
+        "receivedBootNs": 174920018258302,
+        "receivedNs": 174920018251344
+      },
+      {
+        "bootNs": 174920038002833,
+        "monotonicNs": 174920038002708,
+        "receivedAfterNs": 174920038303959,
+        "receivedBootNs": 174920038303376,
+        "receivedNs": 174920038290959
+      },
+      {
+        "bootNs": 174920058115740,
+        "monotonicNs": 174920058115699,
+        "receivedAfterNs": 174920058452907,
+        "receivedBootNs": 174920058452199,
+        "receivedNs": 174920058447157
+      }
+    ]
+  },
+  "clockProgram": {
+    "image": "sha256:06f6223590f518a903c90d7dec383a2ee9fa669f80000013b5a004d2a2efbf25",
+    "dumpPath": "/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01-W/w0-attempt2/w0-compiled-program.txt",
+    "dumpFileSha256": "ab80c58e1bdfd1936c3507f599dc06a93b6f35342452663bb7962ebc7106c27f",
+    "enumPath": "/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01-W/w0-attempt2/w0-bpf-func-id-enum.json",
+    "exitCodes": {
+      "version": 0,
+      "sha": 0,
+      "btf": 0,
+      "compile": 0
+    },
+    "versionStderr": "",
+    "facts": {
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "mountedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "sourceText": "#!/usr/bin/env bpftrace\n// sync-witness/1 trace program (OBS01 round 9, R48 4.1). Run only by the trusted sync-witness container (CAP_BPF + CAP_PERFMON).\n//   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>\n// dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.\n// Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,\n// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times (nsecs(monotonic) everywhere; a bare nsecs is CLOCK_BOOTTIME in bpftrace, R49), never file contents, and never opens a candidate file.\n// Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate\n// or count mismatch against the final \"@n[cpu]\" dump as lost events, so loss detection does not depend on bpftrace's stderr.\n// [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).\n// Rejected: syscall-name tracing (misses msync/io_uring/O_DSYNC); sync_file_range (not a device flush, so deliberately absent).\n// UNVERIFIED until probe W0 attaches it in the triplex2 VM: fexit/fentry on static ext4 functions and the syscalls tracepoints\n// depend on the VM kernel's BTF. W0 records what attaches; a failed attach stops the window, it is not patched around.\n\nBEGIN\n{\n  @dir[(uint64)$1, (uint64)$2] = 1;\n  @dir[(uint64)$3, (uint64)$4] = 1;\n  @dev[(uint64)$1] = 1;\n  @dev[(uint64)$3] = 1;\n  printf(\"SW1|B|%llu|%llu|%llu|%llu|%llu\\n\", nsecs(monotonic), (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);\n}\n\n// W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)\nfexit:vmlinux:ext4_file_write_iter\n{\n  $file = args->iocb->ki_filp;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (retval > 0 && @dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent,\n      args->iocb->ki_pos - retval, retval);\n  }\n}\n\n// M: a store through a writable shared mapping of a file in a witnessed directory (never sync-covered by a write record)\nfentry:vmlinux:ext4_page_mkwrite\n{\n  $file = args->vmf->vma->vm_file;\n  $inode = $file->f_inode;\n  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;\n  $dev = (uint64)$inode->i_sb->s_dev;\n  if (@dir[$dev, (uint64)$parent]) {\n    @ino[$dev, (uint64)$inode->i_ino] = 1;\n    @n[cpu]++;\n    printf(\"SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, $dev, $inode->i_ino, $parent);\n  }\n}\n\n// F: ext4 fsync/fdatasync (also reached by msync(MS_SYNC), O_SYNC writes and io_uring fsync); one line per completed call\ntracepoint:ext4:ext4_sync_file_enter\n{\n  if (@dir[(uint64)args->dev, (uint64)args->parent]) {\n    @fe[tid] = nsecs(monotonic);\n    @fi[tid] = args->ino;\n    @fp[tid] = args->parent;\n    @fd[tid] = args->datasync;\n    @fv[tid] = args->dev;\n  }\n}\n\ntracepoint:ext4:ext4_sync_file_exit\n{\n  if (@fe[tid]) {\n    @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;\n    @n[cpu]++;\n    printf(\"SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\\n\", cpu, @n[cpu], @fe[tid], nsecs(monotonic), cgroup, @fv[tid], @fi[tid], @fp[tid],\n      @fd[tid], args->ret);\n    delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);\n  }\n}\n\n// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device (OBS01 round 10, F5).\n// Fields: enter/ts are the syscall entry and exit; fsenter/fsexit are the entry and exit of that ext4_sync_fs(wait=1) call\n// (both 0 when the entry probe did not fire). The judge uses ts as D_upper (durability is granted there) and fsenter, else\n// enter, as D_lower (an ACK or publication earlier than D_lower is a proven violation; between the two it is unproven).\n// [EXP-OBS01-R10] Why: R48 4.2 names the successful filesystem sync, not the syscall bounds; an interval keeps the proven\n// ordering violations proven and labels the rest DURABILITY-UNPROVEN. Rejected: one instant (the syscall exit invents\n// violations, the ext4 entry invents durability).\ntracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs(monotonic); }\ntracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs(monotonic); }\n\nfentry:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && @se[tid]) {\n    if (@dev[(uint64)args->sb->s_dev]) { @sfe[tid] = nsecs(monotonic); }\n  }\n}\n\nfexit:vmlinux:ext4_sync_fs\n{\n  if (args->wait == 1 && retval == 0 && @se[tid]) {\n    $dev = (uint64)args->sb->s_dev;\n    if (@dev[$dev]) { @sd[tid] = $dev; @sfx[tid] = nsecs(monotonic); }\n  }\n}\n\ntracepoint:syscalls:sys_exit_syncfs\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid], args->ret,\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\ntracepoint:syscalls:sys_exit_sync\n{\n  if (@sd[tid]) {\n    @n[cpu]++;\n    printf(\"SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0|%llu|%llu\\n\", cpu, @n[cpu], @se[tid], nsecs(monotonic), cgroup, @sd[tid],\n      @sfe[tid], @sfx[tid]);\n  }\n  delete(@se[tid]); delete(@sd[tid]); delete(@sfe[tid]); delete(@sfx[tid]);\n}\n\n// T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)\ntracepoint:ext4:ext4_truncate_enter\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);\n  }\n}\n\ntracepoint:ext4:ext4_punch_hole\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\ntracepoint:ext4:ext4_zero_range\n{\n  if (@ino[(uint64)args->dev, (uint64)args->ino]) {\n    @n[cpu]++;\n    printf(\"SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\\n\", cpu, @n[cpu], nsecs(monotonic), cgroup, (uint64)args->dev, (uint64)args->ino,\n      (uint64)args->offset, (uint64)args->len);\n  }\n}\n\n// Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check\nEND\n{\n  printf(\"SW1|Z|%llu\\n\", nsecs(monotonic));\n  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd); clear(@sfe); clear(@sfx);\n}\n",
+      "versionOutput": "bpftrace v0.20.2\n",
+      "versionRun": {
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "error": null
+      },
+      "hashRun": {
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "error": null
+      },
+      "btf": {
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "error": null,
+        "bytes": 6968159
+      },
+      "compiled": {
+        "exitCode": 0,
+        "signal": null,
+        "timedOut": false,
+        "stdoutBytes": 228829,
+        "stderr": "[DEBUG] libbpf: loading kernel BTF '/sys/kernel/btf/vmlinux': 0\nWARNING: BTF: failed to iterate modules BTF objects\nERROR: Unknown error -1: couldn't set RLIMIT_MEMLOCK for bpftrace. If your program is not loading, you can try \"ulimit -l 8192\" to fix the problem\n[DEBUG] libbpf: loading kernel BTF '/sys/kernel/btf/vmlinux': 0\nWARNING: BTF: failed to iterate modules BTF objects\n"
+      }
+    }
+  }
+}

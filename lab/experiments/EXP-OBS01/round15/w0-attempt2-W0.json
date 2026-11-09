@@ -1,0 +1,5 @@
+{
+  "window": "W0",
+  "pass": false,
+  "refused": "Error: witness did not attach (TRACE-INCOMPLETE): ERROR: Unknown error -1: couldn't set RLIMIT_MEMLOCK for bpftrace. If your program is not loading, you can try \"ulimit -l 8192\" to fix the problem\n"
+}
