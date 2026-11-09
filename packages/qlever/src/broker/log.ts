@@ -25,6 +25,28 @@ export class H1BasisUnsupported extends ReadError {
 export class BrokerLogError extends Error {
   readonly _tag = "BrokerLogError";
 }
+// [EXP-HS01] Why: a stale cursor is an explicit retention failure, never a silently shortened feed.
+// Rejected: starting from the first surviving row (drops effects without notice).
+export class FeedRetentionExpired extends BrokerLogError {
+  readonly reason = "feed-retention-expired";
+  constructor(
+    readonly requested: number,
+    readonly retainedFrom: number,
+  ) {
+    super(`Feed cursor ${requested} is below retained anchor ${retainedFrom}`);
+  }
+}
+const workerError = (error: string): Error => {
+  const prefix = "FEED_RETENTION_EXPIRED:";
+  const at = error.indexOf(prefix);
+  if (at >= 0) {
+    const detail = JSON.parse(error.slice(at + prefix.length));
+    return new FeedRetentionExpired(detail.requested, detail.retainedFrom);
+  }
+  return error.includes("H1_RECORD_TIME_UNSUPPORTED")
+    ? new H1BasisUnsupported()
+    : new BrokerLogError(error);
+};
 export interface LogFrame {
   readonly lsn: number;
   readonly epoch: number;
@@ -64,6 +86,9 @@ export interface Selection {
   readonly id?: string;
 }
 export interface StoreSnapshot extends Watermark {
+  readonly base_lsn: number;
+  readonly base_crc: number;
+  readonly base_end: number;
   readonly h: number;
   readonly crc: number;
   readonly size: number;
@@ -119,7 +144,7 @@ class Connection {
         Atomics.wait(state, 0, 0, 10);
       }
       const data = packet.message as { result: T; error?: string };
-      if (data.error) throw new BrokerLogError(data.error);
+      if (data.error) throw workerError(data.error);
       return data.result;
     } finally {
       port1.close();
@@ -148,12 +173,7 @@ class Connection {
       this.worker.once("exit", onExit);
       port1.once("message", (data: { result: T; error?: string }) => {
         cleanup();
-        if (data.error)
-          reject(
-            data.error.includes("H1_RECORD_TIME_UNSUPPORTED")
-              ? new H1BasisUnsupported()
-              : new BrokerLogError(data.error),
-          );
+        if (data.error) reject(workerError(data.error));
         else resolve(data.result);
       });
       this.worker.postMessage({ op, args, response: port2 }, [port2]);
@@ -211,6 +231,7 @@ export class HostLog {
   private writing = false;
   private failed: Error | undefined;
   private readerIndex = 0;
+  readonly openVerification = { frames: 0, bytes: 0, maxPageBytes: 0, peakRss: 0 };
   private constructor(
     readonly dir: string,
     private readonly writer: Connection,
@@ -219,6 +240,7 @@ export class HostLog {
     public epoch: number,
     public nextLsn: number,
     private prevCrc: number,
+    private readonly tailFrames = Infinity,
   ) {}
   static async open(
     dir: string,
@@ -226,8 +248,12 @@ export class HostLog {
       readonly minFreeBytes?: number;
       readonly requireFullFsync?: boolean;
       readonly takeover?: boolean;
+      readonly frameRetention?: { readonly tailFrames: number };
     } = {},
   ): Promise<OpenedLog> {
+    const tailFrames = options.frameRetention?.tailFrames ?? Infinity;
+    if (tailFrames !== Infinity && (!Number.isSafeInteger(tailFrames) || tailFrames < 0))
+      throw new BrokerLogError("Invalid frame retention tail");
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
     dir = fs.realpathSync(dir);
     const prior = streams.get(dir);
@@ -249,30 +275,48 @@ export class HostLog {
     const connections = [writer];
     try {
       const init = await writer.request<{ marker: StoreSnapshot; calibrationMs: number }>("init");
-      const result = writer.sync<{ frames: LogFrame[] }>("frames", {
-        from: { offset: 32, seed, nextLsn: 1 },
-        upto: init.marker.lsn,
-        maxBytes: Number.MAX_SAFE_INTEGER,
-      });
-      const frames = result.frames.map(normalize);
-      let crc = seed;
-      for (const f of frames) {
-        const encoded = encodeFrame({
-          lsn: f.lsn,
-          epoch: f.epoch,
-          kind: f.kind,
-          payload: f.payload,
-          prevCrc: crc,
+      // [EXP-HS01] Why: verification memory is bounded by one retained page, independent of log age.
+      // Rejected: maxBytes=MAX_SAFE_INTEGER (R45 measured a 41 GB restart at 100k).
+      let cursor = {
+        offset: init.marker.base_end,
+        seed: init.marker.base_crc,
+        nextLsn: init.marker.base_lsn + 1,
+      };
+      const verified = { frames: 0, bytes: 0, maxPageBytes: 0, peakRss: process.memoryUsage().rss };
+      let crc = cursor.seed;
+      let last: LogFrame | undefined;
+      while (cursor.nextLsn <= init.marker.lsn) {
+        const page = writer.sync<{ frames: LogFrame[]; next: typeof cursor }>("frames", {
+          from: cursor,
+          upto: init.marker.lsn,
+          maxBytes: 8 * 1024 * 1024,
         });
-        if (encoded.crc !== f.crc) throw new BrokerLogError(`Corrupt frame CRC at ${f.lsn}`);
-        crc = f.crc;
+        if (!page.frames.length) throw new BrokerLogError("Missing retained frame");
+        let pageBytes = 0;
+        for (const f of page.frames) {
+          verified.frames++;
+          verified.bytes += f.end - f.offset;
+          pageBytes += f.end - f.offset;
+          const encoded = encodeFrame({
+            lsn: f.lsn,
+            epoch: f.epoch,
+            kind: f.kind,
+            payload: Buffer.from(f.payload),
+            prevCrc: crc,
+          });
+          if (encoded.crc !== f.crc) throw new BrokerLogError(`Corrupt frame CRC at ${f.lsn}`);
+          crc = f.crc;
+          last = f;
+        }
+        verified.maxPageBytes = Math.max(verified.maxPageBytes, pageBytes);
+        verified.peakRss = Math.max(verified.peakRss, process.memoryUsage().rss);
+        cursor = page.next;
       }
-      const last = frames.at(-1);
       if (
-        (last?.lsn ?? 0) !== init.marker.lsn ||
+        (last?.lsn ?? init.marker.base_lsn) !== init.marker.lsn ||
         (last?.epoch ?? 0) !== init.marker.epoch ||
         crc !== init.marker.crc ||
-        (last?.end ?? 32) !== init.marker.size
+        (last?.end ?? init.marker.base_end) !== init.marker.size
       )
         throw new BrokerLogError("Marker/frame cross-check failed");
       const epoch = init.marker.epoch + 1;
@@ -293,20 +337,16 @@ export class HostLog {
         payload,
         prevCrc: crc,
       });
-      frames.push(
-        normalize(
-          await writer.request<LogFrame>("append", {
-            lsn: init.marker.lsn + 1,
-            epoch,
-            kind: FrameKind.EPOCH_BEGIN,
-            payload,
-            prev: crc,
-            crc: encoded.crc,
-            length: encoded.bytes.length,
-            members: [],
-          }),
-        ),
-      );
+      await writer.request<LogFrame>("append", {
+        lsn: init.marker.lsn + 1,
+        epoch,
+        kind: FrameKind.EPOCH_BEGIN,
+        payload,
+        prev: crc,
+        crc: encoded.crc,
+        length: encoded.bytes.length,
+        members: [],
+      });
       const checkpointer = connect(file, "checkpointer", gate, options.requireFullFsync);
       connections.push(checkpointer);
       await checkpointer.request("init");
@@ -325,7 +365,9 @@ export class HostLog {
         epoch,
         init.marker.lsn + 2,
         encoded.crc,
+        tailFrames,
       );
+      Object.assign(log.openVerification, verified);
       streams.set(dir, log);
       streamReaders.set(file, pool[0]!);
       // [EXP-SQL01] Why: directory entries for the DB and ACKED must survive alongside synced SQLite commits.
@@ -337,7 +379,19 @@ export class HostLog {
       }
       return {
         log,
-        frames,
+        // [EXP-HS01] Why: preserve the diagnostic array API without forcing startup to materialize frames.
+        // Rejected: retaining verified payloads for HostBroker (only marker, epochs and LSN headers are needed).
+        get frames() {
+          const out: LogFrame[] = [];
+          let from = segmentStart(file);
+          while (from.nextLsn < log.nextLsn) {
+            const page = readFramesFrom(file, from, log.nextLsn - 1, 8 * 1024 * 1024);
+            if (!page.frames.length) break;
+            out.push(...page.frames);
+            from = page.next;
+          }
+          return out;
+        },
         recovery: {
           status: init.marker.lsn === 0 ? "created" : "clean-end",
           tornBytes: 0,
@@ -435,6 +489,7 @@ export class HostLog {
   }
   publishWatermark(mark: Watermark) {
     this.lookup("ack", mark);
+    this.purgeFrames();
   }
   claim(id: string) {
     return this.lookup<{ txId: string; position: number } | undefined>("claim", id);
@@ -480,6 +535,26 @@ export class HostLog {
       },
     };
   }
+  snapshot() {
+    return this.lookup<StoreSnapshot>("marker");
+  }
+  epochs() {
+    return this.lookup<
+      { epoch: number; begin_lsn: number; previous_epoch: number; aborted: string }[]
+    >("epochs");
+  }
+  frameHeaders() {
+    return this.lookup<{ lsn: number; kind: number }[]>("frameHeaders");
+  }
+  retain(holder: string, lsn: number, ttlMs?: number) {
+    this.lookup("retain", { holder, lsn, ttlMs });
+  }
+  release(holder: string) {
+    this.lookup("release", holder);
+  }
+  purgeFrames() {
+    return this.lookup<{ removed: number; anchor: number }>("purgeFrames", this.tailFrames);
+  }
   purge(horizon: number) {
     return this.lookup<{ h: number; removed: number }>("purge", horizon);
   }
@@ -506,7 +581,10 @@ export const readWatermark = (dir: string): Watermark | undefined => {
   if (!fs.existsSync(file)) return undefined;
   return readConnection(file).sync<StoreSnapshot>("marker");
 };
-export const segmentStart = (_file: string) => ({ offset: 32, seed, nextLsn: 1 });
+export const segmentStart = (file: string) => {
+  const m = readConnection(file).sync<StoreSnapshot>("marker");
+  return { offset: m.base_end, seed: m.base_crc, nextLsn: m.base_lsn + 1 };
+};
 export const readFramesFrom = (
   file: string,
   from: { readonly offset: number; readonly seed: number; readonly nextLsn: number },
