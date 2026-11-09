@@ -1,0 +1,352 @@
+TAP version 13
+# Subtest: complete D separates observed representation: negative-zero
+ok 1 - complete D separates observed representation: negative-zero
+  ---
+  duration_ms: 7.296667
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: integer-float
+ok 2 - complete D separates observed representation: integer-float
+  ---
+  duration_ms: 4.908542
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: large-integer
+ok 3 - complete D separates observed representation: large-integer
+  ---
+  duration_ms: 3.708958
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: NaN-payload
+ok 4 - complete D separates observed representation: NaN-payload
+  ---
+  duration_ms: 3.0025
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: NaN-sign
+ok 5 - complete D separates observed representation: NaN-sign
+  ---
+  duration_ms: 4.723875
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: float-next-bit
+ok 6 - complete D separates observed representation: float-next-bit
+  ---
+  duration_ms: 2.965166
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: infinity-sign
+ok 7 - complete D separates observed representation: infinity-sign
+  ---
+  duration_ms: 1.980792
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: NFC-NFD
+ok 8 - complete D separates observed representation: NFC-NFD
+  ---
+  duration_ms: 3.983708
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: UTF16-surrogate
+ok 9 - complete D separates observed representation: UTF16-surrogate
+  ---
+  duration_ms: 3.82
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: timestamp-offset-text
+ok 10 - complete D separates observed representation: timestamp-offset-text
+  ---
+  duration_ms: 2.781459
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: time-offset-text
+ok 11 - complete D separates observed representation: time-offset-text
+  ---
+  duration_ms: 2.19375
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: date-vs-text
+ok 12 - complete D separates observed representation: date-vs-text
+  ---
+  duration_ms: 3.668708
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: date-one-ms
+ok 13 - complete D separates observed representation: date-one-ms
+  ---
+  duration_ms: 2.817583
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: date-vs-number
+ok 14 - complete D separates observed representation: date-vs-number
+  ---
+  duration_ms: 3.40075
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: binary-kind
+ok 15 - complete D separates observed representation: binary-kind
+  ---
+  duration_ms: 5.031209
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: binary-content
+ok 16 - complete D separates observed representation: binary-content
+  ---
+  duration_ms: 3.404167
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: nested-zero
+ok 17 - complete D separates observed representation: nested-zero
+  ---
+  duration_ms: 3.809875
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: scalar-kind
+ok 18 - complete D separates observed representation: scalar-kind
+  ---
+  duration_ms: 3.308083
+  type: 'test'
+  ...
+# Subtest: complete D separates observed representation: null-kind
+ok 19 - complete D separates observed representation: null-kind
+  ---
+  duration_ms: 2.499416
+  type: 'test'
+  ...
+# Subtest: raw-frame D separates stored representation: int2-int4
+ok 20 - raw-frame D separates stored representation: int2-int4
+  ---
+  duration_ms: 7.509166
+  type: 'test'
+  ...
+# Subtest: raw-frame D separates stored representation: int4-int8
+ok 21 - raw-frame D separates stored representation: int4-int8
+  ---
+  duration_ms: 8.35875
+  type: 'test'
+  ...
+# Subtest: raw-frame D separates stored representation: integer-float
+ok 22 - raw-frame D separates stored representation: integer-float
+  ---
+  duration_ms: 5.297667
+  type: 'test'
+  ...
+# Subtest: raw-frame D separates stored representation: float4-float8
+ok 23 - raw-frame D separates stored representation: float4-float8
+  ---
+  duration_ms: 4.383375
+  type: 'test'
+  ...
+# Subtest: raw-frame D separates stored representation: negative-zero
+ok 24 - raw-frame D separates stored representation: negative-zero
+  ---
+  duration_ms: 3.549
+  type: 'test'
+  ...
+# Subtest: raw-frame D separates stored representation: decimal-scale
+ok 25 - raw-frame D separates stored representation: decimal-scale
+  ---
+  duration_ms: 3.347459
+  type: 'test'
+  ...
+# Subtest: raw-frame D separates stored representation: decimal-sign-zero
+ok 26 - raw-frame D separates stored representation: decimal-sign-zero
+  ---
+  duration_ms: 4.028792
+  type: 'test'
+  ...
+# Subtest: raw-frame D separates stored representation: unicode-NFC-NFD
+ok 27 - raw-frame D separates stored representation: unicode-NFC-NFD
+  ---
+  duration_ms: 3.84725
+  type: 'test'
+  ...
+# Subtest: raw-frame D separates stored representation: decimal-text-kind
+ok 28 - raw-frame D separates stored representation: decimal-text-kind
+  ---
+  duration_ms: 4.139541
+  type: 'test'
+  ...
+# Subtest: raw-frame D separates stored representation: bytea-hex
+ok 29 - raw-frame D separates stored representation: bytea-hex
+  ---
+  duration_ms: 3.02725
+  type: 'test'
+  ...
+# Subtest: unsupported native representation refuses, never approximates: 700
+ok 30 - unsupported native representation refuses, never approximates: 700
+  ---
+  duration_ms: 0.330667
+  type: 'test'
+  ...
+# Subtest: unsupported native representation refuses, never approximates: 701
+ok 31 - unsupported native representation refuses, never approximates: 701
+  ---
+  duration_ms: 0.158958
+  type: 'test'
+  ...
+# Subtest: unsupported native representation refuses, never approximates: 1082
+ok 32 - unsupported native representation refuses, never approximates: 1082
+  ---
+  duration_ms: 0.1335
+  type: 'test'
+  ...
+# Subtest: unsupported native representation refuses, never approximates: 1083
+ok 33 - unsupported native representation refuses, never approximates: 1083
+  ---
+  duration_ms: 0.167625
+  type: 'test'
+  ...
+# Subtest: unsupported native representation refuses, never approximates: 1114
+ok 34 - unsupported native representation refuses, never approximates: 1114
+  ---
+  duration_ms: 0.244792
+  type: 'test'
+  ...
+# Subtest: unsupported native representation refuses, never approximates: 1184
+ok 35 - unsupported native representation refuses, never approximates: 1184
+  ---
+  duration_ms: 0.14275
+  type: 'test'
+  ...
+# Subtest: unsupported native representation refuses, never approximates: 1266
+ok 36 - unsupported native representation refuses, never approximates: 1266
+  ---
+  duration_ms: 0.126833
+  type: 'test'
+  ...
+# Subtest: unsupported native representation refuses, never approximates: 1186
+ok 37 - unsupported native representation refuses, never approximates: 1186
+  ---
+  duration_ms: 0.124458
+  type: 'test'
+  ...
+# Subtest: unsupported native representation refuses, never approximates: 114
+ok 38 - unsupported native representation refuses, never approximates: 114
+  ---
+  duration_ms: 0.205875
+  type: 'test'
+  ...
+# Subtest: unsupported native representation refuses, never approximates: 3802
+ok 39 - unsupported native representation refuses, never approximates: 3802
+  ---
+  duration_ms: 0.1355
+  type: 'test'
+  ...
+# Subtest: D must refuse a changed stored type hidden by XTDB column widening: integer-width
+ok 40 - D must refuse a changed stored type hidden by XTDB column widening: integer-width
+  ---
+  duration_ms: 4.775917
+  type: 'test'
+  ...
+# Subtest: D must refuse a changed stored type hidden by XTDB column widening: float-width
+ok 41 - D must refuse a changed stored type hidden by XTDB column widening: float-width
+  ---
+  duration_ms: 3.126583
+  type: 'test'
+  ...
+# Subtest: fresh identical inputs match only Dprime: decoded
+ok 42 - fresh identical inputs match only Dprime: decoded
+  ---
+  duration_ms: 15.937625
+  type: 'test'
+  ...
+# Subtest: Dprime preserves caller input: decoded/user-datetime
+ok 43 - Dprime preserves caller input: decoded/user-datetime
+  ---
+  duration_ms: 5.438917
+  type: 'test'
+  ...
+# Subtest: Dprime preserves caller input: decoded/user-valid-from
+ok 44 - Dprime preserves caller input: decoded/user-valid-from
+  ---
+  duration_ms: 5.696625
+  type: 'test'
+  ...
+# Subtest: Dprime preserves caller input: decoded/user-valid-to
+ok 45 - Dprime preserves caller input: decoded/user-valid-to
+  ---
+  duration_ms: 6.675375
+  type: 'test'
+  ...
+# Subtest: Dprime preserves caller input: decoded/user-actor
+ok 46 - Dprime preserves caller input: decoded/user-actor
+  ---
+  duration_ms: 5.080375
+  type: 'test'
+  ...
+# Subtest: Dprime preserves caller input: decoded/user-JSON-lookalike
+ok 47 - Dprime preserves caller input: decoded/user-JSON-lookalike
+  ---
+  duration_ms: 5.993375
+  type: 'test'
+  ...
+# Subtest: Dprime retains a changed nested caller timestamp inside generated change JSON: decoded
+ok 48 - Dprime retains a changed nested caller timestamp inside generated change JSON: decoded
+  ---
+  duration_ms: 7.081166
+  type: 'test'
+  ...
+# Subtest: Dprime refuses or distinguishes an instant inconsistent with its assigning clock: decoded
+ok 49 - Dprime refuses or distinguishes an instant inconsistent with its assigning clock: decoded
+  ---
+  duration_ms: 6.697
+  type: 'test'
+  ...
+# Subtest: fresh identical inputs match only Dprime: wire
+ok 50 - fresh identical inputs match only Dprime: wire
+  ---
+  duration_ms: 14.193541
+  type: 'test'
+  ...
+# Subtest: Dprime preserves caller input: wire/user-datetime
+ok 51 - Dprime preserves caller input: wire/user-datetime
+  ---
+  duration_ms: 8.387208
+  type: 'test'
+  ...
+# Subtest: Dprime preserves caller input: wire/user-valid-from
+ok 52 - Dprime preserves caller input: wire/user-valid-from
+  ---
+  duration_ms: 7.416958
+  type: 'test'
+  ...
+# Subtest: Dprime preserves caller input: wire/user-valid-to
+ok 53 - Dprime preserves caller input: wire/user-valid-to
+  ---
+  duration_ms: 6.742958
+  type: 'test'
+  ...
+# Subtest: Dprime preserves caller input: wire/user-actor
+ok 54 - Dprime preserves caller input: wire/user-actor
+  ---
+  duration_ms: 7.174
+  type: 'test'
+  ...
+# Subtest: Dprime preserves caller input: wire/user-JSON-lookalike
+ok 55 - Dprime preserves caller input: wire/user-JSON-lookalike
+  ---
+  duration_ms: 6.061458
+  type: 'test'
+  ...
+# Subtest: Dprime retains a changed nested caller timestamp inside generated change JSON: wire
+ok 56 - Dprime retains a changed nested caller timestamp inside generated change JSON: wire
+  ---
+  duration_ms: 9.632625
+  type: 'test'
+  ...
+# Subtest: Dprime refuses or distinguishes an instant inconsistent with its assigning clock: wire
+ok 57 - Dprime refuses or distinguishes an instant inconsistent with its assigning clock: wire
+  ---
+  duration_ms: 4.717541
+  type: 'test'
+  ...
+1..57
+# tests 57
+# suites 0
+# pass 57
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 617.040958

@@ -1,0 +1,50 @@
+[
+  {
+    "path": "lab/bench/lib/g0-xtdb.ts",
+    "oldSha256": "21560713bea2d4b9eb74a4b75e29f0a022249b3d6a21ef0e865cb60eb35aca67",
+    "newSha256": "ccd6add7e50b3ce8da3cbe0acc46a2f73b289b8db2ac6bdbfa3e418c36969ca4",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/lib/g0.ts",
+    "oldSha256": "d2995b912bbe0460b3eb1c53a728f2242046676de73f43a401f26d6b4ad6f195",
+    "newSha256": "1f98f70db84383b8c3ea489fa9b11f8fab9bbfc0b60193569f778fc34850b1eb",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/lib/n01-counts.ts",
+    "oldSha256": null,
+    "newSha256": "a2a9a613ad6a40108cc200ce7050ffd855f48947945559f0f440d4c6d2971601",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/test/fixtures/g0-count-live11.json",
+    "oldSha256": null,
+    "newSha256": "a2a529a260ac432488d145028156cd5a28597bebf99d3c841f5e146be38cdddc",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/test/g0-counts.test.ts",
+    "oldSha256": null,
+    "newSha256": "77c977c41c875b33d700a54c837199235d81bc8f77c11eff4d35f66c29312808",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/xtdb-seed.ts",
+    "oldSha256": "82ac7eb63a49c4be16d0543baac362d7bba1a3c1aed298d9578f2365aa61e0a3",
+    "newSha256": "b3f48c0c9caba9bf0751c4663ad0086f09d6533e87f6523a4579d6dc5d0fa99a",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/experiments/EXP-K01-seed-clone/LIVE-round12.md",
+    "oldSha256": null,
+    "newSha256": "7f1cefac8fe194aa48c11c59afc0094dce53e4356e904a092d2de26ec2e26c2d",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/verify/K01/run-round12.mjs",
+    "oldSha256": null,
+    "newSha256": "e782d422c0322c0117b58394aad93cfc8cf7522273d2effc58e8f6d6bad4918b",
+    "acceptanceReferences": []
+  }
+]

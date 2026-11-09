@@ -1,0 +1,3 @@
+# Round-11 live rerun evidence
+
+Original run: `runs/xtdb-seed/k01-r11-20261109T052411Z`, tested head b9d1be7952bb4b1f5890588e693ebe764ec33360. `invocation.json` and `wire-command.sh` bind the actual handoff command and sources. `wire.log` records four scalar smoke cases and two mixed-type refusals. `seed.log` preserves the first failure, before D/Dprime and manifest publication. Admission, owner preimages, both engine logs and both cleanup results are retained. `receipt.json` lists terminal exits and all unrun steps. `SHA256SUMS` verifies this directory. All files are below 1 MB and this raw directory is below 5 MB, so external spill was unnecessary. No retries, semantic re-verification or changes to the failing gate occurred.

@@ -1,0 +1,50 @@
+{
+  "outcome": "STOPPED_AT_FIRST_FAILURE",
+  "head": "e5257600fb41f393d13f3a22eae110d5601a92f3",
+  "run": "runs/xtdb-seed/k01-r10-20261109T034627Z",
+  "holder": "CX-K01-R10-live",
+  "finishedAt": "2026-11-09T03:47:52Z",
+  "commands": [
+    {
+      "step": "engine up --fresh",
+      "exitCode": 0
+    },
+    {
+      "step": "exact LIVE-round10.md wire probe through heavy.mjs",
+      "exitCode": 1,
+      "firstFailure": {
+        "error": "AssertionError [ERR_ASSERTION]",
+        "actual": "#{:i32 :i64}",
+        "expectedRegex": "/:union/",
+        "location": "[eval1]:39:10"
+      }
+    },
+    {
+      "step": "engine logs --tail 200",
+      "exitCode": 0
+    },
+    {
+      "step": "engine down --remove-volume",
+      "exitCode": 0
+    }
+  ],
+  "notRun": [
+    "remaining mixed integer rejection assertion",
+    "mixed float probe",
+    "other native value kinds",
+    "seed and source D/Dprime pin",
+    "freeze",
+    "golden publication",
+    "two clone starts / D and L equality",
+    "E1 fresh-seed Dprime comparison"
+  ],
+  "cleanup": {
+    "engineReportedContainerRemoved": "tx2-xtdb-s1",
+    "engineReportedVolumeRemoved": "tx2-xtdb-s1-data",
+    "slotLockAbsent": true,
+    "remainingOwnReservations": [],
+    "remainingOwnRetainedVolumes": [],
+    "publishedGoldens": []
+  },
+  "hostFreeBytesAfterCleanup": 14837051392
+}

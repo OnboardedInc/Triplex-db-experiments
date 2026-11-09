@@ -1,0 +1,86 @@
+[
+  {
+    "path": "lab/bench/lib/g0-native.ts",
+    "oldSha256": null,
+    "newSha256": "9c507ef4c5e9bb9d0e9c5096a5e0bd6a6dcfddc1f4d94c60cf4c6c63fea33b7f",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/lib/g0-normalize.ts",
+    "oldSha256": "f5da7b79b9f22ddea23cfc756d50662116089ae5af8b2f3b23f6388602927376",
+    "newSha256": "749037ed2727801ab01cd0ab5ddb134f3db66d3197472f119bb81e04af1e8ef8",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/lib/g0-values.ts",
+    "oldSha256": "9cb5a8c63497588f05de78b621ab9307ec55655d6182b1a4ed2a0e8393f35b22",
+    "newSha256": "3e8a6c85c94f854556634fa46c68a9e747ea13cf1e61ac78f26a3f7d845c3ffb",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/lib/g0-wire.ts",
+    "oldSha256": "9d281c1cd1c35fb2ea46895f2be27af50eab919ffc194270d18563c3529fc110",
+    "newSha256": "47b7a5b44c48d99dd278160084ff7d1c1a6a9af9c18699eb23c78437cc51721e",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/lib/g0.ts",
+    "oldSha256": "7286d1976c19c71cdbd694fd835eb8d42111ae060fd6d636196a8c8195bdd7be",
+    "newSha256": "d2995b912bbe0460b3eb1c53a728f2242046676de73f43a401f26d6b4ad6f195",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/test/g0-e1.test.ts",
+    "oldSha256": "9355bcdaaa0a23c6a07681435dd3938c7f60b0ceb77c5482b64d080f287b0c81",
+    "newSha256": "ca4796e0494d0d0df644459f8082cdd86f0231f96b9df89e86542577e603b0df",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/test/g0-native.test.ts",
+    "oldSha256": null,
+    "newSha256": "f3e89c64a56c459816a9cd5f49fb290c65bde72d2ec50009a34fe780777b1a30",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/test/g0-values.test.ts",
+    "oldSha256": "0b87079fe684f95caaaf8cd7392a65862f416ec38dee97be86543021aeb2d2b6",
+    "newSha256": "ed243b6931331cf02fe47399157e4399491406e10a0c672e134529de29d17d5e",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/xtdb-seed.ts",
+    "oldSha256": "ecd495ac64309b2898e9a421fd1b50269212bf76de796e367c90d8edb9c9540c",
+    "newSha256": "82ac7eb63a49c4be16d0543baac362d7bba1a3c1aed298d9578f2365aa61e0a3",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/experiments/EXP-K01-seed-clone/E1-PLAN.md",
+    "oldSha256": "74234e1453d1930328d09734f4eabbc35317a6492c5cc4f91c3b1142bd21f8c7",
+    "newSha256": "a9195d170e19050ebd89b8ea6c36f685a4f4e763cec0408b7eacc0f7be24b42a",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/experiments/EXP-K01-seed-clone/G0-SHARED-INTERFACE.md",
+    "oldSha256": "392bb74203b62c87b707309cdfa2a68f30c9bfc138e58a9dddcb3004b291c7a8",
+    "newSha256": "daf37ca51355f721022191b290439051786af4cc30d59485a3e33889bb13626f",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/experiments/EXP-K01-seed-clone/LIVE-round10.md",
+    "oldSha256": null,
+    "newSha256": "d41710ce2e805d2101cbf3006bd59ceb2791780b2cc199f7b48f6120b0d98456",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/verify/K01/representation-review.test.mjs",
+    "oldSha256": null,
+    "newSha256": "625cc0cfc374aaaef96dceb3fb67c87f190fe240e3e8a159f247425a716fa7e8",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/verify/K01/run-round10.mjs",
+    "oldSha256": null,
+    "newSha256": "e3d870a38ce70a2276236b9be8504ffda18ba8e7f0a31adcb799ae4c18a0b6e9",
+    "acceptanceReferences": []
+  }
+]

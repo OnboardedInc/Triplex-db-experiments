@@ -1,0 +1,62 @@
+[
+  {
+    "path": "lab/bench/lib/g0-native.ts",
+    "oldSha256": "9c507ef4c5e9bb9d0e9c5096a5e0bd6a6dcfddc1f4d94c60cf4c6c63fea33b7f",
+    "newSha256": "a7531ec11c58a37a865198eb0c45d1c469d8b70917bb8c3ea7d38e5c5854e86a",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/lib/g0-values.ts",
+    "oldSha256": "3e8a6c85c94f854556634fa46c68a9e747ea13cf1e61ac78f26a3f7d845c3ffb",
+    "newSha256": "31737e6296bbca788ea4946b719d920d41ae86a0d56f250d7cbf332697a56b5c",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/test/fixtures/g0-live-round10.json",
+    "oldSha256": null,
+    "newSha256": "e3a9322f44ee8bb2dd7b35ff31d4bf71a4535db20e9d73bf416e5a0440457606",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/test/g0-live.test.ts",
+    "oldSha256": null,
+    "newSha256": "7b75356a1098d66cff40fba7fd1c773b19e35ef478595cbb4dff55301e5cc412",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/bench/test/g0-native.test.ts",
+    "oldSha256": "f3e89c64a56c459816a9cd5f49fb290c65bde72d2ec50009a34fe780777b1a30",
+    "newSha256": "ab82213b5fade3cee89c8435348929c91d2dcfe151db2d674f1c5006d45c1bd2",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/experiments/EXP-K01-seed-clone/G0-SHARED-INTERFACE.md",
+    "oldSha256": "daf37ca51355f721022191b290439051786af4cc30d59485a3e33889bb13626f",
+    "newSha256": "a49ec1f71b85edf35583c746d2bef603d47e41e7d48679bab6b5e4a7e4da98f1",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/experiments/EXP-K01-seed-clone/LIVE-round11.md",
+    "oldSha256": null,
+    "newSha256": "6dfc239d6cc506a15c4ddae72ad2a14d113ba841dddd1fcc41f99470dbd5a55e",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/experiments/EXP-K01-seed-clone/WIRE-TYPES-round11.md",
+    "oldSha256": null,
+    "newSha256": "523cc23c2058806842527649dec6b903bd6e1b4fb66435e1c2caf624080d8c6f",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/verify/K01/representation-review.test.mjs",
+    "oldSha256": "625cc0cfc374aaaef96dceb3fb67c87f190fe240e3e8a159f247425a716fa7e8",
+    "newSha256": "c03b89ebb341afb7d7d2125d076a9bb57952eab9012de17dedfe8a66aa98f461",
+    "acceptanceReferences": []
+  },
+  {
+    "path": "lab/verify/K01/run-round11.mjs",
+    "oldSha256": null,
+    "newSha256": "63980d3feab474e9cc0fa600663a12981f2dc6ea83cb11ca8ec5582b1ea5a56f",
+    "acceptanceReferences": []
+  }
+]

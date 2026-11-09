@@ -208,3 +208,54 @@ test("generated change timestamps must still agree with their source transaction
     /inconsistent change clock/,
   );
 });
+
+function setClocks(f: ReturnType<typeof fixture>, values: number[]) {
+  for (const r of f.tables.tx_assertions!) {
+    const time = values[Number(r.recorded_position) - 1]!;
+    r.recorded_at = time;
+    if (r.entity_type === "_Transaction") {
+      r.valid_from = time;
+      if (r.attribute === ":_tx/instant") {
+        r.value_datetime = time;
+        r.value_identity = JSON.stringify({ type: "datetime", value: time });
+      }
+      if (r.attribute === ":_tx/change") {
+        const body = JSON.parse(String(r.value_json));
+        body.recordedAt = time;
+        r.value_json = JSON.stringify(body);
+        r.value_identity = JSON.stringify({ type: "json", value: body });
+      }
+    }
+  }
+  for (const r of f.tables.tx_claims!) r.recorded_at = values[Number(r.position) - 1]!;
+}
+for (const [name, ac, bc, equal] of [
+  ["equal-instants", [100, 100], [900, 900], true],
+  ["strict-order", [100, 200], [900, 1000], true],
+  ["tie-split", [100, 100], [900, 1000], false],
+  ["tie-merged", [100, 200], [900, 900], false],
+  ["order-reversed", [100, 200], [1000, 900], false],
+] as const)
+  test("E1 instant ranks preserve " + name, async () => {
+    const a = fixture("a"),
+      b = fixture("b");
+    metadata(a, "a");
+    metadata(b, "b");
+    setClocks(a, [...ac]);
+    setClocks(b, [...bc]);
+    const want = { ...expected, counts: { ...expected.counts, tx_assertions: 6 } };
+    const ap = await readE1G0(a.reader, want),
+      bp = await readE1G0(b.reader, want);
+    assert.equal(ap.Dprime === bp.Dprime, equal);
+  });
+test("every instant row must equal the assigning clock even if its derived identity agrees", async () => {
+  const f = fixture("a");
+  metadata(f, "a");
+  const row = f.tables.tx_assertions!.find((r) => r.attribute === ":_tx/instant")!;
+  row.value_datetime = 42;
+  row.value_identity = JSON.stringify({ type: "datetime", value: 42 });
+  await assert.rejects(
+    readE1G0(f.reader, { ...expected, counts: { ...expected.counts, tx_assertions: 6 } }),
+    /inconsistent transaction instant/,
+  );
+});

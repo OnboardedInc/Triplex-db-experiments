@@ -1,0 +1,15 @@
+{
+  "format": "tx2-slot-owner/1",
+  "lane": "xtdb",
+  "slot": "s1",
+  "mode": "exclusive",
+  "container": "tx2-xtdb-s1",
+  "volume": "tx2-xtdb-s1-data",
+  "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5471/xtdb",
+  "port": 5471,
+  "holder": "CX-K01-R11-live",
+  "experiment": "EXP-K01",
+  "pid": 5285,
+  "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/k01",
+  "createdAt": "2026-11-09T05:24:47.001Z"
+}

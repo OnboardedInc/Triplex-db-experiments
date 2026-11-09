@@ -8,7 +8,8 @@ import { wireRows } from '../../bench/lib/g0-wire.ts';
 const out = process.env.TX2_K01_REP_OUT ?? '/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VK01/round8/attempt-1/representation';
 const records = [];
 const stableJson = value => JSON.stringify(value, (_k, v) => v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map(k => [k,v[k]])) : v);
-const spec = (oid, text) => ({ wireSpec: true, oid, bytes: Buffer.from(text) });
+const spec = (oid, text, nativeType) => ({ wireSpec: true, oid, nativeType, bytes: Buffer.from(text) });
+const fixtureTypes={16:':bool',17:':varbinary',20:':i64',21:':i16',23:':i32',25:':utf8',700:':f32',701:':f64',1700:'[:decimal 38 6 128]'};
 const expected = { scope: 'independent-e1', position: 2, world: 'N01', counts: { tx_assertions: 10, tx_claims: 2, tx_attempts: 2, tx_meta: 1 } };
 function fixture(tag, mode = 'decoded', edit = () => {}) {
   const tables = Object.fromEntries(Object.keys(fields).map(t => [t, []]));
@@ -50,7 +51,7 @@ function fixture(tag, mode = 'decoded', edit = () => {}) {
     const columns = [], values = [];
     for (const [name, v] of Object.entries(row)) {
       const cell = v?.wireSpec ? v : v===null ? null : typeof v==='number' ? spec(Object.is(v,-0)||!Number.isInteger(v)?701:20,Object.is(v,-0)?'-0':String(v)) : typeof v==='boolean' ? spec(16,v?'t':'f') : spec(25,String(v));
-      columns.push({name,type:cell?.oid ?? 25}); values.push(cell?.bytes ?? null);
+      columns.push({name,type:cell?.oid ?? 25,nativeType:cell?.nativeType??fixtureTypes[cell?.oid??25]}); values.push(cell?.bytes ?? null);
     }
     return wireRows(Object.assign([values],{columns}))[0];
   };
@@ -111,7 +112,9 @@ for (const variant of ['integer-width','float-width']) test('D must refuse a cha
   const values=variant==='integer-width'?[1,2]:[1.5,2.5];
   const serialize=widths=>{
     const oid=variant==='integer-width'?(widths.every(w=>w===32)?23:20):(widths.every(w=>w===32)?700:701);
-    for(let i=0;i<rows.length;i++)rows[i][column]=spec(oid,String(values[i]));
+    // [EXP-K01-R11] Why: serde/types.clj:286-288 renders Poly as an EDN set. Rejected: the Arrow :union input tag as a catalog fixture.
+    const native=widths.every(w=>w===64)?(variant==='integer-width'?':i64':':f64'):widths.every(w=>w===32)?(variant==='integer-width'?':i32':':f32'):(variant==='integer-width'?'#{:i32 :i64}':'#{:f32 :f64}');
+    for(let i=0;i<rows.length;i++)rows[i][column]=spec(oid,String(values[i]),native);
   };
   serialize(sourceWidths);const pin=await readG0(f.reader,expected);
   serialize(cloneWidths);let result,error;try{result=await admitG0(f.reader,pin,expected);}catch(e){error=e.message;}

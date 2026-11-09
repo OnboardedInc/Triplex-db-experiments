@@ -1,0 +1,27 @@
+{
+  "assertion": "  assert.deepEqual(nativeUnionLegs(cat.find(r=>r.column_name==='v')?.xt_type), suffix==='mixed_int' ? [':i32',':i64'] : [':f32',':f64']);",
+  "cases": [
+    [
+      "#{:i32 :i64}",
+      "mixed_int"
+    ],
+    [
+      "#{:i64 :i32}",
+      "mixed_int"
+    ],
+    [
+      "#{:f32 :f64}",
+      "mixed_float"
+    ],
+    [
+      "#{:f64 :f32}",
+      "mixed_float"
+    ]
+  ],
+  "oldAssertion": "  assert.match(cat.find(r=>r.column_name==='v')?.xt_type??'',/:union/);",
+  "oldAssertionRefusesCapturedShape": true,
+  "syntaxExitCode": 0,
+  "liveExecuted": false,
+  "probeSha256": "d270d3a6368469e07d3bf46270613197f73d6e48f3e8ffba1251c04db7cb297c",
+  "docSha256": "6dfc239d6cc506a15c4ddae72ad2a14d113ba841dddd1fcc41f99470dbd5a55e"
+}

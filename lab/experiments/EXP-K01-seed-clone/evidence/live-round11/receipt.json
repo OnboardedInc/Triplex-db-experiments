@@ -1,0 +1,81 @@
+{
+  "outcome": "STOPPED_AT_FIRST_FAILURE",
+  "head": "b9d1be7952bb4b1f5890588e693ebe764ec33360",
+  "holder": "CX-K01-R11-live",
+  "run": "runs/xtdb-seed/k01-r11-20261109T052411Z",
+  "finishedAt": "2026-11-09T05:27:22Z",
+  "commands": [
+    {
+      "step": "engine up --fresh for native probe",
+      "exitCode": 0
+    },
+    {
+      "step": "exact LIVE-round11.md wire probe through heavy.mjs",
+      "exitCode": 0
+    },
+    {
+      "step": "probe engine logs --tail 200",
+      "exitCode": 0
+    },
+    {
+      "step": "probe engine down --remove-volume",
+      "exitCode": 0
+    },
+    {
+      "step": "engine up --fresh for source seed",
+      "exitCode": 0
+    },
+    {
+      "step": "heavy.mjs --label CX-K01-R11-seed -- node lab/bench/xtdb-seed.ts --subjects 500 --seed ns-v2 --seed-batch-facts 400 --out runs/xtdb-seed/k01-r11-20261109T052411Z/seed",
+      "exitCode": 1,
+      "startedAt": "2026-11-09T05:25:05Z",
+      "endedAt": "2026-11-09T05:25:55Z",
+      "firstFailure": {
+        "message": "G0 count mismatch: tx_assertions",
+        "location": "lab/bench/lib/g0.ts:110:15",
+        "stage": "readContent via readE1G0 / pinXtdb, before manifest write",
+        "actualCountLogged": false,
+        "expectedCountLogged": false
+      }
+    },
+    {
+      "step": "failed seed engine logs --tail 300",
+      "exitCode": 0
+    },
+    {
+      "step": "seed engine down --remove-volume",
+      "exitCode": 0
+    }
+  ],
+  "nativeChecksCompleted": [
+    "I32/I64/F32/F64 monomorphic frames for value 1",
+    "integer and float width frame inequalities",
+    "mixed I32/I64 production-reader refusal",
+    "mixed F32/F64 production-reader refusal"
+  ],
+  "nativeMixedTypesObserved": [
+    "#{:i32 :i64}",
+    "#{:f64 :f32}"
+  ],
+  "seedSubjectsLogged": 500,
+  "seedWriteWallSecondsLogged": 47.8,
+  "manifestPublished": false,
+  "notRun": [
+    "remaining native value kinds/representations",
+    "completed source D/Dprime pin",
+    "freeze",
+    "golden creation/publication",
+    "two clone starts / D and L equality",
+    "E1 fresh-seed Dprime comparison"
+  ],
+  "cleanup": {
+    "engineReportedContainerRemoved": "tx2-xtdb-s1",
+    "engineReportedVolumeRemoved": "tx2-xtdb-s1-data",
+    "freshSlotIncarnations": 2,
+    "slotLockAbsent": true,
+    "remainingOwnReservations": [],
+    "remainingOwnRetainedVolumes": [],
+    "publishedGoldens": []
+  },
+  "hostFreeBytesAfterCleanup": 8331243520
+}

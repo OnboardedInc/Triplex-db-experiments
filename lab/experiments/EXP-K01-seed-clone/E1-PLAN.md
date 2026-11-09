@@ -21,3 +21,5 @@ under Q74e. All acquisition has deadlines. No runner deletes goldens; clean only
 No engine/slot/volume action is authorized or performed by this offline implementation round.
 
 Round 9: source pinning now computes the separate Q93c Dprime. D never accepts a changed clone, including generated metadata. E1 compares Dprime only; missing or unrankable normalization refuses. Raw scalar transport retains pgwire types/bytes; unsupported NaN payload/structured transport refuses until qualified. No live E1 is claimed.
+
+Round 10 supersedes any implication that result-column OIDs alone prove stored widths. The native catalog must corroborate a monomorphic scalar type; numeric unions refuse. Dprime now preserves equality and order of verified clock instants, and refuses an instant inconsistent with its transaction clock even when its derived uniqueness identity agrees. Regenerate both source pins after integration; follow LIVE-round10.md for native-wire and two-start checks before E1.
