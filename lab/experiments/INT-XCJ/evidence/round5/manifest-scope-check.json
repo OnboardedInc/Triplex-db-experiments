@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "exactAdditions": 3,
+  "otherEntryChanges": 0,
+  "reason": "live test; runs in G1 against the shared dev residents (J01, INT-XCJ)",
+  "xtdbCount": 87,
+  "qualificationCount": 50
+}

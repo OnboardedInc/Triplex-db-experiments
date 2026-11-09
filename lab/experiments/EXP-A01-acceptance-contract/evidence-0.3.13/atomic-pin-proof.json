@@ -1,0 +1,27 @@
+{
+  "merge": "260d46c715ddd6465894869eeceab08059fcf4ef",
+  "parents": [
+    "15927efed3a6dd48d620b19bd0201fe862344b33",
+    "6e5dde9778ac689f18bf039aa760969c506a0272"
+  ],
+  "basePins": {
+    "testkit": {
+      "path": "packages/testkit/src/index.ts",
+      "oldSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+    },
+    "datomic": {
+      "old": {
+        "image": null,
+        "imageId": null
+      },
+      "new": {
+        "image": "tx2-datomic:1.0.7745-da00",
+        "imageId": "sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf"
+      }
+    }
+  },
+  "testkitThreeProjectionsVerified": true,
+  "sameMergeAsSourceAndSlots": true,
+  "onlyImageAndTestkitExplicitPinsChanged": true
+}

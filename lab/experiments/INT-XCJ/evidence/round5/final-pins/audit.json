@@ -1,0 +1,61 @@
+{
+  "head": "0d5ba2fed38c23463b09b3f8ef86fa12d2e0e02b",
+  "parent": "ec1a81588973194baf85fa526654cfe63ffec863",
+  "generatedDifferences": [
+    {
+      "pointer": "/caseSets/CS-PKT71/pinnedSourceFiles/1/sha256",
+      "before": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3",
+      "after": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
+    },
+    {
+      "pointer": "/caseSets/CS-PKT71/pinnedSourceFiles/2/sha256",
+      "before": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3",
+      "after": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
+    },
+    {
+      "pointer": "/caseSourcesPinned/CS-PKT71/1/sha256",
+      "before": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3",
+      "after": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
+    },
+    {
+      "pointer": "/caseSourcesPinned/CS-PKT71/2/sha256",
+      "before": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3",
+      "after": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
+    },
+    {
+      "pointer": "/transitiveContractSha256",
+      "before": "68788295dcc8dbc0cc4f2879a01f76c8bcb01608b287894a9aa5c11ef7827bef",
+      "after": "e88e4a0aee04539c5fb14d6a9b34360640765e7adcbbf8cc753facf29fd843f4"
+    }
+  ],
+  "changedPinOccurrences": [
+    {
+      "pointer": "/caseSets/CS-PKT71/pinnedSourceFiles/1",
+      "path": "packages/qualification/src/native/xtdb-workloads.ts",
+      "pinnedSha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3",
+      "actualSha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+      "parentSha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
+    },
+    {
+      "pointer": "/caseSets/CS-PKT71/pinnedSourceFiles/2",
+      "path": "packages/qualification/src/native/qlever-workloads.ts",
+      "pinnedSha256": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3",
+      "actualSha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+      "parentSha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
+    },
+    {
+      "pointer": "/caseSourcesPinned/CS-PKT71/1",
+      "path": "packages/qualification/src/native/xtdb-workloads.ts",
+      "pinnedSha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3",
+      "actualSha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+      "parentSha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
+    },
+    {
+      "pointer": "/caseSourcesPinned/CS-PKT71/2",
+      "path": "packages/qualification/src/native/qlever-workloads.ts",
+      "pinnedSha256": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3",
+      "actualSha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+      "parentSha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
+    }
+  ]
+}

@@ -68,6 +68,10 @@ export class OpenLoopScheduler<J extends Job> {
     for (const q of this.queues.values()) n += q.length;
     return n + this.inFlight;
   }
+  /** Jobs handed to exec and not yet finished (they may sit in an engine-side admission queue). */
+  get inFlightCount(): number {
+    return this.inFlight;
+  }
   get notOffered(): number {
     return this.jobs.length - this.next;
   }

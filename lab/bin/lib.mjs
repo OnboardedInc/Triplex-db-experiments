@@ -27,7 +27,8 @@ export const OBJECTS = path.join(REPO, 'runs/objects');
 // Other worktrees then see a config-hash mismatch on the slot and fail closed, which is intended.
 // Rejected: always reading the worktree (each worktree would recreate the shared residents).
 export const CONFIG_DIR = process.env.TX2_CONFIG_DIR ? path.resolve(process.env.TX2_CONFIG_DIR) : MAIN;
-export const SLOTS_FILE = path.join(CONFIG_DIR, 'lab/config/slots.json');
+// [EXP-M01R] Why: paired CPU placement is opt-in; default slot hashes stay unchanged. Rejected: changing shared s1/s3 defaults.
+export const SLOTS_FILE = process.env.TX2_SLOTS_FILE ? path.resolve(process.env.TX2_SLOTS_FILE) : path.join(CONFIG_DIR, 'lab/config/slots.json');
 
 export const now = () => new Date().toISOString();
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -196,6 +197,119 @@ export function volumeBytes(config, volume) {
   return out ? Number(out.split(/\s+/)[0]) * 1024 : null;
 }
 
+// ---------------------------------------------------------------- second-writer guard and followers (EXP-X05)
+
+/**
+ * Parse the flat two-level YAML the lab XTDB configs use: top-level keys, one level of children
+ * indented by exactly two spaces, optional `!Tag` values, `#` comments. Any other line throws.
+ * [EXP-X05] Why a strict subset parser: the second-writer guard below must never pass on a config it
+ * cannot read, and lab/bin takes no dependencies (EXP-000 header). Rejected: a regex search for
+ * "readOnlyDatabases: true" anywhere in the file, which a commented-out or nested line satisfies.
+ */
+export function parseFlatYaml(text) {
+  const top = new Map();
+  let parent = null;
+  String(text).split('\n').forEach((raw, index) => {
+    const line = raw.replace(/\r$/, '').replace(/\s+#.*$/, '');
+    if (/^\s*(#.*)?$/.test(line)) return;
+    let m = /^([A-Za-z][\w-]*):(?:\s+(.*?))?\s*$/.exec(line);
+    if (m) {
+      if (top.has(m[1])) fail('CONFIG', `duplicate top-level key ${m[1]} at line ${index + 1}`);
+      parent = { value: m[2] ?? '', children: new Map() };
+      top.set(m[1], parent);
+      return;
+    }
+    m = /^ {2}([A-Za-z][\w-]*):(?:\s+(.*?))?\s*$/.exec(line);
+    if (m && parent) {
+      if (parent.children.has(m[1])) fail('CONFIG', `duplicate key ${m[1]} at line ${index + 1}`);
+      parent.children.set(m[1], m[2] ?? '');
+      return;
+    }
+    fail('CONFIG', `unsupported YAML at line ${index + 1}: ${JSON.stringify(raw)}`);
+  });
+  return top;
+}
+
+/**
+ * True only for a config whose top level says exactly `readOnlyDatabases: true`. Quoted, capitalised,
+ * nested, commented or unparsable forms count as read-write, so the guard fails closed.
+ * R19 1.1: `readOnlyDatabases: true` makes the primary and every attached secondary read-only
+ * (DatabaseCatalog.kt:118,210), opens both logs as ReadOnlyLocalLog and never claims leadership.
+ */
+export function xtdbConfigReadOnly(text) {
+  try { return parseFlatYaml(text).get('readOnlyDatabases')?.value === 'true'; } catch { return false; }
+}
+
+/**
+ * The second-writer guard. R19 1.1: the Local log takes no file lock and each record's offset footer
+ * is computed from position() before the write (LocalLog.kt:129-136,160-175), so a second read-write
+ * XTDB process on a slot volume corrupts the log silently. Rule: a container may start on a volume
+ * that another container already mounts only if its own config sets `readOnlyDatabases: true`.
+ * Other containers count in every state (a stopped one can be started again with plain docker), and
+ * the container itself is excluded so a restart of the same container is not a second writer.
+ * Rejected: trusting a label or the follower's name, which say nothing about the bytes it runs.
+ */
+export function volumeGuard({ volume, container, configText, mountedBy }) {
+  const others = mountedBy.filter(name => name !== container);
+  const readOnly = xtdbConfigReadOnly(configText);
+  if (others.length === 0 || readOnly) return { ok: true, others, readOnly };
+  return {
+    ok: false, others, readOnly,
+    reason: `${container} would be a second read-write container on ${volume} (already mounted by ${others.join(', ')}); `
+      + 'its config must set top-level readOnlyDatabases: true (R19 1.1: the Local log has no file locks)',
+  };
+}
+
+/** Every container (any state) that mounts the named volume, by name. */
+export function containersOnVolume(volume) {
+  const out = docker(['ps', '-a', '--filter', `volume=${volume}`, '--format', '{{.Names}}']);
+  return out ? out.split('\n').filter(Boolean) : [];
+}
+
+/**
+ * A follower config must be read-only and read the writer's own log and storage (same type, same
+ * absolute path): R19 1.1 and open question 4, a follower attaches secondaries at the paths recorded
+ * in the primary's catalog. healthz must stay on 8080 because the harness health check uses it.
+ */
+export function checkFollowerConfig(writerText, followerText) {
+  const reasons = [];
+  let writer = null, follower = null;
+  try { writer = parseFlatYaml(writerText); } catch (error) { reasons.push(`writer config: ${error.message}`); }
+  try { follower = parseFlatYaml(followerText); } catch (error) { reasons.push(`follower config: ${error.message}`); }
+  if (follower && follower.get('readOnlyDatabases')?.value !== 'true') reasons.push('follower config does not set top-level readOnlyDatabases: true');
+  if (writer && writer.get('readOnlyDatabases')?.value === 'true') reasons.push('writer config is read-only, so nothing would write the log');
+  if (writer && follower) for (const key of ['log', 'storage']) {
+    const w = writer.get(key), f = follower.get(key);
+    if (!w || !f || w.value !== f.value || w.children.get('path') !== f.children.get('path'))
+      reasons.push(`${key} is ${f?.value} ${f?.children.get('path')} on the follower but ${w?.value} ${w?.children.get('path')} on the writer`);
+  }
+  if (follower && follower.get('healthz')?.children.get('port') !== '8080') reasons.push('follower healthz.port must be 8080 (the harness health check)');
+  return { ok: reasons.length === 0, reasons };
+}
+
+/**
+ * Parse a docker --cpuset-cpus list ("0,1" or "2-3") into a sorted array, checked against the VM.
+ * R19 1.6: --cpus is a quota, not a pinning, so a writer and a follower with --cpus 2 each can still
+ * run on the same cores; only disjoint cpusets take the readers off the writer's CPUs.
+ */
+export function parseCpuset(text, vmCpus) {
+  const cpus = new Set();
+  for (const part of String(text).split(',')) {
+    const m = /^(\d+)(?:-(\d+))?$/.exec(part.trim());
+    if (!m) fail('USAGE', `bad cpuset ${JSON.stringify(text)}`);
+    const from = Number(m[1]), to = Number(m[2] ?? m[1]);
+    if (from > to || to >= vmCpus) fail('USAGE', `cpuset ${text} is outside the VM's CPUs 0-${vmCpus - 1}`);
+    for (let cpu = from; cpu <= to; cpu++) cpus.add(cpu);
+  }
+  return [...cpus].sort((a, b) => a - b);
+}
+/** CPUs two containers share; an unpinned container (null) may run on every VM CPU. */
+export function cpusetOverlap(a, b, vmCpus) {
+  const all = Array.from({ length: vmCpus }, (_, i) => i);
+  const left = a ? parseCpuset(a, vmCpus) : all, right = new Set(b ? parseCpuset(b, vmCpus) : all);
+  return left.filter(cpu => right.has(cpu));
+}
+
 // ---------------------------------------------------------------- pool ledger
 
 export const POOL_FILE = () => path.join(LOCKS, 'pool.json');
@@ -273,6 +387,14 @@ export const SOURCE_ROOTS = ['packages', 'qualification', 'lab/bin', 'lab/config
 const SECRET = /(token|secret|credential|\.pem$|\.key$|\.env)/i;
 
 /**
+ * The source label every receipt carries (profileIdentity.sourceTreeSha256). [EXP-E01] Shared with
+ * lab/bin/claim.mjs, which recomputes the clean label of a claimed commit (empty diff, no untracked
+ * inputs) to bind receipts to that commit's tree.
+ */
+export const sourceTreeIdOf = (headTree, diffSha256 = sha256(Buffer.alloc(0)), untracked = []) =>
+  sha256(JSON.stringify({ headTree, diffSha256, untracked }));
+
+/**
  * Identity of the source that ran, including uncommitted changes. `git stash create` covers
  * tracked edits only, so untracked executed inputs and modified files are listed explicitly.
  */
@@ -300,7 +422,7 @@ export function sourceIdentity() {
   const untrackedFiles = untracked.map(fileEntry);
   const modifiedFiles = modified.map(fileEntry);
   const diffSha256 = sha256(diff);
-  const sourceTreeId = sha256(JSON.stringify({ headTree, diffSha256, untracked: untrackedFiles.map(f => [f.path, f.sha256 ?? null]) }));
+  const sourceTreeId = sourceTreeIdOf(headTree, diffSha256, untrackedFiles.map(f => [f.path, f.sha256 ?? null]));
   return { head, headTree, branch, dirty, stashCommit, stashTree, diffScope: SOURCE_ROOTS, diffSha256, diffBytes: diff.length, modifiedFiles, untrackedFiles, otherDirtyPaths, sourceTreeId, diff };
 }
 

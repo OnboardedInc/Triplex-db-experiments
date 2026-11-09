@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o05/lab/acceptance/oracle/replay_review_round2.py", line 65, in <module>
+    if __name__ == '__main__': sys.exit(main())
+                                        ~~~~^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o05/lab/acceptance/oracle/replay_review_round2.py", line 42, in main
+    for stream in context['streams']:
+                  ~~~~~~~^^^^^^^^^^^
+KeyError: 'streams'

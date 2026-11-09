@@ -6,7 +6,7 @@ import { integer } from "@triplex-build/triplex";
 import type { QleverClient, SparqlBinding } from "../src/QleverClient.js";
 import { makeQleverNativeQueries } from "../src/native/NativeQueries.js";
 import { makeQleverNativeContext } from "../src/native/NativeContext.js";
-import { materializeQleverRules } from "../src/recursion.js";
+import { evaluateQleverRules } from "../src/recursion.js";
 import { compileQlever } from "../src/compiler.js";
 
 const literal = (value: string) => ({ type: "literal", value });
@@ -137,18 +137,21 @@ describe("schema-aware native QLever queries", () => {
     );
   });
 
-  it("materializes an equality self-rule without weakening public duplicate-projection validation", async () => {
-    const updates: string[] = [];
+  it("[EXP-C8] evaluates an equality self-rule with reads only, without weakening duplicate-projection validation", async () => {
+    const queries: string[] = [];
     const client: QleverClient = {
-      query: async () => [{ total: literal("0") }],
-      update: async (query) => {
-        updates.push(query);
+      query: async (query) => {
+        queries.push(query);
+        return [{ v0_value: literal("n"), v1_value: literal("n") }];
+      },
+      update: async () => {
+        throw new Error("C8: a read path attempted an update");
       },
       command: async () => ({}),
       cancel: async () => {},
       close: async () => {},
     };
-    await materializeQleverRules(
+    const relations = await evaluateQleverRules(
       client,
       {
         find: ["?node"],
@@ -158,9 +161,11 @@ describe("schema-aware native QLever queries", () => {
       scope,
       { basis: { validAt: 10, recordedPosition: 0 }, signal: new AbortController().signal },
     );
-    expect(updates).toHaveLength(1);
-    expect(updates[0]).toContain("BIND(?v0_value AS ?v1_value)");
-    expect(updates[0]).toContain("BIND(?v0_type AS ?v1_type)");
+    expect(queries).toHaveLength(1);
+    expect(queries[0]).toContain("BIND(?v0_value AS ?v1_value)");
+    expect(queries[0]).toContain("BIND(?v0_type AS ?v1_type)");
+    expect(queries[0]).not.toMatch(/\b(INSERT|DELETE)\b/);
+    expect(relations.get("self")).toEqual([["n", "n"]]);
     expect(() =>
       compileQlever({ find: ["?node", "?node"], where: [["?node", ":same", "?node"]] }, scope, {
         basis: { validAt: 10, recordedPosition: 0 },

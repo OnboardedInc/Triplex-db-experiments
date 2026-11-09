@@ -58,3 +58,47 @@ faultPoint?}]; build spec `lab/config/build.json` {argv, outputs, run} with `{ca
 Contract source for `qualify`; verifierRegistry entries; oracle runners; case-manifest field pins; case-result/1 extension (mode, rep,
 comparator, inputSha256); build spec into the contract; workload identity only for CR-NS and CR-GS; frozen trace pin; image pins into the
 contract; retained fault witnesses; A0 side verified through the registry's measuredBy.
+
+## On contract 0.3.9 (head e2a082e on merge 0042746 of main 639264e; 0.3.8 pass 46bcb62; saved 2026-11-08 00:44Z)
+- 107/107 tests (`node --test lab/bin/test/*.test.mjs`); --verify exits 0; nothing under lab/acceptance edited; gate.mjs keeps the 10-line
+  --dry-run block (adds the GS gate to its allowed list).
+- Agreement: claim_ref.py records every admit_claim call with inputs, executor slots and every executor call in order; the JS admitCore must
+  make the same calls in the same order and reach the same verdict. 0.3.8: 40/40 calls (5 QUALIFIED, 35 DIAGNOSTIC), 4,728 executor calls.
+  0.3.9: 59/59 (7 QUALIFIED, 52 DIAGNOSTIC; includes CX-R7-INVENTED-EVIDENCE, -SELECTION-OVERREACH, -RELABELLED-CONTROL), 10,712 executor calls.
+  Documents: DIAGNOSTIC on all 63. No disagreement; where the lab differs it is stricter or fails closed (A0's own position and identity
+  runs failing: PREREQ-FAILED; `.gitattributes`-altered archive: CHECKOUT-MISMATCH; build edited by an earlier process: BUILD-TAMPERED; a
+  comparator passing on different bytes: CASE-RECORD-INEXPRESSIBLE; a null frozenTrace override or an A0 entry without binarySha256: DIAGNOSTIC
+  where Python raises).
+- 0.3.9 ported: admit_claim with overrides, qualification_run, case_entry_ok, fault_witness_ok, paired_ok, registered_acceptance (null
+  buildSpec fails first; image digests against imagePins; A0 measuredBy accepted with kind a0; workload and PAIR_0 measure_pair for CR-NS and
+  CR-GS only; a fault-witness/1 per faultPoint injection; an unpinned oracle accepted only if COMPILED). Executor reads buildSpec,
+  oracleRunners, oracleAnswerRule, caseManifest, imagePins, writerTrace.generator.frozen, measurementProtocol; writes build-manifest/2 and
+  case-result/2. Honest nulls: no fault injector (every faultPoint case fails closed), no PAIR_0 runner (every CR-NS/CR-GS claim PAIRED-NOT-RUN).
+  Offline positive G10.scope.shared-collision: core QUALIFIED with 64 case-result/2 comparisons and the A0 rebuild reproducing binarySha256;
+  verdict DIAGNOSTIC (GATE-NOT-RUN). No path to QUALIFIED without a gate run.
+- Build spec proposal (Q64a, ruled Q65e) in lab/config/build.json on the branch; questions ruled Q65a-d; the executing OBL gate is Q65f.
+
+## Codex round 8 fixes (head 2796455 on merge ce908a8 of main; Q67b, e, i, j; saved 2026-11-08 01:39Z)
+- 112/112 tests (`node --test lab/bin/test/*.test.mjs`, about 110 s). Reference replay unchanged on 0.3.9: 59/59 admit_claim calls agree
+  (7 QUALIFIED), 10,712 executor calls, 0 self-check errors; documents DIAGNOSTIC on all 63. Changed only lab/bin/claim.mjs,
+  lab/bin/test/claim-fixtures.mjs and lab/bin/test/claim.test.mjs.
+- Q67b (finding 2): every build is a new instance in its own git-archive checkout with an execution-identity/1 hash over the source tree
+  label, buildSpec sha256, lockfile, toolchain (node, platform, pnpm when used), the whole post-build checkout listing (sources, source
+  runners, dependencies, symlink targets) and the dist listing; `byBinary` became `byIdentity`; each comparison records an executionSha256.
+- Q67e (finding 6): separate mkdtemp roots for checkouts, child HOME/TMPDIR, case inputs and each oracle copy; oracle copies and evidence
+  read-only; the oracle copy is listed and re-hashed against the pin before every invocation (ORACLE-TAMPERED refuses the oracle for the
+  rest of the run); inputs re-hashed (INPUT-TAMPERED); an instance's runtime re-hashed when another instance ran in between
+  (BUILD-TAMPERED); children run detached and their process group is SIGKILLed; claim.mjs, lib.mjs and gate.mjs hashed at start and end
+  (EVALUATOR-TAMPERED); evidence verified at the end (EVIDENCE-TAMPERED).
+- Q67i (finding 10): `compare` returns the declared comparator's verdict on the retained raw objects; `caseResultVerdict` gives REFUSED for
+  exit 2 or X-NOT-MODELED, FAIL for other oracle errors or a missing object. Q67j (finding 11): `kind` reaches admitCore; promotion claims
+  get PROMOTION-UNSUPPORTED (DIAGNOSTIC).
+- Codex's counterexamples are now fixtures: identical-dist aliasing (RUN-ALIAS-DIST: the alias runs on its own instance and fails), a
+  build helper left running (RUN-BACKGROUND-HELPER: killed with its group; a control without the group kill writes the marker), an escaped
+  process editing the oracle copy and evidence (ORACLE-TAMPERED, EVIDENCE-TAMPERED, PREREQ-FAILED), the bag comparator ([1,2] against [2,1]
+  passes), and a log-source promotion (PROMOTION-UNSUPPORTED).
+- Still unprotected offline, so offline is never QUALIFIED and GATE-NOT-RUN stays: a process that leaves its group (setsid, double fork);
+  check-to-use gaps between a re-hash and the read after it; runtime re-hashed only between instances, not per case; no filesystem or
+  network isolation. Full isolation is EXP-G03's.
+- Questions, ruled Q71 (pending): install-metadata exclusions for the identity of a real pnpm build; what "toolchain" covers; whether the
+  reference's case_verdict follows Q67i for case-result/2.

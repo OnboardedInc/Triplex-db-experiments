@@ -1,0 +1,63 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 13,
+  "slug": "hris-backfill",
+  "title": "HRIS backfill",
+  "priorities": [
+    "P2",
+    "P1"
+  ],
+  "status": "runnable",
+  "source": "lab/TARGETS.md section 6 row 13 and section 1 secondary measurements (bulk lane)",
+  "story": "A 1M-fact import through the bulk lane while live traffic runs.",
+  "checked": "Live read p99 <= 1.5x; per-batch receipts; the bulk lane never starves live commits.",
+  "seed": 20261113,
+  "yearOne": {
+    "facts": 1000000
+  },
+  "params": {
+    "factsPerSubject": 25,
+    "batchFacts": 500,
+    "digestEvery": 10
+  },
+  "rungs": {
+    "10k": {
+      "subjects": 400,
+      "negatives": 5,
+      "liveMs": 30000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    }
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6.",
+  "witnesses": {
+    "positive": "every 10th backfilled worker (golden digests)",
+    "negative": "onboarded workers outside the import"
+  },
+  "domain": [],
+  "bars": [
+    {
+      "id": "bulk.live-read-p99-ratio",
+      "metric": "extra.bulk.readP99Ratio",
+      "op": "<=",
+      "value": 1.5,
+      "unit": "x",
+      "source": "TARGETS section 1 secondary (bulk lane)"
+    },
+    {
+      "id": "P2.trace.commit.p99",
+      "metric": "commit.trace.p99",
+      "op": "<=",
+      "value": 50,
+      "unit": "ms",
+      "source": "TARGETS section 1 P2 (live commits not starved)"
+    }
+  ],
+  "faults": [],
+  "oracle": {
+    "source": "O-REPLAY (bulk commands split by entity per subject chunk)",
+    "gaps": []
+  }
+}

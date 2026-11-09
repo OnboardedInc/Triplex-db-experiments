@@ -1,0 +1,43 @@
+{
+  "testedSource": "3de54ac5f5ebc6c2c6d12ed902a6cb1ea360d590",
+  "mainMerged": "b31ec9429aaeae4dd6243e9d274f8e2e0e4ad56f",
+  "integrationMerged": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+  "parents": [
+    "ba282b0fa0d6f3e5091c42100e3ece1a2eec21a1",
+    "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89"
+  ],
+  "diskFreeBytes": 12273414144,
+  "hashes": {
+    "lab/acceptance/build_contract.py": "914db3d15e91180e8b449fffeeb27b997dc10eb835fff66e10eca6517e985b59",
+    "lab/acceptance/RULINGS.md": "b516dcd342a4872e017cbffe21a2e1a69e7b8c228bcb199357ea02a70f08650e",
+    "lab/acceptance/RULINGS-PENDING.md": "44f7f41380b8c64abfc381768a6416fa0f7cc809834482c70ddc79126c94d0cd",
+    "lab/acceptance/obligations.json": "2ba0ba03c84e0a02a38d7cd32536530bf5d7999ddda3de429606250633d2b78b",
+    "lab/acceptance/ACCEPTANCE.md": "2cab88f68209072c153f31f5c9ca7dacdbcf81d7d79f5449c0cc886520466b10",
+    "lab/acceptance/oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
+    "lab/acceptance/load-contract.json": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428",
+    "lab/acceptance/budgets.json": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159",
+    "lab/acceptance/capability-matrix.md": "36fd4485da5d7b25fc4406722645f0d49cf7cddc519493b6d752f6b731c5cf4f",
+    "lab/bin/test/claim.test.mjs": "62de70ed333c40f8662da5749179f985f9f8b961a6c10459a0dadfad5bceb476",
+    "lab/bin/test/claim-round2.test.mjs": "6aef70bd2448a6b37dc040d19d9ee219a4e4e5fdf78c8094e1bb66ec45104be9",
+    "qualification/workloads/temporal-workloads.json": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "packages/qualification/src/native/xtdb-workloads.ts": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+    "packages/qualification/src/native/qlever-workloads.ts": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
+  },
+  "trackedDiff": "",
+  "atomicQ45a": [
+    {
+      "path": "packages/qualification/src/native/xtdb-workloads.ts",
+      "parentActual": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3",
+      "mergeActual": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+      "oldPin": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3",
+      "newPin": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
+    },
+    {
+      "path": "packages/qualification/src/native/qlever-workloads.ts",
+      "parentActual": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3",
+      "mergeActual": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+      "oldPin": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3",
+      "newPin": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
+    }
+  ]
+}

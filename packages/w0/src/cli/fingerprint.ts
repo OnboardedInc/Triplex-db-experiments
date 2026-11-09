@@ -144,7 +144,7 @@ const counts = [...perLocation.values()];
 const located = counts.reduce((s, x) => s + x, 0);
 const receipt = {
   experiment: "EXP-D01b",
-  spec: "W0-1.1.1",
+  spec: "W0-1.1.2",
   seed: "W0-pop-1",
   rung: { N, L: R.L, K: R.K },
   fingerprint: {

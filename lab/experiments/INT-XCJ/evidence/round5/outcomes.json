@@ -1,0 +1,46 @@
+{
+  "sourceCommit": "0d5ba2fed38c23463b09b3f8ef86fa12d2e0e02b",
+  "live": {
+    "attempts": 1,
+    "exit": 0,
+    "executed": 3,
+    "pass": 3,
+    "fail": 0,
+    "selectedSkipped": 0
+  },
+  "G0": {
+    "exit": 0,
+    "runId": "G0-xtdb-20261109T001825Z-288416",
+    "counts": {
+      "executed": 1168,
+      "pass": 1168,
+      "fail": 0,
+      "skip": 137,
+      "expectedSkip": 137,
+      "unexpectedSkip": 0
+    }
+  },
+  "evaluator": {
+    "exit": 0,
+    "tests": 108,
+    "pass": 108,
+    "fail": 0,
+    "skip": 0
+  },
+  "contract": {
+    "exit": 1,
+    "changedPinnedFiles": [
+      "packages/qualification/src/native/qlever-workloads.ts",
+      "packages/qualification/src/native/xtdb-workloads.ts"
+    ],
+    "newPinChangesSinceJ01": [],
+    "expectedSkipsContractPinned": false,
+    "regenerated": false
+  },
+  "knownOpen": {
+    "QLeverC8": "CX-C8-R4; no retry this round",
+    "contract": "versioned 0.3.12 repins",
+    "acceptance": "separate reviewer"
+  },
+  "defaultOff": "a0 unchanged; selected live suite explicitly requests compact"
+}

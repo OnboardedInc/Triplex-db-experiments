@@ -1,0 +1,81 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 12,
+  "slug": "audit-march-3",
+  "title": "Audit: what did we know on March 3",
+  "priorities": [
+    "P1"
+  ],
+  "status": "runnable",
+  "source": "lab/TARGETS.md section 6 row 12; section 7 item 2 (reproduction holds modulo erasure)",
+  "story": "Explain reads at a past basis for 1,000 subjects, repeated three times while writes continue.",
+  "checked": "Bit-for-bit identical answers across repeats and engines; as-of pull p99 reported. Numbers rule: an int64 overflow write fails typed; a 2^60 write is exact or a typed error.",
+  "seed": 20261112,
+  "yearOne": {
+    "subjects": 1000,
+    "repeats": 3
+  },
+  "params": {},
+  "rungs": {
+    "10k": {
+      "subjects": 16,
+      "liveMs": 25000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    },
+    "smoke": {
+      "subjects": 8,
+      "liveMs": 12000,
+      "trace": {
+        "subjects": 5,
+        "factsPerSecond": 15
+      }
+    }
+  },
+  "witnesses": {
+    "positive": "audit subjects whose pay rate is corrected from 2026-02-01 during the run (latest state changes; the March 3 answer at R_past must not)",
+    "negative": "audit subjects never written in the live phase"
+  },
+  "domain": [
+    "the explanation (obligations and why) at (R_past, 2026-03-03) (O-DOMAIN)"
+  ],
+  "reads": "Three passes over every audit subject at (R_past = just after setup, validAt 2026-03-03); answer hash per pass; expected hash from O-REPLAY.",
+  "bars": [
+    {
+      "id": "P1.read.p99",
+      "metric": "read.p99",
+      "op": "<=",
+      "value": 100,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    },
+    {
+      "id": "P1.writer.maxWait",
+      "metric": "writer.maxWaitMs",
+      "op": "<=",
+      "value": 2000,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    }
+  ],
+  "report": [
+    "extra.audit.asOfPull (as-of pull latency, reported, no bar)",
+    "extra.audit.expectedHash and repeatHashes (compare across lanes)"
+  ],
+  "findings": [
+    "GS.12 int64 overflow returns WriteError, not InvalidTripleError (receipt GS-xtdb-20261107T223210Z-1bfd1d). Root cause: core Triples.transact (packages/core/src/store/TriplesLive.ts:277-288) checks only that the adapter supports the value type and never validates the value against TripleValue (Value.ts Int64Decimal), so the XTDB adapter's packValue (packages/xtdb/src/codecs.ts:84, calling Value.ts integer() which throws RangeError at Value.ts:86) fails inside insert and XtdbStorageAdapter.ts:456 wraps it as WriteError('Invalid XTDB assertion'). InvalidTripleError (errors/index.ts:62) is declared but never constructed anywhere. Proposed fix: fix.patch (validate assert values with Schema.is(TripleValue) before the adapter and fail with InvalidTripleError; widen five error unions). Typechecks for core src and core test projects; not exercised at run time; dependants (xtdb, qlever) not typechecked against it.",
+    "CX-W01B: fix.patch applies to isolated core copies; the source project typecheck and eight instrumented Triples.transact cases pass (six malformed/overflow integers return InvalidTripleError before adapter.claimCommand, two legal int64 values reach the adapter boundary). Bound evidence: lab/experiments/EXP-W01-golden-scenarios/evidence/gs12-patch/receipt.json. No packages source was edited; the patch is not integrated or verified against XTDB/QLever."
+  ],
+  "faults": [
+    "unrepresentable integer writes (int64 overflow; 2^60 beyond QLever's 60-bit inline integers)"
+  ],
+  "oracle": {
+    "source": "O-REPLAY digests at validAt NOW and 2026-03-03",
+    "gaps": [
+      "O-REPLAY is being corrected by EXP-O02 (numeric and -0 behavior); this scenario relies only on int64 text, strings, refs and datetimes"
+    ]
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) for 25 s with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
+}

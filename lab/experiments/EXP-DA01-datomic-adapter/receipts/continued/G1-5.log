@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 45994 "CX-VP2Q-4-r5-live", pid 43591 "CX-SQL01-r2-verifier", pid 46244 "CX-G03-build-probes", pid 43700 "CX-SQL01-r2-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 45994 "CX-VP2Q-4-r5-live", pid 43591 "CX-SQL01-r2-verifier", pid 46244 "CX-G03-build-probes", pid 43700 "CX-SQL01-r2-live"
+[lab] G1-datomic-20261108T224821Z-5d506c: raw output runs/G1/G1-datomic-20261108T224821Z-5d506c
+PASS G1 datomic/dev scope=full executed=88 pass=88 fail=0 skip=0
+profile: default; planner budget: null
+receipt: lab/runs/G1/G1-datomic-20261108T224821Z-5d506c.json

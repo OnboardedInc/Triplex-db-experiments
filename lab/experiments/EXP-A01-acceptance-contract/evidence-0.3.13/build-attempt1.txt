@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/acceptance/build_contract.py", line 6358, in <module>
+    main()
+    ~~~~^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/acceptance/build_contract.py", line 6272, in main
+    errs += checks_0313()
+            ~~~~~~~~~~~^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/acceptance/build_contract.py", line 6259, in checks_0313
+    if sha_file(p["path"]) != p["sha256"] or oracle_files_pinned("O-TESTKIT") != [{"path": p["path"], "sha256": p["sha256"]}] or CS["CS-U44"]["pinnedSourceFiles"] != [{"path": p["path"], "sha256": p["sha256"]}]:
+                                             ^^^^^^^^^^^^^^^^^^^
+NameError: name 'oracle_files_pinned' is not defined

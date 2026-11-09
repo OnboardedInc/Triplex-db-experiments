@@ -1,0 +1,1923 @@
+{
+ "schedules": [
+  {
+   "classification": "OFFLINE-FAULT-MODEL",
+   "crash": "before-effect",
+   "events": [
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "before-effect",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "resumed",
+     "position": 5
+    },
+    {
+     "point": "before-effect",
+     "phase": "resumed",
+     "position": 5
+    },
+    {
+     "point": "after-effect-before-checkpoint",
+     "phase": "resumed",
+     "position": 6
+    },
+    {
+     "point": "after-checkpoint",
+     "phase": "resumed",
+     "position": 7
+    }
+   ],
+   "effects": 1,
+   "deliveryKeys": [
+    [
+     "wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9",
+     1
+    ]
+   ]
+  },
+  {
+   "classification": "OFFLINE-FAULT-MODEL",
+   "crash": "after-effect-before-checkpoint",
+   "events": [
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "before-effect",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "after-effect-before-checkpoint",
+     "phase": "first",
+     "position": 6
+    },
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "resumed",
+     "position": 6
+    },
+    {
+     "point": "before-effect",
+     "phase": "resumed",
+     "position": 6
+    },
+    {
+     "point": "after-effect-before-checkpoint",
+     "phase": "resumed",
+     "position": 7
+    },
+    {
+     "point": "after-checkpoint",
+     "phase": "resumed",
+     "position": 8
+    }
+   ],
+   "effects": 1,
+   "deliveryKeys": [
+    [
+     "wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9",
+     1
+    ]
+   ]
+  },
+  {
+   "classification": "OFFLINE-FAULT-MODEL",
+   "crash": "after-checkpoint",
+   "events": [
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "before-effect",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "after-effect-before-checkpoint",
+     "phase": "first",
+     "position": 6
+    },
+    {
+     "point": "after-checkpoint",
+     "phase": "first",
+     "position": 7
+    }
+   ],
+   "effects": 1,
+   "deliveryKeys": [
+    [
+     "wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9",
+     1
+    ]
+   ]
+  },
+  {
+   "classification": "OFFLINE-FAULT-MODEL",
+   "crash": "after-enqueue-before-delivery",
+   "events": [
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "resumed",
+     "position": 5
+    },
+    {
+     "point": "before-effect",
+     "phase": "resumed",
+     "position": 5
+    },
+    {
+     "point": "after-effect-before-checkpoint",
+     "phase": "resumed",
+     "position": 6
+    },
+    {
+     "point": "after-checkpoint",
+     "phase": "resumed",
+     "position": 7
+    }
+   ],
+   "effects": 1,
+   "deliveryKeys": [
+    [
+     "wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9",
+     1
+    ]
+   ]
+  },
+  {
+   "kind": "lost-ack",
+   "first": 1,
+   "resolved": 1,
+   "retry": "CommandAlreadyCommittedError"
+  },
+  {
+   "kind": "maintenance",
+   "events": [
+    {
+     "kind": "memory-index-rebuild",
+     "watermark": 1,
+     "assertions": 7
+    },
+    {
+     "kind": "memory-index-rebuild",
+     "watermark": 1,
+     "assertions": 7
+    },
+    {
+     "kind": "fallback",
+     "requested": 2,
+     "watermark": 1,
+     "waitedMs": 0
+    },
+    {
+     "kind": "memory-index-rebuild",
+     "watermark": 2,
+     "assertions": 8
+    }
+   ]
+  }
+ ],
+ "probes": [
+  {
+   "attempt": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75",
+   "scope": "b0d49d27-9d80-41cd-8167-fbc3efeab24b",
+   "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:0"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:0:6"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1850"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:1:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:1"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:outbox",
+       "attribute": "frame",
+       "value": {
+        "type": "string",
+        "value": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"position\":2,\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:2:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:2"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[],\"projection\":[]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:3:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:3"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "0"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:4:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:4"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:3:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:5:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:5"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:4:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "1"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:6:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:6"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "state:pl:p",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75",
+     "endpoint": "memory://b0d49d27-9d80-41cd-8167-fbc3efeab24b",
+     "scope": "b0d49d27-9d80-41cd-8167-fbc3efeab24b"
+    },
+    {
+     "id": "domain:pl:p",
+     "ok": true,
+     "observed": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "expected": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000,
+      "inputSha256": "0b75f02f723ecff312b2e6b5283a29a1ac238ee9b51868258f9eaa416e61f4a6",
+      "oracleIdentity": "2678b4e6dceaf5fddea6d018f86d6bf1fa9538c0371c9a0f45df32fc6e0464ea"
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75",
+     "endpoint": "memory://b0d49d27-9d80-41cd-8167-fbc3efeab24b",
+     "scope": "b0d49d27-9d80-41cd-8167-fbc3efeab24b"
+    },
+    {
+     "id": "publication-content",
+     "ok": true,
+     "observed": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "expected": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75",
+     "endpoint": "memory://b0d49d27-9d80-41cd-8167-fbc3efeab24b",
+     "scope": "b0d49d27-9d80-41cd-8167-fbc3efeab24b"
+    },
+    {
+     "id": "receiver-content",
+     "ok": true,
+     "observed": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "expected": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75",
+     "endpoint": "memory://b0d49d27-9d80-41cd-8167-fbc3efeab24b",
+     "scope": "b0d49d27-9d80-41cd-8167-fbc3efeab24b"
+    },
+    {
+     "id": "exactly-once-visible-effects",
+     "ok": true,
+     "observed": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "expected": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75",
+     "endpoint": "memory://b0d49d27-9d80-41cd-8167-fbc3efeab24b",
+     "scope": "b0d49d27-9d80-41cd-8167-fbc3efeab24b"
+    },
+    {
+     "id": "checkpoint-resumed",
+     "ok": true,
+     "observed": 1,
+     "expected": 1,
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75",
+     "endpoint": "memory://b0d49d27-9d80-41cd-8167-fbc3efeab24b",
+     "scope": "b0d49d27-9d80-41cd-8167-fbc3efeab24b"
+    },
+    {
+     "id": "state:gs:receiver",
+     "ok": true,
+     "observed": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "expected": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75",
+     "endpoint": "memory://b0d49d27-9d80-41cd-8167-fbc3efeab24b",
+     "scope": "b0d49d27-9d80-41cd-8167-fbc3efeab24b"
+    },
+    {
+     "id": "state:gs:consumer",
+     "ok": true,
+     "observed": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "expected": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75",
+     "endpoint": "memory://b0d49d27-9d80-41cd-8167-fbc3efeab24b",
+     "scope": "b0d49d27-9d80-41cd-8167-fbc3efeab24b"
+    },
+    {
+     "id": "state:gs:outbox",
+     "ok": true,
+     "observed": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "expected": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75",
+     "endpoint": "memory://b0d49d27-9d80-41cd-8167-fbc3efeab24b",
+     "scope": "b0d49d27-9d80-41cd-8167-fbc3efeab24b"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "878b04d99583b7283d54721406412c72bda7e30d88e18b83c8aff2561669e941",
+     "caseId": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75:0"
+    },
+    {
+     "caseSha256": "a649563ffedbff7b075d1808cc26cfbbc2e80d8d40b4664377b9e631a8a597fa",
+     "caseId": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75:1"
+    },
+    {
+     "caseSha256": "506b3e097b9871ef4aedb0a1ef62c1097aee3c419f0df38cd1c6a7260118cbe9",
+     "caseId": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75:2"
+    },
+    {
+     "caseSha256": "ec334b4a45979fcd9228ec7f23331113cb8c3e1e65e18339681625f3815019ad",
+     "caseId": "0394cf0b-a0f7-49cb-a2df-10edc1cfcd75:3"
+    }
+   ]
+  },
+  {
+   "attempt": "0bc1da40-0366-453f-9d84-834e7863fbb4",
+   "scope": "e7c12488-42ed-4259-90de-021f198013a4",
+   "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:0"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:0:6"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1850"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:1:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:1"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:outbox",
+       "attribute": "frame",
+       "value": {
+        "type": "string",
+        "value": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"position\":2,\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:2:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:2"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[],\"projection\":[]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:3:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:3"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "0"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:4:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:4"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:3:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:5:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:5"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:5:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:6:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:6"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:4:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "1"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:7:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:7"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "state:pl:p",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0bc1da40-0366-453f-9d84-834e7863fbb4",
+     "endpoint": "memory://e7c12488-42ed-4259-90de-021f198013a4",
+     "scope": "e7c12488-42ed-4259-90de-021f198013a4"
+    },
+    {
+     "id": "domain:pl:p",
+     "ok": true,
+     "observed": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "expected": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000,
+      "inputSha256": "0b75f02f723ecff312b2e6b5283a29a1ac238ee9b51868258f9eaa416e61f4a6",
+      "oracleIdentity": "2678b4e6dceaf5fddea6d018f86d6bf1fa9538c0371c9a0f45df32fc6e0464ea"
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0bc1da40-0366-453f-9d84-834e7863fbb4",
+     "endpoint": "memory://e7c12488-42ed-4259-90de-021f198013a4",
+     "scope": "e7c12488-42ed-4259-90de-021f198013a4"
+    },
+    {
+     "id": "publication-content",
+     "ok": true,
+     "observed": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "expected": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0bc1da40-0366-453f-9d84-834e7863fbb4",
+     "endpoint": "memory://e7c12488-42ed-4259-90de-021f198013a4",
+     "scope": "e7c12488-42ed-4259-90de-021f198013a4"
+    },
+    {
+     "id": "receiver-content",
+     "ok": true,
+     "observed": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "expected": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0bc1da40-0366-453f-9d84-834e7863fbb4",
+     "endpoint": "memory://e7c12488-42ed-4259-90de-021f198013a4",
+     "scope": "e7c12488-42ed-4259-90de-021f198013a4"
+    },
+    {
+     "id": "receiver-content",
+     "ok": true,
+     "observed": "{\"applied\":{\"effects\":[],\"projection\":[]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "expected": "{\"applied\":{\"effects\":[],\"projection\":[]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0bc1da40-0366-453f-9d84-834e7863fbb4",
+     "endpoint": "memory://e7c12488-42ed-4259-90de-021f198013a4",
+     "scope": "e7c12488-42ed-4259-90de-021f198013a4"
+    },
+    {
+     "id": "exactly-once-visible-effects",
+     "ok": true,
+     "observed": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "expected": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0bc1da40-0366-453f-9d84-834e7863fbb4",
+     "endpoint": "memory://e7c12488-42ed-4259-90de-021f198013a4",
+     "scope": "e7c12488-42ed-4259-90de-021f198013a4"
+    },
+    {
+     "id": "checkpoint-resumed",
+     "ok": true,
+     "observed": 1,
+     "expected": 1,
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0bc1da40-0366-453f-9d84-834e7863fbb4",
+     "endpoint": "memory://e7c12488-42ed-4259-90de-021f198013a4",
+     "scope": "e7c12488-42ed-4259-90de-021f198013a4"
+    },
+    {
+     "id": "state:gs:receiver",
+     "ok": true,
+     "observed": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,7]]",
+     "expected": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,7]]",
+     "binding": {
+      "P": 8,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0bc1da40-0366-453f-9d84-834e7863fbb4",
+     "endpoint": "memory://e7c12488-42ed-4259-90de-021f198013a4",
+     "scope": "e7c12488-42ed-4259-90de-021f198013a4"
+    },
+    {
+     "id": "state:gs:consumer",
+     "ok": true,
+     "observed": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,8]]",
+     "expected": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,8]]",
+     "binding": {
+      "P": 8,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0bc1da40-0366-453f-9d84-834e7863fbb4",
+     "endpoint": "memory://e7c12488-42ed-4259-90de-021f198013a4",
+     "scope": "e7c12488-42ed-4259-90de-021f198013a4"
+    },
+    {
+     "id": "state:gs:outbox",
+     "ok": true,
+     "observed": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "expected": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "binding": {
+      "P": 8,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "0bc1da40-0366-453f-9d84-834e7863fbb4",
+     "endpoint": "memory://e7c12488-42ed-4259-90de-021f198013a4",
+     "scope": "e7c12488-42ed-4259-90de-021f198013a4"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "82283bf4c6930fb73f6ef6999e957f43c2c7c5a6ed77aa69e246193e0b4aad13",
+     "caseId": "0bc1da40-0366-453f-9d84-834e7863fbb4:0"
+    },
+    {
+     "caseSha256": "b83aa39bbe42d46ee0f8eeccce8a8529881f16b110447d6cbcbfbd14a69b60ca",
+     "caseId": "0bc1da40-0366-453f-9d84-834e7863fbb4:1"
+    },
+    {
+     "caseSha256": "bc52b7adf3d66f51f3d89c44d5a9af562df43fdc24d9fe0b3f2a43db7df7c1bf",
+     "caseId": "0bc1da40-0366-453f-9d84-834e7863fbb4:2"
+    },
+    {
+     "caseSha256": "9e7f6f5325e50d32ca6314c2e81fb466163ff9cf0ca02c9fb94d5716bb5eb528",
+     "caseId": "0bc1da40-0366-453f-9d84-834e7863fbb4:3"
+    }
+   ]
+  },
+  {
+   "attempt": "ce883e2f-568c-4f50-a63d-52fde0a55efb",
+   "scope": "745af911-f3ef-4c31-a39e-419ffc5fb49a",
+   "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:0"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:0:6"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1850"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:1:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:1"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:outbox",
+       "attribute": "frame",
+       "value": {
+        "type": "string",
+        "value": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"position\":2,\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:2:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:2"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[],\"projection\":[]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:3:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:3"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "0"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:4:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:4"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:3:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:5:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:5"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:4:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "1"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:6:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:6"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "state:pl:p",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "ce883e2f-568c-4f50-a63d-52fde0a55efb",
+     "endpoint": "memory://745af911-f3ef-4c31-a39e-419ffc5fb49a",
+     "scope": "745af911-f3ef-4c31-a39e-419ffc5fb49a"
+    },
+    {
+     "id": "domain:pl:p",
+     "ok": true,
+     "observed": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "expected": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000,
+      "inputSha256": "0b75f02f723ecff312b2e6b5283a29a1ac238ee9b51868258f9eaa416e61f4a6",
+      "oracleIdentity": "2678b4e6dceaf5fddea6d018f86d6bf1fa9538c0371c9a0f45df32fc6e0464ea"
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "ce883e2f-568c-4f50-a63d-52fde0a55efb",
+     "endpoint": "memory://745af911-f3ef-4c31-a39e-419ffc5fb49a",
+     "scope": "745af911-f3ef-4c31-a39e-419ffc5fb49a"
+    },
+    {
+     "id": "publication-content",
+     "ok": true,
+     "observed": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "expected": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "ce883e2f-568c-4f50-a63d-52fde0a55efb",
+     "endpoint": "memory://745af911-f3ef-4c31-a39e-419ffc5fb49a",
+     "scope": "745af911-f3ef-4c31-a39e-419ffc5fb49a"
+    },
+    {
+     "id": "receiver-content",
+     "ok": true,
+     "observed": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "expected": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "ce883e2f-568c-4f50-a63d-52fde0a55efb",
+     "endpoint": "memory://745af911-f3ef-4c31-a39e-419ffc5fb49a",
+     "scope": "745af911-f3ef-4c31-a39e-419ffc5fb49a"
+    },
+    {
+     "id": "exactly-once-visible-effects",
+     "ok": true,
+     "observed": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "expected": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "ce883e2f-568c-4f50-a63d-52fde0a55efb",
+     "endpoint": "memory://745af911-f3ef-4c31-a39e-419ffc5fb49a",
+     "scope": "745af911-f3ef-4c31-a39e-419ffc5fb49a"
+    },
+    {
+     "id": "checkpoint-resumed",
+     "ok": true,
+     "observed": 1,
+     "expected": 1,
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "ce883e2f-568c-4f50-a63d-52fde0a55efb",
+     "endpoint": "memory://745af911-f3ef-4c31-a39e-419ffc5fb49a",
+     "scope": "745af911-f3ef-4c31-a39e-419ffc5fb49a"
+    },
+    {
+     "id": "state:gs:receiver",
+     "ok": true,
+     "observed": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "expected": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "ce883e2f-568c-4f50-a63d-52fde0a55efb",
+     "endpoint": "memory://745af911-f3ef-4c31-a39e-419ffc5fb49a",
+     "scope": "745af911-f3ef-4c31-a39e-419ffc5fb49a"
+    },
+    {
+     "id": "state:gs:consumer",
+     "ok": true,
+     "observed": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "expected": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "ce883e2f-568c-4f50-a63d-52fde0a55efb",
+     "endpoint": "memory://745af911-f3ef-4c31-a39e-419ffc5fb49a",
+     "scope": "745af911-f3ef-4c31-a39e-419ffc5fb49a"
+    },
+    {
+     "id": "state:gs:outbox",
+     "ok": true,
+     "observed": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "expected": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "ce883e2f-568c-4f50-a63d-52fde0a55efb",
+     "endpoint": "memory://745af911-f3ef-4c31-a39e-419ffc5fb49a",
+     "scope": "745af911-f3ef-4c31-a39e-419ffc5fb49a"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "02e22b24f2ae513100ce4b9a6c7758ca46f064c87e3fa504af58d32dc1f565b7",
+     "caseId": "ce883e2f-568c-4f50-a63d-52fde0a55efb:0"
+    },
+    {
+     "caseSha256": "c3c94247dd4adecbaedb818ac87209fe6db6a3ddea667c063fd3eb3011943521",
+     "caseId": "ce883e2f-568c-4f50-a63d-52fde0a55efb:1"
+    },
+    {
+     "caseSha256": "a3e3bb14989dea1804c00bc2188fd6077a6abe50af11c31bdc4f3f983094a54b",
+     "caseId": "ce883e2f-568c-4f50-a63d-52fde0a55efb:2"
+    },
+    {
+     "caseSha256": "1f563bedcd81eb6eeb00e2210f4a45effe6d27b3d1a798f6bc5cb36687049bad",
+     "caseId": "ce883e2f-568c-4f50-a63d-52fde0a55efb:3"
+    }
+   ]
+  },
+  {
+   "attempt": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a",
+   "scope": "c7be18ef-269e-48bf-bffa-a9d006ee1ce3",
+   "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:0"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:0:6"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1850"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:1:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:1"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:outbox",
+       "attribute": "frame",
+       "value": {
+        "type": "string",
+        "value": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"position\":2,\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:2:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:2"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[],\"projection\":[]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:3:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:3"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "0"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:4:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:4"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:3:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:5:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:5"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:4:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "1"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:6:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:6"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "state:pl:p",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a",
+     "endpoint": "memory://c7be18ef-269e-48bf-bffa-a9d006ee1ce3",
+     "scope": "c7be18ef-269e-48bf-bffa-a9d006ee1ce3"
+    },
+    {
+     "id": "domain:pl:p",
+     "ok": true,
+     "observed": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "expected": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000,
+      "inputSha256": "0b75f02f723ecff312b2e6b5283a29a1ac238ee9b51868258f9eaa416e61f4a6",
+      "oracleIdentity": "2678b4e6dceaf5fddea6d018f86d6bf1fa9538c0371c9a0f45df32fc6e0464ea"
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a",
+     "endpoint": "memory://c7be18ef-269e-48bf-bffa-a9d006ee1ce3",
+     "scope": "c7be18ef-269e-48bf-bffa-a9d006ee1ce3"
+    },
+    {
+     "id": "publication-content",
+     "ok": true,
+     "observed": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "expected": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a",
+     "endpoint": "memory://c7be18ef-269e-48bf-bffa-a9d006ee1ce3",
+     "scope": "c7be18ef-269e-48bf-bffa-a9d006ee1ce3"
+    },
+    {
+     "id": "receiver-content",
+     "ok": true,
+     "observed": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "expected": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a",
+     "endpoint": "memory://c7be18ef-269e-48bf-bffa-a9d006ee1ce3",
+     "scope": "c7be18ef-269e-48bf-bffa-a9d006ee1ce3"
+    },
+    {
+     "id": "exactly-once-visible-effects",
+     "ok": true,
+     "observed": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "expected": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a",
+     "endpoint": "memory://c7be18ef-269e-48bf-bffa-a9d006ee1ce3",
+     "scope": "c7be18ef-269e-48bf-bffa-a9d006ee1ce3"
+    },
+    {
+     "id": "checkpoint-resumed",
+     "ok": true,
+     "observed": 1,
+     "expected": 1,
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a",
+     "endpoint": "memory://c7be18ef-269e-48bf-bffa-a9d006ee1ce3",
+     "scope": "c7be18ef-269e-48bf-bffa-a9d006ee1ce3"
+    },
+    {
+     "id": "state:gs:receiver",
+     "ok": true,
+     "observed": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "expected": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a",
+     "endpoint": "memory://c7be18ef-269e-48bf-bffa-a9d006ee1ce3",
+     "scope": "c7be18ef-269e-48bf-bffa-a9d006ee1ce3"
+    },
+    {
+     "id": "state:gs:consumer",
+     "ok": true,
+     "observed": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "expected": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a",
+     "endpoint": "memory://c7be18ef-269e-48bf-bffa-a9d006ee1ce3",
+     "scope": "c7be18ef-269e-48bf-bffa-a9d006ee1ce3"
+    },
+    {
+     "id": "state:gs:outbox",
+     "ok": true,
+     "observed": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "expected": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a",
+     "endpoint": "memory://c7be18ef-269e-48bf-bffa-a9d006ee1ce3",
+     "scope": "c7be18ef-269e-48bf-bffa-a9d006ee1ce3"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "e1269d9cf86f716ad4813126be9bb3b1bdefb460093e8c0a929871db9fa451c5",
+     "caseId": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a:0"
+    },
+    {
+     "caseSha256": "f357da26001f4b26addd32bd5b5ffa88af38c8bd4e3ef2dd320e796baa4f91d8",
+     "caseId": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a:1"
+    },
+    {
+     "caseSha256": "6ac1090aec3e08a6bf6d47a0f38f72b2ff0c64b3af586db88598e83afa47b3d1",
+     "caseId": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a:2"
+    },
+    {
+     "caseSha256": "67c95912e3d69a112a0caf76ab730a564792dba9d07c1826546a3de60ccb08e5",
+     "caseId": "2cc0387c-34ff-4835-9fd7-e2ca57469c7a:3"
+    }
+   ]
+  },
+  {
+   "attempt": "1e897d49-3ae4-4fcd-977c-b0d0fae55e88",
+   "scope": "88432b95-439c-4dc0-ae0f-245453d727d4",
+   "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "lost-ack"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "lost-ack-original-tx",
+     "ok": true,
+     "observed": "_tx/mem1",
+     "expected": "_tx/mem1",
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "1e897d49-3ae4-4fcd-977c-b0d0fae55e88",
+     "endpoint": "memory://88432b95-439c-4dc0-ae0f-245453d727d4",
+     "scope": "88432b95-439c-4dc0-ae0f-245453d727d4"
+    },
+    {
+     "id": "lost-ack-original-position",
+     "ok": true,
+     "observed": 1,
+     "expected": 1,
+     "binding": {},
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "1e897d49-3ae4-4fcd-977c-b0d0fae55e88",
+     "endpoint": "memory://88432b95-439c-4dc0-ae0f-245453d727d4",
+     "scope": "88432b95-439c-4dc0-ae0f-245453d727d4"
+    },
+    {
+     "id": "state:pl:a",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1500\"},1793793600000,null,1],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:a\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:a\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:a\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:a\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:a\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1500\"},1793793600000,null,1],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:a\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:a\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:a\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:a\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:a\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 1,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "1e897d49-3ae4-4fcd-977c-b0d0fae55e88",
+     "endpoint": "memory://88432b95-439c-4dc0-ae0f-245453d727d4",
+     "scope": "88432b95-439c-4dc0-ae0f-245453d727d4"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "430d494c2de609947264cda50e32a44276883bd16ab77359b6562a8745cee1c1",
+     "caseId": "1e897d49-3ae4-4fcd-977c-b0d0fae55e88:0"
+    }
+   ]
+  },
+  {
+   "attempt": "31dd4758-279f-4673-b14a-76e876745076",
+   "scope": "be73dc21-4e78-4fd0-9f3b-eb995d7290b5",
+   "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:0"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1850"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:1:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:1"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "state:pl:a",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1500\"},1793793600000,null,1],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:a\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:a\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:a\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"pl:a\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:a\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1500\"},1793793600000,null,1],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:a\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:a\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:a\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"pl:a\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:a\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000
+     },
+     "sourceSha256": "41d7c7f3092946671f5444198a1c442fe81618151796a23e620cadeed2769025",
+     "attempt": "31dd4758-279f-4673-b14a-76e876745076",
+     "endpoint": "memory://be73dc21-4e78-4fd0-9f3b-eb995d7290b5",
+     "scope": "be73dc21-4e78-4fd0-9f3b-eb995d7290b5"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "b0f8b08855b3a88fb8f17a1e4f0395a197561933d5435ab4dfda7103e5b8f3f6",
+     "caseId": "31dd4758-279f-4673-b14a-76e876745076:0"
+    }
+   ]
+  }
+ ]
+}

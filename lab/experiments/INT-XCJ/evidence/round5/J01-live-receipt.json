@@ -1,0 +1,32 @@
+{
+  "head": "0d5ba2fed38c23463b09b3f8ef86fa12d2e0e02b",
+  "attempts": 1,
+  "exit": 0,
+  "executed": 3,
+  "pass": 3,
+  "fail": 0,
+  "selectedSkipped": 0,
+  "filteredOut": 3,
+  "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+  "sourceSha256": "01d879bf95089510567e0cdcac4c29adbb32e2c877a1262d44251aafa6a50fe0",
+  "tests": [
+    {
+      "fullName": "XTDB compact commit guards against the engine (EXP-J01) lets exactly one of two racing commands with the same id commit, for every tricky id",
+      "status": "passed",
+      "duration": 8632.676916999999,
+      "failureMessages": []
+    },
+    {
+      "fullName": "XTDB compact commit guards against the engine (EXP-J01) rejects an existing assertion id and an existing operation as a definite identity conflict",
+      "status": "passed",
+      "duration": 2645.660750000001,
+      "failureMessages": []
+    },
+    {
+      "fullName": "XTDB compact commit guards against the engine (EXP-J01) refuses a stale source cut as a serialization conflict",
+      "status": "passed",
+      "duration": 63.330667000000176,
+      "failureMessages": []
+    }
+  ]
+}

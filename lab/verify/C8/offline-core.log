@@ -1,0 +1,16 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/core
+
+
+ Test Files  57 passed (57)
+      Tests  848 passed (848)
+   Start at  16:36:15
+   Duration  15.48s (import 67%, tests 28%, transform 3%, worker 2%)
+
+     Import  155 modules were evaluated 243 times · 7.44s total, 67% of tracked time
+             ~2.70s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.

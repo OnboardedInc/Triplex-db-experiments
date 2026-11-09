@@ -1,0 +1,19 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 91531 "CX-A01-0312-evaluator", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 91531 "CX-A01-0312-evaluator", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 83867 "DA01-r2-image-hardened", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 44082 "CX-OBS01-R2-x07", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 6765 "CX-A01-0312-ancillary", pid 44082 "CX-OBS01-R2-x07", pid 46019 "CX-VSQL01-2-qa2-baseline"
+[lab] G1-datomic-20261108T234745Z-c6de65: raw output runs/G1/G1-datomic-20261108T234745Z-c6de65
+error: could not write index
+PASS G1 datomic/dev scope=full executed=88 pass=88 fail=0 skip=0
+profile: default; planner budget: null
+receipt: lab/runs/G1/G1-datomic-20261108T234745Z-c6de65.json

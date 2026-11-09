@@ -1,0 +1,1382 @@
+{
+  "format": "tx2-x05-receipt/1",
+  "experiment": "EXP-X05",
+  "runId": "X05-s2-20261108T001035Z-ae1875",
+  "runKind": "candidate",
+  "startedAt": "2026-11-08T00:10:35.741Z",
+  "params": {
+    "slot": "s2",
+    "smoke": false,
+    "subjects": 20000,
+    "active": 400,
+    "rate": 20,
+    "levelS": 60,
+    "levels": [
+      4,
+      16,
+      64,
+      256
+    ],
+    "cap": 16,
+    "threads": 4,
+    "writerConns": 8,
+    "singleMaxConns": 28,
+    "splitShare": 0.1,
+    "lagEveryMs": 500,
+    "e5S": 120,
+    "burstS": 60,
+    "burstX": 5,
+    "burstKind": "large",
+    "burstConns": 12,
+    "recoverS": 30,
+    "warmS": 15,
+    "connRss": 256,
+    "phases": [
+      "burst"
+    ],
+    "seed": "x05-v1-trial2",
+    "drainMaxMs": 180000
+  },
+  "tables": {
+    "ent": "x520ffd7_ent",
+    "claim": "x520ffd7_claim",
+    "ledger": "x520ffd7_ledger",
+    "feed": "x520ffd7_feed"
+  },
+  "northStar": "P1 (TARGETS 1.1 P1): writer commit latency with readers on a read-only follower versus the zero-reader run on the same trace segment; zero stale reads.",
+  "semantics": "TARGETS 1.1 P1 items 1, 2, 4, 5 (item 3 by a forced block cut at +1 s in every window); R19 E1, E4, E5, E9.",
+  "git": {
+    "head": "cee73471c0700a952fc7048dce04afc8993e675c",
+    "headTree": "d5b2f9e9a1a972d4591fbe93d7b9bce70832cfe2",
+    "branch": "exp/X05-xtdb-read-follower",
+    "dirty": true,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [
+      "lab/experiments/EXP-X05-xtdb-read-follower/receipt-summary.py",
+      "lab/experiments/EXP-X05-xtdb-read-follower/vm-cpu-report.py",
+      "lab/experiments/EXP-X05-xtdb-read-follower/vm-cpu-sample.sh",
+      "lab/runs/X05/X05-s2-20261107T234308Z-ff17f3.json",
+      "lab/runs/X05/X05-s2-20261108T000756Z-8bb535.json"
+    ],
+    "sourceTreeId": "f1f539d82b684852fdd42124f6fdb79fc737f43afbd94c4a871187e0c1878b94"
+  },
+  "driver": {
+    "lab/experiments/EXP-X05-xtdb-read-follower/driver.mjs": "244ce3db86ba8ee11ea81ced6120ed7fcc1fcc0fc7197140bd9941656ed3c7aa",
+    "lab/experiments/EXP-X05-xtdb-read-follower/reader-worker.mjs": "1d357fe327b866fe8e75ef1ed6a7355873040f49e5c4051aadfa209f7b45702d",
+    "lab/experiments/EXP-X05-xtdb-read-follower/common.mjs": "a409b8fcfec202e14f23e2dfdcb266d4ab4244158bc8c8faa278ef51649c4e70"
+  },
+  "harness": {
+    "lab/bin/engine.mjs": "b2bb06172efd2791ec323285998e560ace543a38e022dff489c601d3c879c608",
+    "lab/bin/lib.mjs": "355519608a64bc5ed5738bbae089482e11b4187b1baf0e1e941e599575127c6f"
+  },
+  "slotsJsonSha256": "9c9e1562a747ab93fcba91ffef5899cbe80f9cf14d6e65955c5c0e9479022d9b",
+  "client": {
+    "postgresJs": "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/cjs/src/index.js",
+    "postgresJsIndexSha256": "d8fea1a5311c47e65004646bc81f57305ac64d48f99004a5b3ca27bcfc6babf8",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "load": [
+        10.2099609375,
+        12.0986328125,
+        14.0244140625
+      ]
+    }
+  },
+  "reasons": [
+    "tx2-xtdb-s2-ro restarted or was replaced during the run"
+  ],
+  "enginesAtStart": {
+    "writer": {
+      "container": "tx2-xtdb-s2",
+      "containerId": "bc5b8f52faa9418d1e72b0aea3475f17f1905d1529d9e1acfae0f36b4fb33f6f",
+      "startedAt": "2026-11-07T23:41:54.067847752Z",
+      "running": true,
+      "health": "healthy",
+      "oomKilled": false,
+      "exitCode": 0,
+      "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "pinnedImageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configSha256Label": "a95a454df5bbf091f88993e4cc842c78b42225b83b59e6f2aea40288fc57f1d6",
+      "effectiveConfigSha256": "a95a454df5bbf091f88993e4cc842c78b42225b83b59e6f2aea40288fc57f1d6",
+      "effectiveConfig": {
+        "lane": "xtdb",
+        "slot": "s2",
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "configYamlSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+        "env": {
+          "JDK_JAVA_OPTIONS": "-Xmx2g -XX:MaxDirectMemorySize=1g"
+        },
+        "memBytes": 3758096384,
+        "cpus": 2,
+        "cpusetCpus": "0,1",
+        "publish": "127.0.0.1:5472:5432",
+        "volume": "tx2-xtdb-s2-data:/var/lib/xtdb",
+        "cmd": [
+          "-f",
+          "/etc/xtdb/config.yaml"
+        ],
+        "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+      },
+      "configFileSha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+      "memCapBytes": 3758096384,
+      "nanoCpus": 2000000000,
+      "cpusetCpus": "0,1",
+      "mounts": [
+        {
+          "source": "/Users/sam/projects/triplex-db-2/runs/engines/xtdb-s2/config.yaml",
+          "destination": "/etc/xtdb/config.yaml",
+          "rw": false
+        },
+        {
+          "source": "tx2-xtdb-s2-data",
+          "destination": "/var/lib/xtdb",
+          "rw": true
+        }
+      ],
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5472/xtdb",
+      "holder": "EXP-X05-xtdb-read-follower"
+    },
+    "follower": {
+      "container": "tx2-xtdb-s2-ro",
+      "containerId": "3104ffe2d64a8715fd28a0b6cf1748db7464c6841127fe3eafa52e494d3e991e",
+      "startedAt": "2026-11-08T00:09:47.406763545Z",
+      "running": true,
+      "health": "healthy",
+      "oomKilled": false,
+      "exitCode": 0,
+      "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "pinnedImageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configSha256Label": "b39175ed0d1c54e2bd5d08a884e730e1e8bf53fac903a15a374a64aae67dd4d6",
+      "effectiveConfigSha256": "b39175ed0d1c54e2bd5d08a884e730e1e8bf53fac903a15a374a64aae67dd4d6",
+      "effectiveConfig": {
+        "lane": "xtdb",
+        "slot": "s2",
+        "role": "follower",
+        "follows": "tx2-xtdb-s2",
+        "profile": "small",
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "configSource": "lab/config/xtdb-follower-small-config.yaml",
+        "configYamlSha256": "8e10ceb3be347bcc6160ad3c1409d4a16e848670682c2e903418e35048ab5994",
+        "env": {
+          "JDK_JAVA_OPTIONS": "-Xmx512m -XX:MaxDirectMemorySize=256m"
+        },
+        "memBytes": 1073741824,
+        "cpus": 2,
+        "cpusetCpus": "2,3",
+        "publish": "127.0.0.1:5482:5432",
+        "volume": "tx2-xtdb-s2-data:/var/lib/xtdb:ro",
+        "cmd": [
+          "-f",
+          "/etc/xtdb/config.yaml"
+        ],
+        "health": "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"
+      },
+      "configFileSha256": "8e10ceb3be347bcc6160ad3c1409d4a16e848670682c2e903418e35048ab5994",
+      "memCapBytes": 1073741824,
+      "nanoCpus": 2000000000,
+      "cpusetCpus": "2,3",
+      "mounts": [
+        {
+          "source": "tx2-xtdb-s2-data",
+          "destination": "/var/lib/xtdb",
+          "rw": false
+        },
+        {
+          "source": "/Users/sam/projects/triplex-db-2/runs/engines/xtdb-s2-ro/config.yaml",
+          "destination": "/etc/xtdb/config.yaml",
+          "rw": false
+        }
+      ],
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5482/xtdb",
+      "holder": "EXP-X05-xtdb-read-follower"
+    },
+    "volume": "tx2-xtdb-s2-data",
+    "slotOwner": {
+      "format": "tx2-slot-owner/1",
+      "lane": "xtdb",
+      "slot": "s2",
+      "mode": "exclusive",
+      "container": "tx2-xtdb-s2",
+      "volume": "tx2-xtdb-s2-data",
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5472/xtdb",
+      "port": 5472,
+      "holder": "EXP-X05-xtdb-read-follower",
+      "experiment": "EXP-X05",
+      "pid": 37199,
+      "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a5b9cf52579902ee0",
+      "createdAt": "2026-11-07T22:56:51.306Z"
+    }
+  },
+  "tokenCheck": {
+    "systemTimeText": "2026-11-08 00:10:36.092577+00:00",
+    "awaitToken": "Cg8KBHh0ZGISBwoFsK+ElAI=",
+    "minted": "ChUKBHh0ZGISDQoLCPz7vtcGEOi5kiw=",
+    "mintedDecoded": {
+      "xtdb": [
+        "1794096636092577"
+      ]
+    },
+    "built": "ChUKBHh0ZGISDQoLCPz7vtcGEOi5kiw=",
+    "equal": true
+  },
+  "seed": {
+    "rid": -1,
+    "t": "1794096656831491",
+    "snapshotToken": "ChYKBHh0ZGISDgoMCJD8vtcGELiXvowD",
+    "awaitToken": "Cg8KBHh0ZGISBwoF76uplgI=",
+    "clock": "2026-11-08T00:10:56.831491Z",
+    "ms": 20780,
+    "blockCut": {
+      "at": 1794096656761.669,
+      "ms": 50,
+      "ok": true,
+      "out": "Block flush message sent to 1 database(s)."
+    },
+    "subjects": 20000
+  },
+  "followerCatchUp": {
+    "ms": 121,
+    "rows": 20000
+  },
+  "trace": {
+    "digest": "54feab5dc859d8a5a0fa9a12d1f9c93848d1a2a20df5c51c789dcb6e988b5403",
+    "commands": 1196,
+    "rate": 20,
+    "seconds": 60
+  },
+  "burstBacklogDrain": {
+    "ms": 0,
+    "leftQueued": 0,
+    "leftInflight": 0
+  },
+  "burst": {
+    "trace": {
+      "digest": "5d7a6c01f9fe4916b06a694de2873d70813fca5ddbda873b324c734f763ed8ef",
+      "commands": 6008,
+      "rate": 100,
+      "kind": "large",
+      "payloadNote": "50 facts, ledger values padded 400-1200 bytes each: about 20-60 KB per transaction"
+    }
+  },
+  "watermarksAtEnd": {
+    "writer": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 909780342,
+        "systemTime": "2026-11-08 00:13:50.700815+00:00"
+      }
+    ],
+    "follower": [
+      {
+        "db": "xtdb",
+        "part": 0,
+        "txId": 909780342,
+        "systemTime": "2026-11-08 00:13:50.700815+00:00"
+      }
+    ]
+  },
+  "metrics": {
+    "start": {
+      "writer": [
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.213909504",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.213909504",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.213909504",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.213909504",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.213909504",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.213909504",
+        "block_upload_timer_seconds_count{node_id=\"8247d4d4\"} 24",
+        "block_upload_timer_seconds_sum{node_id=\"8247d4d4\"} 6.633874317",
+        "block_upload_timer_seconds_max{node_id=\"8247d4d4\"} 0.214018791",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.419168256",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.805044224",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.805044224",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.805044224",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.805044224",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.805044224",
+        "compactor_job_timer_seconds_count{node_id=\"8247d4d4\"} 126",
+        "compactor_job_timer_seconds_sum{node_id=\"8247d4d4\"} 94.479958258",
+        "compactor_job_timer_seconds_max{node_id=\"8247d4d4\"} 0.792335225",
+        "compactor_jobs_available{node_id=\"8247d4d4\"} 7.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Eden Space\",node_id=\"8247d4d4\"} 8.0740344E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Old Gen\",node_id=\"8247d4d4\"} 1.92746216E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Survivor Space\",node_id=\"8247d4d4\"} 1.048576E7",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.058687488",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.083853312",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.21807104",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.268402688",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.318734336",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.419397632",
+        "node_tx_await_seconds_count{node_id=\"8247d4d4\"} 30509",
+        "node_tx_await_seconds_sum{node_id=\"8247d4d4\"} 3225.367093577",
+        "node_tx_await_seconds_max{node_id=\"8247d4d4\"} 0.48889656",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.060686336",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.087949312",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.226361344",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.2850816",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.318636032",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.419299328",
+        "node_tx_execute_seconds_count{node_id=\"8247d4d4\"} 30509",
+        "node_tx_execute_seconds_sum{node_id=\"8247d4d4\"} 3537.276401556",
+        "node_tx_execute_seconds_max{node_id=\"8247d4d4\"} 0.504671216",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"8247d4d4\"} 5.83685615E8",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 5.83689291E8",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 5.83689291E8",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"8247d4d4\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"8247d4d4\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"8247d4d4\"} 0.0",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.005242624",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.007339776",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.012582656",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.017825536",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.023068416",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.039845632",
+        "tx_op_timer_seconds_count{node_id=\"8247d4d4\"} 182327"
+      ],
+      "follower": [
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Eden Space\",node_id=\"6874c20e\"} 1.0601912E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Survivor Space\",node_id=\"6874c20e\"} 759280.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Tenured Gen\",node_id=\"6874c20e\"} 1.19393392E8",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.75\"} 0.0",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.85\"} 0.0",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.95\"} 0.0",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.98\"} 0.0",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.99\"} 0.0",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.999\"} 0.0",
+        "node_tx_await_seconds_count{node_id=\"6874c20e\"} 0",
+        "node_tx_await_seconds_sum{node_id=\"6874c20e\"} 0.0",
+        "node_tx_await_seconds_max{node_id=\"6874c20e\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.75\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.85\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.95\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.98\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.99\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.999\"} 0.0",
+        "node_tx_execute_seconds_count{node_id=\"6874c20e\"} 0",
+        "node_tx_execute_seconds_sum{node_id=\"6874c20e\"} 0.0",
+        "node_tx_execute_seconds_max{node_id=\"6874c20e\"} 0.0",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"6874c20e\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"6874c20e\"} 5.83685615E8",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"6874c20e\"} 5.83689687E8",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"6874c20e\"} 5.83689687E8",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"6874c20e\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"6874c20e\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"6874c20e\"} 0.0",
+        "xtdb_block_last_upload_time_seconds{db=\"xtdb\",node_id=\"6874c20e\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.75\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.85\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.95\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.98\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.99\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.999\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds_count{db=\"xtdb\",node_id=\"6874c20e\"} 2",
+        "xtdb_replica_block_buffer_timer_seconds_sum{db=\"xtdb\",node_id=\"6874c20e\"} 0.644999869",
+        "xtdb_replica_block_buffer_timer_seconds_max{db=\"xtdb\",node_id=\"6874c20e\"} 0.493985284",
+        "xtdb_replica_block_buffered_records_count{db=\"xtdb\",node_id=\"6874c20e\"} 2",
+        "xtdb_replica_block_buffered_records_sum{db=\"xtdb\",node_id=\"6874c20e\"} 3.0",
+        "xtdb_replica_block_buffered_records_max{db=\"xtdb\",node_id=\"6874c20e\"} 2.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.75\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.85\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.95\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.98\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.99\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.999\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds_count{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\"} 2",
+        "xtdb_replica_process_timer_seconds_sum{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\"} 0.008688146",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"6874c20e\",quantile=\"0.75\"} 0.024117248",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"6874c20e\",quantile=\"0.85\"} 0.024117248",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"6874c20e\",quantile=\"0.95\"} 0.024117248",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"6874c20e\",quantile=\"0.98\"} 0.024117248",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"6874c20e\",quantile=\"0.99\"} 0.024117248"
+      ]
+    },
+    "beforeBurst": {
+      "writer": [
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.213909504",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.213909504",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.213909504",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.213909504",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.213909504",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.213909504",
+        "block_upload_timer_seconds_count{node_id=\"8247d4d4\"} 24",
+        "block_upload_timer_seconds_sum{node_id=\"8247d4d4\"} 6.633874317",
+        "block_upload_timer_seconds_max{node_id=\"8247d4d4\"} 0.214018791",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.201261056",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.419364864",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.805240832",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.805240832",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.805240832",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.805240832",
+        "compactor_job_timer_seconds_count{node_id=\"8247d4d4\"} 129",
+        "compactor_job_timer_seconds_sum{node_id=\"8247d4d4\"} 94.547864379",
+        "compactor_job_timer_seconds_max{node_id=\"8247d4d4\"} 0.792335225",
+        "compactor_jobs_available{node_id=\"8247d4d4\"} 5.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Eden Space\",node_id=\"8247d4d4\"} 9.751756E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Old Gen\",node_id=\"8247d4d4\"} 1.92746216E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Survivor Space\",node_id=\"8247d4d4\"} 1.048576E7",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.058687488",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.083853312",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.21807104",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.268402688",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.318734336",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.419397632",
+        "node_tx_await_seconds_count{node_id=\"8247d4d4\"} 30509",
+        "node_tx_await_seconds_sum{node_id=\"8247d4d4\"} 3225.367093577",
+        "node_tx_await_seconds_max{node_id=\"8247d4d4\"} 0.48889656",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.060686336",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.087949312",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.226361344",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.2850816",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.318636032",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.419299328",
+        "node_tx_execute_seconds_count{node_id=\"8247d4d4\"} 30509",
+        "node_tx_execute_seconds_sum{node_id=\"8247d4d4\"} 3537.276401556",
+        "node_tx_execute_seconds_max{node_id=\"8247d4d4\"} 0.504671216",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"8247d4d4\"} 5.83685615E8",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 5.83689687E8",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 5.83689687E8",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"8247d4d4\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"8247d4d4\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"8247d4d4\"} 0.0",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.005242624",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.007339776",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.012582656",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.017825536",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.023068416",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.039845632",
+        "tx_op_timer_seconds_count{node_id=\"8247d4d4\"} 182327"
+      ],
+      "follower": [
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Eden Space\",node_id=\"6874c20e\"} 1.1476768E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Survivor Space\",node_id=\"6874c20e\"} 759280.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Tenured Gen\",node_id=\"6874c20e\"} 1.19393392E8",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.75\"} 0.0",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.85\"} 0.0",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.95\"} 0.0",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.98\"} 0.0",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.99\"} 0.0",
+        "node_tx_await_seconds{node_id=\"6874c20e\",quantile=\"0.999\"} 0.0",
+        "node_tx_await_seconds_count{node_id=\"6874c20e\"} 0",
+        "node_tx_await_seconds_sum{node_id=\"6874c20e\"} 0.0",
+        "node_tx_await_seconds_max{node_id=\"6874c20e\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.75\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.85\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.95\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.98\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.99\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"6874c20e\",quantile=\"0.999\"} 0.0",
+        "node_tx_execute_seconds_count{node_id=\"6874c20e\"} 0",
+        "node_tx_execute_seconds_sum{node_id=\"6874c20e\"} 0.0",
+        "node_tx_execute_seconds_max{node_id=\"6874c20e\"} 0.0",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"6874c20e\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"6874c20e\"} 5.83685615E8",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"6874c20e\"} 5.83689687E8",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"6874c20e\"} 5.83689687E8",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"6874c20e\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"6874c20e\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"6874c20e\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"6874c20e\"} 0.0",
+        "xtdb_block_last_upload_time_seconds{db=\"xtdb\",node_id=\"6874c20e\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.75\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.85\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.95\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.98\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.99\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"6874c20e\",quantile=\"0.999\"} 0.150994944",
+        "xtdb_replica_block_buffer_timer_seconds_count{db=\"xtdb\",node_id=\"6874c20e\"} 2",
+        "xtdb_replica_block_buffer_timer_seconds_sum{db=\"xtdb\",node_id=\"6874c20e\"} 0.644999869",
+        "xtdb_replica_block_buffer_timer_seconds_max{db=\"xtdb\",node_id=\"6874c20e\"} 0.493985284",
+        "xtdb_replica_block_buffered_records_count{db=\"xtdb\",node_id=\"6874c20e\"} 2",
+        "xtdb_replica_block_buffered_records_sum{db=\"xtdb\",node_id=\"6874c20e\"} 3.0",
+        "xtdb_replica_block_buffered_records_max{db=\"xtdb\",node_id=\"6874c20e\"} 2.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.75\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.85\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.95\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.98\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.99\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\",quantile=\"0.999\"} 8.84736E-4",
+        "xtdb_replica_process_timer_seconds_count{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\"} 2",
+        "xtdb_replica_process_timer_seconds_sum{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"6874c20e\"} 0.008688146",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"6874c20e\",quantile=\"0.75\"} 0.024117248",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"6874c20e\",quantile=\"0.85\"} 0.024117248",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"6874c20e\",quantile=\"0.95\"} 0.024117248",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"6874c20e\",quantile=\"0.98\"} 0.024117248",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"6874c20e\",quantile=\"0.99\"} 0.024117248"
+      ]
+    },
+    "afterBurst": {
+      "writer": [
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "block_upload_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "block_upload_timer_seconds_count{node_id=\"8247d4d4\"} 27",
+        "block_upload_timer_seconds_sum{node_id=\"8247d4d4\"} 8.786072887",
+        "block_upload_timer_seconds_max{node_id=\"8247d4d4\"} 0.981020892",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "compactor_job_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "compactor_job_timer_seconds_count{node_id=\"8247d4d4\"} 149",
+        "compactor_job_timer_seconds_sum{node_id=\"8247d4d4\"} 104.05000091",
+        "compactor_job_timer_seconds_max{node_id=\"8247d4d4\"} 3.534652889",
+        "compactor_jobs_available{node_id=\"8247d4d4\"} 0.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Eden Space\",node_id=\"8247d4d4\"} 2.9884416E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Old Gen\",node_id=\"8247d4d4\"} 2.0455136E8",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"G1 Survivor Space\",node_id=\"8247d4d4\"} 1483816.0",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.015990784",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.020709376",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.032243712",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.043778048",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.050069504",
+        "node_tx_await_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.100401152",
+        "node_tx_await_seconds_count{node_id=\"8247d4d4\"} 36517",
+        "node_tx_await_seconds_sum{node_id=\"8247d4d4\"} 3932.72660667",
+        "node_tx_await_seconds_max{node_id=\"8247d4d4\"} 1.538975483",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.01835008",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.02359296",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.037224448",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.051904512",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.051904512",
+        "node_tx_execute_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.100139008",
+        "node_tx_execute_seconds_count{node_id=\"8247d4d4\"} 36517",
+        "node_tx_execute_seconds_sum{node_id=\"8247d4d4\"} 4298.959482399",
+        "node_tx_execute_seconds_max{node_id=\"8247d4d4\"} 1.540772342",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"8247d4d4\"} 9.04216076E8",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 9.04216076E8",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"8247d4d4\"} 9.04216076E8",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"8247d4d4\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"8247d4d4\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"8247d4d4\"} 0.0",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.75\"} 0.003276544",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.85\"} 0.004456192",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.95\"} 0.007077632",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.98\"} 0.010485504",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.99\"} 0.013106944",
+        "tx_op_timer_seconds{node_id=\"8247d4d4\",quantile=\"0.999\"} 0.023068416",
+        "tx_op_timer_seconds_count{node_id=\"8247d4d4\"} 218375"
+      ],
+      "follower": [
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Eden Space\",node_id=\"8d42e0fc\"} 2.040444E7",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Survivor Space\",node_id=\"8d42e0fc\"} 638528.0",
+        "jvm_memory_used_bytes{area=\"heap\",id=\"Tenured Gen\",node_id=\"8d42e0fc\"} 9.8727936E7",
+        "node_tx_await_seconds{node_id=\"8d42e0fc\",quantile=\"0.75\"} 0.0",
+        "node_tx_await_seconds{node_id=\"8d42e0fc\",quantile=\"0.85\"} 0.0",
+        "node_tx_await_seconds{node_id=\"8d42e0fc\",quantile=\"0.95\"} 0.0",
+        "node_tx_await_seconds{node_id=\"8d42e0fc\",quantile=\"0.98\"} 0.0",
+        "node_tx_await_seconds{node_id=\"8d42e0fc\",quantile=\"0.99\"} 0.0",
+        "node_tx_await_seconds{node_id=\"8d42e0fc\",quantile=\"0.999\"} 0.0",
+        "node_tx_await_seconds_count{node_id=\"8d42e0fc\"} 0",
+        "node_tx_await_seconds_sum{node_id=\"8d42e0fc\"} 0.0",
+        "node_tx_await_seconds_max{node_id=\"8d42e0fc\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"8d42e0fc\",quantile=\"0.75\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"8d42e0fc\",quantile=\"0.85\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"8d42e0fc\",quantile=\"0.95\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"8d42e0fc\",quantile=\"0.98\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"8d42e0fc\",quantile=\"0.99\"} 0.0",
+        "node_tx_execute_seconds{node_id=\"8d42e0fc\",quantile=\"0.999\"} 0.0",
+        "node_tx_execute_seconds_count{node_id=\"8d42e0fc\"} 0",
+        "node_tx_execute_seconds_sum{node_id=\"8d42e0fc\"} 0.0",
+        "node_tx_execute_seconds_max{node_id=\"8d42e0fc\"} 0.0",
+        "node_tx_lag_MsgId{db=\"xtdb\",node_id=\"8d42e0fc\"} 0.0",
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"8d42e0fc\"} 9.04216076E8",
+        "node_tx_latestProcessedMsgId{db=\"xtdb\",node_id=\"8d42e0fc\"} 9.04216076E8",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"8d42e0fc\"} 9.04216076E8",
+        "node_tx_submit_seconds{node_id=\"8d42e0fc\",quantile=\"0.75\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8d42e0fc\",quantile=\"0.85\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8d42e0fc\",quantile=\"0.95\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8d42e0fc\",quantile=\"0.98\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8d42e0fc\",quantile=\"0.99\"} 0.0",
+        "node_tx_submit_seconds{node_id=\"8d42e0fc\",quantile=\"0.999\"} 0.0",
+        "node_tx_submit_seconds_count{node_id=\"8d42e0fc\"} 0",
+        "node_tx_submit_seconds_sum{node_id=\"8d42e0fc\"} 0.0",
+        "node_tx_submit_seconds_max{node_id=\"8d42e0fc\"} 0.0",
+        "xtdb_block_last_upload_time_seconds{db=\"xtdb\",node_id=\"8d42e0fc\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"8d42e0fc\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"8d42e0fc\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"8d42e0fc\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"8d42e0fc\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"8d42e0fc\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds{db=\"xtdb\",node_id=\"8d42e0fc\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds_count{db=\"xtdb\",node_id=\"8d42e0fc\"} 0",
+        "xtdb_replica_block_buffer_timer_seconds_sum{db=\"xtdb\",node_id=\"8d42e0fc\"} 0.0",
+        "xtdb_replica_block_buffer_timer_seconds_max{db=\"xtdb\",node_id=\"8d42e0fc\"} 0.0",
+        "xtdb_replica_block_buffered_records_count{db=\"xtdb\",node_id=\"8d42e0fc\"} 0",
+        "xtdb_replica_block_buffered_records_sum{db=\"xtdb\",node_id=\"8d42e0fc\"} 0.0",
+        "xtdb_replica_block_buffered_records_max{db=\"xtdb\",node_id=\"8d42e0fc\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"8d42e0fc\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"8d42e0fc\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"8d42e0fc\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"8d42e0fc\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"8d42e0fc\",quantile=\"0.99\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"8d42e0fc\",quantile=\"0.999\"} 0.0",
+        "xtdb_replica_process_timer_seconds_count{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"8d42e0fc\"} 0",
+        "xtdb_replica_process_timer_seconds_sum{db=\"xtdb\",msg_type=\"BlockBoundary\",node_id=\"8d42e0fc\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"8d42e0fc\",quantile=\"0.75\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"8d42e0fc\",quantile=\"0.85\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"8d42e0fc\",quantile=\"0.95\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"8d42e0fc\",quantile=\"0.98\"} 0.0",
+        "xtdb_replica_process_timer_seconds{db=\"xtdb\",msg_type=\"BlockUploaded\",node_id=\"8d42e0fc\",quantile=\"0.99\"} 0.0"
+      ]
+    }
+  },
+  "logs": {
+    "writer": {
+      "lines": 1,
+      "badLines": 0,
+      "sample": [],
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "follower": {
+      "lines": 14,
+      "badLines": 0,
+      "sample": [],
+      "sha256": "e574b425c8770655131df000002849129cf644e7f8da2cf59e0352e5061240c3"
+    }
+  },
+  "enginesAtEnd": {
+    "writer": {
+      "containerId": "bc5b8f52faa9418d1e72b0aea3475f17f1905d1529d9e1acfae0f36b4fb33f6f",
+      "startedAt": "2026-11-07T23:41:54.067847752Z",
+      "running": true,
+      "health": "healthy"
+    },
+    "follower": {
+      "containerId": "dfa7f9ebec79ff146f1c1a0263bcf362f704c99f27f26230cd2b57affdcf06ea",
+      "startedAt": "2026-11-08T00:13:57.122510999Z",
+      "running": true,
+      "health": "healthy",
+      "oomKilled": false,
+      "exitCode": 0
+    }
+  },
+  "followerIncidents": [
+    {
+      "win": "BURST",
+      "at": "00:11:02",
+      "cause": "java.lang.IllegalStateException: Invalid offset in log file: 8680820740569200760",
+      "recovery": {
+        "readyAfterS": 11,
+        "caughtUpAfterReadyS": 0.152,
+        "writerTx": 904216076,
+        "followerTx": 904216076,
+        "caughtUp": true
+      }
+    },
+    {
+      "win": "RECOVER",
+      "at": "00:13:31",
+      "cause": "java.lang.IllegalStateException: Invalid offset in log file: 61572651171584",
+      "recovery": {
+        "readyAfterS": 11,
+        "caughtUpAfterReadyS": 0.073,
+        "writerTx": 909780342,
+        "followerTx": 909780342,
+        "caughtUp": true
+      }
+    }
+  ],
+  "windows": [
+    {
+      "name": "BURST",
+      "mode": "follower",
+      "readers": 16,
+      "kind": "burst",
+      "seconds": 60,
+      "traceDigest": "5d7a6c01f9fe4916b06a694de2873d70813fca5ddbda873b324c734f763ed8ef",
+      "start": 1794096658273.8616,
+      "end": 1794096718273.8616,
+      "offerOverrunMs": -1,
+      "blockCut": {
+        "at": 1794096678273.828,
+        "ms": 103,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 16,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 4,
+            "conns": 4,
+            "cap": 4
+          }
+        ],
+        "connectMs": 42,
+        "pulls": 134,
+        "pullsPerS": 2.23,
+        "goodputPullsPerS": 2.23,
+        "queriesPerS": 9.6,
+        "pull": {
+          "n": 134,
+          "p50": 347.02,
+          "p90": 545.38,
+          "p99": 807.91,
+          "max": 1050.15,
+          "mean": 375.64
+        },
+        "capWait": {
+          "n": 134,
+          "p50": 0.01,
+          "p90": 0.11,
+          "p99": 0.22,
+          "max": 0.22,
+          "mean": 0.03
+        },
+        "errors": {
+          "XX000": 21413
+        },
+        "checkedRows": 5688,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 8,
+          "acked": 8,
+          "straddled": 8,
+          "repeatable": 8,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.08,
+          0.08,
+          0.08,
+          0.08
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 8,
+          "p50": 54.91,
+          "p90": 162.71,
+          "p99": 162.71,
+          "max": 162.71,
+          "mean": 63.19
+        },
+        "writer": {
+          "n": 214,
+          "p50": 15.78,
+          "p90": 38.69,
+          "p99": 88.82,
+          "max": 245.28,
+          "mean": 21.68
+        },
+        "excess": {
+          "n": 8,
+          "p50": 29.5,
+          "p90": 119.77,
+          "p99": 119.77,
+          "max": 119.77,
+          "mean": 36.79
+        },
+        "wrongPos": 0,
+        "errors": [
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000"
+        ]
+      },
+      "stats": {
+        "writer": {
+          "samples": 39,
+          "cpuMean": 105,
+          "cpuMax": 158,
+          "memPeakMiB": 2328
+        },
+        "follower": {
+          "samples": 39,
+          "cpuMean": 41,
+          "cpuMax": 155,
+          "memPeakMiB": 493
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.3,
+        "p99": 6.78,
+        "max": 50.86
+      },
+      "followerIncident": {
+        "win": "BURST",
+        "at": "00:11:02",
+        "cause": "java.lang.IllegalStateException: Invalid offset in log file: 8680820740569200760",
+        "recovery": {
+          "readyAfterS": 11,
+          "caughtUpAfterReadyS": 0.152,
+          "writerTx": 904216076,
+          "followerTx": 904216076,
+          "caughtUp": true
+        }
+      },
+      "writer": {
+        "offered": 6008,
+        "scheduled": 6008,
+        "committed": 6008,
+        "errors": {},
+        "maxQueue": 2458,
+        "drain": {
+          "ms": 58132,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 6008,
+          "p50": 14778.16,
+          "p90": 60383.8,
+          "p99": 63136.95,
+          "max": 63359.11,
+          "mean": 20286.88
+        },
+        "svc": {
+          "n": 6008,
+          "p50": 164.73,
+          "p90": 298.26,
+          "p99": 533.62,
+          "max": 1579.26,
+          "mean": 177.63
+        },
+        "byBand": {
+          "5-10": {
+            "n": 0
+          },
+          "11-25": {
+            "n": 0
+          },
+          "26-50": {
+            "n": 6008,
+            "lat": 63136.95,
+            "svcP50": 164.73
+          }
+        },
+        "waitsOver2s": 5468
+      }
+    },
+    {
+      "name": "RECOVER",
+      "mode": "follower",
+      "readers": 4,
+      "kind": "recover",
+      "seconds": 30,
+      "traceDigest": "d0dd9b43ca778419deef2afa558d3c6d83d7a779fa6d7196214df1ebee64ac96",
+      "start": 1794096800589.727,
+      "end": 1794096830589.727,
+      "offerOverrunMs": -1,
+      "blockCut": {
+        "at": 1794096801589.0688,
+        "ms": 52,
+        "ok": true,
+        "out": "Block flush message sent to 1 database(s)."
+      },
+      "reads": {
+        "logicalReaders": 4,
+        "plan": [
+          {
+            "w": 0,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 1,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 2,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          },
+          {
+            "w": 3,
+            "readers": 1,
+            "conns": 1,
+            "cap": 4
+          }
+        ],
+        "connectMs": 137,
+        "pulls": 200,
+        "pullsPerS": 6.67,
+        "goodputPullsPerS": 6.67,
+        "queriesPerS": 30.5,
+        "pull": {
+          "n": 200,
+          "p50": 121.26,
+          "p90": 317.38,
+          "p99": 833.56,
+          "max": 842.16,
+          "mean": 170.75
+        },
+        "capWait": {
+          "n": 200,
+          "p50": 0.01,
+          "p90": 0.04,
+          "p99": 2.73,
+          "max": 2.8,
+          "mean": 0.07
+        },
+        "errors": {
+          "XX000": 2671
+        },
+        "checkedRows": 8943,
+        "uncertainRows": 0,
+        "violations": 0,
+        "violationSamples": [],
+        "faults": {
+          "missing": 0,
+          "duplicate": 0,
+          "torn": 0
+        },
+        "splits": {
+          "n": 23,
+          "acked": 23,
+          "straddled": 23,
+          "repeatable": 23,
+          "showedStraddledCommand": 0
+        },
+        "elu": [
+          0.03,
+          0.03,
+          0.03,
+          0.03
+        ]
+      },
+      "lag": {
+        "follower": {
+          "n": 18,
+          "p50": 41.83,
+          "p90": 184.27,
+          "p99": 383.56,
+          "max": 383.56,
+          "mean": 67.36
+        },
+        "writer": {
+          "n": 53,
+          "p50": 8.43,
+          "p90": 29.14,
+          "p99": 108.48,
+          "max": 108.48,
+          "mean": 14.35
+        },
+        "excess": {
+          "n": 18,
+          "p50": 22.63,
+          "p90": 75.78,
+          "p99": 359.89,
+          "max": 359.89,
+          "mean": 44.22
+        },
+        "wrongPos": 0,
+        "errors": [
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000",
+          "XX000"
+        ]
+      },
+      "stats": {
+        "writer": {
+          "samples": 9,
+          "cpuMean": 47,
+          "cpuMax": 139,
+          "memPeakMiB": 2261
+        },
+        "follower": {
+          "samples": 9,
+          "cpuMean": 93,
+          "cpuMax": 187,
+          "memPeakMiB": 413
+        }
+      },
+      "mainLoopDelayMs": {
+        "p50": 5.48,
+        "p99": 6.82,
+        "max": 55.21
+      },
+      "followerIncident": {
+        "win": "RECOVER",
+        "at": "00:13:31",
+        "cause": "java.lang.IllegalStateException: Invalid offset in log file: 61572651171584",
+        "recovery": {
+          "readyAfterS": 11,
+          "caughtUpAfterReadyS": 0.073,
+          "writerTx": 909780342,
+          "followerTx": 909780342,
+          "caughtUp": true
+        }
+      },
+      "writer": {
+        "offered": 582,
+        "scheduled": 582,
+        "committed": 582,
+        "errors": {},
+        "maxQueue": 7,
+        "drain": {
+          "ms": 31,
+          "leftQueued": 0,
+          "leftInflight": 0
+        },
+        "lat": {
+          "n": 582,
+          "p50": 32.68,
+          "p90": 212.14,
+          "p99": 872.62,
+          "max": 994.42,
+          "mean": 91.67
+        },
+        "svc": {
+          "n": 582,
+          "p50": 32.24,
+          "p90": 166.37,
+          "p99": 638.14,
+          "max": 872.33,
+          "mean": 77.42
+        },
+        "byBand": {
+          "5-10": {
+            "n": 356,
+            "lat": 872.62,
+            "svcP50": 31.03
+          },
+          "11-25": {
+            "n": 167,
+            "lat": 884.53,
+            "svcP50": 33.2
+          },
+          "26-50": {
+            "n": 59,
+            "lat": 682.95,
+            "svcP50": 37.46
+          }
+        },
+        "waitsOver2s": 0
+      }
+    }
+  ],
+  "summaryTables": {
+    "baseline": {
+      "lat": {
+        "n": 0
+      },
+      "svc": {
+        "n": 0
+      }
+    },
+    "rows": [],
+    "markdown": "Baseline (pooled ): commit from schedule p50 undefined p99 undefined; service p50 undefined p99 undefined ms\n\n|  |\n|  |\n\n- BURST: commits 6008/6008, errors {}, lat p50/p99 14778.16/63136.95, svc p50/p99 164.73/533.62; lag follower p50/p99 54.91/162.71 (n 8, errors 206); reads 2.23/s p99 807.91 viol 0 errors {\"XX000\":21413}; block cut true 103 ms\n- RECOVER: commits 582/582, errors {}, lat p50/p99 32.68/872.62, svc p50/p99 32.24/638.14; lag follower p50/p99 41.83/383.56 (n 18, errors 35); reads 6.67/s p99 833.56 viol 0 errors {\"XX000\":2671}; block cut true 52 ms\n"
+  },
+  "finishedAt": "2026-11-08T00:14:10.661Z"
+}

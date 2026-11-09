@@ -1,0 +1,15 @@
+test_authorized_rows_moved_verbatim (__main__.Contract0312.test_authorized_rows_moved_verbatim) ... ok
+test_every_rule_has_generated_consumer (__main__.Contract0312.test_every_rule_has_generated_consumer) ... ok
+test_no_g03_pins_or_isolation_claim (__main__.Contract0312.test_no_g03_pins_or_isolation_claim) ... ok
+test_observation_safety_and_inventory (__main__.Contract0312.test_observation_safety_and_inventory) ... ok
+test_other_pending_rows_unchanged (__main__.Contract0312.test_other_pending_rows_unchanged) ... ok
+test_q87_preserves_every_assertion (__main__.Contract0312.test_q87_preserves_every_assertion) ... ok
+test_runner_file_closure_and_exact_revisions (__main__.Contract0312.test_runner_file_closure_and_exact_revisions) ... ok
+test_screening_not_acceptance (__main__.Contract0312.test_screening_not_acceptance) ... ok
+test_three_frontiers_and_load_projection (__main__.Contract0312.test_three_frontiers_and_load_projection) ... ok
+test_verifier_record_is_original (__main__.Contract0312.test_verifier_record_is_original) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.464s
+
+OK

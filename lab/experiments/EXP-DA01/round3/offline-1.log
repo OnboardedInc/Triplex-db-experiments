@@ -1,0 +1,10 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 58828 "CX-RQ01-bound-gate-r5", pid 51406 "CX-INT-XCJ-C8-fixed-evaluator", pid 37317 "CX-G03-r3-claim-suites2", pid 47907 "CX-OBS01-R2-Q"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+
+ Test Files  3 passed (3)
+      Tests  102 passed (102)
+   Start at  19:01:39
+   Duration  1.08s (import 60%, transform 31%, tests 8%, worker 1%)
+

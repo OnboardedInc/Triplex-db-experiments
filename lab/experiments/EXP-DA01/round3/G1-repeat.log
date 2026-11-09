@@ -1,0 +1,4 @@
+[lab] G1-datomic-20261109T002002Z-e3adf2: raw output runs/G1/G1-datomic-20261109T002002Z-e3adf2
+PASS G1 datomic/dev scope=full executed=88 pass=88 fail=0 skip=0
+profile: default; planner budget: null
+receipt: lab/runs/G1/G1-datomic-20261109T002002Z-e3adf2.json

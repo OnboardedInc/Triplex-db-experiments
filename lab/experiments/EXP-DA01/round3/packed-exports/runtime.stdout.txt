@@ -1,0 +1,1 @@
+{"positions":40,"subjects":6,"observations":[{"phase":0,"route":"source","outcome":"answer"},{"phase":1,"route":"source","outcome":"answer"}]}

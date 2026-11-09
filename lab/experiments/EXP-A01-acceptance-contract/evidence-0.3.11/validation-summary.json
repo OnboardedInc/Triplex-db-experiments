@@ -1,0 +1,15 @@
+{
+  "sourceHead": "5ba1e7585b8e5bd6134ac9f4a301565889caf3d0",
+  "generatorSha256": "512ef4c1da9e185771bcb94d6fc4680c349a52da37168048fe706a28b5a5cf7e",
+  "mutationCatalog": 419,
+  "runnable": 338,
+  "caught": 338,
+  "missed": 0,
+  "retiredAnchors": 81,
+  "supersededStatusOnly": 1,
+  "newRulingRegressions": 50,
+  "q47d": "PASS",
+  "byteIdentical": "PASS",
+  "engineGates": "NOT RUN",
+  "independentContractReview": "PENDING"
+}

@@ -1,0 +1,17 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/packages/xtdb
+
+ ✓ test/commit-encoding.test.ts (6 tests | 3 skipped) 11343ms
+   ✓ XTDB compact commit guards against the engine (EXP-J01) (3)
+     ✓ lets exactly one of two racing commands with the same id commit, for every tricky id 8633ms
+     ✓ rejects an existing assertion id and an existing operation as a definite identity conflict 2646ms
+
+ Test Files  1 passed (1)
+      Tests  3 passed | 3 skipped (6)
+   Start at  19:17:12
+   Duration  11.75s (tests 97%, import 2%, transform 1%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/lab/experiments/INT-XCJ/evidence/round5/J01-live.json

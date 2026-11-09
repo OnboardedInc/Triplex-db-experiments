@@ -1,0 +1,3082 @@
+{
+  "format": "tx2-x02-live/1",
+  "runId": "x02-1794080692802",
+  "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+  "startedAt": "2026-11-07T19:44:52.803Z",
+  "controls": [
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u1->r1",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "support a1, no block or revoke",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        1002
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u1->r1",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "support a1, no block or revoke",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        749
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u2->r2",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "block b2 matches (u2, r2)",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        755
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u2->r2",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "block b2 matches (u2, r2)",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        597
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u3->r3",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "revoke c3 matches principal p3 on r3",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        770
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u3->r3",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "revoke c3 matches principal p3 on r3",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        891
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u4->r4",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "revoke c4 is for rX, not r4",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        937
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u4->r4",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "revoke c4 is for rX, not r4",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        1158
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u5->r5",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "block b5 is for uX, not u5",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        1023
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u5->r5",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "block b5 is for uX, not u5",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        729
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u6->r6",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "a6 is revoked (p6) but a6b (p6b) is not",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        1184
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u6->r6",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "a6 is revoked (p6) but a6b (p6b) is not",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        710
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u7->r7",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "a7 has no principal fact",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        288
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "u7->r7",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "a7 has no principal fact",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        625
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "nobody->r1",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "no support for this user",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        268
+      ]
+    },
+    {
+      "workload": "12",
+      "operation": "access_with_deny",
+      "label": "nobody->r1",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "no support for this user",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        593
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "conversion_funnel",
+      "label": "funnel [0,10)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          "dup"
+        ],
+        [
+          "lo"
+        ],
+        [
+          "ok"
+        ]
+      ],
+      "derivation": "ok 1<2<3, lo 0<2<3 (0 >= from), dup 1<2<3; eq01/eq12 have equal steps, rev is reversed, hi pays at 10 (not < 10), mix1 has no checkout",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"dup\"}]",
+        "[{\"tag\":\"str\",\"value\":\"lo\"}]",
+        "[{\"tag\":\"str\",\"value\":\"ok\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        935
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "conversion_funnel",
+      "label": "funnel [0,10)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          "dup"
+        ],
+        [
+          "lo"
+        ],
+        [
+          "ok"
+        ]
+      ],
+      "derivation": "ok 1<2<3, lo 0<2<3 (0 >= from), dup 1<2<3; eq01/eq12 have equal steps, rev is reversed, hi pays at 10 (not < 10), mix1 has no checkout",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"dup\"}]",
+        "[{\"tag\":\"str\",\"value\":\"lo\"}]",
+        "[{\"tag\":\"str\",\"value\":\"ok\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        909
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "conversion_funnel",
+      "label": "funnel [1,10)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          "dup"
+        ],
+        [
+          "ok"
+        ]
+      ],
+      "derivation": "as [0,10) but lo's view at 0 is before from=1",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"dup\"}]",
+        "[{\"tag\":\"str\",\"value\":\"ok\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        661
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "conversion_funnel",
+      "label": "funnel [1,10)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          "dup"
+        ],
+        [
+          "ok"
+        ]
+      ],
+      "derivation": "as [0,10) but lo's view at 0 is before from=1",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"dup\"}]",
+        "[{\"tag\":\"str\",\"value\":\"ok\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        849
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "conversion_funnel",
+      "label": "funnel [0,3)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [],
+      "derivation": "every ordered session pays at 3 or later (ok, lo, dup at 3; hi at 10); rev's view at 3 is outside",
+      "rows": [],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        813
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "conversion_funnel",
+      "label": "funnel [0,3)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [],
+      "derivation": "every ordered session pays at 3 or later (ok, lo, dup at 3; hi at 10); rev's view at 3 is outside",
+      "rows": [],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        901
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session ok",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "1<2<3 inside [0,10)",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        855
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session ok",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "1<2<3 inside [0,10)",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        999
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session eq01",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "view = checkout = 5",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        657
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session eq01",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "view = checkout = 5",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        725
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session eq12",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "checkout = payment = 4",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        655
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session eq12",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "checkout = payment = 4",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        645
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session rev",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "3 > 2 > 1",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        567
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session rev",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "3 > 2 > 1",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        511
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session mix1",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "mix1 has no checkout (it is in mix2)",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        739
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session mix1",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          false
+        ]
+      ],
+      "derivation": "mix1 has no checkout (it is in mix2)",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":false}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        544
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session dup",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "1<2<3; the second checkout at 2 changes nothing",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        525
+      ]
+    },
+    {
+      "workload": "17",
+      "operation": "session_conversion",
+      "label": "session dup",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          true
+        ]
+      ],
+      "derivation": "1<2<3; the second checkout at 2 changes nothing",
+      "rows": [
+        "[{\"tag\":\"bool\",\"value\":true}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        593
+      ]
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "cust/USD",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "1375"
+          }
+        ]
+      ],
+      "derivation": "captures 1000 + 500 + 25 (k2 has two amount facts) = 1525; refunds of k1 in USD 100 + 50 = 150; 1525 - 150",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"1375\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        606
+      ]
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "cust/USD",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "1375"
+          }
+        ]
+      ],
+      "derivation": "captures 1000 + 500 + 25 (k2 has two amount facts) = 1525; refunds of k1 in USD 100 + 50 = 150; 1525 - 150",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"1375\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        1070
+      ]
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "cust/EUR",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "700"
+          }
+        ]
+      ],
+      "derivation": "capture k3 700; its refund r3 is in USD, not EUR",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"700\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        689
+      ]
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "cust/EUR",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "700"
+          }
+        ]
+      ],
+      "derivation": "capture k3 700; its refund r3 is in USD, not EUR",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"700\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        1173
+      ]
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "other/USD",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "9"
+          }
+        ]
+      ],
+      "derivation": "capture k4 9, no refunds",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"9\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        539
+      ]
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "other/USD",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "9"
+          }
+        ]
+      ],
+      "derivation": "capture k4 9, no refunds",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"9\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        815
+      ]
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "nobody/USD",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "0"
+          }
+        ]
+      ],
+      "derivation": "no captures: the empty sum is 0",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        687
+      ]
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "nobody/USD",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "0"
+          }
+        ]
+      ],
+      "derivation": "no captures: the empty sum is 0",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        928
+      ]
+    },
+    {
+      "workload": "05",
+      "operation": "accepted_event_count",
+      "label": "o1 count",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "4"
+          }
+        ]
+      ],
+      "derivation": "e1, e2, e3, e4",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"4\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        79
+      ]
+    },
+    {
+      "workload": "05",
+      "operation": "accepted_event_count",
+      "label": "o1 count",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "4"
+          }
+        ]
+      ],
+      "derivation": "e1, e2, e3, e4",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"4\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        90
+      ]
+    },
+    {
+      "workload": "05",
+      "operation": "accepted_event_count",
+      "label": "empty count",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "0"
+          }
+        ]
+      ],
+      "derivation": "no events",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        61
+      ]
+    },
+    {
+      "workload": "05",
+      "operation": "accepted_event_count",
+      "label": "empty count",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "0"
+          }
+        ]
+      ],
+      "derivation": "no events",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        94
+      ]
+    },
+    {
+      "workload": "05",
+      "operation": "state_at",
+      "label": "o1 highest revision tie",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          "shipped"
+        ],
+        [
+          "shipped-b"
+        ]
+      ],
+      "derivation": "revision 3 is highest, held by e2 and e3",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"shipped\"}]",
+        "[{\"tag\":\"str\",\"value\":\"shipped-b\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        278
+      ]
+    },
+    {
+      "workload": "05",
+      "operation": "state_at",
+      "label": "o1 highest revision tie",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          "shipped"
+        ],
+        [
+          "shipped-b"
+        ]
+      ],
+      "derivation": "revision 3 is highest, held by e2 and e3",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"shipped\"}]",
+        "[{\"tag\":\"str\",\"value\":\"shipped-b\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        240
+      ]
+    },
+    {
+      "workload": "05",
+      "operation": "state_at",
+      "label": "unknown object",
+      "language": "xtql",
+      "pass": true,
+      "expect": [],
+      "derivation": "no events",
+      "rows": [],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        317
+      ]
+    },
+    {
+      "workload": "05",
+      "operation": "state_at",
+      "label": "unknown object",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [],
+      "derivation": "no events",
+      "rows": [],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        290
+      ]
+    },
+    {
+      "workload": "09",
+      "operation": "paid_without_entitlement",
+      "label": "s2 and s4",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          "s2"
+        ],
+        [
+          "s4"
+        ]
+      ],
+      "derivation": "s1 entitled; s2 only entitled=false; s3 not paid; s4 paid twice, no entitlement; nnull's boolean subject matches nothing",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"s2\"}]",
+        "[{\"tag\":\"str\",\"value\":\"s4\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        674
+      ]
+    },
+    {
+      "workload": "09",
+      "operation": "paid_without_entitlement",
+      "label": "s2 and s4",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          "s2"
+        ],
+        [
+          "s4"
+        ]
+      ],
+      "derivation": "s1 entitled; s2 only entitled=false; s3 not paid; s4 paid twice, no entitlement; nnull's boolean subject matches nothing",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"s2\"}]",
+        "[{\"tag\":\"str\",\"value\":\"s4\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        487
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m1 [0,10)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "5"
+          }
+        ]
+      ],
+      "derivation": "[0.25, 3.25) U [2, 5.25) = [0.25, 5.25)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"5\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        3596
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m1 [0,10)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "5"
+          }
+        ]
+      ],
+      "derivation": "[0.25, 3.25) U [2, 5.25) = [0.25, 5.25)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"5\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        365
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m2 [0,10)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "2"
+          }
+        ]
+      ],
+      "derivation": "[8, open) clipped to [8, 10)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"2\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        644
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m2 [0,10)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "2"
+          }
+        ]
+      ],
+      "derivation": "[8, open) clipped to [8, 10)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"2\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        387
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m3 [0,10)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "2"
+          }
+        ]
+      ],
+      "derivation": "duplicate [1.5, 2.5) and adjacent [2.5, 3.5): [1.5, 3.5)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"2\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        1552
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m3 [0,10)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "2"
+          }
+        ]
+      ],
+      "derivation": "duplicate [1.5, 2.5) and adjacent [2.5, 3.5): [1.5, 3.5)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"2\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        374
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m3 [2,3)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "1"
+          }
+        ]
+      ],
+      "derivation": "[1.5, 3.5) clipped to [2, 3)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"1\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        1673
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m3 [2,3)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "1"
+          }
+        ]
+      ],
+      "derivation": "[1.5, 3.5) clipped to [2, 3)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"1\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        328
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m4 [0,10)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "4"
+          }
+        ]
+      ],
+      "derivation": "[4, 6) and [7, 9), gap at [6, 7)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"4\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        2454
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m4 [0,10)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "4"
+          }
+        ]
+      ],
+      "derivation": "[4, 6) and [7, 9), gap at [6, 7)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"4\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        389
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m4 [5,8)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "2"
+          }
+        ]
+      ],
+      "derivation": "[5, 6) and [7, 8)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"2\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        2602
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "m4 [5,8)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "2"
+          }
+        ]
+      ],
+      "derivation": "[5, 6) and [7, 8)",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"2\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        478
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "none [0,10)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "0"
+          }
+        ]
+      ],
+      "derivation": "no intervals",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        168
+      ]
+    },
+    {
+      "workload": "18",
+      "operation": "uptime_duration",
+      "label": "none [0,10)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "0"
+          }
+        ]
+      ],
+      "derivation": "no intervals",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"0\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        478
+      ]
+    },
+    {
+      "workload": "20",
+      "operation": "reachability_closure",
+      "label": "closure(n0)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          "n1"
+        ],
+        [
+          "n2"
+        ],
+        [
+          "n3"
+        ],
+        [
+          "n4"
+        ],
+        [
+          "n5"
+        ],
+        [
+          "n6"
+        ],
+        [
+          "b1"
+        ],
+        [
+          "b2"
+        ]
+      ],
+      "derivation": "the chain, the side branch; 6 hops deep",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"b1\"}]",
+        "[{\"tag\":\"str\",\"value\":\"b2\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n1\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n2\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n3\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n4\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n5\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n6\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "elapsedMs": [
+        79,
+        312,
+        888,
+        1627,
+        2422,
+        3079,
+        5007,
+        22511
+      ]
+    },
+    {
+      "workload": "20",
+      "operation": "reachability_closure",
+      "label": "closure(n0)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          "n1"
+        ],
+        [
+          "n2"
+        ],
+        [
+          "n3"
+        ],
+        [
+          "n4"
+        ],
+        [
+          "n5"
+        ],
+        [
+          "n6"
+        ],
+        [
+          "b1"
+        ],
+        [
+          "b2"
+        ]
+      ],
+      "derivation": "the chain, the side branch; 6 hops deep",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"b1\"}]",
+        "[{\"tag\":\"str\",\"value\":\"b2\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n1\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n2\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n3\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n4\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n5\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n6\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        573
+      ]
+    },
+    {
+      "workload": "20",
+      "operation": "reachability_closure",
+      "label": "closure(n3)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          "n2"
+        ],
+        [
+          "n3"
+        ],
+        [
+          "n4"
+        ],
+        [
+          "n5"
+        ],
+        [
+          "n6"
+        ]
+      ],
+      "derivation": "n3 -> n4 -> n5 -> n6 -> n2 -> n3 (cycle includes n3 itself)",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"n2\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n3\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n4\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n5\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n6\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "elapsedMs": [
+        138,
+        436,
+        474,
+        772,
+        1472,
+        2565,
+        14364
+      ]
+    },
+    {
+      "workload": "20",
+      "operation": "reachability_closure",
+      "label": "closure(n3)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          "n2"
+        ],
+        [
+          "n3"
+        ],
+        [
+          "n4"
+        ],
+        [
+          "n5"
+        ],
+        [
+          "n6"
+        ]
+      ],
+      "derivation": "n3 -> n4 -> n5 -> n6 -> n2 -> n3 (cycle includes n3 itself)",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"n2\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n3\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n4\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n5\"}]",
+        "[{\"tag\":\"str\",\"value\":\"n6\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        317
+      ]
+    },
+    {
+      "workload": "20",
+      "operation": "reachability_closure",
+      "label": "closure(b1)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          "b2"
+        ]
+      ],
+      "derivation": "one edge",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"b2\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1,
+        1,
+        1
+      ],
+      "elapsedMs": [
+        57,
+        113,
+        717
+      ]
+    },
+    {
+      "workload": "20",
+      "operation": "reachability_closure",
+      "label": "closure(b1)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          "b2"
+        ]
+      ],
+      "derivation": "one edge",
+      "rows": [
+        "[{\"tag\":\"str\",\"value\":\"b2\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        293
+      ]
+    },
+    {
+      "workload": "20",
+      "operation": "reachability_closure",
+      "label": "closure(b2)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [],
+      "derivation": "no outgoing edge",
+      "rows": [],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1,
+        1,
+        1
+      ],
+      "elapsedMs": [
+        59,
+        136,
+        577
+      ]
+    },
+    {
+      "workload": "20",
+      "operation": "reachability_closure",
+      "label": "closure(b2)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [],
+      "derivation": "no outgoing edge",
+      "rows": [],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        269
+      ]
+    },
+    {
+      "workload": "20",
+      "operation": "reachability_closure",
+      "label": "closure(nobody)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [],
+      "derivation": "not a node",
+      "rows": [],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1,
+        1,
+        1
+      ],
+      "elapsedMs": [
+        58,
+        123,
+        595
+      ]
+    },
+    {
+      "workload": "20",
+      "operation": "reachability_closure",
+      "label": "closure(nobody)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [],
+      "derivation": "not a node",
+      "rows": [],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        280
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "three-2^62",
+      "language": "xtql",
+      "pass": true,
+      "expect": {
+        "error": "NativeIntegerOverflowError"
+      },
+      "derivation": "exact sum 13835058055282163712 is outside int64",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "languages": [],
+      "positions": [],
+      "elapsedMs": []
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "three-2^62",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": {
+        "error": "NativeIntegerOverflowError"
+      },
+      "derivation": "exact sum 13835058055282163712 is outside int64",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "languages": [],
+      "positions": [],
+      "elapsedMs": []
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "int64max-plus-1",
+      "language": "xtql",
+      "pass": true,
+      "expect": {
+        "error": "NativeIntegerOverflowError"
+      },
+      "derivation": "exact sum 9223372036854775808 is outside int64",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "languages": [],
+      "positions": [],
+      "elapsedMs": []
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "int64max-plus-1",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": {
+        "error": "NativeIntegerOverflowError"
+      },
+      "derivation": "exact sum 9223372036854775808 is outside int64",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "languages": [],
+      "positions": [],
+      "elapsedMs": []
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "int64max-plus-min",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "-1"
+          }
+        ]
+      ],
+      "derivation": "exact sum -1",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"-1\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        142
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "int64max-plus-min",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "-1"
+          }
+        ]
+      ],
+      "derivation": "exact sum -1",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"-1\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        148
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "min-plus-minus1",
+      "language": "xtql",
+      "pass": true,
+      "expect": {
+        "error": "NativeIntegerOverflowError"
+      },
+      "derivation": "exact sum -9223372036854775809 is outside int64",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "languages": [],
+      "positions": [],
+      "elapsedMs": []
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "min-plus-minus1",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": {
+        "error": "NativeIntegerOverflowError"
+      },
+      "derivation": "exact sum -9223372036854775809 is outside int64",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "languages": [],
+      "positions": [],
+      "elapsedMs": []
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "exact-int64max",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "9223372036854775807"
+          }
+        ]
+      ],
+      "derivation": "exact sum 9223372036854775807",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"9223372036854775807\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        143
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "exact-int64max",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "9223372036854775807"
+          }
+        ]
+      ],
+      "derivation": "exact sum 9223372036854775807",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"9223372036854775807\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        144
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "exact-int64min",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "-9223372036854775808"
+          }
+        ]
+      ],
+      "derivation": "exact sum -9223372036854775808",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"-9223372036854775808\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        151
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "exact-int64min",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "-9223372036854775808"
+          }
+        ]
+      ],
+      "derivation": "exact sum -9223372036854775808",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"-9223372036854775808\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        138
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "mixed-wrap-cancels",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "5"
+          }
+        ]
+      ],
+      "derivation": "exact sum 5",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"5\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        126
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "mixed-wrap-cancels",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "5"
+          }
+        ]
+      ],
+      "derivation": "exact sum 5",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"5\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        131
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "total+(2^63-1)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "9223372036854775807"
+          }
+        ]
+      ],
+      "derivation": "exact sum 9223372036854775807",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"9223372036854775807\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        193
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "total+(2^63-1)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "9223372036854775807"
+          }
+        ]
+      ],
+      "derivation": "exact sum 9223372036854775807",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"9223372036854775807\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        363
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "total-(2^63-1)",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "-9223372036854775807"
+          }
+        ]
+      ],
+      "derivation": "exact sum -9223372036854775807",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"-9223372036854775807\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        382
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "total-(2^63-1)",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "-9223372036854775807"
+          }
+        ]
+      ],
+      "derivation": "exact sum -9223372036854775807",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"-9223372036854775807\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        381
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "carry-counterexample",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "9223372032559808513"
+          }
+        ]
+      ],
+      "derivation": "exact sum 9223372032559808513",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"9223372032559808513\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        593
+      ]
+    },
+    {
+      "workload": "06",
+      "operation": "account_balance",
+      "label": "carry-counterexample",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "9223372032559808513"
+          }
+        ]
+      ],
+      "derivation": "exact sum 9223372032559808513",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"9223372032559808513\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        403
+      ]
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "net fits, captures do not",
+      "language": "xtql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "9223372036854775807"
+          }
+        ]
+      ],
+      "derivation": "2^62 + 2^62 - 1 = 2^63 - 1; the captures alone (2^63) are outside int64",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"9223372036854775807\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        1141
+      ]
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "net fits, captures do not",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": [
+        [
+          {
+            "type": "integer",
+            "value": "9223372036854775807"
+          }
+        ]
+      ],
+      "derivation": "2^62 + 2^62 - 1 = 2^63 - 1; the captures alone (2^63) are outside int64",
+      "rows": [
+        "[{\"tag\":\"i64\",\"value\":\"9223372036854775807\"}]"
+      ],
+      "error": null,
+      "languages": [
+        "xtdb-sql"
+      ],
+      "positions": [
+        1
+      ],
+      "elapsedMs": [
+        1522
+      ]
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "net outside int64",
+      "language": "xtql",
+      "pass": true,
+      "expect": {
+        "error": "NativeIntegerOverflowError"
+      },
+      "derivation": "2 * (2^63 - 1) with no refunds",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "languages": [],
+      "positions": [],
+      "elapsedMs": []
+    },
+    {
+      "workload": "08",
+      "operation": "customer_net_revenue",
+      "label": "net outside int64",
+      "language": "xtdb-sql",
+      "pass": true,
+      "expect": {
+        "error": "NativeIntegerOverflowError"
+      },
+      "derivation": "2 * (2^63 - 1) with no refunds",
+      "rows": null,
+      "error": "Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])",
+      "languages": [],
+      "positions": [],
+      "elapsedMs": []
+    }
+  ],
+  "mutants": [
+    {
+      "mutant": "17 view<=checkout",
+      "language": "xtql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 9,
+      "failedControls": 3,
+      "caught": true
+    },
+    {
+      "mutant": "17 view<=checkout",
+      "language": "xtdb-sql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 9,
+      "failedControls": 3,
+      "caught": true
+    },
+    {
+      "mutant": "17 checkout<=payment",
+      "language": "xtql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 9,
+      "failedControls": 3,
+      "caught": true
+    },
+    {
+      "mutant": "17 checkout<=payment",
+      "language": "xtdb-sql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 9,
+      "failedControls": 3,
+      "caught": true
+    },
+    {
+      "mutant": "12 revoke never matches",
+      "language": "xtql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 8,
+      "failedControls": 1,
+      "caught": true
+    },
+    {
+      "mutant": "12 revoke never matches",
+      "language": "xtdb-sql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 8,
+      "failedControls": 1,
+      "caught": true
+    },
+    {
+      "mutant": "12 block never matches",
+      "language": "xtql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 8,
+      "failedControls": 1,
+      "caught": true
+    },
+    {
+      "mutant": "12 block never matches",
+      "language": "xtdb-sql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 8,
+      "failedControls": 1,
+      "caught": true
+    },
+    {
+      "mutant": "09 entitlement value ignored",
+      "language": "xtql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 1,
+      "failedControls": 1,
+      "caught": true
+    },
+    {
+      "mutant": "09 entitlement value ignored",
+      "language": "xtdb-sql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 1,
+      "failedControls": 1,
+      "caught": true
+    },
+    {
+      "mutant": "05 lowest revision wins",
+      "language": "xtql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 4,
+      "failedControls": 1,
+      "caught": true
+    },
+    {
+      "mutant": "05 lowest revision wins",
+      "language": "xtdb-sql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 4,
+      "failedControls": 1,
+      "caught": true
+    },
+    {
+      "mutant": "18 covered test drops the upper end",
+      "language": "xtql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 7,
+      "failedControls": 2,
+      "caught": true
+    },
+    {
+      "mutant": "18 covered test drops the upper end",
+      "language": "xtdb-sql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 7,
+      "failedControls": 2,
+      "caught": true
+    },
+    {
+      "mutant": "06 wrong attribute filter",
+      "language": "xtql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 10,
+      "failedControls": 10,
+      "caught": true
+    },
+    {
+      "mutant": "06 wrong attribute filter",
+      "language": "xtdb-sql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 10,
+      "failedControls": 10,
+      "caught": true
+    },
+    {
+      "mutant": "08 refunds ignored",
+      "language": "xtql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 6,
+      "failedControls": 2,
+      "caught": true
+    },
+    {
+      "mutant": "08 refunds ignored",
+      "language": "xtdb-sql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 6,
+      "failedControls": 2,
+      "caught": true
+    },
+    {
+      "mutant": "09 #6313 guard removed (SQL)",
+      "language": "xtql",
+      "applicable": false
+    },
+    {
+      "mutant": "09 #6313 guard removed (SQL)",
+      "language": "xtdb-sql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 1,
+      "failedControls": 1,
+      "caught": true
+    },
+    {
+      "mutant": "12 #6313 guard removed on block (SQL)",
+      "language": "xtql",
+      "applicable": false
+    },
+    {
+      "mutant": "12 #6313 guard removed on block (SQL)",
+      "language": "xtdb-sql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 8,
+      "failedControls": 1,
+      "caught": true
+    },
+    {
+      "mutant": "20 fixpoint check never fires (XTQL)",
+      "language": "xtql",
+      "applicable": true,
+      "textChanged": true,
+      "controls": 5,
+      "failedControls": 2,
+      "caught": true
+    },
+    {
+      "mutant": "20 fixpoint check never fires (XTQL)",
+      "language": "xtdb-sql",
+      "applicable": false
+    }
+  ],
+  "fixedCut": [
+    {
+      "language": "xtql",
+      "pass": true,
+      "writerPosition": 2,
+      "pinned": {
+        "rows": [
+          "[{\"tag\":\"bool\",\"value\":false}]"
+        ],
+        "error": null,
+        "languages": [
+          "xtql"
+        ],
+        "positions": [
+          1,
+          1
+        ],
+        "elapsedMs": [
+          445,
+          154
+        ]
+      },
+      "after": {
+        "rows": [
+          "[{\"tag\":\"bool\",\"value\":true}]"
+        ],
+        "error": null,
+        "languages": [
+          "xtql"
+        ],
+        "positions": [
+          2,
+          2
+        ],
+        "elapsedMs": [
+          168,
+          10
+        ]
+      }
+    },
+    {
+      "language": "xtdb-sql",
+      "pass": true,
+      "writerPosition": 2,
+      "pinned": {
+        "rows": [
+          "[{\"tag\":\"bool\",\"value\":false}]"
+        ],
+        "error": null,
+        "languages": [
+          "xtdb-sql"
+        ],
+        "positions": [
+          1,
+          1
+        ],
+        "elapsedMs": [
+          173,
+          92
+        ]
+      },
+      "after": {
+        "rows": [
+          "[{\"tag\":\"bool\",\"value\":true}]"
+        ],
+        "error": null,
+        "languages": [
+          "xtdb-sql"
+        ],
+        "positions": [
+          2,
+          2
+        ],
+        "elapsedMs": [
+          164,
+          18
+        ]
+      }
+    }
+  ],
+  "hazards": {
+    "exactSum": "1000000000000000004",
+    "sqlDecimalSumText": "1000000000000000004",
+    "sqlDecimalSumAsBigint": "1000000000000000000",
+    "xtqlDecimalSumAsI64": "1000000000000000000",
+    "sqlDecimal2pow63AsBigint": "9223372036854775807"
+  },
+  "endedAt": "2026-11-07T19:48:36.825Z",
+  "summary": {
+    "controls": {
+      "total": 100,
+      "pass": 100
+    },
+    "controlScenarios": 50,
+    "mutants": {
+      "applicable": 21,
+      "caught": 21
+    },
+    "fixedCut": {
+      "total": 2,
+      "pass": 2
+    }
+  },
+  "result": "PASS"
+}

@@ -102,7 +102,9 @@ export async function acquireMeasureLease(label, { holder, pollMs = 1000, timeou
     while (releases.size < HEAVY_SLOTS) {
       for (let index = 1; index <= HEAVY_SLOTS; index++) {
         if (releases.has(index)) continue;
-        const r = takeToken(index, `measure-lease ${label}`);
+        // [EXP-M01R] Why: heavy.mjs waits for its single child while retaining a token; borrow that exact parent permit so a wrapped PAIR can drain the pool. Rejected: releasing another process's token or bypassing the other tokens.
+        const parent = readJson(path.join(dir(), String(index), 'owner.json'), null);
+        const r = parent?.pid === process.ppid ? () => {} : takeToken(index, `measure-lease ${label}`);
         if (r) releases.set(index, r);
       }
       if (releases.size === HEAVY_SLOTS) break;

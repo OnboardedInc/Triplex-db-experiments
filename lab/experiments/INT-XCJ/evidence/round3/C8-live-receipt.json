@@ -1,0 +1,56 @@
+{
+  "format": "int-xcj-live-controls/1",
+  "head": "8fad220b88062b6d153b4ffc83915f0af3d5d4f4",
+  "exit": 1,
+  "executed": 4,
+  "pass": 3,
+  "fail": 1,
+  "selectedSkipped": 0,
+  "filteredOut": 62,
+  "attempts": 1,
+  "heavyLabel": "CX-INT-XCJ-C8-live-once",
+  "endpoints": {
+    "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+    "qlever": "http://127.0.0.1:7070"
+  },
+  "environment": {
+    "XTDB_INTEGRATION": "1",
+    "QLEVER_INTEGRATION": "1",
+    "TRIPLEX_COMMIT_ENCODING": null,
+    "C8_READERS": "default 8",
+    "C8_LOAD_MS": "default 8000"
+  },
+  "sourceHashes": {
+    "lab/config/g0-expected-skips.json": "4cbd2872b261cbc02ae1cab5f03d33f3c3096b75a8abbe6b1ad3f743beb745f2",
+    "packages/qualification/test/c8-reads-never-write.test.ts": "9ad42f4bc903143eb46ced701e0808fb16b8992b0807d97feddc70ab3af96a35",
+    "packages/qualification/test/engine-write-counter.test.ts": "b73bb781ee5715624944fe2f19902c19648527863cf15857a138a74df9b96f7c"
+  },
+  "tests": [
+    {
+      "name": "C8 on XTDB: reads never write (engine boundary) counts zero writes across rule queries, maintained reads, native closures and a load run",
+      "status": "passed",
+      "durationMs": 112732.629625,
+      "failures": []
+    },
+    {
+      "name": "C8 on QLever: reads never write (engine boundary) counts zero updates across rule queries, native closures and a load run",
+      "status": "failed",
+      "durationMs": 91156.56016699999,
+      "failures": [
+        "ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout\n    at fail (/Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/packages/qlever/src/QleverQueryExecutor.ts:53:7)\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:777:40\n    at ~effect/Utils/internal (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/Utils.js:71:14)\n    at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:777:21)\n    at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n    at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n    at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n    at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n    at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17"
+      ]
+    },
+    {
+      "name": "XTDB write counter (live) reads count zero writes; one submit counts one commit",
+      "status": "passed",
+      "durationMs": 165.95495800000003,
+      "failures": []
+    },
+    {
+      "name": "QLever write counter (live) queries count zero writes; one update counts one write",
+      "status": "passed",
+      "durationMs": 4487.663541,
+      "failures": []
+    }
+  ]
+}

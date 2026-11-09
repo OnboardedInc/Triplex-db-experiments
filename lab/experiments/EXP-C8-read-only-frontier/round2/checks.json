@@ -1,0 +1,138 @@
+[
+  {
+    "name": "typecheck-core",
+    "args": [
+      "node_modules/typescript/bin/tsc",
+      "--noEmit",
+      "-p",
+      "packages/core/tsconfig.json"
+    ],
+    "env": {},
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16",
+    "started": "2026-11-08T21:32:26.510Z",
+    "finished": "2026-11-08T21:32:29.028Z",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "name": "typecheck-xtdb",
+    "args": [
+      "node_modules/typescript/bin/tsc",
+      "--noEmit",
+      "-p",
+      "packages/xtdb/tsconfig.json"
+    ],
+    "env": {},
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16",
+    "started": "2026-11-08T21:32:29.030Z",
+    "finished": "2026-11-08T21:32:30.666Z",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "name": "typecheck-qlever",
+    "args": [
+      "node_modules/typescript/bin/tsc",
+      "--noEmit",
+      "-p",
+      "packages/qlever/tsconfig.json"
+    ],
+    "env": {},
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16",
+    "started": "2026-11-08T21:32:30.667Z",
+    "finished": "2026-11-08T21:32:32.442Z",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "name": "typecheck-qualification",
+    "args": [
+      "node_modules/typescript/bin/tsc",
+      "--noEmit",
+      "-p",
+      "packages/qualification/tsconfig.json"
+    ],
+    "env": {},
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16",
+    "started": "2026-11-08T21:32:32.442Z",
+    "finished": "2026-11-08T21:32:33.486Z",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "name": "lint",
+    "args": [
+      "node_modules/oxlint/bin/oxlint",
+      "packages/core/src/native/FrontierClosure.ts",
+      "packages/qualification/src/engine-write-counter.ts",
+      "packages/qualification/src/native/support-paths.ts",
+      "packages/qualification/src/native/xtdb-workloads.ts",
+      "packages/qualification/src/native/qlever-workloads.ts",
+      "packages/qualification/test/c8-support-paths.test.ts",
+      "packages/qualification/test/engine-write-counter.test.ts",
+      "packages/xtdb/src/XtdbStorageAdapter.ts"
+    ],
+    "env": {},
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16",
+    "started": "2026-11-08T21:32:33.486Z",
+    "finished": "2026-11-08T21:32:33.560Z",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "name": "qlever-light",
+    "args": [
+      "node_modules/vitest/vitest.mjs",
+      "run",
+      "--config",
+      "lab/verify/C8/vitest.config.ts",
+      "lab/verify/C8/light-live.test.ts"
+    ],
+    "env": {
+      "C8_LIGHT_LIVE": "1"
+    },
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16",
+    "started": "2026-11-08T21:32:33.560Z",
+    "finished": "2026-11-08T21:32:35.949Z",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "name": "counter-live",
+    "args": [
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/vitest/vitest.mjs",
+      "run",
+      "test/engine-write-counter.test.ts",
+      "-t",
+      "queries count zero writes; one update counts one write"
+    ],
+    "env": {
+      "QLEVER_INTEGRATION": "1"
+    },
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qualification",
+    "started": "2026-11-08T21:32:35.950Z",
+    "finished": "2026-11-08T21:32:42.651Z",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "name": "c8-live",
+    "args": [
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/node_modules/vitest/vitest.mjs",
+      "run",
+      "test/c8-reads-never-write.test.ts",
+      "-t",
+      "C8 on QLever"
+    ],
+    "env": {
+      "QLEVER_INTEGRATION": "1",
+      "C8_LOAD_MS": "2000",
+      "C8_READERS": "1"
+    },
+    "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qualification",
+    "started": "2026-11-08T21:32:42.651Z",
+    "finished": "2026-11-08T21:34:35.131Z",
+    "status": 0,
+    "signal": null
+  }
+]

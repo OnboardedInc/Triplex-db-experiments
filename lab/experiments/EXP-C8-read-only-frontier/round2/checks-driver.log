@@ -1,0 +1,52 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+[lab] heavy: waiting for one of 4 slots; held by pid 45144 "GS-xtdb-20261108T212031Z-015daa gs-scenarios", pid 41295 "CX-VX02-writer-between", pid 73700 "CX-K01-retry", pid 3529 "CX-VO05-review"
+typecheck-core 0 
+typecheck-xtdb 0 
+typecheck-qlever 0 
+typecheck-qualification 0 
+lint 0 
+  ! eslint(no-constant-condition): Unexpected constant condition
+     ,-[packages/xtdb/src/XtdbStorageAdapter.ts:318:18]
+ 317 |           await new Promise((resolve) => setTimeout(resolve, 25));
+ 318 |         } while (true);
+     :                  ^^|^
+     :                    `-- this expression will always evaluate to the same value
+ 319 |         throw new TransactionOutcomeUnknown({
+     `----
+  help: Update the condition to not be constant, or remove the condition entirely
+
+Found 1 warning and 0 errors.
+Finished in 21ms on 8 files with 93 rules using 12 threads.
+
+qlever-light 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed (1)
+   Start at  16:32:33
+   Duration  2.08s (tests 55%, transform 30%, import 15%)
+
+
+counter-live 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qualification
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 61 skipped (62)
+   Start at  16:32:36
+   Duration  6.48s (tests 93%, import 4%, transform 3%)
+
+
+c8-live 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qualification
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 1 skipped (2)
+   Start at  16:32:42
+   Duration  112.28s (tests 100%)
+
+

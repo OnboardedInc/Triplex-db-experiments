@@ -1,0 +1,502 @@
+diff --git a/packages/qualification/src/native/qlever-workloads.ts b/packages/qualification/src/native/qlever-workloads.ts
+index 751afa21..82d4e08f 100644
+--- a/packages/qualification/src/native/qlever-workloads.ts
++++ b/packages/qualification/src/native/qlever-workloads.ts
+@@ -5,6 +5,7 @@
+ import { Effect } from "effect";
+ import { integer } from "@triplex-build/triplex";
+ import { TypeExpr } from "@triplex-build/triplex/config";
++import { countSupportPaths, SUPPORT_EDGE_LIMIT } from "./support-paths.js";
+ import type {
+   NativeQueryContract,
+   NativeReadBasis,
+@@ -197,6 +198,7 @@ export const evaluateQleverNativeWorkload = (
+       build: (ctx: Context, input: RecordValue) => string,
+       at = entry,
+       sourceBasis?: Pick<NativeReadBasis, "recordedPosition">,
++      maxRows = 1000,
+     ) => {
+       const position = sourceBasis?.recordedPosition ?? taskUpperPosition;
+       if (taskUpperPosition !== undefined && position !== undefined && position > taskUpperPosition)
+@@ -219,7 +221,7 @@ export const evaluateQleverNativeWorkload = (
+               ...basisOf(at),
+               ...(position === undefined ? {} : { recordedPosition: position }),
+             },
+-            maxRows: 1000,
++            maxRows,
+             timeoutMs: 20_000,
+           },
+         )
+@@ -577,31 +579,22 @@ export const evaluateQleverNativeWorkload = (
+       return answers;
+     }
+     if (id === "20" && entry["operation"] === "reachability_supports") {
+-      let count = 0n;
+-      for (let length = 1; length <= 3; length++) {
+-        const rows = yield* query(
+-          `bounded-dag-witnesses-${length}`,
+-          { from: p["from"]["value"], to: p["to"]["value"] },
+-          row({ count: TypeExpr.int64 }),
+-          (ctx, input) => {
+-            const edges = Array["from"]({ length }, (_, index) =>
+-              f(
+-                ctx,
+-                index ? `?node${index}` : ctx.entity(input["from"]),
+-                "_support",
+-                index === length - 1 ? "?target" : `?node${index + 1}`,
+-              ),
+-            );
+-            return `SELECT (COUNT(*) AS ?count) WHERE { { SELECT DISTINCT ${length === 1 ? "?target" : Array["from"]({ length: length - 1 }, (_, index) => `?node${index + 1}`).join(" ")} WHERE { ${edges.join("\n")} ${eq(ctx, "?target", input["to"])} } } }`;
+-          },
+-        );
+-        count += exact(rows[0]!["count"]);
+-      }
++      // [EXP-C8-R2] Why: Q76d requires general simple paths at the pinned cut. Rejected: summing lengths 1-3 (fixture-specific).
++      const edges = yield* query(
++        "support-edges",
++        {},
++        row({ source: TypeExpr.text, target: TypeExpr.text }),
++        (ctx) =>
++          `SELECT DISTINCT ?source ?target WHERE { ${f(ctx, "?source", "_support", "?target")} } LIMIT ${SUPPORT_EDGE_LIMIT + 1}`,
++        entry,
++        undefined,
++        SUPPORT_EDGE_LIMIT + 1,
++      );
++      const paths = yield* countSupportPaths(edges, p["from"]["value"], p["to"]["value"]);
+       trace.push({
+-        normalization:
+-          "Add three final native witness counts for the frozen four-node DAG; not general path counting",
++        normalization: "Exact bounded simple-path count over distinct native support edges",
+       });
+-      return [[count > 0n, integer(count)]];
++      return [[paths > 0n, integer(paths)]];
+     }
+     throw new Error(`UNSUPPORTED_PUBLIC_NATIVE_WORKLOAD:qlever:${id}:${entry["operation"]}`);
+   });
+diff --git a/packages/qualification/src/native/xtdb-workloads.ts b/packages/qualification/src/native/xtdb-workloads.ts
+index 3b4153b4..ef0b9e0c 100644
+--- a/packages/qualification/src/native/xtdb-workloads.ts
++++ b/packages/qualification/src/native/xtdb-workloads.ts
+@@ -21,9 +21,10 @@
+  *   uncorrelated). XTQL `exists?` with arguments returned the
+  *   correct rows on the same shape on the dev slot (EXP-X02 probe), and the live NULL controls in
+  *   workloads/xtdb-native-x02.ts check both languages.
+- * - H03 (#6345): a projected or OR-ed EXISTS over more than 100,000 build rows answers false. Only
+- *   the interim XTQL reachability ORs `exists?`; it refuses edge sets above that size
+- *   (xtdb-xtql-reach.ts). No other builder projects or ORs an EXISTS.
++ * - H03 (#6345): a projected or OR-ed EXISTS over more than 100,000 build rows answers false.
++ *   [EXP-C8] The XTQL closures no longer OR `exists?` (they join the read-only closure relation);
++ *   the workload 13 leaf test `(not (exists? ...))` keeps the 100,000 build-row refusal
++ *   (guardMarkJoin). No other builder projects or ORs an EXISTS.
+  * - H04 (#6151): no builder joins over a LIMITed or windowed subquery; every LIMIT is the
+  *   statement's own outermost operator.
+  * - H05: no builder uses `= ANY(...)`; readOnlyNativeSql rejects ANY/SOME/ALL over a non-subquery.
+@@ -34,15 +35,17 @@
+ import { Effect } from "effect";
+ import { integer } from "@triplex-build/triplex";
+ import { TypeExpr } from "@triplex-build/triplex/config";
++import { countSupportPaths, SUPPORT_EDGE_LIMIT } from "./support-paths.js";
+ import type {
+   NativeQueryContract,
+   NativeReadBasis,
+   NativeReadOptions,
+   NativeReadResult,
+ } from "@triplex-build/triplex/runtime";
+-import { checkedInt64, typedSumOverflow } from "./xtdb-native-errors.js";
++import { NativeEngineHazardError, checkedInt64, typedSumOverflow } from "./xtdb-native-errors.js";
+ import { sqlExactTotal, sqlHigh, sqlLow, xtqlExactTotal, xtqlSplit } from "./xtdb-exact-sum.js";
+-import { evaluateXtqlReachability } from "./xtdb-xtql-reach.js";
++/** Mark-join build-side limit of XTDB 2.2.0 (upstream #6345, R14 H03). */
++export const MARK_JOIN_BUILD_LIMIT = 100_000;
+ 
+ type RecordValue = Record<string, any>;
+ interface Context {
+@@ -60,7 +63,21 @@ interface ReachabilityContext extends Context {
+ interface Reachability {
+   readonly name: string;
+   readonly edges: (context: Context, parameters: unknown) => string;
++  readonly seeds?: (
++    context: Context,
++    parameters: unknown,
++  ) => readonly string[] | { readonly query: string };
+ }
++type ReachabilitySelect = (
++  contract: NativeQueryContract,
++  input: unknown,
++  relations: readonly Reachability[],
++  build: (context: ReachabilityContext, parameters: unknown) => string,
++  options?: NativeReadOptions & {
++    readonly maxRecursiveRows?: number;
++    readonly maxRounds?: number;
++  },
++) => Effect.Effect<NativeReadResult, unknown>;
+ type Select = (
+   contract: NativeQueryContract,
+   input: unknown,
+@@ -70,16 +87,9 @@ type Select = (
+ export interface XtdbNativeTaskSession {
+   readonly select: Select;
+   readonly selectSql: Select;
+-  readonly selectSqlWithReachability: (
+-    contract: NativeQueryContract,
+-    input: unknown,
+-    relations: readonly Reachability[],
+-    build: (context: ReachabilityContext, parameters: unknown) => string,
+-    options?: NativeReadOptions & {
+-      readonly maxRecursiveRows?: number;
+-      readonly maxRounds?: number;
+-    },
+-  ) => Effect.Effect<NativeReadResult, unknown>;
++  readonly selectSqlWithReachability: ReachabilitySelect;
++  /** [EXP-C8] XTQL closure reads (packages/xtdb NativeQueries.ts selectWithReachability). */
++  readonly selectWithReachability: ReachabilitySelect;
+ }
+ export type XtdbNativeLanguage = "xtql" | "xtdb-sql";
+ export const xtdbNativeLanguages: readonly XtdbNativeLanguage[] = ["xtql", "xtdb-sql"];
+@@ -240,59 +250,84 @@ export const evaluateXtdbNativeWorkload = (
+       resultType: TypeExpr.TypeExpr,
+       builders: Builders,
+       at = entry,
++      maxRows = 1000,
+     ) => {
+-      // [EXP-X02-R2] Why: Q79d preserves the pre-switch library: XTQL point reads,
+-      // SQL for other tasks and scratch-table recursion. Rejected: default XTQL (D=8
+-      // changes previously admitted closures). Explicit profiles remain language-pure.
++      // [EXP-C8-R3] Why: keep X02's unset routing (XTQL point reads, SQL otherwise)
++      // with C8's read-only closures. Rejected: default XTQL (changes implicit profiles).
+       const xtql = language === "xtql" || (language === undefined && name === "state-at");
+       return (xtql ? native.select : native.selectSql)(
+         contractOf(name, values, resultType),
+         values,
+         (ctx, input) => (xtql ? builders.xtql : builders.sql)(ctx, input as RecordValue),
+-        { basis: pinned(at), maxRows: 1000 },
++        { basis: pinned(at), maxRows },
+       ).pipe(Effect.map(record));
+     };
+-    // [EXP-X02] interim, replaced by EXP-X03: the SQL path keeps its scratch-table reachability
+-    // helper (PLAN C8 removes it after R10); the XTQL path uses xtdb-xtql-reach.ts.
+-    const recursiveSql = (
+-      name: string,
+-      values: Record<string, unknown>,
+-      resultType: TypeExpr.TypeExpr,
+-      edges: readonly [string, string][],
+-      build: (ctx: ReachabilityContext, params: RecordValue) => string,
+-    ) =>
+-      native
+-        .selectSqlWithReachability(
+-          contractOf(name, values, resultType),
+-          values,
+-          edges.map(([name, field]) => ({
+-            name,
+-            edges: (ctx: Context) =>
+-              `SELECT DISTINCT entity_id AS source, value_string AS target FROM ${ctx.facts()} f WHERE attribute = ${ctx.attribute(a(field))} AND value_type = 'ref' AND entity_id IS NOT NULL AND value_string IS NOT NULL`,
+-          })),
+-          (ctx, input) => build(ctx, input as RecordValue),
+-          {
+-            basis: pinned(entry),
+-            maxRows: 1000,
+-            maxRecursiveRows: 100_000,
+-            maxRounds: 100,
+-          },
+-        )
+-        .pipe(Effect.map(record));
+-    const xtqlCall = (
++    // [EXP-C8] Why: one read-only closure call per task in the run's language. The relations are
++    // computed by the native API's frontier loop (packages/core FrontierClosure.ts via
++    // packages/xtdb Reachability.ts): one read per round, no scratch table, no commit (R10 6.4).
++    // Every relation declares its seeds (the bound start), so each closure is single- or
++    // few-source rather than the all-pairs closure the old helper materialized (R10 finding 2).
++    // Edges are the reference facts of the edge attribute, as before (`value_type = 'ref'`).
++    // Replaces both EXP-X02 interim paths: the SQL scratch-table rounds and the XTQL depth
++    // unrolling (xtdb-xtql-reach.ts, D <= 8).
++    interface ClosureRelation {
++      readonly name: string;
++      readonly field: string;
++      readonly seeds: (
++        ctx: Context,
++        input: RecordValue,
++      ) => readonly string[] | { readonly query: string };
++    }
++    const closureTask = (
+       name: string,
+       values: Record<string, unknown>,
+       resultType: TypeExpr.TypeExpr,
+-      build: (ctx: Context, input: RecordValue) => string,
++      relations: readonly ClosureRelation[],
++      builders: {
++        readonly xtql: (ctx: ReachabilityContext, input: RecordValue) => string;
++        readonly sql: (ctx: ReachabilityContext, input: RecordValue) => string;
++      },
+     ) =>
+-      native
+-        .select(
+-          contractOf(name, values, resultType),
+-          values,
+-          (ctx, input) => build(ctx, input as RecordValue),
+-          { basis: pinned(entry), maxRows: 1000 },
+-        )
+-        .pipe(Effect.map(record));
++      (language === "xtql" ? native.selectWithReachability : native.selectSqlWithReachability)(
++        contractOf(name, values, resultType),
++        values,
++        relations.map(({ name, field, seeds }) => ({
++          name,
++          edges: (ctx: Context) =>
++            language === "xtql"
++              ? `(-> ${ctx.facts()} (where (= attribute ${ctx.attribute(a(field))}) (= value_type "ref")) (return {:source entity_id :target value_string}))`
++              : `SELECT DISTINCT entity_id AS source, value_string AS target FROM ${ctx.facts()} f WHERE attribute = ${ctx.attribute(a(field))} AND value_type = 'ref' AND entity_id IS NOT NULL AND value_string IS NOT NULL`,
++          seeds: (ctx: Context, input: unknown) => seeds(ctx, input as RecordValue),
++        })),
++        (ctx, input) =>
++          (language === "xtql" ? builders.xtql : builders.sql)(ctx, input as RecordValue),
++        { basis: pinned(entry), maxRows: 1000, maxRecursiveRows: 100_000, maxRounds: 100 },
++      ).pipe(Effect.map(record));
++    // [EXP-X02] Why (kept by EXP-C8): an XTQL `exists?` in `where` is planned as a mark join, and a
++    // mark join whose build side passes 100,000 rows answers false for every row (upstream #6345,
++    // fixed on main, unreleased; R14 H03). The workload 13 leaf test `(not (exists? ...))` builds
++    // over every fact of the containment attribute, so count those first and refuse, typed, above
++    // the threshold instead of returning non-leaves as leaves.
++    const guardMarkJoin = (field: string, values: RecordValue) =>
++      Effect.gen(function* () {
++        const rows = yield* native
++          .select(
++            contractOf(`mark-join-build-count-${field}`, values, row({ edges: TypeExpr.int64 })),
++            values,
++            (ctx) =>
++              `(-> ${ctx.facts()} (where (= attribute ${ctx.attribute(a(field))})) (aggregate {:edges (row-count)}))`,
++            { basis: pinned(entry), maxRows: 1 },
++          )
++          .pipe(Effect.map(record));
++        const edges = exact(rows[0]?.["edges"] ?? 0);
++        if (edges > BigInt(MARK_JOIN_BUILD_LIMIT))
++          return yield* Effect.fail(
++            new NativeEngineHazardError({
++              code: "mark-join-build-limit",
++              message: `XTQL exists? over ${edges} ${field} facts exceeds ${MARK_JOIN_BUILD_LIMIT} (XTDB #6345); no answer returned`,
++            }),
++          );
++      });
+ 
+     // R12 4.1 (point read; the XTQL text is the shipped one). The SQL form reads the same
+     // columns of the same closed relation.
+@@ -553,72 +588,112 @@ export const evaluateXtdbNativeWorkload = (
+       ["11", "13", "14", "15"].includes(id) ||
+       (id === "20" && entry["operation"] === "reachability_closure")
+     ) {
+-      // [EXP-X02] interim, replaced by EXP-X03 (both branches).
+-      if (language === "xtql")
+-        return yield* evaluateXtqlReachability({
+-          id,
+-          operation: String(entry["operation"]),
+-          p,
+-          a,
+-          call: xtqlCall,
+-        });
++      // [EXP-C8] Every closure below is answered by one read-only closure call in the run's
++      // language. Answers are unchanged from the EXP-000/X02 builders: positive-length closure
++      // targets joined to the same facts (R10 1.1 task table).
++      const pair = (ctx: ReachabilityContext, name: string, source: string, target: string) =>
++        `(join ${ctx.relation(name)} [{:source ${source}} {:target ${target}}])`;
+       if (id === "11") {
+-        const rows = yield* recursiveSql(
++        const rows = yield* closureTask(
+           "inherited-access",
+           { user: p.user.value, resource: p.resource.value },
+           row({ allowed: TypeExpr.boolean }),
+           [
+-            ["member", "_member"],
+-            ["resource", "_resource"],
++            { name: "member", field: "_member", seeds: (_c, i) => [String(i["user"])] },
++            { name: "resource", field: "_resource", seeds: (_c, i) => [String(i["resource"])] },
+           ],
+-          (ctx, input) =>
+-            `WITH f AS ${ctx.facts()}, members AS ${ctx.relation("member")}, resources AS ${ctx.relation("resource")} SELECT DISTINCT TRUE AS allowed FROM members m CROSS JOIN resources r CROSS JOIN f kind CROSS JOIN f subject CROSS JOIN f target WHERE kind.attribute = ${ctx.attribute(a("kind"))} AND kind.value_string = 'grant' AND kind.entity_id = subject.entity_id AND subject.attribute = ${ctx.attribute(a("subject"))} AND subject.value_string = m.target AND kind.entity_id = target.entity_id AND target.attribute = ${ctx.attribute(a("target"))} AND target.value_string = r.target AND m.source = ${ctx.bind(input["user"])} AND r.source = ${ctx.bind(input["resource"])}`,
++          {
++            xtql: (c, i) =>
++              `(-> (unify ${F(c, a("kind"), "{:entity_id g}", '(= value_string "grant")')} ${F(c, a("subject"), "{:entity_id g} {:value_string s}")} ${F(c, a("target"), "{:entity_id g} {:value_string r}")} ${pair(c, "member", "u", "s")} ${pair(c, "resource", "res", "r")} (where (= u ${c.bind(i["user"])}) (= res ${c.bind(i["resource"])}))) (return {:allowed true}) (aggregate allowed))`,
++            sql: (ctx, input) =>
++              `WITH f AS ${ctx.facts()}, members AS ${ctx.relation("member")}, resources AS ${ctx.relation("resource")} SELECT DISTINCT TRUE AS allowed FROM members m CROSS JOIN resources r CROSS JOIN f kind CROSS JOIN f subject CROSS JOIN f target WHERE kind.attribute = ${ctx.attribute(a("kind"))} AND kind.value_string = 'grant' AND kind.entity_id = subject.entity_id AND subject.attribute = ${ctx.attribute(a("subject"))} AND subject.value_string = m.target AND kind.entity_id = target.entity_id AND target.attribute = ${ctx.attribute(a("target"))} AND target.value_string = r.target AND m.source = ${ctx.bind(input["user"])} AND r.source = ${ctx.bind(input["resource"])}`,
++          },
+         );
+         return [[rows.length > 0]];
+       }
+       if (id === "13") {
+-        const rows = yield* recursiveSql(
++        const values = { container: p.container.value };
++        if (language === "xtql") yield* guardMarkJoin("_contains", values);
++        const rows = yield* closureTask(
+           "container-leaves",
+-          { container: p.container.value },
++          values,
+           row({ item: TypeExpr.text }),
+-          [["contains", "_contains"]],
+-          (ctx, input) =>
+-            `WITH f AS ${ctx.facts()}, closure AS ${ctx.relation("contains")} SELECT DISTINCT c.target AS item FROM closure c WHERE c.source = ${ctx.bind(input["container"])} AND NOT EXISTS (SELECT 1 FROM f child WHERE (child.entity_id = c.target) IS TRUE AND child.attribute = ${ctx.attribute(a("_contains"))})`,
++          [{ name: "contains", field: "_contains", seeds: (_c, i) => [String(i["container"])] }],
++          {
++            xtql: (c, i) =>
++              `(-> (unify ${pair(c, "contains", "src", "t")} (where (= src ${c.bind(i["container"])}) (not (exists? [(fn [t2] (-> ${c.facts()} (where (= entity_id t2) (= attribute ${c.attribute(a("_contains"))})))) t])))) (aggregate t) (return {:item t}))`,
++            sql: (ctx, input) =>
++              `WITH f AS ${ctx.facts()}, closure AS ${ctx.relation("contains")} SELECT DISTINCT c.target AS item FROM closure c WHERE c.source = ${ctx.bind(input["container"])} AND NOT EXISTS (SELECT 1 FROM f child WHERE (child.entity_id = c.target) IS TRUE AND child.attribute = ${ctx.attribute(a("_contains"))})`,
++          },
+         );
+         return rows.map((value) => [value["item"]]);
+       }
+       if (id === "14") {
+-        const rows = yield* recursiveSql(
++        const rows = yield* closureTask(
+           "recalled-customers",
+           { lot: p.contaminated_lot.value },
+           row({ customer: TypeExpr.text }),
+-          [["production", "_production"]],
+-          (ctx, input) =>
+-            `WITH f AS ${ctx.facts()}, closure AS ${ctx.relation("production")} SELECT DISTINCT customer.value_string AS customer FROM closure c JOIN f shipment ON shipment.attribute = ${ctx.attribute(a("shipped_lot"))} AND shipment.value_string = c.target JOIN f customer ON customer.entity_id = shipment.entity_id AND customer.attribute = ${ctx.attribute(a("customer"))} WHERE c.source = ${ctx.bind(input["lot"])} AND EXISTS (SELECT 1 FROM f contamination WHERE contamination.attribute = ${ctx.attribute(a("contaminated_lot"))} AND contamination.value_string = ${ctx.bind(input["lot"])})`,
++          [{ name: "production", field: "_production", seeds: (_c, i) => [String(i["lot"])] }],
++          {
++            xtql: (c, i) =>
++              `(-> (unify ${pair(c, "production", "src", "t")} ${F(c, a("shipped_lot"), "{:entity_id sh} {:value_string t}")} ${F(c, a("customer"), "{:entity_id sh} {:value_string cust}")} (where (= src ${c.bind(i["lot"])}) (exists? (-> ${c.facts()} (where (= attribute ${c.attribute(a("contaminated_lot"))}) (= value_string ${c.bind(i["lot"])})))))) (aggregate cust) (return {:customer cust}))`,
++            sql: (ctx, input) =>
++              `WITH f AS ${ctx.facts()}, closure AS ${ctx.relation("production")} SELECT DISTINCT customer.value_string AS customer FROM closure c JOIN f shipment ON shipment.attribute = ${ctx.attribute(a("shipped_lot"))} AND shipment.value_string = c.target JOIN f customer ON customer.entity_id = shipment.entity_id AND customer.attribute = ${ctx.attribute(a("customer"))} WHERE c.source = ${ctx.bind(input["lot"])} AND EXISTS (SELECT 1 FROM f contamination WHERE contamination.attribute = ${ctx.attribute(a("contaminated_lot"))} AND contamination.value_string = ${ctx.bind(input["lot"])})`,
++          },
+         );
+         return rows.map((value) => [value["customer"]]);
+       }
+       if (id === "15") {
+         const closure = entry["operation"] === "dependency_closure";
+-        const rows = yield* recursiveSql(
++        // Vulnerable deployments start from every application deployed in the environment: a
++        // few-source closure whose seeds are a native query in the same language (R10 1.1).
++        const applications = (c: Context, i: RecordValue) =>
++          `${F(c, a("environment"), "{:entity_id e}", `(= value_string ${c.bind(i["environment"])})`)} ${F(c, a("application"), "{:entity_id e} {:value_string app}")}`;
++        const rows = yield* closureTask(
+           closure ? "dependency-closure" : "vulnerable-deployments",
+           closure ? { application: p.application.value } : { environment: p.environment.value },
+           row({ answer: TypeExpr.text }),
+-          [["dependency", "_dependency"]],
+-          (ctx, input) =>
+-            closure
+-              ? `SELECT DISTINCT target AS answer FROM ${ctx.relation("dependency")} c WHERE source = ${ctx.bind(input["application"])}`
+-              : `WITH f AS ${ctx.facts()}, closure AS ${ctx.relation("dependency")} SELECT DISTINCT application.value_string AS answer FROM f environment JOIN f application ON environment.entity_id = application.entity_id JOIN closure c ON c.source = application.value_string JOIN f subject ON subject.value_string = c.target AND subject.attribute = ${ctx.attribute(a("vulnerable_subject"))} JOIN f vulnerable ON subject.entity_id = vulnerable.entity_id WHERE environment.attribute = ${ctx.attribute(a("environment"))} AND environment.value_string = ${ctx.bind(input["environment"])} AND application.attribute = ${ctx.attribute(a("application"))} AND vulnerable.attribute = ${ctx.attribute(a("vulnerable"))} AND vulnerable.value_boolean = 1`,
++          [
++            {
++              name: "dependency",
++              field: "_dependency",
++              seeds: closure
++                ? (_c, i) => [String(i["application"])]
++                : (c, i) => ({
++                    query:
++                      language === "xtql"
++                        ? `(-> (unify ${applications(c, i)}) (return {:seed app}))`
++                        : `WITH f AS ${c.facts()} SELECT application.value_string AS seed FROM f environment JOIN f application ON environment.entity_id = application.entity_id WHERE environment.attribute = ${c.attribute(a("environment"))} AND environment.value_string = ${c.bind(i["environment"])} AND application.attribute = ${c.attribute(a("application"))} AND application.value_string IS NOT NULL`,
++                  }),
++            },
++          ],
++          closure
++            ? {
++                xtql: (c, i) =>
++                  `(-> (unify ${pair(c, "dependency", "src", "t")} (where (= src ${c.bind(i["application"])}))) (aggregate t) (return {:answer t}))`,
++                sql: (ctx, input) =>
++                  `SELECT DISTINCT target AS answer FROM ${ctx.relation("dependency")} c WHERE source = ${ctx.bind(input["application"])}`,
++              }
++            : {
++                xtql: (c, i) =>
++                  `(-> (unify ${applications(c, i)} ${pair(c, "dependency", "app", "t")} ${F(c, a("vulnerable_subject"), "{:entity_id v} {:value_string t}")} ${F(c, a("vulnerable"), "{:entity_id v}", "(= value_boolean 1)")}) (aggregate app) (return {:answer app}))`,
++                sql: (ctx, input) =>
++                  `WITH f AS ${ctx.facts()}, closure AS ${ctx.relation("dependency")} SELECT DISTINCT application.value_string AS answer FROM f environment JOIN f application ON environment.entity_id = application.entity_id JOIN closure c ON c.source = application.value_string JOIN f subject ON subject.value_string = c.target AND subject.attribute = ${ctx.attribute(a("vulnerable_subject"))} JOIN f vulnerable ON subject.entity_id = vulnerable.entity_id WHERE environment.attribute = ${ctx.attribute(a("environment"))} AND environment.value_string = ${ctx.bind(input["environment"])} AND application.attribute = ${ctx.attribute(a("application"))} AND vulnerable.attribute = ${ctx.attribute(a("vulnerable"))} AND vulnerable.value_boolean = 1`,
++              },
+         );
+         return rows.map((value) => [value["answer"]]);
+       }
+-      const rows = yield* recursiveSql(
++      const rows = yield* closureTask(
+         "reachability-closure",
+         { from: p.from.value },
+         row({ target: TypeExpr.text }),
+-        [["support", "_support"]],
+-        (ctx, input) =>
+-          `SELECT DISTINCT target FROM ${ctx.relation("support")} c WHERE source = ${ctx.bind(input["from"])}`,
++        [{ name: "support", field: "_support", seeds: (_c, i) => [String(i["from"])] }],
++        {
++          xtql: (c, i) =>
++            `(-> (unify ${pair(c, "support", "src", "t")} (where (= src ${c.bind(i["from"])}))) (aggregate t) (return {:target t}))`,
++          sql: (ctx, input) =>
++            `SELECT DISTINCT target FROM ${ctx.relation("support")} c WHERE source = ${ctx.bind(input["from"])}`,
++        },
+       );
+       return rows.map((value) => [value["target"]]);
+     }
+@@ -783,58 +858,23 @@ export const evaluateXtdbNativeWorkload = (
+       return answer;
+     }
+     if (id === "20" && entry["operation"] === "reachability_supports") {
+-      // R12 4.15
+-      let paths = 0n;
+-      for (let length = 1; length <= 3; length++) {
+-        const rows = yield* execute(
+-          `bounded-dag-witnesses-${length}`,
+-          { from: p.from.value, to: p.to.value },
+-          row({ count: TypeExpr.int64 }),
+-          {
+-            xtql: (c, i) => {
+-              const parts: string[] = [];
+-              for (let k = 0; k < length; k++) {
+-                const where = [
+-                  k === 0 ? `(= entity_id ${c.bind(i["from"])})` : "",
+-                  k === length - 1 ? `(= value_string ${c.bind(i["to"])})` : "",
+-                ]
+-                  .filter(Boolean)
+-                  .join(" ");
+-                parts.push(
+-                  F(c, a("_support"), `{:entity_id n${k}} {:value_string n${k + 1}}`, where),
+-                );
+-              }
+-              const keep = Array.from({ length: length - 1 }, (_, k) => `n${k + 1}`);
+-              const distinct =
+-                length === 1 ? "(return {:w true}) (aggregate w)" : `(aggregate ${keep.join(" ")})`;
+-              return `(-> (-> (unify ${parts.join(" ")}) ${distinct}) (aggregate {:count (row-count)}))`;
+-            },
+-            sql: (ctx, input) => {
+-              const conditions = Array.from(
+-                { length },
+-                (_, index) => `e${index}.attribute = ${ctx.attribute(a("_support"))}`,
+-              );
+-              conditions.push(
+-                `e0.entity_id = ${ctx.bind(input["from"])}`,
+-                `e${length - 1}.value_string = ${ctx.bind(input["to"])}`,
+-              );
+-              for (let index = 1; index < length; index++)
+-                conditions.push(`e${index}.entity_id = e${index - 1}.value_string`);
+-              const projected =
+-                length === 1
+-                  ? "TRUE AS witness"
+-                  : Array.from(
+-                      { length: length - 1 },
+-                      (_, index) => `e${index}.value_string AS node${index}`,
+-                    ).join(", ");
+-              return `WITH f AS ${ctx.facts()} SELECT COUNT(*) AS count FROM (SELECT DISTINCT ${projected} FROM ${Array.from({ length }, (_, index) => `f e${index}`).join(" CROSS JOIN ")} WHERE ${conditions.join(" AND ")}) paths`;
+-            },
+-          },
+-        );
+-        paths += exact(rows[0]!["count"]);
+-      }
++      // [EXP-C8-R2] Why: Q76d requires general simple paths at the pinned cut. Rejected: summing lengths 1-3 (fixture-specific).
++      const edges = yield* execute(
++        "support-edges",
++        {},
++        row({ source: TypeExpr.text, target: TypeExpr.text }),
++        {
++          xtql: (ctx) =>
++            `(-> ${ctx.facts()} (where (= attribute ${ctx.attribute(a("_support"))}) (= value_type "ref")) (return {:source entity_id :target value_string}) (aggregate source target) (limit ${SUPPORT_EDGE_LIMIT + 1}))`,
++          sql: (ctx) =>
++            `SELECT DISTINCT entity_id AS source, value_string AS target FROM ${ctx.facts()} f WHERE attribute = ${ctx.attribute(a("_support"))} AND value_type = 'ref' LIMIT ${SUPPORT_EDGE_LIMIT + 1}`,
++        },
++        entry,
++        SUPPORT_EDGE_LIMIT + 1,
++      );
++      const paths = yield* countSupportPaths(edges, p.from.value, p.to.value);
+       trace.push({
+-        normalization: "add three final native witness counts for the frozen four-node DAG fixture",
++        normalization: "Exact bounded simple-path count over distinct native support edges",
+       });
+       return [[paths > 0n, integer(paths)]];
+     }

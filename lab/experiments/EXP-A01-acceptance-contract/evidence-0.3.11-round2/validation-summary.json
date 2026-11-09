@@ -1,0 +1,25 @@
+{
+  "sourceHead": "da79107aa3be440ff38012962b0ea161198411df",
+  "generatorSha256": "60055e9f236733365c4e558412368b0a2934df8cb1d5e9479d45758971940ccf",
+  "mutationCatalog": 425,
+  "runnable": 344,
+  "caught": 344,
+  "missed": 0,
+  "retiredAnchors": 81,
+  "supersededLegacyMutation": 1,
+  "round2MutationControls": 6,
+  "reviewerTestsPassed": 35,
+  "reviewerFormerFailuresPassed": [
+    "test_q75g_actual_oracle_aggregate_answer",
+    "test_q75g_unicode_equal_rows",
+    "test_q75g_unicode_inflight_rows",
+    "test_q75g_unicode_object_values",
+    "test_q78_composition_schema_allows_datomic",
+    "test_q76c_matrix_records_ignored_tail_constraint_defect"
+  ],
+  "additionalTestsPassed": 5,
+  "q47d": "PASS",
+  "byteIdentical": "PASS",
+  "independentDeltaReview": "PENDING",
+  "engineGates": "NOT RUN"
+}

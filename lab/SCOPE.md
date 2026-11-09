@@ -1,4 +1,4 @@
-# Scope of triplex-db-2 (authoritative; Sam confirmed 2026-11-07)
+# Scope of triplex-db-2 (authoritative; Sam confirmed 2026-11-07; lane D added by Sam 2026-11-08)
 
 Read this first. It overrides every older statement of goals, scope or targets in this repository, including the
 inherited homebase files (`wiki/goals.md`, `wiki/status.md`, `handoffs/claude-native/*`, `qualification/devloop/*`,
@@ -10,7 +10,9 @@ the devloop sections of `AGENTS.md`) and earlier versions of `lab/PLAN.md` and `
    constraints; expressions and errors; plans, costing and recursion; negation at coherent cuts; aggregates;
    cancellation and resources; atomic writes, receipts and recovery; reuse and maintained supports; bitemporal history,
    presence, deletion and cascades; public TypeScript integration.
-2. **Two lanes:** XTDB (XTQL primary, SQL as the named alternative) and QLever (SPARQL).
+2. **Three lanes:** XTDB (XTQL primary, SQL as the named alternative), QLever (SPARQL), and, from 2026-11-08, Datomic (Datomic
+   Datalog query and pull). Sam, 2026-11-08: "switch to orchestrating the two you are doing AND a Datomic-based version as well".
+   Lane D is held to the same five priorities, ten goals, requirements, contract and golden scenarios as the other two.
 3. **Triplex works like an ORM on top,** and raw native queries still make sense.
 4. **The loop machinery stays:** the evolutionary loop, frozen correctness contracts, independent oracles, bound
    receipts and independent verifiers.
@@ -42,9 +44,9 @@ the devloop sections of `AGENTS.md`) and earlier versions of `lab/PLAN.md` and `
 5. **20 real-world golden scenarios** on top of the normal performance tests put the system under the expected load; they are
    part of the done condition (`lab/TARGETS.md` section 6, `lab/PLAN.md` section 5).
 
-## 3. How the two databases are treated
+## 3. How the databases are treated
 
-1. **Both are candidates for every layer, including source of truth.** Neither is ruled out; each is built to the fullest
+1. **All three are candidates for every layer, including source of truth.** None is ruled out; each is built to the fullest
    extent possible.
 2. **Where something is impossible natively, say so plainly and build a workaround.** Example: QLever's exact int64 and
    decimal gap is handled with exact lexical channels and by routing exact arithmetic elsewhere, not by dropping QLever.

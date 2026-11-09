@@ -1,0 +1,69 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 7,
+  "slug": "two-reviewers",
+  "title": "Two reviewers, one I-9",
+  "priorities": [
+    "P2"
+  ],
+  "status": "runnable",
+  "source": "lab/TARGETS.md section 6 row 7",
+  "story": "Two reviewers approve and waive the same subject at the same moment, 500 times across subjects.",
+  "checked": "Compare-and-set lets exactly one win per race; the loser gets a typed conflict, never a silent overwrite.",
+  "seed": 20261107,
+  "yearOne": {
+    "races": 500
+  },
+  "params": {},
+  "rungs": {
+    "10k": {
+      "subjects": 15,
+      "negatives": 5,
+      "liveMs": 25000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    },
+    "smoke": {
+      "subjects": 6,
+      "negatives": 2,
+      "liveMs": 12000,
+      "trace": {
+        "subjects": 5,
+        "factsPerSecond": 15
+      }
+    }
+  },
+  "witnesses": {
+    "positive": "race subjects (Section 2 becomes approved or waived)",
+    "negative": "idle onboarded subjects"
+  },
+  "domain": [],
+  "bars": [
+    {
+      "id": "P2.commit.p99",
+      "metric": "commit.scenario.p99",
+      "op": "<=",
+      "value": 50,
+      "unit": "ms",
+      "source": "TARGETS section 1 P2"
+    },
+    {
+      "id": "P1.writer.maxWait",
+      "metric": "writer.maxWaitMs",
+      "op": "<=",
+      "value": 2000,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    }
+  ],
+  "faults": [
+    "concurrent conflicting decisions with the same EntityState precondition"
+  ],
+  "oracle": {
+    "source": "O-REPLAY race groups in receipt mode (the winner's state)",
+    "gaps": []
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) for 25 s with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
+}

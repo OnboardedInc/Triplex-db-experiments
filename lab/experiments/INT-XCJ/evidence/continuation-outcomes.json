@@ -1,0 +1,37 @@
+{
+  "merge": "0157eda12daaf21741e5894fcca18b2162d163c0",
+  "G0": {
+    "exit": 1,
+    "runId": "G0-xtdb-20261108T234100Z-b718fc",
+    "executed": 1163,
+    "pass": 1163,
+    "fail": 0,
+    "skip": 134,
+    "expectedSkip": 130,
+    "unexpectedSkip": 4
+  },
+  "evaluator": {
+    "exit": 0,
+    "tests": 108,
+    "pass": 108,
+    "fail": 0,
+    "skip": 0
+  },
+  "contract": {
+    "exit": 1,
+    "reason": "REGENERATION NOT BYTE-IDENTICAL: obligations.json, ACCEPTANCE.md",
+    "changedPinnedFiles": [
+      "packages/qualification/src/native/xtdb-workloads.ts",
+      "packages/qualification/src/native/qlever-workloads.ts"
+    ],
+    "regenerated": false
+  },
+  "integrationFlags": {
+    "XTDB_INTEGRATION": null,
+    "QLEVER_INTEGRATION": null
+  },
+  "J01": {
+    "merged": false,
+    "reason": "stop on C8 G0 unexpected skips"
+  }
+}

@@ -1,0 +1,89 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 4427 "CX-VX02-2-G0", pid 1980 "DA00-G0-final", pid 5185 "G0-xtdb-20261108T215157Z-138fc7 typecheck"
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 4998 "G0-qlever-20261108T215153Z-3524cf build", pid 1980 "DA00-G0-final", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 4998 "G0-qlever-20261108T215153Z-3524cf vitest-qlever", pid 1980 "DA00-G0-final", pid 5696 "CX-C8-R3-checks"
+core 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/core
+
+
+ Test Files  57 passed (57)
+      Tests  849 passed (849)
+   Start at  16:53:16
+   Duration  18.44s (import 65%, tests 29%, transform 3%, worker 2%)
+
+     Import  155 modules were evaluated 210 times · 8.76s total, 65% of tracked time
+             ~2.29s faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+xtdb 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/xtdb
+
+
+ Test Files  7 passed | 8 skipped (15)
+      Tests  38 passed | 84 skipped (122)
+   Start at  16:53:34
+   Duration  4.63s (import 85%, transform 11%, tests 2%, worker 1%)
+
+     Import  134 modules were evaluated 178 times · 2.82s total, 85% of tracked time
+             ~697ms faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+qlever 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qlever
+
+
+ Test Files  7 passed | 3 skipped (10)
+      Tests  27 passed | 21 skipped (48)
+   Start at  16:53:39
+   Duration  3.31s (import 84%, transform 12%, tests 3%, worker 1%)
+
+     Import  118 modules were evaluated 223 times · 2.04s total, 84% of tracked time
+             ~959ms faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+qualification 0 
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qualification
+
+
+ Test Files  4 passed | 2 skipped (6)
+      Tests  92 passed | 50 skipped (142)
+   Start at  16:53:43
+   Duration  2.78s (import 56%, tests 30%, transform 13%, worker 1%)
+
+    Isolate  6 workers spawned · ~79ms startup each (spawn + environment, per file)
+             at least ~394ms faster with isolate: false — reuses workers across files instead of one per file
+
+
+qualification-node 0 # Subtest: cold probes span the declared distinct-entity population and never change under hot corrections
+ok 17 - cold probes span the declared distinct-entity population and never change under hot corrections
+  ---
+  duration_ms: 10.036875
+  type: 'test'
+  ...
+# Subtest: oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+ok 18 - oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+  ---
+  duration_ms: 1.478667
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 199.325125
+

@@ -1,0 +1,2 @@
+CONTRACT INVALID:
+Q59c: V-O05-round4 must hash the original instruction brief, never its review report

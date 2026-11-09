@@ -44,3 +44,69 @@ export async function publish(_evaluations: readonly Evaluation[]): Promise<neve
 export function coverageHash(subjects: readonly number[]): string {
   return createHash("sha256").update(subjects.join(",")).digest("hex");
 }
+
+/** W0 entry points for the position-based sweep; legacy fetch-only calls above remain closed. */
+export interface W0Pins {
+  readonly contractSha256: string;
+  readonly w0Version: string;
+  readonly domainVersion: string;
+}
+export async function loadW0Pins(): Promise<W0Pins> {
+  const fs = await import("node:fs");
+  const contractBytes = fs.readFileSync(
+    new URL("../../acceptance/obligations.json", import.meta.url),
+  );
+  const contract = JSON.parse(contractBytes.toString());
+  const w0 = contract.w0Pin,
+    domain = contract.oraclePins?.["O-DOMAIN"];
+  if (
+    !w0?.files ||
+    !w0.reviewReceipt ||
+    !w0.oDomainFingerprint ||
+    !domain?.sha256 ||
+    !domain.acceptReceipt
+  )
+    throw new SeamNotImplemented("missing accepted W0 or O-DOMAIN pin");
+  const root = new URL("../../../", import.meta.url);
+  for (const [file, hash] of Object.entries({ ...w0.files, ...domain.sha256 })) {
+    const bytes = fs.readFileSync(new URL(file, root));
+    if (createHash("sha256").update(bytes).digest("hex") !== hash)
+      throw new SeamNotImplemented("pin mismatch: " + file);
+  }
+  return {
+    contractSha256: createHash("sha256").update(contractBytes).digest("hex"),
+    w0Version: w0.version,
+    domainVersion: domain.oracleVersion ?? domain.commit,
+  };
+}
+export async function evaluateW0(
+  world: import("../../../packages/w0/dist/index.js").World,
+  release: string,
+  basis: import("./w0-world.ts").PositionBasis,
+  pins: W0Pins | null,
+  activations?: readonly import("../../../packages/w0/dist/index.js").Activation[],
+) {
+  if (!pins?.contractSha256 || !pins.w0Version || !pins.domainVersion)
+    throw new SeamNotImplemented("missing W0 or O-DOMAIN pin");
+  const { W0, w0Basis } = await import("./w0-world.ts");
+  const B = w0Basis(basis);
+  if (activations) {
+    const r = W0.reconcileWorld(world, activations, B);
+    if ("error" in r) throw new Error(r.error);
+    return { output: r, json: W0.outputJson(r), record: W0.recordOf(r) };
+  }
+  const R = W0.RELEASES_BY_NAME.get(release);
+  if (!R) throw new SeamNotImplemented("unknown W0 release");
+  const r = W0.sweepSubject(world, R, B);
+  if ("error" in r) throw new Error(r.error);
+  return r;
+}
+export async function publishW0(
+  comp: import("./composition.ts").CompositionHandle,
+  records: readonly import("../../../packages/w0/dist/index.js").EvaluationRecord[],
+  pins: W0Pins | null,
+) {
+  if (!pins?.contractSha256 || !pins.w0Version || !pins.domainVersion)
+    throw new SeamNotImplemented("missing W0 or O-DOMAIN pin");
+  return comp.publishOutbox(records);
+}

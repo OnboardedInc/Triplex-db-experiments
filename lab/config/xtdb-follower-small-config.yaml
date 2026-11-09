@@ -1,0 +1,19 @@
+# [EXP-X05] The read-only follower sized for the 1.0 GiB the pool can give it (orchestrator slot plan,
+# 2026-11-07: writer 3.5 GiB + follower 1.0 GiB = the 4.5 GiB left beside both dev residents).
+# Same as xtdb-follower-config.yaml except the memory cache: 128 MiB, because the cache lives in direct
+# memory and the small profile has -XX:MaxDirectMemorySize=256m, leaving 128 MiB for query buffers.
+# R19 1.6 and E9 put the smallest sane read node at 1.5 to 1.75 GiB, so results on this profile are provisional.
+readOnlyDatabases: true
+server:
+  host: 0.0.0.0
+  port: 5432
+  numThreads: 300
+log: !Local
+  path: /var/lib/xtdb/log
+storage: !Local
+  path: /var/lib/xtdb/buffers
+memoryCache:
+  maxSizeBytes: 134217728
+healthz:
+  host: 0.0.0.0
+  port: 8080

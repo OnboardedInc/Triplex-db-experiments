@@ -1,0 +1,39 @@
+{
+ "receipt": "qlever-designs-probe-20261108T004717Z-c0d4a5",
+ "perFact": {
+  "a0": {
+   "string": 27,
+   "number": 30
+  },
+  "compact": {
+   "string": 18,
+   "number": 21
+  }
+ },
+ "layouts": {
+  "A0": {
+   "triples": 663,
+   "ratioVsA0": 1
+  },
+  "compact (built)": {
+   "triples": 447,
+   "ratioVsA0": 1.48
+  },
+  "bound: A0 channels, no journal at all": {
+   "triples": 279,
+   "ratioVsA0": 2.38
+  },
+  "H2: compact + journal as one record subject (read-path work)": {
+   "triples": 207,
+   "ratioVsA0": 3.2
+  },
+  "H3: H2 + claim and operation on the record subject (+2 channels)": {
+   "triples": 202,
+   "ratioVsA0": 3.28
+  },
+  "bound: compact channels, no journal at all": {
+   "triples": 189,
+   "ratioVsA0": 3.51
+  }
+ }
+}

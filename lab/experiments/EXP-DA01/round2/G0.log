@@ -1,0 +1,3 @@
+[lab] G0-datomic-20261108T233120Z-f0f378: raw output runs/G0/G0-datomic-20261108T233120Z-f0f378
+PASS G0 datomic scope=full executed=1093 pass=1093 fail=0 skip=57
+receipt: lab/runs/G0/G0-datomic-20261108T233120Z-f0f378.json

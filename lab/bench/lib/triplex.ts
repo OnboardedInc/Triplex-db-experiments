@@ -19,12 +19,13 @@ export const runtimeApi: any = await import(dist("core", "runtime/index.js"));
 const qualification: any = await import(dist("qualification", "index.js"));
 export { Effect };
 
-export type Lane = "xtdb" | "qlever";
+export type Lane = "xtdb" | "qlever" | "datomic";
 
 export interface TriplesHandle {
   readonly backend: { name: string; url: string; queryPath: string };
   readonly scope: unknown;
   readonly triples: any;
+  readonly storage?: any;
   run<A>(effect: any): Promise<A>;
   runExit(effect: any): Promise<any>;
   close(): Promise<void>;
@@ -35,22 +36,43 @@ export interface TriplesHandle {
  * `xtdbOptions` (XTDB only) builds the runtime from the public `makeXtdbRuntime` export with explicit
  * adapter options (for example `admissionQueue: true`) instead of the qualification default.
  */
-export async function openTriples(lane: Lane, scopeName: string, xtdbOptions?: Record<string, unknown>): Promise<TriplesHandle> {
+export async function openTriples(
+  lane: Lane,
+  scopeName: string,
+  xtdbOptions?: Record<string, unknown>,
+): Promise<TriplesHandle> {
   process.env["TRIPLEX_QUERY_PATH"] ??= `${lane}-datalog`;
-  const backend = await qualification.loadQualificationBackend(lane);
+  // [EXP-W02-R2] Why: D uses its own public runtime and endpoint even before the shared qualification registry merges. Rejected: routing an unknown lane through the X/Q default.
+  const backend = lane === "datomic" ? await (async () => {
+    const url = process.env["DATOMIC_URL"];
+    if (!url) throw new Error("DATOMIC_URL is required for the Datomic GS lane");
+    const api = await import(dist("datomic", "index.js"));
+    if (typeof api.makeDatomicRuntime !== "function") throw Error("Datomic public runtime unavailable");
+    return { name: lane, url, queryPath: "datomic-datalog", makeRuntime: () => api.makeDatomicRuntime({ url }) };
+  })() : await qualification.loadQualificationBackend(lane);
+  if (lane === "qlever" && process.env["QLEVER_COMMIT_PATH"] === "broker") {
+    const api = await import(dist("qlever", "index.js"));
+    if (typeof api.HostBroker !== "function") throw Error("QLever public package does not include the selected broker path");
+  }
   const scope = runtimeApi.DatabaseScope.test(scopeName);
   let definition = backend.makeRuntime();
   if (xtdbOptions && lane === "xtdb") {
     const xtdb: any = await import(dist("xtdb", "index.js"));
     definition = xtdb.makeXtdbRuntime({ url: backend.url, ...xtdbOptions });
   }
-  const layer = definition.layer({ scope, capabilities: runtimeApi.Capabilities.none });
+  const clock = process.env["TX2_P5_CLOCK_START"];
+  const layer = definition.layer({
+    scope,
+    capabilities: runtimeApi.Capabilities.none,
+    ...(clock === undefined ? {} : { deterministic: { startTime: Number(clock), seed: scope } }),
+  });
   const managed: any = (ManagedRuntime as any).make(layer);
   const triples = await managed.runPromise(Effect.service(core.Triples));
   return {
     backend: { name: backend.name, url: backend.url, queryPath: backend.queryPath },
     scope,
     triples,
+    storage: await managed.runPromise(Effect.service(runtimeApi.StorageAdapter)),
     run: (effect: any) => managed.runPromise(effect),
     runExit: (effect: any) => managed.runPromiseExit(effect),
     close: () => managed.dispose(),

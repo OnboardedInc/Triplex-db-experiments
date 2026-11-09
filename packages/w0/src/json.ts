@@ -6,7 +6,8 @@
  * token's kind (an integer token as an exact bigint, any other number token as its source text) and records duplicate keys on
  * the subtree, so the operation can report `W0.E_SHAPE` for a duplicate anywhere in its input (SPEC 4.4 step 1, case C66).
  *
- * The scanner is iterative, so nesting depth is bounded by memory, not by the call stack (SPEC-AMBIGUITY D01b-A13).
+ * The scanner and the writer of scanned values are iterative, so nesting depth is bounded by memory, not by the call stack
+ * (SPEC 4.4 reading A13: a value may nest to any depth, and an implementation must not fail on its recursion limit).
  */
 
 /** A JSON value with its token kinds preserved. `start` and `end` are character offsets into the scanned text. */
@@ -93,8 +94,8 @@ function hexVal(c: number): number {
 /**
  * Scans exactly one JSON value (RFC 8259 grammar, whitespace allowed around it) from `src`. Throws JsonSyntaxError for anything
  * else, including `NaN`, `Infinity`, a leading `+`, leading zeros, trailing commas, unescaped control characters and trailing
- * content (Q53 reading A01: bytes that are not one JSON value are W0.E_SHAPE; SPEC-AMBIGUITY D01b-A11 for the non-standard
- * tokens some parsers accept).
+ * content (SPEC 4.4 readings A01 and A11: bytes that are not one JSON text are W0.E_SHAPE, and `NaN`, `Infinity` and
+ * `-Infinity` are not JSON).
  */
 export function scan(src: string): JV {
   const n = src.length;
@@ -362,38 +363,57 @@ export function quote(s: string): string {
 
 /**
  * Canonical JSON (SPEC 9) of a scanned value: members sorted by key in code point order, no whitespace, integer tokens in
- * decimal (`-0` as `0`, Q53 reading A02), any other number token as its source text and strings as in `quote` (Q53 reading A07).
+ * decimal (`-0` as `0`, Q53 reading A02), any other number token as its source text and strings as in `quote` (SPEC 9 item 7,
+ * Q53 reading A07). Iterative, so a payload that `publish` or `receive` copies is written at any nesting depth (SPEC 4.4 A13).
  */
-export function canonicalJV(v: JV): string {
-  switch (v.t) {
-    case "null":
-      return "null";
-    case "bool":
-      return v.v ? "true" : "false";
-    case "int":
-      return v.v.toString();
-    case "num":
-      return v.src;
-    case "str":
-      return quote(v.v);
-    case "arr": {
-      let out = "[";
-      for (let k = 0; k < v.v.length; k++) {
-        if (k > 0) out += ",";
-        out += canonicalJV(v.v[k]!);
-      }
-      return out + "]";
+export function canonicalJV(root: JV): string {
+  let out = "";
+  // Work list, popped from the end: a value to write, or literal text to emit.
+  const todo: (JV | string)[] = [root];
+  while (todo.length > 0) {
+    const v = todo.pop()!;
+    if (typeof v === "string") {
+      out += v;
+      continue;
     }
-    case "obj": {
-      const keys = [...v.m.keys()].sort(cmpCodePoints);
-      let out = "{";
-      for (let k = 0; k < keys.length; k++) {
-        if (k > 0) out += ",";
-        out += quote(keys[k]!) + ":" + canonicalJV(v.m.get(keys[k]!)!);
+    switch (v.t) {
+      case "null":
+        out += "null";
+        break;
+      case "bool":
+        out += v.v ? "true" : "false";
+        break;
+      case "int":
+        out += v.v.toString();
+        break;
+      case "num":
+        out += v.src;
+        break;
+      case "str":
+        out += quote(v.v);
+        break;
+      case "arr": {
+        out += "[";
+        todo.push("]");
+        for (let k = v.v.length - 1; k >= 0; k--) {
+          todo.push(v.v[k]!);
+          if (k > 0) todo.push(",");
+        }
+        break;
       }
-      return out + "}";
+      case "obj": {
+        const keys = [...v.m.keys()].sort(cmpCodePoints);
+        out += "{";
+        todo.push("}");
+        for (let k = keys.length - 1; k >= 0; k--) {
+          todo.push(v.m.get(keys[k]!)!);
+          todo.push((k > 0 ? "," : "") + quote(keys[k]!) + ":");
+        }
+        break;
+      }
     }
   }
+  return out;
 }
 
 /**

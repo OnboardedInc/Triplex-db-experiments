@@ -109,3 +109,87 @@ here). Merged to main as 4591715.
   different erasure instants refuse (Q52c). Q56h holds: all probe values synthetic.
 - Merge note: merging the oracle alone breaks `--verify` (Q45a pinned O-REPLAY files differ from the tree: RULES.md, SCHEMA.md,
   constraints.py), so the merge and the pin move land together in contract 0.3.8 on branch contract/0.3.8.
+
+## V-O04d: O-REPLAY 0.4.2 at 3e38a61: FIX-FIRST on the in-flight answer set (saved by the orchestrator, 2026-11-08 01:11Z)
+- F5: with two or more erasure commits in flight 0.4.2 lists every subset (2^n), not the n + 1 prefixes in position order (Q66a). Case p1 = 1,
+  p2 = 2, p3 = 4 erased one per commit (tx:1, tx:2, tx:3): one commit PASS ([] 7, [tx:1] 6); two commits list 4 alternatives including [tx:2] 5;
+  three commits list 8 including [tx:2] 5, [tx:3] 3, [tx:1, tx:3] 2, [tx:2, tx:3] 1; a read started after tx:1 lists [tx:3] 2. Cause: run.py
+  run_queries loops `for mask in range(1 << len(pending))`; RULES.md R-ERA-6 says every combination is listed. Fix: iterate `seen =
+  pending[:k]` for k = 0..n (in_flight_erasures already returns publication order) and update R-ERA-6.
+- F6: `cursorFrom` on an in-flight entry exits 2 ("malformed case: cursorFrom names unknown or failed query"); 0.4.1 answered the same case. Q66b
+  requires per-prefix answers; at minimum a typed X-NOT-MODELED refusal. Same code path as F5.
+- Passes: Q52a (COUNT distinct with two erased = 3; assertion count 5; valueSupports marker group count 2); Q52b (asc [p3, p2, p6, p1, p4, p5, p7],
+  desc [p2, p3, p6, p1, p4, p5, p7]); Q52c (marker(200) for 200 and 300; card-many [pub, marker(500)]); Q52d (erased dangling reference skipped;
+  readable control rejected E-CONSTRAINT); Q52e single commit ([([], 7), ([tx:1], 4)]); Q66c own scope only; Q52f 11/11 (2.675 half-up 2.68; 2.665
+  half-even 2.66; 0.15 half-even 0.2; 9.995 half-up E-DECIMAL-OVERFLOW; no mode E-DECIMAL-FRACTION; string E-INVALID-VALUE); Q52g (`erasure`,
+  mixed, preconditions each E-INVALID-VALUE, nothing applied). Only three X-NOT-MODELED raise sites (entities.py:61, run.py:53, views.py:129).
+- Counts: probe_q52 35 probes, 31 MATCH, 3 WRONG-ANSWER (Q66a), 1 OBSERVED (Q66b), self-test 10/10; probe_q49 85/85 (15/15); probe_035 119/119
+  (13/13); probe_delta_033 20/20; unit 370/370; self-check 61/61; converters 0 item differences from V-O04b. Differential 0.4.1 against 0.4.2:
+  seed 49 767 cases (722 identical, 5 refused by both, 40 different), probe_q52 35 (3, 0, 32), seed 4949 800/800 identical; all 72 differences on
+  Q52 shapes (13 Q52a-d, 12 Q52e including the F6 cursor case, 8 Q52f, 7 Q52g in seed 49), none from Q56f.
+- Hash table of 29 files at 3e38a61 matches the author's (12 changed against 0.4.1, equal to git diff --stat). Verifier commit 403afe1 on
+  verify/O02; tools lab/verify/O02/tools/probe_q52.py (new), probe_q49.py, probe_035.py, differential.py; results lab/verify/O02/V-O04d/results/.
+
+## V-O04e: O-REPLAY 0.4.3 at 45bfa59: FIX-FIRST, narrow, two cursor-continuation holes (saved by the orchestrator, 2026-11-08 01:33Z)
+- F5 and F6 fixed: in-flight reads list exactly the n + 1 prefixes in position order; `cursorFrom` on an in-flight read is answered per
+  prefix (two-page, three-page and chained continuations keep one prefix across pages). Refusal sites unchanged (entities.py:61, run.py:53,
+  views.py:129). probe_q52 45 probes: 41 MATCH, 2 WRONG (F7, F8), 2 OBSERVED, self-test 16/16; probe_q49 85/85; probe_035 119/119;
+  probe_delta_033 20/20; unit 372/372; self-check 61/61; converter 0 differences on both lanes. Differential against 3e38a61: seed 49, 780
+  cases, 22 different (12 rule label only, 3 Q66a prefix rows, 7 Q66b cursor rows); seed 4949, 800/800 identical; 0 golden or random
+  differences. 29 file hashes match the author's hashes.45bfa59.txt; 13/13 match the oracle's sourceSha256.
+- F7: `run.py` `continued_read` returns the source read only when `len(source["answers"]) > 1`, so a continuation of a read with nothing
+  in flight falls back to its own read view and readStart; a page 2 with an earlier readStart reopens the erased value's old plaintext after
+  page 1 showed the marker. Fix: every `cursorFrom` continuation uses the source read's start, scope and prefixes (drop the `> 1`).
+- F8: a literal cursor token encodes position, valid time, entity type, scope and the `after` id but no prefix, so it is byte-identical in
+  every alternative; with no readStart the continuation is answered after every erasure, and a lane that keeps page 1's all-old prefix is
+  judged wrong. Recommended fix (b): a literal token equal to a `nextCursor` issued earlier in the same case by a read with commits in
+  flight continues that read per prefix (token bytes and cursor vectors unchanged). Both holes existed in 0.4.2.
+- Evidence: verify/O02 4eec2ba; tools probe_q52.py, differential.py, diff_modulo_rule.py (new); results lab/verify/O02/V-O04e/results/.
+- Process note: the orchestrator's scratchpad cleanup removed the 3e38a61 scratch tree after both differential runs had finished; the
+  verifier re-extracted it from git for one re-check. Scratch archives under review stay until their verifier reports.
+
+## V-O04f: O-REPLAY 0.4.5 at acf9fce: implements Q70a-e exactly; two ruling gaps (F9, F10) (saved by the orchestrator, 2026-11-08 01:56Z)
+- probe_q52 with new Q70 rows: 52 probes, 49 MATCH, 0 WRONG, 3 OBSERVED; self-test 21/21; 5 of the new rows fail against 0.4.3, so they
+  separate the versions. Q70e not reachable (erasure never changes entityPage membership, so every prefix issues the same token).
+  Differential against 45bfa59: seed 49, 787 cases, 777 identical, 5 refused by both, 5 different (all cursor-continuation rows, each
+  explained); seed 4949, 800/800 identical. probe_q49 85/85, probe_035 119/119, probe_delta_033 20/20, unit 375/375, self-check 61/61,
+  converters 0 differences on both lanes, refusal sites unchanged, independence holds. 29/29 hashes match hashes.0.4.5.txt; 13/13 match
+  the self-report.
+- F9 (ruling gap from Q70d): in-flight A, then plain B issuing the same token, then a literal-token continuation follows B; A's all-old
+  page (p1 1) joins x's marker page (p2 M), so tx:1 is half-seen across the sequence and a lane that continues A faithfully is judged wrong.
+- F10 (not covered): `transactions(after 0, limit 1)` with a readStart before tx:2 gives two prefixes and next = 1; `transactions(after 1)`
+  with no readStart gives the post-erasure value only, so the all-old page 1 plus page 2 half-sees tx:2.
+- Reach today: no CS-ERASURE required case in contract 0.3.9 uses literal-token or journal-page sequences (ER-CURSOR-MODULO compares modulo
+  markers), so both gaps matter for future cases. Ruled Q70f, Q70g; fixed in 0.4.6 before any pin.
+- Evidence: verify/O02 4fc48af, lab/verify/O02/V-O04f/results/ (at-0.4.3/ for the new rows); scratch tree atacf9fce kept until 0.4.6 is
+  checked.
+
+## V-O04g: O-REPLAY 0.4.7 at 91ba352: every Q70a-k row passes; two journal continuations still mix (F11, F12); one crash (F13) (saved by the orchestrator, 2026-11-08 02:20Z)
+- probe_q52 with V-O04g rows: 66 probes, 61 MATCH, 0 WRONG, 5 OBSERVED; self-test 28/28; 11 new rows fail against 0.4.5. Differential seed
+  49: 801 cases, 783 identical, 5 refused by both, 13 different (3 Q70f, 3 Q70g/i, 6 Q70j/k, 1 F13 crash in both versions; the cut-scoped
+  control byte-identical query by query); seed 4949 800/800. probe_q49 85/85, probe_035 119/119, probe_delta_033 20/20, unit 378/378,
+  self-check 61/61, converters 0 differences, exactly four refusal sites (entities.py:61, run.py:53, run.py:657, views.py:129). 29/29
+  hashes match hashes.0.4.7.txt; 13/13 self-report.
+- F11: `transactionsForEntity` pages are not linked: page 1 (limit 1, snapshotPosition 2, readStart before tx:2) gives two prefixes and
+  nextBeforePosition 2; page 2 with `beforePosition 2` and no readStart gives the post-erasure value only, so tx:2 is half-seen.
+- F12: `continued_read` matches only a numeric `after` lexeme while `q_transactions` accepts anything `int()` parses, so `after: "1"`
+  skips Q70g and forces a mix.
+- F13 (pre-existing): `after: 1.0` raises ValueError at views.py:280; traceback, exit 1 (the FAIL code), no output.
+- Enumeration of every continuation and scope route is in the verifier's report (find pages: no continuation; cursorFrom on other kinds
+  takes the named read's view; history with a cut silently ignores a `scope` field). Evidence: verify/O02 9984cdc,
+  lab/verify/O02/V-O04g/results/; scratch tree at91ba352 kept. Ruled Q70l, Q70m.
+
+## V-O04h (CX-VO04H, Codex reviewer at high): O-REPLAY 0.4.8 at 3c52a1d: FIX-FIRST, two findings (saved by the orchestrator, 2026-11-08 21:23Z)
+- The three paged kinds pass every checked continuation case including F11-F13; 381 tests; 1,793 differential cases against 91ba352 with all
+  15 changes explained; 29/29 hashes match. Evidence: verify/O02 f977e36, lab/verify/O02/V-O04h/VERIFY.md and results/cx-vo04h/ there.
+- F14 (medium, blocks promotion): the Q70l self-check (selfcheck.py:351-372) recognises only literal two-element tuples whose first item
+  starts with "next" and follows only same-module bare calls; its runtime phase runs three hardcoded kinds. Planted kinds that emit
+  `nextPage` through a computed key, a helper in another module, or a nested dictionary all pass the self-check (6/6) while emitting it.
+- F15 (medium): `cursorFrom.page` goes through `int(ref.get("page", 0))` and list indexing (views.py:429): "0" and true are coerced, -2
+  selects the penultimate page, 0.0 crashes with an uncaught ValueError (exit 1). Predates 0.4.8.
+- Ruled Q70n, Q70o; 0.4.9 by a Codex builder, then a Codex reviewer.
+
+## V-O04i (CX-VO04I, Codex reviewer at high): ACCEPT O-REPLAY 0.4.9 at f195f30 for pinning in contract 0.3.11 (saved by the orchestrator, 2026-11-08 21:49Z)
+385 tests; self-check 90/90; every planted paged kind (computed key, cross-module helper, nested dictionary and the reviewer's own new
+shapes) fails the completeness check; every malformed page selector exits 2; 1,793 seeded differential cases against 3c52a1d show no
+unexplained difference; 29/29 hashes match hashes.0.4.9.txt. Known QLever converter gaps remain (unchanged). Evidence: verify/O02 5f348ca.

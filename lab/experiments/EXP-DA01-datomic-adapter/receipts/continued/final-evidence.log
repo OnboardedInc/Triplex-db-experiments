@@ -1,0 +1,70 @@
+{
+  "head": "3c738b226fe94e8fe0912351c3181347266d6009",
+  "gates": [
+    [
+      "G0-datomic-20261108T222137Z-82057a",
+      "FAIL"
+    ],
+    [
+      "G0-datomic-20261108T223725Z-45c7d7",
+      "PASS"
+    ],
+    [
+      "G0-datomic-20261108T224655Z-68c953",
+      "PASS"
+    ],
+    [
+      "G1-datomic-20261108T222406Z-bff062",
+      "FAIL"
+    ],
+    [
+      "G1-datomic-20261108T223616Z-1dff2b",
+      "FAIL"
+    ],
+    [
+      "G1-datomic-20261108T224620Z-529728",
+      "PASS"
+    ],
+    [
+      "G1-datomic-20261108T224821Z-5d506c",
+      "PASS"
+    ]
+  ],
+  "image": "sha256:e17aa3fc258b15b78f0d831ed252db7ae4baac77342b445bbd3c8d3358588f73",
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "964c58ead14530e7f687a7a6639fe4a35bb4fdbaf9d37bab9b1b1e1efa9b76e5"
+  },
+  "preservation": [
+    {
+      "db": "s-5a377987b021d5401900564fbae6a1ee",
+      "basis": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    },
+    {
+      "db": "s-f43d78e756286da105c6aa52db4e63e5",
+      "basis": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    }
+  ]
+}

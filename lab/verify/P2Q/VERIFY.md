@@ -102,3 +102,27 @@ ACKed (at least 3 of the 112 unknown actually committed), offline burst 4.7/25.0
 all match; the ACK-path-alone row has no raw data (rerun: lone ACK p50 4.3 ms, fsync p50 2.84 ms); 42.2 ms is one sample, 33.7 the cold first
 command, 0bccda started at host load 31; cad02c exclusion confirmed (stale dist, other seed, 242 apply errors) and 018b1a should be labelled or
 excluded too; "about 750 triples" does not reproduce (653 live, 663 from receipts).
+
+## V-P2Q round 2 on f711193 (Q62a fix round): REJECT this head, not the design (saved by the orchestrator, 2026-11-08 01:41Z)
+- Fixed as claimed: C1, C2 (for regressions with downtime), C3 (in one process), M1 (256/256 header flips refused), M2, M3 (1,506/1,506
+  outage pulls exact via the log), m1, m6 (lag recomputed from raw: 33/33 complete, p50 5.1 / p99 12.1 ms, measured on a dirty tree at
+  d7c6086, not at f711193). Fuzz: 3,034 normal and 1,506 outage pulls, 0 mismatches; 185 reads beyond the prefix never answered beyond it;
+  3,200 commits, 0 failures, 60/60 seeds converged. Unchanged checks re-run: 620 ACKs, 0 order violations; feed crash duplicates
+  0/129/0/0 (keyed-split/unkeyed-split/keyed-atomic/unkeyed-atomic); 1,017 ACKed under random kills, 0 lost.
+- N1 critical: `KernelLock` ignores the perl flock helper's exit after locking. SIGKILL of the helper, or Ctrl-C to the holder's process
+  group, lets a second process open the stream; both append (30 and 62 LSNs each named two ACKed frames) and the broker then refuses to
+  start. Fix: spawn the helper detached with INT/TERM/HUP ignored so it exits only on stdin EOF; on its exit fail-stop the log.
+- N2 critical: before/after marker probes cannot certify the answer's snapshot. Live: Datalog with includeBasis returned 0 rows at
+  reported basis 2048 (log replay: 1) after a zero-downtime rewind and replay between the probes; the fuzz hit it unprompted in 4 of 153
+  accepted gate reads. Same gap for dependencyState and native SPARQL with awaitBasisMs. Fix: Q67c (marker in the answer's own request, or
+  (incarnation, marker) compared before and after).
+- N3 major: with the option off, A0 now makes one extra request for a fresh basis above its observed position and fails typed above the
+  published position (main answers it). N4 major: each outage pull replays the whole log synchronously (30k commands: 544 ms per pull, a
+  concurrent commit 617 ms against 3 ms alone, +85 MB RSS). N5 minor: waiting gates flood the replica with probes (89 per waiter per
+  second during a regression), one TCP connection each. N7: native SPARQL is typed only with awaitBasisMs. N8: the cross-process flock
+  test imports dist/index.js and hangs on a fresh checkout.
+- Errors: the branch raises `ReadError` with `basis-not-available` / `replica-unavailable`; the contract pins `BasisNotAvailable` /
+  `basis-not-reached` and `ReplicaUnavailable` / `replica-unreachable`, so every case pinned to those ids fails. Contract inconsistency:
+  E-UNAVAILABLE-CUT and E-BASIS-NOT-AVAILABLE name different errors for a basis beyond the latest committed position.
+- Evidence: verify/P2Q 856af98 (round-1 commit rebased as 818819b), lab/verify/P2Q/evidence-f711193/, logs in
+  /Users/sam/Claude/Projects/triplex-db-2/V-P2Q/f711193/. Rulings: Q72 (pending).

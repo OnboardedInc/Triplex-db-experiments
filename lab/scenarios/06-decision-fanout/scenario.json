@@ -1,0 +1,69 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 6,
+  "slug": "decision-fanout",
+  "title": "One recruiter decision, 50 workers (with GS.06b minimum-wage change)",
+  "priorities": [
+    "P2",
+    "P3"
+  ],
+  "status": "runnable",
+  "source": "lab/TARGETS.md section 6 row 6 and section 6.1 (GS.06b)",
+  "story": "A single decision fans out as 50 per-subject commands driven by persisted messages. Added schedule GS.06b: a work location's minimum wage changes (one shared referenced entity).",
+  "checked": "Each subject commits once, in order; no cross-subject transaction; all 50 visible to their next pulls. GS.06b: every worker at that location appears in the feed's affected-subject set and is re-run; no other worker is.",
+  "seed": 20261106,
+  "yearOne": {
+    "fanout": 50
+  },
+  "params": {
+    "fanoutSpacingMs": 50
+  },
+  "rungs": {
+    "10k": {
+      "fanout": 50,
+      "negatives": 10,
+      "liveMs": 25000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    }
+  },
+  "witnesses": {
+    "positive": "the 50 loc1 workers (fan-out changes their placement; GS.06b affects them through location:loc1)",
+    "negative": "loc2 workers (neither the decision nor loc1's wage reaches them)"
+  },
+  "domain": [
+    "GS.06b affected-subject set = exactly the loc1 workers, all re-run (O-DOMAIN dependency rule over the :placement/location reference)",
+    "pay-rate-at-or-above-minimum-wage obligations after the change (O-DOMAIN)"
+  ],
+  "bars": [
+    {
+      "id": "P2.commit.p99",
+      "metric": "commit.scenario.p99",
+      "op": "<=",
+      "value": 50,
+      "unit": "ms",
+      "source": "TARGETS section 1 P2"
+    },
+    {
+      "id": "P3.feed.lag.p99",
+      "metric": "feed.lag.p99",
+      "op": "<=",
+      "value": 250,
+      "unit": "ms",
+      "source": "TARGETS section 1 P3"
+    }
+  ],
+  "faults": [
+    "fan-out of one persisted decision",
+    "shared referenced entity change (GS.06b)"
+  ],
+  "oracle": {
+    "source": "O-REPLAY (state, one commit per subject, no cross-subject transaction); O-DOMAIN (affected set through references)",
+    "gaps": [
+      "O-REPLAY has no dependency rules; GS.06b's affected set is O-DOMAIN's"
+    ]
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
+}

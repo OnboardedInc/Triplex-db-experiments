@@ -1,0 +1,33 @@
+{
+  "format": "j01-receipt/1",
+  "id": "predictions-phase1-A0",
+  "kind": "predictions",
+  "writtenAt": "2026-11-07T23:58:00Z",
+  "note": "Written from the code audit (TriplesLive.transact, transactionMetadata.metadataInputs, XtdbStorageAdapter.persist, QleverStorageAdapter.persist, rdf.rowFields) and one probe of XTDB's record format (probes/p1-record-shape.out: a plain INSERT ... VALUES is logged as put-docs with NULL fields dropped; a 1-row record is about 1.8 KB and each further 3-column row about 115 B) BEFORE any Triplex command was measured. Command shape: 10 string asserts about one subject, entityType set, a commandId, no actor; scope DatabaseScope.test('j01-xa-<uuid>') = 82 characters.",
+  "rowsPerCommand": {
+    "data": "N assertion rows (one per fact)",
+    "journal": "2 + (commandId ? 1 : 0) + (actor/correlation/causation/config ? 1 each : 0) + distinct changed entities (1 here) + N :_tx/change rows = N + 4 here",
+    "xtdbOther": "tx_claims 1 row (commandId), tx_meta 1 row (scope position counter, upserted), tx_attempts 1 row (operation receipt); 4 ASSERT statements (scope CAS, operation not duplicate, command not claimed, new assertion ids)",
+    "qleverOther": "claim subject 4 triples, operation subject 3 triples, meta position 2 triples (deleted and re-inserted after the first commit)"
+  },
+  "qlever": {
+    "triplesPerAssertion": "27 for a string, ref or json value with entityType set (_row 1, scalar_family/lexical/order 3, id/entity_id/attribute/value_type 4, payload 1, recorded_at 4, recorded_position 4, valid_from 4, entity_type 1, schema_version 4, tx_id 1); 30 for number or datetime (payload adds _order, _exact, _native)",
+    "predicted": {
+      "1 fact": { "data": 27, "journalChange": 27, "journalEnvelope": 114, "claimOperationMeta": 9, "total": 177 },
+      "10 facts": { "data": 270, "journalChange": 270, "journalEnvelope": 114, "claimOperationMeta": 9, "total": 663, "journalShare": 0.58 },
+      "50 facts": { "data": 1350, "journalChange": 1350, "journalEnvelope": 114, "claimOperationMeta": 9, "total": 2823, "journalShare": 0.52 }
+    },
+    "explainsKnown750": "663 inserted plus 2 deleted per command; the remaining gap to 'about 750' is expected to be measurement noise from shared-resident delta totals in EXP-P2Q, to be checked against QLever's per-operation counts"
+  },
+  "xtdb": {
+    "model": "record = fixed envelope + per put-docs table (schema) + per row (16 B iid + every non-NULL string value + 4 B offset + 8 B per integer) + per ASSERT (Arrow IPC args: about 130 B per parameter plus its value, about 200 B fixed, plus the SQL text)",
+    "perRow": { "data": 426, "journalChange": 950, "journalEnvelope": 450, "note": "change rows carry the change JSON twice: value_json 267 B and value_identity 291 B (canonical); every row carries the 82-character scope key twice (_id JSON 123 B and scope_key 82 B)" },
+    "predicted": {
+      "1 fact": { "fixed": 6400, "data": 430, "journalChange": 950, "journalEnvelope": 1800, "newIdsAssert": 810, "total": 10400 },
+      "10 facts": { "fixed": 6400, "data": 4300, "journalChange": 9500, "journalEnvelope": 1800, "newIdsAssert": 3900, "total": 25900, "journalShare": 0.53 },
+      "50 facts": { "fixed": 6400, "data": 21300, "journalChange": 47500, "journalEnvelope": 1800, "newIdsAssert": 16800, "total": 93800 }
+    },
+    "predictionsOnTheBrief": "journal (change + envelope rows + their ids in the guard) about 53% of the 10-fact record on XTDB (brief predicts more than half: borderline); 58% of QLever triples (brief: more than half: yes)"
+  },
+  "consequenceForTheCandidate": "QLever: even with the journal removed entirely, the 10 data rows alone are 270 triples, so a 3x cut (<= 221) cannot come from the journal alone; per-assertion fan-out (27 triples) is the multiplier. XTDB: the change payload (~5.6 KB), the scope key copies (~4.9 KB over 24 rows) and the per-parameter ASSERT cost are of similar size."
+}

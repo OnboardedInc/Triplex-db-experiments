@@ -1036,3 +1036,995 @@ Where each priority stands, from evidence so far (research probes and baselines;
   exists (and none should exist).
 - Disk: 14 GiB free on the host data volume (97%). Removing nine finished worktrees freed little because pnpm hard-links node_modules;
   their runs and untracked files are archived in /Users/sam/Claude/Projects/triplex-db-2/worktree-archive/.
+
+## 2026-11-08 00:12Z: V-D01c: O-DOMAIN's rules are right; the golden cases are too weak to judge a kernel
+- O-DOMAIN follows SPEC everywhere, reproduces the fingerprint and shares no code with anyone; it fails only on robustness (F1 array dates,
+  F2 4,300+ digit integers, F3 deep nesting), which are fixed before the pin.
+- **Learning: 20 of 70 single-point mutants survive the 87 golden cases, the unit tests and the fingerprint** (19 real gaps), and 13 more are
+  caught only by O-DOMAIN's own unit tests, which do not judge the TypeScript kernel. The golden set never puts a fact or an activation at
+  basis.tx, never publishes for two subjects, never has an incomplete record or a local floor below the state floor. Mutation testing of an
+  oracle is the cheapest way to find what a test set cannot see; it becomes part of every oracle verification.
+- W0-1.1.2 folds in V-D01c's 40 proposed cases (P01-P40) with the Q53 and Q57 readings; both implementations must then pass them.
+
+## 2026-11-08 00:18Z: W01 and X05 landed; P1's direction moves to broker-fed replicas
+- **EXP-W01:** all 20 golden scenarios exist with goldens from the pinned oracle and a GS gate (merged 4989c7a). On XTDB at 10k, 6 of 8
+  run scenarios pass their database checks; GS.12 found a real typed-error bug (an int64 overflow returns WriteError instead of
+  InvalidTripleError); every bar is missed by orders of magnitude (commit p99 285-400 s) because A0 serializes every writer in a scope on
+  its scope-wide position CAS, the same finding as P2X.
+- **EXP-X05:** the read-only follower on the writer's volume takes reads off the writer (writer CPU 42-89% against 110-151%) and never
+  answered wrongly in 570,821 rows, but XTDB 2.2.0's ReadOnlyLocalLog reads half-written records and dies for good, 9 times in 30 minutes.
+- **Learning (Q63b): read scaling should come from the broker, not from XTDB's shared log.** The broker composition already gives each
+  replica its own applier and marker; a second XTDB replica is a second applier, with no shared-log reader and no Kafka. P1, P2 and P3 then
+  rest on one mechanism on both lanes.
+- **Learning (Q63d): parameterise every XTDB statement;** literal multi-row INSERTs exhausted a 2 GiB heap (X05), as per-cell expressions did
+  in P2X.
+- Dispatched V-X02 (the XTQL native lane, waiting since bf1ad4d) and W0-1.1.2 (readings A01-A15 plus V-D01c's 40 cases).
+
+## 2026-11-08 00:28Z: hourly learnings pass (NORTH-STAR reread first)
+- **Learnings are current** through contract 0.3.9, the O-DOMAIN fix round, V-D01c, V-P2Q, X05, W01, R22, R23, E01 and D01b (entries
+  23:26Z to 00:18Z). Headers now come from `date -u` in the same command; two more heredoc substitutions were caught and restored, so
+  notebook text is written through quoted heredocs with a placeholder for the time.
+- **Residents and host:** xtdb-dev 2.25 of 3.0 GiB at 202% CPU (V-X02 and others share it); qlever-dev 930 MiB of 3.5 GiB; xtdb-s1 1.26 GiB
+  for EXP-N01's diagnostic A0. Pool 10.0 of 11 GiB. Host load 8.4 / 8.2 / 9.8, the lowest yet. Host disk 13 GiB free (97%).
+- **Where evidence points, by priority:**
+  - P1: XTDB's shared-volume follower is out (X05); read scaling goes through broker-fed replicas (Q63b), first measured in EXP-P2B.
+  - P2 and P3: the broker design holds on every routed read and on the feed (lag from source publication p99 13.7-24.9 ms) but failed on its
+    side paths (V-P2Q); fix round running, then P2B, then the SQLite substrate (Q58c).
+  - **P4: no experiment yet.** What exists is indirect: `_id` point reads cost 3-5 ms on XTDB while scope scans grow with history; GS.04b needs
+    a separate current index; the broker's recent_rows could become a current store. **R24 dispatched** to design EXP-P4.
+  - **P5:** the kernel prices the sweep (15.8 s of one core per 100k; validation 80%), but the read side of the sweep and its effect on live
+    traffic are unmeasured; R24 also designs EXP-P5 (a dedicated broker-fed replica for sweeps is the leading idea).
+  - Measurement: PAIR-0 (Q60) is being built (EXP-M01); until it lands every comparison stays relative and DIAGNOSTIC.
+- **Research dispatched (Sonnet xhigh): R24** current-value path and sweep design (XTDB 2.2.0 current versus as-of internals, QLever options,
+  prior art from Datomic, XTDB 1.x, KTables, CQRS projections and materialized views, the smallest Triplex change for an exact current read at
+  basis B, sweep isolation and admission control).
+- **Running (10):** C8, J01, P2Q fix round, E01, M01, V-X02, W0-1.1.2, V-D01c delta check, O-REPLAY 0.4.2, R24 (N01's A0 run in background).
+
+## 2026-11-08 00:54Z: Codex round 8: NOT READY, 10 open (14, 13, 7, 6, 5, 4, 5, 10)
+- Closed: the source/replica ACK split (R7-5). No receipt-shaped input reaches QUALIFIED in claim.mjs (admit always DIAGNOSTIC, qualify always
+  GATE-NOT-RUN), so the document-forgery line of attack is finished.
+- New critical findings come from the new machinery: (6) a candidate's build runs unsandboxed and could edit the oracle or the A0 control;
+  (7) PAIR-0 admission checks only labels, so a RED window with a SLOWER verdict, or no numbers at all, qualified in the reference model.
+  The broker fix round's before/after marker check misses a replica reset that completes inside one query (R7-6).
+- Learning: each new mechanism is first written as labels and checked as labels; the attack that always works is "supply the label without
+  the substance". Q67f makes PAIR-0 recompute decisions from retained data, Q67e isolates builds, Q67c fences replicas by incarnation.
+- Owners: EXP-E01 (Q67b, e, i, j), A01 0.3.10 (Q63-Q67 compile), the P2Q author after V-P2Q's verdict (Q67c, d, h), EXP-M01 (artifact format
+  for Q67f, g), EXP-G03 (executing gate, isolation).
+
+## 2026-11-08 01:07Z: R24 landed: P4 and P5 have designs; XTDB may already split current from history
+- **XTDB 2.2.0 physically separates current from historical files and prunes by recency, but Triplex forfeits it:** every adapter read says
+  `FOR ALL VALID_TIME` and finds facts through non-`_id` predicates. A read-path change (X1) is the cheapest P4 experiment there is.
+- **P4 design (Q68a):** one current structure with a retention horizon H and watermark W, served only when H <= B <= W; first copy in the
+  broker (in the same frame), smaller engine copies for list and native queries. QLever's per-round floor of 3.4-6.5 ms means a host store or
+  a one-scan bundle is the only way under 5 ms there.
+- **P5 design:** pinned basis by holding H, cursor pages from a worker that also runs the kernel, admission on live queue delay, publication in
+  64-record frames (Q68c). Estimated 25-35 s for 100k subjects on the host-store design, against the 100 s bar.
+- Dispatched EXP-P4 (read-path arms first; write-path arms after EXP-J01 merges). EXP-P5 waits for the O-DOMAIN pin, P2B and the SQLite store.
+
+## 2026-11-08 01:26Z: W0-1.1.2 accepted; kernel update dispatched; XTDB A0 falls behind the trace with zero readers
+- **W0-1.1.2 accepted at fedfcda** after the orchestrator diff check (lab/verify/D01/V-D01e/VERIFY.md): only SHA256SUMS, SPEC.md,
+  validate.py and the new input-sha256.json changed; every case, release and fingerprint input is byte-identical; validate.py prints 136
+  cases OK from a clean archive; SHA256SUMS 146/146. It merges with the W0 pin move in contract 0.3.10.
+- **Kernel update dispatched as a fresh agent** because the D01b author's worktree was gone and it could not be resumed. The brief
+  (EXP-D01b-w0-kernel/BRIEF-1.1.2.md) makes the harness compare output hashes against the frozen expected-sha256.json, so a bug in the
+  kernel's own JSON writer can no longer cancel out, and asks for three planted faults to prove it.
+- **N01 interim, XTDB A0 at zero readers:** after the 50x burst at 120 s the writer queue reached about 3,500 commands, and the feed
+  checkpoint moved only about 12 positions in four minutes. This matches P2X's A0 arm (0.35 commits/s on the same trace shape, service time
+  growing with history), so it reads as the A0 result for XTDB's default write path rather than a driver fault. Learning: on this node the
+  XTDB A0 baseline cannot keep up with the TARGETS 2.1 writer trace even before any reader is added, so the NS P2 bar for XTDB rests on the
+  broker composition (P2B) and the per-subject queue, not on the engine's own write path.
+- **M01 parked cleanly** (poller, coordinator and its colima ssh agent stopped; nothing left in the VM). It resumes in the Q69a window.
+- N01, C8 and J01 ended their turns while their own runs continue; orchestrator waiters resume each agent when its process exits.
+
+## 2026-11-08 01:32Z: hourly learnings pass (NORTH-STAR reread first); catch-up on seven reports
+- **Gap found and closed:** seven results landed as reports between 00:40Z and 01:20Z without a notebook entry. Their learnings:
+  - **P2Q fix round (f711193, P2 and P3):** all three criticals fixed. In-transaction Datalog now waits for the replica's real marker and
+    fails typed instead of answering 0 rows (C1); no answer uses a cached marker, and the applier fences and replays after a replica rewind
+    (C2); a second broker on the same log is refused in-process and across processes by flock (C3). 300 random outage reads equal an
+    independent log replay. Open (Codex R7-6): a replica reset that completes inside one query still passes the before/after marker check,
+    and the errors use `ReadError` tags rather than the contract's `BasisNotAvailable`/`ReplicaUnavailable` (Codex R8-9). R8 already measured
+    that one QLever SPARQL request is one snapshot (4,076 reads, 0 torn), so the marker must travel inside the answering request, as R23
+    designed; incarnation fencing (Q67c) covers multi-request Datalog.
+  - **O-REPLAY 0.4.2 FIX-FIRST, then 0.4.3:** 0.4.2 listed every subset of in-flight erasures (2^n) instead of the n + 1 prefixes in
+    publication order, and a cursor continuation of an in-flight read exited 2 (V-O04d F5, F6). 0.4.3 (45bfa59) answers per prefix with
+    per-prefix cursors; V-O04e is re-checking it. Learning: "all-or-none per commit" has to be stated as an order, or an oracle quietly
+    widens the acceptable set.
+  - **EXP-M01 PAIR-0 built offline (1e3c2b5):** a known 2x effect is found at the 8-round look; A/A false positives are 7-9%, matching
+    R22. The live A/A duet cannot run because two 3.5 GiB XTDB slots never fit beside both dev residents (Q69a measurement window). Two risks
+    for the live run: XTDB seeds at about 120 facts/s while screening bursts offer 750, and the calibration-drift rule excluded 3 of 8 rounds
+    at host load 17-21.
+  - **E01 on contract 0.3.9:** the JS evaluator and the Python reference agree on 59/59 admissions and 10,712 executor calls; the lab is
+    stricter where they differ. Honest nulls remain (no fault injector, no PAIR-0 runner), so every fault and NS/GS claim fails closed.
+  - **W0-1.1.2:** no meaning changed (C01-C87 and R1-R3 byte-identical, fingerprint unchanged), 32 of 32 targeted mutants killed. V-D01e's
+    two small fixes were accepted at fedfcda.
+- **Host:** load 19.5 / 18.5 / 18.1 (the highest yet; eight active agents plus N01's, C8's and J01's runs). Pool: xtdb-dev 2.5 of 3.0 GiB,
+  qlever-dev 0.97 of 3.5, xtdb-s1 1.9 of 3.5. **Disk fell to 9.2 GiB free**; removing 3.4 GiB of old scratch archives brought it to 10 GiB.
+  The rest of /private/tmp (6 GiB of m4c-* and m9-* folders) belongs to other projects and is left alone. Rule: below 5 GiB free, no new
+  heavy run starts.
+- **Where evidence points, by priority:**
+  - **P1:** read scaling goes through broker-fed replicas (Q63b). C8 is measuring the reads-never-write floor on both lanes.
+  - **P2:** XTDB's own write path cannot keep up with the writer trace even at zero readers (N01, matching P2X's 0.35 commits/s), so the
+    XTDB P2 bar rests on the broker (P2B) plus a queue per subject. The broker's host store is SQLite (Q58c), and nobody has yet settled
+    how SQLite serves many pinned readers beside one durable writer in Node (R24 open question 2). **R25 dispatched** for that.
+  - **P3:** broker feed lag from source publication p99 13.7-24.9 ms; XTDB's native feed p99 2.9 s. The broker stays the feed source.
+  - **P4:** EXP-P4 is running the read-path arms (X1 current-only reads, X2 `tx_current`, H1 broker store, Q1 QLever `cur` graph).
+  - **P5:** designed (R24 section 7); waits for the O-DOMAIN pin, P2B and the SQLite store, so R25 is on its path too.
+  - **Loop speed:** every A0 or PAIR-0 run on XTDB re-seeds at about 120 facts/s (38 minutes for N01's seed), and PAIR-0 needs 8 to 24
+    rounds. Seeding once and cloning the stopped engine's storage would cut that to minutes if a clone is faithful. **R26 dispatched** for that.
+
+## 2026-11-08 01:36Z: O-DOMAIN accepted and passes all 136 W0-1.1.2 cases; O-REPLAY 0.4.3 needs one more narrow fix; 0.3.10 dispatched
+- **V-D01c ACCEPT O-DOMAIN 5d1fd1a:** 6,833 of 7,127 differential entries identical, and all 294 differences are inputs where 276a280
+  crashed; fingerprint, 400 block digests and every floor unchanged; 71 of 71 kill-matrix rows identical. Orchestrator cross-check against
+  W0-1.1.2: 133/136 through O-DOMAIN's own case runner, and the other three are `inputBase64` cases its loader cannot read, which match when
+  fed as decoded bytes. Learning: a new case form in the golden set needs every implementation's harness to read it, or a correct
+  implementation reports a failure; the contract's O-DOMAIN runner entry has to say how byte cases are fed.
+- **V-O04e FIX-FIRST on O-REPLAY 0.4.3, narrow:** the 2^n and cursor-exit bugs are fixed, but two cursor-continuation edge cases still
+  let a page sequence mix prefixes (F7: a continuation of a plain read consults its own readStart; F8: a literal token carries no prefix).
+  Both existed in 0.4.2. Ruled as pending Q70a, Q70b; the author is on 0.4.4. Learning, the same as Codex's pattern: the rule "one prefix
+  across pages" was implemented for the path the case used, and the two other ways to continue a page were left on the old rule.
+- **Contract 0.3.10 dispatched (A01):** W0-1.1.2 and O-DOMAIN pins, Q57 and Q63-Q69 compiled, Q70 and the unbuilt parts of Q67c/d/h stay
+  pending. The O-REPLAY pin stays at 0.4.1; 0.4.4 goes into 0.3.11 after its re-check.
+- **Research dispatched (Sonnet xhigh):** R25 (many pinned readers beside one durable writer in the broker's SQLite file: settles R23's
+  exclusive lock against R24's reader workers, with host measurements) and R26 (seed once, clone faithfully, from source and docs).
+- **Process errors caught:** (1) the scratch cleanup removed a tree V-O04e was still using for a re-check; scratch archives under review now
+  stay until their verifier reports. (2) A STATE table rewrite cut through to the next blank line and dropped the queue; restored from
+  3f1b214 as a numbered list with a blank line before it.
+
+## 2026-11-08 01:42Z: E01 closes Codex round 8 in claim.mjs; the broker fails on certification, not on answers; O-REPLAY 0.4.5
+- **EXP-E01 at 2796455 (floor for every claim):** each build is its own instance with an execution identity over the whole post-build
+  checkout, so identical dist bytes can no longer alias the A0 control; oracle copies are read-only and re-hashed before every call;
+  children die with their process group; comparators decide case results. 112/112 tests, reference replay 59/59. It says what is still
+  open: a process that leaves its group, check-to-use gaps, no filesystem or network isolation. So offline stays non-QUALIFIED until
+  EXP-G03. V-E01 (fresh Opus) is checking it adversarially. Questions ruled Q71 (install-metadata exclusions, toolchain, comparator in the
+  reference).
+- **V-P2Q round 2 (P2, P3): REJECT this head, not the design.** Every pull answer was exact (4,540 fuzz reads, outages included), and
+  1,017 ACKed commits survived random kills. The two blockers are certification failures, not wrong pulls: (N1) when the flock helper
+  dies, a second writer opens the stream; (N2) Datalog returned 0 rows labelled basis 2048 after a zero-downtime rewind between its two
+  marker probes, and the fuzz hit it unprompted 4 times in 153. Learning: a before/after probe around a separate request certifies nothing
+  about that request's snapshot. The marker has to travel inside the answering request, or an incarnation id has to prove nothing reset in
+  between (Q67c, now Q72b on every surface). Also measured: an outage pull replays the whole log synchronously (544 ms at 30k commands, and
+  it blocks commits), so the Q58c store is required before the broker can be a default.
+- **O-REPLAY 0.4.4 (00703e6)** fixed F7 and F8; its author found the F7 hole still reachable through a literal token from a plain read.
+  Ruled Q70c-e (any issuing read; latest of equal tokens; prefixes without the token left out); 0.4.5 is in progress, then one re-check.
+- **Contract 0.3.10** also compiles Q71b, Q71c and Q72f (one error id for a basis beyond the latest published position).
+
+## 2026-11-08 01:44Z: XTDB A0 at 10k with zero readers: the write path saturates and single reads take seconds; 10k ladder stopped
+- **Receipt NS-xtdb-20261108T001701Z-6f67e0 (MEASURED, exclusive s1, smoke profile, `public-queued`):** seed 384,785 assertions in 38 min
+  (about 400 falling to 170 facts/s as the scope grew). P2: 112 of 15,617 trace commands published in about 40 min; the rest missed the
+  30 s deadline; the 5-10 fact band p50 22 s, p99 45 s; the queue held about 6,700 at steady state and never drained after a burst. P3: 0
+  order violations, 0 duplicate effects, all three crash points resumed exactly; lag p99 41.6 s; 11 gaps not yet classified. 0 correctness
+  violations; read-your-own-write pulls p50 44 s, p99 122 s.
+- **Probes on the idle seeded scope:** one entities round trip 1.3-2.3 s; a 4-hop pull 5.4 s, a 7-hop pull 15-16 s; `transactions(after
+  0, limit 1)` 13.5 s; a 1-fact transact 3 s. These grow with scope size, which fits R24's finding that A0 reads scan all valid time through
+  non-`_id` predicates, and P2X's finding that A0's receipt and scope reads grow with history while its candidate stays near 5 ms.
+- **Decision:** the 10k reader ladder was stopped before it ran. P1 is measured as writer latency with readers against the zero-reader run,
+  and with the writer already saturated that comparison shows nothing about readers. s1 goes to V-X02. N01 proposes the largest rung where
+  the zero-reader writer keeps up, and the A0 ladder runs there after V-X02 (using R26's clone procedure if it holds).
+- **Learning for the north star:** on this node the A0 XTDB lane misses P2 and P3 by two orders of magnitude before any reader is added,
+  so every P1, P2 and P4 gain for XTDB has to come from the read-path change (EXP-P4 X1), the keyed scope candidate (P2X) and the broker
+  (P2B), not from tuning the engine.
+- **O-REPLAY 0.4.5 (acf9fce)** closes Q70a-e (375/375 unit tests, probe_q52 43 MATCH, 2 OBSERVED); V-O04f is re-checking it.
+
+## 2026-11-08 01:54Z: goal check-in: background work audit
+- **All progressing.** Every active agent wrote within the last two minutes (V-X02, W01b, P4, R25, R26, A01, V-E01, P2Q fix round 2,
+  V-O04f). C8 (XTDB SQL G2) and J01 (XTDB G1 with the option off) are idle by design while their runs advance; both runs wrote output
+  in the last five minutes (C8's G2 is past workload 16). N01 finished and is merged; M01 is parked with nothing running.
+- **Stopped:** one leftover `tail -F` of C8's finished QLever G2 run (running 2 h 04 min, no reader left). Nothing else was stuck.
+- **Pool:** xtdb-dev 2.3 of 3.0 GiB, qlever-dev 1.0 of 3.5, xtdb-s2 1.1 of 3.5 (EXP-P4's slot smoke). With s2 taken, s1 cannot also fit
+  in the 11 GiB pool, so V-X02's exclusive XTQL rerun waits for P4 to release s2; engine.mjs's reservations arbitrate this.
+- **Host:** load 15.9 / 26.2 / 22.4 (the 5-minute peak is the highest yet); disk 9.2 GiB free (rule: no new heavy run below 5 GiB).
+
+## 2026-11-08 01:57Z: R26 landed (clones are faithful if settled); disk is the binding constraint; O-REPLAY gets one more round (0.4.6)
+- **R26 (measurement speed for all five):** XTDB 2.2.0 keeps no persistent node identity (node id random per process; the leader term is
+  re-claimed from the copy's own log), and blocks and tries copy byte-identically, so query cost matches. A clone is faithful when the
+  slot is stopped cleanly and settled first (finish-block, compactor idle), `log/` and `buffers/` are copied from one moment, and image and
+  config bytes match. QLever's `/data` copies faithfully too, but saves only 1-4 minutes because its bulk index build already takes about
+  one. Estimated saving: a 10k XTDB run's 38-minute seed becomes 2-4 minutes; a PAIR-0 duet's 76-106 minutes becomes 5-8.
+  Ruled Q74: screening may clone, acceptance seeds fresh, settled is the canonical freeze state, and no clone-seeded receipt counts until
+  validation E1 (fresh against clone under PAIR-0 hold margins) passes. EXP-K01 is briefed to build the tooling and validate at 500 subjects.
+- **Disk:** removing six dangling anonymous volumes from the first bring-up freed 4.7 GB inside the VM but nothing on the host (the VM
+  disk is sparse and does not shrink). Host free is 8.7 GiB, a 10k XTDB volume is 3.41 GiB, and a golden plus two duet clones is about
+  10 GiB, so at the 10k rung only one clone fits at a time (Q74f). Small rungs are unaffected.
+- **V-O04f on O-REPLAY 0.4.5:** implements Q70a-e exactly (49 MATCH, 0 WRONG), and found two shapes no ruling covered: a literal token
+  issued by two reads with different views (F9) and journal pages continued by `after = next` (F10). Neither reaches a required case
+  today. Ruled Q70f (refuse an ambiguous token, typed) and Q70g (journal pages continue the issuing read); 0.4.6 is in progress, and the
+  pin waits for it so the contract pins one version without known gaps.
+- **Learning:** every continuation mechanism in the oracle (cursorFrom, literal token, journal `after`) needed the same rule stated
+  separately; the verifier found each one only by enumerating ways to continue a page. Future read surfaces with cursors get the
+  enumeration up front.
+
+## 2026-11-08 02:04Z: MILESTONE: contract 0.3.10 merged; both domain artifacts pinned; the W0 kernel is on main
+- **Contract 0.3.10 (64ab545):** W0-1.1.2 (146 file hashes) and O-DOMAIN 5d1fd1a are pinned with the fingerprint; Q57, Q63-Q69, Q71 and
+  Q72f are compiled. 65 of 157 obligations are closable (61 before); 0 are blocked by the W0 pin or an unpinned O-DOMAIN (26 each before).
+  The orchestrator merged main into the branch, regenerated byte-identically and reran the regressions: 284/284 caught, Q47d PASS.
+- **What now blocks most:** unpinned O-OBS (62 obligations) and O-HAND (20), which also hold 22 of the 26 domain obligations (NS.P3,
+  NS.P5, GS.01-GS.20); other unpinned oracles 20; O-TDK1 unaccepted 6. Every claim is also blocked evaluator-side until EXP-G03, pinned
+  case manifests, a buildSpec, the frozen trace and the A0 registry exist. Learning: the next contract lever is O-OBS (an observation
+  oracle for receipts), not more rulings.
+- **W0 kernel merged (a199182):** the TypeScript kernel and its byte-only harness are on main.
+- **Contract author's inconsistencies, handled:** an R1 digest typo in V-D01e corrected; Q67i's "CMP-EXACT" does not exist (CMP-EXACT-VALUE
+  compares typed values, and no comparator is plain byte equality), to be ruled with the next comparator change; claim.mjs:894 still builds
+  a workload slot (Q67g moved slot into placement), so E01 adapts after V-E01; V-D01c's delta check and V-O04f ran from messages, not
+  briefs of their own (Q59c), so every re-check now gets a saved brief.
+- **O-REPLAY 0.4.6 (565bc26)** refuses an ambiguous literal token or journal `after` (typed X-NOT-MODELED at run.py:657) and continues
+  journal pages from their issuing read; 377/377 unit tests. Its author found one older journal gap (in-flight scope taken from cut.scope),
+  ruled Q70j; 0.4.7 fixes it, then one re-check against Q70a-j.
+- **EXP-K01 dispatched:** clone tooling per R26 and Q74, validated live at 500 subjects (the rung N01 proposed for the A0 P1 ladder).
+
+## 2026-11-08 02:15Z: V-E01 FIX-FIRST: the evaluator trusted bytes the candidate could still reach
+- **What held:** every round-8 fix does what it claims (9 of 9 mutations break their guard; reference replay 59/59).
+- **What failed:** isolation (check 3). Two routes need no process escape: a build can rewrite claim.mjs so the next honest run returns
+  top-level QUALIFIED with exit 0 (F1), and an unpinned COMPILED oracle is read lazily, after candidate code ran, through a git that honours
+  `git replace` (F2, which also exposed a conflict: Q59e makes claims on unpinned oracles DIAGNOSTIC, but the code and the reference
+  accept COMPILED ones). Smaller: the identity records the evaluator's own node while children run the first node on PATH (v24 ran,
+  identity said v22); one HOME for every child; deleted evidence is not detected; row comparators cannot reach inside an O-REPLAY answer, so
+  those cases can never pass (fail closed).
+- **Learning:** "hash at start and end" protects one run, not the next; trust has to be anchored to git blobs read before any candidate
+  code runs, with replace refs disabled. And the identity must record what children actually execute, not what the evaluator runs on.
+- Ruled Q75a-j; E01 fix round 2 also adopts contract 0.3.10's field names; V-E01 does the delta check. Contract items (pinned runners,
+  comparators inside O-REPLAY answers, promotion in admit_claim) go into 0.3.11.
+
+## 2026-11-08 02:20Z: V-O04g: 0.4.7 passes every Q70 row; the fourth continuation route found, so one general rule replaces the patches
+- Every Q70a-k row passes (61 MATCH, 0 WRONG), V-O04f's F9 and F10 are closed, read scope is right, four refusal sites. Still mixing:
+  `transactionsForEntity` pages continued by `beforePosition` (F11) and a string `after` (F12); `after: 1.0` crashes (F13, pre-existing).
+- **Learning:** four rounds (F7-F8, F9-F10, Q70j, F11-F12) each found one more way to continue a page, because each ruling named a route.
+  Q70l states one rule over a table of paged kinds and adds a self-check that fails when any kind with a `next*` output is missing from it;
+  Q70m types continuation values. A rule that names cases invites the next case; a rule over an enumerated table with a completeness check
+  does not. This applies to every future paged surface in the lanes too (pull cursors, feed pages).
+- 0.4.8 in progress; V-O04h has a saved brief.
+
+## 2026-11-08 02:24Z: MILESTONE (P1 floor): read paths never write, on both lanes
+- **EXP-C8 (d9b2dc8):** every read entry point runs on a read-only client view; five read-path mutators are gone (XTDB scratch tables and
+  per-round COMMIT SYNC for native reachability, Datalog relation tables, maintained-query writes on query(); QLever scratch graphs and
+  never-cleaned derived graphs). A wire-level write counter that fails closed counts 0 writes and 0 commits across every gate run (1,412
+  statements), and a positive control registers its commit. QLever G1 88/88 and its G2 closure workloads pass; XTDB failures are all
+  timeouts on the overloaded shared engine.
+- **Faster as well as read-only:** the single-read default reads each edge relation once and runs the frontier in memory: XTDB native wl15
+  2.6-3.2 s against 5.2-10.3 s before (5-7 write transactions per call before); QLever tree native 1.1-1.7 s against 3.2-4.9 s. Learning:
+  on the current ledger one recursion round costs as much as reading the whole edge relation, so per-round reads only pay once there is an
+  id-keyed current copy (P4's structure); C8's closure scale limits (1M / 100k edge rows) wait for that (Q76a).
+- **P1 side observation:** QLever updates appear to queue behind queries (writer 4.4 s p50 alone, one 20 s commit with 4 readers). That is
+  the replica behind the broker, which is why P1 on QLever goes through broker-fed replicas (Q63b).
+- V-C8 (fresh Opus) dispatched; C8 merges after V-X02, since it carries X02. Ruled Q76 (closure scale, dead schema, tail constraints,
+  WL20 supports, maintained-query publication from the feed, clean receipts on an exclusive slot).
+
+## 2026-11-08 02:29Z: hourly learnings pass (NORTH-STAR reread first)
+- **Learnings are current** through C8, V-O04g, V-E01, R26, N01 and contract 0.3.10 (entries 01:36Z to 02:24Z). O-REPLAY 0.4.8 (3c52a1d)
+  landed during this pass: one continuation table (run.py:64) with a self-check shown to fail when a paged kind is missing; V-O04h checks it.
+- **Host:** load { 9.60 11.65 14.04 }; disk 6.9Gi free (scratch cleanup of finished verifiers' copies, 2.6 GB, followed; V-O04h's trees kept); containers: tx2-xtdb-s2 1.129GiB / 3.5GiB;tx2-qlever-dev 1.057GiB / 3.5GiB;tx2-xtdb-dev 2.292GiB / 3GiB;
+- **Where evidence points, by priority:**
+  - **P1:** the floor is reached on both lanes (C8: read paths never write, 0 writes in 1,412 gate statements). What is left is
+    throughput and isolation: QLever's writer queues behind reads (R17, C8), so P1 on QLever runs through broker-fed replicas (Q63b);
+    on XTDB the default reads scan all valid time (N01: 1.3-2.3 s per entity round trip at 770k rows), which EXP-P4's X1 arm tests.
+  - **P2:** XTDB's default write path saturates at 10k with zero readers (112 of 15,617 commands); P2X's per-subject candidate and the
+    broker are the paths. The QLever broker's answers are exact; its certification is in fix round 2 (one-snapshot marker, lock helper).
+  - **P3:** the default feed page reads the whole journal (13.5-21.2 s); P2X's feed row plus tailer and the broker's log replace it.
+  - **P4:** EXP-P4 running (X1, X2, H1, Q1); C8 adds that closures need an id-keyed current copy to get cheaper (Q76a).
+  - **P5:** domain side is complete and pinned (W0-1.1.2, O-DOMAIN, the TS kernel); EXP-P5 waits for P2B and the SQLite store (R25).
+  - **Measurement:** EXP-K01 builds seed-once cloning; PAIR-0's live A/A waits for the Q69a window.
+  - **Floor for claims:** contract 0.3.10 closes 65 of 157; the biggest blocker is O-OBS (62); every claim also waits for EXP-G03.
+- **Research (Sonnet xhigh), queued because all ten slots are in use:** R27 (engine-side evidence sources per O-OBS protocol on both
+  engines, and a source-kind taxonomy O-OBS can enforce) and R28 (isolating candidate builds and runs for EXP-G03, after V-E01 showed
+  start/end hashing is not isolation). Not needed: QLever update-versus-query interference is already covered by R17 and R8.
+- **Running (10):** V-X02, W01b, P4, R25, P2Q fix round 2, K01, E01 fix round 2, V-O04h, V-C8, J01 (its G1 reruns). Next free slots, in
+  order: EXP-O05 (O-OBS), R27, R28.
+
+## 2026-11-08 21:12Z: PROTOCOL v1: new agent roles, a third lane (Datomic), and the weekly-limit pause handled without losing work
+- **What happened:** all ten Claude agents stopped mid-work on the Claude weekly limit (about 03:30Z to 11:00Z on 2026-11-08). The window
+  has reset (0% used at 21:04Z).
+- **Sam's instruction (2026-11-08):** Codex gpt-6.1-sol at medium builds code, Codex at high reviews adversarially, Opus 5.5 at high plans
+  and thinks, nothing above high, a Datomic lane joins XTDB and QLever, and work pauses gracefully at 65% usage. Written into
+  lab/PROTOCOL.md (replaces PLAN 6.2), SCOPE.md (three lanes) and the memory.
+- **Tooling:** lab/bin/agent.mjs is the only way Codex is launched: it forces model, effort (builder medium, reviewer high) and the
+  workspace-write sandbox with the shared ledgers writable, prepends lab/agents/CODEX-PREAMBLE.md (the lab rules) to every prompt, and
+  records launches, sessions and exits in lab/agents/ledger.jsonl. Needed because ~/.codex/config.toml defaults to effort max with
+  full disk access. A smoke run confirmed Docker, git, the pnpm store and the QLever resident are reachable from the sandbox.
+- **In-flight work kept:** the paused agents were not resumed, since their effort may exceed high; their uncommitted work went into WIP
+  commits on seven branches, and lab/agents/handoffs/ holds each one's last state. Codex agents continue from those.
+- **Running now (10):** R29 (Opus high) designs lane D; nine Codex agents continue lanes X and Q (broker round 2, P4, E01 round 2, W01b,
+  J01, O-OBS) and three reviews (V-C8, V-O04h, V-X02).
+
+## 2026-11-08 21:16Z: EXP-J01 done (CX-J01, Codex builder): compact encoding saves 12% (XTDB) and 33% (QLever); the 3x target is not met
+- Report on exp/J01-bytes-per-commit 5cc42fb (lab/experiments/EXP-J01-bytes-per-commit/REPORT.md). The attribution of every XTDB
+  source-log byte for a 10-fact command closes with 0 unexplained (A0 30,061 bytes; compact 26,397, 1.14x); QLever inserted triples drop
+  32.6% (1.48x). Full G1 still fails (overload), XTDB compact-on is unverified; not promoted, and it needs an independent review first.
+- **Learning for P2:** the journal and its identity guards are 47.9% of an XTDB commit's bytes, and change-row JSON plus canonical value
+  identity is the biggest single block; even dropping both saves 5,736 bytes, not 3x. Per-commit write cost is set by the journal design,
+  so the P2 lever is structural (the broker's log as the journal, P2B; per-subject keys, P2X), not a denser encoding of the same rows.
+
+## 2026-11-08 21:19Z: EXP-P4 (CX-P4): a host-side current store (H1) is about 1,000x faster than the engine path and exact; X1 gains nothing on fresh history
+- Report on exp/P4-current-path 6f061a8 (lab/experiments/EXP-P4-current-path/REPORT.md, MEASUREMENTS.md). 10k XTDB, 200-subject gate block,
+  1,000 matched subjects for history growth; s2 released afterwards (volume retained).
+- **H1** (in-process entity-indexed retained rows, applied from receipts and the feed, served only when H <= B <= W, with fallback):
+  100,097 oracle-checked pulls, 0 wrong; weighted p50 / p99 ms depth 1 0.675 / 10.5, depth 10 0.943 / 18.4; about 10,000 pulls/s per core.
+  Depth-10/depth-1 p99 ratio 1.181x against the 1.1 flatness bar (A0 2.500x, X1 2.344x). Not durable, no erasure yet.
+- **A0 / X1** (current-only temporal bounds): depth 1 p50 627 / 590 ms, depth 10 1,425 / 1,376 ms; X1 is no real gain on fresh history
+  (kept only for the aged-history test). **X2 and Q1** not run (wait for J01's merge). Sample counts below 100k for the engine arms.
+- **Learning for P4:** the fast path to current values is a host-side current store fed by the same frames as the log (R24's H1), not a
+  read-path tweak on the engine; it becomes durable on R25's SQLite design and needs erasure (Q58e) and a flatness fix. Engine copies (X2,
+  Q1) are still worth measuring for native queries.
+- Next: Codex reviewer for J01 now (P2 outranks P4, and X2/Q1 wait for it), then a reviewer for P4.
+
+## 2026-11-08 21:25Z: O-OBS built (CX-O05, Codex builder): 14 protocols, fail-closed, 14/14 planted mutants caught
+- exp/O05-observation-oracle 6852fc1: lab/acceptance/oracle/observe.py with 96 fixtures, 8 CLI tests, 14/14 mutants detected; no engine
+  evidence used. Twelve contract ambiguities (CA01-CA12, lab/acceptance/oracle/README.md there); the deepest is CA01: the contract names no
+  serialized source kinds and no authenticated collector format, so hashes bind content but cannot attest that evidence came from the
+  engine. That is R27's question (engine-side evidence sources), which goes next. Codex reviewer CX-VO05 dispatched.
+
+## 2026-11-08 21:27Z: hourly learnings pass (NORTH-STAR reread first; research is Opus high under lab/PROTOCOL.md)
+- **Catch-up:** V-O04h (FIX-FIRST on O-REPLAY 0.4.8: the completeness check matched code patterns instead of executing kinds, F14; the page
+  selector coerced or crashed, F15; ruled Q70n, Q70o; 0.4.9 building) and V-C8 (FIX-FIRST: two budget bypasses, a stack overflow in path
+  counting, two write-counter blind spots; no read path that writes was found; ruled Q77; fix round building). Learning from both: the
+  Codex reviewers keep finding the same class as the Opus ones did, a guarantee checked on the shapes the author thought of; Q70n's
+  "check by execution, not by pattern" is the general cure and applies to the write counter too (Q77c: classify positively, count every
+  unknown).
+- **Host:** load 8.3 / 11.2 / 13.4; disk 33 GiB free (up from 9); only the two dev residents are running; Claude usage 1% of the week.
+- **Where evidence points, by priority:**
+  - **P1:** read paths never write (C8, fix round for budgets and counter); P1 throughput on QLever goes through broker-fed replicas.
+  - **P2:** encoding tweaks are worth 12-33% (J01), not 3x; the journal and its guards are half of each XTDB commit, so the levers are the
+    broker log as the journal (P2B) and per-subject keys (P2X). Broker fix round 2 is building.
+  - **P3:** the broker log and P2X's feed row replace the full-journal feed scan.
+  - **P4:** H1, a host-side current store, is about 1,000x faster than the engine path and exact on 100,097 checked pulls; it needs R25's
+    durable SQLite design, erasure and a flatness fix (1.18x against 1.1). X2 and Q1 wait for J01's review.
+  - **P5:** the domain side is pinned; P5 waits for P2B and the SQLite store.
+  - **Lane D:** R29 (Opus high) is designing it.
+  - **Floor:** O-OBS built and under review (62 obligations); E01 round 2 building; O-REPLAY 0.4.9 building.
+- **Research:** all ten slots are busy, so R27 (evidence sources for O-OBS, now sharper: CA01 says the contract has no authenticated
+  collector format), R28 (isolation for EXP-G03) and the R25 finish wait, in that order, as Opus high planners. No new question beyond those
+  three this hour.
+
+## 2026-11-08 21:33Z: lane D designed (R29, Opus high); bring-up EXP-DA00 dispatched to a Codex builder
+- Saved as lab/research/R29-datomic-lane-design.md with briefs lab/experiments/EXP-DA00..02/BRIEF.md; ruled Q78a-e.
+- Datomic Pro 1.0.7745 on dev storage; one container per slot with the transactor and a Clojure gateway peer pinned to separate CPUs,
+  which is lane D's P1 hypothesis (on XTDB, readers and the indexer share one JVM and 4 readers raised commit service time about 5x, R16);
+  values tagged so longs and entity ids never lose precision; one database per scope; fact entities with valid time as attributes.
+- **Unknowns, not assumptions:** no published on-prem Datomic latency exists, so every P1-P5 cost is an estimate until EXP-DA03's NS smoke;
+  R18's claim that Datomic does not separate current from history conflicts with an internals guide, and DA03 settles it. No Datomic source
+  exists, so lane D has workarounds only. Pool: the 2.75 GiB resident is parkable, so lane D resident work and lane X/Q exclusive slots do
+  not overlap (Q78b). Two calls are Sam's (Q78e: tenancy on shared dev storage; dev storage for final acceptance).
+
+## 2026-11-08 21:41Z: O-OBS review FIX-FIRST (trust has to come from the evaluator); K01 refused its own golden safely; R25 and R30 dispatched
+- **V-O05 (Codex reviewer):** 177 independent cases found 23 acceptance discrepancies; the blocker is that an invented log carrying its own
+  hashes earns PASS everywhere, and the evidence chooses its own threshold. Learning, again: an oracle that judges only what it is handed
+  cannot tell real evidence from a well-formed invention; the case context and collector objects must be the evaluator's own (Q80a), which is
+  R27's design question. Round 2 waits for R27; exact integer ratios (Q80c) go in with it.
+- **K01 (Codex builder):** the 500-subject seed took 90.9 s (26,635 assertions); golden creation refused because `docker stop -t 60` never
+  logged `Node stopped.`, and finish-block with compactor jobs 0 left 61,709 rows in the live index of the open read view (zero only after a
+  restart). Both R26 assumptions failed on the real image, and the gate failed closed as designed. R30 (Opus high) reads XTDB source for a
+  provable freeze protocol. Also: probing a nonexistent block id hangs; enumerate published files instead.
+- **R25 finish** (Opus high) completes the SQLite pinned-readers design from the retained measurements and now must also serve H1's
+  current_rows.
+
+## 2026-11-08 21:50Z: review round results (Codex reviewers): O-REPLAY 0.4.9 ACCEPTED; X02 stops silent rounding; three narrow FIX-FIRSTs
+- **O-REPLAY 0.4.9 ACCEPTED** (V-O04i): the completeness check now runs every registered kind, so every planted paged kind fails it;
+  1,793 seeded cases unchanged. Contract 0.3.11 (Codex builder) pins it, compiles Q70, Q74-Q77, Q79, Q81 and registers lane D's surface,
+  blocked until EXP-DA00 lands a pinned image.
+- **X02 fix round (6cd68dc):** exact Datalog arithmetic on XTDB now refuses typed instead of rounding 1000000000000000004 to
+  1000000000000000000 (Sam's "no silent precision loss" rule), SQL guards are token-aware, overflow is a typed failure, and an unset switch
+  restores historical routing; G0 949 passed. Reviewer delta check running; C8 round 3 merges it, since C8 carries X02.
+- **Narrow FIX-FIRSTs:** E01 (a case input deleted or rewritten after its last use is not detected; Q81a), C8 (an unclassified GET and pgwire
+  traffic after a parser exception still tally zero; Q81b), J01 (the default-off option changes the XTDB client's array-parameter contract;
+  compact-on G1 missing; Q81c). Each has a Codex builder on it.
+- **Learning:** each delta re-check finds a smaller residue on the same theme (the write counter: multipart, then GET; evaluator inputs:
+  before use, then after last use). The rounds converge; the fix that ends them is a positive allowlist with "everything else counts" rather
+  than a growing list of recognised bad cases.
+
+## 2026-11-08 21:56Z: R27 landed (Opus high): every O-OBS protocol has a real source; O-OBS round 2 dispatched
+- Saved as lab/research/R27-obs-evidence-sources.md; ruled Q82a-e. Engine-internal or read-back sources cover 10 of 14 protocols on XTDB,
+  9 on QLever, 7 on Datomic; 4 gaps have named instruments. Six source kinds with Triplex-reported evidence rejected; the four P1/P2
+  safety protocols need two agreeing kinds; evidence arrives as obs-bundle/1 from an observer sidecar engine.mjs starts.
+- **Corrections to earlier research:** QLever 0.6.0 has a Prometheus /metrics endpoint (query and update counters, delta_triples,
+  rebuild_in_progress) and a per-query metrics-log.jsonl with client-settable query ids (R24 said no counters beyond CPU); XTDB's EXPLAIN
+  ANALYZE works and returns scan_rows_read / pages / files as JSON (R16's probe printed [object Object], and p4.mjs:29 repeats that bug);
+  XTDB's source-log offset moves on flushes and compaction, so only node.tx.latestCompletedTxId counts mutations.
+- **Learning:** "no counter exists" twice turned out to be a decoding bug or a disabled flag in our own harness; engine-capability
+  claims get a probe before they shape a design.
+
+## 2026-11-08 21:59Z: R30 (Opus high): both K01 blockers explained from source; freeze protocol ruled Q83; K01 round 2 dispatched
+- The missing `Node stopped.` is a logging race: Log4j's own shutdown hook stops logging while XTDB's hook is still closing, so every
+  line after `Stopping node...` is lost; both stops were clean (exit 143 in 1.5 s and 5.8 s; an unclean close would halt(1) after 10 s).
+- The "rows in the live index" were in LiveIndex.sharedSnap, a cached snapshot that finish-block does not refresh and queries reuse until
+  the basis moves (upstream #6174, fixed after 2.2.0). It also means K01's pre-stop fingerprint could never match a clone, and a clone would
+  plan over uncompacted L0 files; a second finish-block records the post-compaction catalog.
+- Decisions taken by the orchestrator (lab configuration, not product calls): the log4j flag on slots only (Q83a) and the canonical
+  freeze state (Q83b). Learning: two "engine misbehaves" observations were a logging-library default and a known upstream bug; the K01
+  gate's refusal to make an unproven golden was right both times.
+
+## 2026-11-08 22:04Z: MILESTONE: lane D (Datomic) is up: tx2-datomic-dev READY, G0 green on all three lanes
+- EXP-DA00 (Codex builder) at exp/DA00-datomic-bringup 702643f: verified Datomic Pro 1.0.7745 download, a locally built image with the
+  transactor and the Clojure gateway on pinned CPUs, engine.mjs lane D lifecycle (dev parkable), the tagged value codec; 22 lab tests and 34
+  gateway assertions pass; data survived park and restart. Review pending; EXP-DA01 (adapter, G1) builds on it now.
+- Pool consequence (Q78b): with the 2.75 GiB lane D resident up, no 3.5 GiB exclusive slot fits, so K01's live check, the W01b GS rerun,
+  J01's compact-on G1 and the X02/C8 exclusive reruns wait for a scale window in which the orchestrator parks tx2-datomic-dev.
+
+## 2026-11-08 22:13Z: C8 ACCEPTED; contract 0.3.11 built; X02 guard over-refuses; DA01 unblocked; agent.mjs resume fixed
+- **C8 round 3 ACCEPTED** (CX-VC8-3: 34 probes, 1,024 offline): reads never write, budgets enforced, the counter fails closed on every
+  unclassified request. It merges right after X02 is accepted, since it carries X02.
+- **X02 delta (CX-VX02-2):** F2-F4 hold, but the token-aware guard now refuses six supported parenthesized subquery forms that XTDB answers
+  correctly (F1-R2). Learning: a fix that closes a bypass by refusing more needs a list of supported shapes that must still pass, next to
+  the shapes that must fail; X02 round 3 keeps both.
+- **Contract 0.3.11 built** (36d7434: O-REPLAY 0.4.9 pinned; 50 newly compiled rulings, 338/338 regressions caught; lane D's 153
+  obligations registered and blocked on its image pin). Under independent Codex review before merge.
+- **J01 delta:** default-off is now byte-identical to main (F1, F3 pass); the compact-on qualification recipe still lacks an executable
+  launch envelope (F2), which only matters before compact-on is used. J01 merges default-off after C8 and X02.
+- **DA01** was correctly blocked (its gateway routes need the resident recreated, which my prompt forbade); authorized and resumed. That
+  exposed a tool bug: `codex exec resume` takes no -s or --add-dir, so agent.mjs now passes sandbox and writable roots as config keys.
+- R28 (Opus high) designs build and run isolation for EXP-G03.
+
+## 2026-11-08 22:21Z: E01 merged; R25 landed (SQLite design, Q84); broker SQLite store and observer sidecar dispatched
+- **E01 merged into main (f060f7e)** after four review rounds; 128/128 on main. First run after the merge failed 32 tests because my test
+  run during the uncommitted merge correctly saw claim.mjs differ from git and poisoned the checkout; the marker sits in the shared .git, so
+  it blocked every later run until `claim.mjs restore-evaluator`. The guard works; its scope (all worktrees) is a follow-up.
+- **R25 (Opus high) finished from the retained measurements:** drop EXCLUSIVE locking; one writer thread plus a separate checkpointer
+  thread plus four readonly reader threads; a broker.lock file replaces the perl flock helper; marker-first read transactions with one unit of
+  work each; long work pins H instead of holding a read transaction; H1's rows in the same file. Numbers: 0 acked commits lost in 80 writer
+  SIGKILLs; 0 SQLITE_BUSY in about 300,000 commits; readers add 0.2-0.8 ms to a 3.0-3.3 ms commit; four reader threads ~20k reads/s; H1
+  3-hop pulls 0.10 ms p50 with rows examined flat across history depth; a 20,000-subject pinned sweep in 2.09 s with 0 mismatches.
+  Learning: checkpoint placement decides WAL growth (on the writer thread PASSIVE never finished under readers; WAL reached 714 MB).
+- Dispatched: EXP-SQL01 (broker SQLite file per Q84, on the broker branch), EXP-OBS01 (observer sidecar per R27), and three reviewers
+  (O-OBS round 2, broker round 3, X02 round 3).
+
+## 2026-11-08 22:27Z: hourly learnings pass (NORTH-STAR reread first; research is Opus high)
+- **Learnings current** through E01's merge, R25, R27, R30, contract 0.3.11's review (FIX-FIRST: comparators on real O-REPLAY rows, Unicode,
+  lane D composition fields, the Q76c matrix record) and K01 round 2 (G3 blocked by fast compaction; ruled Q83d).
+- **Host:** load 7.0 / 7.1 / 8.0; disk 25 GiB free; engines: the three dev residents (XTDB, QLever, Datomic); Claude usage 2% of the week.
+- **Where evidence points, by priority:**
+  - **P1:** reads never write (C8 accepted; merges after X02's last check). Lane D's process split is the next P1 hypothesis to measure.
+  - **P2:** the broker is one review from a default-off merge; EXP-SQL01 moves it onto the R25 SQLite file (0 acked commits lost in 80
+    kills; readers add 0.2-0.8 ms to a 3 ms commit). Engine-side encoding tweaks are capped at 12-33% (J01).
+  - **P3:** the broker log is the feed; P3 timing now comes from the log's own record.
+  - **P4:** H1 lives in the same SQLite file (0.10 ms p50 3-hop pulls, rows examined flat across depth); SQL01 builds it.
+  - **P5:** R25's pinned sweep (20,000 subjects in 2.09 s at a pinned basis, 0 mismatches) puts 100k near 10.5 s of one reader thread
+    against the 100 s bar, before kernel evaluation (15.8 s of one core); EXP-P5 can start once SQL01 lands.
+  - **Lane D:** bring-up done and under review; the adapter (DA01) is building.
+  - **Floor:** E01 on main; O-OBS round 2 and the observer sidecar in flight; contract 0.3.11 fix round in flight.
+- **Research:** no new question this hour; R28 (isolation for EXP-G03) is running. All ten slots are busy.
+- **Learning:** the review loop converges fastest when the ruling is general (one continuation table; one allowlist with everything else
+  counted; one trusted context) and slowest when each round names a case.
+
+## 2026-11-08 22:32Z: R28 landed (Opus high): candidate code runs only in hardened containers; two VM security findings go to Sam; EXP-G03 dispatched
+- Saved as lab/research/R28-g03-isolation.md; ruled Q86a-g. Containers in the triplex2 VM with no Mac bind mounts, own PID namespaces
+  (setsid cannot escape; the kernel kills the namespace), one internal network per arm behind a trusted relay, execution-identity/2.
+- **New finding, oracle laundering (L1):** the candidate's checkout contains the pinned oracle files and python3 is on its PATH, so a
+  candidate could run the oracle and pass every case without an engine; the container design removes both.
+- **Security findings outside the lab's code (Q86g, for Sam):** colima mounts $HOME writable into the triplex2 VM by default, so every
+  Docker socket holder can write anywhere in Sam's home; the VM can reach every Mac 127.0.0.1 service, including ports 15442 and 17019.
+  Fixing either changes the VM's security settings and restarts it, so it is Sam's call, not the orchestrator's.
+- Also: lane D's gateway is candidate code baked into the engine container (DA00), so G03 moves it to its own container; lane D
+  durable-readback evidence waits for SQL storage. Builders can move refs/heads/main, so the evaluator uses its own clone (Q86e).
+- V-DA00 FIX-FIRST (Q85: create resets a position under concurrency, public scope names rejected, non-hermetic builds, codec mismatch)
+  goes into DA01's next round, since DA01 carries and edits that code.
+
+## 2026-11-08 22:35Z: three reviews in; P2Q and O-OBS go back for fixes, X02 round 3 goes to review
+- **V-P2Q round 4 FIX-FIRST (P1, P2):** the two earlier regressions pass, and a 60-seed routing fuzz has zero stale accepts. But with
+  the exported standard client, a socket closed mid-response arrives as TypeError "terminated" with a nested UND_ERR_SOCKET cause, so
+  native SPARQL and Datalog both lose replica-unreachable and the basis fields. **Learning:** classify failures from structured nested causes,
+  never from the outer message alone, and test with real HTTP sockets on every exported client, not just the one the runtime factory uses.
+- **V-O05 round 2 FIX-FIRST:** all 177 round-1 inputs now refuse and the 14 positive bundles pass, but signed observations with the wrong
+  contents still pass: fact comparison runs only for QT4s; a context can pick the reuse threshold for an incremental obligation; clock
+  uncertainty applies to only two timing gates. **Learning:** authentication proves which bytes were observed, not that they are correct;
+  every transition needs a content check against the evaluator's expectation.
+- **X02 round 3 (Q79e grammar) done:** 1,818 generated queries match XTDB, 1,818 unsafe mutations are rejected, G0 is 967/967. Reviewer
+  round 4 is checking variations outside the generated set.
+
+## 2026-11-08 23:01Z: contract 0.3.11 merge undone (evaluator suite broke); seven rounds dispatched
+- **Contract 0.3.11 passed its review (V-A01 round 2 ACCEPT: 344/344 mutations, 63 tests), but merging it broke 8 of 108 evaluator
+  tests on main.** The contract's review never ran claim.mjs's suite, which reads the contract. I undid the unpushed merge (main back at
+  5d34fdc; only main contained it). **Q87:** every contract merge now needs the evaluator suite to pass on the branch merged with main.
+  **Learning:** a reviewer's ACCEPT covers what it tested; the merge gate has to cover everything that reads the merged file.
+- **V-X02 round 4 FIX-FIRST:** dollar-bearing identifiers let unsafe operands and second statements past the guard; 36 supported queries
+  are falsely refused; nested block comments are refused although the pinned lexer allows them. **Q79f:** the guard follows the pinned
+  lexer, and refuses wherever it and the lexer disagree.
+- **V-P2Q round 5 FIX-FIRST:** the cause walk fixed truncation (42/42 HTTP cases) but now matches the word "connection" in decode errors.
+  Classification goes by error codes and typed errors only, never message text.
+- **V-K01 FIX-FIRST (offline):** a failed re-verify kept an old PASS; T1 ignored a failed stop proof; settle read the initial gauge. All
+  three are a stale earlier value standing in for a fresh reading; the builder is told to look for that pattern everywhere.
+- **O-OBS round 3 is back with all nine counterexamples rejected,** so it goes to review. OBS01 and G03 delivered partial work: both need
+  slot time. OBS01 releases s1 to K01 after copying its evidence out; G03 does all its no-slot work and scripts the slot run.
+- **The scale window opens after CX-DA01 finishes with tx2-datomic-dev.** It covers K01 live, G03's slot run, W01b's GS rerun, J01's
+  compact-on G1, and the X02 and C8 exclusive reruns.
+
+## 2026-11-08 23:22Z: the 30-of-40 read was real: one basis gave two answers depending on route (SQL01 F1)
+- **V-SQL01 FIX-FIRST.** A deterministic schedule reproduces it: 40 assertions at T1/P1, 10 retracted at T2/P2, read at
+  {recordedAt T1, recordedPosition P2} during an outage. H1 returns 30 because it retires rows by position only; the source returns 40.
+  Not a torn SQLite transaction; a cache whose eligibility check knows less of the basis than the query does. **Learning:** every derived
+  store (H1, current values, replicas) needs a route-equivalence test that asks each basis shape on every route and compares answers.
+- **F2:** the builder put a waiting RESTART checkpoint on the ACK path, against R25's design (separate checkpointer thread), and a pinned
+  reader delayed a commit to 164 ms against 24-29 ms. This is P1's "never block writers" claim, so it goes back too.
+- Durability held: 50 abrupt process stops kept all 163 ACKs; retried commits applied once; the feed had no gaps or repeats.
+- Contract 0.3.11 round 3: 108/108 evaluator tests with fixture changes; in delta review. G03 round 2: 33 fixtures need migration to the
+  contained model. O-OBS round 4: 786 of 786 reviewer cases; in review. P2Q round 5, X02 round 4 and K01 round 3 are in review.
+
+## 2026-11-08 23:25Z: K01 gets a three-frontier settle rule (Q83e); P2Q's classifier converges by edge cases
+- **V-K01 round 2 FIX-FIRST (offline):** four new gaps: cleanup can delete a golden from an earlier run; the final owner read and the
+  publication are not atomic; a changed copy-proof binding keeps PASS; a failed inspect still yields a stop proof. **The reviewer also
+  answered the watermark question from pinned XTDB source:** a block always records its cut F, and XTDB always appends a later
+  maintenance message (TriesAdded, compactor output), so a settled node has F < M forever. Q83d's demand for F = M could never be met
+  live. **Q83e:** record F, M and T separately, and accept F < M only when every message in (F, M] is maintenance.
+- **V-P2Q round 6 FIX-FIRST:** EHOSTDOWN and ENETDOWN are missing. This is the third round in a row whose finding is one more edge of the
+  same classifier. **Learning:** when reviews keep finding members of a set, derive the set from the source (Node errno docs, the
+  installed undici errors module) and add a test that fails when the source gains a member. Round 6 is told to do exactly that.
+
+## 2026-11-08 23:32Z: hourly pass: O-OBS accepted; contract 0.3.12 started; two Opus researchers launched
+- **Usage 3% weekly.** All running agents serve a priority or the correctness floor under them.
+- **V-O05 round 4 ACCEPT:** O-OBS at 23e2273 is safe to pin for screening (786 retained and 133 new cases; one shared context guard covers
+  every protocol). Four review rounds; each round's finding was a missing comparison, not a wrong one. Live collection is still unverified.
+- **Contract 0.3.12 (CX-A01-0312)** compiles Q72, Q79e-f, Q80, Q82-Q87 and pins O-OBS; G03's isolation pins wait for 0.3.13.
+- **Research launched from this hour's learnings:**
+  - **R31, route equivalence (P1, P4):** SQL01 F1 showed a derived store answering a basis it could not answer exactly. R31 lists every
+    read route in all three lanes, what basis shapes each answers exactly, and specifies one route-equivalence harness for all lanes.
+  - **R32, lane D durable storage:** lane D runs on Datomic dev storage, and Q86f bars its durable evidence until SQL storage. R32 sizes
+    SQL storage in the pool, sets out the tenant-isolation options for Sam's Q78e, covers excision for PII erasure, and drafts the migration brief.
+
+## 2026-11-08 23:44Z: R32: Datomic dev storage can lose acknowledged commits; lane D moves to Postgres before DA03
+- **Finding (jar strings, H2 2.1.214 source):** dev storage is Datomic's SQL code on an H2 file inside the transactor with H2 defaults.
+  H2's 500 ms write delay acknowledges a commit while it is only in heap, so an abrupt transactor stop can lose about 0.5 s of ACKed
+  transactions. The peer role also has full rights on the storage table. **Q88a:** dev storage evidence is development only.
+- **Q88b:** EXP-DA04 (Postgres SQL storage, peers SELECT-only) runs before DA03, inside the existing 2.75 GiB resident budget; D0 measures
+  the dev-storage loss as a control. **Q88c:** crypto-shredding first, excision second, keys in their own schema.
+- **For Sam (Q78e):** tenant isolation on Datomic cannot use schemas or row security, because one transactor owns one table; tiered,
+  silo-all and pool-all are the options.
+- SQL01 round 2 (4863a8e) fixed F1 and F2; 50 abrupt stops kept all 163 ACKs; review round 2 is checking route equivalence.
+
+## 2026-11-08 23:49Z: R31: record time is stamped before the commit is decided, so a recordedAt pin is not reproducible
+- **Biggest finding (D-C1):** transact stamps record time before it allocates a position (TriplesLive.ts:309 before :326), and every lane
+  stores that client stamp. A commit staged at 1000 can land after one stamped 1001, so a read at recordedAt 1001 can change after it was
+  served. recordedAt is the only pin the public API offers, so this is the P1 floor. **Q89a:** stamp at decision, monotone in position,
+  plus a record-time watermark; R33 (Opus) designs it, since it moves the core receipt instant.
+- **The F1 class is wider than H1:** any store that retires rows by position cannot answer a record-time basis (H1's pull predicate too,
+  R24's planned current store, Datomic's :f/live). **Q89b:** they refuse such a basis until Q89a lands; **Q89c:** refusals are typed errors.
+- **Datomic:** multi-request Datalog re-syncs to the newest db between requests, mixing cuts (Q89d, DA01's next round). Datomic does keep
+  current and history apart at the index level, so R18 line 97 was wrong (Q89e).
+- **Q89f:** EXP-RQ01 builds the route-equivalence harness in packages/testkit (CX-RQ01) as a gate for every read-route change.
+- **For Sam (Q89g):** whether the public TemporalBasis gets a position or snapshot token. R33 will lay out the TypeScript shapes.
+- P2Q round 6: catalog derived from Node and undici sources plus an upgrade guard (763 controls); review round 7 running.
+
+## 2026-11-09 00:03Z: SQL01 accepted default-off; contract 0.3.12 built; P2Q down to one typed-refusal finding
+- **V-SQL01 round 2 ACCEPT (default-off):** 38,808 route pairs matched between H1 and the source; commits completed while reader and
+  maintenance barriers were held (F2 fixed); 50 abrupt stops kept all 161 ACKs. Still open: the original assertion-only 30/40 (F1 is the
+  likely cause but not proven) and true power loss. **Merge order:** SQL01 sits on an older P2Q base, so it merges after P2Q is accepted,
+  in one integration round with the P2Q head.
+- **Contract 0.3.12 built (f5e7a41):** 432/432 mutations, evaluator 108/108; in review.
+- **V-P2Q round 7 FIX-FIRST:** the derived transport catalog and upgrade guard pass; a transactional read silently replaced a future
+  position 6144 with 2048 and returned []. That is exactly what Q89c forbids, found the first round after the ruling.
+
+## 2026-11-09 00:16Z: all three XTDB-lane branches integrated; a QLever closure is 3x slower than when C8 was accepted
+- **INT-XCJ:** X02, C8 and J01 (default-off) are merged on int/X02-C8-J01 (ec1a815); evaluator 108/108; J01's three live tests need the
+  same expected-skip handling as C8's. Two workload pins changed (XTDB and QLever workload files); contract 0.3.12 re-pins them.
+- **C8's QLever "reads never write" control timed out twice**, localized to the Datalog ancestor closure from c8:a: 10.3 s with no load,
+  over 30.5 s with eight readers. It passed in C8's own review. Leading guess: qlever-dev has accumulated other lanes' test graphs for 25 hours
+  and the closure is not graph-scoped. If so, it is a P1 read-cost bug that shows only on a resident with realistic data volume. CX-C8-R4
+  investigates. **Learning:** shared residents drift in size; live controls need the resident's triple count in every receipt.
+- **Contract 0.3.12 FIX-FIRST:** O-OBS's registry hashed its review report instead of the original brief (Q59c). Everything else passed.
+- **K01 round 5:** 209 offline tests pass, plus a PASS audit listing every observation-to-PASS path; review round 4 audits that list.
+
+## 2026-11-09 00:20Z: R33 designs record time at decision; the oracle half starts first, from a separate builder
+- **R33 (Opus high, 882 lines, source only):** one integer-microsecond stamp per transaction, max(previous + 1, clock) in decision order,
+  public value stamp/1000 so no type changes; omitted validFrom uses a new stagedAt. A read at T above the latest decided stamp waits 2 s
+  then fails typed; at or below it can never change, which closes D-C1. Per lane: broker in commitGroup, both A0s on the client under their
+  CAS, P2X from the engine stamp after probe p9, Datomic on the peer under :db/cas. Ruled Q90a-g.
+- **Order:** O-REPLAY 0.5.0 (CX-O06) starts now and reads only R33 section 4.3, so the oracle stays independent of the product change.
+  RT01's core rounds start from main after RQ01 merges; each lane branch takes its part after it merges main; contract 0.4.0 compiles it all.
+- **For Sam (Q89g):** how a caller names one exact commit in the public API: (A) no new field, (B) a raw position, (C) an opaque
+  scope-checked snapshot token. R33 recommends C. After Q90a, recordedAt: receipt.instant already pins one commit exactly.
+
+## 2026-11-09 00:28Z: hourly pass: usage 4%; progress by priority; R34 launched for P5
+- **Where each priority stands:**
+  - **P1 (pinned reads):** record time at decision designed (R33, Q90), its oracle half building (O06), and the route-equivalence harness in
+    round 2 (RQ01). The C8 QLever closure slowdown is under investigation (C8-R4).
+  - **P2 (commits):** the QLever broker (P2Q) is in review round 8; the SQLite log store (SQL01) is accepted default-off and waits for P2Q.
+    Lane D moves to Postgres (DA04) because dev storage can lose acknowledged commits (Q88a).
+  - **P3 (feed):** SQL01's feed has no gaps or repeats across 50 abrupt stops; no P3 qualification yet, since no executing gate exists
+    (G03 is migrating fixtures).
+  - **P4 (current values):** waits for Q89b refusals and RT01; DA03 reads through :f/live (Q89e).
+  - **P5 (release activation):** least advanced; queued behind SQL01 for months of plan time. **R34 (Opus high) writes a three-lane EXP-P5
+    brief now:** sweep reads at one pinned basis without long read transactions, which lane can start first from main, and a measurement
+    design that binds data volume (the C8 lesson) and runs on a dedicated slot.
+- **Rate of learning:** the review loop keeps finding "evidence accepted that should not be" (K01 four rounds, O-OBS four, P2Q seven).
+  Each round narrows the gap, but the same class recurs; the PASS-audit step K01 round 5 introduced should become standard in builder briefs.
+
+## 2026-11-09 00:30Z: the C8 QLever timeout is the QLever lane reading from its update delta, not an integration regression
+- **CX-C8-R4:** queries are graph-scoped and byte-identical on both branches; the earlier review passed with one reader, the integration
+  ran eight. On qlever-dev the built base index holds 1 triple; all ~1.8M triples arrived by SPARQL UPDATE. A scoped base SELECT returning
+  5 rows takes 4 to 6 s, OPTIONAL joins about 700 to 860 ms each, and planner estimates are far from the real cardinalities. The in-memory
+  closure itself takes 0.5 ms. **So every QLever-lane read so far has run against the update delta.**
+- **Why it matters:** if delta-backed reads cost seconds at 1.8M triples, the lane cannot meet P1, P4 or P5 at 100M facts without folding
+  updates into a built index. **R35 (Opus high)** reads QLever 0.6.0's delta storage and rebuild options and checks whether the lane's design
+  assumed a rebuild loop from the log of record that was never built or measured.
+- **Learning:** a review's load profile is part of what it proves. C8's one-reader PASS said nothing about eight readers. Reviews now name
+  the load they ran, and integration runs the default profile.
+- **Decision:** the integration merges with this recorded as a known QLever-lane read-cost item, since C8's code is unchanged by it.
+
+## 2026-11-09 00:42Z: R35: the QLever lane has never read from a built index; QLever has a rebuild, the lane never used it
+- **Mechanism (QLever 0.6.0 source):** a scan decompresses each block it touches, merges every delta triple in that block, then filters
+  and de-duplicates the whole block before narrowing to its range. qlever-dev has one base block, so about 895k delta triples sit in one SPO
+  block and every scan pays for all of them: 160 to 530 ms for 1 to 3 rows. The planner cannot see the delta (estimates 1 row for a full
+  scan). Delta-only ids compare by ICU collation, not as integers. OPTIONAL itself costs nothing; its child scan is the cost.
+- **QLever has online rebuild-index (and an automatic strategy); the lane never ran it.** qlever-start.sh boots a 1-triple index, the
+  delta policy was recreate with --fresh (dropping data), R13's rebuild-from-log was never run, P2Q's rebuildAtDeltaTriples is unrun.
+  The research assumed a built base with a bounded delta and R17's numbers came from a 69M-triple built base.
+- **Rulings Q91a-d:** QLever performance evidence counts only with a built base and a bounded delta, with both sizes in every receipt;
+  no more --fresh resets; EXP-QG1 builds blue/green generations from the broker log with reader leases and Q89i checks across swaps; the
+  first rebuild runs on a copy on an exclusive slot (bug #3172 can fail a rebuild, and reviews read qlever-dev live).
+- **Learning:** an assumption shared by five research documents was never built. The research index should mark each assumption as
+  built, measured or assumed; that is now part of every planner brief.
+
+## 2026-11-09 00:48Z: R34 gives P5 a three-lane plan; the 100k population is 11x larger than assumed
+- **Basis on every lane:** {recordedPosition: P_act, validAt: V_act}, with P_act from the activation receipt and V_act from a deterministic
+  clock anchored at W0's valid time; no sweep names recordedAt, so Q89b never forces a slow route. One read unit per 64-subject page,
+  nothing spans pages (R25's long-transaction lesson). Ruled Q92a-k.
+- **Key finding:** W0's 100k population is 44.5M facts (basis.tx 4,338,757), 11x R24's estimate. In the A0 encodings that is about 2.85B
+  QLever quads or about 130 GB of XTDB log (estimates), so at 10k and 100k only the broker's host store (about 4 to 5 GB) fits the slot
+  disks; engine-fed arms are 1k baselines (Q92d). That states an engine limit plainly; it rules out no engine.
+- **Order:** lane X native starts now from main (CX-P5A, offline A0 at 1k and 10k; the 1k slot run joins the scale window); lane Q after
+  P2Q and SQL01 merge; lane D after DA01 and DA04.
+
+## 2026-11-09 00:50Z: the 30-of-40 defect appeared again, on lane D
+- **V-DA01 FIX-FIRST:** an indirect selection of :f/live (Datomic's current-only attribute) bypassed the historical-basis guard and
+  returned 30 rows where the earlier snapshot holds 40, the same shape as SQL01's F1 on lane Q. Two lanes, two teams of agents, same defect:
+  a current-only store reached by a historical basis. R31 predicted it (D-D2). Conformance passed 88/88 and the full suite, so G1 does
+  not catch this class. **Learning:** route choice belongs in one place per lane, and RQ01 must become the gate for every lane's
+  read routes (Q89f) as soon as it merges; DA01 round 4 adds an RQ01-style all-shapes-all-paths test meanwhile.
+
+## 2026-11-09 00:56Z: K01's review loop is not converging; R36 asks whether a content fingerprint can replace process evidence
+- **V-K01 round 5 FIX-FIRST,** four more findings (inherited stderr blocks valid checks; failed owner reads become fallback provenance;
+  missing plan fields accepted; a timer overwrites failure with exit zero). Six rounds, each three or four findings, all one class:
+  process evidence accepted when failed, partial or stale. The structural fix in round 6 narrowed it but did not end it.
+- **Hypothesis:** the trust base is too large. If a clone is accepted only when a content fingerprint read through the engine matches the
+  golden's pinned digest (R34's G0 pattern), process evidence can only diagnose, never grant PASS, and needs far less validation.
+  **R36 (Opus high)** tests that: what process evidence protects that a fingerprint does not, the minimal check set, and keep, simplify or
+  drop K01 (re-seed per run, costed from R34's population sizes). K01 waits for R36 instead of another fix round.
+- **Learning:** when a review loop's findings stay the same size across rounds, change the design, not the code.
+
+## 2026-11-09 01:08Z: R36: K01 simplified: only a content fingerprint grants admission (Q93)
+- **Diagnosis:** about 27 process booleans could each grant a golden or clone its PASS, so every review found new ways one could be
+  wrong. Five rounds found 3, 4, 3, 3 and 4 issues; tests grew from 41 to 262; no live golden exists yet.
+- **Rule (Q93a):** for seed reuse on every lane, only G0 grants admission: a content digest read through the engine by the measuring
+  process, on its endpoint, before warm-up, against a digest pinned before the freeze. Everything else refuses or diagnoses. **Q93b:**
+  the golden is published after two clean starts reproduce D and the layout digest L. Q83d and Q83e are retired; Q74d replaced.
+- **Effect (R36 estimate):** of 17 review findings, 7 go away with deleted code, 7 become harmless, 3 are ordinary bugs; 1,200 to 1,400 of
+  K01's 1,957 added lines are deleted. G0 is shared with EXP-P5's fingerprint sweep.
+- **Why not re-seed every run:** XTDB at 10k costs about 38 to 53 minutes per arm against 6 to 20 with clones.
+- **Learning:** when a grant can come from many places, make one check grant and let the rest only refuse. Apply this wherever a gate
+  has more than a handful of PASS-producing paths (G03's evaluator and O-OBS are the next candidates to check).
+
+## 2026-11-09 01:20Z: O-REPLAY 0.5.0 accepted after three independent review rounds
+- 403 tests, zero failures; 22 probes; 341 legacy verdicts unchanged per lane; every surviving wrong variant (staging-time stamps,
+  ties, non-monotone stamps, journal instants, answers above the watermark, Q70E/H/I/K/L) is caught. Built from R33 section 4.3 alone, so the
+  oracle never saw the product change it will judge. It waits to be pinned with RT01 in contract 0.4.0.
+
+## 2026-11-09 01:27Z: hourly pass: usage 5%; R37 audits golden-scenario readiness on all three lanes
+- **Since the last pass:** contract 0.3.12, X02, C8 and J01 on main; O-REPLAY 0.5.0 accepted; K01 rebuilt around one admission check
+  (Q93, 73 tests instead of 262) and in review; G03's 33 fixtures migrated (108/108); RQ01 harness in its third review; lane D's :f/live
+  guard fixed and in review; P5 round A fingerprints match O-DOMAIN at 1k and 10k.
+- **Gap noticed:** the 20 golden scenarios are part of done, but only XTDB has GS receipts, all from shared residents. **R37 (Opus high)**
+  maps all 20 scenarios against the three lanes, finds what each needs beyond the P1-P5 work, orders the shortest path, and says which
+  existing receipts survive Q91a and Q93a.
+- **Patterns this hour:** two more cases where one check that grants and many that only refuse beat many checks that each can grant
+  (K01 via R36; G03 now asked to list its grant paths). The 30-of-40 class has now appeared on two lanes; RQ01 becomes the gate once it merges.
+
+## 2026-11-09 01:31Z: RQ01 accepted; its merge would move a pinned file; my Q93 edit had broken the contract build for an hour
+- **V-RQ01 round 3 ACCEPT** as the Q89f gate (95 tests, six planted faults caught). Merging it would change the sha256 of
+  packages/testkit/src/index.ts, which the contract pins, for four export lines. The harness moves to its own subpath entry instead
+  (CX-RQ01 round 4), so no pin moves and no contract version is needed.
+- **My error:** the Q93 rows copied from R36 began with old ruling ids (Q74d, Q83b and others), which build_contract.py read as duplicate
+  pending rulings. The build failed at that commit and I missed it, because the verify ran behind && and its absence scrolled past. Main's
+  contract did not build from that commit until c026f74. **Guard:** every orchestrator commit touching lab/acceptance/ now runs --verify as its
+  own step and checks the printed line before committing. A pre-commit hook would enforce this, but installing one was refused as persistent
+  configuration, so it is a proposal for Sam.
+- **V-DA01 round 2 FIX-FIRST:** F1 closed; a query with repeated :where or :in sections bypasses route classification (30 of 40 again).
+  DA01 round 5 classifies on a canonical parse and refuses what it cannot canonicalize, with equivalent-form property tests.
+
+## 2026-11-09 01:44Z: R37: no golden scenario passes on any lane yet; RQ01 on main; RT01 starts; K01's redesign converges
+- **R37 readiness (Opus high):** lane X 0 pass / 17 fail / 3 cannot run; lane Q 20 cannot run (it never ran a scenario); lane D 18 cannot
+  run, 2 blocked on Q78e. Lane X's failures are diagnostic: A0 sends every commit through one writer, so commit bars measure queueing; no
+  read returned a wrong answer in 19 receipts. One real core defect: GS.12, an unholdable integer fails as WriteError instead of a typed error.
+  The harness cannot close any obligation yet (not W0, O-DOMAIN never called, private trace, commandId admission, CS-GS unauthored).
+  Ruled Q94b-i; Q94a (GS rung = largest each lane fits on one slot, year-one as a projection) waits for Sam.
+- **Dispatched:** EXP-W02 (harness v2 on W0, O-DOMAIN, frozen trace, G0 admission, lane D and broker selection), EXP-GS12F (typed rejection
+  of unholdable values), R38 (Opus: erasure on three lanes, the longest item on the path).
+- **RQ01 merged** (59e07af) through a testkit /route subpath so the pinned index did not move; evaluator 108/108. **RT01 round A started.**
+- **K01's redesign converges:** round 6 review passed 22 of 23 controls with one finding (G0 omitted value_identity). Before the redesign each
+  round found 3 or 4. Round 8 derives G0's columns from the schema with a test for new columns.
+
+## 2026-11-09 01:58Z: R38 designs erasure for all three lanes; plaintext PII reaches every engine today
+- **Today:** no erase, no ErasedValue, no protected-attribute flag. Plaintext reaches the journal, XTDB value_identity and its constraint
+  and cache tables, QLever literals and broker frames. Evaluation closures keep unkeyed sha256 digests, which an attacker can reverse for an
+  SSN by trying all values.
+- **Design (ruled Q95a-h):** one random key per protected assertion from a durable pre-issued pool (no extra fsync per commit), wrapped by
+  per-tenant epoch keys whose rotation makes stale copies useless; values sealed in the TypeScript core so no engine sees plaintext; every
+  erasure recorded twice (data and ledger), the key store forward-only so a restore cannot bring a value back. Lane X writes ciphertext and a
+  tx_erasures table (XTDB ERASE unused); lane Q seals frames, H1 and the replica and drops erased envelopes in new generations; lane D seals
+  :f.v/string and adds excision as the second layer.
+- **For Sam (Q95-S):** S1 what a reader pinned before an erasure sees after it (recommended: the marker, with an erasure sequence so no
+  change is silent; amends Q89i); S2 about 20 minutes to unrecoverable and the key-store trade; S3 protected attributes are kernel-only for
+  comparison and Unique; S4 erase only declared-protected attributes. Counsel should confirm crypto-shredding against GDPR Article 17.
+- **Order:** ER01-S scanners now (CX-OBS01, evaluator-owned); ER01-C core after RT01 round A merges; then X and rotation; Q behind the
+  SQLite move and QLever generations; D behind DA04.
+
+## 2026-11-09 02:29Z: lane D adapter accepted; scale window open; two process fixes in the preamble
+- **V-DA01 round 3 ACCEPT** (131 tests, the 916-observation matrix, 814 generated surface variants, pagination, full conformance). Merging is
+  an integration round (CX-INT-D): DA01 carries about 1.6M lines of oracle and gate evidence, and it changes the pinned lane D image.
+- **Preamble 9b:** builders never edit the contract; they list pin changes and the contract builder re-pins (GS12F had bumped the contract to
+  0.4.0 itself; reverted). **9c:** evidence files over 1 MB go to the durable folder with a hash manifest in git.
+- **Scale window opened:** tx2-datomic-dev parked (volume kept), pool 6.56 of 11 GiB, one 3.5 GiB exclusive slot at a time. First:
+  EXP-QG1 phases 0 and 1 on qlever-s1 (rebuild-index on a copy of qlever-dev's data, then the delta-cost sweep on a 10M-triple base),
+  because whether QLever can serve reads from a built index decides the lane. Next in the window: K01 live, G03's slot run, X02 and C8
+  exclusive reruns, J01 compact-on, P5 A1.
+- GS12F (typed rejection of unholdable values) is in review; RT01 round A, W02, P5 round A, ER01-S and P2Q's review are running.
+
+## 2026-11-09 02:31Z: hourly pass: usage 5%; 10 of 10 agents busy, so no new research this hour
+- **Converging loops:** K01 (review 7: one finding, -0 lost by JSON encoding in G0) and P2Q (review 9: one finding, inheritance and
+  declaration merging bypass the enumeration guard). Both rounds now ask for the class to be closed by construction: G0 encodes exact stored
+  representations; P2Q's public reads are built from one table of wrapped operations, so a bypass cannot be written.
+- **Pattern across the day:** the lasting fixes changed structure, not cases (one granting check in K01; one canonical query map in lane D;
+  one wrapped read table in P2Q; transport codes derived from sources; G0 columns derived from the schema). Briefs now ask for the structural
+  form first.
+- **Research:** none launched; the agent cap is full and the open questions (tenancy Q78e, erasure S1-S4, GS rung Q94a, commit pin Q89g) wait
+  on Sam, not on research. Next research candidates once a slot frees: lane X's single-writer composition (R37: A0 commit bars measure
+  queueing), and QLever generations phase 2 design once QG1 phase 1 numbers exist.
+- **Scale window:** open, QG1 holds the only exclusive slot's turn.
+
+## 2026-11-09 03:11Z: disk fell to 5.9 GiB; 38 finished worktrees removed (15 GiB free now)
+- **Cause:** 59 agent worktrees held 93 GB (each a full checkout with node_modules). Heavy jobs refuse below 5 GiB, and G03's round 4 hit
+  that floor repeatedly.
+- **Done:** for 38 worktrees whose work is finished (merged, verdict recorded, or a paused old agent with a handoff), every untracked and
+  ignored file except node_modules, dist and caches (2.8 GB) was archived compressed (410 MB) to
+  /Users/sam/Claude/Projects/triplex-db-2/worktree-archive/ with INDEX.txt (worktree, branch, head, file count); then git worktree remove.
+  All branches and commits stay. Nine worktrees locked by this session's agent tool were left alone.
+- **Rule from now on:** when an experiment's branch merges or its verdict is recorded, its builder and reviewer worktrees are archived and
+  removed in the same orchestrator step.
+- **Also:** P5 round A review FIX-FIRST (G0 history coverage, traffic oracle checks, end counts, burst windows); the reviewer picked K01's
+  g0.ts as the one admission module, with P5's W0 reader under it, so P5 round 3 adopts it. GS12F round 3 (one bounds table) is in review.
+
+## 2026-11-09 03:12Z: EXP-QG1: a rebuild makes QLever reads up to 40x faster; delta cost grows with delta size and key layout
+- **Phase 0 (copy of qlever-dev's data on qlever-s1):** rebuild-index took 5.3 s and kept all eight sampled answers byte-identical. The C8
+  base SELECT went from 2,215 ms to 55 ms and the edge SELECT from 2,152 ms to 51 ms; point lookups from 175 to 305 ms down to 44 to 49 ms.
+  Upstream bug #3172 did not trigger. The shared resident was only inventoried and copied.
+- **Phase 1 (10M-triple built base, delta grown 0 to 1.6M changes):** cold joins grew 13 to 182 ms for monotonic keys (about 99 ms per
+  million changes) and 13 to 59 ms for spread keys (about 23 ms per million); rebuilds took 9 to 11 s and brought costs back to baseline.
+  16/16 C8 controls and 320/320 P4 content samples matched. The builder qualified no threshold (non-monotonic small samples, no exact block
+  counters, no frozen trace); the cost growth is clear, the exact rule is not yet.
+- **Separate concern for P4 on lane Q:** the 20-pull sample p99 is about 263 to 300 ms even with zero delta, against P4's 25 ms bar. That is
+  the A0 encoding's pull cost, not the delta, and needs its own look (R17's compact current-graph projection is the candidate).
+- **What it means:** the QLever lane is viable only with a rebuild loop; a rebuild costs seconds, so generations from the log (phase 2) are
+  the plan. Phase 2 waits for the broker (P2Q) to merge. Review CX-VQG1 is checking phases 0 and 1.
+
+## 2026-11-09 03:31Z: W02 and QG1 on main; contract 0.3.13 built; the scale window runs the XTDB exclusive reruns
+- **Merged:** QG1 phases 0-1 (diagnostic, with bounded-slot QLever startup in engine.mjs) and W02, the golden scenario harness v2 (with W01b).
+  W02's 26 missing-claim failures per lane are the list of O-DOMAIN checks still to build. Six W02 evidence files over 1 MB went to the
+  durable folder. Q87 gate 108/108 after each merge.
+- **Contract 0.3.13 built:** 494 mutations, evaluator 108/108, XTDB G0 1,218/1,218, Datomic G0 1,253/1,253; in review. It brings lane D's
+  adapter to main.
+- **Reviews:** GS12F round 2 found four more bounds-vs-codec mismatches (sparse arrays, XTDB journal depth, PostgreSQL fractional datetimes,
+  FoundationDB size limit) after 199 round trips and 759 typed rejections passed; P2Q round 9 built reads from one wrapped table and is
+  in review round 10.
+- **Scale window:** X02 and C8 G1/G2 and J01 compact-on G1 on xtdb-s1 (CX-INT-XCJ).
+
+## 2026-11-09 03:33Z: hourly pass: usage 5%; two researchers on the open P2 and P4 performance questions
+- **Learnings since the last pass:** a QLever rebuild cut scoped reads from about 2.2 s to 55 ms (QG1); the golden scenario harness now
+  catches all 33 planted faults and lists 26 missing domain checks per lane (W02); the erasure scanners refuse when they cannot read a byte
+  range instead of passing (ER01-S r2); one disk cleanup removed worktrees that two follow-ups still needed (fresh launches now).
+- **Research launched (Opus high):**
+  - **R39, lane X P2:** A0 sends every commit through one writer, so measured commit bars are queueing. What did P2X build, what is
+    XTDB's real commit floor for 10 facts with 256 readers, and the next brief.
+  - **R40, lane Q P4:** a QLever pull costs about 270 ms p99 on a built base with zero delta, against a 25 ms bar. Where the time goes and
+    which path (compact cur graph, broker host store, different encoding) can reach the bar.
+- **Priorities by evidence today:** P1 has its floor designed (RT01, Q89, Q90) and building; P2 and P4 have no lane meeting a bar yet; P3
+  has SQL01's feed checks; P5 has round A offline. R39 and R40 target the two weakest.
+
+## 2026-11-09 03:44Z: R39: no lane X commit has reached P2's 10 ms; the XTDB indexer is the floor; the broker is the shortest path
+- **P2X (per-subject CAS, never reviewed, 460 commits behind main):** 0 cross-subject conflicts with 16 writers (A0: 222 conflicts, 3,376
+  CAS rejections), 6 to 8x lower service time than A0 at about 20k history; best single-writer p50 42.6 ms, 31.3 ms of it the commit.
+- **Floor:** best 10-fact commit p50 16.4 ms with no readers; 77 to 290 ms service with 4 to 256 readers on the writer node. The serial
+  indexer is 59 to 90% of commit time in X05's engine metrics; fsync 1 to 2 ms; read-your-own-write adds nothing on the writer node.
+  85% of trace commands arrive in 55/s bursts, so one decider needs about 7 ms service or less.
+- **Rulings Q96a-c:** per-subject serial and cross-subject parallel composition, A0 single-flight only as a control; per-subject arms need a
+  decider-side stamp (RT01's client stamp is monotone only because A0 serializes); the broker (P2B) is the shortest path, and EXP-P2X2 runs
+  once on an exclusive slot, with its decision rule written in advance, to settle whether the native path is closed.
+
+## 2026-11-09 03:46Z: scale window: X02, C8 and J01 pass their exclusive reruns; K01 live starts
+- **CX-XRUN on xtdb-s1:** A0 G1 88/88 plus the suite, A0 G2 142/142, compact G1 88/88 plus the suite. J01's mode collector exited 1 on four
+  scopes that only rejected and never wrote; a classifier gap for J01 to fix later (those scopes have no mode to report), not a correctness
+  failure. Volumes removed, slot released.
+- **Next in the window:** K01's live two-start run and E1 (now), then EXP-P2X2, P5 A1, G03's slot run, RT01 live G2 and G6, W02 live GS.
+
+## 2026-11-09 03:47Z: R40: lane Q's 270 ms pull is seven requests and a keep-alive stall; serve current pulls from H1
+- **Where the time goes:** the A0 pull sends one SPARQL request per BFS level (7 for depth 6), each 31 to 37 ms: about 4.5 ms of
+  host-to-VM transport, a 41 to 45 ms keep-alive stall on 32% of requests (QLever never sets TCP_NODELAY; R17 found this and the fix was
+  never applied), and 12 to 18 ms of engine work for a 7-predicate star join over every assertion ever written. The delta is secondary.
+- **Options:** the cur graph 23 to 80 ms p50; H1 (the broker's SQLite store) about 1 to 2 ms p50 and 8 to 20 ms p99 by estimate, flat bytes
+  by construction, throughput per core the open risk (600 to 2,500 pulls per CPU second against 1,100); a bundle-per-root encoding about 6 ms
+  but up to 2,000 bundle rewrites per commit.
+- **Rulings Q97a-c:** current pulls come from H1 (EXP-QH1 after P2Q and SQL01 merge); QLever receipts record the connection mode, and earlier
+  QLever latencies are DIAGNOSTIC on this ground too; no multi-request QLever pull form is a P4 candidate.
+- **Started now:** EXP-QNODELAY (CX-QNODELAY) adds a connection-per-request mode to QleverClient and measures the stall, because it affects
+  every QLever read the lab has measured.
+- **Learning:** R17 found the stall weeks of plan time ago and nobody applied the fix. Research findings with a cheap fix now get a builder
+  in the same pass.
+
+## 2026-11-09 04:01Z: a connection per request removes QLever's keep-alive stall (EXP-QNODELAY)
+- Diagnostic probe on qlever-dev: stalls 120/240 to 0/240; per-request p99 59.06 ms to 7.87 ms. Opt-in mode, default unchanged; 38 tests
+  pass. In review (CX-VQNODELAY), including a socket-leak check. If it holds, the default flips and every earlier QLever latency number is
+  DIAGNOSTIC (Q97b) anyway.
+- **Also this stretch:** K01 round 11 corrected three XTDB wire-type assumptions from source (union spelling, I8, bpchar), live rerun queued;
+  RT01 review found three defects against its own rulings (native routes wrap typed refusals, same-commit retractions keep their instant,
+  empty batches skip the watermark), fix round running; erasure scanners and GS12F each in their third review.
+
+## 2026-11-09 04:27Z: hourly pass: usage 6%; R41 audits P3; review loops are long but converging
+- **Learnings since the last pass:** QLever's keep-alive stall is real and removable (QNODELAY: stalls 120/240 to 0/240, p99 59 to 7.9 ms),
+  but per-request mode handled gzip and custom aborts differently, so one shared response path comes first. GS12F accepted (typed rejection
+  of unholdable values, one bounds table per adapter); it waits for contract 0.3.14 to re-pin core. K01's first live run stopped correctly on
+  an XTDB type-name expectation and was fixed from source. RT01's review found three defects against its own rulings; all fixed.
+- **Process pattern:** P2Q is in its tenth review round, K01 its eleventh, the erasure scanners their fourth. Each round's finding is
+  narrower than the last and the fixes are now structural (wrapped read tables, closure decoding, exact encodings), so the loops are
+  converging, not cycling. The cost is wall time on one priority at a time.
+- **Scale window:** one exclusive slot at a time is the bottleneck (P2X2 on it now; queue: K01 live, P5 A1, G03, RT01 live, W02 live GS).
+- **Research:** R41 (Opus high) audits P3, the ordered resumable feed, across all three lanes, since it has had the least dedicated work.
+
+## 2026-11-09 04:36Z: lane D's Datomic adapter is on main (contract 0.3.13)
+- Merged 6fa5080: contract 0.3.13 with EXP-DA00 and EXP-DA01, the lane D image re-pinned, Q91a-d, Q93a-c and Q94b-i compiled (Q83d and Q83e
+  retired). Q87 gate 108/108 on main after the commit. All three lanes now have their adapters on main. Lane D acceptance evidence stays
+  DIAGNOSTIC until EXP-DA04 moves it to Postgres (Q88a); DA04 starts when the scale window ends and the resident is unparked.
+- A few DA01 round-3 raw oracle files of about 35k lines each came in under the 1 MB limit of 9c; small, left as is.
+
+## 2026-11-09 04:44Z: R41: no lane can close P3 yet; every P3 number so far is diagnostic
+- **By lane:** X (native P2X feed) 0 gaps, 0 order violations, 0 keyed duplicates over 100 crashes per variant, but lag p99 2.9 s at zero
+  readers (bar 250 ms), three quarters of it the consumer's own XTDB write in the serial indexer (p50 431 ms, p99 2,212 ms). Q (broker feed)
+  lag p99 13.7 to 24.9 ms at zero readers, entries lack a decided stamp. D has no feed route in the gateway.
+- **Missing everywhere:** the O-DOMAIN two-hop affected set (every consumer uses directly written subjects, which W0 says is wrong both ways),
+  an erase op in feed entries, and an off-engine consumer store. None ran with 256 readers.
+- **Rulings Q98a-j:** one identity-only feed contract with no values or keys in entries; consumer state in a host SQLite store, off the
+  engine; publication instant separate from the decided stamp; gaps counted over positions; byte-exact resume including across erasure;
+  O-DOMAIN's affected set; real 256-reader load; all current P3 receipts DIAGNOSTIC; lane X reports two arms.
+- **For Sam:** does a broker-sourced feed count as lane X meeting P3 (Q98j, R39 open question 2)?
+- **Started:** EXP-FD01 (feed contract, host consumer store, conformance suite) on main. Next: EXP-DI01 (dependency-index consumer),
+  EXP-P3M (lag from the publication instant with 256 readers), EXP-DF01 (Datomic log route).
+
+## 2026-11-09 05:03Z: P2Q accepted after eleven review rounds; lane Q integration starts
+- **V-P2Q round 11 ACCEPT (default-off):** offline and live matrices, 80 extension controls, 104 full-byte comparisons. The eleven rounds ran
+  from response truncation through nested causes, transport code sets derived from sources, typed refusals, snapshot masking, and finally a
+  read surface built from one wrapped table with a private marker, so a read that skips the shared checks cannot be written.
+- **CX-INT-Q** merges P2Q and SQL01 onto int/P2Q-SQL01, applies Q89b to H1's pull predicate, and lists pin changes. Contract 0.3.14 then
+  re-pins it together with GS12F and QNODELAY. That unblocks lane Q's P5 sweep, EXP-QH1 (P4 from H1), QLever generations phase 2 and P3's
+  lane Q window.
+
+## 2026-11-09 05:04Z: the erasure scanners (ER01-S) are accepted for offline fixtures
+- **V-ER01-S round 4 ACCEPT:** 39 tests, 61 historical replays, 9,189 layered fixtures with zero marker misses, and three 33-layer REFUSED
+  controls. Four review rounds closed, in order: SQLite overflow pages, UTF-16 WAL keys, superseded WAL frames, JSON escapes, and layered
+  encodings, each time by making the rule general (byte coverage per physical range, decoding as a closure with a REFUSED bound).
+- **Open:** CPU and time bounds on large base64 inputs (a diagnostic was interrupted); live erasure qualification waits for ER01-C to exist.
+- **Next for erasure:** ER01-C (the core) after RT01 round A merges; the scanners stay on exp/OBS01-observer until then.
+
+## 2026-11-09 05:23Z: EXP-P2X2 closes the native XTDB commit path for P2; lane X goes through the broker
+- **Preregistered rule (R39 4.5):** native is closed if F3 p50 > 6 ms or F5 p50 > 20 ms or engine resolve > 7 ms per commit.
+  **Measured:** F3 p50 7.68 ms, F5 fresh 33.00 ms. **Q96d:** lane X's P2 candidate is XTDB behind the broker (EXP-P2B); the native
+  per-subject arm stays as a comparison. This is the first time the lab closed a path with a rule written before the run.
+- Aged F6, F7 to F9 and strict no-wait checks are still open; an independent review reads the receipts. Slot and volume released; K01's live
+  rerun took the slot next.
+
+## 2026-11-09 05:27Z: hourly pass: usage 7%; the first preregistered decision closed a path; EXP-P2B starts
+- **Learnings since the last pass:**
+  - **EXP-P2X2 closed XTDB's native commit path for P2** with a rule written before the run (Q96d). Lane X goes through the broker.
+  - **P2Q accepted after eleven rounds;** INT-Q merged it with SQL01 and applied Q89b to H1; in review.
+  - **The erasure scanners accepted** after four rounds (9,189 layered fixtures, zero misses).
+  - **FD01's conformance suite** catches gaps, order, payload, resume and duplicates, but let a non-atomic consumer through and did not tie
+    lag to the publication clock; fixing.
+  - **QNODELAY's static search for timing writers cannot be complete;** validating at the reading end instead.
+  - **The Codex filter stopped two more reviews** (P2Q round 10, ER01-S round 4); both recovered (one had already written its verdict).
+- **Pattern:** guards that enumerate producers keep missing producers (P2Q's read surface, QNODELAY's timing writers, the scanners'
+  encodings). The fixes that held enforce the property at the one place everything passes through (a wrapper, a parser, a closure).
+- **Dispatched:** EXP-P2B (XTDB behind the broker, designed in Q58b and R23 6) from int/P2Q-SQL01; no new research needed this hour.
+
+## 2026-11-09: K01 live rerun stopped at G0; slot handed to P5 A1
+
+- **K01 live round 11 (f3584a6):** numeric wire probes passed; the first failure was "G0 count mismatch: tx_assertions" during source pinning. No retries; slot released, volumes removed.
+- **Next for K01:** CX-K01-R2 resumed offline (round 12) to decide whether the expected count, the seed's writes, or XTDB's read visibility at the pin basis is wrong, with a fixture from the captured bytes.
+- **Slot:** xtdb-s1 goes to P5 A1 at 1k (CX-P5A, A1-RUNBOOK.md). If its G0 refuses with the same symptom, it records it and stops.
+
+## 2026-11-09: P2X2 accepted and merged; RT01 round 3 FIX-FIRST on F7
+
+- **P2X2 ACCEPT (verify/P2X2 4155fda7), merged in 795aef4c.** F3 p50/p99 7.68/21.81 ms and F5 fresh 33.00/63.26 ms reproduce, and all 338 evidence hashes match. The native lane X P2 path stays closed (Q96d); lane X P2 now depends on EXP-P2B (XTDB behind the broker). Open: reader/full-trace, aged F6, strict no-wait. An irreducible indexer floor is not established.
+- **RT01 round 3 review: F4-F6 fixed, F7 high.** Entity-journal pages at a fixed snapshotPosition filter by the runtime clock (validAt = now against validFrom = stagedAt), so a backward clock empties a committed page. **Lesson:** a position-bound read must not take any clock input; the journal read path needs its own all-valid-time cut. CX-RT01 round 4 fixes it at one choke point, KV analogue included.
+
+## 2026-11-09: K01 round 12 diagnosis: G0's own expectation was wrong
+
+- **Cause (aec5a715):** G0 treated the seed's business assertion count (26,635) as the count of all tx_assertions rows. The public writer also stores the transaction journal there: 4 base rows per command, plus one changed-entity row per distinct entity per command, plus one change row per change. That gives 34,749 journal rows and 61,384 rows in total for the round 11 seed. No seed bug.
+- **What is still unknown:** the deleted volume's actual count was never captured, so an engine-side difference on top of this is not ruled out; the live rerun settles it.
+- **Lesson:** an expected count must come from the same rows the writer stores, journal included. A business-level count is a different quantity, even when the two share a table name. The live G0 refusal did its job: it stopped the run instead of admitting it.
+- **Next:** CX-VK01 reviews the fix offline; then the K01 live rerun (LIVE-round12) re-enters the scale window queue. P5 A1, which is running now, also admits through G0 and may stop on the same symptom.
+
+## 2026-11-09: lane Q integration accepted; contract 0.3.14 started
+
+- **INT-Q ACCEPT (verify/INT-Q c14cdfc9).** Broker default off. Fresh checks include all five live broker cases and 50 process stops with zero acknowledged commits lost. Open: physical power loss, performance qualification, and WAL growth under a pinned reader held indefinitely.
+- **Contract 0.3.14 (CX-A01-0314):** merges INT-Q and GS12F with their re-pins in one commit (Q45a), compiles Q96a-d and Q97a-c. QNODELAY goes into a later contract when its round 4 is accepted. Unblocks EXP-QH1 (lane Q P4 from H1) once merged.
+
+## 2026-11-09: K01 G0 count fix accepted offline
+
+- **verify/K01 12a30d8 ACCEPT-OFFLINE:** the reviewer independently recomputed 61,384 expected rows; 468 tests and both TypeScript checks pass. The K01 live rerun (LIVE-round12) is next in the scale window after P5 A1.
+
+## 2026-11-09: RT01 round 4 (F7 fix) in review; disk housekeeping
+
+- **RT01 472c2c24:** journal reads use all valid time at the committed position cut; 1,096 tests pass; A0 and compact clock regressions pass. CX-VRT01 reviews round 4, including the pack verification the builder deferred for disk.
+- **Disk:** 4.8 GiB free before cleanup, 9.9 GiB after removing five finished worktrees.
+
+## 2026-11-09: P5 A1 stopped on the disk guard; FD01 round 2 FIX-FIRST; K01 live round 12 takes the slot
+
+- **P5 A1 (e283d83a):** stopped during seeding because host disk fell below 5 GiB. G0 never ran, so the K01 symptom was neither reproduced nor ruled out. The disk guard worked as designed. P5 A1 also needs K01's native G0 handoff, so it waits for K01's live rerun.
+- **FD01 round 2 review (verify/FD01 0fcaa911):** atomicity fixed (13/13, 900 crash trials, every split variant rejected). New R2-F1: two processes with different performance.now() origins and the same "host-monotonic" label passed, so a true 402.37 ms lag read as 122.35 ms. **Lesson:** a clock label is not a clock origin; cross-process intervals need one shared, origin-bound capture primitive. The ERESOLVE failure is missing offline npm metadata, not a peer-range defect. CX-FD01 round 3 fixes R2-F1.
+- **K01 live round 12 (CX-K01-R2) on xtdb-s1:** must capture actual COUNT results and the manifest before removing volumes.
+
+## 2026-11-09: QNODELAY round 4 FIX-FIRST; round 5 scoped to one reader function
+
+- **verify/QNODELAY 813fcf4e:** the stall result reproduces offline (120/240 keep-alive versus 0/240 no-delay); keep-alive stays default. Three medium gaps: one reader skips the parser (R4-F1), malformed but labeled timings reach EXP-QG1's summaries (R4-F2), and per-event mode does not bind a run's mode, so compare.mjs can merge both modes (R4-F3).
+- **Lesson:** a shared parser of metadata is not a shared reader of data. Round 5 makes one function the only way to read QLever latency data, returning a typed run with one mode, plus a test that fails on any other access. This is the fifth round of receipt hardening; the measured finding has been stable since round 2, so later rounds are limited to the reviewer's named findings.
+
+## 2026-11-09: K01 live round 12: count fix confirmed live, next stop is a lazily created table
+
+- **Confirmed live (3d334592):** tx_assertions COUNT = 61,384 on the engine, captured before cleanup, matching the source-derived expectation exactly.
+- **Next failure:** G0 queried tx_native_relation_attempts, which the adapter declares but XTDB 2 creates only on first insert; this seed never writes it.
+- **Lesson:** each full live run has found exactly one new G0 assumption about the engine (union integer type, journal rows, lazy table creation). Round 13 runs a small diagnostic smoke run that records every failure in order instead of stopping at the first, then fixes them all offline, before the next full run. Absence of a table is checked through the catalog, never by catching a planning error.
+
+## 2026-11-09: EXP-P2B round 1: in-memory commit latency misses P2 with no engine involved
+
+- **5d1ee8f9:** 140 tests pass; a 10-second in-memory diagnostic with 256 readers checked 194,153 reads with no content, receipt, feed-order, resume or clock errors. Read p99 9.80 ms; feed lag p99 35.23 ms.
+- **But** offer-to-ACK for 5-10 facts was p50 45.94 / p99 82.45 ms (9 commits), against p50 <= 10 / p99 <= 50 ms. P2Q measured p50 5.9 ms offline on lane Q.
+- **Hypothesis:** 256 readers sharing the broker's event loop. Round 2 splits latency by stage on one clock, varies reader count and placement, and raises the sample to 200 commits per band before any live XTDB run.
+
+## 2026-11-09: RT01 round A accepted offline
+
+- **verify/RT01 7222e7e9:** F7 fixed through Temporal.journalBasis(P), an explicit all-valid-time mode bound to a position and used by every journal, command and feed read, including KV. Five fresh cases with 40 clock samples match O-REPLAY 0.5.0; 55 explicit-valid-time cuts still filter correctly; public inputs cannot set the internal all-valid-time flag.
+- **Pack gate:** fails on the out-of-scope DuckDB package's declarations, not on RT01. Pack qualification for lab packages needs its own gate.
+- **Next:** live G2 and G6 on a slot; contract 0.4.0 after 0.3.14.
+
+## 2026-11-09: FD01 accepted offline; P3M and DI01 started; contract 0.3.14 FIX-FIRST
+
+- **FD01 ACCEPT-OFFLINE (verify/FD01 c20526eb):** 14 host tests, 11 bench tests, 900 crash observations; forged origins, reboot identity, worker threads, ACK substitution and wrong-position records are all refused. FD01 moves lab/bench/driver.ts and lab/bin/gate.mjs, so it merges through a contract (0.4.0, with Q98a-i; Q98j waits for Sam). Open: native publication-event integration, live P3.
+- **Started from R41:** EXP-P3M (CX-P3M, brief lab/experiments/EXP-P3M/BRIEF.md) on FD01; EXP-DI01 design check by an Opus planner before its builder.
+- **Contract 0.3.14 review (verify/A01-0314 7c8f1f99) FIX-FIRST:** every gate passed, but two broker regressions came from the merge: GS12F's optional valueDomain field was left out by INT-Q's broker adapter, so it silently used the fallback domain (integer range error mistyped; valid depth-128 JSON refused). **Lesson:** an optional field on a shared adapter interface turns a missing implementation into silent fallback behavior that no gate sees; required fields make the compiler find the gap. Round 2 makes it required.
+
+## 2026-11-09 06:28Z: hourly pass (NORTH-STAR reread first): usage 7%; the scorecard is still all OPEN; two researchers
+
+- **Learnings since 05:27Z:**
+  - **Accepted:** P2X2 (merged; native lane X P2 closed), INT-Q (50 process stops, zero acknowledged commits lost), K01's G0 count fix (confirmed live at 61,384), RT01 round A (F7 fixed), FD01 (atomicity and an origin-bound lag clock).
+  - **Live runs keep finding one engine assumption each.** K01 hit three in a row: the union integer type, journal rows in the count, and lazily created tables. Round 13 switches to a diagnostic smoke run that records every failure.
+  - **Merges create silent fallbacks.** Contract 0.3.14's gates all passed, but INT-Q's broker adapter left out GS12F's optional valueDomain field, so two typed refusals changed. A required field would have failed to compile.
+  - **A label is not a proof:** FD01's equal clock labels hid different clock origins (402 ms read as 122 ms); QNODELAY's per-event mode did not bind a run's mode. Both fixes bind the property to its source.
+  - **P2 is the priority with no passing number anywhere.** Native XTDB is closed (fresh p50 33 ms); P2B's broker in memory gave p50 46 ms with 256 readers, with no engine involved, which points at placement or the Node event loop.
+  - **The disk guard stopped P5 A1** below 5 GiB; housekeeping restored 9.8 GiB.
+- **Scorecard:** every P1-P5 cell is still OPEN. Each accepted result is offline or diagnostic; promotion waits on contract 0.4.0, G03's executing gate and live windows. That ordering needs a written critical path.
+- **Dispatched (Opus 5.5 high):** R42, P2 commit latency for a Node broker under 256 readers (placement, event-loop contention, SQLite fsync durability and cost on macOS and Linux); R43, the critical path from today's accepted work to the first PASS cell on the scorecard.
+
+## 2026-11-09: K01 smoke run reaches D/L and D'; VM trim returns 33 GiB
+
+- **K01 round 13 (9b764517):** the diagnostic smoke run walked every G0 step and recorded two failures, both missing imports, fixed offline; source restarts matched D/L and a fresh seed matched D'. One smoke run found what would have been two more full live runs. Clone qualification and publication are still unverified.
+- **Disk:** host free space was falling again (7.2 GiB) because the VM's disk image kept the blocks of every removed volume. fstrim inside the triplex2 VM returned 32.9 GiB; host free is 40 GiB. **Lesson:** removing a volume frees space inside the VM, not on the host; trim after slot runs.
+
+## 2026-11-09: P2B round 2: moving readers to a worker brings commit p50 to 7.32 ms; RT01 live window starts
+
+- **P2B 5c8f30fa (7,200 commits, n=200 per band, 142 tests):** reader event-loop contention confirmed. 10-fact offer-to-ACK with 256 readers went from p50/p99 226.38/712.45 ms (readers in the broker's thread) to 7.32/55.42 ms (readers in a worker); a first isolated run gave 6.68/21.90 ms. Queue wait fell from 65 ms to 0.008 ms median. Readers now default to a worker.
+- **The remaining tail:** the p99 sample spent 39.11 ms in scheduling delay; the slowest sample spent 39.17 ms in SQLite's COMMIT with full fsync. The host runs many agents, so part of the tail is host noise. P2B round 3 waits for R42 (placement, fsync durability and cost).
+- **First P2 median under the bar on any lane at 256 readers,** diagnostic only (in memory, no live XTDB).
+- **RT01 round 5 (554bf7d2):** N1 fixed; PIN-CHANGES-0.4.0.md written. RT01 now has xtdb-s1 for live G2 (diagnosing the earlier timeouts first) and G6 with a calibrated A/A window. K01's full live run follows after its offline review.
+
+## 2026-11-09: R42: the P2 floor on this Mac is F_FULLFSYNC (about 4 ms); the tail is main-thread work
+
+- **P2Q's 5.9 ms was feed lag, not commit latency;** its offer-to-ACK was p50 7.1 / p99 32.8 ms with zero readers (n=28). SQLite costs about 1 ms per commit over P2Q's segment log, not 40 ms.
+- **Durability floor:** SQLite WAL with synchronous=FULL and fullfsync=ON measured p50 3.4-4.0 / p99 7.4-8.3 ms on this Mac; without F_FULLFSYNC it is 0.1 ms but not durable to the drive. SQL01 is durable as written (bundled SQLite 3.53.1), but requireFullFsync defaults to false, so a volume without F_FULLFSYNC would silently fall back. No power-loss test exists.
+- **Tail causes on the broker's main thread:** the harness feed consumer's fsyncSync per page, synchronous Atomics.wait RPCs for pin, purge and feed, and overlay reads served on the main thread once the single reader worker saturates.
+- **Round 3 (CX-P2B):** feed consumer off-thread, reads served inside reader workers with a shared watermark, a 4-8 worker pool, asynchronous RPCs, requireFullFsync on by default with a typed refusal. R42 expects p50 about 7 ms and p99 10-25 ms on a quiet host.
+- **Lesson:** compare like with like. Two numbers both called "latency" measured different intervals (feed lag versus offer-to-ACK) and made the SQLite store look 40 ms slower than it is.
+
+## 2026-11-09: K01 round 13 accepted offline; why 437 tests missed a missing import
+
+- **verify/K01 88bce4f0:** ACCEPT-OFFLINE, 511 tests, five retained smoke captures reproduce D and D'. The smoke ledger is diagnostic only and grants nothing.
+- **Why the import was missed:** the tests imported engine.mjs to test its exported helpers but never ran the private golden, fresh and loadGolden branches; importing a module or syntax-checking it does not resolve names inside function bodies that never run, and tsc did not semantically check that JavaScript file. Now an allowJs/checkJs test fails on unbound names, with a negative control.
+- **Lesson:** our own JavaScript tools need the same type checking as the product. Queued: checkJs over every lab/bin and lab/bench file.
+
+## 2026-11-09: R43: no cell can PASS yet because qualification machinery is missing, not because engines are slow
+
+- **Finding:** every NS obligation needs machinery no accepted work supplies yet: a ruled NS rung (year-one fits no lane on this host), an NS runner and fault injector in G03, PAIR-0 (M01, parked since 2026-11-07), a CR-NS recompute in claim.mjs (gateNS stops at MEASURED), a trusted broker publication instant (R27 gap G3), and the qualification pins (frozen trace, CS-NS manifest, BUILD_SPEC, A0 registry).
+- **First PASS candidate:** NS.P3 on the broker log source, with lag p99 13.7-24.9 ms against 250 ms and 0 gaps, 0 order violations, 0 keyed duplicates in diagnostics. About 12 rounds and 16 slot hours on the longest chain, 1-2 days after Sam answers.
+- **Acted:** Q99a-e recorded as pending orchestrator rulings (contract 0.4.1 for qualification pins; absolute bars in GREEN windows where A0 cannot hold the rung; H1 reads count for the composition's repository surfaces; queue reordered; acceptance only after screening shows margin). Scorecard P2 is GAP for the XTDB-source columns (Q96d). Dispatched R44 (NS-run execution design, Opus) and CX-M01R (PAIR-0 rebase onto main). K01 live, P5 A1, W02 live and DA04 move below the critical windows.
+- **Ask Sam:** Q99-S1 (the NS rung) with Q94a, and Q60's host half (pausing his default colima VM for 1-3 hour acceptance windows).
+- **Lesson:** a loop that optimizes experiments one at a time can run for days without moving a scorecard cell. The critical path to the first PASS should be written early and checked each hourly pass.

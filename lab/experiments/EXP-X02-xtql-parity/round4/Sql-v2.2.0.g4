@@ -1,0 +1,908 @@
+parser grammar Sql;
+
+options {
+  language = Java;
+  caseInsensitive = true;
+  tokenVocab = SqlLexer;
+}
+
+/// §22 Direct invocation of SQL
+
+/// §22.1 <direct SQL statement>
+
+directSqlStatement : directlyExecutableStatement ';'? EOF ;
+multiSqlStatement : directlyExecutableStatement ( ';' directlyExecutableStatement )* ';'? EOF ;
+
+directlyExecutableStatement
+    : (EXPLAIN ANALYZE?)? settingQueryVariables? queryExpression #QueryExpr
+
+    | 'INSERT' 'INTO' targetTable insertColumnsAndSource returningStatement? #InsertStatement
+
+    | 'UPDATE' targetTable dmlStatementValidTimeExtents? ( 'AS'? correlationName=identifier )?
+      'SET' setClauseList ( 'WHERE' searchCondition )?
+      returningStatement?
+      #UpdateStatement
+      
+    | 'DELETE' 'FROM' targetTable dmlStatementValidTimeExtents? ( 'AS'? correlationName=identifier )?
+      ( 'WHERE' searchCondition )?
+      returningStatement?
+      #DeleteStatement
+
+    | PATCH INTO targetTable patchStatementValidTimeExtents? patchSource #PatchStatement
+
+    | 'ERASE' 'FROM' targetTable ( 'AS'? correlationName=identifier )? ('WHERE' searchCondition)? #EraseStatement
+
+    | ASSERT condition=expr (',' message=characterString)? #AssertStatement
+
+    | PREPARE statementName=identifier AS directlyExecutableStatement #PrepareStatement
+    | EXECUTE statementName=identifier executeArgs #ExecuteStatement
+
+    | COPY targetTable FROM STDIN opts=copyOpts # CopyInStmt
+    | (START TRANSACTION | BEGIN TRANSACTION?) (transactionCharacteristics | beginWithCharacteristics)? # StartTransactionStatement
+    | SET TRANSACTION transactionCharacteristics # SetTransactionStatement
+    | COMMIT (SYNC | ASYNC)? # CommitStatement
+    | ROLLBACK # RollbackStatement
+    | SET SESSION CHARACTERISTICS AS sessionCharacteristic (',' sessionCharacteristic)* # SetSessionCharacteristicsStatement
+    | DISCARD discardTarget # DiscardStatement
+    | SET ROLE ( identifier | NONE ) # SetRoleStatement
+    | SET SESSION? ('TIME' 'ZONE' | 'TIMEZONE') zone=expr # SetTimeZoneStatement
+    | SET AWAIT_TOKEN ( TO | '=' ) awaitToken=expr # SetAwaitTokenStatement
+    | SET SESSION? identifier ( TO | '=' ) literal # SetSessionVariableStatement
+    | SHOW showVariable # ShowVariableStatement
+    | SHOW identifier # ShowSessionVariableStatement
+    | SHOW AWAIT_TOKEN # ShowAwaitTokenStatement
+    | SHOW SNAPSHOT_TOKEN # ShowSnapshotTokenStatement
+    | SHOW CLOCK_TIME # ShowClockTimeStatement
+    | ATTACH DATABASE dbName=identifier (WITH configYaml=characterString)? # AttachDatabaseStatement
+    | DETACH DATABASE dbName=identifier # DetachDatabaseStatement
+
+    | GRANT roleName=identifier TO userName=identifier # GrantRoleStatement
+    | REVOKE roleName=identifier FROM userName=identifier # RevokeRoleStatement
+
+    | CREATE (OR ALTER)? TABLE targetTable ('(' columnNameList ')')? # CreateTableStatement
+    ;
+
+discardTarget
+    : ALL # DiscardAll
+    | PLANS # DiscardPlans
+    | (TEMP | TEMPORARY) # DiscardTemp
+    | SEQUENCES # DiscardSequences
+    ;
+
+targetTable : (schemaName=identifier '.')? tableName=identifier ;
+
+executeArgs : ('(' expr (',' expr)* ')')? ;
+
+copyOpts : 'WITH' '(' copyOpt? (',' copyOpt?)* ')' ;
+
+copyOpt
+    : FORMAT '='? format=characterString # CopyFormatOption
+    ;
+
+showVariable
+   : 'TRANSACTION' 'ISOLATION' 'LEVEL' # ShowTransactionIsolationLevel
+   | ('TIME' 'ZONE' | 'TIMEZONE') # ShowTimeZone
+   ;
+
+settingQueryVariables : 'SETTING' settingQueryVariable (',' settingQueryVariable)* ;
+
+settingQueryVariable
+    : 'DEFAULT' 'VALID_TIME' 'TO'? tableTimePeriodSpecification # SettingDefaultValidTime
+    | 'DEFAULT' 'SYSTEM_TIME' 'TO'? tableTimePeriodSpecification # SettingDefaultSystemTime
+    | SNAPSHOT_TOKEN ('TO' | '=') snapshotToken=expr # SettingSnapshotToken
+    | SNAPSHOT_TIME ('TO' | '=') snapshotTime=expr # SettingSnapshotTime
+    | CLOCK_TIME ('TO' | '=') clockTime=expr # SettingClockTime
+    ;
+
+//// §5 Lexical Elements
+
+/// §5.3 Literals
+
+intervalLiteral : 'INTERVAL' (PLUS | MINUS)? characterString intervalQualifier? ;
+
+dateTimeLiteral
+    : 'DATE' characterString #DateLiteral
+    | 'TIMESTAMP' withOrWithoutTimeZone? characterString #TimestampLiteral
+    ;
+
+integerLiteral: ('+' | '-')? UNSIGNED_INTEGER ;
+
+literal
+    : ('+' | '-')? UNSIGNED_FLOAT #FloatLiteral
+    | integerLiteral #IntegerLiteral0
+    | characterString #CharacterStringLiteral
+    | BINARY_STRING #BinaryStringLiteral
+    | dateTimeLiteral #DateTimeLiteral0
+    | 'TIME' characterString #TimeLiteral
+    | intervalLiteral #IntervalLiteral0
+    | 'DURATION' characterString #DurationLiteral
+    | 'UUID' characterString #UUIDLiteral
+    | 'URI' characterString #UriLiteral
+    | 'KEYWORD' characterString #KeywordLiteral
+    | (TRUE | FALSE | ON | OFF) #BooleanLiteral
+    | NULL #NullLiteral
+    ;
+
+dollarStringText: DM_TEXT+ ;
+
+characterString
+    : CHARACTER_STRING #SqlStandardString
+    | C_ESCAPES_STRING #CEscapesString
+    | DOLLAR_TAG dollarStringText? DM_END_TAG #DollarString
+    ;
+
+intervalQualifier
+   : startField=nonSecondPrimaryDatetimeField 'TO' endField=singleDatetimeField # MultiFieldInterval
+   | singleDatetimeField # SingleFieldInterval
+   ;
+   
+intervalFractionalSecondsPrecision : UNSIGNED_INTEGER ;
+nonSecondPrimaryDatetimeField : 'YEAR' | 'MONTH' | 'DAY' | 'HOUR' | 'MINUTE' ;
+singleDatetimeField : nonSecondPrimaryDatetimeField | 'SECOND' ( '(' intervalFractionalSecondsPrecision ')' )? ;
+
+/// §5.4 Identifiers
+
+identifierChain : identifier ( '.' identifier )* ;
+
+identifier
+    : (REGULAR_IDENTIFIER | nonReservedKeyword) # RegularIdentifier
+    | DELIMITED_IDENTIFIER # DelimitedIdentifier
+    ;
+
+// Where one of these also opens a construct - `PERIOD(a, b)`, `ROW(1, 2)`, `DATE '2020-01-01'` - the input
+// fits both, and ANTLR takes the earlier alternative, so the construct's alternative has to come first.
+nonReservedKeyword
+    : START | END
+    | COMMITTED | UNCOMMITTED
+    | TIMEZONE
+    | VERSION
+    | SYSTEM_TIME | VALID_TIME
+    | SELECT | INSERT | UPDATE | DELETE | ERASE
+    | SETTING
+    | ROLE
+    | USER | PASSWORD
+    | VARBINARY | BYTEA
+    | URI | OID
+    | COPY | FORMAT
+    | ATTACH | DETACH | DATABASE | LEVEL
+    | FILTER
+    | TABLE
+    | METADATA
+    | SYNC
+    | DISCARD | PLANS | TEMP | TEMPORARY | SEQUENCES
+    | setFunctionType
+    | primaryDatetimeField
+    | pgExtractField
+    | rankFunctionType
+    | AT | BETWEEN | BY | CURRENT | FIRST | LAST | NEXT | OF | POSITION
+    | INT2 | INT4 | INT8 | FLOAT4 | FLOAT8 | BOOL | BPCHAR | NAME
+    | BIGINT | BOOLEAN | CHAR | DATE | DEC | DECIMAL | DOUBLE | DURATION | FLOAT | INT | INTEGER
+    | INTERVAL | KEYWORD | NUMERIC | OBJECT | PERIOD | PRECISION | REAL | RECORD | REGCLASS
+    | REGPROC | ROW | SMALLINT | TEXT | TIME | TIMESTAMP | TIMESTAMPTZ | TSTZRANGE | UUID | VARCHAR
+    ;
+
+columnName : identifier ;
+
+columnLabel
+    : identifier
+    | 'CURRENT_USER'
+    ;
+
+// §6 Scalar Expressions
+
+/// §6.1 Data Types
+
+dataType
+    : ('NUMERIC' | 'DECIMAL' | 'DEC') ('(' precision (',' scale)? ')')? # DecimalType
+    | ('SMALLINT' | 'INTEGER' | 'INT' | 'BIGINT' | 'INT2' | 'INT4' | 'INT8') # IntegerType
+    | 'FLOAT' ('(' precision ')')? # FloatType
+    | ('REAL' | 'FLOAT4') # RealType
+    | ('DOUBLE' 'PRECISION'? | 'FLOAT8') # DoubleType
+    | ('BOOLEAN' | 'BOOL') # BooleanType
+    | 'DATE' # DateType
+    | 'TIME' ('(' precision ')')? withOrWithoutTimeZone? # TimeType
+    | 'TIMESTAMP' ('(' precision ')')? withOrWithoutTimeZone? # TimestampType
+    | 'TIMESTAMPTZ' #TimestampTzType
+    | 'INTERVAL' intervalQualifier? # IntervalType
+    | ('CHAR' | 'VARCHAR' | 'TEXT' | 'BPCHAR' | 'NAME') # CharacterStringType
+    | 'DURATION' ('(' precision ')')? # DurationType
+    | 'ROW' '(' fieldDefinition (',' fieldDefinition)* ')' # RowType
+    | 'OID' #OidType
+    | 'REGCLASS' #RegClassType
+    | 'REGPROC' #RegProcType
+    | 'KEYWORD' #KeywordType
+    | 'UUID' #UuidType
+    | 'VARBINARY' #VarbinaryType
+    | 'BYTEA' #VarbinaryType
+    | 'URI' # UriType
+    | dataType 'ARRAY' ('[' maximumCardinality ']')? # ArrayType
+    | dataType '[' maximumCardinality? ']' # ArrayType
+    ;
+
+precision : UNSIGNED_INTEGER ;
+scale : UNSIGNED_INTEGER ;
+
+charLengthUnits : 'CHARACTERS' | 'OCTETS' ;
+
+withOrWithoutTimeZone
+    : 'WITH' ('TIME' 'ZONE' | 'TIMEZONE') #WithTimeZone
+    | 'WITHOUT' ('TIME' 'ZONE' | 'TIMEZONE') #WithoutTimeZone
+    ;
+
+maximumCardinality : UNSIGNED_INTEGER ;
+
+fieldDefinition : fieldName=identifier dataType ;
+
+/// §6.3 <value expression primary>
+
+// Alternative order is precedence, tightest first, following PostgreSQL's operator precedence table:
+// predicates, then comparisons, then IS, NOT, AND, OR.
+expr
+    : commonValueExpr NOT? 'BETWEEN' (ASYMMETRIC | SYMMETRIC)? commonValueExpr 'AND' commonValueExpr # BetweenPredicate
+    | expr NOT? 'IN' inPredicateValue # InPredicate
+    | expr 'NOT'? ('LIKE' | 'ILIKE') likePattern=commonValueExpr ('ESCAPE' likeEscape=commonValueExpr)? # LikePredicate
+    | expr 'NOT'? 'LIKE_REGEX' xqueryPattern=commonValueExpr ('FLAG' xqueryOptionFlag=commonValueExpr)? # LikeRegexPredicate
+    | expr postgresRegexOperator xqueryPattern=commonValueExpr # PostgresRegexPredicate
+
+    // period predicates
+    | expr 'OVERLAPS' expr # PeriodOverlapsPredicate
+    | expr 'STRICTLY' 'OVERLAPS' expr # PeriodStrictlyOverlapsPredicate
+    | expr 'EQUALS' expr # PeriodEqualsPredicate
+    | expr 'CONTAINS' expr # PeriodContainsPredicate
+    | expr 'STRICTLY' 'CONTAINS' expr # PeriodStrictlyContainsPredicate
+    | expr 'PRECEDES' expr # PeriodPrecedesPredicate
+    | expr 'STRICTLY' 'PRECEDES' expr # PeriodStrictlyPrecedesPredicate
+    | expr 'IMMEDIATELY' 'PRECEDES' expr # PeriodImmediatelyPrecedesPredicate
+    | expr 'SUCCEEDS' expr # PeriodSucceedsPredicate
+    | expr 'STRICTLY' 'SUCCEEDS' expr # PeriodStrictlySucceedsPredicate
+    | expr 'IMMEDIATELY' 'SUCCEEDS' expr # PeriodImmediatelySucceedsPredicate
+    | expr 'LAGS' expr # PeriodLagsPredicate
+    | expr 'STRICTLY' 'LAGS' expr # PeriodStrictlyLagsPredicate
+    | expr 'IMMEDIATELY' 'LAGS' expr # PeriodImmediatelyLagsPredicate
+    | expr 'LEADS' expr # PeriodLeadsPredicate
+    | expr 'STRICTLY' 'LEADS' expr # PeriodStrictlyLeadsPredicate
+    | expr 'IMMEDIATELY' 'LEADS' expr # PeriodImmediatelyLeadsPredicate
+
+    | expr compOp expr # ComparisonPredicate
+    | expr compOp quantifier quantifiedComparisonPredicatePart3 # QuantifiedComparisonPredicate
+
+    | expr 'IS' NOT? booleanValue #IsBooleanValueExpr
+    | expr 'IS' 'NOT'? 'NULL' # NullPredicate
+    | expr 'IS' 'NOT'? 'DISTINCT' 'FROM' expr # DistinctFromPredicate
+
+    | 'NOT' expr #UnaryNotExpr
+    | expr 'AND' expr #AndExpr
+    | expr 'OR' expr #OrExpr
+
+    | commonValueExpr #CommonValueExpr0
+    ;
+
+// SQL:2011's <common value expression>: no boolean or predicate operator at its top level, so that
+// `BETWEEN`'s bounds and `LIKE`'s pattern can't swallow a following `AND`.
+//
+// Alternative order is precedence, as for `expr`. Operators sharing a precedence level have to share an
+// alternative - ANTLR gives each alternative a level of its own.
+commonValueExpr
+    : subquery # ScalarSubqueryExpr
+    | '(' expr ')' #WrappedExpr
+    | literal # LiteralExpr
+    | commonValueExpr '.' fieldName=identifier #FieldAccess
+    | commonValueExpr '[' expr ']' #ArrayAccess
+    | commonValueExpr '::' dataType #PostgresCastExpr
+    | obj=commonValueExpr op=(JSON_ARROW | JSON_ARROW_TEXT | JSON_PATH | JSON_PATH_TEXT) arg=commonValueExpr #JsonAccessExpr
+    | '+' commonValueExpr #UnaryPlusExpr
+    | '-' commonValueExpr #UnaryMinusExpr
+    | commonValueExpr (SOLIDUS | ASTERISK | PERCENT) commonValueExpr #NumericFactorExpr
+    | commonValueExpr (PLUS | MINUS) commonValueExpr #NumericTermExpr
+    | TILDE commonValueExpr #NumericBitwiseNotExpr
+    | commonValueExpr op=(CONCAT | AMPERSAND | BITWISE_OR | BITWISE_XOR | BITWISE_SHIFT_LEFT | BITWISE_SHIFT_RIGHT) commonValueExpr #ConcatOrBitwiseExpr
+
+    | parameterSpecification # ParamExpr
+    | columnReference # ColumnExpr
+    | aggregateFunction # AggregateFunctionExpr
+    | windowFunctionType 'OVER' windowNameOrSpecification # WindowFunctionExpr
+    | nestedWindowFunction # NestedWindowFunctionExpr
+    | 'NEST_ONE' subquery # NestOneSubqueryExpr
+    | 'NEST_MANY' subquery # NestManySubqueryExpr
+    | 'CASE' expr simpleWhenClause+ elseClause? 'END' #SimpleCaseExpr
+    | 'CASE' searchedWhenClause+ elseClause? 'END' # SearchedCaseExpr
+    | 'NULLIF' '(' expr ',' expr ')' # NullIfExpr
+    | 'COALESCE' '(' expr (',' expr)* ')' # CoalesceExpr
+    | 'CAST' '(' expr 'AS' dataType ')' # CastExpr
+    | arrayValueConstructor # ArrayExpr
+    | objectConstructor # ObjectExpr
+    | generateSeries # GenerateSeriesFunction
+
+    | 'EXISTS' subquery # ExistsPredicate
+
+    | (identifier '.')? 'HAS_ANY_COLUMN_PRIVILEGE' '('
+        ( userString=expr ',' )?
+        tableString=expr ','
+        privilegeString=expr
+      ')' # HasAnyColumnPrivilegePredicate
+
+    | (identifier '.')? 'HAS_TABLE_PRIVILEGE' '('
+        ( userString=expr ',' )?
+        tableString=expr ','
+        privilegeString=expr
+      ')' # HasTablePrivilegePredicate
+
+    | (identifier '.')? 'HAS_SCHEMA_PRIVILEGE' '('
+        ( userString=expr ',' )?
+        schemaString=expr ','
+        privilegeString=expr
+      ')' # HasSchemaPrivilegePredicate
+
+    | (schemaName=identifier '.')? 'VERSION' '(' ')' #PostgresVersionFunction
+
+    | (identifier '.')? 'PG_GET_USERBYID' '(' relOwner=columnReference ')' # PostgresGetUserByIdFunction
+    | (identifier '.')? 'PG_TABLE_IS_VISIBLE' '(' columnOid=columnReference ')' # PostgresTableIsVisibleFunction
+
+    // numeric value functions
+    | 'POSITION' '(' expr 'IN' expr ( 'USING' charLengthUnits )? ')' # PositionFunction
+    | 'EXTRACT' '(' extractField 'FROM' extractSource=expr ')' # ExtractFunction
+    | ('CHAR_LENGTH' | 'CHARACTER_LENGTH') '(' expr ('USING' charLengthUnits)? ')' # CharacterLengthFunction
+    | ('PERIOD' | 'TSTZRANGE') '(' expr ',' expr ')' # TsTzRangeConstructor
+    | (schemaName=identifier '.')? fn=identifier '(' ( expr (',' expr)* )? ')' # FunctionCall
+
+    // string value functions
+    | 'SUBSTRING' '('
+        substringSource=expr
+        ('FROM'? startPosition=expr ( 'FOR'? stringLength=expr )? ( 'USING' charLengthUnits )?
+         | ',' startPosition=expr (',' stringLength=expr)? )
+      ')' # CharacterSubstringFunction
+
+    | 'TRIM' '(' trimSpecification? (trimCharacter=expr 'FROM' trimSource=expr | 'FROM' trimSource=expr | trimSource=expr) ')' # TrimFunction
+
+    | 'URI_SCHEME' '(' expr ')' # UriSchemeFunction
+    | 'URI_USER_INFO' '(' expr ')' # UriUserInfoFunction
+    | 'URI_HOST' '(' expr ')' # UriHostFunction
+    | 'URI_PORT' '(' expr ')' # UriPortFunction
+    | 'URI_PATH' '(' expr ')' # UriPathFunction
+    | 'URI_QUERY' '(' expr ')' # UriQueryFunction
+    | 'URI_FRAGMENT' '(' expr ')' # UriFragmentFunction
+
+    | 'OVERLAY' '('
+        expr
+        'PLACING' expr
+        'FROM' startPosition=expr
+        ( 'FOR' stringLength=expr )?
+        ( 'USING' charLengthUnits )?
+      ')' # OverlayFunction
+
+    | 'REPLACE' '(' source=expr ',' pattern=expr ',' replacement=expr ')' # ReplaceFunction
+    | 'REGEXP_REPLACE' '(' source=expr ',' pattern=characterString ',' replacement=characterString (',' start=integerLiteral ( ',' n=integerLiteral )? )? (',' flags=characterString)? ')' # RegexpReplaceFunction
+
+    | (identifier '.')? 'CURRENT_USER' # CurrentUserFunction
+    | (identifier '.')? 'CURRENT_SCHEMA' ('(' ')')? # CurrentSchemaFunction
+    | (identifier '.')? 'CURRENT_SCHEMAS' '(' expr ')' # CurrentSchemasFunction
+    | (identifier '.')? 'CURRENT_CATALOG' ('(' ')')? # CurrentCatalogFunction
+    | (identifier '.')? 'PG_GET_EXPR' ('(' expr ',' expr (',' expr)? ')')? # PgGetExprFunction
+    | (identifier '.')? '_PG_EXPANDARRAY' ('(' expr ')')? # PgExpandArrayFunction
+    | (identifier '.')? 'PG_GET_INDEXDEF' '(' expr (',' expr ',' expr)? ')' # PgGetIndexdefFunction
+    | PG_SLEEP '(' sleepSeconds=expr ')' # PgSleepFunction
+    | PG_SLEEP_FOR '(' sleepPeriod=expr ')' # PgSleepForFunction
+
+    | currentInstantFunction # CurrentInstantFunction0
+    | 'CURRENT_SETTING' '(' expr ')' #CurrentSettingFunction
+    | 'CURRENT_TIME' ('(' precision ')')? # CurrentTimeFunction
+    | LOCAL_TIME ('(' precision ')')? # LocalTimeFunction
+    | 'DATE_TRUNC' '(' dateTruncPrecision ',' dateTruncSource=expr (',' dateTruncTimeZone=characterString)? ')' # DateTruncFunction
+    | 'DATE_BIN' '(' intervalLiteral ',' dateBinSource=expr (',' dateBinOrigin=expr)? ')' # DateBinFunction
+    | 'RANGE_BINS' '(' intervalLiteral ',' rangeBinsSource=expr (',' dateBinOrigin=expr)? ')' #RangeBinsFunction
+    | 'OVERLAPS' '(' expr ( ',' expr )+ ')' # OverlapsFunction
+
+    | 'TRIM_ARRAY' '(' expr ',' expr ')' # TrimArrayFunction
+    ;
+
+currentInstantFunction
+    : 'CURRENT_DATE' ( '(' ')' )? # CurrentDateFunction
+    | ('CURRENT_TIMESTAMP' | 'NOW') ('(' precision? ')')? # CurrentTimestampFunction
+    | 'SNAPSHOT_TOKEN' ('(' ')')? # SnapshotTokenFunction
+    | LOCAL_DATE ( '(' ')' )? # LocalDateFunction
+    | LOCAL_TIMESTAMP ('(' precision ')')? # LocalTimestampFunction
+    ;
+
+booleanValue : 'TRUE' | 'FALSE' | 'UNKNOWN' ;
+
+// spec addition: objectConstructor
+
+objectConstructor
+    : ('RECORD' | 'OBJECT') '(' (objectNameAndValue (',' objectNameAndValue)*)? ')'
+    | '{' (objectNameAndValue (',' objectNameAndValue)*)? '}'
+    ;
+
+objectNameAndValue : objectName=identifier ':' expr ;
+
+parameterSpecification
+    : '?' #DynamicParameter
+    | POSTGRES_PARAMETER_SPECIFICATION #PostgresParameter
+    ;
+
+staticExpr
+    : literal #StaticLiteral
+    | parameterSpecification #StaticParam
+    ;
+
+columnReference : identifierChain ;
+
+/// generate_series function
+
+generateSeries : (identifier '.')? fn=(GENERATE_SERIES | RANGE) '(' seriesStart=expr ',' seriesEnd=expr (',' seriesStep=expr)? ')' ;
+
+/// §6.10 <window function>
+
+windowFunctionType
+    : rankFunctionType '(' ')' # RankWindowFunction
+    | 'ROW_NUMBER' '(' ')' # RowNumberWindowFunction
+    | aggregateFunction # AggregateWindowFunction
+    | 'NTILE' '(' numberOfTiles ')' # NtileWindowFunction
+
+    | ('LEAD' | 'LAG') '('
+        leadOrLagExtent=expr
+        (',' offset=UNSIGNED_INTEGER (',' defaultExpression=expr)?)?
+      ')' nullTreatment? # LeadOrLagWindowFunction
+
+    | firstOrLastValue '(' expr ')' nullTreatment? # FirstOrLastValueWindowFunction
+    | 'NTH_VALUE' '(' expr ',' nthRow ')' fromFirstOrLast? nullTreatment? # NthValueWindowFunction
+;
+
+rankFunctionType : 'RANK' | 'DENSE_RANK' | 'PERCENT_RANK' | 'CUME_DIST' ;
+
+numberOfTiles : UNSIGNED_INTEGER | parameterSpecification ;
+
+nullTreatment
+    : 'RESPECT' 'NULLS' # RespectNulls
+    | 'IGNORE' 'NULLS' # IgnoreNulls
+    ;
+
+firstOrLastValue : 'FIRST_VALUE' | 'LAST_VALUE' ;
+
+nthRow : UNSIGNED_INTEGER | '?' ;
+
+fromFirstOrLast
+    : 'FROM' 'FIRST' # FromFirst
+    | 'FROM' 'LAST' # FromLast
+    ;
+
+windowNameOrSpecification : windowName=identifier | windowSpecification ;
+
+/// §6.11 <nested window function>
+
+nestedWindowFunction
+    : 'ROW_NUMBER' '(' rowMarker ')' # NestedRowNumberFunction
+    | 'VALUE_OF' '(' expr 'AT' rowMarkerExpression (',' valueOfDefaultValue)? ')' # ValueOfExprAtRow
+    ;
+
+rowMarker : 'BEGIN_PARTITION' | 'BEGIN_FRAME' | 'CURRENT_ROW' | 'FRAME_ROW' | 'END_FRAME' | 'END_PARTITION' ;
+
+rowMarkerExpression : rowMarker rowMarkerDelta? ;
+
+rowMarkerDelta : PLUS rowMarkerOffset | MINUS rowMarkerOffset ;
+
+rowMarkerOffset : UNSIGNED_INTEGER | '?' ;
+valueOfDefaultValue : expr ;
+
+/// §6.12 <case expression>
+
+simpleWhenClause : 'WHEN' whenOperandList 'THEN' expr ;
+searchedWhenClause : 'WHEN' expr 'THEN' expr ;
+elseClause : 'ELSE' expr ;
+
+whenOperandList : whenOperand (',' whenOperand)* ;
+whenOperand : predicatePart2 | expr ;
+
+/// §6.28 <numeric value function>
+
+extractField : primaryDatetimeField | timeZoneField | pgExtractField ;
+primaryDatetimeField : nonSecondPrimaryDatetimeField | 'SECOND' ;
+timeZoneField : 'TIMEZONE_HOUR' | 'TIMEZONE_MINUTE' ;
+pgExtractField : 'DOW' | 'ISODOW' | 'DOY' | 'WEEK' | 'QUARTER' | 'EPOCH' ;
+
+/// §6.30 <string value function>
+
+trimSpecification : 'LEADING' | 'TRAILING' | 'BOTH' ;
+
+/// §6.32 <datetime value function>
+
+// spec additions for date_trunc
+
+dateTruncPrecision
+    : 'MILLENNIUM' | 'CENTURY' | 'DECADE'
+    | 'YEAR' | 'QUARTER' | 'MONTH' | 'WEEK' | 'DAY'
+    | 'HOUR' | 'MINUTE' | 'SECOND'
+    | 'MILLISECOND' | 'MICROSECOND' | 'NANOSECOND'
+    | characterString
+    ;
+
+/// §6.34 <interval value function>
+
+// spec addition: age function
+
+/// §6.37 <array value function>
+
+/// §6.38 <array value constructor>
+
+arrayValueConstructor
+    : 'ARRAY'? '[' (expr (',' expr)*)? ']' # ArrayValueConstructorByEnumeration
+    | 'ARRAY' subquery # ArrayValueConstructorByQuery
+    ;
+
+//// §7 Query expressions
+
+/// §7.1 <row value constructor>
+
+rowValueConstructor
+    : 'ROW' '(' ( expr (',' expr)* )? ')' # MultiExprRowConstructor
+    | expr # SingleExprRowConstructor
+    | '(' ( expr (',' expr)+ )? ')'  # MultiExprRowConstructor
+    ;
+
+/// §7.3 <table value constructor>
+
+rowValueList : rowValueConstructor (',' rowValueConstructor)* ;
+tableValueConstructor : 'VALUES' rowValueList ;
+
+recordValueConstructor
+    : parameterSpecification # ParameterRecord
+    | objectConstructor # ObjectRecord
+    ;
+
+recordsValueList : recordValueConstructor (',' recordValueConstructor)* ;
+
+recordsValueConstructor : 'RECORDS' recordsValueList ;
+
+/// §7.5 <from clause>
+
+fromClause : 'FROM' tableReference (',' tableReference)* ;
+
+/// §7.6 <table reference>
+
+tableReference
+    : fromTableRef (querySystemTimePeriodSpecification | queryValidTimePeriodSpecification)* (tableAlias tableProjection?)? # BaseTable
+    | tableReference joinType? 'JOIN' tableReference joinSpecification # JoinTable
+    | tableReference 'CROSS' 'JOIN' tableReference # CrossJoinTable
+    | tableReference 'NATURAL' joinType? 'JOIN' tableReference # NaturalJoinTable
+    | subquery tableAlias tableProjection? # DerivedTable
+    | 'LATERAL' subquery tableAlias tableProjection? # LateralDerivedTable
+    | 'UNNEST' '(' expr ')' withOrdinality? tableAlias tableProjection? # CollectionDerivedTable
+    | generateSeries withOrdinality? tableAlias tableProjection? # GenerateSeriesTable
+    | expr withOrdinality? (tableAlias tableProjection?)? # ExprDerivedTable
+    | '(' tableReference ')' # WrappedTableReference
+    ;
+
+withOrdinality : 'WITH' 'ORDINALITY' ;
+
+tableAlias : 'AS'? correlationName=identifier ;
+tableProjection : '(' columnNameList ')' ;
+
+querySystemTimePeriodSpecification
+    : 'FOR' 'SYSTEM_TIME' tableTimePeriodSpecification
+    | 'FOR' ALL 'SYSTEM_TIME'
+    ;
+
+queryValidTimePeriodSpecification
+   : 'FOR' 'VALID_TIME' tableTimePeriodSpecification
+   | 'FOR' 'VALID_TIME' ONLY 'FROM' from=expr 'TO' to=expr
+   | 'FOR' ALL 'VALID_TIME'
+   ;
+
+tableTimePeriodSpecification
+    : 'AS' 'OF' at=expr # TableAsOf
+    | 'ALL' # TableAllTime
+    | 'BETWEEN' from=expr 'AND' to=expr # TableBetween
+    | 'FROM' from=expr 'TO' to=expr # TableFromTo
+    ;
+
+fromTableRef : ((identifier '.')? identifier '.')? identifier ;
+
+columnNameList : columnName (',' columnName)* ;
+
+/// §7.7 <joined table>
+
+joinSpecification
+    : 'ON' expr # JoinCondition
+    | 'USING' '(' columnNameList ')' # NamedColumnsJoin
+    ;
+
+joinType : 'INNER' | outerJoinType 'OUTER'? ;
+outerJoinType : 'LEFT' | 'RIGHT' | 'FULL';
+
+/// §7.8 <where clause>
+
+whereClause : 'WHERE' searchCondition ;
+
+/// §7.9 <group by clause>
+
+groupByClause : 'GROUP' 'BY' (setQuantifier)? groupingElement (',' groupingElement)* ;
+
+groupingElement
+    : expr # ExpressionGroupingSet
+    | '(' ')' # EmptyGroupingSet
+    ;
+
+/// §7.10 <having clause>
+
+havingClause : 'HAVING' searchCondition ;
+
+/// §7.11 <window clause>
+
+windowClause : 'WINDOW' windowDefinitionList ;
+windowDefinitionList : windowDefinition (',' windowDefinition)* ;
+windowDefinition : newWindowName 'AS' windowSpecification ;
+newWindowName : windowName=identifier ;
+
+windowSpecification : '(' windowSpecificationDetails ')' ;
+
+windowSpecificationDetails : existingWindowName=identifier? windowPartitionClause? windowOrderClause? windowFrameClause? ;
+
+windowPartitionClause : 'PARTITION' 'BY' windowPartitionColumnReferenceList ;
+windowPartitionColumnReferenceList : columnReference (',' columnReference)* ;
+windowOrderClause : 'ORDER' 'BY' sortSpecificationList ;
+windowFrameClause : windowFrameUnits windowFrameExtent (windowFrameExclusion)? ;
+windowFrameUnits : 'ROWS' | 'RANGE' | 'GROUPS' ;
+windowFrameExtent : windowFrameStart | windowFrameBetween ;
+windowFrameStart : 'UNBOUNDED' 'PRECEDING' | windowFramePreceding | 'CURRENT' 'ROW' ;
+windowFramePreceding : UNSIGNED_INTEGER 'PRECEDING' ;
+windowFrameBetween : 'BETWEEN' windowFrameBound1=windowFrameBound 'AND' windowFrameBound2=windowFrameBound ;
+windowFrameBound : windowFrameStart | 'UNBOUNDED' 'FOLLOWING' | windowFrameFollowing ;
+windowFrameFollowing : UNSIGNED_INTEGER 'FOLLOWING' ;
+
+windowFrameExclusion : 'EXCLUDE' 'CURRENT' 'ROW' | 'EXCLUDE' 'GROUP' | 'EXCLUDE' 'TIES' | 'EXCLUDE' 'NO' 'OTHERS' ;
+
+/// §7.12 <query specification>
+
+selectClause : 'SELECT' setQuantifier? selectList ;
+selectList
+    : selectListAsterisk (',' selectSublist?)*
+    | selectSublist? (',' selectSublist?)* (',' selectListAsterisk)?
+    ;
+
+selectListAsterisk : ASTERISK excludeClause? renameClause? ;
+
+selectSublist : derivedColumn | qualifiedAsterisk ;
+qualifiedAsterisk : identifierChain '.' ASTERISK excludeClause? qualifiedRenameClause?;
+
+renameClause
+    : 'RENAME' renameColumn
+    | 'RENAME' '(' renameColumn (',' renameColumn )* ')'
+    ;
+
+renameColumn : columnReference asClause ;
+
+qualifiedRenameClause
+    : 'RENAME' qualifiedRenameColumn
+    | 'RENAME' '(' qualifiedRenameColumn (',' qualifiedRenameColumn )* ')'
+    ;
+
+qualifiedRenameColumn : identifier asClause ;
+
+excludeClause
+    : 'EXCLUDE' identifier
+    | 'EXCLUDE' '(' identifier (',' identifier )* ')'
+    ;
+
+derivedColumn : expr asClause? ;
+asClause
+    : 'AS' (columnLabel | 'DEFAULT')
+    | columnLabel
+    ;
+
+/// §7.13 <query expression>
+
+queryExpression : withClause? queryExpressionNoWith ;
+queryExpressionNoWith : queryExpressionBody orderByClause? offsetAndLimit?  ;
+withClause : 'WITH' RECURSIVE? withListElement (',' withListElement)* ;
+withListElement : MATERIALIZED? queryName=identifier ('(' columnNameList ')')? 'AS' subquery ;
+
+queryExpressionBody
+    : selectClause fromClause? whereClause? groupByClause? havingClause? windowClause? # QuerySpecification
+    | fromClause queryTail* windowClause? # QuerySpecification
+    | tableValueConstructor # ValuesQuery
+    | recordsValueConstructor # RecordsQuery
+    | '(' queryExpressionNoWith ')' # WrappedQuery
+    | 'XTQL' ( xtqlQuery=characterString | '(' xtqlQuery=characterString xtqlParams ')' ) # XtqlQuery
+
+    // INTERSECT binds tighter; UNION and EXCEPT share one alternative so they share a precedence level
+    | left=queryExpressionBody INTERSECT (ALL | DISTINCT)? right=queryExpressionBody # IntersectQuery
+    | left=queryExpressionBody (UNION | EXCEPT) (ALL | DISTINCT)? right=queryExpressionBody # UnionOrExceptQuery
+    ;
+
+xtqlParams : ( ',' parameterSpecification )* ;
+
+queryTail
+    : whereClause # WhereTail
+    | groupByClause? havingClause? selectClause # SelectTail
+    ;
+
+orderByClause : 'ORDER' 'BY' sortSpecificationList ;
+
+offsetAndLimit
+    : resultOffsetClause fetchFirstClause?
+    | fetchFirstClause resultOffsetClause?
+    ;
+
+resultOffsetClause : 'OFFSET' offsetRowCount ( 'ROW' | 'ROWS' )? ;
+
+fetchFirstClause
+    : 'FETCH' ('FIRST' | 'NEXT') fetchFirstRowCount? ( 'ROW' | 'ROWS' ) 'ONLY'
+    | 'LIMIT' fetchFirstRowCount
+    ;
+
+offsetRowCount : UNSIGNED_INTEGER | parameterSpecification ;
+fetchFirstRowCount : UNSIGNED_INTEGER | parameterSpecification ;
+
+/// §7.15 <subquery>
+
+subquery : '(' queryExpression ')' ;
+
+//// §8 Predicates
+
+predicatePart2
+    : compOp expr # ComparisonPredicatePart2
+    | NOT? 'BETWEEN' (ASYMMETRIC | SYMMETRIC)? commonValueExpr 'AND' commonValueExpr # BetweenPredicatePart2
+    | NOT? 'IN' inPredicateValue # InPredicatePart2
+    | 'NOT'? ('LIKE' | 'ILIKE') likePattern=commonValueExpr ('ESCAPE' likeEscape=commonValueExpr)? # LikePredicatePart2
+    | 'NOT'? 'LIKE_REGEX' xqueryPattern=commonValueExpr ('FLAG' xqueryOptionFlag=commonValueExpr)? # LikeRegexPredicatePart2
+    | postgresRegexOperator xqueryPattern=commonValueExpr # PostgresRegexPredicatePart2
+    | 'IS' 'NOT'? 'NULL' # NullPredicatePart2
+    | 'IS' 'NOT'? 'DISTINCT' 'FROM' expr # DistinctFromPredicatePart2
+    | compOp quantifier quantifiedComparisonPredicatePart3 # QuantifiedComparisonPredicatePart2
+    ;
+
+quantifiedComparisonPredicatePart3
+  : subquery # QuantifiedComparisonSubquery
+  | expr #QuantifiedComparisonExpr
+  ;
+
+compOp : '=' | '!=' | '<>' | '<' | '>' | '<=' | '>=' ;
+
+inPredicateValue
+    : subquery # InSubquery
+    | '(' rowValueList ')' # InRowValueList
+    ;
+
+postgresRegexOperator : '~' | '~*' | '!~' | '!~*' ;
+
+quantifier : 'ALL' | 'SOME' | 'ANY' ;
+
+/// §8.21 <search condition>
+
+searchCondition : expr? (',' expr?)* ;
+
+//// §10 Additional common elements
+
+/// §10.9 <aggregate function>
+
+aggregateFunction
+    : 'COUNT' '(' ASTERISK ')' aggregateFilterClause? # CountStarFunction
+    | 'ARRAY_AGG' '(' expr ('ORDER' 'BY' sortSpecificationList)? ')' aggregateFilterClause? # ArrayAggFunction
+    | setFunctionType '(' setQuantifier? expr ')' aggregateFilterClause? # SetFunction
+    | orderedSetFunctionType '(' percentileFraction ')' 'WITHIN' 'GROUP' '(' 'ORDER' 'BY' sortSpecification ')' aggregateFilterClause? # OrderedSetFunction
+    ;
+
+aggregateFilterClause : 'FILTER' '(' 'WHERE' expr ')' ;
+
+percentileFraction
+    : literal              # PercentileFractionLiteral
+    | parameterSpecification # PercentileFractionParam
+    ;
+
+orderedSetFunctionType : 'PERCENTILE_CONT' | 'PERCENTILE_DISC' ;
+
+setFunctionType
+    : 'AVG' | 'MAX' | 'MIN' | 'SUM' | 'COUNT'
+    // Removed 'ANY' and 'SOME' as aggregate functions, as it introduces ambiguities with
+    // the `= ANY` comparison operator.  (Following the same approach as PostgreSQL).
+    | 'EVERY' | 'BOOL_AND' | 'BOOL_OR'
+    | 'STDDEV_POP' | 'STDDEV_SAMP' | 'VAR_SAMP' | 'VAR_POP' ;
+
+setQuantifier : 'DISTINCT' | 'ALL' ;
+
+/// §10.10 <sort specification list>
+
+sortSpecificationList : sortSpecification (',' sortSpecification)* ;
+sortSpecification : expr orderingSpecification? nullOrdering? ;
+orderingSpecification : 'ASC' | 'DESC' ;
+nullOrdering : 'NULLS' 'FIRST' | 'NULLS' 'LAST' ;
+
+/// §14 Data manipulation
+
+/// Postgres return statements
+returningStatement : 'RETURNING' selectList # DmlReturningStatement;
+
+/// §14.9 <delete statement: searched>
+
+dmlStatementValidTimeExtents
+  : 'FOR' ('PORTION' 'OF')? 'VALID_TIME' 'FROM' from=staticExpr ('TO' to=staticExpr)? # DmlStatementValidTimePortion
+  | 'FOR' ('ALL' 'VALID_TIME' | 'VALID_TIME' 'ALL') # DmlStatementValidTimeAll
+  ;
+
+// could become dmlStatementValidTimeExtents
+patchStatementValidTimeExtents
+: 'FOR' ('PORTION' 'OF')? 'VALID_TIME' 'FROM' from=staticExpr ('TO' to=staticExpr)? # PatchStatementValidTimePortion
+;
+
+patchSource
+  : recordsValueConstructor # PatchRecords
+//  | ( '(' columnNameList ')' )? tableValueConstructor # PatchValues
+  ;
+
+/// §14.11 <insert statement>
+
+insertColumnsAndSource
+    : ( '(' columnNameList ')' )? tableValueConstructor # InsertValues
+    | ( '(' columnNameList ')' )? recordsValueConstructor # InsertRecords
+    | ( '(' columnNameList ')' )? queryExpression # InsertFromSubquery
+    ;
+
+/// §14.14 <update statement: searched>
+
+/// §14.15 <set clause list>
+
+setClauseList : setClause (',' setClause)* ;
+setClause : setTarget '=' updateSource=expr ;
+
+// TODO SQL:2011 supports updating keys within a struct here
+setTarget : columnName ;
+
+/// §17.3 <transaction characteristics>
+
+sessionCharacteristic
+    : 'TRANSACTION' sessionTxMode (',' sessionTxMode)* # SessionTxCharacteristics
+    ;
+
+sessionTxMode
+    : 'ISOLATION' 'LEVEL' levelOfIsolation  # SessionIsolationLevel
+    | 'READ' 'ONLY' # ReadOnlySession
+    | 'READ' 'WRITE' # ReadWriteSession
+    ;
+
+transactionCharacteristics
+    : (readOnlyTxMode ',')* 'READ' 'ONLY' (',' readOnlyTxMode)* # ReadOnlyTxCharacteristics
+    | (readWriteTxMode ',')* 'READ' 'WRITE' (',' readWriteTxMode)* # ReadWriteTxCharacteristics
+    | commonTxMode (',' commonTxMode)* # CommonTxCharacteristics
+    ;
+
+commonTxMode
+    : 'ISOLATION' 'LEVEL' levelOfIsolation # IsolationLevelTxMode
+    | txTzOption # TxTzMode
+    ;
+
+readOnlyTxMode : commonTxMode | readOnlyTxOption ;
+readWriteTxMode : commonTxMode | readWriteTxOption ;
+
+beginWithCharacteristics : beginWithMode (',' beginWithMode)* ;
+
+beginWithMode
+    : 'ISOLATION' 'LEVEL' levelOfIsolation # BeginWithIsolationLevel
+    | 'READ' 'ONLY' 'WITH' '(' beginReadOnlyOption? (',' beginReadOnlyOption?)* ')' # BeginReadOnlyWith
+    | 'READ' 'WRITE' 'WITH' '(' beginReadWriteOption? (',' beginReadWriteOption?)* ')' # BeginReadWriteWith
+    ;
+
+beginReadOnlyOption : readOnlyTxOption | txTzOption ;
+beginReadWriteOption : readWriteTxOption | txTzOption ;
+
+txOptionValue : expr | DEFAULT ;
+
+txTzOption : ('TIMEZONE' | 'TIME' 'ZONE') '='? txOptionValue ;
+
+readOnlyTxOption
+    : 'SNAPSHOT_TOKEN' '='? txOptionValue # SnapshotTokenTxOption
+    | 'SNAPSHOT_TIME' '='? txOptionValue # SnapshotTimeTxOption
+    | 'CLOCK_TIME' '='? txOptionValue # ClockTimeTxOption
+    | AWAIT_TOKEN '='? txOptionValue # AwaitTokenTxOption
+    ;
+
+readWriteTxOption
+    : 'SYSTEM_TIME' '='? txOptionValue # SystemTimeTxOption
+    | ASYNC '='? (async=literal | DEFAULT) # AsyncTxOption
+    | METADATA '='? txOptionValue # MetadataTxOption
+    ;
+
+levelOfIsolation
+    : 'READ' 'UNCOMMITTED' # ReadUncommittedIsolation
+    | 'READ' 'COMMITTED' # ReadCommittedIsolation
+    | 'REPEATABLE' 'READ' # RepeatableReadIsolation
+    | 'SERIALIZABLE' # SerializableIsolation
+    ;

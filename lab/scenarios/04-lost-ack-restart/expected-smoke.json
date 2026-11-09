@@ -1,0 +1,336 @@
+{
+ "format": "tx2-gs-expected/1",
+ "scenario": 4,
+ "slug": "lost-ack-restart",
+ "rung": "smoke",
+ "seed": 20261104,
+ "genVersion": "w01-gen/1",
+ "streamSha256": "8d8f75aeecc262c6daa21dccf2c1e4af38e548e358053c19dbb5e3005306b110",
+ "commands": 36,
+ "setupCommands": 2,
+ "facts": 528,
+ "oracle": {
+  "id": "O-REPLAY",
+  "version": "0.4.1",
+  "commit": "a9c1327d4e1d6756696db6844e17008671d4a193",
+  "sourceBranch": "main (O-REPLAY 0.4.1 pinned at a9c1327 by contract 0.3.8+, V-O04c)",
+  "files": {
+   "lab/oracles/replay/RULES.md": "949ad8751e515bfb21a0bb811364146a21b330c7051f01ff1ff8dd801abbb67c",
+   "lab/oracles/replay/SCHEMA.md": "7c00d078346ad519ad633df960d42c73c3378faa3de189fb091ec7c6b546fcae",
+   "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+   "lab/oracles/replay/constraints.py": "9b9a9fcbdbb787e784a6cefd9b9e9ba525cf5e0ea8a9cdcc0e5278fe1ff19e43",
+   "lab/oracles/replay/entities.py": "2af069de69a53a027f225756a955544c5ecec126d4ba99f66f40586fb5879371",
+   "lab/oracles/replay/errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+   "lab/oracles/replay/exact.py": "d2cdbabe0c7131983e347e4f04d0e63ebd9db9793b5ccccc5732324fb6037544",
+   "lab/oracles/replay/replay.py": "585524ba205b5ce19a42efd7ff2ef5886d0462abcd4fe4d22035c0b55880980d",
+   "lab/oracles/replay/run.py": "9fa40089db5c50fa5f7f245f14c050dee4cd3d0bfefd1e7e171461226e154032",
+   "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "lab/oracles/replay/selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c",
+   "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+   "lab/oracles/replay/views.py": "df8dba0ba607c98ccd204ab9adbf5f6192d1a4fe250b103ed458b5dec70ad26a"
+  }
+ },
+ "oracleCases": [
+  {
+   "caseId": "GS/4/smoke/chunk-0000",
+   "caseSha256": "524880833bbdfde87f18d35c312872994e81c14ed39c9e52b78a946fa08decc8",
+   "verdict": "EXPECTED-ONLY"
+  }
+ ],
+ "validAts": [
+  1794052800000
+ ],
+ "digestSubjects": 15,
+ "noDigestSubjects": [],
+ "outcomes": {
+  "3": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  },
+  "12": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  },
+  "15": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  },
+  "28": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  },
+  "35": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  }
+ },
+ "notModeled": [],
+ "hand": null,
+ "gaps": [],
+ "digests": {
+  "k0000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "973647bb8cd352f4cd9299d7"
+    },
+    "2": {
+     "1794052800000": "114e3a03bcec5c035905a14f"
+    },
+    "3": {
+     "1794052800000": "114e3a03bcec5c035905a14f",
+     "rejected": true
+    },
+    "21": {
+     "1794052800000": "ecbd423d45c08acc3db0bcf9"
+    }
+   }
+  },
+  "k0001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "2984e8af0c2cbe84e3c16ae7"
+    },
+    "4": {
+     "1794052800000": "29c60731f44018f7ccdc5ca4"
+    },
+    "23": {
+     "1794052800000": "201b9fc87c6a567db2468439"
+    }
+   }
+  },
+  "k0002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "a93562cb3cb195255f2ce41a"
+    },
+    "7": {
+     "1794052800000": "bb8222c60e36eaf6867a0ed8"
+    },
+    "25": {
+     "1794052800000": "a892a8935d820ef536584995"
+    }
+   }
+  },
+  "k0003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "ed5dd1bcb07b715f047fbd13"
+    },
+    "9": {
+     "1794052800000": "434c677291a64b9d6ca4a81e"
+    },
+    "27": {
+     "1794052800000": "583f3ac2af8660e32247dea9"
+    },
+    "28": {
+     "1794052800000": "583f3ac2af8660e32247dea9",
+     "rejected": true
+    }
+   }
+  },
+  "k0004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "09b75bddb94efaba2d7f89ec"
+    },
+    "11": {
+     "1794052800000": "1c601dce26ec49ff84ad5d73"
+    },
+    "12": {
+     "1794052800000": "1c601dce26ec49ff84ad5d73",
+     "rejected": true
+    },
+    "29": {
+     "1794052800000": "ee96646e91c50f6ceed25c04"
+    }
+   }
+  },
+  "k0005": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "b7ec65dbda1b36bf3f1f3446"
+    },
+    "14": {
+     "1794052800000": "9857a352687694c5fc9535f5"
+    },
+    "31": {
+     "1794052800000": "ad69154198fd6d738a6252c8"
+    }
+   }
+  },
+  "k0006": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "b01515cf70415a1d9dee7510"
+    },
+    "16": {
+     "1794052800000": "f35004f75f01a533abe99bfb"
+    },
+    "33": {
+     "1794052800000": "07b97a61f6d0d9aaa278b218"
+    }
+   }
+  },
+  "k0007": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "534c859010705fa61024603e"
+    },
+    "20": {
+     "1794052800000": "438674f55a28b34586597e1c"
+    },
+    "34": {
+     "1794052800000": "e894abad37cff060cc63f456"
+    },
+    "35": {
+     "1794052800000": "e894abad37cff060cc63f456",
+     "rejected": true
+    }
+   }
+  },
+  "k0008": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "ea51993f73dd8c4163503250"
+    }
+   }
+  },
+  "k0009": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "38e36c4ba795db2e8351b340"
+    }
+   }
+  },
+  "tr00000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "fdcb378d4857208d44797298"
+    },
+    "10": {
+     "1794052800000": "da9337ba5ff95c4f471c4660"
+    },
+    "15": {
+     "1794052800000": "da9337ba5ff95c4f471c4660",
+     "rejected": true
+    },
+    "22": {
+     "1794052800000": "2764b51c026160687c962190"
+    }
+   }
+  },
+  "tr00001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "4b1ed82cfab08540e838c0eb"
+    },
+    "8": {
+     "1794052800000": "ab41e8e3d14be4dbabcbd74f"
+    },
+    "32": {
+     "1794052800000": "3e11be8e262976ba1d1d68f5"
+    }
+   }
+  },
+  "tr00002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "ac7094fa459289d1b7d73d23"
+    },
+    "5": {
+     "1794052800000": "e7c2e1a3f84136553b3da619"
+    },
+    "24": {
+     "1794052800000": "e744007c72e8c4cb83cf5f17"
+    }
+   }
+  },
+  "tr00003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "0e4b36accff9b024beedf0c8"
+    },
+    "6": {
+     "1794052800000": "4452584eb871faa483beec8f"
+    },
+    "17": {
+     "1794052800000": "ac712f1c455e6c5c88436174"
+    },
+    "26": {
+     "1794052800000": "e8763f824dff131d60670e85"
+    },
+    "30": {
+     "1794052800000": "5aaf6da67463d79904d1d69c"
+    }
+   }
+  },
+  "tr00004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "c9c730a9b952feab00340ad8"
+    },
+    "13": {
+     "1794052800000": "f6706cc0d07decca26499ea9"
+    },
+    "18": {
+     "1794052800000": "1ef3c36292aebd0df60e53b6"
+    },
+    "19": {
+     "1794052800000": "0ed33b967c6fe261d6495b2b"
+    }
+   }
+  }
+ }
+}

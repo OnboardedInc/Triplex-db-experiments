@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 22016 "CX-VX02-4-G0", pid 22032 "G0-xtdb-20261108T223604Z-8609c6 typecheck", pid 22309 "DA01-G1", pid 22424 "CX-OBS01-live-r4"
+[lab] waiting for worktree gate lock (held by pid 22322)
+[lab] G0-datomic-20261108T223725Z-45c7d7: raw output runs/G0/G0-datomic-20261108T223725Z-45c7d7
+PASS G0 datomic scope=full executed=1023 pass=1023 fail=0 skip=56
+receipt: lab/runs/G0/G0-datomic-20261108T223725Z-45c7d7.json

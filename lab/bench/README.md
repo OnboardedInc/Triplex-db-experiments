@@ -43,17 +43,19 @@ stands; each bar has its own pass/miss in `ns.bars`; a missed bar is a fitness r
 ## Paired rounds (PAIR-0, EXP-M01; R22, RULINGS Q60)
 
 A comparison is a duet: A0 (arm A) and the candidate (arm B) replay the same trace window at the same instant on two
-identically configured slots in the cpuset regime (`lab/config/slots.json`: xtdb s1 on vCPUs 0-1, s3 on 2-3, no quota),
+identically configured slots in the cpuset regime (`lab/config/slots-pair.json`, explicitly selected with `TX2_SLOTS_FILE`: xtdb s1 on vCPUs 0-1, s3 on 2-3, no quota),
 inside a measurement lease (every heavy token; pool admission frozen). Rounds are aligned to the series' burst period
 (`screening-b180`: a 60 s burst every 180 s, so each 150 s measured window holds about 3,300 commands). Per round, both
 arms, pre-registered rules (`lab/config/noise.json`) exclude disturbed rounds; the statistics never look at latency
 to decide what counts.
 
 ```sh
+export TX2_CONFIG_DIR="$PWD"
+export TX2_SLOTS_FILE="$PWD/lab/config/slots-pair.json" # opt in; shared defaults stay unchanged
 node lab/bench/wait-slot.mjs --after none --slots 2 --lane xtdb --need-gib 3.5      # two exclusive XTDB slots fit
-TX2_CONFIG_DIR=$PWD node lab/bin/engine.mjs up --lane xtdb --slot s1 --exp EXP-M01   # until slots.json is on main
-TX2_CONFIG_DIR=$PWD node lab/bin/engine.mjs up --lane xtdb --slot s3 --exp EXP-M01
-TX2_CONFIG_DIR=$PWD node lab/bin/gate.mjs PAIR --lane xtdb --slots s1,s3 --mode aa --rounds 8 --series screening-b180 \
+node lab/bin/engine.mjs up --lane xtdb --slot s1 --exp EXP-M01
+node lab/bin/engine.mjs up --lane xtdb --slot s3 --exp EXP-M01
+node lab/bin/gate.mjs PAIR --lane xtdb --slots s1,s3 --mode aa --rounds 8 --series screening-b180 \
   --composition public-queued --exp EXP-M01 --run-kind calibration --raw-archive ~/Claude/Projects/triplex-db-2/EXP-M01
 node lab/bench/duet.ts recompute --receipt lab/runs/PAIR/<run-id>.json             # every number, from the receipt alone
 ```
@@ -67,6 +69,9 @@ A/A s_d, slot bias, sign flip, procedure false-positive rate, p99 floor), `noise
 values per round, calibration reference, `windowGrade`). Verdicts: `PAIRED_DECIDED`, `PAIRED_INCONCLUSIVE`,
 `INVALID_NOISE` (RED, or over a third of rounds excluded), `INVALID` (protocol departure), `FAIL` (harness, identity,
 correctness). Offline pipeline check: `--composition memory --no-lease` with development round sizes (FAILs by design).
+
+PAIR-0 stays default-off: only an explicit PAIR gate runs the duet. See
+[the current Q69a runbook](../experiments/EXP-M01-paired-measurement/RUNBOOK-rebase.md) for capacity, partitioning, timing and restoration prerequisites.
 
 ## Trace definition (frozen; `lib/trace.ts`)
 

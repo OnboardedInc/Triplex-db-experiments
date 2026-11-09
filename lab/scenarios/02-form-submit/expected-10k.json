@@ -1,0 +1,565 @@
+{
+ "format": "tx2-gs-expected/1",
+ "scenario": 2,
+ "slug": "form-submit",
+ "rung": "10k",
+ "seed": 20261102,
+ "genVersion": "w01-gen/1",
+ "streamSha256": "cbc1e71258b511c3622de1f16cdf7ace2dd8c61d1fb5218c004e8034d78d6cd4",
+ "commands": 58,
+ "setupCommands": 4,
+ "facts": 1041,
+ "oracle": {
+  "id": "O-REPLAY",
+  "version": "0.4.1",
+  "commit": "a9c1327d4e1d6756696db6844e17008671d4a193",
+  "sourceBranch": "main (O-REPLAY 0.4.1 pinned at a9c1327 by contract 0.3.8+, V-O04c)",
+  "files": {
+   "lab/oracles/replay/RULES.md": "949ad8751e515bfb21a0bb811364146a21b330c7051f01ff1ff8dd801abbb67c",
+   "lab/oracles/replay/SCHEMA.md": "7c00d078346ad519ad633df960d42c73c3378faa3de189fb091ec7c6b546fcae",
+   "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+   "lab/oracles/replay/constraints.py": "9b9a9fcbdbb787e784a6cefd9b9e9ba525cf5e0ea8a9cdcc0e5278fe1ff19e43",
+   "lab/oracles/replay/entities.py": "2af069de69a53a027f225756a955544c5ecec126d4ba99f66f40586fb5879371",
+   "lab/oracles/replay/errors.py": "5cfdd07ed710557d1db868bfae38e32f7c851dc3007fbcc9b2c0de521185f887",
+   "lab/oracles/replay/exact.py": "d2cdbabe0c7131983e347e4f04d0e63ebd9db9793b5ccccc5732324fb6037544",
+   "lab/oracles/replay/replay.py": "585524ba205b5ce19a42efd7ff2ef5886d0462abcd4fe4d22035c0b55880980d",
+   "lab/oracles/replay/run.py": "9fa40089db5c50fa5f7f245f14c050dee4cd3d0bfefd1e7e171461226e154032",
+   "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "lab/oracles/replay/selfcheck.py": "c1e0ae41cfe9bac7f2ed7f249715b5ae71e98f4d66e4ae152938b6d333c9418c",
+   "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+   "lab/oracles/replay/views.py": "df8dba0ba607c98ccd204ab9adbf5f6192d1a4fe250b103ed458b5dec70ad26a"
+  }
+ },
+ "oracleCases": [
+  {
+   "caseId": "GS/2/10k/chunk-0000",
+   "caseSha256": "e1af921266f178a40446eadfa90188c5f8187ee2d88f61246edaa13b10f284d6",
+   "verdict": "EXPECTED-ONLY"
+  },
+  {
+   "caseId": "GS/2/10k/chunk-0001",
+   "caseSha256": "824417148c1999560d394292b1567e764ecb04848211703d4d00cc9f52b25dfe",
+   "verdict": "EXPECTED-ONLY"
+  }
+ ],
+ "validAts": [
+  1794052800000
+ ],
+ "digestSubjects": 32,
+ "noDigestSubjects": [],
+ "outcomes": {
+  "27": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  },
+  "31": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  },
+  "37": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  },
+  "44": {
+   "outcome": "rejected",
+   "category": "command-already-committed",
+   "errorTag": "CommandAlreadyCommittedError"
+  }
+ },
+ "notModeled": [],
+ "hand": null,
+ "gaps": [],
+ "digests": {
+  "f0000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "0a18a179f9a8cd824dc7246d"
+    },
+    "7": {
+     "1794052800000": "59a3f08045b66b193a5e5a4b"
+    }
+   }
+  },
+  "f0001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "9b835ca7296e9198a5f11434"
+    },
+    "14": {
+     "1794052800000": "133d58ae3a75a2688f4f16c8"
+    }
+   }
+  },
+  "f0002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "2a4f42dc5501c6cef7cd2e08"
+    },
+    "16": {
+     "1794052800000": "ea292024f00477d34e70a8dd"
+    }
+   }
+  },
+  "f0003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "e1cfd26fc25cfebdaffa0b83"
+    },
+    "21": {
+     "1794052800000": "66f1ea32ea0b9cd92859d256"
+    }
+   }
+  },
+  "f0004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "8e85ccaa22d13586787e7b0c"
+    },
+    "22": {
+     "1794052800000": "bd2fa81d4a2afd73880c937e"
+    }
+   }
+  },
+  "f0005": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "857895e2b1fb42a5e563781a"
+    },
+    "29": {
+     "1794052800000": "0d7f1d22cea899ae5e36e681"
+    }
+   }
+  },
+  "f0006": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "3e706be6b08944b4ce1d0015"
+    },
+    "34": {
+     "1794052800000": "20604758dc98eb787161521d"
+    }
+   }
+  },
+  "f0007": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "ef7ef310f7e8dc0da9df0e54"
+    },
+    "36": {
+     "1794052800000": "f85b06f48be4e0d6a70df165"
+    }
+   }
+  },
+  "f0008": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "42c03e29b6f375e7bd0335e1"
+    },
+    "42": {
+     "1794052800000": "9b2af4fb5a09db00fcf25e6c"
+    }
+   }
+  },
+  "f0009": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "0": {
+     "1794052800000": "c27ba3fc95ee38add2be64b1"
+    },
+    "45": {
+     "1794052800000": "30dcd6f27eab8976de459e01"
+    }
+   }
+  },
+  "f0010": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "3df60d02986c9c2d6df368a8"
+    },
+    "49": {
+     "1794052800000": "7057aeddd7fdcda674f8ffb2"
+    }
+   }
+  },
+  "f0011": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "b18b20ec4759bead18707673"
+    },
+    "55": {
+     "1794052800000": "431a30337ef3acd4ce639af5"
+    }
+   }
+  },
+  "f0012": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "a7028b74abd3f5f6007b6d68"
+    }
+   }
+  },
+  "f0013": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "07fa2617c958821a6c8a8399"
+    }
+   }
+  },
+  "f0014": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "52eb4deb0aba3f69ff8546bf"
+    }
+   }
+  },
+  "f0015": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "b9967f131b239d01ca4f8380"
+    }
+   }
+  },
+  "f0016": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "1": {
+     "1794052800000": "c852f061b3caa6491056535c"
+    }
+   }
+  },
+  "tr00000": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "05ce0af1ee9fb7e13f616c32"
+    },
+    "30": {
+     "1794052800000": "8e0518da3a7b977e3dbce225"
+    },
+    "31": {
+     "1794052800000": "8e0518da3a7b977e3dbce225",
+     "rejected": true
+    }
+   }
+  },
+  "tr00001": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "22338c1fb72090ec11d93973"
+    },
+    "18": {
+     "1794052800000": "ba1ea6677a3901322bd0ab10"
+    },
+    "41": {
+     "1794052800000": "c747520d7ce666b8986d3f26"
+    },
+    "54": {
+     "1794052800000": "652657c1edcc340b4d762dfe"
+    }
+   }
+  },
+  "tr00002": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "a173a33529fd9b26e6b7a45f"
+    },
+    "26": {
+     "1794052800000": "ad7da519b202ebd5926f7446"
+    },
+    "51": {
+     "1794052800000": "d9706bbfd5f8d198710e120d"
+    }
+   }
+  },
+  "tr00003": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "da12b3df011d6d65b47afbe5"
+    },
+    "10": {
+     "1794052800000": "5624792ff8fae02114dab3ab"
+    }
+   }
+  },
+  "tr00004": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "aeddb195c3caa8f616d21a01"
+    },
+    "23": {
+     "1794052800000": "3f935442e0a0d8137068d13e"
+    },
+    "25": {
+     "1794052800000": "f571917af1a4b191b4c6e96c"
+    }
+   }
+  },
+  "tr00005": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "d7e2ce74e850e68b9d120413"
+    },
+    "43": {
+     "1794052800000": "f3fd39303a724db2e071b7f5"
+    },
+    "44": {
+     "1794052800000": "f3fd39303a724db2e071b7f5",
+     "rejected": true
+    }
+   }
+  },
+  "tr00006": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "6783328b8cb1affcc24c2b51"
+    },
+    "5": {
+     "1794052800000": "57e6f15603d220d57e6587c8"
+    },
+    "15": {
+     "1794052800000": "6b54aa1e3384c19f37ee0b50"
+    },
+    "40": {
+     "1794052800000": "7f1875a4c63a0ca0fa44bf72"
+    },
+    "52": {
+     "1794052800000": "e3bb3e6f206eb88134d82592"
+    }
+   }
+  },
+  "tr00007": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "65fa0d18bc4a23df026b5261"
+    },
+    "13": {
+     "1794052800000": "9d2b496a808f5f55cc37efe2"
+    },
+    "24": {
+     "1794052800000": "0de381d1d2c436d93fe59e3a"
+    },
+    "27": {
+     "1794052800000": "0de381d1d2c436d93fe59e3a",
+     "rejected": true
+    },
+    "32": {
+     "1794052800000": "1109a7b8e416e81a51462d00"
+    },
+    "35": {
+     "1794052800000": "278903d085d1dba3db19a233"
+    },
+    "37": {
+     "1794052800000": "278903d085d1dba3db19a233",
+     "rejected": true
+    },
+    "46": {
+     "1794052800000": "95e736e32fcb73c75237a1cb"
+    }
+   }
+  },
+  "tr00008": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "65e789601bd9d621add3610b"
+    },
+    "28": {
+     "1794052800000": "d95c4bf47ec6152fe9253f07"
+    },
+    "39": {
+     "1794052800000": "c2aaa471686fab804de81bca"
+    },
+    "50": {
+     "1794052800000": "073fb4a2303529130899cbfb"
+    }
+   }
+  },
+  "tr00009": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "2": {
+     "1794052800000": "24c82c1e16ca8e105838af48"
+    },
+    "12": {
+     "1794052800000": "6eecfdceabbc30fc996e259b"
+    },
+    "19": {
+     "1794052800000": "3689af503560b8efe7aaa7ae"
+    }
+   }
+  },
+  "tr00010": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "3": {
+     "1794052800000": "3476459e16bc3326387d8ea7"
+    },
+    "8": {
+     "1794052800000": "9b5f879b4ff0ca8f179e521d"
+    },
+    "11": {
+     "1794052800000": "ee940319c3a78dc6a0c21227"
+    },
+    "38": {
+     "1794052800000": "cb5315bbf6452d76b4f5ce16"
+    },
+    "48": {
+     "1794052800000": "e779c789d456392edfb534a5"
+    },
+    "53": {
+     "1794052800000": "fe570a02762b83d7be83bba2"
+    }
+   }
+  },
+  "tr00011": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "3": {
+     "1794052800000": "a2d25f81b2bf4da7e6d0735b"
+    },
+    "4": {
+     "1794052800000": "08cb4c6908d1ed93356271de"
+    },
+    "9": {
+     "1794052800000": "c370a905d909de2373668a08"
+    },
+    "47": {
+     "1794052800000": "1d2e470cf4ba0139f7ae84e9"
+    }
+   }
+  },
+  "tr00012": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "3": {
+     "1794052800000": "63f8b986cce49111c761458d"
+    },
+    "33": {
+     "1794052800000": "2e9719239d541e8c0f6d1c1f"
+    }
+   }
+  },
+  "tr00013": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "3": {
+     "1794052800000": "a84e3177911c7584e4f95e33"
+    },
+    "6": {
+     "1794052800000": "b5c8359c2a5456245ca0984c"
+    },
+    "17": {
+     "1794052800000": "d83f4b4e02fa079fa9974e0f"
+    },
+    "20": {
+     "1794052800000": "4152ad6fd9b18dff7c4ec3e5"
+    },
+    "57": {
+     "1794052800000": "54ec72a1ed011991e638c427"
+    }
+   }
+  },
+  "tr00014": {
+   "base": {
+    "1794052800000": "e3b0c44298fc1c149afbf4c8"
+   },
+   "after": {
+    "3": {
+     "1794052800000": "0ac95ff734efd0fe2d126a01"
+    },
+    "56": {
+     "1794052800000": "c5dadadfdd280ef7bfae7274"
+    }
+   }
+  }
+ }
+}

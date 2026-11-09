@@ -2,6 +2,10 @@
 cut semantics where the domains overlap. Each check re-expresses the other
 oracle's fixture as an O-REPLAY case (command stream + receipts) and compares the
 replayed answers with the other oracle's frozen expectations.
+
+RULINGS Q70n adds an execution check: every query kind whose output carries a next*
+field is in run.CONTINUATIONS with that field as its issued value, so a new paged kind
+cannot be left outside the one continuation rule.
 """
 
 from __future__ import annotations
@@ -339,9 +343,92 @@ def check_evt():
     return results
 
 
+# --------------------------------------------------------------------------- Q70l
+
+
+def _paged_case():
+    ops = [{"op": "assert", "ref": f"a{k}", "entityId": f"e{k}", "attribute": ":x/v", "entityType": "T",
+            "value": {"type": "integer", "value": str(k)}, "validFrom": 0} for k in range(3)]
+    commands = [{"clock": 100 + k, "operations": [op]} for k, op in enumerate(ops)]
+    queries = [{"id": "entityPage", "kind": "entityPage", "entityType": "T", "limit": 1, "cut": {"validAt": 1}},
+               {"id": "transactions", "kind": "transactions", "limit": 1},
+               {"id": "transactionsForEntity", "kind": "transactionsForEntity", "entityId": "e0", "limit": 1}]
+    commands.append({"clock": 200, "operations": [dict(ops[0], ref="b0", value={"type": "integer", "value": "9"})]})
+    return {"format": RUN.CASE_FORMAT, "caseId": "selfcheck/continuations", "defaultScope": "s",
+            "commands": commands, "queries": queries}
+
+
+def _next_keys(node, out):
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k.startswith("next"):
+                out.add(k)
+            _next_keys(v, out)
+    elif isinstance(node, list):
+        for v in node:
+            _next_keys(v, out)
+    return out
+
+
+def _continuation_cases(kind):
+    """Generated empty/populated reads, including single and multi-page output."""
+    for populated in (False, True):
+        for limit in (1, 2):
+            case = _paged_case()
+            if not populated:
+                case["commands"] = []
+            case["queries"] = []
+            case["schemas"] = [{"version": 1, "entityTypes": {"T": {"attributes": {
+                "v": {"attribute": ":x/v", "type": "integer", "cardinality": "many"}}}}}]
+            value = {"type": "integer", "value": "1"}
+            query = {"id": kind, "kind": kind, "entityType": "T", "entityId": "e0", "entityIds": ["e0", "e1"],
+                     "limit": limit, "pageSize": limit, "cut": {"validAt": 1}, "attribute": ":x/v",
+                     "prop": "v", "from": "e0", "txId": "tx:0", "commandId": "c0", "match": {"attributes": {"v": ":x/v"}},
+                     "aggregates": [{"op": "count", "var": "v", "as": "n"}], "expr": value, "left": value, "right": value,
+                     "values": [value], "n": 3, "width": 1}
+            yield V.loads(json.dumps(case)), V.loads(json.dumps(query))
+
+
+def check_continuations(table=None, queries=None):
+    """Q70n: execute every registered handler and inspect its serialized output recursively.
+    A new handler requiring another fixture fails closed until it can be exercised."""
+    table = RUN.CONTINUATIONS if table is None else table
+    queries = RUN.QUERIES if queries is None else queries
+    rows = []
+    for kind, handler in sorted(queries.items()):
+        fields, errors, exercised = set(), [], 0
+        for case, query in _continuation_cases(kind):
+            try:
+                run = RUN.Run(case)
+                run.process()
+                try:
+                    output = handler(run, query)
+                except V.OracleInputError as error:
+                    # [O-REPLAY-049] Why: the three explicitly unsupported key handlers execute
+                    # their only behavior, a refusal. Rejected: accepting arbitrary input errors
+                    # (a future handler missing required fixture inputs must fail closed).
+                    if handler is not RUN._order_keys_not_modeled:
+                        raise
+                    output = {"inputError": str(error)}
+                fields |= _next_keys(plain(output), set())
+                exercised += 1
+            except Exception as error:
+                errors.append(f"{type(error).__name__}: {error}")
+        spec = table.get(kind)
+        allowed = {spec["issued"]} if spec else set()
+        rows.append({"check": f"continuation-runtime:{kind}",
+                     "pass": exercised == 4 and not errors and fields == allowed,
+                     "exercised": exercised, "nextFields": sorted(fields), "issued": spec and spec["issued"],
+                     "errors": errors})
+    for kind in sorted(set(table) - set(queries)):
+        rows.append({"check": f"continuation-runtime:{kind}", "pass": False, "errors": ["unregistered table kind"]})
+    return rows
+
+
 def run_all():
     sections = [("O-HAM finite-nine (v2 nine definitions, same-R control)", check_ham),
-                ("O-CFG8 tiny-v4", check_cfg8), ("O-EVT cut semantics (overlap)", check_evt)]
+                ("O-CFG8 tiny-v4", check_cfg8), ("O-EVT cut semantics (overlap)", check_evt),
+                ("Q70l continuation table", check_continuations)]
     out, all_pass = [], True
     for title, fn in sections:
         rows = fn()

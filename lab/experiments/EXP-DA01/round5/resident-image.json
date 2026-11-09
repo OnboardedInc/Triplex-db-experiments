@@ -1,0 +1,22 @@
+{
+  "id": "a103d9dc7ff1ab9b9e6862aec1091f4dcc758569e0a2bc0ffbd9fae195c37b40",
+  "image": "sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf",
+  "running": true,
+  "startedAt": "2026-11-09T01:36:18.815035723Z",
+  "memory": 2952790016,
+  "mounts": [
+    {
+      "type": "bind",
+      "destination": "/config/entrypoint.sh"
+    },
+    {
+      "type": "volume",
+      "name": "tx2-datomic-dev-data",
+      "destination": "/data"
+    },
+    {
+      "type": "bind",
+      "destination": "/config/transactor.properties"
+    }
+  ]
+}

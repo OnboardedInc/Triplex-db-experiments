@@ -1,0 +1,67 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 20,
+  "slug": "midnight-expiry",
+  "title": "Midnight expiry wave",
+  "priorities": [
+    "P3",
+    "P5",
+    "P1"
+  ],
+  "status": "runnable",
+  "source": "lab/TARGETS.md section 6 row 20",
+  "story": "20,000 documents expire at midnight (valid-time boundaries) while morning traffic starts.",
+  "checked": "Every affected subject is re-run at the boundary; reads before and after midnight are exact; live p99 holds.",
+  "seed": 20261120,
+  "yearOne": {
+    "documents": 20000
+  },
+  "params": {},
+  "rungs": {
+    "10k": {
+      "subjects": 40,
+      "negatives": 10,
+      "liveMs": 25000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    }
+  },
+  "witnesses": {
+    "kind": "valid-time",
+    "positive": "subjects whose List A document ends at 2026-11-08T00:00Z (state at midnight differs from one ms before)",
+    "negative": "subjects whose document is valid for another year (same state on both sides)"
+  },
+  "domain": [
+    "every expiring subject is re-run at the boundary and gains the re-verification obligation (O-DOMAIN)"
+  ],
+  "bars": [
+    {
+      "id": "P1.read.p99",
+      "metric": "read.p99",
+      "op": "<=",
+      "value": 100,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    },
+    {
+      "id": "P3.feed.lag.p99",
+      "metric": "feed.lag.p99",
+      "op": "<=",
+      "value": 250,
+      "unit": "ms",
+      "source": "TARGETS section 1 P3"
+    }
+  ],
+  "faults": [
+    "valid-time boundary crossing with no write at the boundary"
+  ],
+  "oracle": {
+    "source": "O-REPLAY digests at validAt NOW, midnight minus 1 ms and midnight; O-DOMAIN for the re-run set",
+    "gaps": [
+      "a re-run triggered by time alone needs the dependency index's next-boundary schedule (Triplex dependencyState.nextTemporalBoundary), not a feed entry"
+    ]
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
+}

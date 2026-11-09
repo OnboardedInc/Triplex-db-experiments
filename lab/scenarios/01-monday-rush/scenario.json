@@ -1,0 +1,78 @@
+{
+  "format": "tx2-gs-scenario/1",
+  "id": 1,
+  "slug": "monday-rush",
+  "title": "Monday onboarding rush",
+  "priorities": [
+    "P1",
+    "P2"
+  ],
+  "status": "runnable",
+  "source": "lab/TARGETS.md section 6 row 1",
+  "story": "A day's 1,300 placements compressed into business hours, with a 10x burst at 9am; workers and recruiters submit forms; every commit triggers a reconcile pull.",
+  "checked": "P1 and P2 bars hold through the burst; no writer waits over 2 s.",
+  "seed": 20261101,
+  "yearOne": {
+    "placements": 1300,
+    "burst": "10x at 9am"
+  },
+  "params": {
+    "burstFactor": 10,
+    "burstAt": 0.25,
+    "submitDelayMs": 4000
+  },
+  "rungs": {
+    "10k": {
+      "placements": 30,
+      "negatives": 5,
+      "liveMs": 30000,
+      "burstMs": 3000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    }
+  },
+  "witnesses": {
+    "positive": "placements onboarded during the rush (created, then Section 1 submitted)",
+    "negative": "placements onboarded in setup and never touched"
+  },
+  "domain": [
+    "each reconcile pull's next task (O-DOMAIN)"
+  ],
+  "reads": "A reconcile pull at every returned receipt (as scenario 2) plus closed-loop pinned readers, 50% on subjects written in the previous 60 s (TARGETS 1.1 P1 item 1).",
+  "bars": [
+    {
+      "id": "P2.commit.p99",
+      "metric": "commit.scenario.p99",
+      "op": "<=",
+      "value": 50,
+      "unit": "ms",
+      "source": "TARGETS section 1 P2"
+    },
+    {
+      "id": "P1.read.p99",
+      "metric": "read.p99",
+      "op": "<=",
+      "value": 100,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    },
+    {
+      "id": "P1.writer.maxWait",
+      "metric": "writer.maxWaitMs",
+      "op": "<=",
+      "value": 2000,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1 and section 6 row 1"
+    }
+  ],
+  "faults": [
+    "10x arrival burst"
+  ],
+  "oracle": {
+    "source": "O-REPLAY",
+    "gaps": []
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
+}

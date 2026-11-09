@@ -1,0 +1,241 @@
+{
+  "format": "tx2-da01-round3/1",
+  "at": "2026-11-09T00:28:52.897Z",
+  "implementationHead": "6f70eb46dea8ecae3d3448a2d1ceaa05e3844de0",
+  "gates": [
+    {
+      "runId": "G0-datomic-20261109T001802Z-f61e8a",
+      "head": "6f70eb46dea8ecae3d3448a2d1ceaa05e3844de0",
+      "previous": null,
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1095,
+        "pass": 1095,
+        "fail": 0,
+        "skip": 62,
+        "expectedSkip": 62,
+        "unexpectedSkip": 0
+      },
+      "deletedDatabases": 0,
+      "routeDeletedDatabases": 0
+    },
+    {
+      "runId": "G1-datomic-20261109T001828Z-85abad",
+      "head": "6f70eb46dea8ecae3d3448a2d1ceaa05e3844de0",
+      "previous": null,
+      "verdict": "PASS",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "deletedDatabases": 89,
+      "routeDeletedDatabases": 1,
+      "routeSummary": {
+        "kind": "datomic-route-equivalence",
+        "seed": 29,
+        "bases": 11,
+        "oracleBefore": 40,
+        "commitsAfter": 51,
+        "output": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/runs/G1/G1-datomic-20261109T001828Z-85abad/route-oracle/seed-29-a6469e1c-84aa-49ca-8d9e-378a2937a79c",
+        "observations": 88
+      }
+    },
+    {
+      "runId": "G1-datomic-20261109T002002Z-e3adf2",
+      "head": "6f70eb46dea8ecae3d3448a2d1ceaa05e3844de0",
+      "previous": "G1-datomic-20261109T001828Z-85abad",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "deletedDatabases": 89,
+      "routeDeletedDatabases": 1,
+      "routeSummary": {
+        "kind": "datomic-route-equivalence",
+        "seed": 29,
+        "bases": 11,
+        "oracleBefore": 40,
+        "commitsAfter": 51,
+        "output": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/runs/G1/G1-datomic-20261109T002002Z-e3adf2/route-oracle/seed-29-e3aa3ee4-6a42-447f-9cef-cb12ed98d695",
+        "observations": 88
+      }
+    }
+  ],
+  "builds": [
+    {
+      "imageId": "sha256:5d078de46c886a796e763ef2baaa3dbc4728a44def4b90c506699573592d6269",
+      "buildInputsSha256": "003b365c37084d24e5fc6ceeb578a7505718a64e8c71c8c314b1c1779bd423c1",
+      "sourceInputsSha256": "214cacfd43449470e613f54d33f25e36d88b92aecab30d838528c9fda1f2be06",
+      "gatewaySourceSha256": "0908c0d6414ca5998eef59f44991550881225e3120b5b4799d977afb553d914a",
+      "context": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/003b365c37084d24e5fc6ceeb578a7505718a64e8c71c8c314b1c1779bd423c1-91194-1794182493099",
+      "stagedFiles": 811
+    },
+    {
+      "imageId": "sha256:9619fb07157511efa7c22e8e86041cb9179ffd473c28bb761344ca57bcc59a30",
+      "buildInputsSha256": "2e8f170abdbea1e926bf313d41ae77edceadd90a39f49929824f29b789b37634",
+      "sourceInputsSha256": "92984ee3875d609aace2c1fd368a61eaaa979c06e99b4b6afe45d6f5b79f9604",
+      "gatewaySourceSha256": "92c14a52764a4933376e8efbf4b7164a4d8f0318fe7996d6ac3ac8242e62386f",
+      "context": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/2e8f170abdbea1e926bf313d41ae77edceadd90a39f49929824f29b789b37634-91529-1794182922206",
+      "stagedFiles": 811
+    }
+  ],
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "92c14a52764a4933376e8efbf4b7164a4d8f0318fe7996d6ac3ac8242e62386f"
+  },
+  "owner": {
+    "format": "tx2-slot-owner/1",
+    "lane": "datomic",
+    "slot": "dev",
+    "mode": "resident",
+    "container": "tx2-datomic-dev",
+    "volume": "tx2-datomic-dev-data",
+    "endpoint": "http://127.0.0.1:8470",
+    "port": 8470,
+    "holder": "EXP-DA01",
+    "experiment": "EXP-DA01",
+    "pid": 58762,
+    "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01",
+    "createdAt": "2026-11-09T00:14:11.316Z"
+  },
+  "preservation": [
+    {
+      "db": "s-5a377987b021d5401900564fbae6a1ee",
+      "status": 200,
+      "basis": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    },
+    {
+      "db": "s-f43d78e756286da105c6aa52db4e63e5",
+      "status": 200,
+      "basis": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    }
+  ],
+  "live": {
+    "passed": 118,
+    "created": 18,
+    "deleted": 18
+  },
+  "jvm": {
+    "tests": 7,
+    "assertions": 157
+  },
+  "packCheck": {
+    "command": "/opt/homebrew/bin/pnpm",
+    "args": [
+      "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+      "pack:check"
+    ],
+    "startedAt": "2026-11-09T00:22:38.389Z",
+    "endedAt": "2026-11-09T00:22:41.874Z",
+    "status": 1,
+    "signal": null,
+    "artifactRoot": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round3/pack-check"
+  },
+  "packedExports": {
+    "at": "2026-11-09T00:26:21.337Z",
+    "inputs": [
+      {
+        "name": "core",
+        "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round3/pack-check/triplex-pack-R3RZTe/tarballs/triplex-build-triplex-0.2.0.tgz",
+        "sha256": "14bca01aa3a05cdfb242d1ba567128bc88bfbe75ae172d587dfd6d1bea3cea11"
+      },
+      {
+        "name": "testkit",
+        "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round3/pack-check/triplex-pack-R3RZTe/tarballs/triplex-build-triplex-testkit-0.2.0.tgz",
+        "sha256": "97f6c390a94fbbb2b69738e9fe749d1b99d1a9b8c79bace8c9a4e904a546f881"
+      }
+    ],
+    "dependencies": [
+      {
+        "name": "effect",
+        "target": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/node_modules/.pnpm/effect@4.0.3/node_modules/effect",
+        "version": "4.0.3"
+      },
+      {
+        "name": "ulidx",
+        "target": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/node_modules/.pnpm/ulidx@2.4.1/node_modules/ulidx",
+        "version": "2.4.1"
+      }
+    ],
+    "results": [
+      {
+        "name": "types",
+        "command": "/Users/sam/.hermes/node/bin/node",
+        "args": [
+          "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/node_modules/typescript/bin/tsc",
+          "--noEmit",
+          "--module",
+          "nodenext",
+          "--moduleResolution",
+          "nodenext",
+          "--target",
+          "ESNext",
+          "--skipLibCheck",
+          "smoke.ts"
+        ],
+        "status": 0
+      },
+      {
+        "name": "runtime",
+        "command": "/Users/sam/.hermes/node/bin/node",
+        "args": [
+          "smoke.mjs"
+        ],
+        "status": 0
+      }
+    ],
+    "freshDependencyInstall": false
+  },
+  "hostFreeBytes": 12981252096
+}

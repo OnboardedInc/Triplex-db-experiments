@@ -1,0 +1,24 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+.F..
+======================================================================
+FAIL: test_all_protocol_positives_still_pass (__main__.SelectionTests.test_all_protocol_positives_still_pass) (protocol='OBS-ERASURE-SCAN')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/acceptance/oracle/test_round4.py", line 52, in test_all_protocol_positives_still_pass
+    self.assertEqual((report['verdict'],code),('PASS',0),report)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Tuples differ: ('FAIL', 1) != ('PASS', 0)
+
+First differing element 0:
+'FAIL'
+'PASS'
+
+- ('FAIL', 1)
++ ('PASS', 0) : {'protocol': 'OBS-ERASURE-SCAN', 'verdict': 'FAIL', 'reasons': ['inventory lacks contract categories'], 'thresholds': {}, 'sourceStrength': 'direct', 'qualification': 'screening-only'}
+
+----------------------------------------------------------------------
+Ran 4 tests in 2.935s
+
+FAILED (failures=1)

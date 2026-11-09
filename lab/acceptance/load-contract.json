@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/load-contract/3",
-  "version": "0.3.8",
+  "version": "0.3.13",
   "generatedBy": "lab/acceptance/build_contract.py",
   "status": "provisional bars from lab/TARGETS.md section 1; calibration may tighten, loosening needs Sam",
   "obligations": [
@@ -134,6 +134,25 @@
       "burstPhase": "bursts start at 120 s + k x 600 s from the start of the measured window, identical for baselines and candidates",
       "scenarioOverlay": "a golden scenario's commands are added on top of the background trace, never instead of it; both streams accounted separately in the receipt",
       "freeze": "the generator source hash and the seed are bound in every receipt; a change to either starts a new comparison series",
+      "frozenScreening": {
+        "screening-burst-180": {
+          "sha256": null,
+          "seed": null,
+          "offerScheduleSha256": null
+        },
+        "screening-r4": {
+          "sha256": null,
+          "seed": null,
+          "offerScheduleSha256": null
+        },
+        "rule": "each screening series has its own frozen entry, frozen by EXP-M01 (RULINGS Q64b, Q60g, Q69f); frozen is the acceptance trace; until frozen, claims stay diagnostics"
+      },
+      "frozen": {
+        "sha256": null,
+        "seed": null,
+        "offerScheduleSha256": null,
+        "rule": "a required input: the generator source sha256, the seed and the offer schedule's sha256, pinned by a contract version once the trace is frozen; while null no CR-NS or CR-GS comparison has a workload identity and every such claim is a diagnostic (RULINGS Q61h)"
+      },
       "invalidCommands": {
         "share": 0.001,
         "rule": "0.1% of trace commands are deliberately invalid (values no engine may hold) and marked in the frozen trace; only those may end in a typed rejection",
@@ -141,7 +160,170 @@
       }
     }
   },
-  "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
+  "seedRules": {
+    "Q74a": {
+      "topic": "who may clone",
+      "rule": "Screening and development receipts may be seeded by clone of a golden; the receipt records `seededBy: clone` with the golden key (adapter commit, world and seed-generator hash, driver seed options, image digest, engine config hash) and the golden's freeze fingerprint. Acceptance runs seed fresh (TARGETS 6).",
+      "basis": "R26 design item 2"
+    },
+    "Q74b": {
+      "topic": "freeze state",
+      "rule": "becomes the **recipe**: two finish-blocks, jobs-0 waits, `docker stop -t 60`, copy from a stopped container. A timeout refuses; nothing in it grants.",
+      "basis": "Q93; R36 section 6"
+    },
+    "Q74c": {
+      "topic": "validation first",
+      "rule": "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked. **unchanged**; E1 is rerun when the recipe, the image or the XTDB version changes",
+      "basis": "R26 section 6.9; Q93; R36 section 6"
+    },
+    "Q74d": {
+      "topic": "readiness",
+      "rule": "**replaced** by Q93a/b: health precondition plus G0 in the driver; `owner.json` holds slot ownership only",
+      "basis": "Q93; R36 section 6"
+    },
+    "Q74e": {
+      "topic": "maintenance in every window",
+      "rule": "Runs that measure P1 force one `finish-block` at a fixed trace time in every window, on every arm, so a settled clone still has a maintenance event.",
+      "basis": "R26 note"
+    },
+    "Q74f": {
+      "topic": "disk",
+      "rule": "A golden or clone is made only when host free disk after the copy stays at or above 5 GiB; clone volumes are removed after each run. At the 10k rung (3.41 GiB per XTDB volume) that allows one clone at a time today.",
+      "basis": "R26 risk 4; host 8.7 GiB free"
+    },
+    "Q74g": {
+      "topic": "broker compositions",
+      "rule": "A broker composition clones the engine volume and the broker directory together, from one stopped moment.",
+      "basis": "R26 design item 3"
+    },
+    "Q83a": {
+      "topic": "log4j flag on slots",
+      "rule": "**kept as a diagnostic aid**; no rule requires the lines",
+      "basis": "Q93; R36 section 6"
+    },
+    "Q83b": {
+      "topic": "canonical freeze state",
+      "rule": "**superseded by Q93a**: the steps stay in the recipe, their readings become diagnostics; `xt.live_tables` is read only on a freshly started node (K3)",
+      "basis": "Q93; R36 section 6"
+    },
+    "Q83c": {
+      "topic": "block listing",
+      "rule": "kept for diagnostic tools; B never reads `xt.block_files`",
+      "basis": "Q93; R36 section 6"
+    },
+    "Q93a": {
+      "topic": "process evidence refuses, never grants",
+      "rule": "For seed reuse on every lane, the only evidence that grants admission is a content fingerprint (G0) read through the engine by the process that will measure, on the endpoint it measures, before its warm-up, compared with a digest pinned before the freeze began (and with O-DOMAIN where one exists). Every other observation (stop, settle, log tails, frontiers, inspect, stderr, timers, owner state, copy hashes, plan hashes, disk) is refusal-only or a diagnostic, and no decision reads a diagnostic.",
+      "basis": "R36 section 6"
+    },
+    "Q93b": {
+      "topic": "G0 for K01",
+      "rule": "Fields, pinning point and counts as in sections 2.1 and 3.2; every read has a deadline; the golden is published only after two starts of a clone each reproduce `D` and the layout digest `L`.",
+      "basis": "R36 section 6"
+    },
+    "Q93c": {
+      "topic": "two digests",
+      "rule": "G0 admits a clone by the full digest D over every stored column (byte-level identity with its golden). E1, which compares a clone with a fresh seed of the same inputs, uses a second digest D' over the same columns with engine-assigned values normalized: engine-generated ids and system timestamps are replaced by their rank in commit order, and every other column is kept as is. A fresh seed must match the golden's D', never its D. The normalization list is part of the G0 module, each entry with a comment naming the engine source that assigns it, and a test fails if a column is normalized without one.",
+      "basis": "CX-K01-R2 round 8"
+    }
+  },
+  "freezeProtocol": {
+    "precedence": [
+      "Q93a",
+      "Q93b",
+      "Q93c"
+    ],
+    "grant": "G0 content fingerprint only; read in the measuring process on its measured endpoint before warm-up every run",
+    "pinBefore": "after last seed commit, before first finish-block",
+    "cloneDigest": "D: every stored column, byte-level identity to golden",
+    "freshSeedDigest": "D-prime: same columns; only engine-assigned ids/system timestamps normalized to rank in commit order; every normalization has an engine-source comment and a test",
+    "scope": "all seed-scope assertions (all value/lifetime columns), claims, attempts; tx_meta enumerates every scope",
+    "counts": "independent COUNT(*) equals closed-form manifest counts; tx_meta holds only the seed scope; W0 worlds and R2 outputs equal O-DOMAIN",
+    "deadlines": "every read has a deadline; timeout refuses",
+    "goldenPublication": "two starts of a qualification clone each reproduce D and L before golden publication",
+    "recipe": [
+      "finish-block",
+      "jobs-0 wait",
+      "finish-block",
+      "jobs-0 wait",
+      "docker stop -t 60",
+      "copy from stopped container"
+    ],
+    "refusalOnly": [
+      "current golden key",
+      "copy tree hash",
+      "started-node quiescence: jobs 0 over three readings, live rows 0, layout L, transaction T, lag 0",
+      "Triplex lastPosition",
+      "first warm-up commit lastPosition + 1",
+      "end counts start plus recorded commands",
+      "resource/disk floor"
+    ],
+    "diagnostics": [
+      "stop/log lines",
+      "settle readings",
+      "F",
+      "M",
+      "log tails",
+      "inspect",
+      "stderr",
+      "timers",
+      "owner state",
+      "plan hashes"
+    ],
+    "ownerJson": "slot ownership only; no readiness admission",
+    "blockListing": "diagnostic tools only; B never reads xt.block_files",
+    "e1": "fresh D-prime equals golden D-prime; PAIR-0 A/A p50 <= 1.10 and p99 <= 1.15; rerun on recipe/image/XTDB version changes",
+    "retired": [
+      "Q83d",
+      "Q83e"
+    ]
+  },
+  "qleverEvidencePolicy": {
+    "performance": [
+      "P1",
+      "P4",
+      "P5",
+      "GS"
+    ],
+    "required": [
+      "built base index",
+      "declared rebuild threshold",
+      "base triple count",
+      "delta triple count",
+      "delta in touched blocks"
+    ],
+    "deltaOnly": "DIAGNOSTIC",
+    "freshResetAsDeltaPolicy": false,
+    "phase0": "copy on exclusive slot, never shared resident",
+    "phase1": "10M-triple base; scan/join versus delta, monotonic and spread keys",
+    "phase2": "blue/green generations rebuilt from broker log; leases bind every multi-request read to one generation; Q89i byte identity across every swap",
+    "feed": "log",
+    "perGraphDeltaBound": "rejected: shared server blocks"
+  },
+  "goldenScenarioPolicy": {
+    "before040": "DIAGNOSTIC",
+    "closesObligation": false,
+    "entersComparison": false,
+    "world": "W0-valid; domain claims checked by O-DOMAIN or fail closed; W01 retired",
+    "background": "frozen TARGETS 2.1 trace via W0 mapper; private writerTrace retired",
+    "everyWindow": [
+      "one burst",
+      "one maintenance event"
+    ],
+    "admission": [
+      "per-run G0",
+      "fresh scope or verified clone",
+      "start/end store counts",
+      "QLever Q91a counts"
+    ],
+    "GS04b": "required exactly when a separate current store exists",
+    "GS04": "engine-kill schedule every lane, exclusive only",
+    "outbox": "product atomic outbox for GS.10 and GS.19; harness file only diagnostic P3 checks",
+    "GS10": "round C after A/B race required for closure",
+    "GS03": "W0-1.2 signal-ack pending implementation; superseded outcome flagged for Sam",
+    "acceptanceSize": "Q94a pending; TARGETS unchanged"
+  },
+  "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql, datomic-datalog query and pull); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
   "measurements": {
     "P1": {
       "readers": "closed-loop, zero think time, each reader a distinct client id",
@@ -156,6 +338,7 @@
       "stress": 1024,
       "zeroReaderBaseline": "level 0 = writer trace alone, same trace segment and burst phase",
       "readShape": "subject pull (P4 shape) at a named basis: valid time plus record time or tx; 80% at the latest committed tx (named exactly), 15% at a tx within the last hour, 5% at a past basis up to 90 days back (RULINGS Q16, TARGETS section 2)",
+      "hostServedReads": "provisional: reads served from the broker count for the P1 and P4 bars when the receipt records route = host and the per-core denominator includes broker and kernel CPU (RULINGS Q68d)",
       "hotSet": {
         "minShare": 0.5,
         "rule": "at least 50% of reads target subjects written in the previous 60 s (the writer trace's active set)"
@@ -226,7 +409,7 @@
       "commands": "the trace's own commands; the 10-fact probe is a diagnostic only",
       "readGuarantees": "each serving surface the composition claims is measured against COMPOSITION readGuarantees (RULINGS Q55c, provisional)",
       "hotSubjects": "COMPOSITION hotSubjects; E-OVERLOADED counts as an unjustified outcome (RULINGS Q51a)",
-      "storagePerCommit": "reported, never a bar: bytes and triples per 10-fact command on both lanes (EXP-J01; XTDB A0 27,581 bytes against the candidate's 95,364; QLever A0 about 750 triples against R17's 94), plus xt.txs and METADATA cost at 1M+ transactions (RULINGS Q50c, Q51d, Q51f)",
+      "storagePerCommit": "reported, never a bar: bytes and triples per 10-fact command on both lanes (EXP-J01; XTDB A0 27,581 bytes against the candidate's 95,364; QLever A0 653 triples per 10-fact command as V-P2Q measured it: 24 rows (10 facts and 14 journal rows) of about 27 triples each, the candidate 655 plus a 4-triple deleted marker, against R17's 94; the cause is the row encoding and journal on every lane, not the broker (RULINGS Q62c)), plus xt.txs and METADATA cost at 1M+ transactions (RULINGS Q50c, Q51d, Q51f)",
       "accounting": "every offered command is committed with a receipt, rejected with a typed error, or a typed conflict; zero unaccounted (NS-P2-UNACCOUNTED-MAX)",
       "progress": {
         "rule": "every oracle-valid trace command publishes; typed rejections count only for commands the frozen trace marks deliberately invalid, typed conflicts only where the oracle independently finds a compare-and-set race (NS-P2-UNJUSTIFIED-OUTCOMES-MAX)",
@@ -256,6 +439,7 @@
     "P3": {
       "commitTime": "the source's own publication timestamp for each position (the broker's durable watermark update, or the engine's commit resolution when the engine is the source), stamped by the source on the host monotonic clock the driver also reads, recorded independently of ACK delivery (RULINGS Q55d)",
       "accounting": "every committed position is accounted; no lag sample is dropped for a missing ACK; a position with no consumer record is counted and fails the run (RULINGS Q55d)",
+      "publicationEnumeration": "both arms enumerate the final published source prefix from the source's own record and timestamp actual publication (broker: watermark publication; engine as source: commit resolution); ACK records are reconciled afterwards; a late or lost ACK is never a feed defect (RULINGS Q67d)",
       "cursor": "(epoch, position), a total order over transactions; per-subject order follows from it",
       "expectedAffected": "subjects written directly (O-REPLAY) plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN; RULINGS Q36e)",
       "milestone": "the consumer durably records the affected-subject set and its checkpoint in one durable write; lag runs from commit time to that record",
@@ -315,6 +499,7 @@
       "tails": "the p50 and p99 bars apply to the weighted mix; each bucket reports its own p50 and p99; the largest bucket has NS-P4-PULL-P99-LARGEST-MS",
       "throughput": "closed-loop pulls; cores = the CPU quota bound in the receipt; host broker and kernel CPU reported beside engine-core throughput",
       "history": "one matched sample of 1,000 subjects: measure at history depth 1, add corrections to the same subjects to depth 3 and then 10, measure again; compare p99 latency and bytes read (RULINGS Q16, Q27)",
+      "hostServedReads": "provisional: reads served from the broker count for the P4 bars when the receipt records route = host and the per-core denominator includes broker and kernel CPU (RULINGS Q68d)",
       "bars": [
         "NS-P4-PULL-P50-MS",
         "NS-P4-PULL-P99-MS",
@@ -352,7 +537,72 @@
       "audit": "explain at a past basis, repeated three times; bit-for-bit identical"
     }
   },
+  "measurementProtocol": {
+    "status": "PROVISIONAL (RULINGS Q60); the margins are the orchestrator's interpretation and adjustable (NORTH-STAR item 4)",
+    "mode": "paired-rounds",
+    "design": {
+      "rule": "comparisons run as paired rounds: a duet (A0 and candidate at the same time on two identically configured slots, same trace window) or, as the fallback, same-engine ABBA; a single run never decides a bar (RULINGS Q60a)",
+      "designs": [
+        "duet",
+        "abba"
+      ],
+      "rounds": {
+        "min": 8,
+        "default": 12,
+        "max": 24
+      },
+      "roundS": 150,
+      "statistic": "pooled-quantile ratios with a bootstrap over rounds",
+      "looks": [
+        8,
+        12,
+        18,
+        24
+      ],
+      "confidence": 0.982,
+      "aa": "A/A rounds in the pre-flight and every sixth round"
+    },
+    "margins": {
+      "superiorityRatioDefault": 1.25,
+      "superiority": "the lower bound of A/B at or above the claimed ratio (1.25 by default)",
+      "holdP50Max": 1.1,
+      "holdP99Max": 1.15,
+      "hold": "the upper bound of B/A at or below 1.10 for p50 and 1.15 for p99",
+      "source": "RULINGS Q60b"
+    },
+    "slotRegime": {
+      "rule": "measurement slots run with a cpuset and no CPU quota; receipts record the effective cpu.max, cpuset and cpu.weight; quota and cpuset arms are never compared; A0 is measured again under the new regime (RULINGS Q60c)",
+      "receiptFields": [
+        "cpuMax",
+        "cpuset",
+        "cpuWeight"
+      ]
+    },
+    "accounting": "latency histograms include every offered command (expired, failed and rejected ones at their censor time) next to the committed-only view; reads get an open-loop probe at a fixed rate; per-second goodput and per-second maximum latency are recorded (RULINGS Q60d)",
+    "windows": "absolute bars are judged only in GREEN windows (the pre-registered noise signals and the A/A gate of R22 section 4.2); outside them an absolute bar is reported unjudged, which never counts as met (RULINGS Q60e)",
+    "screeningSeries": {
+      "rule": "a screening trace with a burst every 180 s is a new comparison series (TARGETS 2.1 item 5), so P2 and P3 rounds contain enough commands for p99; acceptance keeps the frozen trace (RULINGS Q60g)",
+      "burstEveryS": 180,
+      "fallback": {
+        "name": "screening-r4",
+        "rule": "4x the steady rate, no bursts; pre-registered and used only if the burst series makes commitAll p50 NOT_ESTIMABLE in the A/A run (RULINGS Q69f)"
+      }
+    },
+    "lease": "a measurement window takes every heavy token and freezes pool admission for its duration (RULINGS Q60h)",
+    "a0": "EXP-N01's single-run A0 is diagnostic only; A0 numbers for comparisons come from paired rounds (RULINGS Q60i)",
+    "windowProcedure": "the pool cannot hold two 3.5 GiB slots beside both dev residents, so a measurement window stops one dev resident for its duration (qlever-dev by default, recreated fresh after; xtdb-dev when the window is QLever's) once no running agent depends on it; the orchestrator announces the window in STATE; no agent starts engine work during it; the lease enforces it (RULINGS Q69a)",
+    "verdicts": {
+      "INVALID": "a protocol departure: development overrides, the wrong regime, no lease, or an unregistered round count",
+      "INVALID_NOISE": "a window that fails the noise gate",
+      "source": "RULINGS Q69b"
+    },
+    "aaInAbMode": "provisional: A/B windows grade from the all-round s_d (conservative); acceptance-level claims add a second pair of container lifetimes with roles swapped (RULINGS Q69c)",
+    "continuousTrace": "duets run one continuous trace, so both arms see the same content at the same time; ABBA fallback runs keep per-round window randomization (RULINGS Q69d)",
+    "liveComposition": "the live A/A uses public-queued, matching EXP-N01's A0 (RULINGS Q69e)",
+    "calibration": "thresholds stay as pre-registered; a passive recorder (signals every 10 s, calibration every 10 minutes) runs for 7 days to set them, started after EXP-M01 merges (RULINGS Q69g)"
+  },
   "windows": {
+    "judging": "absolute bars are judged only in GREEN windows (the pre-registered noise signals and the A/A gate of R22 section 4.2); outside them an absolute bar is reported unjudged, which never counts as met (RULINGS Q60e)",
     "acceptance": {
       "warmupS": 120,
       "perLadderLevelS": 600,

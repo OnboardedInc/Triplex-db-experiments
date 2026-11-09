@@ -1,0 +1,49 @@
+{
+  "testedSource": "260d46c715ddd6465894869eeceab08059fcf4ef",
+  "parents": [
+    "15927efed3a6dd48d620b19bd0201fe862344b33",
+    "6e5dde9778ac689f18bf039aa760969c506a0272"
+  ],
+  "mainAtDispatch": "15927efed3a6dd48d620b19bd0201fe862344b33",
+  "integration": "6e5dde9778ac689f18bf039aa760969c506a0272",
+  "freeDiskBytes": 5109080064,
+  "hashes": {
+    "lab/acceptance/build_contract.py": "07c98812ec83fe8a7e32dd09418d40522b48b3dc53e2d5f3df6f7007288d98e5",
+    "lab/acceptance/RULINGS.md": "c2535ca27faefba04e85cb9e1456f6481a341a0433a205a204cf5ae1d41e1d59",
+    "lab/acceptance/RULINGS-PENDING.md": "e25e6fb86c247fce38f59ed9407daee26bd6878dc210f263926ef2258fd310d2",
+    "lab/acceptance/obligations.json": "d6803033523c200a0aa74b1dc374d366669f04b214b2880af90473678bd81f41",
+    "lab/acceptance/load-contract.json": "c37bb4499b0bceec0d020388ffab6f53db16433b27616e008f692860ace186c6",
+    "lab/acceptance/budgets.json": "c7f72c715b74c4630ef13b6e62b8c8a387b4ec318f205044cdfd640166ca2dc2",
+    "lab/acceptance/oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9",
+    "lab/acceptance/ACCEPTANCE.md": "4b3178851f59a025e029f1ec897a34ca0195c8d0c33007cc5b7e3a1d1521fd86",
+    "lab/acceptance/capability-matrix.md": "33cc8f7dcae26fdd5f280234f870bb2a10a9d9f0c5afdebbcd234b26ac0b47ec",
+    "lab/bin/claim.mjs": "e2111d8918e5d458a1b15a8c6f83c974e0b56c1595b4405cb9af2c4d8d574077",
+    "lab/bin/gate.mjs": "36f204d0659ebcadf494b6e2bf6a515b08c6d4b2793f55d6b081ffa5f0c1f2c2",
+    "lab/bin/test/claim.test.mjs": "62de70ed333c40f8662da5749179f985f9f8b961a6c10459a0dadfad5bceb476",
+    "lab/bin/test/claim-round2.test.mjs": "6aef70bd2448a6b37dc040d19d9ee219a4e4e5fdf78c8094e1bb66ec45104be9",
+    "lab/config/slots.json": "3cd5463b6fda8af3653057e74ae287a34f1ad1478fa173e98f5ceaefc8e5c225",
+    "packages/testkit/src/index.ts": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+    "lab/experiments/EXP-A01-acceptance-contract/regressions/test0313.py": "a8c00bf312a4df03c880277ae6f4982537f066e2108177ead2282b3069cb5e0d",
+    "lab/experiments/EXP-A01-acceptance-contract/regressions/negtest0313.py": "73b0db97dbc861f135e2bd5f24040e4e750fc942187ffbd456bda6d1d8ad8ea4",
+    "lab/experiments/EXP-A01-acceptance-contract/regressions/screening0313.test.mjs": "704c7f2e41c8576cceb8339a5d1398ba1a577d2039e092d6296580514fa2f925",
+    "lab/experiments/EXP-A01-acceptance-contract/bin/pnpm": "f102facfd7b0a36130304c2adbc9af39a8c6027af1db191dcd177ecdbe0684d6"
+  },
+  "atomicPinProof": {
+    "testkit": {
+      "path": "packages/testkit/src/index.ts",
+      "oldSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+    },
+    "datomic": {
+      "old": {
+        "image": null,
+        "imageId": null
+      },
+      "new": {
+        "image": "tx2-datomic:1.0.7745-da00",
+        "imageId": "sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf"
+      }
+    }
+  },
+  "trackedSourceDiff": ""
+}

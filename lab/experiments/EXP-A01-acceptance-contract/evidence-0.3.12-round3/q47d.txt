@@ -1,0 +1,3 @@
+DETECTED regression '0.3.6 prohibition reinstated': RULINGS-PENDING.md still holds ruling rows
+CAUGHT 'pending rows read as RULINGS.md rows': Q38c: RULINGS.md entries not compiled and not listed as recorded-not-compiled: ['Q73a', 'Q73b', 'Q78e', 'Q81b', 'Q81c', 'Q86g', 'Q89a', 'Q89b', 'Q89c', 'Q89d', 
+Q47d external test: PASS
