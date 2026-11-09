@@ -221,3 +221,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 K01 round 13 (9b764517): typed catalog checks for tables the seed does not write; a diagnostic smoke run found two missing
   imports (fixed offline); source restarts matched D/L, a fresh seed matched D'. CX-VK01 reviews; then the full live run. P5 A1 waits for
   K01's native G0 handoff, then reruns (disk is no longer the constraint).
+- 2026-11-09 K01 round 13 ACCEPT-OFFLINE (verify/K01 88bce4f0; 511 tests; five smoke captures reproduce D/D'). Next in the scale window
+  after CX-RT01 releases xtdb-s1: the full K01 live run (LIVE runbook at 9b764517 plus the reviewer's tests), then P5 A1.
+- Queued small task (from K01 r13): lab/bin/*.mjs are not semantically type-checked, so an unbound name (sha256File) inside an unexecuted
+  branch passed 437 tests. Enable TypeScript checkJs over every lab/bin and lab/bench JavaScript file, triage the diagnostics, and fail
+  the lab check on unbound names.

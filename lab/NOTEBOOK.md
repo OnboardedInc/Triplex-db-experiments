@@ -2014,3 +2014,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Tail causes on the broker's main thread:** the harness feed consumer's fsyncSync per page, synchronous Atomics.wait RPCs for pin, purge and feed, and overlay reads served on the main thread once the single reader worker saturates.
 - **Round 3 (CX-P2B):** feed consumer off-thread, reads served inside reader workers with a shared watermark, a 4-8 worker pool, asynchronous RPCs, requireFullFsync on by default with a typed refusal. R42 expects p50 about 7 ms and p99 10-25 ms on a quiet host.
 - **Lesson:** compare like with like. Two numbers both called "latency" measured different intervals (feed lag versus offer-to-ACK) and made the SQLite store look 40 ms slower than it is.
+
+## 2026-11-09: K01 round 13 accepted offline; why 437 tests missed a missing import
+
+- **verify/K01 88bce4f0:** ACCEPT-OFFLINE, 511 tests, five retained smoke captures reproduce D and D'. The smoke ledger is diagnostic only and grants nothing.
+- **Why the import was missed:** the tests imported engine.mjs to test its exported helpers but never ran the private golden, fresh and loadGolden branches; importing a module or syntax-checking it does not resolve names inside function bodies that never run, and tsc did not semantically check that JavaScript file. Now an allowJs/checkJs test fails on unbound names, with a negative control.
+- **Lesson:** our own JavaScript tools need the same type checking as the product. Queued: checkJs over every lab/bin and lab/bench file.
