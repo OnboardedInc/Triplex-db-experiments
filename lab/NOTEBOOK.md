@@ -2271,3 +2271,18 @@ Where each priority stands, from evidence so far (research probes and baselines;
   kernel skips for recursion protection (low risk for ext4 events).
 - **Lesson:** the offline tests could not catch the clock bug, because the fixtures were written in the clock the normalizer expects. A
   clock-domain claim needs a check against the running kernel (W0 should compare nsecs(monotonic) with the observer's CLOCK_MONOTONIC).
+
+## 2026-11-09: QH1 round 2: the real H1 path spends its CPU on statement count, tuple width and main-thread decode
+
+- **173831eb (measurement only):** per pull, today 7,154 us (140/CPU-s), round 1 3,122 us (320), R46's microbench path 712 us (1,405;
+  reproduces R46 but carries 8 of 15 fields and is not a valid path), R46 shape with every kernel field 1,248 us (801; answers equal on
+  1,000/1,000). c=4 equals c=1 per CPU second.
+- **Where round 1 spends it:** worker SQL about 750 us (JSON/printf building 402, %!.17g on timestamps alone 219), main JSON.parse and
+  decode about 550 us (hex-to-base32 ids 195), Effect/adapter/kernel about 350 us. Round 1 issues 17.7 statements and about 304 per-entity
+  probes per pull against R46's 4; tuples are 15 fields wide with 7 dictionary joins; main-thread cost is about 1,048 us against R46's
+  150-300.
+- **Plan:** QH1 round 3 (Sonnet) builds five changes in order, measured step by step: R46-shape worker op, one Effect run per pull, cheaper
+  decode (together = L3, 801 measured), dictionary ids on the wire, columnar transfer (predicted about 1,000-1,250). The 1.2x screening
+  margin (1,320) is not yet in reach by measurement; the per-subject document fallback fails the commit guard (+0.91 ms p50).
+- **Lesson:** the gap between a microbench and the real path was in the fields and statements the microbench left out. A prediction
+  needs the same answer, by full-field digest, before its speed counts.

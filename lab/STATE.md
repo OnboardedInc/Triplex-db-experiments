@@ -359,3 +359,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   D_upper]; durability is granted at D_upper; violations only below D_lower; in between is a new refusal DURABILITY-UNPROVEN. File
   syncs keep R48's exact rule. OBS01 round 10 (Sonnet) fixes F1-F5, the R49 nsecs(monotonic) clock bug, R49's W0 checks, and adds the
   image Dockerfile unbuilt (pull waits for Sam).
+- 2026-11-09 QH1 round 2 (173831eb, Sonnet, measurement only): round 1 3,122 us/pull (320/CPU-s), R46 shape with all fields 1,248 (801),
+  bar 1,100. QH1 round 3 (Sonnet) builds the five ranked changes with O-REPLAY 100k equality, RQ01, P2 ratio <= 1.10x gates per step and
+  an explicit REAL-value round-trip test (Q105b). Round 2 itself not separately reviewed (measurement only); round 3 gets the review.
