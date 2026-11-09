@@ -186,7 +186,7 @@ export const writeReceipt = (kind, body) => {
     rawPath = path.join(RAW_DIR, `${id}.raw.json`);
     fs.writeFileSync(rawPath, JSON.stringify(raw));
   }
-  const receipt = { format: 'j01-receipt/1', id, kind, writtenAt: new Date().toISOString(), identity: identity(), ...rest, rawPath, rawSha256: rawPath ? createHash('sha256').update(fs.readFileSync(rawPath)).digest('hex') : null };
+  const receipt = { qleverConnectionMode: qlever.qleverConnectionModeOf(), format: 'j01-receipt/1', id, kind, writtenAt: new Date().toISOString(), identity: identity(), ...rest, rawPath, rawSha256: rawPath ? createHash('sha256').update(fs.readFileSync(rawPath)).digest('hex') : null };
   const file = path.join(RECEIPT_DIR, `${id}.json`);
   fs.writeFileSync(file, JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' });
   return { id, file };

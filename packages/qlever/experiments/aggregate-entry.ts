@@ -1,3 +1,4 @@
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Public compiled-export regression for the explicit bounded answer profile. */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -15,6 +16,7 @@ const scope = DatabaseScope.test(`aggregate-entry-${runId}`);
 const output = path.join(root, "qualification/evidence", `qlever-aggregate-entry-${runId}.json`);
 const accessToken = labQleverAccessToken();
 const report: Record<string, any> = {
+  qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-bounded-aggregate-entry/1",
   runId,
   scope,

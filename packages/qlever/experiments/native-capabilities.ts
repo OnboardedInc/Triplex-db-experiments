@@ -1,3 +1,4 @@
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { makeQleverClient } from "../src/QleverClient.js";
@@ -6,6 +7,7 @@ const client = makeQleverClient("http://127.0.0.1:7019");
 const run = randomUUID(),
   prefix = `urn:triplex:probe:${run}`;
 const result: Record<string, unknown> = {
+  qleverConnectionMode: qleverConnectionModeOf(),
   run,
   at: new Date().toISOString(),
   version: await client.command("stats"),

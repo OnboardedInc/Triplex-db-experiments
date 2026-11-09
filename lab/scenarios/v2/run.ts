@@ -119,7 +119,7 @@ async function main() {
   const tag = 'W02-' + randomBytes(12).toString('hex');
   const report: any = { format: 'tx2-gs-run/2', generator: 'W02/1', classification: 'DIAGNOSTIC', lane, rung, readers: Number(opt('--readers', '256')),
     runTag: tag, status: 'RUNNING', slotOwner: owner, profile: { reduced: true, reason: 'v2 product/fault and state-oracle integration incomplete' },
-    qlever: lane === 'qlever' ? { commitPath: 'broker', brokerDirectory: process.env.QLEVER_BROKER_DIR, baseTriples: null, deltaTriples: null, touchedBlockDelta: null, rebuildThreshold: null } : null,
+    qlever: lane === 'qlever' ? { connectionMode: process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? 'keep-alive', commitPath: 'broker', brokerDirectory: process.env.QLEVER_BROKER_DIR, baseTriples: null, deltaTriples: null, touchedBlockDelta: null, rebuildThreshold: null } : null,
     scenarios: [], startedAt: new Date().toISOString() };
   if (!Number.isSafeInteger(report.readers) || report.readers < 1) throw Error('positive integer readers required');
   fs.mkdirSync(path.dirname(output), { recursive: true });

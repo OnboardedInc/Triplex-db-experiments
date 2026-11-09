@@ -1,3 +1,4 @@
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 import { readFile, writeFile } from "node:fs/promises";
 import { Effect } from "effect";
 import { Triples, EntityId } from "@triplex-build/triplex";
@@ -112,6 +113,7 @@ const sentinelPass =
 const client = makeQleverClient("http://127.0.0.1:7019"),
   version = await client.command("stats");
 const artifact = {
+  qleverConnectionMode: qleverConnectionModeOf(),
   at: new Date().toISOString(),
   version,
   oomEvidence: "qlever-oom-workloads-20261106T144001.json",

@@ -39,6 +39,7 @@ export async function runW0Driver(argv: string[]) {
   const startedAt = new Date().toISOString();
   const report: any = {
     format: "triplex-db-2/p5-screening/1",
+    qleverConnectionMode: lane === "qlever" ? (process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
     attempt,
     scope,
     startedAt,

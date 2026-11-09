@@ -116,6 +116,7 @@ const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", ...fs.
 
 const report: Record<string, any> = {
   format: "tx2-ns-report/2",
+  qleverConnectionMode: lane === "qlever" ? (process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v2 sections 1.1, 2.1, 4.1",
   status: "RUNNING",
   startedAt: new Date().toISOString(),

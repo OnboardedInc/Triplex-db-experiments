@@ -1,3 +1,4 @@
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Actual writer-pair invariant and row-level partial-pair admission.
  * Two owned retired rows are damaged in opposite directions, keeping aggregate
  * predicate counts equal. A local per-row guard must still reject both.
@@ -26,6 +27,7 @@ const accessToken = labQleverAccessToken();
 const client = makeQleverClient(url, { accessToken }),
   native = makeQleverNativeQueries(client, scope);
 const report: Record<string, any> = {
+  qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-paired-retirement-admission/1",
   scope,
   status: "RUNNING",

@@ -1,4 +1,44 @@
 import { randomUUID } from "node:crypto";
+import { request as httpRequest } from "node:http";
+import { request as httpsRequest } from "node:https";
+import { Readable } from "node:stream";
+
+// [EXP-QNODELAY] Why: agent:false allocates a fresh socket even if another client
+// has idle keep-alive sockets for this origin. Rejected: Connection:close on the
+// shared fetch pool (its first request can still borrow an existing socket).
+const requestFresh = (
+  target: URL,
+  init: { method: string; headers: Record<string, string>; body?: string; signal: AbortSignal },
+): Promise<Response> =>
+  new Promise((resolve, reject) => {
+    const transport = target.protocol === "https:" ? httpsRequest : httpRequest;
+    const req = transport(
+      target,
+      { method: init.method, headers: init.headers, signal: init.signal, agent: false },
+      (res) => {
+        resolve(
+          new Response(
+            [204, 205, 304].includes(res.statusCode ?? 500)
+              ? null
+              : (Readable.toWeb(res) as ReadableStream<Uint8Array>),
+            {
+              status: res.statusCode ?? 500,
+              headers: Object.fromEntries(
+                Object.entries(res.headers)
+                  .filter((entry) => entry[1] !== undefined)
+                  .map(([key, value]) => [
+                    key,
+                    Array.isArray(value) ? value.join(", ") : (value as string),
+                  ]),
+              ),
+            },
+          ),
+        );
+      },
+    );
+    req.on("error", reject);
+    req.end(init.body);
+  });
 
 export interface SparqlTerm {
   readonly type: string;
@@ -7,6 +47,18 @@ export interface SparqlTerm {
   readonly "xml:lang"?: string;
 }
 export type SparqlBinding = Record<string, SparqlTerm>;
+export type QleverConnectionMode = "keep-alive" | "per-request";
+
+/** Explicit options take precedence over the lab environment; absent selection preserves keep-alive. */
+export const qleverConnectionModeOf = (
+  requested: string | undefined = process.env["TRIPLEX_QLEVER_CONNECTION_MODE"],
+): QleverConnectionMode => {
+  const mode = requested ?? "keep-alive";
+  if (mode !== "keep-alive" && mode !== "per-request")
+    throw new TypeError("Unknown QLever connection mode; choose keep-alive or per-request");
+  return mode;
+};
+
 export interface QleverRequestOptions {
   readonly signal?: AbortSignal;
   readonly timeoutMs?: number;
@@ -31,8 +83,13 @@ export class QleverHttpError extends Error {
 }
 export const makeQleverClient = (
   url: string,
-  options: { readonly accessToken?: string; readonly timeoutMs?: number } = {},
+  options: {
+    readonly accessToken?: string;
+    readonly timeoutMs?: number;
+    readonly connectionMode?: QleverConnectionMode;
+  } = {},
 ): QleverClient => {
+  const connectionMode = qleverConnectionModeOf(options.connectionMode);
   const base = new URL(url);
   const cancel = async (queryId: string) => {
     const target = new URL(`/watch/${encodeURIComponent(queryId)}`, base);
@@ -75,6 +132,9 @@ export const makeQleverClient = (
       "Query-Id": queryId,
       Accept: kind === "query" ? "application/sparql-results+json" : "application/json",
     };
+    // [EXP-QNODELAY] Why: R40 section 1.3 identifies delayed ACK stalls on reused
+    // QLever HTTP/1.1 sockets. Rejected: a global fetch dispatcher (changes unrelated clients).
+    if (connectionMode === "per-request") headers["Connection"] = "close";
     if (options.accessToken) headers["Authorization"] = `Bearer ${options.accessToken}`;
     if (kind !== "command") headers["Content-Type"] = `application/sparql-${kind}`;
     const onAbort = () => {
@@ -82,7 +142,7 @@ export const makeQleverClient = (
     };
     signal.addEventListener("abort", onAbort, { once: true });
     try {
-      const response = await fetch(target, {
+      const response = await (connectionMode === "per-request" ? requestFresh : fetch)(target, {
         method: kind === "command" ? "GET" : "POST",
         headers,
         ...(sparql === undefined ? {} : { body: sparql }),

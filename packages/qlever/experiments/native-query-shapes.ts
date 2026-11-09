@@ -1,3 +1,4 @@
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Fresh public-schema edge cases for the predeclared native query repair wave.
  * The independent fixture has tied int64 maxima beyond QLever's native integer
  * range, no matching object, and empty grouped contributions. This is a small
@@ -34,6 +35,7 @@ const struct = (fields: Record<string, TypeExpr.TypeExpr>) =>
     Object.fromEntries(Object.entries(fields).map(([key, type]) => [key, TypeExpr.required(type)])),
   );
 const report: Record<string, any> = {
+  qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-native-query-shape-edges/1",
   runId,
   scope,

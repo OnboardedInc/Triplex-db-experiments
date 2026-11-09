@@ -1,3 +1,4 @@
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Lab G4 entry (lane Q): the raw QLever semantic counterexamples through the public native
  * SPARQL surface (`makeQleverNativeQueries().select`) against one lab slot, scored against their
  * ORIGINAL oracles. On the pinned QLever 0.6.0 the counterexamples are expected to FAIL; this is
@@ -86,6 +87,7 @@ const struct = (fields: Record<string, TypeExpr.TypeExpr>) =>
     Object.fromEntries(Object.entries(fields).map(([key, type]) => [key, TypeExpr.required(type)])),
   );
 const report: Record<string, any> = {
+  qleverConnectionMode: qleverConnectionModeOf(),
   format: "tx2-lab-counterexamples/1",
   runId,
   lane: "qlever",

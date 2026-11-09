@@ -1,3 +1,4 @@
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Actual complete/missing canonical-channel admission at one owned scope.
  * Only this UUID fixture's scalar_lexical quad is deliberately removed. The
  * malformed fixture is retained, never used as normal application state.
@@ -25,6 +26,7 @@ const accessToken = labQleverAccessToken();
 const client = makeQleverClient(url, { accessToken }),
   native = makeQleverNativeQueries(client, scope);
 const report: Record<string, any> = {
+  qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-persisted-scalar-admission/1",
   scope,
   status: "RUNNING",

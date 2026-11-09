@@ -1,3 +1,4 @@
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { Effect, Layer } from "effect";
@@ -134,6 +135,7 @@ const trial = async (admissionQueue: boolean) => {
 };
 const results = await Promise.allSettled([trial(false), trial(true)]);
 const artifact = {
+  qleverConnectionMode: qleverConnectionModeOf(),
   run,
   at: new Date().toISOString(),
   timing:

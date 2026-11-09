@@ -1,3 +1,4 @@
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Unchanged public testkit cases over compiled public QLever/core exports. */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -23,6 +24,7 @@ const runtime = makeQleverRuntime({
   queryLimits: { aggregateAnswerPlan: answerPlan },
 });
 const report: Record<string, any> = {
+  qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-public-upstream44/1",
   backend: "qlever",
   runId,

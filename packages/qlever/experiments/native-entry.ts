@@ -1,3 +1,4 @@
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Fresh public native-SPARQL gate. Requires an admitted server; starts none. */
 import assert from "node:assert/strict";
 import { createHash, randomUUID } from "node:crypto";
@@ -96,6 +97,7 @@ const counterContract = {
   row: fields({ counter: TypeExpr.int64 }),
 };
 const report: Record<string, any> = {
+  qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-public-native-entry/1",
   runId,
   backend: "qlever",
@@ -406,6 +408,7 @@ try {
     path.join(path.dirname(output), "checks.json"),
     JSON.stringify(
       {
+        qleverConnectionMode: qleverConnectionModeOf(),
         format: "triplex-public-native-entry-checks/1",
         backend: "qlever",
         status: report.status,

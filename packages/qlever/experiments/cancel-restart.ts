@@ -1,3 +1,4 @@
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 import { randomUUID } from "node:crypto";
 import { copyFile, mkdir, stat, writeFile } from "node:fs/promises";
 import { execFile } from "node:child_process";
@@ -134,6 +135,7 @@ const receiptPreserved =
   );
 const allOrNone = [0, 160001].includes(afterPublication) && afterRestart === afterPublication;
 const artifact = {
+  qleverConnectionMode: qleverConnectionModeOf(),
   run,
   version: "QLever0.6.0/6c5861a",
   profile: "4GiB4CPU",

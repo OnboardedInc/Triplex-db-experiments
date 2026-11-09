@@ -61,6 +61,7 @@ fs.writeFileSync(
   output,
   JSON.stringify(
     {
+      qleverConnectionMode: process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive",
       subjects: manifest.subjects,
       basis: { recordedPosition: manifest.result.lastPosition, validAt: SEED_VALID_FROM },
       sample: observations,

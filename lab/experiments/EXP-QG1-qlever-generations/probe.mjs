@@ -33,6 +33,7 @@ async function request(params) {
   }
   const meta = {
     id,
+    connectionMode: "keep-alive",
     at,
     finished: new Date().toISOString(),
     ms: performance.now() - start,

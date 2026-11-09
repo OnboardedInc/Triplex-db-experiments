@@ -736,6 +736,7 @@ main(async () => {
     startedAt: run.startedAt, endedAt: now(), durationMs: Date.now() - run.t0, scope: result.scope ?? 'unknown',
     runKind, mutation, contractVersion: claims.contract?.version ?? null, contract: claims.contract, obligations: claims.obligations,
     engineName: options.lane,
+    qleverConnectionMode: options.lane === 'qlever' ? (process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? 'keep-alive') : null,
     git, lockfileSha256, toolchain: tools, gateScripts, ...result,
     steps: run.steps.map(({ tail, ...step }) => step), firstFailures: run.firstFailures,
     rawDir: run.rel(run.rawDir), reasons: run.reasons,
