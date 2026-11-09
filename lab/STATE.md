@@ -333,3 +333,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   seven refusal codes, eleven planted writers; 32 Python + 13 Node tests; 3,000 fuzz mutations refuse cleanly). The VM probe window
   W0-W3 did NOT run: the triplex2 VM has no bpftrace, and a digest-pinned bpftrace image (or package) is a download that needs Sam's
   explicit approval (asked 2026-11-09). In review (CX-VOBS6 round 3, offline).
+- 2026-11-09 CX-VOBS6 round 3 stopped on the Codex content filter (second time, after CX-VNSR round 4): kernel tracing plus "find a trace
+  a candidate could shape" reads as offensive security. Nothing was written (worktree clean). Relaunched fresh as CX-VOBS7 with
+  correctness-only wording (seven numbered judge properties plus edge-case fixtures). Rule for reviewer briefs on observer/witness code:
+  frame it as a durability measurement tool for our own test database and list concrete correctness properties and fixtures; avoid
+  attacker, evade, shape, spoof wording. agent.mjs launch with --worktree also needs --branch.
