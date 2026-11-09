@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { readLatencyRun } from "../../receipts/parse.ts";
 // [EXP-W02] Why: all three lanes share the GS floor; unqualified metadata cannot grant admission.
 // Rejected: assuming a health probe, directory string or a delta-only count proves world content.

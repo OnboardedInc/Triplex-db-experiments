@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing; option bags inferred from defaults omit optional fields; lane-specific effective config fields are present on the Datomic branch; Node overloads and union-valued dynamic records; negative fixtures deliberately delete fields; Promise resolver used without a value. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Unit tests for lab/bin (EXP-000). Run: node --test lab/bin/test/
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';

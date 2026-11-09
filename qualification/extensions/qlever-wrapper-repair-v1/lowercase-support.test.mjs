@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Pure controls only: no worker import, credential, resolver or service call. */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';

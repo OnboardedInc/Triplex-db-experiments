@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { readLatencyRun } from "../receipts/parse.ts";
 // lab/bin/scorecard.mjs [--ref main] [--dry-run]
 // Rebuilds the G0-G2 rows of the "Gates by lane" table in lab/SCORECARD.md from the newest

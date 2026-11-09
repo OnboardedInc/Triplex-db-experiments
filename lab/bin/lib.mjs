@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Shared helpers for lab/bin (EXP-000). Node 22 built-ins and the docker CLI only.
 // [EXP-000] Why: thin scripts, no daemon, mkdir locks; at most 10 agents and 3 heavy slots.
 // Rejected: the homebase controller in qualification/devloop (queue, scheduler, quota mount,

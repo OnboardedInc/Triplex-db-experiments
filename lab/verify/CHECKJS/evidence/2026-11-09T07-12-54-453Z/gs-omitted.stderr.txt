@@ -1,0 +1,1 @@
+CX-VCHECKJS overlay: {"target":"/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/scenarios/run.mjs","mutation":"append","reads":0,"originalUnchanged":true}

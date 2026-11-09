@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { readLatencyRun } from "../receipts/parse.ts";
 // lab/bin/status.mjs [--ref main | (working tree)] [--tree SOURCE-TREE-ID] [--json]
 // Evaluates the obligations lab/bin gates can produce receipts for (G1.found.unchanged44,

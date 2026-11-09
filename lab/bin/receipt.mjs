@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Pure receipt logic shared by gate.mjs, scorecard.mjs and status.mjs, unit-tested in lab/bin/test (EXP-000).
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';

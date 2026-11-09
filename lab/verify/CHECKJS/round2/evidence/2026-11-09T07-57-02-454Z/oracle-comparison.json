@@ -1,0 +1,8 @@
+{
+  "oracle": "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs",
+  "oldHash": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+  "newHash": "752aaa5c706c514ec265ed6865458fd6bd78795486764e200c088c3f52f53f28",
+  "oldPrintedSha256": "23404619555fe86cb57b55f17bd5d2693ae925190531d16af46168b12d012c10",
+  "newPrintedSha256": "23404619555fe86cb57b55f17bd5d2693ae925190531d16af46168b12d012c10",
+  "singleLeadingCommentOnly": true
+}

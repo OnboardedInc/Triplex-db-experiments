@@ -1,0 +1,2 @@
+lab/scenarios/run.mjs(14,14): error TS2304: Cannot find name 'cxVcheckjsDormantUnboundName'.
+CX-VCHECKJS overlay: {"target":"/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/lab/scenarios/run.mjs","mutation":"append","reads":2,"originalUnchanged":true}

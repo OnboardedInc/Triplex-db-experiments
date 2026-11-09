@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-built or optional package modules absent from this standalone project. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Metadata capture only; no target import, compiler, install or native call. */
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';

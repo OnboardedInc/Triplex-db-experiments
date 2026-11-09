@@ -1,0 +1,388 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 49538 "CX-DI01-G0-r3", pid 49969 "CX-RT01-live2-products", pid 63449 "CX-P2B-R3-step1b", pid 58994 "CX-VP3M-offline-review-r2"
+printer: 105 files, 104 identical, 3 matching original pins; project: 110 roots
+baseline: exit=0
+engine-dormant: exit=1
+engine-original-missing-import: exit=1
+gs-omitted: exit=0
+gs-cases-omitted: exit=0
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Values have same structure but are not reference-equal:
+
+... Skipped lines
+[
+  {
+    args: [
+      'build'
+    ],
+    code: 0,
+    command: 'pnpm',
+    name: 'build',
+    options: {
+      heavy: true
+    },
+    stderr: 'build.stderr',
+    stdout: 'build.stdout'
+  },
+  {
+    args: [
+      '--filter',
+      'core',
+      '--filter',
+      'testkit',
+      '--filter',
+      'xtdb',
+      '--filter',
+      'qualification',
+      'typecheck'
+    ],
+    code: 0,
+    command: 'pnpm',
+    name: 'typecheck',
+    options: {
+      heavy: true
+    },
+    stderr: 'typecheck.stderr',
+    stdout: 'typecheck.stdout'
+  },
+  {
+    args: [
+      '--filter',
+      'core',
+      'exec',
+      'vitest',
+      'run',
+      '--reporter=json',
+      '--outputFile=vitest-core.json'
+    ],
+    code: 0,
+    command: 'pnpm',
+    name: 'vitest-core',
+    options: {
+      heavy: true
+...}
+
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/review.mjs:161:10 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: [
+    {
+      name: 'build',
+      command: 'pnpm',
+      args: [ 'build' ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'build.stdout',
+      stderr: 'build.stderr'
+    },
+    {
+      name: 'typecheck',
+      command: 'pnpm',
+      args: [
+        '--filter',
+        'core',
+        '--filter',
+        'testkit',
+        '--filter',
+        'xtdb',
+        '--filter',
+        'qualification',
+        'typecheck'
+      ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'typecheck.stdout',
+      stderr: 'typecheck.stderr'
+    },
+    {
+      name: 'vitest-core',
+      command: 'pnpm',
+      args: [
+        '--filter',
+        'core',
+        'exec',
+        'vitest',
+        'run',
+        '--reporter=json',
+        '--outputFile=vitest-core.json'
+      ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'vitest-core.stdout',
+      stderr: 'vitest-core.stderr'
+    },
+    {
+      name: 'vitest-testkit',
+      command: 'pnpm',
+      args: [
+        '--filter',
+        'testkit',
+        'exec',
+        'vitest',
+        'run',
+        '--reporter=json',
+        '--outputFile=vitest-testkit.json'
+      ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'vitest-testkit.stdout',
+      stderr: 'vitest-testkit.stderr'
+    },
+    {
+      name: 'vitest-xtdb',
+      command: 'pnpm',
+      args: [
+        '--filter',
+        'xtdb',
+        'exec',
+        'vitest',
+        'run',
+        '--reporter=json',
+        '--outputFile=vitest-xtdb.json'
+      ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'vitest-xtdb.stdout',
+      stderr: 'vitest-xtdb.stderr'
+    },
+    {
+      name: 'vitest-qualification',
+      command: 'pnpm',
+      args: [
+        '--filter',
+        'qualification',
+        'exec',
+        'vitest',
+        'run',
+        '--reporter=json',
+        '--outputFile=vitest-qualification.json'
+      ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'vitest-qualification.stdout',
+      stderr: 'vitest-qualification.stderr'
+    },
+    {
+      name: 'node-test-qualification',
+      command: 'node',
+      args: [
+        '--test',
+        '--test-reporter=tap',
+        '../../qualification/compare.test.mjs',
+        'load/dispatch.test.ts',
+        'load/model.test.ts'
+      ],
+      options: { cwd: '/mock/packages/qualification', heavy: true },
+      code: 0,
+      stdout: 'node-test-qualification.stdout',
+      stderr: 'node-test-qualification.stderr'
+    },
+    {
+      name: 'node-test-engine-cases',
+      command: 'node',
+      args: [
+        '--test',
+        '--test-reporter=tap',
+        'qualification/workloads/test_engine_cases.mjs'
+      ],
+      options: {},
+      code: 0,
+      stdout: 'node-test-engine-cases.stdout',
+      stderr: 'node-test-engine-cases.stderr'
+    },
+    {
+      name: 'node-test-ns-bench',
+      command: 'node',
+      args: [
+        '--test',
+        '--test-reporter=tap',
+        'lab/bench/test/bench.test.ts'
+      ],
+      options: {},
+      code: 0,
+      stdout: 'node-test-ns-bench.stdout',
+      stderr: 'node-test-ns-bench.stderr'
+    },
+    {
+      name: 'oracle-validate-workloads',
+      command: 'python3',
+      args: [ '-B', 'qualification/workloads/validate_workloads.py' ],
+      options: {},
+      code: 0,
+      stdout: 'oracle-validate-workloads.stdout',
+      stderr: 'oracle-validate-workloads.stderr'
+    },
+    {
+      name: 'oracle-unittest',
+      command: 'python3',
+      args: [ '-B', '-m', 'unittest', '-v', 'test_event_oracles' ],
+      options: { cwd: '/mock/qualification/workloads' },
+      code: 0,
+      stdout: 'oracle-unittest.stdout',
+      stderr: 'oracle-unittest.stderr'
+    }
+  ],
+  expected: [
+    {
+      name: 'build',
+      command: 'pnpm',
+      args: [ 'build' ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'build.stdout',
+      stderr: 'build.stderr'
+    },
+    {
+      name: 'typecheck',
+      command: 'pnpm',
+      args: [
+        '--filter',
+        'core',
+        '--filter',
+        'testkit',
+        '--filter',
+        'xtdb',
+        '--filter',
+        'qualification',
+        'typecheck'
+      ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'typecheck.stdout',
+      stderr: 'typecheck.stderr'
+    },
+    {
+      name: 'vitest-core',
+      command: 'pnpm',
+      args: [
+        '--filter',
+        'core',
+        'exec',
+        'vitest',
+        'run',
+        '--reporter=json',
+        '--outputFile=vitest-core.json'
+      ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'vitest-core.stdout',
+      stderr: 'vitest-core.stderr'
+    },
+    {
+      name: 'vitest-testkit',
+      command: 'pnpm',
+      args: [
+        '--filter',
+        'testkit',
+        'exec',
+        'vitest',
+        'run',
+        '--reporter=json',
+        '--outputFile=vitest-testkit.json'
+      ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'vitest-testkit.stdout',
+      stderr: 'vitest-testkit.stderr'
+    },
+    {
+      name: 'vitest-xtdb',
+      command: 'pnpm',
+      args: [
+        '--filter',
+        'xtdb',
+        'exec',
+        'vitest',
+        'run',
+        '--reporter=json',
+        '--outputFile=vitest-xtdb.json'
+      ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'vitest-xtdb.stdout',
+      stderr: 'vitest-xtdb.stderr'
+    },
+    {
+      name: 'vitest-qualification',
+      command: 'pnpm',
+      args: [
+        '--filter',
+        'qualification',
+        'exec',
+        'vitest',
+        'run',
+        '--reporter=json',
+        '--outputFile=vitest-qualification.json'
+      ],
+      options: { heavy: true },
+      code: 0,
+      stdout: 'vitest-qualification.stdout',
+      stderr: 'vitest-qualification.stderr'
+    },
+    {
+      name: 'node-test-qualification',
+      command: 'node',
+      args: [
+        '--test',
+        '--test-reporter=tap',
+        '../../qualification/compare.test.mjs',
+        'load/dispatch.test.ts',
+        'load/model.test.ts'
+      ],
+      options: { cwd: '/mock/packages/qualification', heavy: true },
+      code: 0,
+      stdout: 'node-test-qualification.stdout',
+      stderr: 'node-test-qualification.stderr'
+    },
+    {
+      name: 'node-test-engine-cases',
+      command: 'node',
+      args: [
+        '--test',
+        '--test-reporter=tap',
+        'qualification/workloads/test_engine_cases.mjs'
+      ],
+      options: {},
+      code: 0,
+      stdout: 'node-test-engine-cases.stdout',
+      stderr: 'node-test-engine-cases.stderr'
+    },
+    {
+      name: 'node-test-ns-bench',
+      command: 'node',
+      args: [
+        '--test',
+        '--test-reporter=tap',
+        'lab/bench/test/bench.test.ts'
+      ],
+      options: {},
+      code: 0,
+      stdout: 'node-test-ns-bench.stdout',
+      stderr: 'node-test-ns-bench.stderr'
+    },
+    {
+      name: 'oracle-validate-workloads',
+      command: 'python3',
+      args: [ '-B', 'qualification/workloads/validate_workloads.py' ],
+      options: {},
+      code: 0,
+      stdout: 'oracle-validate-workloads.stdout',
+      stderr: 'oracle-validate-workloads.stderr'
+    },
+    {
+      name: 'oracle-unittest',
+      command: 'python3',
+      args: [ '-B', '-m', 'unittest', '-v', 'test_event_oracles' ],
+      options: { cwd: '/mock/qualification/workloads' },
+      code: 0,
+      stdout: 'oracle-unittest.stdout',
+      stderr: 'oracle-unittest.stderr'
+    }
+  ],
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2

@@ -43,7 +43,13 @@
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-repin-review.json": "0a414b2d80fe57c991751d6e2d60a70a752c26f7eba3d0430f61ae1d6be511fa",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-packages__qlever__experiments__native-entry.ts.diff": "7b656f2155a25e2380497824889fd2d3f50f1afb55b282bc38c80a3e271df97c",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/M01-repin-review.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
-    "lab/acceptance/build_contract.py": "f479c544dd3d9179dbbf676acc1d53b4597f95f68820b1e1b46fac92bf0c9576"
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-repin-review.json": "7effb005a06ca7438815990dff19784a48e5378b48bd811076f5fb2a66d7f74d",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-lab__bin__test__claim-round2.test.mjs.diff": "8a985c3bfc17580ac89d40bb99838e8ebd83fb7d91c3161ea2049d96bd1d66d3",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-lab__bin__test__claim.test.mjs.diff": "d91ce1a545a842c7f840c651f88096319d5fa63910fd2429794ae2b645901387",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__configured-entities-v1__oracle.mjs.diff": "421422cf5d0643051bafa72f80270a9b1b13b009841e8301f4d13e060ee8a4f7",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__historical-assertion-metadata-v1__oracle.mjs.diff": "38466870a94edfa3666abeb16c41d9266c5f78b7bc7ca9e4f8f8eff1e929e32d",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__historical-assertion-metadata-v2__oracle.mjs.diff": "81c053d13b42ca48d9ff24b9b4b090ee60efbee79c3afb80140a79f76db984b0",
+    "lab/acceptance/build_contract.py": "bb11460c581257ff664163146552490ea6369d2ef262b544dad27a27538a2776"
   },
   "artifacts": {
     "oracle-contract.json": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266",
@@ -3973,7 +3979,7 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "f479c544dd3d9179dbbf676acc1d53b4597f95f68820b1e1b46fac92bf0c9576",
+        "lab/acceptance/build_contract.py": "bb11460c581257ff664163146552490ea6369d2ef262b544dad27a27538a2776",
         "lab/acceptance/oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9"
       }
     },
@@ -11341,17 +11347,17 @@
     "O-HAM": [
       {
         "path": "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs",
-        "sha256": "bc93f24c88365add1d215747cd95705a3c2a2b4fd1c6cdd7e347a014fb23b290"
+        "sha256": "bbd656760719b67a3435419121b0b7df909a99ea9c1aba22d85ea1363cb6b08f"
       },
       {
         "path": "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
-        "sha256": "f661e8138d5194bbcbbe56eec9ec35f8766bc9938540192e7b0d92d04685721b"
+        "sha256": "5ce6612714b2b7742c46e0599617d472b4bf18a352806e5d44a44577878c9649"
       }
     ],
     "O-CFG8": [
       {
         "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
-        "sha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3"
+        "sha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94"
       }
     ],
     "O-STR": [
@@ -16441,7 +16447,7 @@
         },
         {
           "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
-          "sha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3"
+          "sha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94"
         }
       ],
       "note": null
@@ -17161,7 +17167,7 @@
       },
       {
         "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
-        "sha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3"
+        "sha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94"
       }
     ]
   },
@@ -31360,5 +31366,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "333fdaa3020f36c4fbfc2a29ba004ba868bd6b45e7976a5a9ba653ad89feefff"
+  "transitiveContractSha256": "5c55dfe568165fea8bc14bb0c481d4c503d1fadaef9e3a0704008dd4d2e53aa8"
 }

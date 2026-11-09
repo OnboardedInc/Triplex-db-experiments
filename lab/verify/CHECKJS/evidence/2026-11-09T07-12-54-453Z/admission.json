@@ -1,0 +1,19 @@
+{
+  "waitingWithAllFourOwned": true,
+  "childDidNotRunBeforeRelease": true,
+  "admittedUnderWrapperPid": {
+    "parentPid": 6824,
+    "own": [
+      {
+        "slot": "4",
+        "pid": 6824,
+        "label": "CX-VCHECKJS-isolated-child",
+        "at": "2026-11-09T07:13:23.653Z"
+      }
+    ],
+    "ownerCount": 4
+  },
+  "releasedAfterExit": true,
+  "stdout": "{\"parentPid\":6824,\"own\":[{\"slot\":\"4\",\"pid\":6824,\"label\":\"CX-VCHECKJS-isolated-child\",\"at\":\"2026-11-09T07:13:23.653Z\"}],\"ownerCount\":4}\n",
+  "stderr": "[lab] heavy: waiting for one of 4 slots; held by pid 99210 \"CX-VCHECKJS-isolated-holder\", pid 99210 \"CX-VCHECKJS-isolated-holder\", pid 99210 \"CX-VCHECKJS-isolated-holder\", pid 99210 \"CX-VCHECKJS-isolated-holder\"\n"
+}

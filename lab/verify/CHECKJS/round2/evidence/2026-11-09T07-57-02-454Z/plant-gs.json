@@ -1,0 +1,16 @@
+{
+  "start": "2026-11-09T07:57:22.532Z",
+  "end": "2026-11-09T07:57:28.393Z",
+  "args": [
+    "--import",
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/overlay.mjs",
+    "lab/bin/checkjs.mjs"
+  ],
+  "env": {
+    "CHECKJS_REVIEW_TARGET": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-g3WFif/lab/scenarios/run.mjs",
+    "CHECKJS_REVIEW_MUTATION": "append"
+  },
+  "status": 1,
+  "signal": null,
+  "error": null
+}

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters; runtime error inspection. Binding errors remain checked by lab/bin/checkjs.mjs.
 // A registered process-group leader waits for the durable START handshake.
 // The parent keeps stdin open. Parent death closes it and tears down this group,
 // preventing an unrecorded job launch between spawn and PID publication.

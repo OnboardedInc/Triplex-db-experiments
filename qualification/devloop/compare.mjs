@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated local values; unannotated dynamic parameters; recursive helper inference; recursive callback inference; unannotated destructured parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { readLatencyRun } from "../../lab/receipts/parse.ts";
 import { createReadStream, promises as fs } from 'node:fs';
 import { createInterface } from 'node:readline';

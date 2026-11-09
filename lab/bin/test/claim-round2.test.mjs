@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing; option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // V-E01: independent counterexamples against lab/bin/claim.mjs at 2796455 (checks 2 to 6 of lab/verify/E01/BRIEF.md).
 // Run from the worktree root: node --test lab/verify/E01/v-e01.test.mjs   (needs git, tar, python3; no engines, no Docker)
 //

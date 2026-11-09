@@ -1,0 +1,19 @@
+{
+  "reviewed": "f72cd5add3dd7e9f5f7874802a6c8b6292c9c26a",
+  "base": "3575785aff5ab36bc92eee6131f4b5b0ffe83c5d",
+  "startedAt": "2026-11-09T07:57:02.459Z",
+  "grant": {
+    "slot": 4,
+    "file": "/Users/sam/projects/triplex-db-2/lab/locks/heavy/4/owner.json",
+    "sha256": "2620c0993fb1dd07beeec766c1bab82c842842246b0ae848343d2d28c321bcae",
+    "owner": {
+      "pid": 84654,
+      "label": "CX-VCHECKJS-r2",
+      "at": "2026-11-09T07:57:02.185Z"
+    }
+  },
+  "node": "v22.23.2",
+  "typescript": "6.0.2",
+  "verifierSha256": "c64c6a19b6417dca36091aa9db9220cea83cf7edf37cfd7c3dbf2e143687d9e0",
+  "overlaySha256": "7d5cd16800354fbe3bb4ae24c43b9249cb486bafa742c3731b245c14ab16a8da"
+}
