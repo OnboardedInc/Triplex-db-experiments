@@ -28,7 +28,7 @@ export async function runW0Driver(argv: string[]) {
   const N = Number(opt("rung", "1000")!.replace("k", "000"));
   W0.rung(N);
   const composition = opt("composition", "memory")!,
-    lane = opt("lane", "xtdb")! as "xtdb" | "qlever";
+    lane = opt("lane", "xtdb")! as "xtdb" | "qlever" | "datomic";
   const output = path.resolve(opt("output", `runs/P5/${randomUUID()}/receipt.json`)!);
   if (!output.startsWith(path.resolve("runs") + path.sep))
     throw new Error("--output must be inside worktree runs/");

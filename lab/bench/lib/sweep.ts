@@ -56,7 +56,7 @@ export const subjectHash = (subjects: readonly string[]) => sha256(canonical(sub
 export interface SweepOptions {
   comp: CompositionHandle;
   composition: string;
-  lane: "xtdb" | "qlever";
+  lane: "xtdb" | "qlever" | "datomic";
   scope: string;
   subjects: readonly string[];
   basis: PositionBasis;
