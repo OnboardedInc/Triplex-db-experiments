@@ -16,6 +16,18 @@ const MODES={
  'control-truncated':{stream:'partial',partial:'{"schema":"ns-control/1","binding":',closeSelf:true,options:{timeout:2000}},
  'control-json':{stream:'partial',partial:'not json at all\n',options:{timeout:2000}},
  'control-cap':{stream:'partial',partial:'x'.repeat(400),options:{timeout:2000,max:64}},
+ // [EXP-G03-R7d] Why: F6 (a parsed JSON null or other non-object envelope) and F7 (raw bytes, split multibyte characters) reach the exact Box.execControl through the chunked stream; `chunks` are hex strings written as separate data events. Rejected: only string fixtures (they cannot express invalid or split UTF-8).
+ 'control-null':{stream:'partial',partial:'null\n',options:{timeout:2000}},
+ 'control-array':{stream:'partial',partial:'[{"schema":"ns-control/1"}]\n',options:{timeout:2000}},
+ 'control-scalar':{stream:'partial',partial:'7\n',options:{timeout:2000}},
+ 'control-nonutf8':{stream:'partial',chunks:['ff0a'],options:{timeout:2000}},
+ 'control-split-utf8-valid-then-null':{stream:'partial',chunks:['7b22736368656d61223a2278222c226e223a22c3', 'a9227d0a6e756c6c0a'],options:{timeout:2000}},
+ 'control-split-utf8-garbage':{stream:'partial',chunks:['c3','a90a'],options:{timeout:2000}},
+ 'control-split-utf8-truncated':{stream:'partial',chunks:['7b2261223a22e282','ac'],closeSelf:true,options:{timeout:2000}},
+ // [EXP-G03-R7d] Why: F5 injects a one-shot EIO into exactly the stage-10 stage-log append (the review's reproduction), with a rejected control session and with a nonzero exit. Rejected: failing every append (the gap write then cannot be asserted).
+ 'stage10-control':{...hookStream,faults:faultsOn,failStage10:true},
+ 'stage10-nonzero':{status:7,hooks:true,failStage10:true},
+ 'stage10-clean':{status:0,hooks:true,failStage10:true},
  'retain-walk-failure':{...hookStream,faults:faultsOn,walkFails:true},
  'retain-remove-failure':{status:7,hooks:true,removeFails:true},
 };
@@ -39,7 +51,7 @@ const box={prefix:'offline-',workDir,resources:[],records:[],config:{imageId:'sh
    const spawn=()=>{const child=new EventEmitter();child.stdout=new PassThrough();child.stderr=new PassThrough();child.stdin=new PassThrough();child.kill=()=>{operations.push('exec-client-kill');setImmediate(()=>child.emit('close',null));return true};
     setImmediate(()=>{
      if(control.stream==='hook')child.stdout.write(JSON.stringify({schema:'ns-control/1',binding,event:{event:'at-point',role:'consumer',point:'before-effect',page:0,cursor:{after:0},nonce:'offline-reject-hook'}})+'\n');
-     else child.stdout.write(control.partial);
+     else if(control.chunks){child.stderr.write('model-stderr-partial');let i=0;const next=()=>{child.stdout.write(Buffer.from(control.chunks[i++],'hex'));if(i<control.chunks.length)setImmediate(next);else if(control.closeSelf)setImmediate(()=>child.emit('close',0))};next();return}else child.stdout.write(control.partial);
      child.stderr.write('model-stderr-partial');
      if(control.closeSelf)setImmediate(()=>child.emit('close',0));
     });return child};
@@ -61,7 +73,10 @@ const box={prefix:'offline-',workDir,resources:[],records:[],config:{imageId:'sh
  close(){for(const [kind,name]of [...this.resources].reverse()){operations.push('close-remove:'+kind+':'+name);if(kind==='volume')volumes.delete(name);else containers.delete(name)}this.resources=[]},
 };
 const ctx=vm.createContext({Buffer,console,setTimeout,clearTimeout});
-const deps={'node:fs':{default:fs},'node:path':{default:path},'node:child_process':{spawnSync(){}},'node:crypto':await import('node:crypto'),'node:util':await import('node:util'),
+let stage10Failed=false;
+// One-shot EIO on the stage-10 append only; every other append, and the gap file, work.
+const nsFs=Object.create(fs,{appendFileSync:{value(file,data,options){if(M.failStage10&&!stage10Failed&&String(data).includes('"step":10,')){stage10Failed=true;throw Object.assign(Error('EIO: injected stage-10 append failure'),{code:'EIO'})}return fs.appendFileSync(file,data,options)}}});
+const deps={'node:fs':{default:nsFs},'node:path':{default:path},'node:child_process':{spawnSync(){}},'node:crypto':await import('node:crypto'),'node:util':await import('node:util'),
  './lib.mjs':{docker(args){operations.push('docker:'+args[0]);if(args[0]==='start')containers.get(args[1]).State.Running=true;return Buffer.alloc(0)},dockerArgs:a=>a,inspect:n=>containers.get(n),sha256},
  '../bench/ns-driver/answer.mjs':{canonicalAnswer},'./ns-fault.mjs':{FaultInjector},
  './ns-fault-box.mjs':{boxedFaultTransport:()=>({pause:async c=>({id:c.target.id,paused:true}),snapshot:async c=>Buffer.from(JSON.stringify({schema:'ns-dr/1',binding:c.binding,attempt:c.attempt,targetId:c.target.id,volume:c.target.volume,phase:c.phase,checkpoint:1,effects:[],rowCount:0,frontier:0,walBytes:0,walBase64:'',walSha256:sha256(Buffer.alloc(0)),observedAtNs:'100'})),kill:async()=>{throw Error('must not kill after contradictory DR')}}),snapshotScript(){}},

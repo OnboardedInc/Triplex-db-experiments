@@ -128,16 +128,18 @@ export class BoxExecutor {
     });
   }
   // [EXP-G03-R7c] Why: every rejection carries the bytes read so far (error.partial) so the coordinator can retain the cause and partial streams of a failed control session (F3). Rejected: dropping them on reject (the failed attempt then has nothing to export).
+  // [EXP-G03-R7d] Why: the partial streams are the exact raw chunks received (F7); lines are framed on the 0x0a byte and decoded strictly (a UTF-8 round trip must reproduce the line bytes; no TextDecoder, so the vm test contexts need no new global), so a multibyte character split between chunks survives and an invalid byte is a refusal, never a U+FFFD rewrite. The parsed top-level value is validated before any property access (F6): JSON null, arrays and scalars are malformed envelopes that fail() with the partial bytes. Rejected: appending Buffers to strings (re-encodes invalid UTF-8) and reading row.schema unguarded (a TypeError in the stream callback skips the rejection path).
   // [EXP-G03-R6] Why: guarded driver control is a bounded private pipe, not a candidate-visible socket. Rejected: synchronous buffered exec (cannot service a blocked hook).
   execControl(name,argv,onControl,{timeout=120000,max=16*1024*1024}={}) {
     if(!this.resources.some(([kind,n])=>kind==='container'&&n===name))throw Error('unowned driver');
     return new Promise((resolve,reject)=>{
-      const child=spawn('docker',dockerArgs(['exec','-i',name,...argv]));let stdout='',stderr='',pending='',size=0,chain=Promise.resolve(),failure;
+      const child=spawn('docker',dockerArgs(['exec','-i',name,...argv]));const out=[],err=[];let pending=Buffer.alloc(0),size=0,chain=Promise.resolve(),failure;
       const fail=e=>{failure??=e;child.kill();};const timer=setTimeout(()=>fail(Error('FAULT-CONTROL-TIMEOUT')),timeout);
+      const raw=b=>Buffer.isBuffer(b)?b:Buffer.from(b);const strict=line=>{const text=line.toString('utf8');if(!Buffer.from(text,'utf8').equals(line))throw Error('invalid UTF-8');return text};
       child.stdin.on('error',e=>fail(e));child.on('error',fail);
-      child.stdout.on('data',b=>{size+=b.length;if(size>max)return fail(Error('FAULT-CONTROL-CAP'));stdout+=b;pending+=b;let at;while((at=pending.indexOf('\n'))>=0){const line=pending.slice(0,at);pending=pending.slice(at+1);let row;try{row=JSON.parse(line)}catch{return fail(Error('FAULT-CONTROL-JSON'))}if(row.schema==='ns-control/1')chain=chain.then(async()=>{const reply=await onControl(row);child.stdin.write(JSON.stringify(reply)+'\n')}).catch(fail);}});
-      child.stderr.on('data',b=>{size+=b.length;if(size>max)fail(Error('FAULT-CONTROL-CAP'));else stderr+=b;});
-      child.on('close',async status=>{clearTimeout(timer);await chain;const partial={status,stdout:Buffer.from(stdout),stderr:Buffer.from(stderr),pending:Buffer.from(pending)};if(failure)return reject(Object.assign(typeof failure==='object'&&failure!==null?failure:Error(String(failure)),{partial}));if(pending)return reject(Object.assign(Error('FAULT-CONTROL-TRUNCATED'),{partial}));resolve({status,stdout:Buffer.from(stdout),stderr:Buffer.from(stderr)})});
+      child.stdout.on('data',chunk=>{const b=raw(chunk);size+=b.length;if(size>max)return fail(Error('FAULT-CONTROL-CAP'));out.push(b);pending=Buffer.concat([pending,b]);let at;while((at=pending.indexOf(10))>=0){const line=pending.subarray(0,at);pending=pending.subarray(at+1);let row;try{row=JSON.parse(strict(line))}catch{return fail(Error('FAULT-CONTROL-JSON'))}if(row===null||typeof row!=='object'||Array.isArray(row))return fail(Error('FAULT-CONTROL-ENVELOPE'));if(row.schema==='ns-control/1')chain=chain.then(async()=>{const reply=await onControl(row);child.stdin.write(JSON.stringify(reply)+'\n')}).catch(fail);}});
+      child.stderr.on('data',chunk=>{const b=raw(chunk);size+=b.length;if(size>max)fail(Error('FAULT-CONTROL-CAP'));else err.push(b);});
+      child.on('close',async status=>{clearTimeout(timer);await chain;const partial={status,stdout:Buffer.concat(out),stderr:Buffer.concat(err),pending:Buffer.from(pending)};if(failure)return reject(Object.assign(typeof failure==='object'&&failure!==null?failure:Error(String(failure)),{partial}));if(pending.length)return reject(Object.assign(Error('FAULT-CONTROL-TRUNCATED'),{partial}));resolve({status,stdout:partial.stdout,stderr:partial.stderr})});
     });
   }
   remove(name) {

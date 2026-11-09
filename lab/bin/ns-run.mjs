@@ -150,13 +150,14 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
  try{result=await box.execControl(drv.name,drv.launchArgv,row=>injector.handshake(row),{timeout:90000})}
  catch(e){controlError=e;const p=e?.partial??{};result={status:null,stdout:p.stdout??Buffer.alloc(0),stderr:p.stderr??Buffer.alloc(0)}}
  // [EXP-G03-R7a] Why: a nonzero driver exit or failed fault stream must still stop and export every retained byte, then refuse before replay. Rejected: throwing here (loses failed-attempt evidence) or recording the exit and continuing (F2).
- let faultSummary=null,faultError=null;try{faultSummary=injector.finish({requireInjections:faults?.requireInjections??false})}catch(e){faultError=e}
- const terminal=trustedTerminal({runId,exec:result,faultError,controlError});stage(10,{driverExit:result.status,terminal,faultSummary});
  // [EXP-G03-R7c] Why: if the stop, teardown or export cannot be proven, the run's volumes are the only copy of the evidence; they leave box.resources so close() cannot delete them, and the gap is written down. Rejected: letting close() remove volumes after a failed export, or omitting the gap from the record.
+ // [EXP-G03-R7d] Why: the retention guard now starts before the terminal is built and logged, and stage 10 is inside it (F5): a persistence failure at that edge also leaves the run's volumes detached from box.resources before the caller's close(), keeps the original control cause in the thrown message, and records the persistence gap. Rejected: a guard that begins after stage 10 (an EIO there let close() delete the only copy of the evidence).
  const forensicVolumes=new Set(Object.values(volumes).filter(v=>v!==network));
- let candidateLogs={},output,observed,stateExports,rawDir,capture,exported=false;
+ let candidateLogs={},output,observed,stateExports,rawDir,capture,exported=false,terminal=null,persistenceError=null,faultSummary=null,faultError=null;
  const owned=n=>box.resources.some(([kind,r])=>kind==='container'&&r===n);
  try{
+  try{faultSummary=injector.finish({requireInjections:faults?.requireInjections??false})}catch(e){faultError=e}
+  try{terminal=trustedTerminal({runId,exec:result,faultError,controlError});stage(10,{driverExit:result.status,terminal,faultSummary})}catch(e){persistenceError=e;throw e}
   // A rejected control session may leave the driver alive in its container (killing the docker exec client does not stop it): remove it, with kill proof, before the observer is sealed.
   if(controlError&&owned(drv.name))box.remove(drv.name);
   // Stop the observer via a private evaluator-only control volume, never candidate RPC.
@@ -175,13 +176,18 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
   // [EXP-G03-R7a] Why: digests taken at capture, before any verification, let a later CR-NS ingestion detect any change to the exported bytes. Rejected: re-deriving them from files after replay.
   capture={};for(const [kind,files]of exportSets)for(const [relative,bytes]of files)capture[kind+'/'+relative]=sha256(bytes);
   fs.writeFileSync(path.join(rawDir,'terminal.json'),JSON.stringify({terminal,capture}),{flag:'wx',mode:0o600});exported=true;
- }catch(e){
+ }catch(caught){
+  let e=caught;
   if(!exported){
    const kept=box.resources.filter(([kind,n])=>kind==='volume'&&forensicVolumes.has(n)).map(([,n])=>n);
    box.resources=box.resources.filter(([kind,n])=>!(kind==='volume'&&forensicVolumes.has(n)));
    box.retained=[...(box.retained??[]),...kept.map(name=>({kind:'volume',name,runId}))];
-   const gap={schema:'ns-retained/1',runId,binding,reason:String(e?.message??e),export:'NOT-PROVEN-SAFE',partialRawDir:rawDir??null,volumes:kept,terminal,qualification:false};
-   fs.writeFileSync(path.join(box.workDir,'ns-'+runId+'-retained.json'),JSON.stringify(gap),{flag:'wx',mode:0o600});stage(14,{retainedVolumes:kept,reason:gap.reason});
+   // The original failure stays first in the message when the persistence write is what failed; the persistence error is the cause.
+   const original=controlError?'DRIVER-CONTROL-FAILURE '+String(controlError.message??controlError):result.status!==0?'DRIVER-EXIT-NONZERO status='+result.status:faultError?'DRIVER-HOOK-FAILURE '+String(faultError.message??faultError):null;
+   if(persistenceError&&original)e=Object.assign(Error(original+'; TERMINAL-PERSISTENCE-GAP '+String(persistenceError.message??persistenceError),{cause:persistenceError}),{code:persistenceError.code});
+   const gap={schema:'ns-retained/1',runId,binding,reason:String(caught?.message??caught),export:'NOT-PROVEN-SAFE',partialRawDir:rawDir??null,volumes:kept,terminal,persistenceGap:persistenceError?String(persistenceError.message??persistenceError):null,originalCause:original,qualification:false};
+   // The volumes are already detached; a failure to write the gap record must not replace the error or undo the retention.
+   try{fs.writeFileSync(path.join(box.workDir,'ns-'+runId+'-retained.json'),JSON.stringify(gap),{flag:'wx',mode:0o600});stage(14,{retainedVolumes:kept,reason:gap.reason})}catch(g){Object.assign(e,{gapWriteError:String(g?.message??g)})}
    Object.assign(e,{retained:kept,terminal});
   }
   Object.assign(e,{candidateLogs,runId});throw e;
