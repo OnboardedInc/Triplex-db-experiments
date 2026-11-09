@@ -304,24 +304,8 @@ test('host disk floor: a copy that would leave less than 5 GiB is refused (Q74f)
   assert.equal(diskFloorVerdict({ freeBytes: 5 * GiB, copyBytes: 0 }).ok, true);
 });
 
-test('clean stop needs both lines, no forced halt, exit 143 within ten seconds', async () => {
-  const { stopVerdict } = await import('../engine.mjs');
-  const good = '2026 INFO xtdb.main - Stopping node...\n2026 INFO xtdb.main - Node stopped.\n';
-  assert.equal(stopVerdict({ log: good, exitCode: 143, oomKilled: false, stopMs: 1200 }).ok, true);
-  assert.equal(stopVerdict({ log: good, exitCode: 0, oomKilled: false, stopMs: 1200 }).ok, false);
-  assert.deepEqual(stopVerdict({ log: good, exitCode: 137, oomKilled: false, stopMs: 1200 }).reasons, ['exit code 137']);
-  assert.equal(stopVerdict({ log: 'Stopping node...\n', exitCode: 143, oomKilled: false, stopMs: 1200 }).ok, false);
-  assert.equal(stopVerdict({ log: good, exitCode: 143, stopMs: 10000 }).ok, false);
-  assert.equal(stopVerdict({ log: good, exitCode: 143, stopMs: null }).ok, false);
-  assert.equal(stopVerdict({ log: 'Node stopped.', exitCode: 143, stopMs: 1 }).ok, false);
-  const forced = stopVerdict({ log: 'could not stop node cleanly after 10000 ms, forcing exit\n', exitCode: 1, oomKilled: false, stopMs: 1200 });
-  assert.equal(forced.ok, false);
-  assert.equal(forced.reasons.length, 4);
-  assert.equal(stopVerdict({ log: good, exitCode: 143, oomKilled: true, stopMs: 1200 }).ok, false);
-});
-
-test('volume listings parse, hash every field, fail closed on truncation, and diff for P-e', async () => {
-  const { parseListing, diffListings, listingScript } = await import('../engine.mjs');
+test('volume listings parse, hash every field, fail closed on truncation, as a refusal-only check', async () => {
+  const { parseListing, listingScript } = await import('../engine.mjs');
   const h = c => c.repeat(64);
   const text = (logSha, extra = '') => `@@stat\n./buffers/v06/blocks/b00.binpb|10|644|20000|20000\n./log/LOG|5|644|20000|20000\n./log/REPLICA_LOG|7|644|20000|20000\n${extra}@@sha\n${h('a')}  ./buffers/v06/blocks/b00.binpb\n${logSha}  ./log/LOG\n${h('c')}  ./log/REPLICA_LOG\n@@end\n`;
   const a = parseListing(text(h('b')));
@@ -333,14 +317,20 @@ test('volume listings parse, hash every field, fail closed on truncation, and di
   assert.notEqual(a.treeSha256, parseListing(text(h('b')).replace('./log/LOG|5|644|20000|20000', './log/LOG|5|644|0|0')).treeSha256, 'owner is part of the tree hash');
   assert.throws(() => parseListing(text(h('b')).replace('@@end\n', '')), /truncated/);
   assert.throws(() => parseListing(text(h('b')).replace(`${h('a')}  ./buffers/v06/blocks/b00.binpb\n`, '')), /disagree/);
-  const logsOnly = diffListings(a, parseListing(text(h('d'))));
-  assert.deepEqual(logsOnly.changed, ['./log/LOG']);
-  assert.equal(logsOnly.storageImmutable, true);
-  const blockChanged = diffListings(a, parseListing(text(h('b')).replace(`${h('a')}  ./buffers`, `${h('e')}  ./buffers`)));
-  assert.deepEqual(blockChanged.changedOutsideLogs, ['./buffers/v06/blocks/b00.binpb']);
-  assert.equal(blockChanged.storageImmutable, false);
-  const groupChanged = structuredClone(a);
-  groupChanged.files[0].gid = '0';
-  assert.equal(diffListings(a, groupChanged).storageImmutable, false, 'group ownership is part of storage immutability');
   assert.match(listingScript('/dst'), /! -path '\*\/\.tmp\/\*'/);
+});
+
+// [EXP-K01-R7] Why: these resource refusal controls still apply after retiring process admission. Rejected: deleting tests for the retained pool fix.
+const resourceConfig={vm:{memBytes:10000},pool:{memLimitBytes:10000,diskUsedLimitBytes:10000}};
+for(const target of ['request-memory','request-disk','reservation-memory','reservation-disk','VM-cap','pool-cap','external-cap'])test(`resource validation refuses missing/invalid ${target}`,()=>{
+ const input={config:structuredClone(resourceConfig),reservations:[{container:'other',memBytes:1,diskForecastBytes:1}],running:[{name:'external',running:true,memBytes:1}],request:{container:'new',memBytes:1,diskForecastBytes:1},diskUsedBytes:1};
+ if(target==='request-memory')input.request.memBytes=NaN;if(target==='request-disk')delete input.request.diskForecastBytes;if(target==='reservation-memory')input.reservations[0].memBytes=-1;if(target==='reservation-disk')delete input.reservations[0].diskForecastBytes;if(target==='VM-cap')input.config.vm.memBytes=undefined;if(target==='pool-cap')input.config.pool.diskUsedLimitBytes=Infinity;if(target==='external-cap')delete input.running[0].memBytes;
+ assert.equal(lib.admission(input).ok,false);
+});
+for(const df of ['Filesystem 1-blocks Used Available Capacity Mounted on\n/dev/v 100 10 90 10% /','Filesystem 1-blocks Used Available Capacity Mounted on\n/dev/v NaN 10 90 10% /','Filesystem 1-blocks Used Available Capacity Mounted on\n/dev/v 100 -1 90 10% /','Filesystem 1-blocks Used Available Capacity Mounted on\n/dev/v 100 10 100 10% /','Filesystem 1-blocks Used Available Capacity Mounted on'])test(`VM disk parser requires complete sane bytes (${df.split('\n')[1]})`,()=>{
+ if(df.includes('100 10 90'))assert.equal(lib.parseVmDisk(df).usedBytes,10);else assert.throws(()=>lib.parseVmDisk(df));
+});
+
+for(const body of ['@@end','@@stat\n@@end','@@sha\n@@stat\n@@end','@@stat\n@@sha\n@@end\nunexpected'])test(`copy refusal rejects incomplete framing ${JSON.stringify(body)}`,async()=>{
+ const {parseListing}=await import('../engine.mjs');assert.throws(()=>parseListing(body));
 });

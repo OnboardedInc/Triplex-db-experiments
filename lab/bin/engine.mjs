@@ -2,9 +2,6 @@
 // lab/bin/engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh]
 //   [--holder NAME] [--exp EXP-NNN] [--remove-volume] [--note TEXT] [--force] [--tail N]
 //   [--follower [--follower-profile NAME]] [--cpuset-cpus LIST]
-// lab/bin/engine.mjs settle|stop|verify|listing --lane xtdb --slot S;  golden --lane xtdb --slot S --manifest FILE;
-//   clone --lane xtdb --slot S --golden-record FILE [--no-verify];  golden-rm --golden-record FILE;  toolcheck
-//   (EXP-K01 seed once, clone faithfully; the section above status() explains each)
 //
 // [EXP-X05] --follower acts on the slot's read-only XTDB follower tx2-xtdb-<slot>-ro (R19 1.1, 1.7):
 // same image and named volume, lab/config/xtdb-follower-config.yaml (readOnlyDatabases: true), its own
@@ -23,17 +20,13 @@
 // a daemon (no process to babysit with at most 10 agents).
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
-import { randomUUID } from 'node:crypto';
-import { observe, complete, processObservation, text, byteCount, booleanProof } from './observation.ts';
-import { verifyMaintenanceTail } from './xtdb-log.mjs';
-import { ownerStateLock, updateOwner } from './owner-state.mjs';
-import { cloneCertificateHash } from '../bench/lib/clone.ts';
+import { checkXtdb, quietXtdb, healthXtdb } from '../bench/lib/g0-xtdb.ts';
 import net from 'node:net';
 import path from 'node:path';
 import {
-  CONFIG_DIR, DOCKER_HOST, ENGINE_DIR, LabError, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, checkFollowerConfig,
-  containersOnVolume, cpusetOverlap, defaultHolder, docker, dockerStats, fail, fmtBytes, inspect, inspectVolume, listTx2Containers, loadSlots, main, now,
-  parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sha256File, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool,
+  CONFIG_DIR, ENGINE_DIR, LabError, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, checkFollowerConfig,
+  containersOnVolume, cpusetOverlap, defaultHolder, docker, dockerStats, fail, fmtBytes, inspect, listTx2Containers, loadSlots, main, now,
+  parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool,
 } from './lib.mjs';
 
 /**
@@ -123,7 +116,7 @@ function runArgs(info, eff, holder) {
   const e = eff.effective;
   const common = [
     'run', '-d', '--name', info.container, '--restart', 'no',
-    '--label', `tx2.lane=${info.lane}`, '--label', `tx2.slot=${info.slot}`, '--label', `tx2.config-sha256=${eff.sha256}`,
+    '--label', `tx2.lane=${info.lane}`, '--label', `tx2.slot=${info.slot}`, '--label', `tx2.config-sha256=${eff.sha256}`, '--label', `tx2.system-config-sha256=${sha256(JSON.stringify(systemConfig(eff.effective)))}`,
     '--label', `tx2.holder=${holder}`, '--label', 'tx2.managed-by=lab/bin/engine.mjs',
     ...(info.role === 'follower' ? ['--label', 'tx2.role=follower', '--label', `tx2.follows=${info.writer}`, '--label', `tx2.follower-profile=${info.profile ?? 'default'}`] : []),
     '--memory', String(info.memBytes), '--memory-swap', String(info.memBytes), '--cpus', String(info.cpus),
@@ -144,38 +137,14 @@ const tcpOpen = port => new Promise(resolve => {
   socket.on('timeout', () => { socket.destroy(); resolve(false); });
 });
 
-/**
- * [EXP-K01] GET an XTDB healthz path from inside the container (the lab publishes only pgwire). The image's wget is GNU
- * wget (`apk add wget`, references/xtdb/docker/Dockerfile): -S prints the status line on stderr, --content-on-error keeps
- * a 503 body. Returns { status, body }; status null when the exec itself failed.
- */
-export function healthz(container, route, { post = false } = {}) {
-  const r = spawnSync('docker', dockerArgs(['exec', container, 'wget', '-q', '-S', '--content-on-error', '-O', '-', ...(post ? ['--post-data='] : []), `http://127.0.0.1:8080${route}`]), { encoding: 'utf8', timeout: 30_000 });
-  const observation = processObservation('HTTP readiness', { container, route, post }, r, out => {
-    const match = /HTTP\/[\d.]+ (\d{3})/.exec(out.stderr);
-    if (!match) throw Error('missing HTTP status');
-    return { status: Number(match[1]), body: out.stdout.trim(), exit: r.status };
-  });
-  return observation.state === 'complete' ? { ...observation.value, observation } : { status: null, body: '', observation };
-}
-
-/**
- * Host-side readiness: XTDB container healthz + pgwire port open + (writers) /healthz/started; QLever answers a SPARQL query.
- * [EXP-K01] R26 1.2 item 9 and RULINGS Q74d: /healthz/alive does not wait for replay, so a restarted or cloned writer
- * could pass on alive while it still replays REPLICA_LOG and answer reads from a partial state. /healthz/started returns
- * 200 only once every critical database has processed up to the log head it saw at start. A fresh node passes at once.
- * Followers keep the alive-only rule (EXP-X05 behaviour unchanged).
- */
-// [EXP-K01-R6] Why: Optional health labels are absence, never a healthy default; exceptions and nullable readiness below yield false, while container reads themselves now fail closed. Rejected: converting a failed observation into successful content.
+/** Host-side readiness: XTDB container healthz + pgwire port open; QLever answers a SPARQL query. */
 export async function probe(info) {
   const c = inspect(info.container);
   if (!c?.State.Running) return { ok: false, why: `container ${c ? c.State.Status : 'absent'}` };
   if (info.lane === 'xtdb') {
     const health = c.State.Health?.Status;
     const open = await tcpOpen(info.port);
-    if (info.role === 'follower' || health !== 'healthy' || !open) return { ok: health === 'healthy' && open, why: `health=${health} pgwire=${open ? 'open' : 'closed'}` };
-    const started = healthz(info.container, '/healthz/started');
-    return { ok: started.status === 200, why: `health=${health} pgwire=open started=${started.status ?? 'exec-failed'}${started.status === 200 ? '' : ` ${started.body.slice(0, 120)}`}` };
+    return { ok: health === 'healthy' && open, why: `health=${health} pgwire=${open ? 'open' : 'closed'}` };
   }
   try {
     const response = await fetch(`${info.endpoint}/?query=${encodeURIComponent('SELECT * WHERE { ?s ?p ?o } LIMIT 1')}`,
@@ -210,7 +179,7 @@ function exportsFor(info) {
 }
 
 /** Acquire (or confirm) the persistent slot lock. dev is a shared resident; s* are exclusive. */
-function acquireSlotUnlocked(info, holder, experiment) {
+function acquireSlot(info, holder, experiment) {
   fs.mkdirSync(path.dirname(info.lockDir), { recursive: true });
   let created = false;
   try { fs.mkdirSync(info.lockDir); created = true; } catch (error) { if (error.code !== 'EEXIST') throw error; }
@@ -220,54 +189,28 @@ function acquireSlotUnlocked(info, holder, experiment) {
     if (!owner) fail('REFUSED', `${info.lockDir} exists without owner.json; inspect and remove it by hand if abandoned`);
     if (owner.holder !== holder && info.mode !== 'resident')
       fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}" (${owner.experiment ?? 'no experiment'}) since ${owner.createdAt}`);
-    if (['REMOVING', 'STOPPING', 'STARTING'].includes(owner.lifecycle?.state)) fail('REFUSED', 'slot teardown is in progress');
     return { owner, created: false };
   }
   const owner = {
     format: OWNER_FORMAT, lane: info.lane, slot: info.slot, mode: info.mode, container: info.container, volume: info.volume,
-    endpoint: info.endpoint, port: info.port, generation: randomUUID(), holder, experiment: experiment ?? null, pid: process.pid, worktree: REPO, createdAt: now(),
+    endpoint: info.endpoint, port: info.port, holder, experiment: experiment ?? null, pid: process.pid, worktree: REPO, createdAt: now(),
   };
   atomicJson(info.ownerFile, owner);
   appendEvent({ event: 'slot-acquired', slot: `${info.lane}-${info.slot}`, holder });
   return { owner, created: true };
 }
 
-async function acquireSlot(info, holder, experiment) { return ownerStateLock(info, () => acquireSlotUnlocked(info, holder, experiment)); }
-
-async function releaseSlot(info, expectedOwner) {
-  return ownerStateLock(info, () => {
-    // [EXP-K01-R5] Why: teardown may wait on pool accounting while a newer owner appears. Rejected: unconditional directory removal (erases the newer generation and receipts).
-    const current = readOwner(info);
-    if (!current && !expectedOwner) return;
-    if (!current || !expectedOwner || current.generation !== expectedOwner.generation || current.holder !== expectedOwner.holder || current.createdAt !== expectedOwner.createdAt || current.lifecycle?.token !== expectedOwner.lifecycle?.token)
-      fail('REFUSED', 'slot generation changed before release');
-    fs.rmSync(info.lockDir, { recursive: true, force: true });
-    appendEvent({ event: 'slot-released', slot: `${info.lane}-${info.slot}` });
-  });
+function releaseSlot(info) {
+  fs.rmSync(info.lockDir, { recursive: true, force: true });
+  appendEvent({ event: 'slot-released', slot: `${info.lane}-${info.slot}` });
 }
 
-/**
- * hooks.prepareVolume (EXP-K01 clone): runs after the reservation and the --fresh removal, right before docker run, so
- * a clone fills the new volume before the first start (Docker then never populates it from the image directory).
- */
-// [EXP-K01-R6] Why: Lifecycle optional chains below are refusal guards or explicit legacy metadata, not replacement runtime reads; catches retain or release only after complete absence observation and never return success. Rejected: converting a failed observation into successful content.
 async function up(config, info, opts, hooks = {}) {
   const holder = defaultHolder(opts);
-  const slot = await acquireSlot(info, holder, opts.exp);
+  const slot = acquireSlot(info, holder, opts.exp);
   try {
     const eff = effectiveConfig(config, info);
     const existing = inspect(info.container);
-    // [EXP-K01] The owner record says what the slot volume holds; a --fresh start wipes it, and a restart makes an
-    // earlier readiness verdict stale (the start appends a NoOp to REPLICA_LOG and replays), so it is re-run by `verify`.
-    if (opts.fresh || !existing?.State.Running) {
-      slot.owner = await updateOwner(info, owner => {
-        if (!owner || owner.generation !== slot.owner.generation || owner.holder !== holder || owner.createdAt !== slot.owner.createdAt || owner.lifecycle?.token !== slot.owner.lifecycle?.token) fail('REFUSED', 'slot generation changed before start');
-        owner.lifecycle = { state: 'STARTING', token: randomUUID(), at: now() };
-        if (opts.fresh) delete owner.volumeContent;
-        else if (owner.volumeContent) owner.volumeContent.readiness = { verdict: 'STALE', reason: `restarted at ${now()}; run engine.mjs verify` };
-        return owner;
-      });
-    }
     if (existing && !opts.fresh && existing.Config.Labels?.['tx2.config-sha256'] !== eff.sha256)
       fail('REFUSED', `${info.container} runs config ${existing.Config.Labels?.['tx2.config-sha256']?.slice(0, 12)} but slots.json now gives ${eff.sha256.slice(0, 12)}; rerun with --fresh to recreate (wipes the volume)`);
     if (existing?.State.Running && !opts.fresh) {
@@ -299,8 +242,8 @@ async function up(config, info, opts, hooks = {}) {
     try {
       if (opts.fresh) {
         if (existing) docker(['rm', '-f', info.container]);
-        if (inspectVolume(info.volume)) docker(['volume', 'rm', info.volume]);
-        if (inspectVolume(info.volume)) fail('ENGINE', `volume ${info.volume} still exists after --fresh removal`);
+        docker(['volume', 'rm', info.volume], { allowFail: true });
+        if (docker(['volume', 'inspect', info.volume], { allowFail: true })) fail('ENGINE', `volume ${info.volume} still exists after --fresh removal`);
       }
       assertSingleWriter(info, eff);
       if (existing && !opts.fresh) docker(['start', info.container]);
@@ -314,21 +257,13 @@ async function up(config, info, opts, hooks = {}) {
           docker(['run', '--rm', '--network', 'none', '-u', '0:0', '-v', `${info.volume}:/data`, '--entrypoint', 'sh', info.laneConf.image,
             '-c', 'echo "tx2 volume initialized for uid 999" > /data/.tx2-volume && chown -R 999:999 /data']);
         }
-        if (hooks.prepareVolume) await hooks.prepareVolume(eff);
-        assertSingleWriter(info, eff);
-        hooks.marks && (hooks.marks.runAt = Date.now());
+        if (hooks.prepareVolume) await hooks.prepareVolume();
         docker(runArgs(info, eff, holder));
       }
       const ready = await waitReady(info);
-      hooks.marks && (hooks.marks.readyAt = Date.now());
       await withPool(async ledger => {
         const entry = ledger.reservations.find(item => item.container === info.container);
         if (entry) Object.assign(entry, { state: 'running', pid: null, configSha256: eff.sha256, readyAt: now() });
-      });
-      await updateOwner(info, owner => {
-        if (!owner || owner.generation !== slot.owner.generation || owner.holder !== holder || owner.lifecycle?.token !== slot.owner.lifecycle?.token) fail('REFUSED', 'slot lifecycle changed during start');
-        if (owner.lifecycle) owner.lifecycle.state = 'RUNNING';
-        return owner;
       });
       process.stderr.write(`[lab] ${info.container} ready (${ready.why}); cap ${fmtBytes(info.memBytes)}, ${info.cpus} CPU, config ${eff.sha256.slice(0, 12)}\n`);
       process.stdout.write(exportsFor(info) + '\n');
@@ -339,7 +274,7 @@ async function up(config, info, opts, hooks = {}) {
       throw error;
     }
   } catch (error) {
-    if (slot.created && !inspect(info.container)) await releaseSlot(info, slot.owner);
+    if (slot.created && !inspect(info.container)) releaseSlot(info);
     throw error;
   }
 }
@@ -347,45 +282,33 @@ async function up(config, info, opts, hooks = {}) {
 async function down(config, info, opts) {
   const holder = defaultHolder(opts);
   const owner = readOwner(info);
-  if (!owner) fail('REFUSED', 'no slot owner; refusing teardown without a current generation');
   if (owner && owner.holder !== holder && !opts.force)
     fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}"; pass --force only if you own it`);
   // [EXP-X05] A follower outliving its writer would block the next writer start (volumeGuard) and keep
   // its pool reservation; take it down first, explicitly.
   if (info.lane === 'xtdb' && config.lanes.xtdb.follower && inspect(`${info.container}-ro`))
     fail('REFUSED', `${info.container}-ro still exists; run: node lab/bin/engine.mjs down --lane xtdb --slot ${info.slot} --follower`);
-  // [EXP-K01-R5] Why: revocation must precede physical teardown, including its pool-lock wait. Rejected: releasing only after removal (an in-flight verifier can publish PASS for the gone container).
-  const removing = await updateOwner(info, current => {
-    if (!current && !owner) return;
-    if (!current || !owner || current.generation !== owner.generation || current.holder !== owner.holder || current.createdAt !== owner.createdAt) fail('REFUSED', 'slot generation changed before teardown');
-    current.lifecycle = { state: 'REMOVING', token: randomUUID(), at: now() };
-    if (current.volumeContent) {
-      current.volumeContent.verificationHistory = [...(current.volumeContent.verificationHistory ?? []), current.volumeContent.readiness].filter(Boolean);
-      current.volumeContent.readiness = { verdict: 'STALE', reason: 'down requested; current receipt revoked', at: now() };
-    }
-    return current;
-  });
   const existing = inspect(info.container);
   if (existing) {
     if (!existing.Config.Labels?.['tx2.managed-by']) fail('REFUSED', `${info.container} was not started by lab/bin/engine.mjs; not stopping it`);
-    docker(['stop', '-t', '30', info.container]);
+    docker(['stop', '-t', '30', info.container], { allowFail: true });
     docker(['rm', '-f', info.container]);
   }
   // Prove cleanup before releasing anything.
-  if (docker(['ps', '-a', '--filter', `name=^${info.container}$`, '--format', '{{.ID}}'])) fail('ENGINE', `${info.container} still exists; reservation kept`);
+  if (inspect(info.container)) fail('ENGINE', `${info.container} still exists; reservation kept`);
   let volumeNote;
   if (opts['remove-volume']) {
-    if (inspectVolume(info.volume)) docker(['volume', 'rm', info.volume]);
-    if (docker(['volume', 'ls', '--filter', `name=^${info.volume}$`, '--format', '{{.Name}}'])) fail('ENGINE', `volume ${info.volume} still exists; reservation kept`);
+    docker(['volume', 'rm', info.volume], { allowFail: true });
+    if (docker(['volume', 'inspect', info.volume], { allowFail: true })) fail('ENGINE', `volume ${info.volume} still exists; reservation kept`);
     volumeNote = 'removed';
-  } else volumeNote = docker(['volume', 'ls', '--filter', `name=^${info.volume}$`, '--format', '{{.Name}}']) ? 'retained' : 'absent';
+  } else volumeNote = docker(['volume', 'inspect', info.volume], { allowFail: true }) ? 'retained' : 'absent';
   await withPool(async ledger => {
     ledger.reservations = ledger.reservations.filter(entry => entry.container !== info.container);
     ledger.retainedVolumes = (ledger.retainedVolumes ?? []).filter(entry => entry.volume !== info.volume);
     if (volumeNote === 'retained')
       ledger.retainedVolumes.push({ volume: info.volume, holder, note: opts.note ?? 'retained by engine down (default)', at: now(), bytes: volumeBytes(config, info.volume) });
   });
-  await releaseSlot(info, removing);
+  releaseSlot(info);
   appendEvent({ event: 'down', container: info.container, volume: volumeNote });
   process.stderr.write(`[lab] ${info.container} removed; volume ${info.volume} ${volumeNote}; reservation and slot lock released\n`);
 }
@@ -399,7 +322,6 @@ async function down(config, info, opts) {
  * A follower holds no state of its own (the volume is the writer's and it never writes), so a stopped or
  * differently configured follower container is removed and recreated rather than restarted.
  */
-// [EXP-K01-R6] Why: follower catch paths only reconcile reservations and rethrow; lifecycle defaults do not create observation PASS. Rejected: successful fallback after failed startup.
 async function followerUp(config, info, fol, opts) {
   const holder = defaultHolder(opts);
   if (info.mode !== 'exclusive') fail('REFUSED', `followers attach only to exclusive slots, not ${info.lane}-${info.slot} (${info.mode})`);
@@ -468,7 +390,7 @@ async function followerDown(config, info, fol, opts) {
   const existing = inspect(fol.container);
   if (existing) {
     if (existing.Config.Labels?.['tx2.role'] !== 'follower') fail('REFUSED', `${fol.container} is not a harness follower; not stopping it`);
-    docker(['stop', '-t', '30', fol.container]);
+    docker(['stop', '-t', '30', fol.container], { allowFail: true });
     docker(['rm', '-f', fol.container]);
   }
   if (inspect(fol.container)) fail('ENGINE', `${fol.container} still exists; reservation kept`);
@@ -477,715 +399,6 @@ async function followerDown(config, info, fol, opts) {
   process.stderr.write(`[lab] ${fol.container} removed; reservation released; ${info.container} and ${info.volume} untouched\n`);
 }
 
-// ---------------------------------------------------------------- seed once, clone faithfully (EXP-K01)
-//
-// [EXP-K01] Why: every XTDB A0, NS and PAIR-0 run seeds its slot through the commit path, 38 minutes or more at the 10k
-// rung (EXP-N01 A0 receipt). R26 section 6: seed once on an exclusive slot, settle it, prove a clean stop, copy the
-// stopped volume into a write-once golden volume, and start faithful copies of it on any slot with the same system
-// config (RULINGS Q74a-g). Subcommands (XTDB lane, exclusive slots held by the caller):
-//   settle     two finish-blocks, stable block/trie catalogs and idle gauges (Q83b)
-//   stop       docker stop -t 60 and prove the stop was clean; container, lock and reservation stay
-//   golden     settle twice, clean stop, copy, reference start fingerprint (C3-C8), clean stop; tx2-golden-xtdb-<key8>, golden.json beside the manifest
-//   clone      wipe the slot volume, copy a golden in, start, gate on /healthz/started, then C1-C8 (Q74d)
-//   verify     re-run C2-C8 on a cloned slot (after a restart)
-//   listing    list a stopped slot's volume (path, size, mode, owner, sha256), optionally diffed with a golden (R26 P-e)
-//   golden-rm  remove a golden volume that no container mounts
-//   toolcheck  the helper image's tools that R26 assumes (R26 P-g)
-// The SQL side of settle, freeze and verify is lab/bench/clone-check.ts (it needs the built XTDB client; lab/bin takes no
-// dependencies). Rejected: hard links and overlay volumes (R26 3.2: shared inodes, a different I/O path); copying a
-// running engine (torn LOG tail); R26 6.3's empty-node start before the copy (the copy fills a new volume before the
-// first docker run instead, so Docker never populates it from the image and the owner is set once, explicitly).
-
-export const HOST_DISK_FLOOR_BYTES = 5 * 1024 ** 3;
-const HOST_DISK_PATH = process.env.TX2_HOST_DISK_PATH ?? path.dirname(path.dirname(new URL(DOCKER_HOST).pathname));
-const GOLDEN_RECORD_FORMAT = 'tx2-xtdb-golden/1';
-const XTDB_UID = '20000:20000';
-// M01's PAIR system/placement split (Q67g): fields that differ between slots without changing what the engine runs.
-const PLACEMENT_FIELDS = ['slot', 'publish', 'volume', 'cpuset', 'cpusetCpus'];
-
-/** Canonical JSON (sorted keys at every level), so a key does not depend on property order. */
-export const canonicalJson = value => JSON.stringify(value, (key, v) => (v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]])) : v));
-
-/** The slot-independent part of an effective config: what a golden's bytes and a clone's behaviour depend on. */
-export function systemConfig(effective) {
-  return Object.fromEntries(Object.entries(effective).filter(([k]) => !PLACEMENT_FIELDS.includes(k)));
-}
-
-/**
- * Q74a golden key: the seed half (adapter commit and built dist hashes, world and seed-generator hashes, driver seed
- * options; written by lab/bench/xtdb-seed.ts into manifest.seedInputs) plus the engine half (image digest, system
- * config hash). A golden is valid only for exactly these inputs (R26 6.1, risk 1).
- */
-export function goldenKey({ seedInputs, imageId, systemConfigSha256 }) {
-  if (!seedInputs || !imageId || !systemConfigSha256) fail('USAGE', 'goldenKey needs seedInputs, imageId and systemConfigSha256');
-  const inputs = { format: 'tx2-golden-key/1', seedInputs, engine: { imageId, systemConfigSha256 } };
-  const key = sha256(canonicalJson(inputs));
-  return { key, key8: key.slice(0, 8), inputs };
-}
-
-/** Q74f: refuse a copy that would leave the host below the floor. The VM disk is a sparse file, so a copy can grow it by its size. */
-export function diskFloorVerdict({ freeBytes, copyBytes, floorBytes = HOST_DISK_FLOOR_BYTES }) {
-  const afterBytes = freeBytes - copyBytes;
-  // [EXP-K01-R5] Why: invalid observations cannot imply sufficient disk. Rejected: arithmetic comparison alone (Infinity or a negative copy size can pass).
-  const valid = [freeBytes, copyBytes, floorBytes].every(n => Number.isFinite(n) && n >= 0 && n <= Number.MAX_SAFE_INTEGER);
-  return { ok: valid && afterBytes >= floorBytes, freeBytes, copyBytes, afterBytes, floorBytes,
-    reason: valid && afterBytes >= floorBytes ? null : `host free disk ${fmtBytes(freeBytes)} - copy ${fmtBytes(copyBytes)} = ${fmtBytes(afterBytes)} < floor ${fmtBytes(floorBytes)} (Q74f)` };
-}
-export function hostDisk() {
-  return complete(observe('host disk', { path: HOST_DISK_PATH }, () => fs.statfsSync(HOST_DISK_PATH), s => {
-    const freeBytes = byteCount(s.bavail * s.bsize), totalBytes = byteCount(s.blocks * s.bsize);
-    if (freeBytes > totalBytes || totalBytes === 0) throw Error('inconsistent host disk observation');
-    return { path: HOST_DISK_PATH, freeBytes, totalBytes };
-  }));
-}
-
-/**
- * R26 1.5 item 2: a stop is clean only if the log of this run says `Node stopped.`, never `could not stop node cleanly`
- * (the shutdown hook's halt(1) after 10 s, references/xtdb/main/src/main/clojure/xtdb/main.clj:81-98), and the JVM
- * exited 143 (SIGTERM) within ten seconds. 137 is a SIGKILL after the grace period; 1 is the halt.
- */
-export function stopVerdict({ log, exitCode, oomKilled, stopMs }) {
-  const reasons = [];
-  const stoppedLine = String(log).split('\n').reverse().find(line => line.includes('Node stopped.')) ?? null;
-  if (!stoppedLine) reasons.push('no "Node stopped." in this run\'s log');
-  if (/could not stop node cleanly/.test(log)) reasons.push('log says "could not stop node cleanly"');
-  if (!String(log).includes('Stopping node...')) reasons.push('no "Stopping node..." in this run\'s log');
-  if (!(Number.isFinite(stopMs) && stopMs >= 0 && stopMs < 10000)) reasons.push('stop did not finish within 10 s');
-  if (exitCode !== 143) reasons.push(`exit code ${exitCode}`);
-  if (typeof oomKilled !== 'boolean') reasons.push('missing OOM observation');
-  if (oomKilled) reasons.push('OOM killed');
-  const componentLines = String(log).split('\n').filter(line => /Server stopped\.|Flight SQL server stopped|Healthz server stopped\./.test(line));
-  return { ok: reasons.length === 0, componentLines, stoppedLine: stoppedLine?.trim().slice(0, 300) ?? null, exitCode, oomKilled: !!oomKilled, reasons };
-}
-
-/**
- * Helper-container listing of a mounted directory: one stat line and one sha256 line per regular file, `.tmp` upload
- * scratch refused if nonempty (Q83b). BusyBox find/stat/sha256sum/sort (R26 P-g).
- */
-// [EXP-K01-R6] Why: a shell pipeline can hide find/stat/hash failures behind successful sort. Rejected: set -e alone (does not propagate earlier pipeline exits).
-export const listingScript = dir => `(
-set -eu; ${emptyTmpScript(dir)};
-work=$(mktemp -d); trap 'rm -rf "$work"' EXIT; cd ${dir};
-find . -type f ! -path '*/.tmp/*' -exec stat -c '%n|%s|%a|%u|%g' {} + > "$work/stat";
-LC_ALL=C sort "$work/stat" > "$work/stat.sorted";
-find . -type f ! -path '*/.tmp/*' -exec sha256sum {} + > "$work/sha";
-LC_ALL=C sort -k 2 "$work/sha" > "$work/sha.sorted";
-echo @@stat; cat "$work/stat.sorted"; echo @@sha; cat "$work/sha.sorted"; echo @@end
-)`;
-
-// [EXP-K01-R2] Why: interrupted uploads are forensic evidence, never disposable copy scratch (Q83b). Rejected: deleting .tmp to manufacture an equal tree.
-export const emptyTmpScript = dir => `tmp=$(find ${dir}/buffers -path '*/.tmp/*' ! -type d -print); test -z "$tmp" || { echo 'non-empty .tmp refused' >&2; exit 1; }`;
-
-// [EXP-K01-R2] Why: reproduce LocalLog.kt:61-93 offline without starting another JVM. Rejected: exit status alone (does not prove durable log tails).
-// [EXP-K01-R6] Why: binary reads and block enumeration must finish before transformation. Rejected: tail/dd/find pipelines (the final awk/sort can succeed on partial input). dd's ordinary counters are hidden, but its exit is checked.
-export const offlineScript = dir => `(
-set -eu; ${emptyTmpScript(dir)};
-work=$(mktemp -d); trap 'rm -rf "$work"' EXIT;
-be() { od -An -v -tu1 "$work/binary" > "$work/numbers"; awk '{for(i=1;i<=NF;i++) n=n*256+$i} END {printf "%.0f",n}' "$work/numbers"; }
-for name in LOG REPLICA_LOG; do
- f=${dir}/log/$name; test -f "$f"; bytes=$(stat -c %s "$f");
- if [ "$bytes" -eq 0 ]; then echo "$name|0|-1|0"; continue; fi;
- test "$bytes" -ge 21;
- tail -c 8 "$f" > "$work/binary"; offset=$(be); test "$offset" -ge 0; test "$offset" -lt "$bytes";
- dd if="$f" bs=1 skip="$offset" count=1 > "$work/binary" 2>/dev/null; sep=$(be); test "$sep" -eq 30;
- dd if="$f" bs=1 skip=$((offset+1)) count=4 > "$work/binary" 2>/dev/null; size=$(be);
- test "$bytes" -eq $((offset+1+4+8+size+8));
- echo "$name|$bytes|$offset|$size";
-done;
-find ${dir}/buffers/v06/blocks -maxdepth 1 -type f -name 'b*.binpb' > "$work/blocks";
-sed 's|.*/b||;s|.binpb$||' "$work/blocks" > "$work/names";
-LC_ALL=C sort "$work/names" > "$work/sorted";
-echo @@blocks; cat "$work/sorted"; echo @@end
-)`;
-
-// [EXP-K01-R6] Why: Decoder errors below are retained failed observations with ok:false; no partial listing/tail can set ok without the complete helper and decoded proof. Rejected: converting a failed observation into successful content.
-function offlineCheck(config, info, expected) {
-  const frontiers = expected.frontiers;
-  if (!frontiers) fail('REFUSED', 'offline freeze requires separate F/M/T frontiers (Q83e)');
-  if (!Number.isSafeInteger(expected.cutIndex) || expected.cutIndex < 0) fail('REFUSED', 'offline freeze requires intended cut index');
-  const offset = frontiers.F % (2 ** 48);
-  if (!Number.isSafeInteger(offset) || offset < 0) fail('REFUSED', 'invalid block-cut offset');
-  const raw = helper(config, `tx2-clone-offline-${info.slot}`, [`${info.volume}:/src:ro`], offlineScript('/src') +
-    `; tail -c +${offset + 1} /src/log/LOG > /tmp/k01-source-tail; test $(stat -c %s /tmp/k01-source-tail) -le 16777216; echo @@sourceTail; base64 /tmp/k01-source-tail; echo @@sourceEnd`);
-  const [tails, listing] = sections(raw, '@@blocks');
-  const blocks = listing.split('@@end')[0].trim().split('\n').filter(Boolean);
-  const sourceTailBase64 = sections(sections(raw, '@@sourceTail')[1], '@@sourceEnd')[0].replace(/\s/g, '');
-  let maintenance;
-  try {
-    const bytes = Buffer.from(sourceTailBase64, 'base64');
-    if (bytes.toString('base64') !== sourceTailBase64) throw new Error('noncanonical base64 stopped-tail evidence');
-    maintenance = verifyMaintenanceTail(bytes, frontiers, expected.cutIndex);
-  }
-  catch (error) { maintenance = { ok: false, error: error.message, frontiers }; }
-  return { ok: maintenance.ok && canonicalJson(blocks) === canonicalJson(expected.listing), maintenance, sourceTailBase64, tails: tails.trim().split('\n'), blocks, expected: expected.listing, raw };
-
-}
-
-/** Parse one listingScript output into sorted file records and a tree hash over every field. */
-export function parseListing(text) {
-  const stat = [], sha = new Map(), seen = new Set();
-  let section = null, phase = 0;
-  for (const line of String(text).split('\n')) {
-    if (line.startsWith('@@')) { section = line.slice(2).trim(); if (section !== ['stat', 'sha', 'end'][phase++]) fail('ENGINE', 'listing sections are missing, duplicated or out of order'); continue; }
-    if (!line.trim()) continue;
-    if (section === 'stat') {
-      const [p, bytes, mode, uid, gid, extra] = line.split('|');
-      if (extra !== undefined || !p?.startsWith('./') || seen.has(p) || !/^(0|[1-9][0-9]*)$/.test(bytes) || !Number.isSafeInteger(Number(bytes)) || !/^[0-7]{3,4}$/.test(mode) || !/^[0-9]+$/.test(uid) || !/^[0-9]+$/.test(gid)) fail('ENGINE', 'invalid or duplicate file stat in tree preimage');
-      seen.add(p);
-      stat.push({ path: p, bytes: Number(bytes), mode, uid, gid });
-    } else if (section === 'sha') {
-      const m = /^([0-9a-f]{64})\s+(.+)$/.exec(line);
-      if (!m) fail('ENGINE', `bad sha256sum line ${JSON.stringify(line)}`);
-      if (sha.has(m[2])) fail('ENGINE', 'duplicate file hash in tree preimage');
-      sha.set(m[2], m[1]);
-    } else fail('ENGINE', 'unexpected bytes outside listing sections');
-  }
-  if (section !== 'end' || phase !== 3) fail('ENGINE', 'listing output is truncated (no @@end)');
-  const files = stat.map(f => ({ ...f, sha256: sha.get(f.path) ?? null })).sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
-  if (files.some(f => !f.sha256) || sha.size !== files.length) fail('ENGINE', 'listing stat and sha256 sections disagree');
-  const lines = files.map(f => `${f.path}|${f.bytes}|${f.mode}|${f.uid}|${f.gid}|${f.sha256}`);
-  return { files, count: files.length, bytes: files.reduce((s, f) => s + f.bytes, 0), treeSha256: sha256(lines.join('\n') + '\n') };
-}
-
-/** Files that differ between two listings (R26 P-e: a first start may only append to the logs and add files). */
-export function diffListings(before, after) {
-  const a = new Map(before.files.map(f => [f.path, f])), b = new Map(after.files.map(f => [f.path, f]));
-  const changed = [...a.keys()].filter(p => b.has(p) && (a.get(p).sha256 !== b.get(p).sha256 || a.get(p).bytes !== b.get(p).bytes || a.get(p).mode !== b.get(p).mode || a.get(p).uid !== b.get(p).uid || a.get(p).gid !== b.get(p).gid));
-  const removed = [...a.keys()].filter(p => !b.has(p));
-  const added = [...b.keys()].filter(p => !a.has(p));
-  const logs = new Set(['./log/LOG', './log/REPLICA_LOG']);
-  const changedOutsideLogs = changed.filter(p => !logs.has(p));
-  return { changed, added, removed, changedOutsideLogs, storageImmutable: changedOutsideLogs.length === 0 && removed.length === 0 };
-}
-
-/** One throwaway helper on the pinned image, root, no network, memory-capped, named tx2-clone-* (counted as external by others' admission). */
-function helper(config, name, mounts, script) {
-  return docker(['run', '--rm', '--network', 'none', '-u', '0:0', '--name', name, '--memory', '512m', '--memory-swap', '512m',
-    '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', 'tx2.role=clone-helper', ...mounts.flatMap(m => ['-v', m]),
-    '--entrypoint', 'sh', config.lanes.xtdb.image, '-c', `set -eu; ${script}`], { stderrEmpty: true });
-}
-const sections = (text, marker) => { const i = text.indexOf(marker); if (i < 0) fail('ENGINE', `helper output has no ${marker}`); return [text.slice(0, i), text.slice(i + marker.length)]; };
-
-/** lab/bench/clone-check.ts (settle | freeze | verify); progress on stderr, one JSON document on stdout. */
-function cloneCheck(args) {
-  const r = spawnSync(process.execPath, [path.join(REPO, 'lab/bench/clone-check.ts'), ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 256 << 20, timeout: 3600_000 });
-  return complete(processObservation('clone-check response', { args }, r, out => {
-    const value = JSON.parse(out.stdout);
-    if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('missing clone-check response object');
-    return value;
-  }));
-}
-
-function requireHeldXtdbSlot(info, opts) {
-  if (info.lane !== 'xtdb') fail('USAGE', 'golden, clone and settle exist for the xtdb lane only (R26 6.4 has the QLever variant, not built)');
-  if (info.mode !== 'exclusive') fail('REFUSED', `${info.lane}-${info.slot} is ${info.mode}; clones and goldens use exclusive slots only`);
-  const owner = readOwner(info);
-  if (owner && owner.holder !== defaultHolder(opts)) fail('REFUSED', `${info.lane}-${info.slot} is held by "${owner.holder}"`);
-  return owner;
-}
-function requireRunningSlot(config, info) {
-  const c = inspect(info.container);
-  if (!c?.State.Running) fail('REFUSED', `${info.container} is not running`);
-  const eff = effectiveConfig(config, info);
-  if (c.Config.Labels?.['tx2.config-sha256'] !== eff.sha256) fail('REFUSED', `${info.container} runs config ${c.Config.Labels?.['tx2.config-sha256']?.slice(0, 12)}, not the effective ${eff.sha256.slice(0, 12)}`);
-  if (c.Image !== info.laneConf.imageId) fail('REFUSED', `${info.container} image ${c.Image} is not the pinned ${info.laneConf.imageId}`);
-  return { c, eff };
-}
-const writeJson = (file, value) => { fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n'); };
-
-/** Q74b settle on a running slot (also the fresh-seeded arm's settle in E1). */
-async function settle(config, info, opts) {
-  if (!readOwner(info)) fail('REFUSED', `${info.lane}-${info.slot} has no slot lock`);
-  requireHeldXtdbSlot(info, opts);
-  requireRunningSlot(config, info);
-  const out = cloneCheck(['settle', '--url', info.endpoint, '--container', info.container, ...(opts['timeout-s'] ? ['--timeout-s', String(opts['timeout-s'])] : [])]);
-  process.stdout.write(JSON.stringify(out, null, 2) + '\n');
-  if (!out.settled) fail('ENGINE', `${info.container} did not settle: ${out.reason}`);
-  return out;
-}
-
-/** docker stop -t 60 and the clean-stop proof (R26 1.5 item 2). Container, slot lock and reservation stay. */
-async function stopSlot(config, info, opts) {
-  if (!readOwner(info)) fail('REFUSED', `${info.lane}-${info.slot} has no slot lock`);
-  requireHeldXtdbSlot(info, opts);
-  const held = readOwner(info);
-  const stopping = await updateOwner(info, current => {
-    if (!current || current.holder !== held.holder || current.generation !== held.generation || current.createdAt !== held.createdAt || current.lifecycle?.token !== held.lifecycle?.token || current.lifecycle?.state === 'REMOVING') fail('REFUSED', 'slot generation changed before stop');
-    current.lifecycle = { state: 'STOPPING', token: randomUUID(), at: now() };
-    if (current.volumeContent) {
-      current.volumeContent.verificationHistory = [...(current.volumeContent.verificationHistory ?? []), current.volumeContent.readiness].filter(Boolean);
-      current.volumeContent.readiness = { verdict: 'STALE', at: now(), reason: 'stop requested; fresh verification required' };
-    }
-    return current;
-  });
-  const before = inspect(info.container);
-  if (!before) fail('REFUSED', `${info.container} does not exist or current inspect failed`);
-  if (!before.Id || !before.State?.StartedAt || !Number.isFinite(Date.parse(before.State.StartedAt))) fail('REFUSED', 'current stop inspect has no valid start identity');
-  if (!before.Config.Labels?.['tx2.managed-by']) fail('REFUSED', `${info.container} was not started by lab/bin/engine.mjs`);
-  const t0 = Date.now();
-  if (before.State.Running) docker(['stop', '-t', '60', info.container]);
-  const stopMs = Date.now() - t0;
-  const after = inspect(info.container);
-  if (!after?.State) fail('ENGINE', 'current stopped-container inspect failed');
-  if (after.Id !== before.Id || after.State.StartedAt !== before.State.StartedAt) fail('REFUSED', 'container start identity changed while stopping');
-  if (after?.State.Running) fail('ENGINE', `${info.container} still running after docker stop -t 60`);
-  const logs = spawnSync('docker', dockerArgs(['logs', '--since', before.State.StartedAt, info.container]), { encoding: 'utf8', maxBuffer: 256 << 20 });
-  const logRead = { status: logs.status, signal: logs.signal ?? null, error: logs.error?.message ?? null, stdout: logs.stdout ?? '', stderr: logs.stderr ?? '' };
-  const verdict = stopVerdict({ log: `${logs.stdout ?? ''}\n${logs.stderr ?? ''}`, exitCode: after.State.ExitCode, oomKilled: after.State.OOMKilled, stopMs: before.State.Running ? stopMs : null });
-  const logObservation = processObservation('stop log', { container: info.container, startedAt: before.State.StartedAt }, logs, out => out);
-  if (logObservation.state !== 'complete') { verdict.ok = false; verdict.reasons.push('current stop log read failed'); }
-  const proof = observe('stop proof', { container: info.container, containerId: after.Id, startedAt: before.State.StartedAt }, () => verdict, booleanProof);
-  await withPool(async ledger => { const e = ledger.reservations.find(item => item.container === info.container); if (e) Object.assign(e, { state: 'stopped', stoppedAt: now() }); });
-  await updateOwner(info, current => {
-    if (!current || current.generation !== stopping.generation || current.holder !== stopping.holder || current.lifecycle?.token !== stopping.lifecycle.token) fail('REFUSED', 'slot lifecycle changed during stop');
-    current.lifecycle.state = 'STOPPED';
-    return current;
-  });
-  appendEvent({ event: 'stopped', container: info.container, clean: verdict.ok });
-  const out = { container: info.container, containerId: after.Id, startedAt: before.State.StartedAt, finishedAt: after.State.FinishedAt, stopMs, wasRunning: before.State.Running, logRead, logObservation, proof, verdict };
-  if (opts.print !== false) { process.stdout.write(JSON.stringify(out, null, 2) + '\n'); if (proof.state !== 'complete') process.exitCode = 1; }
-  return out;
-}
-
-/**
- * Golden (R26 6.2): settle, freeze record, clean stop, copy into a new write-once volume through a read-only source mount.
- * The slot stays held with its container stopped; release it with `down --remove-volume` or clone onto it.
- */
-// [EXP-K01-R6] Why: Missing semantic fields below refuse or throw; catch paths retain the original failure and cleanup observation, and never publish a golden from defaults. Rejected: converting a failed observation into successful content.
-async function golden(config, info, opts) {
-  if (!readOwner(info)) fail('REFUSED', `${info.lane}-${info.slot} has no slot lock`);
-  requireHeldXtdbSlot(info, opts);
-  if (!opts.manifest) fail('USAGE', 'golden needs --manifest runs/xtdb-seed/<name>/manifest.json (lab/bench/xtdb-seed.ts)');
-  const manifestFile = path.resolve(String(opts.manifest));
-  const manifest = readJson(manifestFile);
-  if (manifest.format !== 'tx2-xtdb-seed/1' || manifest.lane !== 'xtdb') fail('REFUSED', `${manifestFile} is ${manifest.format}/${manifest.lane}, not an XTDB seed manifest`);
-  if (!manifest.result?.complete) fail('REFUSED', `the seed in ${manifestFile} is incomplete (${manifest.result?.seededSubjects}/${manifest.subjects})`);
-  const recordFile = path.join(path.dirname(manifestFile), 'golden.json');
-  if (fs.existsSync(recordFile)) fail('REFUSED', `${recordFile} exists: one golden per seed manifest`);
-  const { c, eff } = requireRunningSlot(config, info);
-  const systemConfigSha256 = sha256(JSON.stringify(systemConfig(eff.effective)));
-  const k = goldenKey({ seedInputs: manifest.seedInputs, imageId: c.Image, systemConfigSha256 });
-  const volume = `tx2-golden-xtdb-${k.key8}`;
-  if (inspectVolume(volume)) fail('REFUSED', `${volume} already exists (goldens are write-once; engine.mjs golden-rm first)`);
-  const timings = {};
-  // [EXP-K01] Why: a clean-stop refusal must retain its successful freeze and actual stop outcome. Rejected: publishing only golden.json on success (loses first-failure evidence).
-  const attemptFile = path.join(path.dirname(manifestFile), `golden-attempt-${Date.now()}.json`);
-  const attempt = { format: 'tx2-xtdb-golden-attempt/1', at: now(), key: k.key, volume, manifestSha256: sha256File(manifestFile), containerId: c.Id, timings, status: 'SETTLING' };
-  writeJson(attemptFile, attempt);
-  try {
-    const settleEvidence = path.join(path.dirname(manifestFile), `settle-${Date.now()}.json`);
-    attempt.settleEvidence = path.relative(REPO, settleEvidence);
-    writeJson(attemptFile, attempt);
-    let t = Date.now();
-    const settled = cloneCheck(['settle', '--url', info.endpoint, '--container', info.container, '--evidence', settleEvidence]);
-    timings.settleS = (Date.now() - t) / 1000;
-    Object.assign(attempt, { settled, status: settled.settled ? 'FREEZING' : 'REFUSED_SETTLE' });
-    writeJson(attemptFile, attempt);
-    if (!settled.settled) fail('ENGINE', `${info.container} did not settle: ${settled.reason}`);
-    // [EXP-K01-R2] Why: clone-check has exited and closed all pools before stop (G6). Rejected: stopping with a held snapshot (can exceed the JVM hook deadline).
-    Object.assign(attempt, { clients: { cloneCheckExited: true }, status: 'STOPPING' });
-    writeJson(attemptFile, attempt);
-    const stop = await stopSlot(config, info, { ...opts, print: false });
-    timings.stopS = stop.stopMs / 1000;
-    Object.assign(attempt, { stop, status: stop.verdict.ok ? 'COPYING' : 'REFUSED_STOP' });
-    writeJson(attemptFile, attempt);
-    if (!stop.verdict.ok) fail('REFUSED', `${info.container} did not stop cleanly (${stop.verdict.reasons.join('; ')}); no golden made`);
-    const offline = offlineCheck(config, info, settled.after);
-    Object.assign(attempt, { offline, status: offline.ok ? 'COPYING' : 'REFUSED_OFFLINE' });
-    writeJson(attemptFile, attempt);
-    if (!offline.ok) fail('REFUSED', 'offline tails/frontiers or block listing differ from settled evidence');
-    settled.qualified = true; settled.proofStage = 'STOPPED_TAIL_VERIFIED'; settled.tailProof = offline.maintenance;
-    const sourceBytes = volumeBytes(config, info.volume);
-    const diskBefore = hostDisk();
-    const floor = diskFloorVerdict({ freeBytes: diskBefore.freeBytes, copyBytes: sourceBytes });
-    if (!floor.ok) fail('REFUSED', floor.reason);
-    const creationId = randomUUID();
-    const creationReceiptFile = opts['creation-receipt'] ? path.resolve(opts['creation-receipt']) : path.join(path.dirname(manifestFile), `creation-${creationId}.json`);
-    const creation = { format: 'tx2-golden-creation/1', invocation: String(opts.invocation ?? creationId), creationId, volume, created: false, at: now() };
-    atomicJson(creationReceiptFile, creation, { exclusive: true });
-    Object.assign(attempt, { creation, creationReceiptFile }); writeJson(attemptFile, attempt);
-    docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', 'tx2.golden=1', '--label', `tx2.seed-key=${k.key}`, '--label', `tx2.creation-id=${creationId}`, volume]);
-    const createdVolume = JSON.parse(docker(['volume', 'inspect', volume]))[0];
-    if (createdVolume.Labels?.['tx2.creation-id'] !== creationId) fail('REFUSED', 'golden creation ownership differs; do not remove it');
-    creation.created = true; writeJson(creationReceiptFile, creation);
-    Object.assign(attempt, { creation }); writeJson(attemptFile, attempt);
-    t = Date.now();
-    let src, dst;
-    try {
-      const out = helper(config, `tx2-clone-gold-${k.key8}`, [`${info.volume}:/src:ro`, `${volume}:/dst`],
-        `${listingScript('/src')}; echo @@copy; cp -a /src/. /dst/; ${emptyTmpScript('/dst')}; chown ${XTDB_UID} /dst; sync; ${listingScript('/dst')}`);
-      const [a, b] = sections(out, '@@copy');
-      src = parseListing(a);
-      dst = parseListing(b);
-    } catch (error) { error.cleanup = observe('failed golden copy cleanup', { volume }, () => docker(['volume', 'rm', volume]), text); throw error; }
-    timings.copyS = (Date.now() - t) / 1000;
-    if (src.treeSha256 !== dst.treeSha256) { const cleanup = observe('unequal golden cleanup', { volume }, () => docker(['volume', 'rm', volume]), text); fail('ENGINE', `golden copy differs from its source (${src.treeSha256.slice(0, 12)} vs ${dst.treeSha256.slice(0, 12)}); cleanup=${JSON.stringify(cleanup)}`); }
-    Object.assign(attempt, { copy: { source: src, destination: dst }, status: 'REFERENCE_START' });
-    writeJson(attemptFile, attempt);
-    t = Date.now();
-    await up(config, info, { ...opts, fresh: false });
-    const expectedFile = path.join(path.dirname(manifestFile), 'reference-expected.json');
-    writeJson(expectedFile, settled.after);
-    const start = cloneCheck(['start-check', '--url', info.endpoint, '--container', info.container, '--expected', expectedFile]);
-    Object.assign(attempt, { start, status: start.ok ? 'REFERENCE_FREEZE' : 'REFUSED_REFERENCE_START' });
-    writeJson(attemptFile, attempt);
-    if (!start.ok) fail('REFUSED', 'reference start differs from settled state; golden is unpublished');
-    const freeze = cloneCheck(['freeze', '--url', info.endpoint, '--container', info.container, '--manifest', manifestFile]);
-    timings.freezeS = (Date.now() - t) / 1000;
-    const end = cloneCheck(['diagnostic', '--url', info.endpoint, '--container', info.container]);
-    Object.assign(attempt, { freeze, referenceEnd: end, status: 'REFERENCE_STOP' });
-    writeJson(attemptFile, attempt);
-    const referenceStop = await stopSlot(config, info, { ...opts, print: false });
-    Object.assign(attempt, { referenceStop, status: 'REFERENCE_STOPPED' });
-    writeJson(attemptFile, attempt);
-    if (!freeze.ok || freeze.c4?.position !== manifest.result.lastPosition || !referenceStop.verdict.ok || timings.freezeS >= 600 ||
-      end.live.total !== 0 || end.snapshot.trie.sha256 !== settled.after.trie.sha256 ||
-      end.snapshot.gauges.jobsAvailable !== 0 || end.snapshot.gauges.lagMsgId !== 0 ||
-      end.snapshot.gauges.latestCompletedTxId !== settled.after.gauges.latestCompletedTxId ||
-      end.snapshot.gauges.latestProcessedMsgId !== settled.after.gauges.latestProcessedMsgId ||
-      end.snapshot.gauges.latestSubmittedMsgId !== settled.after.gauges.latestSubmittedMsgId ||
-      canonicalJson(end.snapshot.listing) !== canonicalJson(settled.after.listing))
-      fail('REFUSED', 'reference fingerprint, timer, listing or stop failed; golden is unpublished');
-    const referenceOffline = offlineCheck(config, info, settled.after);
-    Object.assign(attempt, { referenceOffline }); writeJson(attemptFile, attempt);
-    if (!referenceOffline.ok) fail('REFUSED', 'reference stopped tail no longer binds M');
-    const goldenBytes = volumeBytes(config, volume);
-    const filesFile = path.join(path.dirname(manifestFile), 'golden-files.json');
-    writeJson(filesFile, dst.files);
-    const pick = name => dst.files.find(f => f.path === name)?.sha256 ?? null;
-    const record = {
-      format: GOLDEN_RECORD_FORMAT, key: k.key, key8: k.key8, keyInputs: k.inputs, volume, createdAt: now(), holder: defaultHolder(opts), experiment: opts.exp ?? null,
-      manifest: { path: path.relative(REPO, manifestFile), sha256: sha256File(manifestFile), scope: manifest.scope, subjects: manifest.subjects, lastPosition: manifest.result.lastPosition, seedWallS: manifest.capture?.wallS ?? null },
-      source: { slot: info.slot, container: info.container, containerId: c.Id, volume: info.volume, imageId: c.Image, configSha256: eff.sha256, systemConfigSha256, systemConfig: systemConfig(eff.effective) },
-      creation, settle: settled, freeze, stop, offline, referenceStart: start, referenceStop, referenceOffline,
-      copy: { sourceBytes, goldenBytes, files: dst.count, fileBytes: dst.bytes, treeSha256: dst.treeSha256, logSha256: pick('./log/LOG'), replicaLogSha256: pick('./log/REPLICA_LOG'), filesFile: path.relative(REPO, filesFile), filesSha256: sha256File(filesFile), sourceMatches: true },
-      hostDisk: { before: diskBefore, after: hostDisk(), floor },
-      timings,
-      rule: 'never start an engine on this volume; clone it (engine.mjs clone --golden-record this file)',
-    };
-    writeJson(recordFile, record);
-    Object.assign(attempt, { status: 'GOLDEN_CREATED', record: recordFile });
-    writeJson(attemptFile, attempt);
-    await withPool(async ledger => {
-      ledger.goldens = (ledger.goldens ?? []).filter(g => g.volume !== volume);
-      ledger.goldens.push({ volume, key: k.key, bytes: goldenBytes, holder: defaultHolder(opts), record: recordFile, at: now() });
-    });
-    appendEvent({ event: 'golden-created', volume, key: k.key, bytes: goldenBytes });
-    process.stderr.write(`[lab] golden ${volume} (${fmtBytes(goldenBytes)}, ${dst.count} files, tree ${dst.treeSha256.slice(0, 12)}) from ${info.container}; settle ${timings.settleS.toFixed(1)} s, freeze ${timings.freezeS.toFixed(1)} s, stop ${timings.stopS.toFixed(1)} s, copy ${timings.copyS.toFixed(1)} s\n[lab] record ${recordFile}; ${info.container} is stopped and still held\n`);
-    process.stdout.write(JSON.stringify({ record: recordFile, volume, key: k.key, timings }) + '\n');
-  } catch (error) {
-    Object.assign(attempt, { failedAt: now(), error: String(error.message ?? error), observation: error.observation, cleanup: error.cleanup });
-    writeJson(attemptFile, attempt);
-    throw error;
-  }
-}
-
-/** One-cut sacrificial copy for R30 T3/T6, never a qualified golden or screening source. */
-async function oneCutProbe(config, info, opts) {
-  requireHeldXtdbSlot(info, opts);
-  requireRunningSlot(config, info);
-  if (!opts.manifest) fail('USAGE', 'one-cut-probe needs --manifest FILE');
-  const file = path.join(path.dirname(path.resolve(opts.manifest)), 'one-cut-probe.json');
-  if (fs.existsSync(file)) fail('REFUSED', 'one-cut-probe evidence already exists');
-  const volume = `tx2-k01-singlecut-${Date.now()}`;
-  const attempt = { format: 'tx2-k01-singlecut-probe/1', volume, at: now(), diagnosticOnly: true };
-  const save = values => { Object.assign(attempt, values); writeJson(file, attempt); };
-  let created = false, firstError;
-  try {
-    save({ before: cloneCheck(['diagnostic', '--url', info.endpoint, '--container', info.container]) });
-    const settled = cloneCheck(['settle', '--cuts', '1', '--url', info.endpoint, '--container', info.container, '--evidence', file + '.settle.json']);
-    save({ settled, afterCut: cloneCheck(['diagnostic', '--url', info.endpoint, '--container', info.container]) });
-    if (!settled.settled) fail('REFUSED', 'single-cut diagnostic did not settle');
-    const stop = await stopSlot(config, info, { ...opts, print: false });
-    save({ stop });
-    if (!stop.verdict.ok) fail('REFUSED', 'single-cut stop refused');
-    const offline = offlineCheck(config, info, settled.after);
-    save({ offline });
-    if (!offline.ok) fail('REFUSED', 'single-cut offline listing differs');
-    const floor = diskFloorVerdict({ freeBytes: hostDisk().freeBytes, copyBytes: volumeBytes(config, info.volume) });
-    if (!floor.ok) fail('REFUSED', floor.reason);
-    docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', 'tx2.diagnostic=K01-R30-T6', volume]);
-    created = true;
-    const copied = helper(config, `tx2-clone-singlecut-${info.slot}`, [`${info.volume}:/src:ro`, `${volume}:/dst`],
-      `${listingScript('/src')}; echo @@copy; cp -a /src/. /dst/; chown ${XTDB_UID} /dst; sync; ${listingScript('/dst')}`);
-    const [a, b] = sections(copied, '@@copy');
-    const src = parseListing(a), dst = parseListing(b);
-    save({ copy: { source: src.treeSha256, destination: dst.treeSha256, bytes: dst.bytes } });
-    if (src.treeSha256 !== dst.treeSha256) fail('REFUSED', 'single-cut snapshot copy differs');
-    // [EXP-K01-R2] Why: T6 must boot copied bytes, then add exactly one diagnostic write. Rejected: mutating the eventual golden seed (changes its transaction lineage).
-    await up(config, info, { ...opts, fresh: true }, { prepareVolume: async () => {
-      docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', info.volume]);
-      const listing = parseListing(helper(config, `tx2-clone-singlecut-${info.slot}`, [`${volume}:/src:ro`, `${info.volume}:/dst`],
-        `cp -a /src/. /dst/; chown ${XTDB_UID} /dst; sync; ${listingScript('/dst')}`));
-      if (listing.treeSha256 !== dst.treeSha256) fail('REFUSED', 'single-cut clone differs');
-      save({ cloneTreeSha256: listing.treeSha256 });
-    } });
-    const args = ['--url', info.endpoint, '--container', info.container, '--manifest', path.resolve(opts.manifest)];
-    save({ beforeWrite: cloneCheck(['freeze', ...args]) });
-    if (!attempt.beforeWrite.ok || !attempt.beforeWrite.c8?.plan?.sha256) fail('REFUSED', 'T6 before-write fingerprint is incomplete');
-    save({ write: cloneCheck(['probe-write', ...args]) });
-    save({ afterWrite: cloneCheck(['freeze', ...args]) });
-    if (!attempt.afterWrite.ok || !attempt.afterWrite.c8?.plan?.sha256) fail('REFUSED', 'T6 after-write fingerprint is incomplete');
-    save({ t6PlanChanged: attempt.beforeWrite.c8?.plan?.sha256 !== attempt.afterWrite.c8?.plan?.sha256 });
-  } catch (error) {
-    // [EXP-K01-R6] Why: cleanup failure must not erase the original failed observation. Rejected: throwing from finally without retaining the first error.
-    firstError = error;
-    save({ error: String(error.message ?? error) });
-    throw error;
-  } finally {
-    if (created) {
-      const removal = observe('single-cut removal', { volume }, () => docker(['volume', 'rm', volume]), text);
-      const absence = observe('single-cut absence', { volume }, () => docker(['volume', 'ls', '--filter', `name=^${volume}$`, '--format', '{{.Name}}']), raw => {
-        if (text(raw).trim() !== '') throw Error('snapshot still present');
-        return true;
-      });
-      const cleanup = { removal, absence };
-      save({ snapshotRemoved: removal.state === 'complete' && absence.state === 'complete', cleanup });
-      if (!firstError) { complete(removal); complete(absence); }
-    }
-  }
-}
-
-/** Read and check a golden record: its key recomputes, its volume exists with that key, its manifest is unchanged. */
-// [EXP-K01-R6] Why: Persisted optional fields below are required guards: absent proofs/bytes/index/generation refuse, and current inspect/hash observations must complete. Rejected: converting a failed observation into successful content.
-function loadGolden(file) {
-  const recordFile = path.resolve(String(file));
-  const record = readJson(recordFile);
-  // [EXP-K01-R4] Why: persisted flags cannot substitute for the stopped bytes or their current frontier binding. Rejected: trusting qualified:true after the tail or snapshot has changed.
-  const frontiers = record.settle?.frontiers, after = record.settle?.after;
-  if (!record.settle?.qualified || !frontiers || canonicalJson(frontiers) !== canonicalJson(after?.frontiers) ||
-    frontiers.M !== after?.gauges?.latestProcessedMsgId || frontiers.M !== after?.gauges?.latestSubmittedMsgId || frontiers.T !== after?.gauges?.latestCompletedTxId)
-    fail('REFUSED', 'golden has no qualified stopped-tail F/M/T evidence');
-  if (!Number.isSafeInteger(after.cutIndex) || after.cutIndex < 0 || !after.blocks?.some(b => Number(b.latest_processed_msg_id) === frontiers.F && Number(b.tx_id) === frontiers.T && parseInt(b.block_idx.slice(1), 16) === after.cutIndex)) fail('REFUSED', 'golden cut is not bound to its checkpoint block');
-  for (const offline of [record.offline, record.referenceOffline]) {
-    const proof = verifyMaintenanceTail(Buffer.from(offline?.sourceTailBase64 ?? '', 'base64'), frontiers, after.cutIndex);
-    if (!offline?.ok || canonicalJson(proof) !== canonicalJson(offline.maintenance)) fail('REFUSED', 'golden stopped-tail proof changed');
-  }
-  if (record.format !== GOLDEN_RECORD_FORMAT) fail('REFUSED', `${recordFile} is not a ${GOLDEN_RECORD_FORMAT} record`);
-  const again = goldenKey({ seedInputs: record.keyInputs.seedInputs, imageId: record.keyInputs.engine.imageId, systemConfigSha256: record.keyInputs.engine.systemConfigSha256 });
-  if (again.key !== record.key) fail('REFUSED', `${recordFile}: key does not recompute from its inputs`);
-  const vol = inspectVolume(record.volume);
-  if (!vol) fail('REFUSED', `golden volume ${record.volume} does not exist`);
-  if (!record.creation?.creationId || JSON.parse(vol)[0].Labels?.['tx2.creation-id'] !== record.creation.creationId) fail('REFUSED', 'golden volume generation differs from its creation receipt');
-  if (JSON.parse(vol)[0].Labels?.['tx2.seed-key'] !== record.key) fail('REFUSED', `${record.volume} is labelled with another key`);
-  const manifestFile = path.resolve(REPO, record.manifest.path);
-  if (!fs.existsSync(manifestFile) || sha256File(manifestFile) !== record.manifest.sha256) fail('REFUSED', `seed manifest ${record.manifest.path} is missing or changed since the golden was made`);
-  return { record, recordFile, manifestFile };
-}
-
-/**
- * Clone (R26 6.3, folded into up): pool admission and reservation, remove the slot container and volume, create the
- * volume, copy the golden in through a read-only mount, chown the root to the XTDB user, check C1 against the golden,
- * docker run with the slot's own effective config, wait for /healthz/started (probe), then C2-C8 (clone-check verify).
- */
-async function clone(config, info, opts) {
-  requireHeldXtdbSlot(info, opts);
-  if (!opts['golden-record']) fail('USAGE', 'clone needs --golden-record runs/xtdb-seed/<name>/golden.json');
-  const { record, recordFile, manifestFile } = loadGolden(opts['golden-record']);
-  const eff = effectiveConfig(config, info);
-  const systemConfigSha256 = sha256(JSON.stringify(systemConfig(eff.effective)));
-  if (systemConfigSha256 !== record.keyInputs.engine.systemConfigSha256 || info.laneConf.imageId !== record.keyInputs.engine.imageId)
-    fail('REFUSED', `stale golden: ${info.container} would run system config ${systemConfigSha256.slice(0, 12)} on ${info.laneConf.imageId.slice(7, 19)}, the golden was made on ${record.keyInputs.engine.systemConfigSha256.slice(0, 12)} on ${record.keyInputs.engine.imageId.slice(7, 19)} (Q74a)`);
-  if (containersOnVolume(record.volume).length) fail('REFUSED', `golden ${record.volume} is mounted by ${containersOnVolume(record.volume).join(', ')}`);
-  const goldenBytes = volumeBytes(config, record.volume);
-  const marks = { begin: Date.now() };
-  let copy = null;
-  await up(config, info, { ...opts, fresh: true }, {
-    marks,
-    prepareVolume: async () => {
-      const disk = hostDisk();
-      const floor = diskFloorVerdict({ freeBytes: disk.freeBytes, copyBytes: goldenBytes });
-      if (!floor.ok) fail('REFUSED', floor.reason);
-      docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', `tx2.cloned-from=${record.volume}`, '--label', `tx2.seed-key=${record.key}`, info.volume]);
-      const t = Date.now();
-      let listing;
-      try {
-        listing = parseListing(helper(config, `tx2-clone-${info.slot}`, [`${record.volume}:/src:ro`, `${info.volume}:/dst`],
-          `cp -a /src/. /dst/; chown ${XTDB_UID} /dst; sync; ${listingScript('/dst')}`));
-      } catch (error) { error.cleanup = observe('failed clone copy cleanup', { volume: info.volume }, () => docker(['volume', 'rm', info.volume]), text); throw error; }
-      copy = { creationId: randomUUID(), startedAt: new Date(t).toISOString(), copyS: (Date.now() - t) / 1000, goldenBytes, files: listing.count, fileBytes: listing.bytes, treeSha256: listing.treeSha256, hostDisk: { before: disk, floor } };
-      copy.c1 = { pass: listing.treeSha256 === record.copy.treeSha256, expected: record.copy.treeSha256, observed: listing.treeSha256, files: listing.count, expectedFiles: record.copy.files };
-      if (!copy.c1.pass) {
-        const diff = diffListings({ files: readJson(path.resolve(REPO, record.copy.filesFile)) }, listing);
-        const cleanup = observe('unequal clone cleanup', { volume: info.volume }, () => docker(['volume', 'rm', info.volume]), text);
-        fail('ENGINE', `C1 failed: copy of ${record.volume} differs from the golden (changed ${diff.changed.length}, added ${diff.added.length}, removed ${diff.removed.length}); cleanup=${JSON.stringify(cleanup)}, nothing started`);
-      }
-    },
-  });
-  const c = inspect(info.container);
-  const owner = readOwner(info);
-  owner.volumeContent = {
-    kind: 'clone', goldenVolume: record.volume, key: record.key, goldenRecord: path.relative(REPO, recordFile), goldenRecordSha256: sha256File(recordFile),
-    manifest: record.manifest.path, manifestSha256: record.manifest.sha256, freezeSha256: sha256(canonicalJson(record.freeze)), clonedAt: now(), containerId: c.Id, startedAt: c.State.StartedAt,
-    copy, timings: { copyS: copy.copyS, runToStartedS: (marks.readyAt - marks.runAt) / 1000, totalToStartedS: (marks.readyAt - marks.begin) / 1000 },
-    readiness: { verdict: 'PENDING' },
-  };
-  await updateOwner(info, latest => {
-    if (!latest || latest.generation !== owner.generation || latest.holder !== owner.holder || latest.lifecycle && latest.lifecycle.state !== 'RUNNING') fail('REFUSED', 'clone lifecycle changed before publication');
-    latest.volumeContent = owner.volumeContent;
-    return latest;
-  });
-  appendEvent({ event: 'cloned', container: info.container, golden: record.volume, key: record.key });
-  process.stderr.write(`[lab] ${info.container} cloned from ${record.volume}: copy ${copy.copyS.toFixed(1)} s, C1 PASS (${copy.files} files), docker run to /healthz/started ${owner.volumeContent.timings.runToStartedS.toFixed(1)} s\n`);
-  if (opts['no-verify']) return;
-  await verify(config, info, opts);
-}
-
-/** C2-C8 on a cloned slot against its golden's freeze record; the verdict lands in owner.json (the driver requires PASS). */
-// [EXP-K01-R6] Why: Optional fields below are refusal/ownership guards and historical metadata only; errors revoke this attempt, never substitute an earlier PASS. Rejected: converting a failed observation into successful content.
-async function verify(config, info, opts) {
-  requireHeldXtdbSlot(info, opts);
-  const owner = readOwner(info);
-  const content = owner?.volumeContent;
-  if (owner?.lifecycle && owner.lifecycle.state !== 'RUNNING') fail('REFUSED', 'slot lifecycle is not running; current receipts are revoked');
-  if (content?.kind !== 'clone') fail('REFUSED', `${info.lane}-${info.slot} holds no clone (owner.json volumeContent)`);
-  const t = Date.now();
-  const attemptId = `${info.slot}-${t}-${Math.random().toString(16).slice(2)}`;
-  const file = path.join(REPO, 'runs/xtdb-clone', `${attemptId}.json`);
-  // [EXP-K01-R3] Why: every new verification revokes admission before fallible checks. Rejected: retaining a previous PASS until the new process returns (an exception leaves stale admission usable).
-  const previousReadiness = content.readiness;
-  const identity = cloneCertificateHash;
-  content.verificationHistory = [...(content.verificationHistory ?? []), ...(previousReadiness ? [previousReadiness] : [])];
-  content.readiness = { verdict: 'PENDING', attemptId, at: now() };
-  let result;
-  try {
-    await updateOwner(info, current => {
-      if (!current || current.lifecycle && current.lifecycle.state !== 'RUNNING' || current.generation !== owner.generation || current.holder !== owner.holder || identity(current.volumeContent) !== identity(content) || JSON.stringify(current.volumeContent.readiness) !== JSON.stringify(previousReadiness)) throw new Error('verification superseded before revocation');
-      current.volumeContent = content;
-      return current;
-    });
-    writeJson(file, { verdict: 'PENDING', attemptId, at: now() });
-    const running = requireRunningSlot(config, info);
-    if (running?.c && running.c.Id !== content.containerId) throw new Error('clone container identity changed before verification');
-    const { recordFile } = loadGolden(path.resolve(REPO, content.goldenRecord));
-    const verdict = cloneCheck(['verify', '--url', info.endpoint, '--container', info.container, '--golden-record', recordFile, '--owner', info.ownerFile]);
-    if (!['PASS', 'FAIL'].includes(verdict.verdict) || !['C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8'].every(k => typeof verdict.checks?.[k]?.pass === 'boolean') ||
-      (verdict.verdict === 'PASS' && Object.values(verdict.checks).some(check => check.pass !== true))) throw new Error('incomplete or inconsistent verification verdict');
-    const fresh = requireRunningSlot(config, info);
-    if (running?.c && (fresh.c.Id !== running.c.Id || fresh.c.State.StartedAt !== running.c.State.StartedAt)) throw new Error('clone restarted during verification');
-    writeJson(file, { ...verdict, attemptId });
-    const receiptSha256 = sha256File(file);
-    if (content.goldenRecordSha256 && sha256File(recordFile) !== content.goldenRecordSha256) throw new Error('golden record changed since the clone was copied');
-    const latest = await updateOwner(info, latest => {
-      if (latest?.lifecycle && latest.lifecycle.state !== 'RUNNING' || latest?.generation !== owner.generation || latest?.holder !== owner.holder || latest?.volumeContent?.readiness?.attemptId !== attemptId) throw new Error('verification superseded by another slot operation');
-      if (identity(latest.volumeContent) !== identity(content)) throw new Error('clone ownership content changed during verification');
-      latest.volumeContent.readiness = { verdict: verdict.verdict, attemptId, at: now(), checksS: (Date.now() - t) / 1000, file: path.relative(REPO, file), sha256: receiptSha256, certificateSha256: identity(content), verifiedContainerId: fresh?.c?.Id, verifiedStartedAt: fresh?.c?.State.StartedAt, failed: Object.entries(verdict.checks).filter(([, v]) => !v.pass).map(([k]) => k) };
-      if (fresh?.c) latest.volumeContent.startedAt = fresh.c.State.StartedAt;
-      return latest;
-    });
-    process.stdout.write(JSON.stringify(verdict, null, 2) + '\n');
-    process.stderr.write(`[lab] ${info.container} readiness ${verdict.verdict} (${latest.volumeContent.readiness.failed.join(', ') || 'C1-C8 pass'}) in ${latest.volumeContent.readiness.checksS.toFixed(1)} s; ${path.relative(REPO, file)}\n`);
-    result = verdict;
-  } catch (error) {
-    const refusal = { verdict: 'ERROR', attemptId, at: now(), error: String(error.message ?? error) };
-    let receipt = {};
-    try { writeJson(file, refusal); receipt = { file: path.relative(REPO, file), sha256: sha256File(file) }; }
-    // [EXP-K01-R6] Why: a failed failure-receipt write is itself recorded as error metadata; current readiness still becomes ERROR, never PASS. Rejected: resurrecting earlier evidence.
-    catch (receiptError) { receipt = { receiptWriteError: String(receiptError.message ?? receiptError) }; }
-    // [EXP-K01-R3] Why: only this attempt may replace its readiness, including a failed PASS publication. Rejected: overwriting a newer attempt or resurrecting the historical PASS after an error.
-    await updateOwner(info, latest => {
-      const initialRevocationFailed = latest?.volumeContent && identity(latest.volumeContent) === identity(content) && JSON.stringify(latest.volumeContent.readiness) === JSON.stringify(previousReadiness);
-      if ((!latest?.lifecycle || latest.lifecycle.state === 'RUNNING') && latest?.generation === owner.generation && latest?.holder === owner.holder && (latest?.volumeContent?.readiness?.attemptId === attemptId || initialRevocationFailed)) {
-        if (initialRevocationFailed) latest.volumeContent.verificationHistory = content.verificationHistory;
-        latest.volumeContent.readiness = { ...refusal, ...receipt };
-        return latest;
-      }
-    });
-    throw error;
-  }
-  if (result.verdict !== 'PASS') fail('ENGINE', `${info.container} is not ready: ${Object.entries(result.checks).filter(([, v]) => !v.pass).map(([k]) => k).join(', ')} failed (Q74d)`);
-}
-
-/** List a stopped slot's volume through a read-only helper; with --golden-record, diff it with the golden (R26 P-e). */
-async function listing(config, info, opts) {
-  if (!readOwner(info)) fail('REFUSED', `${info.lane}-${info.slot} has no slot lock`);
-  requireHeldXtdbSlot(info, opts);
-  const c = inspect(info.container);
-  if (c?.State.Running) fail('REFUSED', `${info.container} is running; stop it first (a listing of a live Local log is torn)`);
-  if (!inspectVolume(info.volume)) fail('REFUSED', `${info.volume} does not exist`);
-  const list = parseListing(helper(config, `tx2-clone-list-${info.slot}`, [`${info.volume}:/src:ro`], listingScript('/src')));
-  const out = { volume: info.volume, at: now(), count: list.count, bytes: list.bytes, treeSha256: list.treeSha256, files: list.files };
-  if (opts['golden-record']) {
-    const { record } = loadGolden(opts['golden-record']);
-    out.golden = { volume: record.volume, treeSha256: record.copy.treeSha256, diff: diffListings({ files: readJson(path.resolve(REPO, record.copy.filesFile)) }, list) };
-  }
-  if (opts.out) writeJson(path.resolve(String(opts.out)), out);
-  process.stdout.write(JSON.stringify({ ...out, files: opts.out ? `${out.files.length} files in ${opts.out}` : out.files }, null, 2) + '\n');
-}
-
-async function goldenRm(config, opts) {
-  const recordFile = opts['golden-record'] ? path.resolve(String(opts['golden-record'])) : null;
-  const volume = recordFile ? readJson(recordFile).volume : opts.volume;
-  if (!volume || !/^tx2-golden-xtdb-[0-9a-f]{8}$/.test(volume)) fail('USAGE', 'golden-rm needs --golden-record FILE or --volume tx2-golden-xtdb-<key8>');
-  const vol = inspectVolume(volume);
-  if (vol && JSON.parse(vol)[0].Labels?.['tx2.golden'] !== '1') fail('REFUSED', `${volume} is not labelled tx2.golden=1`);
-  if (vol && opts['creation-id'] && JSON.parse(vol)[0].Labels?.['tx2.creation-id'] !== opts['creation-id']) fail('REFUSED', 'golden does not belong to this creation receipt');
-  const users = containersOnVolume(volume);
-  if (users.length) fail('REFUSED', `${volume} is mounted by ${users.join(', ')}`);
-  if (vol) docker(['volume', 'rm', volume]);
-  if (docker(['volume', 'ls', '--filter', `name=^${volume}$`, '--format', '{{.Name}}'])) fail('ENGINE', `${volume} still exists`);
-  await withPool(async ledger => { ledger.goldens = (ledger.goldens ?? []).filter(g => g.volume !== volume); });
-  appendEvent({ event: 'golden-removed', volume });
-  process.stderr.write(`[lab] golden ${volume} ${vol ? 'removed' : 'was already absent'}\n`);
-}
-
-/** Expected outcome of every TOOLCHECK_SCRIPT line (R26 P-g). */
-export const TOOLCHECK_EXPECT = {
-  'cp-a': out => out.includes('20000:20000 640 1577836800'),
-  'find-exec-plus': out => out.includes('/t/dst/a/f 1'),
-  'find-prune-rm': out => out.includes('removed'),
-  'stat-c': out => /\/t\/dst\/a\/f\|1\|640\|20000\|20000/.test(out),
-  'sha256sum': out => /^[0-9a-f]{64}\s/.test(out),
-  'sort-k': out => out.startsWith('a 1'),
-  'chown': out => out.includes('20000:20000'),
-  'sync': () => true,
-  'mktemp': out => out.includes('checked'),
-  'offline-valid': out => out.includes('@@end'),
-  'offline-corrupt': out => out.includes('refused'),
-  'offline-tmp': out => out.includes('refused'),
-  'wget-post-data': out => /GNU Wget/.test(out) && /post-data=1/.test(out),
-  'du-k': out => /^\d+\s/.test(out),
-};
-// [EXP-K01-R6] Why: capability probes must not hide producer failures either. Rejected: find/wget/printf pipelines whose final command masks an earlier error. Expected corrupt-log refusals are tested in separate child shells.
-const TOOLCHECK_SCRIPT = `set -eu;
-mkdir -p /t;
-r() { n=$1; shift; if "$@" > /t/probe.raw 2>&1; then s=ok; else s=FAIL; fi; tr '\\n' ' ' < /t/probe.raw > /t/probe.flat; cut -c1-300 /t/probe.flat > /t/probe.short; printf '%s|%s|' "$n" "$s"; cat /t/probe.short; echo; };
-mkdir -p /t/src/a/.tmp /t/dst; printf x > /t/src/a/f; printf x > /t/src/a/.tmp/g; chown -R 20000:20000 /t/src; chmod 640 /t/src/a/f; touch -d '2020-01-01 00:00:00' /t/src/a/f;
-r busybox sh -c 'set -eu; readlink -f /bin/sh; busybox true; busybox --list > /t/busybox.list; head -1 /t/busybox.list';
-r cp-a sh -c 'set -eu; cp -a /t/src/. /t/dst/; stat -c "%u:%g %a %Y" /t/dst/a/f';
-r find-exec-plus sh -c 'set -eu; find /t/dst -type f -exec stat -c "%n %s" {} + > /t/find.raw; sort /t/find.raw';
-r find-prune-rm sh -c 'set -eu; find /t/dst -name .tmp -type d -prune -exec rm -rf {} +; test ! -e /t/dst/a/.tmp; echo removed';
-r stat-c stat -c '%n|%s|%a|%u|%g' /t/dst/a/f;
-r sha256sum sha256sum /t/dst/a/f;
-r sort-k sh -c 'set -eu; printf "b 2\\na 1\\n" > /t/sort.raw; LC_ALL=C sort -k 2 /t/sort.raw';
-r chown sh -c 'set -eu; chown 20000:20000 /t/dst; stat -c %u:%g /t/dst';
-r sync sync;
-r mktemp sh -c 'set -eu; d=$(mktemp -d); test -d "$d"; rm -rf "$d"; echo checked';
-r wget-post-data sh -c 'set -eu; w=$(command -v wget); readlink -f "$w"; wget --version > /t/wget.version; head -1 /t/wget.version; wget --help > /t/wget.help; n=$(grep -c -- --post-data /t/wget.help); echo post-data=$n';
-r du-k du -s -k /t`;
-
-/** R26 P-g: run the tools R26's procedure assumes inside the pinned image (no network, no volumes). */
-// [EXP-K01-R2] Why: exercise the exact offline shell checks on the pinned image, including refusal fixtures. Rejected: a second parser that could disagree with production checks.
-const shellQuote = value => "'" + value.replaceAll("'", "'\\''") + "'";
-const offlineFixtures = (() => {
-  const setup = "mkdir -p /t/check/log /t/check/buffers/v06/blocks; printf '\\036' > /t/check/log/LOG; dd if=/dev/zero bs=20 count=1 >> /t/check/log/LOG 2>/dev/null; cp /t/check/log/LOG /t/check/log/REPLICA_LOG; touch /t/check/buffers/v06/blocks/b00.binpb; ";
-  const check = `sh -c ${shellQuote('set -eu; ' + offlineScript('/t/check'))}`;
-  return `; r offline-valid sh -c ${shellQuote(setup + check)}; ` +
-    `r offline-corrupt sh -c ${shellQuote(`printf x >> /t/check/log/LOG; if ${check} >/dev/null 2>&1; then exit 1; else echo refused; fi`)}; ` +
-    `r offline-tmp sh -c ${shellQuote(`cp /t/check/log/REPLICA_LOG /t/check/log/LOG; mkdir -p /t/check/buffers/v06/.tmp; touch /t/check/buffers/v06/.tmp/upload; if ${check} >/dev/null 2>&1; then exit 1; else echo refused; fi`)}`;
-})();
-
-async function toolcheck(config) {
-  const out = docker(['run', '--rm', '--network', 'none', '-u', '0:0', '--memory', '256m', '--memory-swap', '256m', '--entrypoint', 'sh', config.lanes.xtdb.image, '-c', TOOLCHECK_SCRIPT + offlineFixtures]);
-  const rows = out.split('\n').filter(Boolean).map(line => { const [name, status, ...rest] = line.split('|'); return { name, status, output: rest.join('|') }; });
-  const checks = rows.map(row => ({ ...row, pass: row.status === 'ok' && (TOOLCHECK_EXPECT[row.name]?.(row.output) ?? true) }));
-  const missing = Object.keys(TOOLCHECK_EXPECT).filter(name => !rows.some(row => row.name === name));
-  const result = { image: config.lanes.xtdb.image, at: now(), pass: missing.length === 0 && checks.every(c => c.pass), missing, checks };
-  process.stdout.write(JSON.stringify(result, null, 2) + '\n');
-  if (!result.pass) process.exitCode = 1;
-}
-
-// [EXP-K01-R6] Why: Optional labels, history arrays and dashes below are display-only; current resource/readiness acquisition still must complete and cannot mint admission. Rejected: converting a failed observation into successful content.
 async function status(config) {
   const all = listTx2Containers({ all: true });
   const stats = Object.fromEntries(dockerStats().map(row => [row.name, row]));
@@ -1224,48 +437,392 @@ async function status(config) {
   for (const entry of ledger.reservations) console.log(`  reservation ${entry.container} ${fmtBytes(entry.memBytes)} ${entry.cpus}cpu state=${entry.state} holder=${entry.holder}`);
   for (const entry of verdict.external) console.log(`  external    ${entry.container} ${fmtBytes(entry.memBytes)} ${entry.nanoCpus ? entry.nanoCpus / 1e9 + 'cpu' : 'uncapped-cpu'}${entry.uncapped ? ' UNCAPPED (counts as whole VM)' : ''}`);
   for (const entry of ledger.retainedVolumes ?? []) console.log(`  retained volume ${entry.volume} ${fmtBytes(entry.bytes)} holder=${entry.holder} note=${entry.note}`);
-  // [EXP-K01] Golden volumes hold VM disk outside any reservation; admission already counts them through real df.
-  for (const entry of ledger.goldens ?? []) console.log(`  golden volume ${entry.volume} ${fmtBytes(entry.bytes)} key=${entry.key.slice(0, 12)} holder=${entry.holder}`);
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
-  const { positional, options } = parseArgs(process.argv.slice(2));
-  const command = positional[0];
-  const config = loadSlots();
-  if (command === 'status') return status(config);
-  if (command === 'toolcheck') return toolcheck(config);
-  if (command === 'golden-rm') return goldenRm(config, options);
-  const K01 = ['one-cut-probe', 'settle', 'stop', 'offline', 'golden', 'clone', 'verify', 'listing'];
-  if (!['up', 'down', 'logs', ...K01].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]\n'
-    + '  EXP-K01: settle|stop --lane xtdb --slot S; golden --lane xtdb --slot S --manifest FILE; clone --lane xtdb --slot S --golden-record FILE [--no-verify];\n'
-    + '  verify --lane xtdb --slot S; listing --lane xtdb --slot S [--golden-record FILE] [--out FILE]; golden-rm --golden-record FILE|--volume V; toolcheck');
-  if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
-  const info = slotInfo(config, options.lane, options.slot);
-  if (options.follower) {
-    const fol = followerInfo(config, info, options);
-    if (command === 'up') return followerUp(config, info, fol, options);
-    if (command === 'down') return followerDown(config, info, fol, options);
-    complete(processObservation('follower log', { container: fol.container }, spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), fol.container]), { encoding: 'utf8' }), out => { process.stdout.write(out.stdout); process.stderr.write(out.stderr); return true; }));
-    return;
+export const canonicalJson = value => JSON.stringify(value, (key, v) => (v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.keys(v).sort().map(k => [k, v[k]])) : v));
+
+/** The slot-independent part of an effective config: what a golden's bytes and a clone's behaviour depend on. */
+export function systemConfig(effective) {
+  return Object.fromEntries(Object.entries(effective).filter(([k]) => !["lane","slot","publish","volume","cpusetCpus"].includes(k)));
+}
+
+/**
+ * Q74a golden key: the seed half (adapter commit and built dist hashes, world and seed-generator hashes, driver seed
+ * options; written by lab/bench/xtdb-seed.ts into manifest.seedInputs) plus the engine half (image digest, system
+ * config hash). A golden is valid only for exactly these inputs (R26 6.1, risk 1).
+ */
+export function goldenKey({ seedInputs, imageId, systemConfigSha256 }) {
+  if (!seedInputs || !imageId || !systemConfigSha256) fail('USAGE', 'goldenKey needs seedInputs, imageId and systemConfigSha256');
+  const inputs = { format: 'tx2-golden-key/1', seedInputs, engine: { imageId, systemConfigSha256 } };
+  const key = sha256(canonicalJson(inputs));
+  return { key, key8: key.slice(0, 8), inputs };
+}
+
+
+export const listingScript = dir => `(
+set -eu; ${emptyTmpScript(dir)};
+work=$(mktemp -d); trap 'rm -rf "$work"' EXIT; cd ${dir};
+find . -type f ! -path '*/.tmp/*' -exec stat -c '%n|%s|%a|%u|%g' {} + > "$work/stat";
+LC_ALL=C sort "$work/stat" > "$work/stat.sorted";
+find . -type f ! -path '*/.tmp/*' -exec sha256sum {} + > "$work/sha";
+LC_ALL=C sort -k 2 "$work/sha" > "$work/sha.sorted";
+echo @@stat; cat "$work/stat.sorted"; echo @@sha; cat "$work/sha.sorted"; echo @@end
+)`;
+
+// [EXP-K01-R2] Why: interrupted uploads are forensic evidence, never disposable copy scratch (Q83b). Rejected: deleting .tmp to manufacture an equal tree.
+export const emptyTmpScript = dir => `tmp=$(find ${dir}/buffers -path '*/.tmp/*' ! -type d -print); test -z "$tmp" || { echo 'non-empty .tmp refused' >&2; exit 1; }`;
+
+/** Parse one listingScript output into sorted file records and a tree hash over every field. */
+export function parseListing(text) {
+  const stat = [], sha = new Map(), seen = new Set();
+  let section = null, phase = 0;
+  for (const line of String(text).split('\n')) {
+    if (line.startsWith('@@')) { section = line.slice(2).trim(); if (section !== ['stat', 'sha', 'end'][phase++]) fail('ENGINE', 'listing sections are missing, duplicated or out of order'); continue; }
+    if (!line.trim()) continue;
+    if (section === 'stat') {
+      const [p, bytes, mode, uid, gid, extra] = line.split('|');
+      if (extra !== undefined || !p?.startsWith('./') || seen.has(p) || !/^(0|[1-9][0-9]*)$/.test(bytes) || !Number.isSafeInteger(Number(bytes)) || !/^[0-7]{3,4}$/.test(mode) || !/^[0-9]+$/.test(uid) || !/^[0-9]+$/.test(gid)) fail('ENGINE', 'invalid or duplicate file stat in tree preimage');
+      seen.add(p);
+      stat.push({ path: p, bytes: Number(bytes), mode, uid, gid });
+    } else if (section === 'sha') {
+      const m = /^([0-9a-f]{64})\s+(.+)$/.exec(line);
+      if (!m) fail('ENGINE', `bad sha256sum line ${JSON.stringify(line)}`);
+      if (sha.has(m[2])) fail('ENGINE', 'duplicate file hash in tree preimage');
+      sha.set(m[2], m[1]);
+    } else fail('ENGINE', 'unexpected bytes outside listing sections');
   }
-  if (options['cpuset-cpus']) info.cpusetCpus = parseCpuset(options['cpuset-cpus'], config.vm.cpus).join(',');
-  if (command === 'settle') return settle(config, info, options);
-  if (command === 'stop') return stopSlot(config, info, options);
-  if (command === 'offline') {
-    requireHeldXtdbSlot(info, options);
-    if (!readOwner(info) || inspect(info.container)?.State.Running) fail('REFUSED', 'offline requires a held, stopped slot');
-    if (!options.expected) fail('USAGE', 'offline needs --expected FILE (settle.after)');
-    const out = offlineCheck(config, info, readJson(path.resolve(options.expected)));
-    process.stdout.write(JSON.stringify(out, null, 2) + '\n');
-    if (!out.ok) fail('REFUSED', 'offline listing differs');
-    return;
-  }
-  if (command === 'one-cut-probe') return oneCutProbe(config, info, options);
-  if (command === 'golden') return golden(config, info, options);
-  if (command === 'clone') return clone(config, info, options);
-  if (command === 'verify') return verify(config, info, options);
-  if (command === 'listing') return listing(config, info, options);
-  if (command === 'up') return up(config, info, options);
-  if (command === 'down') return down(config, info, options);
-  complete(processObservation('slot log', { container: info.container }, spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), info.container]), { encoding: 'utf8' }), out => { process.stdout.write(out.stdout); process.stderr.write(out.stderr); return true; }));
-});
+  if (section !== 'end' || phase !== 3) fail('ENGINE', 'listing output is truncated (no @@end)');
+  const files = stat.map(f => ({ ...f, sha256: sha.get(f.path) ?? null })).sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
+  if (files.some(f => !f.sha256) || sha.size !== files.length) fail('ENGINE', 'listing stat and sha256 sections disagree');
+  const lines = files.map(f => `${f.path}|${f.bytes}|${f.mode}|${f.uid}|${f.gid}|${f.sha256}`);
+  return { files, count: files.length, bytes: files.reduce((s, f) => s + f.bytes, 0), treeSha256: sha256(lines.join('\n') + '\n') };
+}
+
+
+// [EXP-K01-R7] Why: owner files describe slot ownership only; G0 in the driver grants reuse. Rejected: readiness certificates, lifecycle tokens, stopped-tail proofs and transported C3-C8 results.
+export const HOST_DISK_FLOOR_BYTES = 5 * 1024 ** 3;
+const HOST_DISK_PATH = REPO;
+export const hostDisk = () => {
+  const s = fs.statfsSync(HOST_DISK_PATH);
+  return { freeBytes: s.bavail * s.bsize };
+};
+export function diskFloorVerdict({ freeBytes, copyBytes }) {
+  return {
+    ok:
+      [freeBytes, copyBytes].every((n) => typeof n === "number" && Number.isFinite(n) && n >= 0) &&
+      freeBytes - copyBytes >= HOST_DISK_FLOOR_BYTES,
+    reason: "Q74f disk floor",
+  };
+}
+function helper(config, name, mounts, script) {
+  return docker([
+    "run",
+    "--rm",
+    "--network",
+    "none",
+    "--name",
+    name,
+    "--memory",
+    "512m",
+    "--memory-swap",
+    "512m",
+    "-u",
+    "0:0",
+    ...mounts.flatMap((v) => ["-v", v]),
+    "--entrypoint",
+    "sh",
+    config.lanes.xtdb.image,
+    "-c",
+    `set -eu; ${script}`,
+  ]);
+}
+function requireSlot(info, opts) {
+  const owner = readOwner(info);
+  if (
+    info.lane !== "xtdb" ||
+    info.mode !== "exclusive" ||
+    (owner && owner.holder !== defaultHolder(opts))
+  )
+    fail("REFUSED", "K01 needs this holder’s exclusive XTDB slot");
+}
+function stopped(info) {
+  const c = inspect(info.container);
+  if (!c || c.State.Running) fail("REFUSED", "copy needs an observed stopped source");
+}
+async function stopSlot(config, info, opts = {}) {
+  requireSlot(info, opts);
+  const start = Date.now();
+  const result = spawnSync("docker", dockerArgs(["stop", "-t", "60", info.container]), {
+    encoding: "utf8",
+    timeout: 70_000,
+  });
+  // [EXP-K01-R7] Why: stop lines, exit code and duration explain failures but never grant or refuse content. Rejected: the Log4j shutdown race as an admission gate.
+  const diagnostics = {
+    stop: {
+      status: result.status,
+      signal: result.signal,
+      stdout: result.stdout,
+      stderr: result.stderr,
+      ms: Date.now() - start,
+    },
+  };
+  diagnostics.logs = docker(["logs", "--tail", "100", info.container], {
+    allowFail: true,
+    timeoutMs: 30_000,
+  });
+  stopped(info);
+  return diagnostics;
+}
+function checkKey(config, info, record) {
+  const eff = effectiveConfig(config, info);
+  const system = sha256(JSON.stringify(systemConfig(eff.effective)));
+  if (
+    info.laneConf.imageId !== record.keyInputs.engine.imageId ||
+    system !== record.keyInputs.engine.systemConfigSha256
+  )
+    fail("REFUSED", "K0 stale image/system config");
+  return eff;
+}
+function loadGolden(file) {
+  const record = readJson(path.resolve(file));
+  if (record.format !== "tx2-xtdb-golden/2" || !record.g0?.D || !record.L)
+    fail("REFUSED", "Q93 golden record required");
+  const again = goldenKey({ seedInputs: record.keyInputs.seedInputs, ...record.keyInputs.engine });
+  if (
+    again.key !== record.key ||
+    sha256File(path.resolve(REPO, record.manifest.path)) !== record.manifest.sha256
+  )
+    fail("REFUSED", "K0 stale key/manifest");
+  return record;
+}
+async function copyToSlot(config, info, opts, record) {
+  checkKey(config, info, record);
+  if (containersOnVolume(record.volume).length) fail("REFUSED", "golden must not be mounted");
+  if (
+    !diskFloorVerdict({
+      freeBytes: hostDisk().freeBytes,
+      copyBytes: volumeBytes(config, record.volume),
+    }).ok
+  )
+    fail("REFUSED", "copy disk floor");
+  await up(
+    config,
+    info,
+    { ...opts, fresh: true },
+    {
+      prepareVolume: async () => {
+        docker(["volume", "create", "--label", "tx2.managed-by=lab/bin/engine.mjs", info.volume]);
+        const tree = parseListing(
+          helper(
+            config,
+            `tx2-k01-copy-${info.slot}`,
+            [`${record.volume}:/src:ro`, `${info.volume}:/dst`],
+            `cp -a /src/. /dst/; chown 20000:20000 /dst; sync; ${listingScript("/dst")}`,
+          ),
+        );
+        if (tree.treeSha256 !== record.treeSha256) fail("REFUSED", "K1 copy tree differs");
+      },
+    },
+  );
+  await healthXtdb(info.endpoint, info.container);
+}
+async function fresh(config, info, opts) {
+  requireSlot(info, opts);
+  const m = readJson(path.resolve(opts.manifest));
+  if (!m.g0?.D) fail("REFUSED", "pre-freeze pin required");
+  const r = spawnSync(
+    process.execPath,
+    [
+      path.join(REPO, "lab/bench/clone-check.ts"),
+      "recipe",
+      "--url",
+      info.endpoint,
+      "--container",
+      info.container,
+    ],
+    { encoding: "utf8", timeout: 1_300_000 },
+  );
+  if (r.status !== 0) fail("REFUSED", "fresh-arm recipe refused");
+  await stopSlot(config, info, opts);
+  await up(config, info, { ...opts, fresh: false });
+  await healthXtdb(info.endpoint, info.container);
+  const layout = await quietXtdb(info.endpoint);
+  const file = path.join(path.dirname(path.resolve(opts.manifest)), "fresh-state.json");
+  fs.writeFileSync(
+    file,
+    JSON.stringify({
+      ...layout,
+      D: m.g0.D,
+      manifestSha256: sha256File(path.resolve(opts.manifest)),
+    }) + "\n",
+    { flag: "wx" },
+  );
+  process.stdout.write(`export TRIPLEX_LAB_FRESH_STATE='${file}'\n`);
+}
+async function golden(config, info, opts) {
+  requireSlot(info, opts);
+  const manifestFile = path.resolve(opts.manifest),
+    m = readJson(manifestFile);
+  if (!m.g0?.D || !m.result.complete)
+    fail("REFUSED", "pre-freeze G0 pin required in seed manifest");
+  const file = path.join(path.dirname(manifestFile), "golden.json");
+  if (fs.existsSync(file)) fail("REFUSED", "golden record already exists");
+  const c = inspect(info.container),
+    eff = effectiveConfig(config, info);
+  const k = goldenKey({
+    seedInputs: m.seedInputs,
+    imageId: c.Image,
+    systemConfigSha256: sha256(JSON.stringify(systemConfig(eff.effective))),
+  });
+  const volume = `tx2-golden-xtdb-${k.key8}`;
+  // [EXP-K01-R7] Why: a failed lookup must not permit copying into an older golden. Rejected: suppressing volume-inspect errors as absence.
+  if (docker(["volume", "ls", "--filter", `name=^${volume}$`, "--format", "{{.Name}}"]))
+    fail("REFUSED", "golden volume already exists");
+  // [EXP-K01-R7] Why: D is pinned in the seed writer before freeze. Rejected: deriving the expected content from the copied bytes.
+  const recipe = spawnSync(
+    process.execPath,
+    [
+      path.join(REPO, "lab/bench/clone-check.ts"),
+      "recipe",
+      "--url",
+      info.endpoint,
+      "--container",
+      info.container,
+    ],
+    { encoding: "utf8", timeout: 1_300_000 },
+  );
+  if (recipe.status !== 0) fail("REFUSED", "freeze recipe failed or timed out");
+  const diagnostics = await stopSlot(config, info, opts);
+  if (
+    !diskFloorVerdict({
+      freeBytes: hostDisk().freeBytes,
+      copyBytes: volumeBytes(config, info.volume),
+    }).ok
+  )
+    fail("REFUSED", "golden disk floor");
+  docker([
+    "volume",
+    "create",
+    "--label",
+    "tx2.managed-by=lab/bin/engine.mjs",
+    "--label",
+    "tx2.golden=1",
+    volume,
+  ]);
+  process.stderr.write(
+    `[K01] created ${volume}; retained until manual golden-rm, including on qualification failure\n`,
+  );
+  const raw = helper(
+    config,
+    `tx2-k01-golden-${info.slot}`,
+    [`${info.volume}:/src:ro`, `${volume}:/dst`],
+    `${listingScript("/src")}; echo @@copy; cp -a /src/. /dst/; chown 20000:20000 /dst; sync; ${listingScript("/dst")}`,
+  );
+  const [src, dst] = raw.split("@@copy").map(parseListing);
+  if (src.treeSha256 !== dst.treeSha256) fail("REFUSED", "K1 golden copy differs");
+  const record = {
+    format: "tx2-xtdb-golden/2",
+    key: k.key,
+    keyInputs: k.inputs,
+    volume,
+    treeSha256: dst.treeSha256,
+    g0: m.g0,
+    manifest: { path: path.relative(REPO, manifestFile), sha256: sha256File(manifestFile) },
+    diagnostics,
+  };
+  await copyToSlot(config, info, opts, record);
+  const layout = await quietXtdb(info.endpoint);
+  await checkXtdb(info.endpoint, m, m.g0);
+  await stopSlot(config, info, opts);
+  await up(config, info, { ...opts, fresh: false });
+  await healthXtdb(info.endpoint, info.container);
+  await quietXtdb(info.endpoint, layout);
+  await checkXtdb(info.endpoint, m, m.g0);
+  // [EXP-K01-R7] Why: publication follows two actual clone starts reproducing D and L. Rejected: checking only the source/reference or publishing a persisted readiness PASS.
+  fs.writeFileSync(
+    file,
+    JSON.stringify({ ...record, ...layout, qualifiedAt: now() }, null, 2) + "\n",
+    { flag: "wx" },
+  );
+  process.stderr.write(
+    `[K01] published ${file}; kept golden ${volume} (${volumeBytes(config, volume)} bytes); qualification clone remains in ${info.volume}\n`,
+  );
+}
+async function clone(config, info, opts) {
+  requireSlot(info, opts);
+  const record = loadGolden(opts["golden-record"]);
+  await copyToSlot(config, info, opts, record);
+  process.stdout.write(`export TRIPLEX_LAB_GOLDEN='${path.resolve(opts["golden-record"])}'\n`);
+}
+async function goldenRm(config, opts) {
+  const volume = opts.volume ?? loadGolden(opts["golden-record"]).volume;
+  if (!/^tx2-golden-xtdb-[0-9a-f]{8}$/.test(volume) || containersOnVolume(volume).length)
+    fail("REFUSED", "manual golden cleanup needs an unmounted owned golden name");
+  const labels = JSON.parse(docker(["volume", "inspect", volume]))[0]?.Labels;
+  if (labels?.["tx2.managed-by"] !== "lab/bin/engine.mjs" || labels?.["tx2.golden"] !== "1")
+    fail("REFUSED", "golden cleanup needs managed golden labels");
+  docker(["volume", "rm", volume]);
+}
+
+if (import.meta.url === `file://${process.argv[1]}`)
+  main(async () => {
+    const { positional, options } = parseArgs(process.argv.slice(2));
+    const command = positional[0];
+    const config = loadSlots();
+    if (command === "golden-rm") return goldenRm(config, options);
+    if (command === "status") return status(config);
+    if (
+      !["up", "down", "logs", "golden", "clone", "fresh", "stop", "listing", "toolcheck"].includes(
+        command,
+      )
+    )
+      fail(
+        "USAGE",
+        "usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]",
+      );
+    if (!options.lane || !options.slot) fail("USAGE", "--lane and --slot are required");
+    const info = slotInfo(config, options.lane, options.slot);
+    if (options.follower) {
+      const fol = followerInfo(config, info, options);
+      if (command === "up") return followerUp(config, info, fol, options);
+      if (command === "down") return followerDown(config, info, fol, options);
+      spawnSync(
+        "docker",
+        dockerArgs(["logs", "--tail", String(options.tail ?? 200), fol.container]),
+        { stdio: "inherit" },
+      );
+      return;
+    }
+    if (options["cpuset-cpus"])
+      info.cpusetCpus = parseCpuset(options["cpuset-cpus"], config.vm.cpus).join(",");
+    if (command === "fresh") return fresh(config, info, options);
+    if (command === "golden") return golden(config, info, options);
+    if (command === "clone") return clone(config, info, options);
+    if (command === "stop") {
+      console.log(JSON.stringify(await stopSlot(config, info, options)));
+      return;
+    }
+    if (command === "listing") {
+      stopped(info);
+      console.log(
+        helper(
+          config,
+          `tx2-k01-list-${info.slot}`,
+          [`${info.volume}:/src:ro`],
+          listingScript("/src"),
+        ),
+      );
+      return;
+    }
+    if (command === "toolcheck") {
+      console.log(docker(["version"]));
+      return;
+    }
+    if (command === "up") return up(config, info, options);
+    if (command === "down") return down(config, info, options);
+    spawnSync(
+      "docker",
+      dockerArgs(["logs", "--tail", String(options.tail ?? 200), info.container]),
+      { stdio: "inherit" },
+    );
+  });

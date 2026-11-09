@@ -1,0 +1,50 @@
+{
+  "head": "d35fc4b4c63f140a7f56fbaa61e7a6a2536fc3ad",
+  "at": "2026-11-09T01:17:42.050Z",
+  "disk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 2461551,
+    "bavail": 2461551,
+    "files": 110366719,
+    "ffree": 98462040
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/bench/lib/g0.ts": "5daa8c69439843e2c70198e3270548b911b58763d376e6f6995c7d0591844a6f",
+    "lab/bench/lib/g0-xtdb.ts": "e3dd777d1d45cc7ad05323d0d4b5598c2d1da9724ac0137d06ab11adccb9ed4d",
+    "lab/bench/lib/bulk.ts": "30fb15038aa0c945e631db948308a230034d85f90f188556c5a5f59b1e4cb920",
+    "lab/bench/driver.ts": "e0543531e49c26532e61a3013ccb518750077cfd4983243d09086ba6e08b37a3",
+    "lab/bench/xtdb-seed.ts": "2cc75abb7cac18f3a515eb839f0cf0c43df736a5cfa9c6419f3e6d43eb11267e",
+    "lab/bin/engine.mjs": "708bf946220ce11b64f7c0b9f2a60a83d6324fd8c22ac44598d3fa0c64e3129a",
+    "lab/bin/lib.mjs": "e58846786abebbca800e3dee295fefa48aac18252eefae9b9449593ae9f6c836",
+    "lab/bench/test/g0.test.ts": "668f65a397e5afa0ddb9f99866c5cad0b15f4fc1d6f059939ee74078a050e7aa"
+  },
+  "runs": [
+    {
+      "label": "tests",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/g0.test.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "c95ea96b6923740f18d7653afa06f86807cd7e3a2071a58c42e814da5faf36f0"
+    },
+    {
+      "label": "types",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}
