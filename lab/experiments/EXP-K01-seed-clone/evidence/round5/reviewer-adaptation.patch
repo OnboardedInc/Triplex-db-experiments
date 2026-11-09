@@ -1,0 +1,44 @@
+--- reviewer-4815140/q83e-review.test.mjs
++++ builder-round5/q83e-review.test.mjs
+@@ -5,7 +5,7 @@
+ import vm from 'node:vm';
+ import { stripTypeScriptTypes } from 'node:module';
+ import { after, test } from 'node:test';
+-import { createHash } from 'node:crypto';
++import { createHash, randomUUID } from 'node:crypto';
+ import { sourceMessageKind, verifyMaintenanceTail } from '../../bin/xtdb-log.mjs';
+ import { updateOwner, ownerStateLock } from '../../bin/owner-state.mjs';
+ import { canonical, compareFreeze, digest, blockTrieCoverage, cloneCertificateHash } from '../../bench/lib/clone.ts';
+@@ -125,12 +125,12 @@
+ const baseOwner = () => ({ holder: 'fixture-holder', volumeContent: {
+   kind: 'clone', key: 'key', containerId: 'container', startedAt: '2000-01-01T00:00:00Z',
+   goldenRecord: 'golden.json', goldenRecordSha256: 'golden-hash', goldenVolume: 'golden', manifestSha256: hash('{}'),
+-  copy: { creationId: 'copy-id', treeSha256: 'good-tree', c1: { pass: true, expected: 'good-tree', observed: 'good-tree' } }, readiness: { verdict: 'PENDING' },
++  copy: { creationId: 'copy-id', treeSha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', c1: { pass: true, expected: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', observed: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' } }, readiness: { verdict: 'PENDING' },
+ } });
+ const proofReceipt = () => ({ format: 'tx2-clone-readiness/1', verdict: 'PASS', checks: Object.fromEntries(Array.from({ length: 8 }, (_, i) => [`C${i + 1}`, { pass: true }])) });
+ 
+ async function childVerify(owner) {
+-  const record = { volume: 'golden', key: 'key', copy: { treeSha256: 'good-tree' }, manifest: { path: 'manifest.json' }, settle: { after: {} }, freeze };
++  const record = { volume: 'golden', key: 'key', copy: { treeSha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' }, manifest: { path: 'manifest.json' }, settle: { after: {} }, freeze };
+   const verify = load(section(checker, 'async function verify()', '\ntry {\n  if (mode'), 'verify', {
+     path, REPO: root, url: 'offline', container: 'container', Date, compareFreeze,
+     opt: name => name === 'golden-record' ? 'golden.json' : name === 'owner' ? 'owner.json' : undefined,
+@@ -162,7 +162,7 @@
+   const poolBarrier = new Promise(resolve => { releasePool = resolve; });
+   const readOwner = () => fs.existsSync(info.ownerFile) ? JSON.parse(fs.readFileSync(info.ownerFile, 'utf8')) : null;
+   const context = {
+-    fs, path, Date, Math, REPO: dir, cloneCertificateHash, ownerStateLock, readOwner,
++    fs, path, Date, Math, randomUUID, REPO: dir, cloneCertificateHash, ownerStateLock, readOwner,
+     now: () => new Date().toISOString(), defaultHolder: () => 'fixture-holder',
+     requireHeldXtdbSlot: () => {}, requireRunningSlot: () => {
+       if (!running || !containerPresent) throw new Error('not running');
+@@ -177,7 +177,7 @@
+     sha256File: file => file === 'golden.json' ? 'golden-hash' : hash(fs.readFileSync(file)),
+     process: { stdout: { write: () => {} }, stderr: { write: () => {} } }, fail: (_code, message) => { throw new Error(message); },
+   };
+-  const releaseSlot = load(section(engine, 'async function releaseSlot(info)', '/**\n * hooks.prepareVolume'), 'releaseSlot', context);
++  const releaseSlot = load(section(engine, 'async function releaseSlot(info, expectedOwner)', '/**\n * hooks.prepareVolume'), 'releaseSlot', context);
+   context.releaseSlot = releaseSlot;
+   const down = load(section(engine, 'async function down(config, info, opts)', '/**\n * [EXP-X05] Start the slot'), 'down', context);
+   context.updateOwner = async (currentInfo, action) => {

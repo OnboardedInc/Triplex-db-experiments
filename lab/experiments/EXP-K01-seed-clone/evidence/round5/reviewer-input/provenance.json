@@ -1,0 +1,10 @@
+{
+  "reviewedHead": "4815140bdb2ddec70d70f1a39da421acb85bfec3",
+  "sourceHashes": {
+    "lab/verify/K01/VERIFY-round3.md": "5937a9bd72dd122302c202701fa07c1369143ece2005b888953bd7b8362098de",
+    "lab/verify/K01/q83e-review.test.mjs": "6e7f1d1cbe311d30bf193729223f96ffb52f14854a3adf010f8462394d5e901a",
+    "lab/verify/K01/run-review-round3.mjs": "92f41de4cad4e9021c97ab6ffbf0ff517fad49534c70e8170fe2de6f6a47ac03",
+    "lab/verify/K01/evidence/review-round3/codec-source.json": "749c95ab2e79ebaf7e66d0e337efd039055352fb44be03745b3d02e16add73eb",
+    "lab/verify/K01/evidence/review-round3/new-cases.json": "730872fc9227736bf346cacedfc161dec03582fa7bebb8850e78deaf2ed15241"
+  }
+}

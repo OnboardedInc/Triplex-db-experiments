@@ -1,0 +1,160 @@
+TAP version 13
+# Subtest: recursive codec content (nested-good)
+ok 1 - recursive codec content (nested-good)
+  ---
+  duration_ms: 1.634917
+  type: 'test'
+  ...
+# Subtest: recursive codec content (metadata-bad-tag)
+ok 2 - recursive codec content (metadata-bad-tag)
+  ---
+  duration_ms: 0.2765
+  type: 'test'
+  ...
+# Subtest: recursive codec content (temporal-bad-tag)
+ok 3 - recursive codec content (temporal-bad-tag)
+  ---
+  duration_ms: 0.201583
+  type: 'test'
+  ...
+# Subtest: recursive codec content (temporal-wrong-wire)
+ok 4 - recursive codec content (temporal-wrong-wire)
+  ---
+  duration_ms: 0.089833
+  type: 'test'
+  ...
+# Subtest: recursive codec content (utf8)
+ok 5 - recursive codec content (utf8)
+  ---
+  duration_ms: 0.139458
+  type: 'test'
+  ...
+# Subtest: recursive codec content (enum)
+ok 6 - recursive codec content (enum)
+  ---
+  duration_ms: 0.072417
+  type: 'test'
+  ...
+# Subtest: recursive codec content (duplicate-cut)
+ok 7 - recursive codec content (duplicate-cut)
+  ---
+  duration_ms: 0.153083
+  type: 'test'
+  ...
+# Subtest: recursive codec content (unknown-trie)
+ok 8 - recursive codec content (unknown-trie)
+  ---
+  duration_ms: 0.077917
+  type: 'test'
+  ...
+# Subtest: recursive codec content (unknown-temporal)
+ok 9 - recursive codec content (unknown-temporal)
+  ---
+  duration_ms: 0.279041
+  type: 'test'
+  ...
+# Subtest: recursive codec content (wrong-trie-wire)
+ok 10 - recursive codec content (wrong-trie-wire)
+  ---
+  duration_ms: 0.322875
+  type: 'test'
+  ...
+# Subtest: recursive codec content (out-of-range-int32)
+ok 11 - recursive codec content (out-of-range-int32)
+  ---
+  duration_ms: 0.15875
+  type: 'test'
+  ...
+# Subtest: cut body binds the intended checkpoint index
+ok 12 - cut body binds the intended checkpoint index
+  ---
+  duration_ms: 0.173292
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses duplicates
+ok 13 - C1 exact tree preimage refuses duplicates
+  ---
+  duration_ms: 0.199083
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses bad-size
+ok 14 - C1 exact tree preimage refuses bad-size
+  ---
+  duration_ms: 0.044167
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses bad-mode
+ok 15 - C1 exact tree preimage refuses bad-mode
+  ---
+  duration_ms: 0.0455
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses bad-owner
+ok 16 - C1 exact tree preimage refuses bad-owner
+  ---
+  duration_ms: 0.02875
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses missing-hash
+ok 17 - C1 exact tree preimage refuses missing-hash
+  ---
+  duration_ms: 0.044209
+  type: 'test'
+  ...
+# Subtest: C1 exact tree preimage refuses duplicate-hash
+ok 18 - C1 exact tree preimage refuses duplicate-hash
+  ---
+  duration_ms: 0.136083
+  type: 'test'
+  ...
+# Subtest: conditional release preserves replacement owner (same)
+ok 19 - conditional release preserves replacement owner (same)
+  ---
+  duration_ms: 6.363791
+  type: 'test'
+  ...
+# Subtest: conditional release preserves replacement owner (new-generation)
+ok 20 - conditional release preserves replacement owner (new-generation)
+  ---
+  duration_ms: 5.1455
+  type: 'test'
+  ...
+# Subtest: conditional release preserves replacement owner (new-operation)
+ok 21 - conditional release preserves replacement owner (new-operation)
+  ---
+  duration_ms: 3.721625
+  type: 'test'
+  ...
+# Subtest: conditional release preserves replacement owner (new-holder)
+ok 22 - conditional release preserves replacement owner (new-holder)
+  ---
+  duration_ms: 3.330667
+  type: 'test'
+  ...
+# Subtest: failed teardown retains revoked receipts (remove)
+ok 23 - failed teardown retains revoked receipts (remove)
+  ---
+  duration_ms: 9.978459
+  type: 'test'
+  ...
+# Subtest: failed teardown retains revoked receipts (absence-read)
+ok 24 - failed teardown retains revoked receipts (absence-read)
+  ---
+  duration_ms: 7.721083
+  type: 'test'
+  ...
+# Subtest: failed teardown retains revoked receipts (pool)
+ok 25 - failed teardown retains revoked receipts (pool)
+  ---
+  duration_ms: 7.022167
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 141.08525

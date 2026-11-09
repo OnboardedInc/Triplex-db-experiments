@@ -1,0 +1,138 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 24829 "CX-P2Q-R7-final-suites", pid 37317 "CX-G03-r3-claim-suites2", pid 17994 "CX-INT-XCJ-J01-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 24829 "CX-P2Q-R7-final-suites", pid 37317 "CX-G03-r3-claim-suites2", pid 17994 "CX-INT-XCJ-J01-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 24829 "CX-P2Q-R7-final-suites", pid 37317 "CX-G03-r3-claim-suites2", pid 17994 "CX-INT-XCJ-J01-evaluator"
+{
+  "at": "2026-11-09T00:12:49.614Z",
+  "head": "9254ec3b055e1b5ebd049947792d0ed868a13415",
+  "offlineOnly": true,
+  "hostDisk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 3246258,
+    "bavail": 3246258,
+    "files": 141420712,
+    "ffree": 129850320
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/bin/engine.mjs": "b9acc40420bd601d7cae70b14380b77ef3d67f2f1261e742274121d867726dc2",
+    "lab/bin/owner-state.mjs": "8cf0c4be727bbdd03968415f0e11a85f822acdef061d555e4045d0080cb70ebb",
+    "lab/bin/xtdb-log.mjs": "d251668c35b570120cc2c69c27b68af6d1854a0a80751b91b794f10329a2da62",
+    "lab/bench/clone-check.ts": "4b51d2e6311dc1c0a2b02d7ce1770bffa46135a960921cb1ec2b3f0fda184836",
+    "lab/bench/lib/clone.ts": "b62f5f0f0cb69c3b073f4393b020d28ced626ed186b3bf92d6799b5444154715",
+    "lab/bench/lib/bulk.ts": "0e14cd1f0392cdaca3191aeee051b1c18e443742b55b8078d89c6fdf9d83c0df",
+    "lab/experiments/EXP-K01-seed-clone/round2-live.mjs": "a0afcb3ad9df3c330b44059753638a6b242650978dbd222a24ed95010cac48dc",
+    "lab/verify/K01/freshness.test.mjs": "7b2b0433a31cb65685a8e55e5d9149b7a64212591c849896f393f3dffa2461e9",
+    "lab/verify/K01/round4.test.mjs": "5c36fb2b8b3f9a2e3c9d4daadd2753532d7f0451cacdb0d03abe8cfcefcff171",
+    "lab/verify/K01/tail-fixtures.mjs": "29bec6c80a2330c88e5539e20517f96e5471a6aeb6e691cf22f7cc03fd512abd",
+    "lab/verify/K01/run-round5.mjs": "c6a9906983be25341e50f36a5914d92f763d834c1cf00bc22ed1ee622627bb41",
+    "lab/verify/K01/q83e-review.test.mjs": "2c6939d92c628d7a6a6da3253cc67d3f7783dff6124fd668169368c7eef46e7c",
+    "lab/verify/K01/round5.test.mjs": "51d1175ff1228b63f106226e097858b4ec46c76a002e65d0f4541a3128b6e73c",
+    "lab/verify/K01/offline.test.mjs": "c864874412124341d3ce33b4516a66a959ffdb47d204ad7019a32dfb55b76e12",
+    "lab/verify/K01/round3.test.mjs": "f99f45c8da60a576e9fd23126ba7e6fbd41095a0ca7d31bde65b799bff456fc5",
+    "lab/bench/test/clone.test.ts": "4a0fd68fe8c9c4d9582f0f331d156045e9d29252aa4346198d9d24ba4b7e9651"
+  },
+  "runs": [
+    {
+      "label": "baseline",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/clone.test.ts"
+      ],
+      "exit": 1,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1022,
+      "sha256": "23c68cb6cb176cda8076d1c2b277d1738fa425ee4c0fc80380bc32e65d3bc0e5"
+    },
+    {
+      "label": "original-21",
+      "args": [
+        "--test",
+        "lab/verify/K01/offline.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 153,
+      "sha256": "6babad06844e7f01fcaef21bcf64c2d06827e7b75ae7ea52f44214ce10a87e53"
+    },
+    {
+      "label": "round3-23",
+      "args": [
+        "--test",
+        "lab/verify/K01/round3.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 118,
+      "sha256": "35e2efa45e68b182a09f499dacdf7c7a17734f5ef5c99380e58602869c200319"
+    },
+    {
+      "label": "freshness-14",
+      "args": [
+        "--test",
+        "lab/verify/K01/freshness.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 139,
+      "sha256": "9188599046c4730fc938e8de0fb036a3d0cc744f84b6747326b6fc55ce52aa13"
+    },
+    {
+      "label": "round4",
+      "args": [
+        "--test",
+        "lab/verify/K01/round4.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 484,
+      "sha256": "c0143724d53ee07e23cc4bfd21ef189a99566db72eb83d17baa735d19f767a29"
+    },
+    {
+      "label": "reviewer-36",
+      "args": [
+        "--test",
+        "lab/verify/K01/q83e-review.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 373,
+      "sha256": "bfecaf6efe451f8767725807ef23266d6121f3ee018945500092da105778859f"
+    },
+    {
+      "label": "round5",
+      "args": [
+        "--test",
+        "lab/verify/K01/round5.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 236,
+      "sha256": "9895cec20bc9541fae17457e817b3209988e2e68e6bbc4ee0e4ab82c5de6f63d"
+    },
+    {
+      "label": "types",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 1277,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

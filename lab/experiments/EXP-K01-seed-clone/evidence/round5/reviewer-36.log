@@ -1,0 +1,229 @@
+TAP version 13
+# [lab] waiting for xtdb-s1 owner state (held by pid 55858)
+# (node:55858) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Q83e: schema-derived maintenance and cut encodings qualify distinct F/M/T
+ok 1 - Q83e: schema-derived maintenance and cut encodings qualify distinct F/M/T
+  ---
+  duration_ms: 1.211125
+  type: 'test'
+  ...
+# Subtest: Q83e: Tx at interval position 1/5 refuses with unchanged observed T
+ok 2 - Q83e: Tx at interval position 1/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.366834
+  type: 'test'
+  ...
+# Subtest: Q83e: Tx at interval position 2/5 refuses with unchanged observed T
+ok 3 - Q83e: Tx at interval position 2/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.103917
+  type: 'test'
+  ...
+# Subtest: Q83e: Tx at interval position 3/5 refuses with unchanged observed T
+ok 4 - Q83e: Tx at interval position 3/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.568125
+  type: 'test'
+  ...
+# Subtest: Q83e: Tx at interval position 4/5 refuses with unchanged observed T
+ok 5 - Q83e: Tx at interval position 4/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.23975
+  type: 'test'
+  ...
+# Subtest: Q83e: Tx at interval position 5/5 refuses with unchanged observed T
+ok 6 - Q83e: Tx at interval position 5/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.151958
+  type: 'test'
+  ...
+# Subtest: Q83e: LegacyTx at interval position 1/5 refuses with unchanged observed T
+ok 7 - Q83e: LegacyTx at interval position 1/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.129541
+  type: 'test'
+  ...
+# Subtest: Q83e: LegacyTx at interval position 2/5 refuses with unchanged observed T
+ok 8 - Q83e: LegacyTx at interval position 2/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.066583
+  type: 'test'
+  ...
+# Subtest: Q83e: LegacyTx at interval position 3/5 refuses with unchanged observed T
+ok 9 - Q83e: LegacyTx at interval position 3/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.277125
+  type: 'test'
+  ...
+# Subtest: Q83e: LegacyTx at interval position 4/5 refuses with unchanged observed T
+ok 10 - Q83e: LegacyTx at interval position 4/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.31675
+  type: 'test'
+  ...
+# Subtest: Q83e: LegacyTx at interval position 5/5 refuses with unchanged observed T
+ok 11 - Q83e: LegacyTx at interval position 5/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.125375
+  type: 'test'
+  ...
+# Subtest: Q83e: AttachDatabase at interval position 1/5 refuses with unchanged observed T
+ok 12 - Q83e: AttachDatabase at interval position 1/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.102625
+  type: 'test'
+  ...
+# Subtest: Q83e: AttachDatabase at interval position 2/5 refuses with unchanged observed T
+ok 13 - Q83e: AttachDatabase at interval position 2/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.057792
+  type: 'test'
+  ...
+# Subtest: Q83e: AttachDatabase at interval position 3/5 refuses with unchanged observed T
+ok 14 - Q83e: AttachDatabase at interval position 3/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.058917
+  type: 'test'
+  ...
+# Subtest: Q83e: AttachDatabase at interval position 4/5 refuses with unchanged observed T
+ok 15 - Q83e: AttachDatabase at interval position 4/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.062083
+  type: 'test'
+  ...
+# Subtest: Q83e: AttachDatabase at interval position 5/5 refuses with unchanged observed T
+ok 16 - Q83e: AttachDatabase at interval position 5/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.063542
+  type: 'test'
+  ...
+# Subtest: Q83e: DetachDatabase at interval position 1/5 refuses with unchanged observed T
+ok 17 - Q83e: DetachDatabase at interval position 1/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.042375
+  type: 'test'
+  ...
+# Subtest: Q83e: DetachDatabase at interval position 2/5 refuses with unchanged observed T
+ok 18 - Q83e: DetachDatabase at interval position 2/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.049291
+  type: 'test'
+  ...
+# Subtest: Q83e: DetachDatabase at interval position 3/5 refuses with unchanged observed T
+ok 19 - Q83e: DetachDatabase at interval position 3/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.052292
+  type: 'test'
+  ...
+# Subtest: Q83e: DetachDatabase at interval position 4/5 refuses with unchanged observed T
+ok 20 - Q83e: DetachDatabase at interval position 4/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.055375
+  type: 'test'
+  ...
+# Subtest: Q83e: DetachDatabase at interval position 5/5 refuses with unchanged observed T
+ok 21 - Q83e: DetachDatabase at interval position 5/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.072375
+  type: 'test'
+  ...
+# Subtest: Q83e: ambiguous protobuf oneof refuses (tx-first)
+ok 22 - Q83e: ambiguous protobuf oneof refuses (tx-first)
+  ---
+  duration_ms: 0.2245
+  type: 'test'
+  ...
+# Subtest: Q83e: ambiguous protobuf oneof refuses (tx-last)
+ok 23 - Q83e: ambiguous protobuf oneof refuses (tx-last)
+  ---
+  duration_ms: 0.047916
+  type: 'test'
+  ...
+# Subtest: R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (empty-body)
+ok 24 - R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (empty-body)
+  ---
+  duration_ms: 0.088708
+  type: 'test'
+  ...
+# Subtest: R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (unknown-field-1)
+ok 25 - R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (unknown-field-1)
+  ---
+  duration_ms: 0.04325
+  type: 'test'
+  ...
+# Subtest: R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (wrong-wire-for-field-2)
+ok 26 - R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (wrong-wire-for-field-2)
+  ---
+  duration_ms: 0.039584
+  type: 'test'
+  ...
+# Subtest: R3-F1: invalid nested TrieMetadata bytes must not qualify as maintenance
+ok 27 - R3-F1: invalid nested TrieMetadata bytes must not qualify as maintenance
+  ---
+  duration_ms: 0.093917
+  type: 'test'
+  ...
+# Subtest: Q83e: T is read independently; a changing application gauge refuses even with stable M
+ok 28 - Q83e: T is read independently; a changing application gauge refuses even with stable M
+  ---
+  duration_ms: 2.471625
+  type: 'test'
+  ...
+# Subtest: control: C1 is recomputed from the golden/copy evidence (clean)
+ok 29 - control: C1 is recomputed from the golden/copy evidence (clean)
+  ---
+  duration_ms: 1.941125
+  type: 'test'
+  ...
+# Subtest: R3-F2: C1 is recomputed from the golden/copy evidence (different-observed)
+ok 30 - R3-F2: C1 is recomputed from the golden/copy evidence (different-observed)
+  ---
+  duration_ms: 0.757542
+  type: 'test'
+  ...
+# Subtest: R3-F2: C1 is recomputed from the golden/copy evidence (wrong-expected)
+ok 31 - R3-F2: C1 is recomputed from the golden/copy evidence (wrong-expected)
+  ---
+  duration_ms: 0.705541
+  type: 'test'
+  ...
+# Subtest: R3-F2: C1 is recomputed from the golden/copy evidence (missing-hashes)
+ok 32 - R3-F2: C1 is recomputed from the golden/copy evidence (missing-hashes)
+  ---
+  duration_ms: 0.734792
+  type: 'test'
+  ...
+# Subtest: control: down invalidates verification before removing the current container
+ok 33 - control: down invalidates verification before removing the current container
+  ---
+  duration_ms: 22.110833
+  type: 'test'
+  ...
+# Subtest: R3-F3: down invalidates verification before removing the current container
+ok 34 - R3-F3: down invalidates verification before removing the current container
+  ---
+  duration_ms: 231.886709
+  type: 'test'
+  ...
+# Subtest: cleanup variation: golden creation UUID is checked before removal (true)
+ok 35 - cleanup variation: golden creation UUID is checked before removal (true)
+  ---
+  duration_ms: 0.957292
+  type: 'test'
+  ...
+# Subtest: cleanup variation: golden creation UUID is checked before removal (false)
+ok 36 - cleanup variation: golden creation UUID is checked before removal (false)
+  ---
+  duration_ms: 0.425666
+  type: 'test'
+  ...
+1..36
+# tests 36
+# suites 0
+# pass 36
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 357.987417

@@ -1,0 +1,76 @@
+{
+  "head": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+  "status": "",
+  "files": {
+    "core/src/main/kotlin/xtdb/api/log/SourceMessage.kt": {
+      "sha256": "e4747a78fced0b99bf3fa631a5f07571c122507e8e1ee8cb0b31162283691f97",
+      "regions": [
+        {
+          "first": 26,
+          "last": 46,
+          "text": "26: \n27:     companion object Codec : MessageCodec<SourceMessage> {\n28:         private const val TX_HEADER: Byte = -1\n29:         private const val LEGACY_FLUSH_BLOCK_HEADER: Byte = 2\n30:         private const val PROTOBUF_HEADER: Byte = 3\n31: \n32:         override fun encode(message: SourceMessage): ByteArray = message.encode()\n33: \n34:         override fun decode(bytes: ByteArray): SourceMessage? = parse(bytes)\n35: \n36:         @JvmStatic\n37:         fun parse(bytes: ByteArray) =\n38:             when (bytes[0]) {\n39:                 TX_HEADER -> LegacyTx(bytes)\n40:                 LEGACY_FLUSH_BLOCK_HEADER -> null\n41:                 PROTOBUF_HEADER -> ProtobufMessage.parse(ByteBuffer.wrap(bytes).position(1))\n42: \n43:                 else -> throw IllegalArgumentException(\"Unknown message type: ${bytes[0]}\")\n44:             }\n45:     }\n46: "
+        },
+        {
+          "first": 54,
+          "last": 93,
+          "text": "54:         final override fun encode(): ByteArray = toLogMessage().toHeaderedBytes(PROTOBUF_HEADER)\n55: \n56:         companion object {\n57:             fun parse(buffer: ByteBuffer): SourceMessage? =\n58:                 SourceLogMessage.parseFrom(buffer.duplicate().position(1))\n59:                     .let { msg ->\n60:                         when (msg.messageCase) {\n61:                             SourceLogMessage.MessageCase.FLUSH_BLOCK ->\n62:                                 msg.flushBlock\n63:                                     .takeIf { it.hasExpectedBlockIdx() }\n64:                                     ?.expectedBlockIdx\n65:                                     ?.let { FlushBlock(it) }\n66: \n67:                             SourceLogMessage.MessageCase.TRIES_ADDED -> msg.triesAdded.let {\n68:                                 TriesAdded(it.storageVersion, it.storageEpoch, it.triesList)\n69:                             }\n70: \n71:                             SourceLogMessage.MessageCase.ATTACH_DATABASE -> msg.attachDatabase.let {\n72:                                 AttachDatabase(it.dbName, Database.Config.fromProto(it.config))\n73:                             }\n74: \n75:                             SourceLogMessage.MessageCase.DETACH_DATABASE -> DetachDatabase(msg.detachDatabase.dbName)\n76: \n77:                             SourceLogMessage.MessageCase.TX -> msg.tx.let {\n78:                                 Tx(\n79:                                     txOps = it.txOps,\n80:                                     systemTime = if (it.hasSystemTimeMicros()) InstantUtil.fromMicros(it.systemTimeMicros) else null,\n81:                                     defaultTz = ZoneId.of(it.defaultTz),\n82:                                     user = if (it.hasUser()) it.user else null,\n83:                                     userMetadata = if (it.userMetadata.isEmpty) null else it.userMetadata,\n84:                                     externalSourceToken = it.externalSourceToken.takeIf { _ -> it.hasExternalSourceToken() }?.toByteArray()\n85:                                 )\n86:                             }\n87: \n88:                             else -> null\n89:                         }\n90:                     }\n91:         }\n92:     }\n93: "
+        },
+        {
+          "first": 132,
+          "last": 148,
+          "text": "132: \n133:     data class FlushBlock(val expectedBlockIdx: BlockIndex?) : ProtobufMessage() {\n134:         override fun toLogMessage() = sourceLogMessage {\n135:             flushBlock = flushBlock { this@FlushBlock.expectedBlockIdx?.let { expectedBlockIdx = it } }\n136:         }\n137:     }\n138: \n139:     data class TriesAdded(\n140:         val storageVersion: Int, val storageEpoch: StorageEpoch, val tries: List<TrieDetails>\n141:     ) : ProtobufMessage() {\n142:         override fun toLogMessage() = sourceLogMessage {\n143:             triesAdded = triesAdded {\n144:                 storageVersion = this@TriesAdded.storageVersion\n145:                 storageEpoch = this@TriesAdded.storageEpoch\n146:                 tries.addAll(this@TriesAdded.tries)\n147:             }\n148:         }"
+        }
+      ]
+    },
+    "core/src/main/proto/xtdb/log/proto/log.proto": {
+      "sha256": "d11f43c05efafaa17ac59d9d0d174d1621628c7295c2158595a8628c80ee94a5",
+      "regions": [
+        {
+          "first": 11,
+          "last": 29,
+          "text": "11: message SourceLogMessage {\n12:     // 5 was block_uploaded, only ever written by unreleased builds between 2.1 and 2.2.\n13:     reserved 5;\n14: \n15:     oneof message {\n16:         FlushBlock flush_block = 1;\n17:         TriesAdded tries_added = 2;\n18:         AttachDatabase attach_database = 3;\n19:         DetachDatabase detach_database = 4;\n20:         Tx tx = 6;\n21:     }\n22: }\n23: \n24: message Tx {\n25:     bytes tx_ops = 1;\n26:     int64 system_time_micros = 2;\n27:     string default_tz = 3;\n28:     string user = 4;\n29:     bytes user_metadata = 5;"
+        },
+        {
+          "first": 40,
+          "last": 82,
+          "text": "40: }\n41: \n42: message FlushBlock {\n43:     int64 expected_block_idx = 2;\n44: }\n45: \n46: message TriesAdded {\n47:     int32 storage_version = 2;\n48:     int32 storage_epoch = 3;\n49:     repeated TrieDetails tries = 1;\n50:     int64 source_msg_id = 4;\n51: }\n52: \n53: message TemporalMetadata {\n54:     int64 min_valid_from = 1 [default = 9223372036854775807];\n55:     int64 max_valid_from = 2 [default = -9223372036854775808];\n56:     int64 min_valid_to = 3 [default = 9223372036854775807];\n57:     int64 max_valid_to = 4 [default = -9223372036854775808];\n58:     int64 min_system_from = 5 [default = 9223372036854775807];\n59:     int64 max_system_from = 6 [default = -9223372036854775808];\n60: }\n61: \n62: message TrieMetadata {\n63:     TemporalMetadata temporal_metadata = 1;\n64:     int64 row_count = 2 [default = 0];\n65:     // deprecated, see #5355: never consulted at query time;\n66:     // retained for backwards compatibility with existing block files.\n67:     bytes iid_bloom = 8;\n68: }\n69: \n70: enum TrieState {\n71:     NASCENT = 0;\n72:     LIVE = 1;\n73:     GARBAGE = 2;\n74: }\n75: \n76: message TrieDetails {\n77:     string table_name = 1;\n78:     string trie_key = 2;\n79:     int64 data_file_size = 3;\n80:     TrieMetadata trie_metadata = 4;\n81:     TrieState trie_state = 5;\n82:     int64 garbage_as_of = 6;"
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/indexer/SourceLogProcessor.kt": {
+      "sha256": "8ea7057dc8a049ba8363752bc2cd30b9d7f495403be8bda2a53e0aa0e9af7a8f",
+      "regions": [
+        {
+          "first": 134,
+          "last": 153,
+          "text": "134:         val msg = record.message\n135:         LOG.trace { \"[$dbName] leader: message $msgId (${msg::class.simpleName})\" }\n136: \n137:         return when (msg) {\n138:             is SourceMessage.Tx -> appendTx(txResolver.indexTx(msgId, record.logTimestamp, msg))\n139: \n140:             is SourceMessage.LegacyTx -> appendTx(txResolver.indexTx(msgId, record.logTimestamp, msg))\n141: \n142:             is SourceMessage.FlushBlock -> {\n143:                 val expectedBlockIdx = msg.expectedBlockIdx\n144:                 val cut = expectedBlockIdx != null && expectedBlockIdx == (tableCatalog.currentBlockIndex ?: -1L)\n145: \n146:                 if (cut) blockCutter.cut(msgId, txResolver.resolvedExtToken)\n147:                 // see #5680\n148:                 else replicaAppender.append(ControlItem(ReplicaMessage.NoOp(srcMsgId = msgId, termId = leaderTerm)))\n149: \n150:                 txResolver.advanceSrcMsgId(msgId)\n151:                 cut\n152:             }\n153: "
+        },
+        {
+          "first": 156,
+          "last": 214,
+          "text": "156:                     when (txResolver.stagedDbOp(msg.dbName)) {\n157:                         is DbOp.Attach ->\n158:                             throw Conflict(\"Database already exists\", \"xtdb/db-exists\", mapOf(\"db-name\" to msg.dbName))\n159: \n160:                         is DbOp.Detach -> throw Conflict(\n161:                             \"Database is still being detached \u2014 retry once the previous detach has completed\",\n162:                             \"xtdb/db-being-detached\", mapOf(\"db-name\" to msg.dbName)\n163:                         )\n164: \n165:                         null -> it.checkCanAttach(msg.dbName, msg.config)\n166:                     }\n167:                 }\n168: \n169:                 appendTx(\n170:                     if (error == null)\n171:                         txResolver.indexDbOp(msgId, record.logTimestamp, DbOp.Attach(msg.dbName, msg.config))\n172:                     else\n173:                         txResolver.indexFailedDbOp(msgId, record.logTimestamp, error)\n174:                 )\n175:             }\n176: \n177:             is SourceMessage.DetachDatabase -> {\n178:                 val error = checkDbOp(msgId, \"detach\", msg.dbName) {\n179:                     when (txResolver.stagedDbOp(msg.dbName)) {\n180:                         // The primary is always held, so it never has one of these; anything that does\n181:                         // will be there to detach by the time this op is applied.\n182:                         is DbOp.Attach -> {}\n183: \n184:                         is DbOp.Detach ->\n185:                             throw NotFound(\"Database does not exist\", \"xtdb/no-such-db\", mapOf(\"db-name\" to msg.dbName))\n186: \n187:                         null -> it.checkCanDetach(msg.dbName)\n188:                     }\n189:                 }\n190: \n191:                 appendTx(\n192:                     if (error == null)\n193:                         txResolver.indexDbOp(msgId, record.logTimestamp, DbOp.Detach(msg.dbName))\n194:                     else\n195:                         txResolver.indexFailedDbOp(msgId, record.logTimestamp, error)\n196:                 )\n197:             }\n198: \n199:             is SourceMessage.TriesAdded -> {\n200:                 // Forwarded whatever its storage version: each node guards the add on the way back in,\n201:                 // and this message is also what carries the source watermark forward.\n202:                 replicaAppender.append(\n203:                     ControlItem(\n204:                         TriesAdded(\n205:                             msg.storageVersion, msg.storageEpoch, msg.tries,\n206:                             sourceMsgId = msgId, termId = leaderTerm\n207:                         )\n208:                     )\n209:                 )\n210:                 txResolver.advanceSrcMsgId(msgId)\n211:                 false\n212:             }\n213:         }\n214:     }"
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/database/Database.kt": {
+      "sha256": "8455da9db9cca14d33952a061154466d8c5972e4385020b437c95e5d6bf0a087",
+      "regions": [
+        {
+          "first": 375,
+          "last": 387,
+          "text": "375:                 listOf(\n376:                     gauge(\"node.tx.latestCompletedTxId\") {\n377:                         (state.liveIndex.latestCompletedTx?.txId ?: -1).toDouble()\n378:                     },\n379:                     gauge(\"node.tx.latestSubmittedMsgId\") {\n380:                         logs.sourceLog.latestSubmittedMsgId().toDouble()\n381:                     },\n382:                     gauge(\"node.tx.latestProcessedMsgId\") {\n383:                         watchers.latestSourceMsgId.toDouble()\n384:                     },\n385:                     gauge(\"node.tx.lag.MsgId\") {\n386:                         maxOf(logs.sourceLog.latestSubmittedMsgId() - watchers.latestSourceMsgId, 0).toDouble()\n387:                     },"
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/api/log/LocalLog.kt": {
+      "sha256": "39f86a5215d46e8c294386b0c508ca21c5dfd808cd7a8b285dac6450b94d2763",
+      "regions": [
+        {
+          "first": 143,
+          "last": 170,
+          "text": "143: \n144:         try {\n145:             val res = Array(msgs.size) { idx ->\n146:                 val (msg) = msgs[idx]\n147:                 // we only use the instantSource for Tx messages so that the tests\n148:                 // that check files can be deterministic\n149:                 val ts = if (msg is SourceMessage.Tx || msg is SourceMessage.LegacyTx || useInstantSourceForNonTx) instantSource.instant() else Instant.now()\n150:                 val payload = codec.encode(msg)\n151:                 val size = payload.size\n152:                 val offset = logFileChannel.position()\n153: \n154:                 logFileChannel.write(\n155:                     ByteBuffer\n156:                         .allocateDirect(messageSizeBytes(size))\n157:                         .run {\n158:                             put(RECORD_SEPARATOR)\n159:                             putInt(size)\n160:                             putLong(ts.asMicros)\n161:                             put(payload)\n162:                             putLong(offset)\n163:                             flip()\n164:                         })\n165: \n166:                 Record(epoch, offset, ts, msg)\n167:             }\n168: \n169:             logFileChannel.force(true)\n170: "
+        }
+      ]
+    }
+  }
+}
