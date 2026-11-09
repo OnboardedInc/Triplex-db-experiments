@@ -1902,3 +1902,16 @@ Where each priority stands, from evidence so far (research probes and baselines;
   per-subject arm stays as a comparison. This is the first time the lab closed a path with a rule written before the run.
 - Aged F6, F7 to F9 and strict no-wait checks are still open; an independent review reads the receipts. Slot and volume released; K01's live
   rerun took the slot next.
+
+## 2026-11-09 05:27Z: hourly pass: usage 7%; the first preregistered decision closed a path; EXP-P2B starts
+- **Learnings since the last pass:**
+  - **EXP-P2X2 closed XTDB's native commit path for P2** with a rule written before the run (Q96d). Lane X goes through the broker.
+  - **P2Q accepted after eleven rounds;** INT-Q merged it with SQL01 and applied Q89b to H1; in review.
+  - **The erasure scanners accepted** after four rounds (9,189 layered fixtures, zero misses).
+  - **FD01's conformance suite** catches gaps, order, payload, resume and duplicates, but let a non-atomic consumer through and did not tie
+    lag to the publication clock; fixing.
+  - **QNODELAY's static search for timing writers cannot be complete;** validating at the reading end instead.
+  - **The Codex filter stopped two more reviews** (P2Q round 10, ER01-S round 4); both recovered (one had already written its verdict).
+- **Pattern:** guards that enumerate producers keep missing producers (P2Q's read surface, QNODELAY's timing writers, the scanners'
+  encodings). The fixes that held enforce the property at the one place everything passes through (a wrapper, a parser, a closure).
+- **Dispatched:** EXP-P2B (XTDB behind the broker, designed in Q58b and R23 6) from int/P2Q-SQL01; no new research needed this hour.
