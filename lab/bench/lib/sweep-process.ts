@@ -33,8 +33,9 @@ process.on("message", async (m: any) => {
       },
       afterCheckpoint: (page) => rpc("checkpoint", [page]),
     });
-    process.send!({ type: "done", result });
-    process.disconnect?.();
+    // [EXP-P5N] Why: the parent only reads `complete`; the full result (157 page metrics at 10k) is larger than a pipe buffer and the immediate disconnect() could drop it, which the 10k run saw as "unexpected exit 0".
+    // Rejected: disconnecting right after send (the message may still be queued).
+    process.send!({ type: "done", result: { complete: result.complete, published: result.published.length } }, undefined, undefined, () => process.disconnect?.());
   } catch (e: any) {
     process.send!({ type: "failure", error: String(e.stack ?? e) });
     process.disconnect?.();
