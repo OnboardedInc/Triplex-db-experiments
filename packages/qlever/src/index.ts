@@ -230,6 +230,7 @@ export {
   type LogFrame,
   type Watermark,
 } from "./broker/log.js";
+export { openSweepReader } from "./broker/log.js";
 export { FrameKind, scanSegment, encodeFrame, encodeSegmentHeader } from "./broker/frame.js";
 export { crc32c } from "./broker/crc32c.js";
 export { ORDINALS, packPosition, lsnOf, ordinalOf, lastPositionOf } from "./broker/position.js";

@@ -694,6 +694,9 @@ export class HostBroker {
   readback(ids: readonly string[]) {
     return this.log.readback(ids);
   }
+  sweepHandle() {
+    return this.log.sweepHandle();
+  }
   appendStats(reset = false) {
     return this.log.appendStats(reset);
   }

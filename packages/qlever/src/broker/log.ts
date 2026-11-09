@@ -231,6 +231,18 @@ const connect = (
       workerData: { file, role, seed, driver, gateBuffer, requireFullFsync },
     }),
   );
+// [EXP-P5N] Why: D3. A sweep worker thread opens its own readonly connection on the owner's gate so page reads never pass through the owner's main thread; the gate counter still includes it,
+// so the checkpointer and RESTART see it. Rejected: reading from a second process (the gate buffer cannot be shared across processes).
+export function openSweepReader(file: string, gate: SharedArrayBuffer) {
+  const c = connect(file, "reader", gate);
+  return {
+    sweep: (args: { basis: number; entities: readonly string[]; validAt?: number }) =>
+      c.request<
+        PinnedPull & { transactionMs: number; cpuMicros: number; cpuScope: string; roundTrips: number }
+      >("sweep", args),
+    close: () => c.close(),
+  };
+}
 const hostStores = new WeakMap<HostLog, Connection>();
 const streams = new Map<string, HostLog>();
 const readers = new Map<string, Connection>();
@@ -451,6 +463,10 @@ export class HostLog {
   get segmentPath() {
     return path.join(this.dir, "broker.db");
   }
+  /** [EXP-P5N] The file and shared gate a sweep worker needs to open its own reader (see openSweepReader). */
+  sweepHandle() {
+    return { file: this.segmentPath, gate: this.gate };
+  }
   get failure() {
     return this.failed;
   }
@@ -548,8 +564,8 @@ export class HostLog {
   ) {
     if (this.closed) throw new BrokerLogError("Broker log is closed");
     const worker = options.worker ?? 0;
-    if (!Number.isInteger(worker) || worker < 0 || worker > 3 || entities.length > 64)
-      throw new BrokerLogError("Sweep requires worker 0..3 and at most 64 subjects");
+    if (!Number.isInteger(worker) || worker < 0 || worker > 15 || entities.length > 64)
+      throw new BrokerLogError("Sweep requires worker 0..15 and at most 64 subjects");
     if (options.validAt !== undefined && !Number.isFinite(options.validAt))
       throw new BrokerLogError("Sweep validAt must be finite");
     // [EXP-P5B] Why: R34/Q92h isolates page BFS from four live readers and shares the maintenance gate.
