@@ -32,11 +32,13 @@ import {createHash} from 'node:crypto';
 import {deriveHelperIds} from './btf-helpers.mjs';
 
 export const BPFTRACE_VERSION='0.20.2';
-/** The ONE flag set W0 relies on to make bpftrace emit its compiled program. R49 does not document bpftrace's debug options and no bpftrace or
- * network is available offline, so this is from the builder's knowledge of the 0.20 series, UNVERIFIED against the 0.20.2 man page: `-d STAGE`
- * (stages all, ast, codegen, codegen-opt, dis, libbpf, verifier), which compiles and prints each stage without running the program. If 0.20.2
- * rejects it, the process exits nonzero or the dump is empty and W0 refuses (fail closed); the first W0 run records the real output and settles it. */
-export const COMPILE_FLAGS=['-d','all'];
+/** The ONE flag set W0 relies on to make bpftrace emit its compiled program.
+ * [EXP-OBS01-R15] Why: bpftrace 0.20.2 `--help` lists `-d` ("dry run" debug info) and `-dd` ("dry run" verbose debug info) and NEITHER takes an argument; the
+ * round 11 flag `-d all` was the 0.21+/STAGE spelling and is wrong here. Observed in the real r49 image (output in evidence/OBS01-W): `-d` prints the AST after each analysis pass
+ * and then ONE LLVM IR module, byte-identical to the "After optimization" module of `-dd` (the program that is loaded); `-dd` prints the same ASTs plus the IR "Before optimization"
+ * and "After optimization". Neither prints BPF disassembly. `-d` is chosen: its IR is the loaded program and it has no second, pre-optimisation copy that doubles every helper call.
+ * Rejected: `-dd` (the extra pre-optimisation module adds nothing the final IR lacks); `-d all` (observed in the r49 image: bpftrace reads `all` as the program file and fails with "failed to open file 'all'"). */
+export const COMPILE_FLAGS=['-d'];
 /** Positional arguments for the dump: placeholders. They change only constants in the compiled program, never which helpers it calls. */
 export const COMPILE_PLACEHOLDER_ARGS=['1','2','3','4'];
 
