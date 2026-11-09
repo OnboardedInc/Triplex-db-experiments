@@ -1,0 +1,100 @@
+{
+  "checks": [
+    {
+      "receipt": "lab/runs/G1/G1-xtdb-20261109T033339Z-61d306.json",
+      "sha256": "6b4d0b5f8b6e57cd9ffc54c2009b0bdb956a5ba2f869c896cff2f933b58fe795",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "rawReportSha256": "f9c62928714e0be53c47522919c7938de2263ac9a556b8d16a4b2e0665f41bfb",
+      "slot": "s1",
+      "containerId": "1bb78de139cf2346af0416f84af97425ca324596c9e98f7f95c524bd9c29a2f5",
+      "volume": "tx2-xtdb-s1-data:/var/lib/xtdb",
+      "volumeBytes": 16375808,
+      "environment": {
+        "DOCKER_HOST": "unix:///Users/sam/.colima/triplex2/docker.sock",
+        "npm_config_store_dir": "/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "TRIPLEX_COMMIT_ENCODING": "a0"
+      },
+      "sourceTreeId": "29626bf1ba00c98b532d2278d285100fddb4c642181c8da6d18aa3c9bfdf2357",
+      "objectReferencesChecked": 17
+    },
+    {
+      "receipt": "lab/runs/G2/G2-xtdb-20261109T033820Z-12808b.json",
+      "sha256": "a7bce16b2e826b97003b04474cface277703067c51b3b96416a68f617cce2cb2",
+      "counts": {
+        "executed": 142,
+        "expected": 142,
+        "pass": 142,
+        "fail": 0,
+        "skip": 0,
+        "statuses": {
+          "PASS": 142
+        }
+      },
+      "rawReportSha256": "73a0cc2a86b007528e6bd6ba3fbeec67a0090267dd1645fd5d0ae882ca06deaf",
+      "slot": "s1",
+      "containerId": "a98a827c2773b8cd7dd65e17424b25f08f7e164415689b874bed47e1048a38dd",
+      "volume": "tx2-xtdb-s1-data:/var/lib/xtdb",
+      "volumeBytes": 3903488,
+      "environment": {
+        "DOCKER_HOST": "unix:///Users/sam/.colima/triplex2/docker.sock",
+        "npm_config_store_dir": "/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "TRIPLEX_COMMIT_ENCODING": "a0"
+      },
+      "sourceTreeId": "29626bf1ba00c98b532d2278d285100fddb4c642181c8da6d18aa3c9bfdf2357",
+      "objectReferencesChecked": 30
+    },
+    {
+      "receipt": "lab/runs/G1/G1-xtdb-20261109T034051Z-ab5e08.json",
+      "sha256": "dd05a37e75feb9693772e166cfa753bce9511171ef4480b4cff066f3e5fcd3db",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "rawReportSha256": "8f53d15681908828b24cc36cc6022c0d00afca64a1d71c0d2ab7d9e9db943e93",
+      "slot": "s1",
+      "containerId": "0759d2cff7316d65dc00f5181848db4762f9d4f5421409327eb3ad6cc7b36939",
+      "volume": "tx2-xtdb-s1-data:/var/lib/xtdb",
+      "volumeBytes": 15392768,
+      "environment": {
+        "DOCKER_HOST": "unix:///Users/sam/.colima/triplex2/docker.sock",
+        "npm_config_store_dir": "/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "TRIPLEX_COMMIT_ENCODING": "compact"
+      },
+      "sourceTreeId": "29626bf1ba00c98b532d2278d285100fddb4c642181c8da6d18aa3c9bfdf2357",
+      "objectReferencesChecked": 17
+    }
+  ],
+  "modeCollectorExit": 1,
+  "modeQualified": false
+}
