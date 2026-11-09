@@ -52,16 +52,21 @@ describe.skipIf(process.env["XTDB_INTEGRATION"] !== "1")(
               })),
             );
             const position = yield* triples.currentPosition();
-            const first = yield* maintained.query(query, { validAt: 1 });
+            // [EXP-C8] query() is read-only: before publication it answers directly, unpublished.
+            const direct = yield* maintained.query(query, { validAt: 1 });
+            expect(direct.reused).toBe(false);
+            expect(direct.results).toHaveLength(5);
+            const first = yield* maintained.publish(query, { validAt: 1 });
             expect(first.reused).toBe(false);
-            expect(first.results).toHaveLength(5);
+            expect(first.generation).toBe(direct.generation);
+            expect(first.results).toEqual(direct.results);
             const reused = yield* makeXtdbMaintainedQueries(client, scope).query(query, {
               validAt: 1,
             });
             expect(reused.reused).toBe(true);
             expect(reused.generation).toBe(first.generation);
             yield* triples.retract(facts[0]!.id);
-            const alternate = yield* maintained.query(query, { validAt: 1 });
+            const alternate = yield* maintained.publish(query, { validAt: 1 });
             expect(alternate.reused).toBe(false);
             expect(alternate.results).toHaveLength(4);
             expect(has(alternate.results, "a", "d")).toBe(true);
@@ -111,7 +116,7 @@ describe.skipIf(process.env["XTDB_INTEGRATION"] !== "1")(
               where: [["?account", ":account/balance", "?value"]],
               aggregate: [["sum", "?value", "?sum"]],
             } as const;
-            const first = yield* maintained.query(sumQuery, { validAt: 1 });
+            const first = yield* maintained.publish(sumQuery, { validAt: 1 });
             expect(first.results).toEqual([{ "?sum": integer("9223372036854775807") }]);
             const cached = yield* maintained.query(sumQuery, { validAt: 1 });
             expect(cached.reused).toBe(true);
@@ -142,7 +147,10 @@ describe.skipIf(process.env["XTDB_INTEGRATION"] !== "1")(
               aggregate: [["sum", "?value", "?sum"]],
               orderBy: [{ variable: "?sum", direction: "asc" }],
             } as const;
-            const orderedGroups = yield* maintained.query(grouped, { validAt: 1 });
+            const directGroups = yield* maintained.query(grouped, { validAt: 1 });
+            expect(directGroups.reused).toBe(false);
+            const orderedGroups = yield* maintained.publish(grouped, { validAt: 1 });
+            expect(orderedGroups.results).toEqual(directGroups.results);
             expect(orderedGroups.results.map((row) => row["?sum"])).toEqual([
               integer("2"),
               integer("10"),

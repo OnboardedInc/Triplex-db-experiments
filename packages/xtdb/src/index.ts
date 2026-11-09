@@ -8,7 +8,7 @@ import {
   type MigrationError,
 } from "@triplex-build/triplex/runtime";
 import { makeXtdbClient, type XtdbClient } from "./XtdbClient.js";
-import { makeXtdbStorageAdapter } from "./XtdbStorageAdapter.js";
+import { makeXtdbStorageAdapter, type XtdbCommitEncoding } from "./XtdbStorageAdapter.js";
 import { makeXtdbQueryExecutor, type XtdbQueryLimits } from "./XtdbQueryExecutor.js";
 
 export interface XtdbRuntimeOptions {
@@ -18,8 +18,23 @@ export interface XtdbRuntimeOptions {
   readonly admissionQueue?: boolean;
   /** Experimental SQL constraint strategies; portable remains the default. */
   readonly constraintStrategy?: "portable" | "inline" | "projection";
+  /**
+   * Experimental (EXP-J01). Default `a0`. When omitted, `TRIPLEX_COMMIT_ENCODING` may select
+   * `compact`, so the unchanged lab gates (which build the runtime from this public factory) can run
+   * the candidate; the gate note must record it.
+   */
+  readonly commitEncoding?: XtdbCommitEncoding;
   readonly queryLimits?: XtdbQueryLimits;
 }
+
+/** The commit encoding an option or `TRIPLEX_COMMIT_ENCODING` selects; unknown values fail loudly. */
+export const commitEncodingOf = (requested: string | undefined): XtdbCommitEncoding | undefined => {
+  const value = requested ?? process.env["TRIPLEX_COMMIT_ENCODING"];
+  if (value === undefined || value === "") return undefined;
+  if (value !== "a0" && value !== "compact")
+    throw new TypeError("Unknown TRIPLEX_COMMIT_ENCODING; choose a0 or compact");
+  return value;
+};
 
 class Connection extends Context.Service<Connection, XtdbClient>()("triplex/xtdb/Connection") {}
 
@@ -31,6 +46,7 @@ class Connection extends Context.Service<Connection, XtdbClient>()("triplex/xtdb
 export const makeXtdbRuntime = (
   options: XtdbRuntimeOptions,
 ): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> => {
+  const commitEncoding = commitEncodingOf(options.commitEncoding);
   const connection = Layer.effect(
     Connection,
     Effect.acquireRelease(
@@ -52,6 +68,7 @@ export const makeXtdbRuntime = (
         ...(options.constraintStrategy === undefined
           ? {}
           : { constraintStrategy: options.constraintStrategy }),
+        ...(commitEncoding === undefined ? {} : { commitEncoding }),
       });
     }),
   ).pipe(Layer.provide(connection));
@@ -73,7 +90,11 @@ export const makeXtdbRuntime = (
 };
 
 export { makeXtdbClient, type XtdbClient, type XtdbBasis } from "./XtdbClient.js";
-export { makeXtdbStorageAdapter } from "./XtdbStorageAdapter.js";
+export {
+  makeXtdbStorageAdapter,
+  compactGuards,
+  type XtdbCommitEncoding,
+} from "./XtdbStorageAdapter.js";
 export { makeXtdbQueryExecutor, type XtdbQueryLimits } from "./XtdbQueryExecutor.js";
 export {
   makeXtdbTemporalQueries,
@@ -94,5 +115,6 @@ export {
   type XtdbNativeReachabilityContext,
   type XtdbNativeReachabilityOptions,
 } from "./native/NativeQueries.js";
-export { type XtdbNativeReachability, NativeWorkingOutcomeUnknown } from "./native/Reachability.js";
+// [EXP-C8] NativeWorkingOutcomeUnknown is gone with the scratch writes it reported on.
+export { type XtdbNativeReachability } from "./native/Reachability.js";
 export { type XtdbNativeContext } from "./native/Sources.js";

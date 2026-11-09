@@ -1,0 +1,27 @@
+--- committed/obligations.json
++++ generated/obligations.json
+@@ -14559,7 +14559,7 @@
+         },
+         {
+           "path": "packages/qualification/src/native/xtdb-workloads.ts",
+-          "sha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3"
++          "sha256": "4d9ad73e8f42c30aacd538e0986c1d9052bd603517db01bc4db00a1174700acd"
+         },
+         {
+           "path": "packages/qualification/src/native/qlever-workloads.ts",
+@@ -16071,7 +16071,7 @@
+       },
+       {
+         "path": "packages/qualification/src/native/xtdb-workloads.ts",
+-        "sha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3"
++        "sha256": "4d9ad73e8f42c30aacd538e0986c1d9052bd603517db01bc4db00a1174700acd"
+       },
+       {
+         "path": "packages/qualification/src/native/qlever-workloads.ts",
+@@ -30034,5 +30034,5 @@
+       ]
+     }
+   ],
+-  "transitiveContractSha256": "68788295dcc8dbc0cc4f2879a01f76c8bcb01608b287894a9aa5c11ef7827bef"
++  "transitiveContractSha256": "62e0c8fad22fd9faef11f1c85e8157d00c24bb3970aa4acf637e806309891448"
+ }

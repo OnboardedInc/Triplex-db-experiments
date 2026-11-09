@@ -18,8 +18,8 @@
     "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",
     "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
-    "lab/acceptance/RULINGS.md": "13a880df8878f3eecec48fa367ade87fe00e22352a4ef61a0799e8aef0634bcd",
-    "lab/acceptance/RULINGS-PENDING.md": "1f132ddc1d2320e7cc9025301e2c08e2f8a7cfc5bba95ceb0577fe6dc042291a",
+    "lab/acceptance/RULINGS.md": "b516dcd342a4872e017cbffe21a2e1a69e7b8c228bcb199357ea02a70f08650e",
+    "lab/acceptance/RULINGS-PENDING.md": "44f7f41380b8c64abfc381768a6416fa0f7cc809834482c70ddc79126c94d0cd",
     "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",
     "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",
     "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",
@@ -31,7 +31,10 @@
     "lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md": "4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa",
     "lab/acceptance/pins/O-OBS-V-O05-round4-brief-provenance.json": "50fe4ca21c0e0769136b1a77d9f2ab71afff0f4e454668e4654acc0030f19fdd",
     "lab/acceptance/pins/O-OBS-V-O05-round4-last.md": "5956dfd269b4f18b13bda84a0bfa840b164d0d783c6f34dda9ff29ad706bcf7c",
-    "lab/acceptance/build_contract.py": "c7f9e62e716416722b26c14f786e94d0bd3beda62472f04a0874813777429eb3"
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/workload-hunk-review.json": "86fccbf5ef7a27611f45b44659a37a5bcba8e613953bcfd04a8e326464c77dae",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/xtdb-workloads.ts.diff": "b31cae3941b058b72f9cda6e890ab600983fde24c0f4b609d9e161f5ba4d4f1f",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/qlever-workloads.ts.diff": "1a40dcce1fb973666abe0385fb2af3f24bf499676b9b595fea4a5aa7c49fb85a",
+    "lab/acceptance/build_contract.py": "914db3d15e91180e8b449fffeeb27b997dc10eb835fff66e10eca6517e985b59"
   },
   "artifacts": {
     "oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
@@ -1915,6 +1918,33 @@
       "compiledInto": [
         "seedRules"
       ]
+    },
+    {
+      "id": "Q88a",
+      "topic": "dev storage is development only",
+      "ruling": "Lane D evidence from Datomic dev storage is DIAGNOSTIC for every durable-readback, lost-ACK, P2 receipt and final acceptance obligation. Dev storage is H2 inside the transactor with H2's default 500 ms write delay, so an abrupt transactor stop can lose acknowledged transactions, which P2's 100% receipt bar does not allow. Acceptance runs on SQL storage on PostgreSQL (fsync on commit) with peers on a SELECT-only role (closes R28's R5, the peer writing storage). Dev storage stays allowed for development gates. This decides the storage half of Q78e without loosening any of Sam's bars; the other option R32 lists (accept a declared loss window) would loosen P2 and is Sam's alone.",
+      "compiledInto": [
+        "datomicRules",
+        "datomicStoragePolicy"
+      ]
+    },
+    {
+      "id": "Q88b",
+      "topic": "EXP-DA04 before DA03",
+      "ruling": "Lane D moves to SQL storage in EXP-DA04 (brief lab/experiments/EXP-DA04-sql-storage/BRIEF.md) before the DA03 NS smoke: resident pair Postgres 0.5 GiB plus Datomic 2.25 GiB in the existing 2.75 GiB budget (fallback 3.0 GiB if G1 runs short), exclusive lane D slot 4.0 GiB with the resident pair parked. Gates: G1 88/88 with --previous; durability probes D1 (abrupt transactor stop) and D2 (abrupt Postgres stop) with zero lost ACKs, D0 the same on dev storage as the control; tenancy probe; erasure inventory smoke.",
+      "compiledInto": [
+        "datomicRules",
+        "datomicStoragePolicy"
+      ]
+    },
+    {
+      "id": "Q88c",
+      "topic": "erasure on lane D",
+      "ruling": "Crypto-shredding is the primary PII erasure on every lane D storage; Datomic excision in batches of about 2,000 to 3,000 datoms is the second layer; keys live in their own Postgres schema so key deletion can be shown by scanning table files and WAL.",
+      "compiledInto": [
+        "datomicRules",
+        "datomicStoragePolicy"
+      ]
     }
   ],
   "languageRules": {
@@ -3641,6 +3671,21 @@
       "topic": "one codec definition",
       "rule": "The TypeScript and JVM codecs share one specification of each value kind's range and representation, with a shared test vector set; a value either codec cannot represent is refused by both.",
       "basis": "V-DA00 F4"
+    },
+    "Q88a": {
+      "topic": "dev storage is development only",
+      "rule": "Lane D evidence from Datomic dev storage is DIAGNOSTIC for every durable-readback, lost-ACK, P2 receipt and final acceptance obligation. Dev storage is H2 inside the transactor with H2's default 500 ms write delay, so an abrupt transactor stop can lose acknowledged transactions, which P2's 100% receipt bar does not allow. Acceptance runs on SQL storage on PostgreSQL (fsync on commit) with peers on a SELECT-only role (closes R28's R5, the peer writing storage). Dev storage stays allowed for development gates. This decides the storage half of Q78e without loosening any of Sam's bars; the other option R32 lists (accept a declared loss window) would loosen P2 and is Sam's alone.",
+      "basis": "R32 sections 1, 6"
+    },
+    "Q88b": {
+      "topic": "EXP-DA04 before DA03",
+      "rule": "Lane D moves to SQL storage in EXP-DA04 (brief lab/experiments/EXP-DA04-sql-storage/BRIEF.md) before the DA03 NS smoke: resident pair Postgres 0.5 GiB plus Datomic 2.25 GiB in the existing 2.75 GiB budget (fallback 3.0 GiB if G1 runs short), exclusive lane D slot 4.0 GiB with the resident pair parked. Gates: G1 88/88 with --previous; durability probes D1 (abrupt transactor stop) and D2 (abrupt Postgres stop) with zero lost ACKs, D0 the same on dev storage as the control; tenancy probe; erasure inventory smoke.",
+      "basis": "R32 sections 2, 5"
+    },
+    "Q88c": {
+      "topic": "erasure on lane D",
+      "rule": "Crypto-shredding is the primary PII erasure on every lane D storage; Datomic excision in batches of about 2,000 to 3,000 datoms is the second layer; keys live in their own Postgres schema so key deletion can be shown by scanning table files and WAL.",
+      "basis": "R32 section 4"
     }
   },
   "exactQueryRules": {
@@ -3759,7 +3804,7 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "c7f9e62e716416722b26c14f786e94d0bd3beda62472f04a0874813777429eb3",
+        "lab/acceptance/build_contract.py": "914db3d15e91180e8b449fffeeb27b997dc10eb835fff66e10eca6517e985b59",
         "lab/acceptance/oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0"
       }
     },
@@ -4080,6 +4125,40 @@
     "appliesTo": "obligations whose closure rules include CR-NS or CR-GS only; correctness obligations carry no workload identity (RULINGS Q61g)",
     "rule": "every measurement and control receipt carries workload {generatorSourceSha256 (trace generator hash), seed, offerScheduleSha256, window [from, to] with 0 <= from < to, slot (the source assignment's slot)}, every field present, typed and nonempty; a control matches a measurement only when the two workload identities are equal field by field; a missing field never matches a missing field (RULINGS Q47b)"
   },
+  "workloadRepins": {
+    "packages/qualification/src/native/xtdb-workloads.ts": {
+      "previousSha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3",
+      "sha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+      "baseCommit": "f483fb644744da4cc7a7f9296214668e7d55bbf4",
+      "sourceCommit": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+      "diffSha256": "b31cae3941b058b72f9cda6e890ab600983fde24c0f4b609d9e161f5ba4d4f1f"
+    },
+    "packages/qualification/src/native/qlever-workloads.ts": {
+      "previousSha256": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3",
+      "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+      "baseCommit": "f483fb644744da4cc7a7f9296214668e7d55bbf4",
+      "sourceCommit": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+      "diffSha256": "1a40dcce1fb973666abe0385fb2af3f24bf499676b9b595fea4a5aa7c49fb85a"
+    }
+  },
+  "workloadRepinReview": {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/workload-hunk-review.json",
+    "sha256": "86fccbf5ef7a27611f45b44659a37a5bcba8e613953bcfd04a8e326464c77dae"
+  },
+  "datomicStoragePolicy": {
+    "developmentStorage": "dev",
+    "developmentEvidence": "DIAGNOSTIC",
+    "acceptanceStorage": "postgresql-sql",
+    "fsyncOnCommit": true,
+    "peerRole": "SELECT-only",
+    "sequencing": [
+      "EXP-DA04",
+      "EXP-DA03"
+    ],
+    "primaryPiiErasure": "crypto-shredding",
+    "secondaryPiiErasure": "batched-excision",
+    "keysSchema": "separate PostgreSQL schema"
+  },
   "evidenceSchemas": {
     "build-manifest/1": {
       "fields": {
@@ -4393,7 +4472,7 @@
   },
   "pendingRulings": {
     "file": "lab/acceptance/RULINGS-PENDING.md",
-    "sha256": "1f132ddc1d2320e7cc9025301e2c08e2f8a7cfc5bba95ceb0577fe6dc042291a",
+    "sha256": "44f7f41380b8c64abfc381768a6416fa0f7cc809834482c70ddc79126c94d0cd",
     "ids": [
       "Q51b",
       "Q73a",
@@ -4402,9 +4481,6 @@
       "Q81b",
       "Q81c",
       "Q86g",
-      "Q88a",
-      "Q88b",
-      "Q88c",
       "Q89a",
       "Q89b",
       "Q89c",
@@ -8345,7 +8421,10 @@
       "Q86f",
       "Q79f",
       "Q87",
-      "Q83e"
+      "Q83e",
+      "Q88a",
+      "Q88b",
+      "Q88c"
     ],
     "recordedNotCompiled": []
   },
@@ -15121,11 +15200,11 @@
         },
         {
           "path": "packages/qualification/src/native/xtdb-workloads.ts",
-          "sha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3"
+          "sha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
         },
         {
           "path": "packages/qualification/src/native/qlever-workloads.ts",
-          "sha256": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3"
+          "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
         }
       ],
       "note": null
@@ -16646,11 +16725,11 @@
       },
       {
         "path": "packages/qualification/src/native/xtdb-workloads.ts",
-        "sha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3"
+        "sha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0"
       },
       {
         "path": "packages/qualification/src/native/qlever-workloads.ts",
-        "sha256": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3"
+        "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
       }
     ],
     "CS-ENTRY": [
@@ -30885,5 +30964,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "c1eb70705905d1c10f34b45856b8661b7cdd2e5746ccd475f83e0ff6a276ed03"
+  "transitiveContractSha256": "ad199b4c915846f24ef6c445dfd9d224bfb2f7a3751cd27a09813706af52f56e"
 }

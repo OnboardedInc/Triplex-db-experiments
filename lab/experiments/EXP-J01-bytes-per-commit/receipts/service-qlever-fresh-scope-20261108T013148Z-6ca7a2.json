@@ -1,0 +1,139 @@
+{
+  "format": "j01-receipt/1",
+  "id": "service-qlever-fresh-scope-20261108T013148Z-6ca7a2",
+  "kind": "service-qlever-fresh-scope",
+  "writtenAt": "2026-11-08T01:31:48.147Z",
+  "identity": {
+    "gitHead": "41517f903a8f71555795b9b515ef4c8a926e65b1",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "5315e5ffbb95b0d32f7d4788685412a1e6daab53a8b4a34919ecd80f932620b9",
+    "engines": {
+      "xtdb": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "qlever": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "endpoints": {
+      "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "qlever": "http://127.0.0.1:7070"
+    },
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        20.8,
+        18.18,
+        17.94
+      ]
+    }
+  },
+  "lane": "qlever",
+  "label": "fresh-scope",
+  "blocks": 6,
+  "perBlock": 10,
+  "commandFacts": 10,
+  "hostLoad1m": {
+    "min": 14.71,
+    "max": 20.8
+  },
+  "serviceMs": {
+    "a0": {
+      "all": {
+        "n": 60,
+        "p50": 7430.3,
+        "p90": 11846.2,
+        "p99": 14412.6,
+        "max": 14412.6,
+        "mean": 8292.3
+      },
+      "firstBlock": {
+        "n": 10,
+        "p50": 11916.2,
+        "p90": 14170.2,
+        "p99": 14412.6,
+        "max": 14412.6,
+        "mean": 12154.2
+      },
+      "secondHalf": {
+        "n": 30,
+        "p50": 6957.9,
+        "p90": 9667.4,
+        "p99": 11846.2,
+        "max": 11846.2,
+        "mean": 7488.4
+      }
+    },
+    "compact": {
+      "all": {
+        "n": 60,
+        "p50": 6972.7,
+        "p90": 9620.9,
+        "p99": 12788.9,
+        "max": 12788.9,
+        "mean": 7322.4
+      },
+      "firstBlock": {
+        "n": 10,
+        "p50": 5709.7,
+        "p90": 12632.9,
+        "p99": 12788.9,
+        "max": 12788.9,
+        "mean": 7464.6
+      },
+      "secondHalf": {
+        "n": 30,
+        "p50": 7146.4,
+        "p90": 9525.3,
+        "p99": 10482.5,
+        "max": 10482.5,
+        "mean": 7572.5
+      }
+    }
+  },
+  "updateMs": {
+    "a0": {
+      "n": 60,
+      "p50": 6149.6,
+      "p90": 10335.6,
+      "p99": 12890.3,
+      "max": 12890.3,
+      "mean": 6877.9
+    },
+    "compact": {
+      "n": 60,
+      "p50": 5685.9,
+      "p90": 7666.8,
+      "p99": 10679.2,
+      "max": 10679.2,
+      "mean": 5925.7
+    }
+  },
+  "ratioP50": 1.07,
+  "perBlockP50": [
+    {
+      "a0": 11916.2,
+      "compact": 5709.7
+    },
+    {
+      "a0": 8319.7,
+      "compact": 6272.1
+    },
+    {
+      "a0": 6554.4,
+      "compact": 6769.7
+    },
+    {
+      "a0": 7424.4,
+      "compact": 7955.9
+    },
+    {
+      "a0": 6757.8,
+      "compact": 6686
+    },
+    {
+      "a0": 6826,
+      "compact": 7547.1
+    }
+  ],
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/service-qlever-fresh-scope-20261108T013148Z-6ca7a2.raw.json",
+  "rawSha256": "c9bdd9f71b2c537252338b405ca0f005c1dff27d00c65953470ec98b02f66daa"
+}

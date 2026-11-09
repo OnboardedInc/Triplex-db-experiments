@@ -1,0 +1,30 @@
+PASS near1e18 xtql {"rows":[["1000000000000000004"]],"error":null}
+PASS near1e18 xtdb-sql {"rows":[["1000000000000000004"]],"error":null}
+PASS max xtql {"rows":[["9223372036854775807"]],"error":null}
+PASS max xtdb-sql {"rows":[["9223372036854775807"]],"error":null}
+PASS min xtql {"rows":[["-9223372036854775808"]],"error":null}
+PASS min xtdb-sql {"rows":[["-9223372036854775808"]],"error":null}
+PASS maxPlus1 xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS maxPlus1 xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS minMinus1 xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS minMinus1 xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS three2p62 xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS three2p62 xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS cancellation xtql {"rows":[["5"]],"error":null}
+PASS cancellation xtdb-sql {"rows":[["5"]],"error":null}
+PASS carryCounterexample xtql {"rows":[["9223372032559808513"]],"error":null}
+PASS carryCounterexample xtdb-sql {"rows":[["9223372032559808513"]],"error":null}
+PASS availableOverflow xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: Native int64 result 9223372036854775808 is outside the signed 64-bit range)])"}
+PASS availableOverflow xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: Native int64 result 9223372036854775808 is outside the signed 64-bit range)])"}
+PASS netCancelsOverflowingSides xtql {"rows":[["5"]],"error":null}
+PASS netCancelsOverflowingSides xtdb-sql {"rows":[["5"]],"error":null}
+PASS availableUnderflow xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: Native int64 result -9223372036854775809 is outside the signed 64-bit range)])"}
+PASS availableUnderflow xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: Native int64 result -9223372036854775809 is outside the signed 64-bit range)])"}
+PASS ledgerOverflow-physical xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS ledgerOverflow-physical xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS ledgerOverflow-reservation xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS ledgerOverflow-reservation xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS netOverflow-positive xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS netOverflow-positive xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS netOverflow-negative xtql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}
+PASS netOverflow-negative xtdb-sql {"rows":null,"error":"Cause([Fail(NativeIntegerOverflowError: The exact int64 total is outside the signed 64-bit range (cause: ReadError: XTDB native query failed: PostgresError: data exception - overflow error (cause: PostgresError: data exception - overflow error)))])"}

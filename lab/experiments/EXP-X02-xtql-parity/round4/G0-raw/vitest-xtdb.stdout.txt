@@ -1,0 +1,1 @@
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aa4da7e88fb9a6b0f/runs/G0/G0-xtdb-20261108T230612Z-2a04a8/vitest-xtdb.json

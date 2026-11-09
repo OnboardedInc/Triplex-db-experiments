@@ -5088,6 +5088,9 @@ def render_acceptance(doc, cells, counts):
     A(f"Transitive contract hash: `{doc['transitiveContractSha256']}`.\n")
     A("## 0. Change log\n")
     A("### 0.3.12 (this version): O-OBS screening pin and pending rulings\n")
+    A("Round 3 integrates X02/C8/J01 default-off and atomically repins both reviewed native workload recipes; all 17 diff hunks preserve logical task operations, input data and offered schedule. Q88a-c compile lane D storage requirements; Q78e/Q86g/Q89/Q90 remain pending.\n")
+    A(md_table(["Ruling", "Storage rule"], [[k, v["rule"]] for k, v in RULES_0312_R3.items()]))
+
     A("O-OBS 23e2273 is accepted for screening by V-O05 round 4 (3e3df9c), with every runner file hashed. Acceptance requires verifier recollection; no engine obligation closes from this pin. Q78e and Q86g wait for Sam; G03 isolation pins wait for 0.3.13. Q83e takes precedence for F, M and T. Q87 requires at least 108 unchanged evaluator assertions on the merged branch.\n")
     for title, rules in (("Broker", BROKER_RULES), ("Observation provenance", OBSERVATION_RULES), ("Isolation requirements (not yet in force)", ISOLATION_RULES)):
         A("\n" + title + "\n")
@@ -6128,10 +6131,60 @@ def checks_0312():
     return errors
 
 
+# [EXP-A01-0312-R3] Why: freeze the two reviewed recipe identities in the integration commit, not from arbitrary current files. Rejected: silently re-pinning every edited workload on regeneration.
+WORKLOAD_REPINS_0312 = {'packages/qualification/src/native/xtdb-workloads.ts': {'previousSha256': '22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3', 'sha256': 'ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0', 'baseCommit': 'f483fb644744da4cc7a7f9296214668e7d55bbf4', 'sourceCommit': 'b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89', 'diffSha256': 'b31cae3941b058b72f9cda6e890ab600983fde24c0f4b609d9e161f5ba4d4f1f'}, 'packages/qualification/src/native/qlever-workloads.ts': {'previousSha256': '410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3', 'sha256': '9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da', 'baseCommit': 'f483fb644744da4cc7a7f9296214668e7d55bbf4', 'sourceCommit': 'b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89', 'diffSha256': '1a40dcce1fb973666abe0385fb2af3f24bf499676b9b595fea4a5aa7c49fb85a'}}
+WORKLOAD_REPIN_REVIEW = {"path": 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/workload-hunk-review.json', "sha256": '86fccbf5ef7a27611f45b44659a37a5bcba8e613953bcfd04a8e326464c77dae'}
+RULES_0312_R3 = {'Q88a': {'topic': 'dev storage is development only', 'rule': "Lane D evidence from Datomic dev storage is DIAGNOSTIC for every durable-readback, lost-ACK, P2 receipt and final acceptance obligation. Dev storage is H2 inside the transactor with H2's default 500 ms write delay, so an abrupt transactor stop can lose acknowledged transactions, which P2's 100% receipt bar does not allow. Acceptance runs on SQL storage on PostgreSQL (fsync on commit) with peers on a SELECT-only role (closes R28's R5, the peer writing storage). Dev storage stays allowed for development gates. This decides the storage half of Q78e without loosening any of Sam's bars; the other option R32 lists (accept a declared loss window) would loosen P2 and is Sam's alone.", 'basis': 'R32 sections 1, 6'}, 'Q88b': {'topic': 'EXP-DA04 before DA03', 'rule': 'Lane D moves to SQL storage in EXP-DA04 (brief lab/experiments/EXP-DA04-sql-storage/BRIEF.md) before the DA03 NS smoke: resident pair Postgres 0.5 GiB plus Datomic 2.25 GiB in the existing 2.75 GiB budget (fallback 3.0 GiB if G1 runs short), exclusive lane D slot 4.0 GiB with the resident pair parked. Gates: G1 88/88 with --previous; durability probes D1 (abrupt transactor stop) and D2 (abrupt Postgres stop) with zero lost ACKs, D0 the same on dev storage as the control; tenancy probe; erasure inventory smoke.', 'basis': 'R32 sections 2, 5'}, 'Q88c': {'topic': 'erasure on lane D', 'rule': 'Crypto-shredding is the primary PII erasure on every lane D storage; Datomic excision in batches of about 2,000 to 3,000 datoms is the second layer; keys live in their own Postgres schema so key deletion can be shown by scanning table files and WAL.', 'basis': 'R32 section 4'}}
+DATOMIC_RULES.update(RULES_0312_R3)
+DATOMIC_STORAGE_POLICY = {"developmentStorage": "dev", "developmentEvidence": "DIAGNOSTIC", "acceptanceStorage": "postgresql-sql", "fsyncOnCommit": True, "peerRole": "SELECT-only", "sequencing": ["EXP-DA04", "EXP-DA03"], "primaryPiiErasure": "crypto-shredding", "secondaryPiiErasure": "batched-excision", "keysSchema": "separate PostgreSQL schema"}
+for _rid, _value in RULES_0312_R3.items():
+    RULINGS.append({"id": _rid, "topic": _value["topic"], "ruling": _value["rule"], "compiledInto": ["datomicRules", "datomicStoragePolicy"]})
+SCOPE_SOURCES += [WORKLOAD_REPIN_REVIEW["path"]] + ["lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/" + name + ".diff" for name in ("xtdb-workloads.ts", "qlever-workloads.ts")]
+
+
+def checks_0312_round3():
+    errors = []
+    authority = {}
+    for line in (HERE / "RULINGS.md").read_text().splitlines():
+        m = re.match(r"^\| (Q88[a-c])\b([^|]*)\| (.*?) \| (.*?) \|$", line)
+        if m:
+            authority[m[1]] = {"topic": m[2].strip(), "rule": m[3], "basis": m[4]}
+    if set(RULES_0312_R3) != {"Q88a", "Q88b", "Q88c"}:
+        errors.append("Q88: exact authorized storage ruling set required")
+    for rid in ("Q88a", "Q88b", "Q88c"):
+        if RULES_0312_R3.get(rid) != authority.get(rid) or DATOMIC_RULES.get(rid) != authority.get(rid):
+            errors.append(rid + ": literal ruling and storage consumer must match authority")
+    expected_policy = {"developmentStorage": "dev", "developmentEvidence": "DIAGNOSTIC", "acceptanceStorage": "postgresql-sql", "fsyncOnCommit": True, "peerRole": "SELECT-only", "sequencing": ["EXP-DA04", "EXP-DA03"], "primaryPiiErasure": "crypto-shredding", "secondaryPiiErasure": "batched-excision", "keysSchema": "separate PostgreSQL schema"}
+    if DATOMIC_STORAGE_POLICY != expected_policy:
+        errors.append("Q88: dev evidence stays diagnostic, SQL storage and erasure requirements preserved")
+    compiled = {r["id"] for r in RULINGS}
+    held = {"Q78e", "Q86g"} | {k for k in pending_ruling_ids() if k.startswith(("Q89", "Q90"))}
+    if not held <= set(pending_ruling_ids()) or held & compiled:
+        errors.append("0.3.12 round 3: Sam and RT01 rulings stay pending")
+    paths = {"packages/qualification/src/native/xtdb-workloads.ts", "packages/qualification/src/native/qlever-workloads.ts"}
+    if set(WORKLOAD_REPINS_0312) != paths:
+        errors.append("Q45a: both reviewed workload repins required")
+    audit = json.loads((REPO / WORKLOAD_REPIN_REVIEW["path"]).read_text())
+    if sha_file(WORKLOAD_REPIN_REVIEW["path"]) != WORKLOAD_REPIN_REVIEW["sha256"] or audit.get("reviewedBeforeRepin") is not True or audit.get("totalHunks") != 17 or audit.get("workloadChangingHunks") != 0:
+        errors.append("Q45a: original 17-hunk pre-pin review required")
+    actual_pins = {p["path"]: p["sha256"] for p in CS["CS-PKT71"]["pinnedSourceFiles"]}
+    for path, pin in WORKLOAD_REPINS_0312.items():
+        reviewed = next((f for f in audit["files"] if f["path"] == path), {})
+        if any(pin[k] != reviewed.get(k) for k in ("previousSha256", "sha256", "baseCommit", "sourceCommit", "diffSha256")) or pin["sha256"] != sha_file(path) or actual_pins.get(path) != pin["sha256"]:
+            errors.append("Q45a: reviewed workload repin mismatch: " + path)
+        if not all(h.get(k) is False for h in reviewed.get("hunks", []) for k in ("changesOperations", "changesData", "changesSchedule")):
+            errors.append("Q45a: workload-changing hunk must stop repinning: " + path)
+        diff_path = "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/" + path.rsplit("/", 1)[1] + ".diff"
+        if sha_file(diff_path) != pin["diffSha256"]:
+            errors.append("Q45a: preserve exact reviewed diff: " + path)
+    return errors
+
+
 def main():
     errs = validate()
     errs += checks_0311()
     errs += checks_0312()
+    errs += checks_0312_round3()
     for o in OBL:
         o["verifierMode"] = verifier_mode(o)
         o["definitionSha256"] = obligation_hash(o)
@@ -6155,7 +6208,7 @@ def main():
         "valueKinds": VALUE_KINDS, "decimalRules": DECIMAL_RULES, "decimalOps": DECIMAL_OPS, "decimalConversions": DECIMAL_CONVERSIONS, "decimalScaleEvolution": DECIMAL_SCALE_EVOLUTION, "decimalTests": DECIMAL_TEST_TEXT, "screeningProfiles": SCREENING_PROFILES,
         "temporalRules": TEMPORAL_RULES, "readShapeRules": READ_SHAPE_RULES, "journalRules": JOURNAL_RULES, "ambRulings": AMB_RULINGS, "goldenResolutions": GOLDEN_RESOLUTIONS, "goldenRule": GOLDEN_RULE, "goldenFilesPinned": {f"{GOLDEN_DIR}/{k}": sha_file(f"{GOLDEN_DIR}/{k}") for k in golden_vectors()},
         "erasure": ERASURE, "protectedCopyInventory": PROTECTED_COPY_INVENTORY, "composition": COMPOSITION, "worldW0": WORLD_W0, "goldenFailureSchedules": {f"GS.{k:02d}": [{"case": c, "schedule": w, "expected": x} for c, w, x in v] for k, v in GS_FAILURE_SCHEDULES.items()},
-        "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "a0Controls": A0_CONTROLS, "a0Registry": A0_REGISTRY, "qualificationRun": dict(QUALIFICATION_RUN, integrity=EVALUATOR_INTEGRITY, unprotected=["in-run edit and restore", "setsid", "TOCTOU", "no filesystem isolation", "no network isolation"] + ISOLATION_ADMISSION["unprotected"], protectedProcessCleanup="double-fork descendants are killed; setsid remains unprotected (Q75j)"), "continuationRules": CONTINUATION_RULES, "seedRules": SEED_RULES, "recursionRules": RECURSION_RULES, "datomicRules": DATOMIC_RULES, "exactQueryRules": EXACT_QUERY_RULES, "oracleRunners": ORACLE_RUNNERS, "compositionFields": list(COMPOSITION_FIELDS), "oracleAnswerRule": ORACLE_ANSWER_RULE, "answerMembers": ANSWER_MEMBERS, "caseManifest": CASE_MANIFEST, "buildSpec": BUILD_SPEC, "imagePins": IMAGE_PINS, "verifierRegistry": VERIFIER_REGISTRY, "verifierBriefSources": VERIFIER_BRIEF_SOURCES, "sourceVariantFields": SOURCE_VARIANT_FIELDS, "logFields": LOG_FIELDS, "workloadIdentity": WORKLOAD_IDENTITY, "evidenceSchemas": EVIDENCE_SCHEMAS, "outsideBlockMutationFixture": OUTSIDE_BLOCK_MUTATION_FIXTURE, "positionRequiredCases": POSITION_REQUIRED_CASES, "claimAdmission": CLAIM_ADMISSION,
+        "evaluatorCounterexamples": EVALUATOR_COUNTEREXAMPLES, "evaluatorPositiveFixtures": EVALUATOR_POSITIVE_FIXTURES, "position": POSITION, "positionDenseCases": POSITION_DENSE_CASES, "a0Controls": A0_CONTROLS, "a0Registry": A0_REGISTRY, "qualificationRun": dict(QUALIFICATION_RUN, integrity=EVALUATOR_INTEGRITY, unprotected=["in-run edit and restore", "setsid", "TOCTOU", "no filesystem isolation", "no network isolation"] + ISOLATION_ADMISSION["unprotected"], protectedProcessCleanup="double-fork descendants are killed; setsid remains unprotected (Q75j)"), "continuationRules": CONTINUATION_RULES, "seedRules": SEED_RULES, "recursionRules": RECURSION_RULES, "datomicRules": DATOMIC_RULES, "exactQueryRules": EXACT_QUERY_RULES, "oracleRunners": ORACLE_RUNNERS, "compositionFields": list(COMPOSITION_FIELDS), "oracleAnswerRule": ORACLE_ANSWER_RULE, "answerMembers": ANSWER_MEMBERS, "caseManifest": CASE_MANIFEST, "buildSpec": BUILD_SPEC, "imagePins": IMAGE_PINS, "verifierRegistry": VERIFIER_REGISTRY, "verifierBriefSources": VERIFIER_BRIEF_SOURCES, "sourceVariantFields": SOURCE_VARIANT_FIELDS, "logFields": LOG_FIELDS, "workloadIdentity": WORKLOAD_IDENTITY, "workloadRepins": WORKLOAD_REPINS_0312, "workloadRepinReview": WORKLOAD_REPIN_REVIEW, "datomicStoragePolicy": DATOMIC_STORAGE_POLICY, "evidenceSchemas": EVIDENCE_SCHEMAS, "outsideBlockMutationFixture": OUTSIDE_BLOCK_MUTATION_FIXTURE, "positionRequiredCases": POSITION_REQUIRED_CASES, "claimAdmission": CLAIM_ADMISSION,
         "brokerRules": BROKER_RULES, "observationRules": OBSERVATION_RULES, "isolationRules": ISOLATION_RULES, "isolationAdmission": ISOLATION_ADMISSION, "freezeProtocol": FREEZE_PROTOCOL, "mergeGates": MERGE_GATES, "pendingRulings": pending_rulings(), "closability": closability(), "oraclePins": ORACLE_PINS, "oracleRefusals": ORACLE_REFUSALS, "oracleRefusalRule": ORACLE_REFUSAL_RULE, "oracleScope": {k: oracle_scope(k) for k in ORACLE_PINS}, "pinScopeExpectedDiff": PIN_SCOPE_EXPECTED_DIFF, "q43Rules": Q43_RULES, "receiverCases": RECEIVER_CASES, "atomicUnitCases": ATOMIC_UNIT_CASES, "oTdk1Files": O_TDK1_FILES, "outbox": OUTBOX, "decimalRouting": DECIMAL_ROUTING, "decimalRoutingQ52": DECIMAL_ROUTING_Q52, "rulingsCoverage": rulings_coverage(), "tdk1": TDK1, "tdk1Tests": TDK1_TESTS, "tdk1VectorPin": TDK1_VECTOR_PIN, "q33Rules": Q33_RULES, "q33iCursorReadings": Q33I_CURSOR_READINGS, "q33iQleverRejected": Q33I_QLEVER_REJECTED, "gates": GATES, "wireRules": WIRE_RULES, "w0Pin": W0_PIN, "legacyLaneOutcomes": LEGACY_LANE_OUTCOMES, "legacyRule": LEGACY_RULE, "legacyScan": legacy_out_of_range_scan(), "modeRule": MODE_RULE, "secondaryRule": SECONDARY_RULE, "integerMinRange": INTEGER_MIN_RANGE, "laneIntegerRange": LANE_INTEGER_RANGE, "rangeRule": RANGE_RULE,
         "numericOps": NUMERIC_OPS, "conversionRules": CONVERSION_RULES, "comparisonRules": COMPARISON_RULES, "aggregateRules": AGGREGATE_RULES,
         "cardManyOrder": CARD_MANY_ORDER, "constraintRules": CONSTRAINT_RULES, "errorTable": ERROR_TABLE, "retiredErrors": RETIRED_ERRORS, "errorRepresentation": ERROR_REPRESENTATION, "errorComparison": ERROR_COMPARISON,

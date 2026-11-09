@@ -33,7 +33,7 @@ class Contract0312(unittest.TestCase):
     def test_other_pending_rows_unchanged(self):
         before = rows(original('lab/acceptance/RULINGS-PENDING.md', 'b31ec942').decode())
         after = rows((ACC / 'RULINGS-PENDING.md').read_text())
-        self.assertEqual(after, {k: v for k, v in before.items() if k not in D['RULES_0312']})
+        self.assertEqual(after, {k: v for k, v in before.items() if k not in set(D['RULES_0312']) | set(D.get('RULES_0312_R3', {}))})
         self.assertEqual(DOC['pendingRulings']['authority'], 'none')
         self.assertTrue({'Q78e', 'Q86g'} <= set(after))
 
@@ -117,6 +117,30 @@ class Contract0312(unittest.TestCase):
             self.assertEqual(entry['briefSha256'], expected['sha256'], vid)
             self.assertEqual(hashlib.sha256((REPO / entry['brief']).read_bytes()).hexdigest(), expected['sha256'], vid)
             self.assertNotEqual(entry['brief'], entry['record'], vid)
+
+    def test_q88_storage_rules_are_literal_and_consumed(self):
+        source_rows = rows(original('lab/acceptance/RULINGS-PENDING.md', 'b31ec942').decode())
+        final_rows = rows((ACC / 'RULINGS.md').read_text())
+        for rid in ('Q88a', 'Q88b', 'Q88c'):
+            self.assertEqual(final_rows[rid], source_rows[rid])
+            self.assertEqual(DOC['datomicRules'][rid], D['RULES_0312_R3'][rid])
+            self.assertNotIn(rid, DOC['pendingRulings']['ids'])
+        self.assertEqual(DOC['datomicStoragePolicy']['developmentEvidence'], 'DIAGNOSTIC')
+        self.assertEqual(DOC['datomicStoragePolicy']['peerRole'], 'SELECT-only')
+
+    def test_both_repins_match_reviewed_commit_and_both_projections(self):
+        for path, pin in DOC['workloadRepins'].items():
+            self.assertEqual(hashlib.sha256(original(path, 'f483fb64')).hexdigest(), pin['previousSha256'])
+            self.assertEqual(hashlib.sha256(original(path, 'b916d5d')).hexdigest(), pin['sha256'])
+            for projection in (DOC['caseSets']['CS-PKT71']['pinnedSourceFiles'], DOC['caseSourcesPinned']['CS-PKT71']):
+                self.assertEqual(next(p['sha256'] for p in projection if p['path'] == path), pin['sha256'])
+        audit = json.loads((REPO / DOC['workloadRepinReview']['path']).read_text())
+        self.assertEqual(audit['totalHunks'], 17)
+        self.assertEqual(audit['workloadChangingHunks'], 0)
+        self.assertTrue(audit['reviewedBeforeRepin'])
+        packet = audit['packet']['path']
+        self.assertEqual((REPO / packet).read_bytes(), original(packet, 'f483fb64'))
+        self.assertEqual((REPO / packet).read_bytes(), original(packet, 'b916d5d'))
 
     def test_verifier_record_is_original(self):
         entry = DOC['verifierRegistry']['entries']['V-O05-round4']
