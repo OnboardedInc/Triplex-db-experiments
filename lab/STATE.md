@@ -290,3 +290,9 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   parked). Round 6 (offline) merges main to restore lab/acceptance and builds the fault injector. **Slot windows, in order:** (1) RT01 G6,
   when CX-P2B and CX-DI01 are idle; (2) G03's 1k registered run with qlever-dev parked per Q100n (authorized by the orchestrator for that
   window; restore it after) and the observer's matched-arm overhead measurement; (3) M01 A/A calibration; then P3 screening.
+- 2026-11-09 11:37Z (Sam approved, Q106b): Sam's default colima VM (Onboarded stack, 4 CPU / 6 GiB) is STOPPED for lab quiet windows.
+  Its docker context `colima` is removed by colima on stop; the global context is `default`, never colima-triplex2. Restart with
+  `colima start` when Sam asks. Heavy processes left running are all lab work (QH1, DI01 oracles and trace, a verifier); Claude, Codex
+  and the unidentified ~/.hermes node runtime (it is running QH1's tsx) are never stopped.
+- Protocol v2 (e6c8a812): new builders are Sonnet 5.5 high via the Agent tool; Codex reviewers high; Opus planners high. Sam's decisions
+  of 2026-11-09 recorded as Q106a-g (lab/research/SAM-decisions-2026-11-09.md).
