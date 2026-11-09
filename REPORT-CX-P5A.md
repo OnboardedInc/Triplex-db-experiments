@@ -60,3 +60,32 @@ G4 is PARTIAL, G6 NOT-RUN, G8 absent. The seeder's successful return, a worker's
 6. XTDB live G0 and G8. Current pool ledger has all three residents, whose caps leave less than a 3.5 GiB exclusive XTDB slot. No admission was attempted and no lifecycle changed; orchestrator must open the scale window.
 
 **Predictions:** no XTDB prediction tested; XTDB bytes per fact unknown. Worker CPU measured on the offline slices must not be interpreted as live engine pull CPU or traffic impact. P5's outcome remains open.
+
+## Frozen 10k attempt completed
+
+`runs/P5/a0-10k-01/receipt.json`, attempt `a5962ff8-1cb9-4ae1-b962-9b4eabdee73b`, finished 2026-11-09 01:13:52Z, source recheck passed. Full receipt SHA-256: `db9b9e00896d326a6489f0f734b06a39dacdeaeda19701086785074a8c557787`. G0/G1-no-trace/G2/G3/G5/G7/G9 slices passed; G4 PARTIAL, G6 NOT-RUN, no G8. Overall **PARTIAL**, acceptance false. The fresh independent fingerprint is:
+
+- basis.tx **434,768**; facts **4,488,231**.
+- worlds `sha256:7b4c292331396ab379423ed7faa1a095c324dcdb72afb411d0f48f93efa5624d`.
+- R2 outputs `sha256:79fd11ed2fca7f47dba526e0994792db977e8a799b2fe67442e7298bf0803036`.
+- Activation outbox: **7,831 deliveries**, byte-compared per frame with O-DOMAIN publish. Exactly 100 post-capture positive mutation witnesses, with 100 untouched negative witnesses.
+- Actual start counts: position/frames 434,768; assertions 4,468,284; retired 1,954. End: position/frames 435,026; assertions 4,488,385; retired 2,054; all equal the independently folded journal changes.
+
+Worker thread CPU seconds (read excludes the memory owner's read work):
+
+| Phase | Worker read | Decode/world construction | Kernel |
+| --- | ---: | ---: | ---: |
+| G0 preview | 3.837812 | 40.268107 | 2.272809 |
+| Activation | 3.902049 | 41.286981 | 2.372194 |
+
+Kernel stages average **227.3 µs/subject** preview and **237.2 µs/subject** activation. R34's prediction of within 20% of 158 µs **did not hold for this measured pipeline/host run** (upper edge 189.6 µs). This is a diagnostic measurement on the busy host, not an isolated kernel benchmark. Decode/world construction dominates. No XTDB bytes-per-fact measurement or XTDB prediction was made.
+
+Committed summary: `lab/experiments/EXP-P5/offline-summary.json`; raw results remain in `runs/P5`. Final source-state test receipt: `runs/P5/checks-final.tap`, **19/19 passed**, zero skipped/failed; TypeScript and scoped lint also passed.
+
+## Frozen 1k attempt completed
+
+`runs/P5/a0-1k-final/receipt.json`, attempt `54cda78e-0c19-48c2-a769-53327485bcf2`, source recheck passed, status **PARTIAL**, acceptance false. Receipt SHA-256 `8b3e065e48ce4692bb5ae0fd01001f3fb4b5a2a26d9c01a4b11d66579512c3b0`. G0/G1-no-trace/G2/G3/G5/G7/G9 slices passed; G4 PARTIAL, G6 NOT-RUN, no G8. Basis 42775; world facts 444368; 807 deliveries. Independent worlds and R2 fingerprint bytes matched.
+
+Worker CPU seconds (read/decode/kernel): preview {'read': 0.343803, 'decode': 3.6783910000000004, 'kernel': 0.191958}; activation {'read': 0.35389, 'decode': 3.7931850000000003, 'kernel': 0.221132}. See the committed offline summary for the full fingerprints/counts and raw receipt hashes. Both requested offline rungs were executed, but the required A0 all-gates condition is **not fulfilled**.
+
+Implementation commit: `7bc0601a`. The following separate stacked commit carries the unrun G6 fixture and this final evidence summary. No further jobs or engine ownership remain held by CX-P5A.
