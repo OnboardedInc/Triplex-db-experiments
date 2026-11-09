@@ -410,3 +410,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   --verify). New: F3 medium, a rejected execControl (bad hook, timeout, truncation, DR contradiction) skips the terminal record and raw
   export; F4 low, a null first clock domain skips the constant-domain check. Round 7c (Sonnet) fixes both; 7b (R48 witness) still waits
   for OBS01's accepted witness.
+- 2026-11-09 DI01 round 2 (Sonnet, c4aeb4cb): main merged (13949e3a, same resolution as the reviewer's aa34513a), F1 fixed with a tagged
+  BasisNotAvailable on all four guard paths; refuse, reopen, retry leaves state unchanged (5 new tests). DI01 suites 16/16, lab PACK PASS,
+  --verify, evaluator 108. retentionFloor declared but unpopulated (no interface exposes it). In review (CX-VDI01 round 2).
