@@ -159,7 +159,7 @@ const q = makeQleverClient(qleverUrl);
 try {
   const scope = `rt01:legacy:${randomUUID()}`;
   await q.update(
-    `INSERT DATA { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ${literal("1")} }`,
+    `INSERT DATA { GRAPH ${graphIri(scope)} { ${metaIri} ${fieldIri("position")} ${literal("1")} } }`,
     { timeoutMs: 30000 },
   );
   let writes = 0,
