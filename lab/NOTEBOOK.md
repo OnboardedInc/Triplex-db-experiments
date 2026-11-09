@@ -1888,3 +1888,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **CX-INT-Q** merges P2Q and SQL01 onto int/P2Q-SQL01, applies Q89b to H1's pull predicate, and lists pin changes. Contract 0.3.14 then
   re-pins it together with GS12F and QNODELAY. That unblocks lane Q's P5 sweep, EXP-QH1 (P4 from H1), QLever generations phase 2 and P3's
   lane Q window.
+
+## 2026-11-09 05:04Z: the erasure scanners (ER01-S) are accepted for offline fixtures
+- **V-ER01-S round 4 ACCEPT:** 39 tests, 61 historical replays, 9,189 layered fixtures with zero marker misses, and three 33-layer REFUSED
+  controls. Four review rounds closed, in order: SQLite overflow pages, UTF-16 WAL keys, superseded WAL frames, JSON escapes, and layered
+  encodings, each time by making the rule general (byte coverage per physical range, decoding as a closure with a REFUSED bound).
+- **Open:** CPU and time bounds on large base64 inputs (a diagnostic was interrupted); live erasure qualification waits for ER01-C to exist.
+- **Next for erasure:** ER01-C (the core) after RT01 round A merges; the scanners stay on exp/OBS01-observer until then.

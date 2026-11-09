@@ -199,3 +199,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   them (after 0.3.13 lands). Queue for 0.3.14: GS12F; QNODELAY if accepted; any other accepted branch that moves pins.
 - P5 round A ACCEPT-OFFLINE (verify/P5A 85c1b13: 207 suite, 57 await-boundary and 2 late-cleanup tests). Ready for its A1 run at 1k on an
   exclusive XTDB slot (A1-RUNBOOK.md in .claude/worktrees/p5a), queued after K01's live rerun. Its g0.ts guard commit goes onto K01's branch.
+- ER01-S accepted for offline fixtures (verify/ER01-S b81e102); merges with the observer branch when ER01-C lands. Open: CPU/time bounds on
+  large base64 inputs.
