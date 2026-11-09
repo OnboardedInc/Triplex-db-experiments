@@ -1,3 +1,4 @@
+// [CX-INT-Q] Why: accepted P2Q identifies transport outages by code, not prose. Rejected: weakening product classification for an old stub.
 // [EXP-SQL01] Why: independent schedules test whole commit groups, time cuts and exact rows. Rejected: counting ACKs as read proof.
 import fs from "node:fs";
 import path from "node:path";
@@ -21,7 +22,7 @@ const outage: QleverClient = { ...empty, query: async (text) => {
   // [EXP-SQL01] Why: initialize checks connectivity before any fixture writes; fail only answer requests.
   // Rejected: failing initialize (never exercises the H1 outage route).
   if (text.includes("SELECT ?s WHERE")) return [];
-  throw new TypeError("fetch failed");
+  throw new TypeError("fetch failed", { cause: Object.assign(new Error("fixture connection refused"), { code: "ECONNREFUSED" }) });
 } };
 async function runtime(dir: string, client = empty) {
   const scope = "vsql01:" + randomUUID();

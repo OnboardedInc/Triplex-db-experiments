@@ -9,7 +9,7 @@ if (!label || !command.length) throw Error('usage: run.mjs label command...');
 const base = '/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q';
 const dir = path.join(base, `${label}-${randomUUID()}`); fs.mkdirSync(dir, {recursive:true});
 const sha = b => createHash('sha256').update(b).digest('hex');
-const inputs = () => Object.fromEntries(execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', 'packages', 'lab/bin', 'lab/acceptance', 'lab/verify/P2Q/tests', 'lab/verify/P2Q/types', 'lab/verify/SQL01', 'lab/experiments/INT-Q/run.mjs', 'pnpm-lock.yaml', 'vitest.workspace-aliases.ts'], {encoding:'utf8'}).trim().split('\n').filter(f => fs.existsSync(f) && fs.statSync(f).isFile()).sort().map(f => [f, sha(fs.readFileSync(f))]));
+const inputs = () => Object.fromEntries(execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard', 'packages', 'lab/bin', 'lab/acceptance', 'lab/verify/P2Q/tests', 'lab/verify/P2Q/types', 'lab/verify/SQL01', 'lab/experiments/INT-Q/run.mjs', 'pnpm-lock.yaml', 'vitest.workspace-aliases.ts'], {encoding:'utf8'}).trim().split('\n').filter(f => !f.includes('/evidence') && fs.existsSync(f) && fs.statSync(f).isFile()).sort().map(f => [f, sha(fs.readFileSync(f))]));
 const before=inputs();
 const receipt={label,command,dir,start:new Date().toISOString(),head:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),node:process.version,inputs:before,disk:execFileSync('df',['-k','.'],{encoding:'utf8'}),slot:process.env.QLEVER_URL ?? null};
 if(Number(receipt.disk.trim().split('\n').at(-1).trim().split(/\s+/)[3])*1024 < 5*1024**3) throw Error('disk below 5 GiB');
