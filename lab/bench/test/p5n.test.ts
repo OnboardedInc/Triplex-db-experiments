@@ -86,3 +86,22 @@ test("direct-read pipelined sweep gives the owner route's world hashes at W=1,2,
     await h.comp.close();
   }
 });
+
+// [EXP-P5N] Why: the reverse journal channel (a value match on :_tx/changed-entity from the changed entity) scans the journal on an H1 store, so it is checked here on a small store.
+test("journal reverse match finds the commit from the changed entity", { timeout: 120000 }, async () => {
+  const dir = path.resolve("runs/P5N-tests", randomUUID());
+  fs.mkdirSync(dir, { recursive: true });
+  const h = await openMappedHost(path.join(dir, "store"), "p5n-jnl-test:" + randomUUID());
+  try {
+    await h.seed(50, dir);
+    const r: any = await h.comp.transact([{ op: "assert", entityId: "p5:x1", attribute: "p5/a", value: { type: "string", value: "v" }, validFrom: 0 }], { commandId: "p5n:jnl:1" });
+    assert.ok(r.ok);
+    const tr: any = await h.comp.transactionByCommand("p5n:jnl:1");
+    const changed = await h.api.match({ attribute: ":_tx/changed-entity", value: { type: "ref", value: "p5:x1" } });
+    assert.equal(changed.length, 1);
+    assert.equal(changed[0].entityId, tr.value.txId);
+    assert.equal((await h.api.match({ entityId: tr.value.txId, attribute: ":_tx/change" })).length, 1);
+  } finally {
+    await h.comp.close();
+  }
+});

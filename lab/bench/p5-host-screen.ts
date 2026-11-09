@@ -289,12 +289,12 @@ async function activationArm(name: string, W: number) {
         const p = pubLog[i]!,
           n = p.evaluations.length,
           want = new Set(p.evaluations.map((e: any) => "p5:outbox:" + e.subject));
-        const tr: any = await comp.transactionByCommand("p5:outbox:" + sha256(canonical(p.evaluations)));
+        const tr: any = await comp.transactionByCommand("p5:outbox:" + sha256(canonical(p.evaluations))).catch((e: any) => { throw Error("G-JNL transactionByCommand threw: " + String(e?.cause ?? e)); });
         if (!tr.ok || !tr.value) throw Error("G-JNL transactionByCommand did not resolve the activation commit");
         const txId = tr.value.txId;
         const raw: any = await h.broker.pullAt(h.broker.head(), { entities: [txId] });
         const rawBy = (a: string) => raw.rows.filter((r: any) => r.attribute === a);
-        const apiChange = await h.api.match({ entityId: txId, attribute: ":_tx/change" }),
+        const apiChange = await h.api.match({ entityId: txId, attribute: ":_tx/change" }).catch((e: any) => { throw Error("G-JNL match threw: " + String(e?.cause ?? e)); }),
           apiEntity = await h.api.match({ entityId: txId, attribute: ":_tx/changed-entity" });
         const entities = new Set(apiEntity.map((t: any) => t.value.value));
         const changeTargets = apiChange.map((t: any) => t.value.value);
@@ -310,10 +310,7 @@ async function activationArm(name: string, W: number) {
           changeTargets.some((c: any) => c.op !== "assert" || !want.has(c.entityId) || !["p5/state", "p5/deliveries"].includes(c.attribute))
         )
           throw Error("G-JNL journal triples differ from the expected set for page " + i);
-        // The reverse channel: a value match on :_tx/changed-entity from an outbox entity finds the same transaction. (core's transactionsForEntity is a Datalog query, and the mapped host's
-        // query executor is a detached replica that returns nothing, so the Datalog route is not exercised by this harness.)
-        const reverse = await h.api.match({ attribute: ":_tx/changed-entity", value: { type: "ref", value: [...want][0]! } });
-        if (!reverse.some((t: any) => t.entityId === txId)) throw Error("G-JNL reverse :_tx/changed-entity match missed the activation commit");
+        // The reverse channel (a value match on :_tx/changed-entity from an outbox entity) is a scan of the journal on an H1 store, so it is checked on the small store in p5n.test.ts, not here.
         gJnl.pagesChecked++;
       }
       const journalExpected = 4 * pubLog.length + 3 * N,
