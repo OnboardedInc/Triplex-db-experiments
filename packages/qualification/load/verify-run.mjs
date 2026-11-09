@@ -1,3 +1,4 @@
+import { parseLatencyReceipt } from "../../../lab/receipts/parse.ts";
 /** Independent post-run use of the controller's retained-byte/cut oracle verifier. */
 import assert from "node:assert/strict";
 import { writeFile } from "node:fs/promises";
@@ -32,7 +33,7 @@ for await (const line of createInterface({
   crlfDelay: Infinity,
 })) {
   if (!line.trim()) continue;
-  const event = JSON.parse(line);
+  const event = parseLatencyReceipt(line, { lane: run.manifest.queryPath, source: run.manifest.evidence.events });
   if (event.type !== "read" || event.ok !== true) continue;
   assert.equal(typeof event.resultJson, "string");
   assert.equal(

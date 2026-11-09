@@ -1,3 +1,4 @@
+import { parseLatencyReceipt } from "../../lab/receipts/parse.ts";
 import { createReadStream, promises as fs } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { join } from 'node:path';
@@ -79,7 +80,8 @@ export async function loadRun(context, reference) {
   const lines = createInterface({ input: createReadStream(source), crlfDelay: Infinity });
   for await (const line of lines) {
     if (!line.trim()) continue;
-    const value = JSON.parse(line);
+    const value = manifest.queryPath.startsWith("qlever")
+      ? parseLatencyReceipt(line, { lane: manifest.queryPath, source }) : JSON.parse(line);
     if (value.type === 'read') {
       assert(profile.requiredClasses.includes(value.taskClass), 'EVENT', 'Unknown logical task class');
       assert(Number.isSafeInteger(value.clientId) && value.clientId >= 0 && value.clientId < profile.clients, 'EVENT', 'Read client id exceeds the declared population');

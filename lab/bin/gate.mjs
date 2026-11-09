@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { parseLatencyReceipt } from "../receipts/parse.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 // lab/bin/gate.mjs <G0|G1|G2|G4|GS> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
 //   [--previous RUN-ID] [--holder NAME] [--cases N (G1 subset)] [--workloads 01,02 (G2 subset)]
@@ -400,6 +401,7 @@ async function gateG1(run, config) {
   result.fixtures = fileHashes(run, ['packages/testkit/src/index.ts', 'packages/qualification/workloads/lab-conformance.ts'], 'oracle-fixture');
   const report = readJson(output, null);
   if (!report) { run.reason('no G1 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
+  parseLatencyReceipt(report, { lane: run.lane, source: output });
   run.store(output, 'raw-outcome');
   result.contactedEndpoint = report.endpoint;
   if (report.endpoint !== bound.info.endpoint) run.reason(`G1 contacted ${report.endpoint}, slot is ${bound.info.endpoint}`);
@@ -438,6 +440,7 @@ async function gateG2(run, config) {
   result.packet = packetIdentity();
   const report = readJson(output, null);
   if (!report) { run.reason('no G2 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
+  parseLatencyReceipt(report, { lane: run.lane, source: output });
   run.store(output, 'raw-outcome');
   if (fs.existsSync(results)) run.store(results, 'raw-outcome');
   if (report.packetSha256 !== result.packet.sha256) run.reason('runner packet sha256 differs from the hashed packet');
@@ -516,6 +519,7 @@ async function gateNS(run, config) {
     const receiptFile = path.join(REPO, 'lab/runs/NS', `${run.options.baseline}.json`);
     const base = readJson(receiptFile, null);
     if (!base) fail('USAGE', `--baseline ${run.options.baseline}: no receipt at ${path.relative(REPO, receiptFile)}`);
+    parseLatencyReceipt(base, { lane: run.lane, source: receiptFile });
     const writesFile = path.join(REPO, base.rawDir, 'ns-writes.jsonl');
     if (!fs.existsSync(writesFile)) fail('USAGE', `--baseline ${run.options.baseline}: raw writes ${path.relative(REPO, writesFile)} are gone`);
     baseline = { runId: base.runId, verdict: base.verdict, zeroReaders: base.ns?.config?.zeroReaders ?? null, traceDigest: base.ns?.trace?.digest ?? null, writes: run.store(writesFile, 'ns-baseline-writes') };
@@ -533,6 +537,7 @@ async function gateNS(run, config) {
   result.oracle = { id: 'O-REPLAY', ref: oracleRef, commit: oracleCommit, tarSha256: sha256(tar) };
   const report = readJson(output, null);
   if (!report) { run.reason('no NS report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
+  parseLatencyReceipt(report, { lane: run.lane, source: output });
   run.store(output, 'raw-outcome');
   for (const extra of ['ns-writes.jsonl', 'ns-log.txt', 'feed-checkpoints.jsonl', 'feed-effects.jsonl', 'oracle-case.json', 'oracle-expected.json'])
     if (fs.existsSync(run.raw(extra))) run.store(run.raw(extra), 'raw-outcome');
@@ -612,6 +617,7 @@ async function gateGS(run, config) {
   result.fixtures = fileHashes(run, fixtureFiles.sort(), 'oracle-fixture');
   const report = readJson(output, null);
   if (!report) { run.reason('no GS report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
+  parseLatencyReceipt(report, { lane: run.lane, source: output });
   for (const reason of gsRefusals(report, readJson(path.join(REPO, 'lab/acceptance/obligations.json'), {}).version)) run.reason(reason);
   run.store(output, 'raw-outcome');
   for (const f of fs.readdirSync(run.rawDir).filter(f => f.endsWith('-checkpoint.json'))) run.store(path.join(run.rawDir, f), 'raw-outcome');
@@ -660,6 +666,7 @@ async function gateG4(run, config) {
     'qualification/native-controls/qlever-collation-tiny-v1/fixture.nt', 'packages/qlever/experiments/native-query-shapes.ts', 'lab/research/R5-probe/probe1.py', 'lab/research/R5-probe/probe3.py'], 'oracle-fixture');
   const report = readJson(output, null);
   if (!report) { run.reason('no G4 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
+  parseLatencyReceipt(report, { lane: run.lane, source: output });
   run.store(output, 'raw-outcome');
   result.contactedEndpoint = report.endpoint;
   if (report.endpoint !== bound.info.endpoint) run.reason(`G4 contacted ${report.endpoint}, slot is ${bound.info.endpoint}`);
@@ -721,7 +728,7 @@ main(async () => {
     git = identity(run);
     tools = await toolchain(run);
     lockfileSha256 = run.store(path.join(REPO, 'pnpm-lock.yaml'), 'lockfile').sha256;
-    gateScripts = Object.fromEntries(['lab/bin/gate.mjs', 'lab/bin/lib.mjs', 'lab/bin/receipt.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/config/slots.json', 'lab/receipts/latency.mjs', 'lab/receipts/latency.d.mts']
+    gateScripts = Object.fromEntries(['lab/bin/gate.mjs', 'lab/bin/lib.mjs', 'lab/bin/receipt.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/config/slots.json', 'lab/receipts/latency.mjs', 'lab/receipts/latency.d.mts', 'lab/receipts/parse.ts']
       .map(file => [file, run.store(path.join(REPO, file), 'gate-script').sha256]));
     result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'G2' ? await gateG2(run, config) : gate === 'NS' ? await gateNS(run, config) : gate === 'GS' ? await gateGS(run, config) : await gateG4(run, config);
   } catch (error) {

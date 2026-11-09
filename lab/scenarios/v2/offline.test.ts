@@ -74,8 +74,8 @@ test('domain claim rejects prose, wrong content, stale run and missing named cla
   const missing = ctx(); requireDomainClaims(missing); assert.equal(missing.checks[0].ok, false);
 });
 test('qualification refuses legacy world, old contract and delta-only QLever', () => {
-  assert(gsRefusals({ lane: 'xtdb', scenarios: [] }, '0.3.12').length >= 3);
-  const r = { lane: 'qlever', generator: 'W02/1', world: { admission: { status: 'MATCHING' }, countsStart: {}, countsEnd: {} },
+  assert(gsRefusals({ lane: 'xtdb', qleverConnectionMode: null, scenarios: [] }, '0.3.12').length >= 3);
+  const r = { lane: 'qlever', qleverConnectionMode: 'keep-alive', generator: 'W02/1', world: { admission: { status: 'MATCHING' }, countsStart: {}, countsEnd: {} },
     qlever: { commitPath: 'broker', brokerDirectory: '/owned', baseTriples: 1, deltaTriples: 100 }, scenarios: [] };
   assert(gsRefusals(r, '0.4.0').some((s: string) => s.startsWith('Q91a')));
 });

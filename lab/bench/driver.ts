@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { parseLatencyReceipt } from "../receipts/parse.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 /**
  * NS north-star benchmark driver (EXP-N01, measurement semantics v2 = TARGETS 1.1, 2.1, 4.1).
@@ -1004,7 +1005,7 @@ function p2Progress(background: any[], traceStart: number) {
 }
 function loadBaselineWrites(): any[] | null {
   if (!config.baselineWrites) return null;
-  return fs.readFileSync(config.baselineWrites, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l)).filter((w) => w.stream === "background" && !w.resend);
+  return fs.readFileSync(config.baselineWrites, "utf8").split("\n").filter(Boolean).map((l) => parseLatencyReceipt(l, { lane, source: config.baselineWrites! })).filter((w) => w.stream === "background" && !w.resend);
 }
 function matchedBaseline(rows: any[], fromOffset: number, toOffset: number) {
   const h = new Histogram();

@@ -179,3 +179,84 @@ Intermediate logs are retained: `gate-final.log` exposed a missing explicit Node
 Durable evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/round3/`. `round3/EVIDENCE.md` and `round3/SHA256SUMS` index raw logs, reviewer inputs and exact source preimages. No dependency/credential caches are copied. Prior rounds' evidence/manifests remain unchanged.
 
 Open: independent review of the expanded source classifications and mode propagation; representative admitted P1/P4 comparison and connection/CPU/TLS cost before proposing any default flip. This round does not rerun transport/socket longevity or claim engine-backed semantic acceptance. No merge or push.
+
+## Round 4 — validate at the receipt reading boundary
+
+North star: P1/P4 measurement integrity, with transport correctness as the floor; goals remain `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md`. Baseline builder `b7aec0f7297015a15afe72eda027590773b0827d`; reviewer `verify/QNODELAY` at `83c96de`. Read `VERIFY-round3.md`, the full-guard reproduction and alternate-field/output evidence. `round4/review-inputs.json` records five copied reviewer preimages. The review closed C8 but showed that output regexes cannot establish reader safety. This round replaces that approach. Keep-alive remains the default; client transport, public exports and lockfile are unchanged.
+
+### One parser, including Python
+
+`lab/receipts/parse.ts` is the shared TypeScript metadata schema. `parseLatencyReceipt` accepts bytes, JSON text or an object, rejects non-object receipts and requires an **own** `qleverConnectionMode` field with `keep-alive | per-request`. Explicit null is accepted only with a named non-QLever lane; an unknown identity is treated conservatively as requiring a QLever mode. A caller's expected QLever lane cannot be overridden by the receipt claiming another backend. Nested explicit mode metadata is validated too. A labeled envelope covers its nested samples; QG1's separate cold/warm and child receipts are also parsed individually. `parseLatencyReceipts` applies the same schema separately to every array element. Field names, units and serialization APIs play no part in validation. Payload content and timing values are preserved; existing content/freshness/binding gates remain responsible for their schemas.
+
+`parse-cli.mjs` invokes that exact TS implementation. The thin `latency_reader.py` bridge sends receipt bytes to the CLI and decodes its validated JSON; Python has no duplicate mode validator. R35's profiler now calls the bridge. Its optional `--connection-mode` is only an expectation checked against the recorded field; neither the CLI flag nor the environment can add a missing mode. A raw QLever server response without transport metadata is now refused by that profiler. Earlier caller-declared profiler attribution is superseded; users must retain mode-bearing input receipts. The server-log percentile tool likewise now requires a parsed `{qleverConnectionMode, log}` receipt envelope. Raw text or a mode-less log envelope is refused even with a CLI mode flag; the optional flag only checks an expectation. Its log does not independently prove the recorded transport, so that limitation remains explicit.
+
+The TypeScript receipt interfaces and required-field negative fixtures remain unchanged. JavaScript writer constructors remain available. `recordedConnectionMode` now delegates to the parser rather than implementing an independent reader policy. No reader reconstructs an absent QLever mode from the current environment.
+
+### Reader adoption
+
+The reader inventory covers **22 readers** (21 JS/TS modules and one Python tool), including the helper and one shared aggregator outside the requested trees:
+
+| Reading boundary | Inputs validated before use |
+| --- | --- |
+| `lab/bin/gate.mjs` | G1, G2, NS, GS and G4 child reports; NS baseline receipt |
+| `lab/bin/{scorecard,status}.mjs` | Retained/committed gate receipts; invalid receipts cannot populate a status/comparison cell |
+| `lab/scenarios/lib/policy.mjs` | Report argument before GS qualification rules |
+| `lab/bench/{summarize.mjs,audit-traffic.ts,driver.ts,round2.ts}` | NS/report summaries, traffic report and QLever raw events, baseline write events, external component seed receipt |
+| EXP-002 `qlever-log-latency.mjs` | Mode-bearing server-log envelope before percentile calculation |
+| C8 `summarize-timing.mjs` | Recorded run before emitting any summary |
+| QG1 `summarize.mjs`, `summary-cell.mjs`, `final-audit.mjs` | Grid cells, P4 children, cold/warm samples and retained request receipts; F05 child observations are validated separately |
+| J01 `equivalence-diff.mjs` | Mode-bearing raw envelope before comparing its result surfaces; reads round 3's `j01-raw/2` envelope |
+| `packages/qualification/load/{inspect-trial,verify-run}.mjs` | Retained raw events with the manifest's query path as context |
+| `packages/qualification/workloads/{scale-loader,verify-scale,verify-qlever-recovery}.ts` | Resume/retained scale reports, prior workload run and recovery sentinel |
+| `qualification/devloop/compare.mjs` | Each QLever event at the actual read inside `loadRun`, before percentile/goodput aggregation |
+| `lab/receipts/latency.mjs`, R35 `prof.py` | Recorded-mode helper and Python execution-tree report input |
+
+The shared `loadRun` change is necessary because validating only its caller after aggregation would be too late; separately pre-reading the file would also validate different bytes from those aggregated. Its non-QLever event path remains unchanged. Existing semantic-only answer comparators, data/config/oracle readers, live engine protocols and memory-only traffic calculations are not QLever latency receipt readers. For example, J01's `show.mjs` prints attribution row/byte counts, not service timings. The GS offline fixture now explicitly labels its synthetic XTDB/QLever reports; missing-mode rejection is tested separately.
+
+The gate's executed-script preimages include `parse.ts`, in addition to receipt helpers and source identity's existing `lab/receipts` root.
+
+### Replace the writer guard
+
+Removed `coverage.mjs`, `coverage.test.mjs`, `source-inventory.json` and `check-writers.mjs`. There is no timing-field/serializer search deciding which writers enter a gate.
+
+`readers.mjs` enumerates **all 914 supported source files**, without a timing or serialization filter, under lab/packages plus the shared external aggregator. `reader-inventory.json` classifies these sources: **22 readers, three schema/adapter files and 889 non-reader sources**. Review starts from gate/report entry points, imports of receipt helpers/paths and external receipt inputs; the evidence retains the actual static import graph and entry-point list. Generic IO helpers are classified as forwarding/config plumbing; their gate callers validate the reports they return. Fixed contract/oracle code is only read and classified, never edited.
+
+The replacement test requires every identified reader to import the shared parser (the Python tool imports the bridge) and to retain its actual parser calls. Import paths must resolve to the canonical shared parser, not another module with the same basename. Every new supported source file requires input-boundary review; every changed source invalidates its recorded hash, including a previous non-reader. Thus aliases or unfamiliar units do not silently remove new readers from discovery. It verifies the source set and all input hashes again before producing its audit. Supported source forms are JS/MJS/CJS/TS/MTS/CTS/TSX/JSX, Python and shell; dependencies, generated dist/coverage/cache trees and symlinks are excluded. Shell launchers delegate to checked readers rather than interpreting receipts themselves.
+
+This is a reviewed boundary inventory and import/call guard, not a proof of arbitrary program dataflow. Classification changes remain reviewable source changes; an import alone does not prove every possible future code path uses it. The actual reader/schema regressions and fail-closed changed-source review are the enforcement boundaries. No universal writer discovery claim remains.
+
+### Validation and evidence
+
+Final admitted command (Node v22.23.2, TypeScript source executed with Node's native type stripping):
+
+```sh
+TX2_QNODELAY_READER_AUDIT=/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/round4/final-reader-audit4.json \
+  node lab/bin/heavy.mjs --label CX-QNODELAY-R4-final4 -- \
+  pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store lab:receipts:check
+```
+
+- **42/42 tests passed**, exit zero, then TypeScript parser/runtime-helper/declaration checks passed. The original required-mode negative type fixtures remain effective.
+- Schema tests reject absent/undefined/null/unknown modes across `seconds`, `time`, `milliseconds`, `microseconds`, `ns`, `us`, `execution_time`, `queryLatency`, `wall_s`, `p99` and `elapsedMs`; object, text and byte inputs use the same policy. Explicit null is checked against lane context; prototype-inherited modes and invalid nested metadata are refused.
+- Actual aliased Python file serialization and JavaScript stderr serialization emit mode-less JSON that the parser refuses. These are synthetic timings, not measurements.
+- Actual C8 subprocesses preserve the known 7 ms/5 ms values for both modes and emit nothing for absent/null/unknown modes, despite a per-request environment. Actual NS summary, GS policy, server-log percentile reader and QG1 comparison negative controls refuse missing metadata before output/comparison. The server-log positive control preserves a 7 ms sample and its recorded keep-alive mode despite a per-request environment. Python bridge/profiler tests reject missing mode and CLI mismatches and preserve valid recorded mode.
+- Reader guard tests insert new aliased readers under both trees in JS, TS, Python and shell; no timing spelling controls whether they enter review. They reject a reader missing its parser import and an imported parser with its actual call removed.
+- **10/10 prior QG1/receipt regressions passed** with an isolated native-config-loader Vitest run; no engine workflow executed. **20/20 lab unit tests passed** (owned temporary config/lock fixtures, no engine lifecycle/network operations).
+- Final audit JSON contains **917 input hashes**, including all 914 sources plus inventory, root command and receipt tsconfig. Independent final-byte comparison found **zero stale hashes**. Focused JS/TS and Python syntax checks, formatting of new schema/test/guard files, and `git diff --check` passed. Focused oxlint: **zero errors, 12 inherited warnings** in unchanged portions of existing harnesses.
+
+Earlier successful gates bind earlier source iterations. `final.log` demonstrated that TAP chunks a very large JSON console line; the final test instead exclusive-creates `final-reader-audit4.json` and logs its byte hash. `final4.log` is the final execution, not a reconstruction of that earlier console stream. Source preimages, final audit, reviewer inputs, command/config bytes and all intermediate logs are retained durably. No engine, benchmark, transport/socket longevity rerun, full root check, full legacy harness body typecheck, merge or push was performed. The GS full offline suite was not executed because its generated W0 package build is absent in this worktree; the changed policy boundary is exercised directly by the new offline test.
+
+### Round 4 PASS / verdict / receipt audit
+
+1. **TS parser and Python bridge:** content checks the actual decoded receipt shape, own mode enum, lane context and nested explicit labels. They return the same payload only after validation; no PASS or timing validity is inferred. Freshness/binding remain the calling gate's byte/oracle/attempt/source/slot checks. They never supply mode from environment, mtime or a prior attempt. Python passes the actual current input bytes to the identical TS schema.
+2. **All 22 reader boundaries above:** validation occurs before report output, qualification or comparison. The shared load reader validates each exact event it aggregates, not a preflight copy. Existing content/oracle, attempt and source/slot checks remain; mode validity adds a necessary condition without replacing them. Missing mode throws or excludes the invalid receipt from status; it cannot supply timing samples to comparison. The real engine workflows were not newly certified here.
+3. **Reader inventory/test audit:** content checks current sources against their reviewed hashes, parser imports and call counts; asserts no failures and unchanged source set/bytes. Fresh traversal and fresh tests occur in this attempt. The exclusive-created audit binds source hashes, inventory, root command, tsconfig, entry points and import graph; its logged digest matches the retained bytes. It certifies this offline inventory check, not database correctness or complete arbitrary-language dataflow.
+4. **Parser/reader regressions and prior receipt/unit tests:** expected payload values, emitted bytes, refusal status and empty stdout are asserted against actual new local subprocesses/temporary files. The two mode-bearing inputs remain distinguishable; modeless alternatives cannot gain a label from caller settings. Exact test/producer source preimages, final logs and observed zero exits bind the run. No engine slot is claimed.
+5. **Hashes/report:** checksums attest retained bytes and final source identity only. Earlier attempts remain separate. This builder report is not independent review, production acceptance or evidence for a default flip.
+
+### Round 4 pins and open boundaries
+
+`lab/acceptance/` remains unchanged. No newly changed fixed-hash pinned path was found (`round4/changed-pins.json` is empty). Old/new hashes for all 29 changed/deleted existing code/config files are in `round4/changed-source-hashes.json`; deleted files have null new hashes. The previously reported round-2 native-entry pin discrepancy is unchanged and remains the contract builder's responsibility.
+
+Durable evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/round4/`; see `round4/EVIDENCE.md` and `round4/SHA256SUMS`. Earlier reports/manifests remain historical and unchanged.
+
+Open: independent review of the parser adoption and reader classifications; representative admitted P1/P4 comparison and connection/CPU/TLS cost before any default proposal. Default remains keep-alive; no new performance or semantic acceptance claim.

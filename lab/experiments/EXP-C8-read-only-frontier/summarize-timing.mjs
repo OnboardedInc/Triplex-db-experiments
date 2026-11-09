@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { parseLatencyReceipt } from "../../receipts/parse.ts";
 // EXP-C8: summarize round-timing.mjs outputs: per call total, per-round step times, engine writes
 // per call (scratch phases), Datalog wall time. Usage: summarize-timing.mjs <file.json>...
 import fs from "node:fs";
@@ -11,7 +12,7 @@ const WRITE_PHASES = new Set([
 ]);
 const range = (values) => (values.length ? `${Math.min(...values)}-${Math.max(...values)}` : "-");
 for (const file of process.argv.slice(2)) {
-  const run = JSON.parse(fs.readFileSync(file, "utf8"));
+  const run = parseLatencyReceipt(fs.readFileSync(file), { source: file });
   for (const [graph, entry] of Object.entries(run.graphs)) {
     const ok = entry.native.filter((call) => call.steps);
     // A multi-statement transaction records its elapsed time on its first statement only.
