@@ -1,0 +1,155 @@
+{
+  "format": "CX-VHS01-offline-review-round2/1",
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VHS01/round2",
+  "reviewedHead": "a9ebe759dbbd448220c9f3688788f2ae4b86f7c3",
+  "product": "dfddd916d7aaaf99ad78158073156f051f1dad93",
+  "files": 171,
+  "bytes": 1185889635,
+  "manifestSha256": "5f8194188f57e2a8065f39eb7446660aeed1f7a743c1b49d89048799cf20d175",
+  "allRegularFilesReadBack": true,
+  "pinnedPaths": 247,
+  "movedPins": [],
+  "attempts": [
+    {
+      "path": "audit-cf45cfe8-ce54-4864-bfc2-21e01b611d37",
+      "head": "7b52a205ffdaaaa4464872f335c6064514aa78d1",
+      "command": ["node", "lab/verify/HS01/round2/audit.mjs"],
+      "start": "2026-11-09T13:41:23.571Z",
+      "end": "2026-11-09T13:42:00.616Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "a8473466a5a86be0ab973925101ec439d154e1cc9875a5dd08b28c9f310ca04d"
+    },
+    {
+      "path": "audit-r2-9653d10f-33fd-4699-a585-76c18cb4bb4c",
+      "head": "7b52a205ffdaaaa4464872f335c6064514aa78d1",
+      "command": [
+        "node",
+        "lab/verify/HS01/round2/audit.mjs",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VHS01/round2/audit-cf45cfe8-ce54-4864-bfc2-21e01b611d37/w0-restored.db"
+      ],
+      "start": "2026-11-09T13:43:38.714Z",
+      "end": "2026-11-09T13:44:11.695Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "111e8a6bcf0eefc3d2ad3483ce0020431fd56daf9f8abc5e3075215e6fb692a2"
+    },
+    {
+      "path": "build-5eaa4454-ef9e-412b-8c04-e8333472a151",
+      "head": "7b52a205ffdaaaa4464872f335c6064514aa78d1",
+      "command": ["node", "lab/experiments/EXP-HS01/build.mjs"],
+      "start": "2026-11-09T13:40:33.235Z",
+      "end": "2026-11-09T13:40:49.074Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "d07e382937d0d0ac7f572f2c8cb78d73290d8077f9c5a4cc0c4f172ef55abe7d"
+    },
+    {
+      "path": "evaluator-f6fdde4a-2a53-4929-9b91-1d67e0b94c44",
+      "head": "7b52a205ffdaaaa4464872f335c6064514aa78d1",
+      "command": [
+        "node",
+        "--test",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/claim-round2.test.mjs"
+      ],
+      "start": "2026-11-09T13:45:45.181Z",
+      "end": "2026-11-09T13:48:37.357Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "2765ab30d4f435adc6b9c6a4faf80a552d3437d9e948cf4e15b99e074b5e80e7"
+    },
+    {
+      "path": "independent-1672a844-dc5e-441e-9829-86c6c325673c",
+      "head": "7b52a205ffdaaaa4464872f335c6064514aa78d1",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/round2/vitest.config.ts"
+      ],
+      "start": "2026-11-09T13:37:35.468Z",
+      "end": "2026-11-09T13:37:42.679Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "7d4fc32b3ae9e64e2f6ed94346a4d71de253db608b25032e3b05d57997f9c9ce"
+    },
+    {
+      "path": "independent-r2-788d079b-d29b-455c-8ea3-f8937ef6d0ab",
+      "head": "7b52a205ffdaaaa4464872f335c6064514aa78d1",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/round2/vitest.config.ts"
+      ],
+      "start": "2026-11-09T13:40:23.908Z",
+      "end": "2026-11-09T13:40:33.013Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "5067e5c9f7169ddcbf30e11318bf14cb9b172b7c7ca75013cbc99f4df138d53c"
+    },
+    {
+      "path": "kill80-24d0fe5c-9965-4483-b8eb-6b7555a0044f",
+      "head": "7b52a205ffdaaaa4464872f335c6064514aa78d1",
+      "command": ["node", "lab/verify/HS01/kill.mjs"],
+      "start": "2026-11-09T13:42:30.834Z",
+      "end": "2026-11-09T13:43:38.119Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": false,
+      "receiptSha256": "9b94bc364b06d66a3d44785d4b73e0e22cb31aad69afb88d833f2c4d87289472"
+    },
+    {
+      "path": "kill80-final-94bd9563-9d24-4f3f-934a-36a607406738",
+      "head": "7b52a205ffdaaaa4464872f335c6064514aa78d1",
+      "command": ["node", "lab/verify/HS01/kill.mjs"],
+      "start": "2026-11-09T13:48:37.665Z",
+      "end": "2026-11-09T13:49:53.880Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "04b6bd18e6e69ca1180719427611e6be0408fdf5dac30b238915811b0396f18e"
+    },
+    {
+      "path": "layout-g6-g7-07f04c40-7211-4e5c-8204-bf86dfdd8785",
+      "head": "7b52a205ffdaaaa4464872f335c6064514aa78d1",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/vitest.config.ts"
+      ],
+      "start": "2026-11-09T13:44:11.996Z",
+      "end": "2026-11-09T13:45:43.043Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "receiptSha256": "60745670034fad772a697fc8e4ac635ac9cef903fad0435ca05f14586bac80af"
+    }
+  ]
+}
