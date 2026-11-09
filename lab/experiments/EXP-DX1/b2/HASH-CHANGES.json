@@ -1,6 +1,6 @@
 {
   "base": "9e565e9159cf9f39016611f7ae39e0c6ec22b8b7",
-  "note": "All changed existing source paths are listed, including unpinned ones. Contract unchanged. Exact path mentions are conservative candidates, not proof of a pin.",
+  "note": "All changed existing source paths, including unpinned ones. No changed path is mentioned as a file pin in lab/acceptance; contract untouched. This is a delta inventory, not a repin.",
   "paths": [
     {
       "path": "lab/bench/driver.ts",
@@ -27,15 +27,33 @@
       "pathMentionedInAcceptance": false
     },
     {
+      "path": "packages/datomic/gateway/src/triplex/gateway/feed.clj",
+      "oldSha256": "e3a6b9effe6524aeb679399f368d5f3da16a74135e96b11b4fa4c0cf91d974df",
+      "newSha256": "4a1e15d8150d78ca7b9a763652027ccd4c6014520ce9391dc8d7464557ce2630",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/feed_live.clj",
+      "oldSha256": "2cd71993391b34817e6d505bb2e28ce372003ec84518e2130401776e58a65213",
+      "newSha256": "817fb0cba56df3ed60219e23abff49c8c6b18eb80099a0a4699a53f01f616954",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/feed_test.clj",
+      "oldSha256": "d2bcbbf2a991169bfc38da43643b6606bfd46daf1a4bc0a1fb73e19f13298b4b",
+      "newSha256": "35508854ae2c5bd849d0a60dd44d10b03f7daa477cd8042a586cb51a62096e18",
+      "pathMentionedInAcceptance": false
+    },
+    {
       "path": "packages/datomic/gateway/src/triplex/gateway/main.clj",
       "oldSha256": "a6198f0f30ff26e6be41668cd98b993a633c1ce98c7b34d5f32e122358d6a172",
-      "newSha256": "3d4f6e078ad28cf8e13626b5d3e62da6d62fe12ae5ac2ed2e0ed3526e7347429",
+      "newSha256": "662054107251fd9fb57f8421769dde3953aca0201fd19c68bfee15808afdedff",
       "pathMentionedInAcceptance": false
     },
     {
       "path": "packages/datomic/gateway/src/triplex/gateway/reach.clj",
       "oldSha256": "b16a2ae00d44bc362630d8b3961ab954fc1cbffdb11f29d58764f140a7fc8773",
-      "newSha256": "1ac2b86392fd53f149f33618df7d54be1d01af6afb48a715ddfe377463a8a4bc",
+      "newSha256": "cc04f91c765e701968f364446ac3674c4f5482336978c00b6f854e7a28392b70",
       "pathMentionedInAcceptance": false
     },
     {
@@ -47,13 +65,13 @@
     {
       "path": "packages/datomic/gateway/src/triplex/gateway/storage.clj",
       "oldSha256": "206b5b5348ae383d50a185e4042a06248694cda36caf79896e40a1cb5b0126fe",
-      "newSha256": "71388dfb74752647f4ebfe4bbbd4b589db88555921bbfad5256e59e8320a3d6f",
+      "newSha256": "b8d7c48687699532de97408363bac92e208e218227a9dddc78c3d1486d001110",
       "pathMentionedInAcceptance": false
     },
     {
       "path": "packages/datomic/src/DatomicClient.ts",
       "oldSha256": "a6aa9280d14078b348d089d44a32ab1072ee7d3999e097c35a7e0a4afe3b19c4",
-      "newSha256": "ed11b44bf8a12559c9b3ab371f5777af0ae29ba85e8ef1328240cfa3cadb2ceb",
+      "newSha256": "64cd579106942755b0e5ec447aa601f06ad25dd6565a5a46a0ad5105f964824a",
       "pathMentionedInAcceptance": false
     },
     {
@@ -71,7 +89,7 @@
     {
       "path": "packages/datomic/src/rowText.ts",
       "oldSha256": "cdaf0563d3f4ab0bf3e558ec01169ddcf82e261beeff849585db286b0879ad4f",
-      "newSha256": "18c59b341121e164a2d8d37188650cb87deab2c9aeab8e6a17f978169489f795",
+      "newSha256": "657c7371eee01e14500dded47621bb8027f548d2919d87c51107e2c23cb6b01d",
       "pathMentionedInAcceptance": false
     },
     {

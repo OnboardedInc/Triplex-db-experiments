@@ -2,6 +2,8 @@
 
 North star: P1/P4 exact subject pulls and P2 atomic commits on Postgres storage. Targets: lab/TARGETS.md. Diagnostic fast-forward work under PROTOCOL 0b; no acceptance or scorecard promotion.
 
+Final result: N1–N5 implemented and correctness-gated. The final diagnostic run observed 3,461 pulls/read-gateway CPU-second, single-client pull 1.87/6.50 ms p50/p99, and serial commit 9.77/30.69 ms. The 55/s queue tail, writer/readers ratio and grown-world read-your-own-write tail remain misses. All created Docker resources were removed; no qualification or promotion is claimed.
+
 ## Baseline and N0
 
 Offline install: 605 packages, 600 reused, zero downloads. Built core/testkit/Datomic before the effective baseline. Baseline on the merged gateway with Postgres: 142 tests passed, the one declared signed-zero/int64-domain test failed (143 total). The initial test attempt raced the initial build and collected no tests; retained as baseline.log. Effective baseline: baseline2.log.
@@ -140,3 +142,119 @@ N5 omits physical schema-version when it equals 1 and derives the asserting tran
 The JVM feed fixture exposed another merged URI-template remnant: feed_live.clj referenced removed main/base-uri. It now uses main/db-uri and main/uri-template. The first JVM attempt failed to compile that fixture; the second lacked its required DF01_RECORDED_PAGE output setting. Both failures are retained. Neither is counted as a successful feed gate.
 
 The repeated 3,000-warm-up / 1,000-profiled-command probe is in `commit-probe-1794263835793-998e9d71-802c-4816-8582-15da1c148581/`, with pre-execution source/build copies and unchanged-source checks. Median row encoding fell 1.181→0.777 ms; remaining core staging 1.244 ms; request serialization 0.729 ms; gateway parsing 0.217 ms; transport remainder 1.742 ms. Median datoms fell 281→233 (17.1%). d/transact was 7.196 ms versus 6.948 ms in the control; total 16.315 versus 16.467 ms. This probe does not demonstrate an engine-latency benefit from N5. Its physical size reduction and unchanged correctness are established; full step-5 remeasurement follows. The original control probe bound only selected entrypoints, not a complete transitive snapshot; it is attribution evidence, not a production receipt.
+
+## Final verification before the final warm run
+
+Final unmutated Datomic suite: 144 passed / 1 unchanged known failure / 145 total, 179.77 seconds (`final-gate.log`). It includes 29,800 answer comparisons at 6,600 bases. All five final mutants failed content/coverage assertions (`final-mutants.log`, `mutants-20261109T224204Z-24714/`); production sources were restored before the final suite. Normal 50-pull concurrency: 0 concurrent reference misses; deliberate cache loss: 1 full retry. Forced cap-2 reset gate: 65 resets, 0 faults, 50 correct concurrent answers (`final-reset.log`, `final-reset-transitions.json`). The final stack is created from the restored committed production source.
+
+The broader lab/bench typecheck remains red in unmodified files: audit-traffic.ts (13 JSON-narrowing diagnostics), round2.ts (18 JSON-narrowing diagnostics), and hs01-seed.ts (one possibly-undefined claim). There were no driver.ts diagnostics. The six other adapters' typechecks and the seven touched core reach/read-basis tests are green as reported above.
+
+## Observation-to-verdict inventory (final)
+
+These are diagnostic checks, not contract PASS receipts:
+
+- `packages/datomic/test/reach.test.ts`: compares exact Triple content and BFS order against the fallback at the identical pinned basis; fresh UUID scopes and fresh clients/sessions bind each attempt; cache-transition cases exercise newer/older revisions, retraction-only changes, concurrent requests and resets. Fault/decline counters prevent silent fallback from counting as an accepted fast answer. Gateway closure coverage is checked independently.
+- `packages/datomic/test/rowText.test.ts` and client/value-domain tests: codec round trips compare with the existing tagged codec; 10,000 seeded row fixtures and explicit rejection cases exercise the current source. Direct row-text validation still checks scalar types, exact safe long columns and the stored value domain.
+- `packages/datomic/test/commit-fast.test.ts`: actual begin/transact request counts, duplicate/stale/lost-ACK outcomes and handle release are checked; indexing tests bind a fresh job to this scope, requested t, same-server timestamps and a fresh marker readback. The existing signed-zero/int64-domain failure remains excluded from success claims.
+- `gateway/feed_test.clj`: current executable feed projection compares identity-only and legacy dual witnesses with the same expected record, plus ordering, deadline and unsupported-erasure cases. These are mock-peer unit checks, not a fresh two-process excision qualification.
+- `b2/mutants.sh`: each changed current source must produce nonzero test exit AND an AssertionError answer/coverage mismatch; startup/transport failures cannot qualify. Each rerun gets its own retained directory; source restoration precedes the unmutated gate.
+- `b2/bench.mjs`: assertions check completed public calls, positive measured CPU, zero fast-path faults/declines in the head runs, exactly two HTTP calls for each serial commit, and the exact expected stamp at every returned-position readback. Fresh UUID scopes, copied runner, source/build hashes, container/image IDs, cpusets, native cgroup counters, actual response headers and raw observations bind the measurements. There is no automated performance PASS verdict; tables show numbers beside bars.
+- `b2/commit-probe.mjs`: attribution uses real public commands, checks actual call counts/stamp presence, retains a V8 profile and (in the later attempt) pre-execution source/build copies with unchanged-source checks. Its smaller fixture and the earlier control's partial binding make it diagnostic only.
+- `lab/bench/driver.ts`: indexing witnesses require the correct database, an identified job, native requested t, completed=true, ordered server timestamps, and BOTH timestamps inside the measured P1 window. The gateway actually calls request-index/sync-index at that t. Incomplete or outside-window jobs never count. The short smoke observed five of six jobs completing; it is not a full P1 qualification.
+
+## Declines, retries and limits
+
+Gateway declines: rows-version not 2; sticky irregular time/position history; a non-head logical position without an exact physical transaction (including an interior cut/position zero); overflow on any visited entity; more than 5,000 unique entities or 100,000 scanned rows (the union for a batch page); nonempty row sets without a revision; invalid root/page/session shape. Empty or historically absent entities are inline revision-zero empty sets. Transaction-local adapter calls decline so staged reads keep the fallback path. Invalid inputs and unavailable future positions keep their typed gateway/read errors.
+
+Client recovery: a missing/mismatched revision reference retries once with full=true; an unresolved full response or malformed/basis/coverage response increments faults and falls back. Server LRU eviction sends inline again. Server entry overflow resets the session and sends the whole response inline. The client rotates its session and clears caches when it observes more than 500,000 cached entities at the start of a pull. Transport/timeout/response-byte-budget failures remain read errors rather than semantic accepted answers. Cached Triples, nested values and Options are frozen.
+
+No full 256-reader P1 run, production scale rung, P5 qualification, independent final review or scorecard promotion is claimed. The benchmark uses internal SPI position injection for exact-position public reach calls; no new public TemporalBasis member was introduced. No merge, push, deployment or package publication was performed.
+
+## Final N4 warm results (retained N5 design)
+
+Measured source head `9d5809fc183a2284f3365b0e5fe0ff10930c06f6`. Full raw evidence, runner, source/build hashes and container bindings: `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B2/bench-1794264686047-2fbd8359-6b4d-4d93-b459-0d51b2de01bb`. This complete second attempt replaces the first attempt for the final design. Both attempts remain retained.
+
+Conditions are the same requested topology listed above: PG CPU 0; transactor 0,1 (Xmx2g, 3g cap, index 128m/512m); writer CPU 2; reader CPUs 3,4 (both Xmx1g, 1500m caps). PG fsync, synchronous_commit and full_page_writes were on, wal_sync_method=fdatasync. Each step has its own `step*-stats.jsonl` start snapshot for all four owned containers. CPU is the read gateway cgroup alone, never the transactor/PG sum. Client CPU includes the public call and benchmark bookkeeping.
+
+### Final step 1 — seed
+
+| Subjects | Accounts | Domain facts | Seconds | Facts/s | Bar |
+|---:|---:|---:|---:|---:|---|
+| 2,000 | 20 | 83,185 | 51.51 | 1,614.89 | Report |
+
+### Final step 2 — one reader
+
+20,000 warm-up + 20,000 uniformly random timed pulls per mode; 30-second idle baseline for each.
+
+| Mode | p50 / p90 / p99 ms | Client CPU us/pull | Reader CPU us/pull | Pulls/reader CPU-s | Body bytes/pull | Rows / entities | Gateway p50 us |
+|---|---|---:|---:|---:|---:|---|---:|
+| references | 1.87 / 4.27 / 6.50 | 709.29 | 901.42 | 1,109.36 | 3,634.97 | 429.88 / 91.44 | 446.00 |
+| full | 4.15 / 9.92 / 15.04 | 3,865.58 | 1,399.04 | 714.77 | 82,839.65 | 429.88 / 91.44 | 738.00 |
+
+Bars: p50 ≤5 ms, p99 ≤25 ms, ≥1,100 pulls/reader CPU-second. The reference mode observed all three bars, with little margin on the single-reader CPU bar. Full mode is a diagnostic bypass of references. Both had 0 reference misses, faults, resets and declines. References cut body bytes 22.79x and client CPU 5.45x. A single diagnostic run is not an independently verified qualification.
+
+### Final step 3 — 32 readers
+
+| Readers / threads | Pulls | Pulls/s | Reader CPU-s | Pulls/reader CPU-s | p50 / p99 ms | Host CPU-s | CPU bar |
+|---|---:|---:|---:|---:|---|---:|---|
+| 32 / 4 | 408,010 | 6,798.03 | 117.88 | 3,461.19 | 3.47 / 26.25 | 84.88 | ≥1,100 |
+
+Each thread warmed 5,000 pulls before its eight closed-loop readers ran for 60 seconds. Reader CPU was about 1.96 cores of the two-core cpuset; host CPU about 1.41 cores. The 26.25 ms concurrent p99 is reported explicitly; this is not a 256-reader P1 run.
+
+### Final step 4 — past bases
+
+| Basis | Cut | Samples | p50 / p99 ms | Reader CPU us/pull | Client CPU us/pull | Declines |
+|---|---|---:|---|---:|---:|---:|
+| recordedAt | 1794265563933 | 5,000 | 1.00 / 5.84 | 592.25 | 533.88 | 0 |
+| position | 1539 | 5,000 | 1.04 / 5.82 | 619.90 | 507.46 | 0 |
+
+The record-time cut is halfway through seed; the position cut is exactly 500 subject commits before the seed head. Some subjects did not yet exist at these cuts. No equal-world history-flatness conclusion is drawn.
+
+### Final step 5 — commits
+
+| Mode | Samples | p50 / p90 / p99 ms | Max queue | p99 ratio | Bar |
+|---|---:|---|---:|---:|---|
+| commits | 3,000 | 9.77 / 17.18 / 30.69 | — | — | p50 ≤10, p99 ≤50 ms |
+| openLoop | 3,291 | 25.16 / 69.29 / 177.86 | 15 | — | p50 ≤10, p99 ≤50 ms |
+| openLoopWithReaders | 3,291 | 28.77 / 126.48 / 353.21 | 23 | 1.99 | p50 ≤10, p99 ≤50 ms |
+
+Serial has 3,000 warm-up then 3,000 timed real buildTraceCommand commands, all exactly two HTTP calls. Datoms p50/p90/p99: 249.00 / 538.00 / 896.00. Median datoms fell 301→249 (17.3%) from the first N4 run. Both 60-second open-loop arms use 3,291 scheduled Poisson offers (expected rate 55/s) over 200 subjects, with admission enabled. Latency starts at the intended arrival and includes all waiting; no early timer releases or censored queue waits are omitted.
+
+The serial bars were observed, but the 55/s p99 bar was missed in both arms. Queue maxima improved from 254/768 to 15/23, but remained material. The 1.99x writer-tail ratio is above P1's 1.25x reference and does not qualify isolation. Arrival schedules match; command shapes are subsequent deterministic draws and hot worlds accumulate events, so this is the requested first look, not a matched-clone P1 experiment.
+
+#### Final commit breakdown
+
+| Component | p50 ms | p99 ms |
+|---|---:|---:|
+| beforeMs | 0.18 | 0.42 |
+| beginWallMs | 1.05 | 3.26 |
+| beginGatewayMs | 0.34 | 2.17 |
+| stagingMs | 1.44 | 4.77 |
+| transactWallMs | 6.73 | 26.37 |
+| transactGatewayMs | 5.00 | 24.18 |
+| datomicTransactMs | 4.21 | 22.71 |
+| afterMs | 0.11 | 0.22 |
+
+The final d/transact median is 4.21 ms (first run 7.46 ms). Staging remains 1.44 ms; the attribution probe isolates core work and local encoding as above. Begin HTTP wall is 1.05 ms; its gateway work is 0.34 ms. Transact HTTP wall includes the native transaction, gateway preparation, serialization and VM transport. Core and transport costs are reported rather than changing the core transaction contract outside the permitted optional-member scope. Medians are not additive. No causally isolated speedup is claimed from these two whole-design attempts.
+
+### Final step 6 — read your own write
+
+| Checks | New stamp visible | Read gateway waited | Pull p50 / p90 / p99 ms | Bar |
+|---:|---:|---:|---|---|
+| 2,000 | 2,000 | 15 | 4.87 / 11.63 / 50.27 | Every stamp visible; pull 5/25 ms |
+
+Correctness was observed in all 2,000 cases at the returned internal position. The grown-world p99 of 50.27 ms missed the 25 ms pull reference. Raw witnesses retain each position, expected stamp, observed stamp and wait status. These hot worlds have accumulated live event refs throughout 14,582 measured/warm-up commands; this is not the original seed-only world size.
+
+## Remaining questions
+
+- Why do 55/s queue tails and the writer/readers ratio remain high despite passing serial medians? The next work needs admission/core staging and engine pause attribution under a matched cohort; no dropped work or deadline censoring was used here.
+- Can grown-world cross-peer p99 be reduced while retaining the full event closure? The final 2,000 correctness checks do not meet that latency reference.
+- Independent final review, full P1/P5 windows and scale qualification remain outstanding. No contract or scorecard promotion was attempted.
+
+## Cleanup and retained evidence
+
+All DX-B2-created containers, networks and volumes were removed after clients exited. `evidence/DX-B2/CLEANUP.json` records empty remaining-owned lists. Source/build snapshots, tests, first failures, profiles, raw measurements and logs remain in the durable evidence directory. The committed SHA256SUMS manifest and EVIDENCE.md index locate and verify them.
+
+## Pin hash inventory
+
+No modified path appears as a file pin in the current lab/acceptance text/JSON inputs, and lab/acceptance is unchanged. `HASH-CHANGES.json` lists every changed existing source path with its full old and new SHA-256 (including unpinned paths) for the contract builder; no repinning was performed.
