@@ -9,7 +9,7 @@ assert all(sha((R/p).read_bytes())==h for p,h in s['hashes'].items())
 for ref in s['parents']:subprocess.run(['git','merge-base','--is-ancestor',ref,head],cwd=R,check=True)
 runs=[]
 for label,content in [('verify-final','second regeneration byte-identical'),('contract-tests-final','Ran 23 tests'),('evaluator-final','# pass 108')]:
-    ds=list(D.glob(label+'-*'));assert len(ds)==1,(label,ds)
+    ds=[p for p in D.glob(label+'-*') if (p/'receipt.json').exists()];assert len(ds)==1,(label,ds)
     p=ds[0];x=json.loads((p/'receipt.json').read_text());log=(p/'command.log').read_bytes();text=log.decode()
     assert x['head']==head and x['result']=={'code':0,'signal':None} and x['sourceStillMatches']
     assert sha(log)==x['logSha256'] and content in text

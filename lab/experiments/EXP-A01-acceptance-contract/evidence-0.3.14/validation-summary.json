@@ -1,0 +1,84 @@
+{
+  "testedSource": "df4881217056137dfba549359cdc7a5a492b2f77",
+  "mainIncluded": "55e7c524c002a044bb48a6ead724b3be8d34e7d7",
+  "sourceHashesStable": true,
+  "contractTests": 23,
+  "evaluatorPass": 108,
+  "mutationCatalog": 607,
+  "mutationsCaught": 519,
+  "retiredAnchors": 88,
+  "g0": [
+    {
+      "lane": "xtdb",
+      "runId": "G0-xtdb-20261109T055854Z-ffe0f1",
+      "counts": {
+        "executed": 1223,
+        "pass": 1223,
+        "fail": 0,
+        "skip": 140,
+        "expectedSkip": 140,
+        "unexpectedSkip": 0
+      },
+      "sourceTreeId": "b65af90129b83b3d7cfac97e1e5096a1e2334c9df32050222cdd4aef5bfd8678",
+      "objects": 41,
+      "builtFiles": 586,
+      "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/g0/G0-xtdb-20261109T055854Z-ffe0f1",
+      "capturedAtEpoch": 1794204034.819245,
+      "startedAt": 1794203934.002
+    },
+    {
+      "lane": "datomic",
+      "runId": "G0-datomic-20261109T060042Z-478f16",
+      "counts": {
+        "executed": 1258,
+        "pass": 1258,
+        "fail": 0,
+        "skip": 66,
+        "expectedSkip": 66,
+        "unexpectedSkip": 0
+      },
+      "sourceTreeId": "b65af90129b83b3d7cfac97e1e5096a1e2334c9df32050222cdd4aef5bfd8678",
+      "objects": 48,
+      "builtFiles": 548,
+      "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/g0/G0-datomic-20261109T060042Z-478f16",
+      "capturedAtEpoch": 1794204191.8179379,
+      "startedAt": 1794204042.206
+    },
+    {
+      "lane": "qlever",
+      "runId": "G0-qlever-20261109T060312Z-8895d7",
+      "counts": {
+        "executed": 1396,
+        "pass": 1396,
+        "fail": 0,
+        "skip": 79,
+        "expectedSkip": 79,
+        "unexpectedSkip": 0
+      },
+      "sourceTreeId": "b65af90129b83b3d7cfac97e1e5096a1e2334c9df32050222cdd4aef5bfd8678",
+      "objects": 41,
+      "builtFiles": 628,
+      "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/g0/G0-qlever-20261109T060312Z-8895d7",
+      "capturedAtEpoch": 1794204365.2284439,
+      "startedAt": 1794204192.13
+    }
+  ],
+  "runs": [
+    {
+      "label": "verify-final",
+      "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/verify-final-00337b5a-8f46-4f1e-b074-f8e7e7cb6a6f/receipt.json",
+      "sha256": "b6797d07b76e8a912ed49b905a9cee07559302972229d29e698a4a2ec48b0be9"
+    },
+    {
+      "label": "contract-tests-final",
+      "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/contract-tests-final-20b2858a-3c86-4da3-9b42-2ac37289db8c/receipt.json",
+      "sha256": "b6f3a4f8ff247356252f60f214b1a522aba97678d4fcf40235162be504976b84"
+    },
+    {
+      "label": "evaluator-final",
+      "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/evaluator-final-9a856764-f9e4-4894-96c6-3e066a83e4ef/receipt.json",
+      "sha256": "4a36ace2893b1fb88f64c9c4d229b28a143150092942f7afb961ff545927fab4"
+    }
+  ],
+  "noIndependentPromotion": true
+}

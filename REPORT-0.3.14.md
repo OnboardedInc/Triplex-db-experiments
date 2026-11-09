@@ -2,7 +2,7 @@
 
 North star: correctness floor for P1–P5, especially P2 per-subject concurrency and P4 exact current routing. Goals and targets: lab/SCOPE.md, lab/NORTH-STAR.md, lab/TARGETS.md.
 
-Builder source assembly; fresh required gates and independent review remain pending at this source commit. No engine/performance acceptance is claimed.
+**Result: all required builder gates pass on frozen source `df488121` with main `55e7c524` included. Independent contract review remains pending. No engine/performance acceptance is claimed.**
 
 Integrated accepted INT-Q at 3c2e4b8 with review c14cdfc9, and GS12F at 2fdf491 with review f5664a1. The final atomic merge commit replaces temporary local assembly commits and includes all four integration/review tips as parents alongside current merged main 3450617b (starting main 3e8afadd). No main edits, merge to main or push.
 
@@ -23,7 +23,8 @@ INT-Q applies Q89b early: H1 refuses record-time bases typed and the adapter rou
 - `bin/run0314.mjs` records actual exit, signal, log digest, unique UUID attempt, start/end, before/after input equality, exact Git head, command, toolchain and disk observation. It emits execution facts, not semantic PASS. All heavy work goes through heavy.mjs; no gate begins below 5 GiB free.
 - Unchanged evaluator and G0 controller: retained exact expected assertions and content/count checks; fresh append-only attempt/raw outputs, rebuilt distributions, source identity, oracle identities, resource grants, config and slot-null offline identity bind receipts. No historical PASS substitutes for execution.
 - `capture-g0.py`: reads named fresh attempt identity against source snapshot; rehashes raw bytes, all retained objects, build-manifest contents and every copied build byte. Captures immediately after its own gate before later builds. Durable checksums preserve bytes, not new engine acceptance.
-- This report will assess actual semantic summaries, zero unexpected skips/failures and current-source evidence before recording final builder gate results. Independent reviewer promotion remains separate.
+- `evidence-0.3.14/validate.py`: compares actual unittest/TAP/mutation/verify content and all raw/object/build bytes; requires fresh named attempts after the recorded source snapshot, capture after each gate and before the next build, exact tested head/main ancestry, slot-null offline identity and unchanged source/input hashes. Its summary is sealed by SHA256SUMS and grants no engine qualification.
+- This report assesses those actual semantic summaries, zero unexpected skips/failures and current-source evidence before recording final builder gate results. Independent reviewer promotion remains separate.
 
 Bulky fresh output belongs at /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/. Commit only small indexes/manifests and audit preimages. Original failures remain. Not done: live G1+, performance/target-scale acceptance, root pnpm check, packing, external backend integration, deploy or publish. No engine lifecycle operation or slot is needed for offline G0.
 
@@ -36,3 +37,27 @@ The first evaluator began on a temporary assembly head and refused uncommitted c
 First XTDB G0 G0-xtdb-20261109T055225Z-148ffe executed 1,223 tests successfully but refused three unexpected live GS12F skips. The imported GS12F files add three named live value-boundary cases on each of XTDB and QLever; their suite guards require XTDB_INTEGRATION/QLEVER_INTEGRATION. Added precisely those six expected offline skips. No live case is relabeled as executed; no assertion, timeout or gate condition changed. Prior skip sets are preserved. Its FAIL receipt, raw/object/build bytes and checksums remain retained. The final retry cites this attempt with --previous.
 
 Task-owned disposable alchemy, distilled cloud and workerd node_modules copies were removed after verifying they are unused by these six-package offline gates. The owned store, lock and install receipt remain. Disk capacity was remeasured; logical deletion is not claimed as physical reclaimed bytes. No external dependency cache, source, evidence, engine or unrelated worktree was removed.
+
+## Final gate results
+
+All final executions use frozen source `df4881217056137dfba549359cdc7a5a492b2f77`, including main `55e7c524c002a044bb48a6ead724b3be8d34e7d7`. No source edits overlapped these final runs; before/after collector hashes and the complete source snapshot agree. The initial atomic integration/re-pin commit is `a317c52b`; follow-up validation/skip correction is `d88d2d04`. The final report commit changes evidence and documentation only.
+
+| Required gate | Actual final result | Evidence |
+| --- | --- | --- |
+| Standalone `build_contract.py --verify` | Six outputs byte-identical; separate execution, exit 0 | RUNS.json / verify-final |
+| Contract tests | 23/23; inherited policy assertions retained | RUNS.json / contract-tests-final |
+| Contract mutations | 519/519 caught, zero missed; catalog 607, 88 retired anchors | RUNS.json / mutations-final |
+| Q87 evaluator | 108/108; zero failed, skipped, cancelled or todo; both required files unchanged | RUNS.json / evaluator-final |
+| XTDB offline G0 | 1,223/1,223, 140 expected skips, zero unexpected/failures, full scope | G0-xtdb-20261109T055854Z-ffe0f1 |
+| Datomic offline G0 | 1,258/1,258, 66 expected skips, zero unexpected/failures, full scope | G0-datomic-20261109T060042Z-478f16 |
+| QLever offline G0 | 1,396/1,396, 79 expected skips, zero unexpected/failures, full scope | G0-qlever-20261109T060312Z-8895d7 |
+
+All heavy suites used `heavy.mjs` and were admitted above 5 GiB free. The explicit disk preflight refusals started no jobs; admissions resumed when capacity recovered to 9.9 GiB. Installed frozen/offline using pnpm 10.11.0 and the required absolute owned store. No dependency versions changed. The gate-local shim executes unchanged declared build/typecheck scripts and Vitest, and now supports QLever as well as the prior packages. G0 removes live flags; no engine/container lifecycle or exclusive slot was used.
+
+`evidence-0.3.14/validate.py` independently rechecks this attempt's exact semantic summaries; source/head and input stability; fresh timestamps; zero unexpected skips/failures; all raw/object and built-file hashes; manifest contents; and capture-before-next-build ordering. This is a byte/content revalidation of the named fresh attempts, not new engine qualification. Every gate has slot null and zero executed-source diff bytes; optional stash snapshots are null (the sandbox refused the optional Git index write), so no stash or clean-tree snapshot is claimed. Exact Git heads, explicit source hashes and complete raw/object/build copies remain available.
+
+Final retained build inventories: 586 XTDB files / 41 object references; 548 Datomic files / 48 objects; 628 QLever files / 41 objects. All rehash correctly. The original XTDB FAIL's build/raw/objects are retained separately. Bulk output lives at `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/`; the committed short index, RUNS.json and SHA256SUMS manifests are under `lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/`.
+
+Contract transitive hash: `266e66f537cd27f462a01f6bf18c9ee7be3f3915bc5bdb61c03554a41d55a718`. All 157 obligations remain open; 40 are only pin-level closable and 117 blocked. Fifty-four pending IDs remain, including every requested hold. No historical PASS is relabeled as fresh qualification, no performance target is loosened, and no obligation is closed here.
+
+Open questions: independent contract review is still required. Existing pending policy/qualification work stays pending; this build resolves none of Q78e, Q86g, Q89, Q90, Q92, Q94a, Q95 or Q98. No other required builder gate remains unrun. Live engine gates, performance/target scale, root check, packing, physical durability, erasure, tenant isolation, external backend integrations, deployment and publishing were not performed.
