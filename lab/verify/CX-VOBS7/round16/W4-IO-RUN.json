@@ -1,0 +1,23 @@
+{
+  "argv": [
+    "node",
+    "--test",
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round16_w4_io.mjs"
+  ],
+  "exit": 1,
+  "finishedNs": 1794250325999641000,
+  "head": "339912534fec6b43af4c27a1970b1eaad113788f",
+  "sourceSha256": {
+    "lab/bin/sync-witness.mjs": "65d5efc97172618399287fa539bb0b4e25cae64e0460b740a0983d8f348d6bd9",
+    "lab/observer/test_w4.py": "3627faa4c0e036198e0953d7d319b9a3c2ef4071441c4ccb5df9836619ac1239",
+    "lab/observer/vm_fixture.py": "785bf49d536290505c1a204caeb7f0d36b9d374874a1253943ef120318691578",
+    "lab/observer/vm_normalizer.py": "222dbe1455b2da1ca1346c3152b9411ff97452a9658a7da5aa68586d7eef3b46",
+    "lab/observer/vm_w4_judge.py": "f0e3b17a91a8f03433a6f7d9a69e4a4546167f5950bf8d2300b2876cf4256e35",
+    "lab/verify/CX-VOBS7/capture_round16_io.py": "b214fd2532337b5b51e7a5f5966d75f3aea4cde64cdd339f3762265ddfb9d0a9",
+    "lab/verify/CX-VOBS7/review_round16_w4_io.mjs": "c18c8aff8d8a8773124319c03d4c0384b4bed1391bce5e27679d313591f48072"
+  },
+  "sourceUnchanged": true,
+  "startedNs": 1794250325691588000,
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutSha256": "ac7f2764bc58ec28b3b8f317f2d3c7fb6b6331ae7e4ad1f145b0c1c3679ed733"
+}

@@ -1,0 +1,140 @@
+{
+  "reviewedFunctionSha256": "45053951b753095e5083fdb3775e0af1cedb9143c470a045b6914133ba8aaf9b",
+  "actualRecoveredWalBytes": 2542072,
+  "result": {
+    "index": 2,
+    "mode": "off",
+    "rehearsal": true,
+    "crashed": false,
+    "dir": [
+      4112,
+      183578900
+    ],
+    "profileViolations": [],
+    "writerId": "mock-writer",
+    "writerCgroupId": 4242,
+    "acksBeforeCrash": 200,
+    "bootIdBefore": "mock-boot-id",
+    "judge": {
+      "acked": 200,
+      "ackedLostCount": 200,
+      "lastAcked": 200,
+      "lastSurvived": 0,
+      "marker": 0,
+      "mode": "off",
+      "pass": true,
+      "problems": [],
+      "survived": 0,
+      "syncsCredited": 0,
+      "traceDetached": false,
+      "traceEvents": 200,
+      "unwitnessedAcked": 200,
+      "unwitnessedLostCount": 200,
+      "witnessProblems": [
+        "SYNC-MISSING: 200 of 200 commits"
+      ],
+      "witnessed": 0,
+      "witnessedLost": [],
+      "witnessedLostCount": 0
+    },
+    "pass": true
+  },
+  "refused": null,
+  "calls": [
+    {
+      "argv": [
+        "volume",
+        "create",
+        "--label",
+        "tx2.holder=CX-VOBS7",
+        "--label",
+        "tx2.run=io-test-w4-2",
+        "tx2-sw-io-test-w4-2-data"
+      ],
+      "options": null
+    },
+    {
+      "argv": [
+        "volume",
+        "create",
+        "--label",
+        "tx2.holder=CX-VOBS7",
+        "--label",
+        "tx2.run=io-test-w4-2",
+        "tx2-sw-io-test-w4-2-witness"
+      ],
+      "options": null
+    },
+    {
+      "argv": [],
+      "options": null
+    },
+    {
+      "argv": [],
+      "options": null
+    },
+    {
+      "argv": [
+        "kill",
+        "--signal",
+        "KILL",
+        "tx2-sw-w4x-io-test-w4-2"
+      ],
+      "options": null
+    },
+    {
+      "argv": [
+        "kill",
+        "--signal",
+        "KILL",
+        "tx2-sw-w4w-io-test-w4-2"
+      ],
+      "options": null
+    },
+    {
+      "argv": [],
+      "options": null
+    },
+    {
+      "argv": [
+        "cp",
+        "tx2-sw-w4c-e54bbc1d2827:/data/store/broker.db",
+        "/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/cx-vobs7-r16-io-zYraEk/out/w4/02-off/broker.db"
+      ],
+      "options": {
+        "allowFail": true
+      }
+    },
+    {
+      "argv": [
+        "cp",
+        "tx2-sw-w4c-e54bbc1d2827:/data/store/broker.db-wal",
+        "/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/cx-vobs7-r16-io-zYraEk/out/w4/02-off/broker.db-wal"
+      ],
+      "options": {
+        "allowFail": true
+      }
+    },
+    {
+      "argv": [
+        "volume",
+        "inspect",
+        "tx2-sw-io-test-w4-2-data"
+      ],
+      "options": {
+        "allowFail": true
+      }
+    },
+    {
+      "argv": [
+        "volume",
+        "inspect",
+        "tx2-sw-io-test-w4-2-witness"
+      ],
+      "options": {
+        "allowFail": true
+      }
+    }
+  ],
+  "claim": "offline I/O fault injection; every Docker/VM operation is a stub; only Python SQLite/judge executes locally"
+}

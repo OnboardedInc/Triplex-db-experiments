@@ -1,0 +1,16 @@
+[
+  {
+    "mode": "full",
+    "events": 38340,
+    "cpus": 1,
+    "prefixReasons": [],
+    "traceSha256": "deab895a413414f9adadd3ecbd829aa4b9f2ef497f287e698508a5bc028cf527"
+  },
+  {
+    "mode": "off",
+    "events": 131525,
+    "cpus": 1,
+    "prefixReasons": [],
+    "traceSha256": "5805f38ace33f95cbabe0019c412a20a74e826f4bdb1a775d6cc9d1cd6134d17"
+  }
+]

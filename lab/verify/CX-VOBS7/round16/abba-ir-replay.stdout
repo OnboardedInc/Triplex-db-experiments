@@ -1,0 +1,42 @@
+TAP version 13
+# Subtest: recompute complete ABBA analyses from all 36 recorded arms
+ok 1 - recompute complete ABBA analyses from all 36 recorded arms
+  ---
+  duration_ms: 11267.660959
+  type: 'test'
+  ...
+# Subtest: golden independently counts every helper/intrinsic and diagnostic binding refuses redistribution
+not ok 2 - golden independently counts every helper/intrinsic and diagnostic binding refuses redistribution
+  ---
+  duration_ms: 19.523291
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round16.mjs:37:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The expression evaluated to a falsy value:
+    
+      assert.ok(at>0)
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round16.mjs:64:84)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 11371.724125

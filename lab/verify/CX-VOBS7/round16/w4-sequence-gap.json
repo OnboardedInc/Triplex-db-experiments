@@ -1,0 +1,23 @@
+{
+  "actual": {
+    "acked": 20,
+    "ackedLostCount": 0,
+    "lastAcked": 20,
+    "lastSurvived": 20,
+    "marker": 20,
+    "mode": "full",
+    "pass": true,
+    "problems": [],
+    "survived": 20,
+    "syncsCredited": 20,
+    "traceDetached": false,
+    "traceEvents": 39,
+    "unwitnessedAcked": 0,
+    "unwitnessedLostCount": 0,
+    "witnessProblems": [],
+    "witnessed": 20,
+    "witnessedLost": [],
+    "witnessedLostCount": 0
+  },
+  "removed": "SW1|W|0|3|120|4242|4112|183575221|183575218|12392|12360"
+}

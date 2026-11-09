@@ -1,0 +1,47 @@
+{
+  "completeTrace": {
+    "acked": 20,
+    "ackedLostCount": 1,
+    "lastAcked": 20,
+    "lastSurvived": 19,
+    "marker": 19,
+    "mode": "full",
+    "pass": false,
+    "problems": [],
+    "survived": 19,
+    "syncsCredited": 20,
+    "traceDetached": false,
+    "traceEvents": 40,
+    "unwitnessedAcked": 0,
+    "unwitnessedLostCount": 0,
+    "witnessProblems": [],
+    "witnessed": 20,
+    "witnessedLost": [
+      20
+    ],
+    "witnessedLostCount": 1
+  },
+  "removed": "SW1|F|0|40|301|305|4242|4112|183575230|183575227|0|0",
+  "withInternalLostSync": {
+    "acked": 20,
+    "ackedLostCount": 1,
+    "lastAcked": 20,
+    "lastSurvived": 19,
+    "marker": 19,
+    "mode": "full",
+    "pass": true,
+    "problems": [],
+    "survived": 19,
+    "syncsCredited": 19,
+    "traceDetached": false,
+    "traceEvents": 40,
+    "unwitnessedAcked": 1,
+    "unwitnessedLostCount": 1,
+    "witnessProblems": [
+      "SYNC-MISSING: 1 of 20 commits"
+    ],
+    "witnessed": 19,
+    "witnessedLost": [],
+    "witnessedLostCount": 0
+  }
+}

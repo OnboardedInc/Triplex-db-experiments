@@ -1,0 +1,41 @@
+FFFF.
+======================================================================
+FAIL: test_R16_F1_an_internal_sequence_gap_must_refuse (__main__.W4Adversarial.test_R16_F1_an_internal_sequence_gap_must_refuse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/test_round16_adversarial.py", line 39, in test_R16_F1_an_internal_sequence_gap_must_refuse
+    self.assertFalse(r['pass'],'W4 accepted an internal per-CPU sequence gap')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false : W4 accepted an internal per-CPU sequence gap
+
+======================================================================
+FAIL: test_R16_F1_lost_sync_hides_a_witnessed_commit_that_did_not_survive (__main__.W4Adversarial.test_R16_F1_lost_sync_hides_a_witnessed_commit_that_did_not_survive)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/test_round16_adversarial.py", line 53, in test_R16_F1_lost_sync_hides_a_witnessed_commit_that_did_not_survive
+    self.assertFalse(actual['pass'],'an internal lost sync concealed a witnessed commit lost in recovery')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false : an internal lost sync concealed a witnessed commit lost in recovery
+
+======================================================================
+FAIL: test_R16_F1_regressed_sequence_time_must_refuse (__main__.W4Adversarial.test_R16_F1_regressed_sequence_time_must_refuse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/test_round16_adversarial.py", line 43, in test_R16_F1_regressed_sequence_time_must_refuse
+    self.assertFalse(r['pass'],'W4 accepted regressed per-CPU event timestamps')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false : W4 accepted regressed per-CPU event timestamps
+
+======================================================================
+FAIL: test_R16_F2_failed_WAL_collection_cannot_be_counted_as_crash_loss (__main__.W4Adversarial.test_R16_F2_failed_WAL_collection_cannot_be_counted_as_crash_loss)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/test_round16_adversarial.py", line 61, in test_R16_F2_failed_WAL_collection_cannot_be_counted_as_crash_loss
+    self.assertFalse(missing['pass'],'missing collected WAL was treated as successful recovery evidence')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false : missing collected WAL was treated as successful recovery evidence
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.046s
+
+FAILED (failures=4)

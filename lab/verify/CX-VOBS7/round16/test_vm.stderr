@@ -1,0 +1,19 @@
+test_bound_files_refuse_replacement_source_and_consumer (__main__.VmObserver.test_bound_files_refuse_replacement_source_and_consumer) ... ok
+test_cgroup_gone_requires_positive_visibility (__main__.VmObserver.test_cgroup_gone_requires_positive_visibility) ... ok
+test_clock_q100q_and_binding_negatives (__main__.VmObserver.test_clock_q100q_and_binding_negatives) ... ok
+test_early_and_late_stamps_f20 (__main__.VmObserver.test_early_and_late_stamps_f20) ... ok
+test_final_readback_must_cover_witnessed_frontier (__main__.VmObserver.test_final_readback_must_cover_witnessed_frontier) ... ok
+test_first_positive_and_inverted_decision_window (__main__.VmObserver.test_first_positive_and_inverted_decision_window) ... ok
+test_four_planted_delays_with_measured_period (__main__.VmObserver.test_four_planted_delays_with_measured_period) ... ok
+test_oobs_authenticates_and_reruns_pinned_normalizer (__main__.VmObserver.test_oobs_authenticates_and_reruns_pinned_normalizer) ... ok
+test_q100s_decision_and_publication_windows (__main__.VmObserver.test_q100s_decision_and_publication_windows) ... ok
+test_q100s_send_binding_required (__main__.VmObserver.test_q100s_send_binding_required) ... ok
+test_readonly_and_schema_and_wal_checksums (__main__.VmObserver.test_readonly_and_schema_and_wal_checksums) ... ok
+test_real_sqlite_delays_and_actual_poll_periods (__main__.VmObserver.test_real_sqlite_delays_and_actual_poll_periods) ... ok
+test_rewritten_wal_f11_even_when_final_is_valid (__main__.VmObserver.test_rewritten_wal_f11_even_when_final_is_valid) ... ok
+test_source_durability_and_file_binding_refusals (__main__.VmObserver.test_source_durability_and_file_binding_refusals) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 1.610s
+
+OK

@@ -1,0 +1,28 @@
+TAP version 13
+# Subtest: R16-F2 actual harness refuses a failed WAL copy rather than adopting it as OFF crash loss
+not ok 1 - R16-F2 actual harness refuses a failed WAL copy rather than adopting it as OFF crash loss
+  ---
+  duration_ms: 166.20725
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round16_w4_io.mjs:15:1'
+  failureType: 'testCodeFailure'
+  error: 'the actual w4Trial returned pass with 200 false lost OFF commits after a simulated WAL-copy failure'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round16_w4_io.mjs:52:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 243.856875

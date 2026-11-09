@@ -1,0 +1,76 @@
+TAP version 13
+# Subtest: golden file: the documented extraction reproduces every hash in MANIFEST.json (R15-N1)
+ok 1 - golden file: the documented extraction reproduces every hash in MANIFEST.json (R15-N1)
+  ---
+  duration_ms: 1.774459
+  type: 'test'
+  ...
+# Subtest: golden dump: the IR reader accounts for every call, 15 bpf_ktime_get_ns sites and exactly the allow-listed helpers (diagnostic passes)
+ok 2 - golden dump: the IR reader accounts for every call, 15 bpf_ktime_get_ns sites and exactly the allow-listed helpers (diagnostic passes)
+  ---
+  duration_ms: 12.634
+  type: 'test'
+  ...
+# Subtest: the golden dump is the "-d" shape the reader expects: one module, five ASTs, and `-dd` (two modules) is refused
+ok 3 - the golden dump is the "-d" shape the reader expects: one module, five ASTs, and `-dd` (two modules) is refused
+  ---
+  duration_ms: 15.762541
+  type: 'test'
+  ...
+# Subtest: crafted IR: a ktime-like helper other than bpf_ktime_get_ns, by id, is refused (the gate is untouched: no name token)
+ok 4 - crafted IR: a ktime-like helper other than bpf_ktime_get_ns, by id, is refused (the gate is untouched: no name token)
+  ---
+  duration_ms: 46.871917
+  type: 'test'
+  ...
+# Subtest: crafted IR: the count of bpf_ktime_get_ns calls must equal the source and the AST, per probe and in total
+ok 5 - crafted IR: the count of bpf_ktime_get_ns calls must equal the source and the AST, per probe and in total
+  ---
+  duration_ms: 35.327375
+  type: 'test'
+  ...
+# Subtest: crafted IR: every call form that is not a constant helper or an allow-listed intrinsic is UNPARSED-CALL
+ok 6 - crafted IR: every call form that is not a constant helper or an allow-listed intrinsic is UNPARSED-CALL
+  ---
+  duration_ms: 97.281417
+  type: 'test'
+  ...
+# Subtest: crafted IR: a call outside a probe function, and a call hidden after the last function, are refused
+ok 7 - crafted IR: a call outside a probe function, and a call hidden after the last function, are refused
+  ---
+  duration_ms: 13.125666
+  type: 'test'
+  ...
+# Subtest: crafted IR: helper ids outside the kernel enum or the allow-list, and a missing, extra or truncated function, are refused
+ok 8 - crafted IR: helper ids outside the kernel enum or the allow-list, and a missing, extra or truncated function, are refused
+  ---
+  duration_ms: 48.557959
+  type: 'test'
+  ...
+# Subtest: crafted IR: an ERROR line in stderr, and an empty or AST-only dump, are refused
+ok 9 - crafted IR: an ERROR line in stderr, and an empty or AST-only dump, are refused
+  ---
+  duration_ms: 7.768958
+  type: 'test'
+  ...
+# Subtest: controls: calls inside comments, metadata and declare lines are not calls; the real program is unchanged by them
+ok 10 - controls: calls inside comments, metadata and declare lines are not calls; the real program is unchanged by them
+  ---
+  duration_ms: 10.666625
+  type: 'test'
+  ...
+# Subtest: legacy disassembly samples still go through the legacy reader (constructed fixtures of rounds 11 to 14 are unchanged)
+ok 11 - legacy disassembly samples still go through the legacy reader (constructed fixtures of rounds 11 to 14 are unchanged)
+  ---
+  duration_ms: 2.079084
+  type: 'test'
+  ...
+1..11
+# tests 11
+# suites 0
+# pass 11
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 378.080459

@@ -1,0 +1,57 @@
+{
+  "failedCollectionAsUsedByHarness": {
+    "acked": 20,
+    "ackedLostCount": 20,
+    "lastAcked": 20,
+    "lastSurvived": 0,
+    "marker": 0,
+    "mode": "off",
+    "pass": true,
+    "problems": [],
+    "survived": 0,
+    "syncsCredited": 0,
+    "traceDetached": false,
+    "traceEvents": 20,
+    "unwitnessedAcked": 20,
+    "unwitnessedLostCount": 20,
+    "witnessProblems": [
+      "SYNC-MISSING: 20 of 20 commits"
+    ],
+    "witnessed": 0,
+    "witnessedLost": [],
+    "witnessedLostCount": 0
+  },
+  "falseAggregate": {
+    "full": 5,
+    "fullAckedLost": 0,
+    "off": 5,
+    "offUnwitnessedLost": 100,
+    "pass": true,
+    "premiseHolds": true,
+    "reasons": [],
+    "trials": 10,
+    "witnessedLost": 0
+  },
+  "intactSource": {
+    "acked": 20,
+    "ackedLostCount": 0,
+    "lastAcked": 20,
+    "lastSurvived": 20,
+    "marker": 20,
+    "mode": "off",
+    "pass": true,
+    "problems": [],
+    "survived": 20,
+    "syncsCredited": 0,
+    "traceDetached": false,
+    "traceEvents": 20,
+    "unwitnessedAcked": 20,
+    "unwitnessedLostCount": 0,
+    "witnessProblems": [
+      "SYNC-MISSING: 20 of 20 commits"
+    ],
+    "witnessed": 0,
+    "witnessedLost": [],
+    "witnessedLostCount": 0
+  }
+}
