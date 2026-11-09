@@ -258,3 +258,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   of the unbuilt-CLI pack failure seen by NSR and DF01.
 - 2026-11-09 contract 0.3.14 on main (1de3e640). EXP-QH1 is unblocked but waits for R45 (host store layout), because QH1 reads H1's
   live_rows, which R45 may change; QH1 starts on the new layout. RT01 live G6 waits for host disk above 10 GiB (7.8 GiB now).
+- 2026-11-09 EXP-PACK merged (3d9dca59; verify/PACK d4a7d225): the lab pack gate lists packages from the pnpm workspace, imports every
+  public entry point in a fresh process, and reports DuckDB as out of scope. Builders and reviewers use it instead of check-packages.mjs.
