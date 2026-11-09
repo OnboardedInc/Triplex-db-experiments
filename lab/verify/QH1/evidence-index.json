@@ -1,0 +1,433 @@
+{
+  "reviewer": "CX-VQH1",
+  "reviewedCommit": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1",
+  "createdAt": "2026-11-09T15:08:13.829690+00:00",
+  "kind": "offline-review-command-index",
+  "slot": null,
+  "attempts": [
+    {
+      "label": "adversarial-a2",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/adversarial-a2-a9a63b05-c937-4deb-b758-99377e935cc0",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "review-adversarial.test.ts"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T15:00:07.254Z",
+      "end": "2026-11-09T15:00:53.384Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "d1297f6bb70983ebb259b60e329cee8f2ba3c43b66a729d6a3092b2957be3137"
+    },
+    {
+      "label": "adversarial-a3",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/adversarial-a3-a06c6f0b-702d-415f-b2c6-8174540fb00d",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "review-adversarial.test.ts"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T15:02:20.617Z",
+      "end": "2026-11-09T15:02:57.881Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "dffc337ce04e7c21a7dec5f1963d9449a82d7edda594f9c276b2015b7f07bb83"
+    },
+    {
+      "label": "adversarial",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/adversarial-fda7b9f8-00bb-4a1f-91bf-6fa83b963075",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "review-adversarial.test.ts"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:57:56.037Z",
+      "end": "2026-11-09T14:58:30.842Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "955104c51882e249b3729afd000ad8a68dcb6a842cd83efda65bd844897430c7"
+    },
+    {
+      "label": "build-core-a2",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/build-core-a2-70326836-5ae0-4d45-9283-e5c5d87de9f4",
+      "command": [
+        "sh",
+        "-c",
+        "cd packages/core && ../../node_modules/.bin/tsdown"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T15:01:10.308Z",
+      "end": "2026-11-09T15:01:50.814Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "b5a6eb939ba2f34350c81ef6bb722247ddb4d9d2317a458a891e1cc2a1267bb3"
+    },
+    {
+      "label": "build-core",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/build-core-a599433e-e27f-45c4-9c30-ddc1cc26324b",
+      "command": [
+        "node_modules/.bin/tsdown",
+        "--config",
+        "packages/core/tsdown.config.ts"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T15:00:07.050Z",
+      "end": "2026-11-09T15:00:58.835Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "71453431788b732b1fb77d9c7ccf6effa931dcd870f8f43f15623bebd0551a70"
+    },
+    {
+      "label": "contract-verify",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/contract-verify-df7bd63e-4322-4fed-9617-d9e88ad43390",
+      "command": [
+        "python3",
+        "-I",
+        "lab/acceptance/build_contract.py",
+        "--verify"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:55:01.092Z",
+      "end": "2026-11-09T14:55:08.967Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "0e1138ac8e8faa5e2b6ecfedd700ced13e8930de928cde2f57f65119a4ce417f"
+    },
+    {
+      "label": "core",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/core-26738acc-3e8e-4ce6-8867-691ec5ea9435",
+      "command": [
+        "pnpm",
+        "--store-dir",
+        "/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "--dir",
+        "packages/core",
+        "test",
+        "--maxWorkers=2",
+        "--no-file-parallelism"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:55:01.096Z",
+      "end": "2026-11-09T14:55:02.655Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "0a9f8c47365a4dbc168d7c6f9a7ccd3a2726c9cb52986066785e75632fe6d3f9"
+    },
+    {
+      "label": "core-a2",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/core-a2-4ce73842-7bc6-4e91-aa6a-993b74e25dc7",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/core",
+        "--config",
+        "packages/core/vitest.config.ts",
+        "--maxWorkers=2",
+        "--no-file-parallelism"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:55:43.193Z",
+      "end": "2026-11-09T14:55:51.560Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "701a36d574635a6da36e6f5fd5da7fc5cfd6b6a33fcbb8c71e484b673296628f"
+    },
+    {
+      "label": "core-a3",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/core-a3-b5183c7a-b3e1-40b0-8968-c70ac602c70e",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/core",
+        "--config",
+        "vitest.config.ts",
+        "--maxWorkers=2",
+        "--no-file-parallelism"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:58:26.923Z",
+      "end": "2026-11-09T14:58:48.844Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "f6c8259fba9ff3901e70ac277002e1dbac3fe4df498ed3b2aa0ebfc7b99f2641"
+    },
+    {
+      "label": "evaluator",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/evaluator-5befccf5-e8cb-4cd6-af17-83a94298cc75",
+      "command": [
+        "node",
+        "--test",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/claim-round2.test.mjs"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:55:01.096Z",
+      "end": "2026-11-09T14:58:25.529Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "f8a41ce3138d271090f3aa34172693eba9a2839d1ce1b459aeb472d1bafe56df"
+    },
+    {
+      "label": "evidence-audit",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/evidence-audit-29550767-bc71-4436-b0fc-0997a3d3ed9f",
+      "command": [
+        "node",
+        "lab/verify/QH1/review-evidence.mjs"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:59:13.256Z",
+      "end": "2026-11-09T15:00:55.195Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "6ef5d767e54ad5cd1d4b9e5e722e0dff0d09f4fd8f694dba9796128017feac70"
+    },
+    {
+      "label": "evidence-final",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/evidence-final-9902ed3c-784a-4a75-9852-bf7a16e825e7",
+      "command": [
+        "node",
+        "lab/verify/QH1/review-evidence.mjs"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T15:03:47.715Z",
+      "end": "2026-11-09T15:05:00.807Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "cf9cc7a05d964252a47e64934183925846a050dcce0ed4beaa833286865e1d1d"
+    },
+    {
+      "label": "mutants",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/mutants-45ff8f0e-3d59-4ecb-a999-d364ab90d567",
+      "command": [
+        "node",
+        "lab/experiments/EXP-QH1/mutants.mjs"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:55:43.186Z",
+      "end": "2026-11-09T14:55:51.071Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "b3f41807aca0f247b0e653cbdaddbf7e1b6cbb15eb4e66869a2a03c2cd658df4"
+    },
+    {
+      "label": "public-witness",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/public-witness-0f644d26-e271-490f-8548-d2eb0f95977c",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "review-adversarial.test.ts"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T15:05:43.519Z",
+      "end": "2026-11-09T15:05:53.381Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "d7dc237725a32310f027bd6b743a1675d0817145352e87ffddccc560f0b80cdc"
+    },
+    {
+      "label": "qh1-final",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/qh1-final-e79f0e8e-38b4-452b-bbc6-29a691f9a2ec",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "--exclude",
+        "**/writer.test.ts"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T15:03:47.715Z",
+      "end": "2026-11-09T15:04:58.579Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "88507a1a574c0051de567a6f690923430d686f7a392b5dc359e886f2efd2b820"
+    },
+    {
+      "label": "qh1-semantic",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/qh1-semantic-37c9d4b2-aae8-4070-a63b-928509a1a1b3",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/QH1/vitest.config.ts",
+        "--exclude",
+        "**/writer.test.ts"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:55:43.195Z",
+      "end": "2026-11-09T14:56:25.051Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "5fc2ab3bb96ada5a2786de4cca74a53d8ae2dda290b1eaf82f9113535dbdf8b8"
+    },
+    {
+      "label": "qlever-a2",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/qlever-a2-927dc8c5-320a-4fc9-a98c-c76abb04cc5e",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/qlever",
+        "--config",
+        "packages/qlever/vitest.config.ts"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:55:43.186Z",
+      "end": "2026-11-09T14:55:44.313Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "42014048572b29024dc2c69d3855ef32ad2c4ccd43ce992643a42022ab92f41f"
+    },
+    {
+      "label": "qlever-a3",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/qlever-a3-fda4fdf6-7c85-4ce4-8f74-ba49e4de3d66",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/qlever",
+        "--config",
+        "vitest.config.ts"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:58:26.923Z",
+      "end": "2026-11-09T15:00:47.335Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "3db301525dedab9e8e666d72dfc0a2b0a162add5155ba8a4d1065ece4e59b4dc"
+    },
+    {
+      "label": "qlever-a4",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/qlever-a4-efeaf922-64a5-4503-8dd9-023c0d02b9a9",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/qlever",
+        "--config",
+        "vitest.config.ts"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T15:01:28.932Z",
+      "end": "2026-11-09T15:02:49.717Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": false,
+      "logSha256": "a70d949fe5792d84e79fa981189914cf8f971c9244c7c4e49b6ff4e1d49f4473"
+    },
+    {
+      "label": "qlever",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/qlever-c0120ab5-a0f9-4f58-80cd-c6fcea425530",
+      "command": [
+        "pnpm",
+        "--store-dir",
+        "/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "--dir",
+        "packages/qlever",
+        "test"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T14:55:01.096Z",
+      "end": "2026-11-09T14:55:01.430Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "f3929f01dea98065a4f5beb4fd3e3564d887981282255b919bbc23c4fb011cb3"
+    },
+    {
+      "label": "qlever-final",
+      "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQH1/qlever-final-cdef05f8-22b8-4092-9fa8-988f4a7ddd9f",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/qlever",
+        "--config",
+        "vitest.config.ts"
+      ],
+      "head": "7965540b857cc2ea063a79f227410edd0ef3fab2",
+      "start": "2026-11-09T15:03:47.715Z",
+      "end": "2026-11-09T15:04:51.190Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "logSha256": "90a01a2e80dcea969d33fa7e6745c47d0d92eda7072aee8a5d7daa857efaa0c8"
+    }
+  ],
+  "witness": "public-witness-0f644d26-e271-490f-8548-d2eb0f95977c/mixed-cut-witness.json",
+  "notes": "Command exits are observations. Semantic findings and scope are in VERIFY.md. Earlier failed attempts are retained."
+}
