@@ -253,3 +253,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   rebase, CHECKJS re-pins (three oracle helpers, comment-only), P3M when NSR lands, G03's isolation pins; compile Q89 (minus g), Q90,
   Q92, Q95 (minus S), Q98a-i. Q99, Q100, Q101 stay pending until R43's 0.4.1. CX-G03 builds the V1-V7 VM probes now and runs them when
   the exclusive slot frees.
+- 2026-11-09 CHECKJS ACCEPT (verify/CHECKJS d4b0caa9; coverage inverted; 78 exclusions audited). Joins the 0.4.0 queue with its
+  comment-only oracle re-pins. CX-PACK started: a lab-owned pack gate that reports the out-of-scope DuckDB package separately, and the cause
+  of the unbuilt-CLI pack failure seen by NSR and DF01.
