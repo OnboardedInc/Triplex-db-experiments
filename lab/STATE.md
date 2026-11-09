@@ -487,3 +487,9 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   way 2 must work today; misses caused by journal cost become reported misses with a TODO). HS01's one-record journal stays OFF and is
   informational only. VM resize approved: 8 CPU / 20 GiB / 100 GiB, to run after OBS01 round 15 (live witness) finishes and before
   calibration. Sam is finding host disk space.
+- 2026-11-09 10:34 local: the Mac locked up and was power-button reset (ResetCounter btn_rst; no kernel panic; CleanMyMac was writing
+  about 2 GB at the time, on top of 6 agents and the VM). All six running agents and the CX-VG03-56 reviewer were interrupted; their
+  worktrees keep committed and untracked work. Recovery: triplex2 resized while down to 8 CPU / 20 GiB / 100 GiB (Sam's decision);
+  docker context reset to default after colima switched it; all images survived (bpftrace 06f62235 included). lab/config/slots.json
+  vm and pool updated to match (pool 19 of 20 GiB, disk 90 of 100 GiB; not hashed per Q64e; --verify byte-identical). Host disk 83 GiB
+  free. Agents are resumed in stages, no more than 5 at once, to avoid another lock-up.

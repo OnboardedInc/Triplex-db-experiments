@@ -1,11 +1,11 @@
 {
   "format": "tx2-slots/1",
   "dockerHost": "unix:///Users/sam/.colima/triplex2/docker.sock",
-  "vm": { "memBytes": 12884901888, "cpus": 6, "diskBytes": 63088406528 },
+  "vm": { "memBytes": 21474836480, "cpus": 8, "diskBytes": 107374182400 },
   "pool": {
-    "memLimitBytes": 11811160064,
-    "diskUsedLimitBytes": 53687091200,
-    "note": "Sum of memory caps of every tx2-* reservation plus running tx2-* containers outside the ledger (research probes) plus the new one must stay <= memLimitBytes (11 GiB of 12). VM disk used plus every active reservation's disk forecast plus the new one must stay <= diskUsedLimitBytes (50 GiB of the 60 GiB VM disk, PLAN section 7)."
+    "memLimitBytes": 20401094656,
+    "diskUsedLimitBytes": 96636764160,
+    "note": "Sum of memory caps of every tx2-* reservation plus running tx2-* containers outside the ledger (research probes) plus the new one must stay <= memLimitBytes (19 GiB of 20; VM resized 2026-11-09 per Sam, was 11 of 12). VM disk used plus every active reservation's disk forecast plus the new one must stay <= diskUsedLimitBytes (90 GiB of the 100 GiB VM disk; was 50 of 60, PLAN section 7)."
   },
   "forbiddenPorts": [15442, 17019],
   "reservedPortRanges": [{ "from": 5461, "to": 5469, "owner": "research probes" }, { "from": 7061, "to": 7069, "owner": "research probes" }],
