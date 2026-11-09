@@ -43,9 +43,13 @@ const read = (
 ) => {
   const basis = { ...at(b), ...(recordedAt === undefined ? {} : { recordedAt }) },
     a = rt.adapter;
-  const native = makeQleverNativeQueries(client, DatabaseScope.test(rt.scope), {
-    awaitBasisMs: budget,
-  });
+  const native = makeQleverNativeQueries(
+    client,
+    rt.scope as ReturnType<typeof DatabaseScope.test>,
+    {
+      awaitBasisMs: budget,
+    },
+  );
   switch (route) {
     case "getByEntity":
       return a.getByEntity(subject, basis);
@@ -101,6 +105,7 @@ const futureChecks = async (rt: Rt, client: QleverClient, label: string) => {
       )
     )[0]?.position?.value ?? 0,
   );
+  if (label !== "offline") expect(nativeObserved).toBe(rt.broker.replicaPosition());
   const records: any[] = [];
   for (const route of routes)
     for (const transaction of [false, true])
@@ -145,7 +150,7 @@ const futureChecks = async (rt: Rt, client: QleverClient, label: string) => {
 };
 
 it("round7 offline all entry points refuse future cuts, including absent entities and empty inputs", async () => {
-  const scope = `round7:${randomUUID()}`,
+  const scope = DatabaseScope.test(`round7:${randomUUID()}`),
     replica = new ModelReplica(graphIri(scope));
   const rt = await openRt(
     freshDir("round7-all"),
@@ -164,7 +169,7 @@ it("round7 offline all entry points refuse future cuts, including absent entitie
 });
 
 it("round7 repository preserves earlier and pinned cuts across staged insertion/retraction and a newer global head", async () => {
-  const scope = `round7:${randomUUID()}`,
+  const scope = DatabaseScope.test(`round7:${randomUUID()}`),
     replica = new ModelReplica(graphIri(scope));
   const rt = await openRt(
     freshDir("round7-pin"),
@@ -198,7 +203,8 @@ it("round7 repository preserves earlier and pinned cuts across staged insertion/
             }
             expect(yield* rt.adapter.getById(row.id)).toBeNull();
             expect((yield* rt.adapter.history("s:present")).length).toBe(1);
-            // A separate fiber has no transaction context; its commit must not advance this transaction's pin.
+            // [EXP-P2Q] Why: a separate fiber's commit must not advance the captured transaction pin.
+            // Rejected: advancing in the same context (would stage another write instead of moving the global head).
             const advance = Effect.promise(() =>
               rt.run(rt.triples.transact(ops("s:concurrent", 1, "new"))),
             );
@@ -226,7 +232,8 @@ it("round7 repository preserves earlier and pinned cuts across staged insertion/
               pin,
               globalHead: rt.broker.head(),
             });
-            // Avoid committing staged writes after the intentional concurrent scope change.
+            // [EXP-P2Q] Why: this test isolates read semantics after a concurrent scope change.
+            // Rejected: committing the staged writes (would test the separate CAS conflict path).
             return yield* Effect.fail("rollback-test");
           }),
         )
@@ -242,7 +249,7 @@ describe.skipIf(!live)("round7 live exact basis", () => {
   it.each(Object.keys(makers) as (keyof typeof makers)[])(
     "%s all routes and historical Datalog with pending writes",
     async (kind) => {
-      const scope = `round7-live:${randomUUID()}`,
+      const scope = DatabaseScope.test(`round7-live:${randomUUID()}`),
         client = makers[kind]("http://127.0.0.1:7070");
       const rt = await openRt(
         freshDir(`round7-live-${kind}`),
