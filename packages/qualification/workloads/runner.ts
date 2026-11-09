@@ -1,3 +1,4 @@
+import { latencyReceipt, connectionModeForBackend } from "../../../lab/receipts/latency.mjs";
 /** Execute the copied business-event packet through public Triplex APIs.
  * No expected rows or event-oracle output are used to seed storage or queries.
  */
@@ -156,7 +157,8 @@ assert.ok(
   "Output must remain in the admitted artifacts directory",
 );
 mkdirSync(path.dirname(output), { recursive: true });
-const report: JsonRecord = {
+const report: JsonRecord = latencyReceipt({
+  qleverConnectionMode: connectionModeForBackend(backend.name),
   format: "triplex-public-workload-packet/3",
   backend: backend.name,
   queryPath: backend.queryPath,
@@ -216,7 +218,7 @@ const report: JsonRecord = {
     "Five public query surfaces share three Triplex foundations. Native public providers compete; raw probes remain diagnostics and event replay remains the independent oracle.",
     "Upstream44 qualifies the foundation runtime separately; it does not certify arbitrary native queries or every native query-surface feature.",
   ],
-};
+});
 writeFileSync(output, JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
 const save = () => writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 const beginning = -9223372036854775808n,
@@ -988,7 +990,14 @@ for (const workload of packet.workloads.filter((entry: JsonRecord) =>
   record.unexecutedCaseExecutions = record.expectedCaseExecutions - record.cases.length;
   save();
   console.log(
-    JSON.stringify({ workload: workload.id, status: record.status, cases: record.cases.length }),
+    JSON.stringify(
+      latencyReceipt({
+        workload: workload.id,
+        status: record.status,
+        cases: record.cases.length,
+        qleverConnectionMode: connectionModeForBackend(backend.name),
+      }),
+    ),
   );
 }
 report.caseExecutions = report.workloads.reduce(
@@ -1048,11 +1057,14 @@ if (resultsOutput) {
   );
 }
 console.log(
-  JSON.stringify({
-    result: report.status,
-    output,
-    caseExecutions: report.caseExecutions,
-    passedCaseExecutions: report.passedCaseExecutions,
-  }),
+  JSON.stringify(
+    latencyReceipt({
+      result: report.status,
+      output,
+      caseExecutions: report.caseExecutions,
+      passedCaseExecutions: report.passedCaseExecutions,
+      qleverConnectionMode: connectionModeForBackend(backend.name),
+    }),
+  ),
 );
 if (report.status !== "PASS_FUNCTIONAL_ONLY") process.exitCode = 1;

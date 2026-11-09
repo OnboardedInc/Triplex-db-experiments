@@ -72,7 +72,7 @@ for (const entry of triplesConformanceCases) {
     });
   }
   save();
-  console.log(JSON.stringify(report.cases.at(-1)));
+  console.log(JSON.stringify(qleverLatencyReceipt({ ...report.cases.at(-1), qleverConnectionMode: qleverConnectionModeOf() })));
 }
 const passed = report.cases.filter((entry: any) => entry.status === "PASS").length;
 report.status = passed === 44 ? "PASS_UPSTREAM44_ONLY" : "FAIL_RETAINED";

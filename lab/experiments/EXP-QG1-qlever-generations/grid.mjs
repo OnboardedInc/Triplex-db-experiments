@@ -239,14 +239,15 @@ async function measure(label) {
   summaries.push(summary);
   save("summary.json", summaries);
   console.log(
-    JSON.stringify({
+    JSON.stringify(qleverLatencyReceipt({
+      qleverConnectionMode: "keep-alive",
       label,
       arm,
       delta: before.deltaTriples.total,
       c8: control.status,
       baseMs: results.base[0].ms,
       joinMs: results.join[0].ms,
-    }),
+    })),
   );
 }
 for (const target of [0, 10000, 30000, 100000, 300000, 1000000, 1500000]) {

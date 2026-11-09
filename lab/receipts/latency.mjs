@@ -27,3 +27,21 @@ export function latencyReceipt(receipt) {
     requireQleverConnectionMode(receipt.qleverConnectionMode);
   return receipt;
 }
+
+// [EXP-QNODELAY] Why: current producers may resolve their selected factory mode;
+// readers must validate the recorded mode instead. Rejected: relabeling old data
+// from the summarizer process environment.
+/** @param {string} backend @returns {QleverConnectionMode | null} */
+export function connectionModeForBackend(backend) {
+  return backend.startsWith("qlever")
+    ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive")
+    : null;
+}
+/** @param {{ lane?: string, backend?: string, queryPath?: string, qleverConnectionMode?: unknown }} receipt @returns {QleverConnectionMode | null} */
+export function recordedConnectionMode(receipt) {
+  const lane = receipt.lane ?? receipt.backend ?? receipt.queryPath;
+  if (lane === undefined) throw new TypeError("timing input must identify its backend");
+  return lane.startsWith("qlever")
+    ? requireQleverConnectionMode(receipt.qleverConnectionMode)
+    : null;
+}

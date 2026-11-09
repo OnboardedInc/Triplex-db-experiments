@@ -1,3 +1,4 @@
+import { latencyReceipt, connectionModeForBackend } from "../../../lab/receipts/latency.mjs";
 /** Real public seed/load entry point. The controller owns admission and process cleanup. */
 import assert from "node:assert/strict";
 import {
@@ -268,7 +269,8 @@ async function seed(): Promise<void> {
   writeJson(path.join(artifacts, "fixture.json"), bundle, true);
   writeJson(
     output,
-    {
+    latencyReceipt({
+      qleverConnectionMode: connectionModeForBackend(backend.name),
       format: "triplex-public-load-seed/1",
       status: "PASS",
       backend: backend.name,
@@ -296,7 +298,7 @@ async function seed(): Promise<void> {
         "Admitted tiny replicas are retained and charged; this is not permission for target-scale copies.",
         "No performance or full-scale acceptance.",
       ],
-    },
+    }),
     true,
   );
   writeJson(path.join(artifacts, "results.json"), expectedChecks("seed"), true);
@@ -435,8 +437,11 @@ async function load(): Promise<void> {
     writtenVersion = 0,
     capped = false;
   const maximumEventBytes = 128 * 1024 ** 2;
-  const emit = (event: unknown, fd = eventFd) => {
-    const line = JSON.stringify(event) + "\n";
+  const emit = (event: Record<string, unknown>, fd = eventFd) => {
+    const line =
+      JSON.stringify(
+        latencyReceipt({ ...event, qleverConnectionMode: connectionModeForBackend(backend.name) }),
+      ) + "\n";
     bytes += Buffer.byteLength(line);
     assert(bytes <= maximumEventBytes, "Raw observation byte budget exhausted");
     writeSync(fd, line);
@@ -462,7 +467,8 @@ async function load(): Promise<void> {
   const now = () => performance.now() - start;
   const waitFor = (instant: number) => waitUntil(instant, now);
   let hotIds = [...receipt.hotFactIds] as TripleId[];
-  const report: Record<string, unknown> = {
+  const report: Record<string, unknown> = latencyReceipt({
+    qleverConnectionMode: connectionModeForBackend(backend.name),
     format: "triplex-public-load-run/1",
     status: "RUNNING",
     backend: backend.name,
@@ -494,7 +500,7 @@ async function load(): Promise<void> {
       "Per-call cancellation requests and controller process cleanup do not alone prove physical engine resource reclamation.",
       "No production latency SLA. Tail promotion requires controller sample/calibration gates.",
     ],
-  };
+  });
   writeJson(output, report, true);
   try {
     // Separate roots isolate service contexts and logical writer dispatch.

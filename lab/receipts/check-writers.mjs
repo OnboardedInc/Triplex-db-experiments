@@ -2,21 +2,40 @@
 // required mode in both JS and TS. Rejected: testing only a detached interface,
 // or accepting a constructor hidden behind any/spread without an explicit field.
 import assert from "node:assert/strict";
+import { discoverSources, auditSources } from "./coverage.mjs";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import ts from "typescript";
 import { execFileSync } from "node:child_process";
 
-const inventory = JSON.parse(
-  fs.readFileSync("lab/experiments/EXP-QNODELAY/round2/receipt-writers.json", "utf8"),
-);
+const reviewed = JSON.parse(fs.readFileSync("lab/receipts/source-inventory.json", "utf8"));
+const discovered = discoverSources(process.cwd());
+const errors = auditSources(discovered, reviewed);
+assert.deepEqual(errors, [], "timing source coverage failed\n" + errors.join("\n"));
+const inventory = [];
+for (const source of discovered) {
+  if (reviewed.find((entry) => entry.path === source.path).role !== "labeled") continue;
+  const ast = ts.createSourceFile(source.path, source.text, ts.ScriptTarget.Latest, true);
+  let constructors = 0;
+  function count(node) {
+    if (
+      ts.isCallExpression(node) &&
+      ["latencyReceipt", "qleverLatencyReceipt"].includes(node.expression.getText(ast))
+    )
+      constructors++;
+    ts.forEachChild(node, count);
+  }
+  count(ast);
+  if (constructors) inventory.push({ path: source.path, constructors });
+}
 const inputPaths = [
-  ...inventory.map((entry) => entry.path),
+  ...discovered.map((entry) => entry.path),
+  "lab/receipts/source-inventory.json",
   "lab/receipts/check-writers.mjs",
   "lab/receipts/latency.mjs",
   "lab/receipts/latency.d.mts",
   "lab/receipts/typecheck.ts",
-  "lab/experiments/EXP-QNODELAY/round2/receipt-writers.json",
+  "lab/receipts/coverage.mjs",
 ];
 const hash = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const sourceHashes = Object.fromEntries(
@@ -120,6 +139,8 @@ try {
       "--noEmit",
       "--allowJs",
       "--checkJs",
+      "--types",
+      "node",
       "--strict",
       "--skipLibCheck",
       "--target",
@@ -135,6 +156,7 @@ try {
   console.log(
     JSON.stringify({
       sourceHashes,
+      discoveredTimingOrSerializationFiles: discovered.length,
       inventoriedFiles: inventory.length,
       writerShapes: expressions.length,
       withMode: "typechecks",

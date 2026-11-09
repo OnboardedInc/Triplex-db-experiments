@@ -3,12 +3,16 @@
 // per-update and per-query "total time" lines, plus the delta size the update responses report in
 // the log. Diagnostic for North-star P2 (small commit latency) and P1 (reads while writes run); it is
 // single-client gate traffic, not a concurrency benchmark.
-// Usage: docker logs tx2-qlever-dev 2>&1 | node qlever-log-latency.mjs [--since ISO] [--until ISO]
+// Usage: docker logs tx2-qlever-dev 2>&1 | node qlever-log-latency.mjs --connection-mode keep-alive|per-request [--since ISO] [--until ISO]
 import fs from 'node:fs';
+import { qleverLatencyReceipt, requireQleverConnectionMode } from '../../receipts/latency.mjs';
 
 const args = process.argv.slice(2);
 const opt = name => (args.includes(name) ? args[args.indexOf(name) + 1] : undefined);
 const since = opt('--since'), until = opt('--until');
+const qleverConnectionMode = requireQleverConnectionMode(opt('--connection-mode'));
+// [EXP-QNODELAY] Why: logs cannot identify client socket policy; require an explicit
+// caller attribution. Rejected: reading the parser's current environment as history.
 const text = fs.readFileSync(0, 'utf8');
 const updates = [], queries = [], planning = [];
 for (const line of text.split('\n')) {
@@ -27,4 +31,4 @@ const stats = values => {
   const q = p => sorted[Math.min(sorted.length - 1, Math.floor(p * sorted.length))];
   return { n: sorted.length, p50: q(0.5), p90: q(0.9), p99: q(0.99), max: sorted.at(-1), sumMs: sorted.reduce((s, v) => s + v, 0) };
 };
-console.log(JSON.stringify({ since: since ?? null, until: until ?? null, updateMs: stats(updates), queryMs: stats(queries), planningMs: stats(planning) }, null, 2));
+console.log(JSON.stringify(qleverLatencyReceipt({ qleverConnectionMode, modeEvidence: "caller-declared; server log does not prove transport", since: since ?? null, until: until ?? null, updateMs: stats(updates), queryMs: stats(queries), planningMs: stats(planning) }), null, 2));

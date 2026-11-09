@@ -1,8 +1,13 @@
+import { qleverLatencyReceipt } from "../../receipts/latency.mjs";
 import { describe, it, expect } from "vitest";
 import { Effect } from "effect";
 import { DatabaseScope } from "@triplex-build/triplex/runtime";
 import { TypeExpr } from "@triplex-build/triplex/config";
-import { makeQleverClient, makeQleverNativeQueries } from "@triplex-build/triplex-qlever";
+import {
+  qleverConnectionModeOf,
+  makeQleverClient,
+  makeQleverNativeQueries,
+} from "@triplex-build/triplex-qlever";
 import { startQleverWriteCounter } from "../../../packages/qualification/src/engine-write-counter.ts";
 
 // [CX-VC8] Why: tiny VALUES graph exercises real native closures without data writes, lifecycle calls or shared XTDB traffic. Rejected: C8 integration load test (outside light-check scope).
@@ -41,7 +46,16 @@ describe.skipIf(process.env.C8_LIGHT_LIVE !== "1")("CX-VC8 light QLever only", (
         expect(counts.statements).toBeGreaterThan(0);
         snapshots.push({ relationStrategy, rows: result.rows, counts, steps: result.trace.steps });
       }
-      console.log(JSON.stringify({ liveEndpoint: "http://127.0.0.1:7070", snapshots }));
+      console.log(
+        JSON.stringify(
+          qleverLatencyReceipt({
+            qleverConnectionMode: qleverConnectionModeOf(),
+            proxyUpstreamConnectionMode: "keep-alive",
+            liveEndpoint: "http://127.0.0.1:7070",
+            snapshots,
+          }),
+        ),
+      );
     } finally {
       await client.close();
       await counter.close();
