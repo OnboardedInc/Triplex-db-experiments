@@ -24,6 +24,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { randomUUID } from 'node:crypto';
+import { observe, complete, processObservation, text, byteCount, booleanProof } from './observation.ts';
 import { verifyMaintenanceTail } from './xtdb-log.mjs';
 import { ownerStateLock, updateOwner } from './owner-state.mjs';
 import { cloneCertificateHash } from '../bench/lib/clone.ts';
@@ -31,7 +32,7 @@ import net from 'node:net';
 import path from 'node:path';
 import {
   CONFIG_DIR, DOCKER_HOST, ENGINE_DIR, LabError, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, checkFollowerConfig,
-  containersOnVolume, cpusetOverlap, defaultHolder, docker, dockerStats, fail, fmtBytes, inspect, listTx2Containers, loadSlots, main, now,
+  containersOnVolume, cpusetOverlap, defaultHolder, docker, dockerStats, fail, fmtBytes, inspect, inspectVolume, listTx2Containers, loadSlots, main, now,
   parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sha256File, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool,
 } from './lib.mjs';
 
@@ -150,8 +151,12 @@ const tcpOpen = port => new Promise(resolve => {
  */
 export function healthz(container, route, { post = false } = {}) {
   const r = spawnSync('docker', dockerArgs(['exec', container, 'wget', '-q', '-S', '--content-on-error', '-O', '-', ...(post ? ['--post-data='] : []), `http://127.0.0.1:8080${route}`]), { encoding: 'utf8', timeout: 30_000 });
-  const status = r.status === 0 && !r.signal && !r.error ? Number((/HTTP\/[\d.]+ (\d{3})/.exec(r.stderr ?? '') ?? [])[1]) || null : null;
-  return { status, body: (r.stdout ?? '').trim(), exit: r.status };
+  const observation = processObservation('HTTP readiness', { container, route, post }, r, out => {
+    const match = /HTTP\/[\d.]+ (\d{3})/.exec(out.stderr);
+    if (!match) throw Error('missing HTTP status');
+    return { status: Number(match[1]), body: out.stdout.trim(), exit: r.status };
+  });
+  return observation.state === 'complete' ? { ...observation.value, observation } : { status: null, body: '', observation };
 }
 
 /**
@@ -161,6 +166,7 @@ export function healthz(container, route, { post = false } = {}) {
  * 200 only once every critical database has processed up to the log head it saw at start. A fresh node passes at once.
  * Followers keep the alive-only rule (EXP-X05 behaviour unchanged).
  */
+// [EXP-K01-R6] Why: Optional health labels are absence, never a healthy default; exceptions and nullable readiness below yield false, while container reads themselves now fail closed. Rejected: converting a failed observation into successful content.
 export async function probe(info) {
   const c = inspect(info.container);
   if (!c?.State.Running) return { ok: false, why: `container ${c ? c.State.Status : 'absent'}` };
@@ -244,6 +250,7 @@ async function releaseSlot(info, expectedOwner) {
  * hooks.prepareVolume (EXP-K01 clone): runs after the reservation and the --fresh removal, right before docker run, so
  * a clone fills the new volume before the first start (Docker then never populates it from the image directory).
  */
+// [EXP-K01-R6] Why: Lifecycle optional chains below are refusal guards or explicit legacy metadata, not replacement runtime reads; catches retain or release only after complete absence observation and never return success. Rejected: converting a failed observation into successful content.
 async function up(config, info, opts, hooks = {}) {
   const holder = defaultHolder(opts);
   const slot = await acquireSlot(info, holder, opts.exp);
@@ -292,8 +299,8 @@ async function up(config, info, opts, hooks = {}) {
     try {
       if (opts.fresh) {
         if (existing) docker(['rm', '-f', info.container]);
-        docker(['volume', 'rm', info.volume], { allowFail: true });
-        if (docker(['volume', 'inspect', info.volume], { allowFail: true })) fail('ENGINE', `volume ${info.volume} still exists after --fresh removal`);
+        if (inspectVolume(info.volume)) docker(['volume', 'rm', info.volume]);
+        if (inspectVolume(info.volume)) fail('ENGINE', `volume ${info.volume} still exists after --fresh removal`);
       }
       assertSingleWriter(info, eff);
       if (existing && !opts.fresh) docker(['start', info.container]);
@@ -361,14 +368,14 @@ async function down(config, info, opts) {
   const existing = inspect(info.container);
   if (existing) {
     if (!existing.Config.Labels?.['tx2.managed-by']) fail('REFUSED', `${info.container} was not started by lab/bin/engine.mjs; not stopping it`);
-    docker(['stop', '-t', '30', info.container], { allowFail: true });
+    docker(['stop', '-t', '30', info.container]);
     docker(['rm', '-f', info.container]);
   }
   // Prove cleanup before releasing anything.
   if (docker(['ps', '-a', '--filter', `name=^${info.container}$`, '--format', '{{.ID}}'])) fail('ENGINE', `${info.container} still exists; reservation kept`);
   let volumeNote;
   if (opts['remove-volume']) {
-    docker(['volume', 'rm', info.volume], { allowFail: true });
+    if (inspectVolume(info.volume)) docker(['volume', 'rm', info.volume]);
     if (docker(['volume', 'ls', '--filter', `name=^${info.volume}$`, '--format', '{{.Name}}'])) fail('ENGINE', `volume ${info.volume} still exists; reservation kept`);
     volumeNote = 'removed';
   } else volumeNote = docker(['volume', 'ls', '--filter', `name=^${info.volume}$`, '--format', '{{.Name}}']) ? 'retained' : 'absent';
@@ -392,6 +399,7 @@ async function down(config, info, opts) {
  * A follower holds no state of its own (the volume is the writer's and it never writes), so a stopped or
  * differently configured follower container is removed and recreated rather than restarted.
  */
+// [EXP-K01-R6] Why: follower catch paths only reconcile reservations and rethrow; lifecycle defaults do not create observation PASS. Rejected: successful fallback after failed startup.
 async function followerUp(config, info, fol, opts) {
   const holder = defaultHolder(opts);
   if (info.mode !== 'exclusive') fail('REFUSED', `followers attach only to exclusive slots, not ${info.lane}-${info.slot} (${info.mode})`);
@@ -460,7 +468,7 @@ async function followerDown(config, info, fol, opts) {
   const existing = inspect(fol.container);
   if (existing) {
     if (existing.Config.Labels?.['tx2.role'] !== 'follower') fail('REFUSED', `${fol.container} is not a harness follower; not stopping it`);
-    docker(['stop', '-t', '30', fol.container], { allowFail: true });
+    docker(['stop', '-t', '30', fol.container]);
     docker(['rm', '-f', fol.container]);
   }
   if (inspect(fol.container)) fail('ENGINE', `${fol.container} still exists; reservation kept`);
@@ -524,8 +532,11 @@ export function diskFloorVerdict({ freeBytes, copyBytes, floorBytes = HOST_DISK_
     reason: valid && afterBytes >= floorBytes ? null : `host free disk ${fmtBytes(freeBytes)} - copy ${fmtBytes(copyBytes)} = ${fmtBytes(afterBytes)} < floor ${fmtBytes(floorBytes)} (Q74f)` };
 }
 export function hostDisk() {
-  const s = fs.statfsSync(HOST_DISK_PATH);
-  return { path: HOST_DISK_PATH, freeBytes: s.bavail * s.bsize, totalBytes: s.blocks * s.bsize };
+  return complete(observe('host disk', { path: HOST_DISK_PATH }, () => fs.statfsSync(HOST_DISK_PATH), s => {
+    const freeBytes = byteCount(s.bavail * s.bsize), totalBytes = byteCount(s.blocks * s.bsize);
+    if (freeBytes > totalBytes || totalBytes === 0) throw Error('inconsistent host disk observation');
+    return { path: HOST_DISK_PATH, freeBytes, totalBytes };
+  }));
 }
 
 /**
@@ -541,6 +552,7 @@ export function stopVerdict({ log, exitCode, oomKilled, stopMs }) {
   if (!String(log).includes('Stopping node...')) reasons.push('no "Stopping node..." in this run\'s log');
   if (!(Number.isFinite(stopMs) && stopMs >= 0 && stopMs < 10000)) reasons.push('stop did not finish within 10 s');
   if (exitCode !== 143) reasons.push(`exit code ${exitCode}`);
+  if (typeof oomKilled !== 'boolean') reasons.push('missing OOM observation');
   if (oomKilled) reasons.push('OOM killed');
   const componentLines = String(log).split('\n').filter(line => /Server stopped\.|Flight SQL server stopped|Healthz server stopped\./.test(line));
   return { ok: reasons.length === 0, componentLines, stoppedLine: stoppedLine?.trim().slice(0, 300) ?? null, exitCode, oomKilled: !!oomKilled, reasons };
@@ -550,27 +562,43 @@ export function stopVerdict({ log, exitCode, oomKilled, stopMs }) {
  * Helper-container listing of a mounted directory: one stat line and one sha256 line per regular file, `.tmp` upload
  * scratch refused if nonempty (Q83b). BusyBox find/stat/sha256sum/sort (R26 P-g).
  */
-export const listingScript = dir => `${emptyTmpScript(dir)}; echo @@stat; cd ${dir} && find . -type f ! -path '*/.tmp/*' -exec stat -c '%n|%s|%a|%u|%g' {} + | LC_ALL=C sort; `
-  + `echo @@sha; cd ${dir} && find . -type f ! -path '*/.tmp/*' -exec sha256sum {} + | LC_ALL=C sort -k 2; echo @@end`;
+// [EXP-K01-R6] Why: a shell pipeline can hide find/stat/hash failures behind successful sort. Rejected: set -e alone (does not propagate earlier pipeline exits).
+export const listingScript = dir => `(
+set -eu; ${emptyTmpScript(dir)};
+work=$(mktemp -d); trap 'rm -rf "$work"' EXIT; cd ${dir};
+find . -type f ! -path '*/.tmp/*' -exec stat -c '%n|%s|%a|%u|%g' {} + > "$work/stat";
+LC_ALL=C sort "$work/stat" > "$work/stat.sorted";
+find . -type f ! -path '*/.tmp/*' -exec sha256sum {} + > "$work/sha";
+LC_ALL=C sort -k 2 "$work/sha" > "$work/sha.sorted";
+echo @@stat; cat "$work/stat.sorted"; echo @@sha; cat "$work/sha.sorted"; echo @@end
+)`;
 
 // [EXP-K01-R2] Why: interrupted uploads are forensic evidence, never disposable copy scratch (Q83b). Rejected: deleting .tmp to manufacture an equal tree.
 export const emptyTmpScript = dir => `tmp=$(find ${dir}/buffers -path '*/.tmp/*' ! -type d -print); test -z "$tmp" || { echo 'non-empty .tmp refused' >&2; exit 1; }`;
 
 // [EXP-K01-R2] Why: reproduce LocalLog.kt:61-93 offline without starting another JVM. Rejected: exit status alone (does not prove durable log tails).
-export const offlineScript = dir => `${emptyTmpScript(dir)};
-be() { od -An -v -tu1 | awk '{for(i=1;i<=NF;i++) n=n*256+$i} END {printf "%.0f",n}'; }
+// [EXP-K01-R6] Why: binary reads and block enumeration must finish before transformation. Rejected: tail/dd/find pipelines (the final awk/sort can succeed on partial input). dd's ordinary counters are hidden, but its exit is checked.
+export const offlineScript = dir => `(
+set -eu; ${emptyTmpScript(dir)};
+work=$(mktemp -d); trap 'rm -rf "$work"' EXIT;
+be() { od -An -v -tu1 "$work/binary" > "$work/numbers"; awk '{for(i=1;i<=NF;i++) n=n*256+$i} END {printf "%.0f",n}' "$work/numbers"; }
 for name in LOG REPLICA_LOG; do
  f=${dir}/log/$name; test -f "$f"; bytes=$(stat -c %s "$f");
  if [ "$bytes" -eq 0 ]; then echo "$name|0|-1|0"; continue; fi;
  test "$bytes" -ge 21;
- offset=$(tail -c 8 "$f" | be); test "$offset" -ge 0; test "$offset" -lt "$bytes";
- sep=$(dd if="$f" bs=1 skip="$offset" count=1 2>/dev/null | be); test "$sep" -eq 30;
- size=$(dd if="$f" bs=1 skip=$((offset+1)) count=4 2>/dev/null | be);
+ tail -c 8 "$f" > "$work/binary"; offset=$(be); test "$offset" -ge 0; test "$offset" -lt "$bytes";
+ dd if="$f" bs=1 skip="$offset" count=1 > "$work/binary" 2>/dev/null; sep=$(be); test "$sep" -eq 30;
+ dd if="$f" bs=1 skip=$((offset+1)) count=4 > "$work/binary" 2>/dev/null; size=$(be);
  test "$bytes" -eq $((offset+1+4+8+size+8));
  echo "$name|$bytes|$offset|$size";
 done;
-echo @@blocks; find ${dir}/buffers/v06/blocks -maxdepth 1 -type f -name 'b*.binpb' | sed 's|.*/b||;s|.binpb$||' | LC_ALL=C sort; echo @@end`;
+find ${dir}/buffers/v06/blocks -maxdepth 1 -type f -name 'b*.binpb' > "$work/blocks";
+sed 's|.*/b||;s|.binpb$||' "$work/blocks" > "$work/names";
+LC_ALL=C sort "$work/names" > "$work/sorted";
+echo @@blocks; cat "$work/sorted"; echo @@end
+)`;
 
+// [EXP-K01-R6] Why: Decoder errors below are retained failed observations with ok:false; no partial listing/tail can set ok without the complete helper and decoded proof. Rejected: converting a failed observation into successful content.
 function offlineCheck(config, info, expected) {
   const frontiers = expected.frontiers;
   if (!frontiers) fail('REFUSED', 'offline freeze requires separate F/M/T frontiers (Q83e)');
@@ -596,9 +624,9 @@ function offlineCheck(config, info, expected) {
 /** Parse one listingScript output into sorted file records and a tree hash over every field. */
 export function parseListing(text) {
   const stat = [], sha = new Map(), seen = new Set();
-  let section = null;
+  let section = null, phase = 0;
   for (const line of String(text).split('\n')) {
-    if (line.startsWith('@@')) { section = line.slice(2).trim(); continue; }
+    if (line.startsWith('@@')) { section = line.slice(2).trim(); if (section !== ['stat', 'sha', 'end'][phase++]) fail('ENGINE', 'listing sections are missing, duplicated or out of order'); continue; }
     if (!line.trim()) continue;
     if (section === 'stat') {
       const [p, bytes, mode, uid, gid, extra] = line.split('|');
@@ -610,9 +638,9 @@ export function parseListing(text) {
       if (!m) fail('ENGINE', `bad sha256sum line ${JSON.stringify(line)}`);
       if (sha.has(m[2])) fail('ENGINE', 'duplicate file hash in tree preimage');
       sha.set(m[2], m[1]);
-    }
+    } else fail('ENGINE', 'unexpected bytes outside listing sections');
   }
-  if (section !== 'end') fail('ENGINE', 'listing output is truncated (no @@end)');
+  if (section !== 'end' || phase !== 3) fail('ENGINE', 'listing output is truncated (no @@end)');
   const files = stat.map(f => ({ ...f, sha256: sha.get(f.path) ?? null })).sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));
   if (files.some(f => !f.sha256) || sha.size !== files.length) fail('ENGINE', 'listing stat and sha256 sections disagree');
   const lines = files.map(f => `${f.path}|${f.bytes}|${f.mode}|${f.uid}|${f.gid}|${f.sha256}`);
@@ -634,17 +662,18 @@ export function diffListings(before, after) {
 function helper(config, name, mounts, script) {
   return docker(['run', '--rm', '--network', 'none', '-u', '0:0', '--name', name, '--memory', '512m', '--memory-swap', '512m',
     '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', 'tx2.role=clone-helper', ...mounts.flatMap(m => ['-v', m]),
-    '--entrypoint', 'sh', config.lanes.xtdb.image, '-c', `set -eu; ${script}`]);
+    '--entrypoint', 'sh', config.lanes.xtdb.image, '-c', `set -eu; ${script}`], { stderrEmpty: true });
 }
 const sections = (text, marker) => { const i = text.indexOf(marker); if (i < 0) fail('ENGINE', `helper output has no ${marker}`); return [text.slice(0, i), text.slice(i + marker.length)]; };
 
 /** lab/bench/clone-check.ts (settle | freeze | verify); progress on stderr, one JSON document on stdout. */
 function cloneCheck(args) {
   const r = spawnSync(process.execPath, [path.join(REPO, 'lab/bench/clone-check.ts'), ...args], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 256 << 20, timeout: 3600_000 });
-  let out = null;
-  try { out = JSON.parse(r.stdout); } catch {}
-  if (!out || r.status !== 0 || r.signal || r.error) fail('ENGINE', `clone-check ${args[0]} exited ${r.status} without a JSON verdict: ${String(r.stdout).slice(-800)}`);
-  return out;
+  return complete(processObservation('clone-check response', { args }, r, out => {
+    const value = JSON.parse(out.stdout);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw Error('missing clone-check response object');
+    return value;
+  }));
 }
 
 function requireHeldXtdbSlot(info, opts) {
@@ -694,7 +723,7 @@ async function stopSlot(config, info, opts) {
   if (!before.Id || !before.State?.StartedAt || !Number.isFinite(Date.parse(before.State.StartedAt))) fail('REFUSED', 'current stop inspect has no valid start identity');
   if (!before.Config.Labels?.['tx2.managed-by']) fail('REFUSED', `${info.container} was not started by lab/bin/engine.mjs`);
   const t0 = Date.now();
-  if (before.State.Running) docker(['stop', '-t', '60', info.container], { allowFail: true });
+  if (before.State.Running) docker(['stop', '-t', '60', info.container]);
   const stopMs = Date.now() - t0;
   const after = inspect(info.container);
   if (!after?.State) fail('ENGINE', 'current stopped-container inspect failed');
@@ -703,7 +732,9 @@ async function stopSlot(config, info, opts) {
   const logs = spawnSync('docker', dockerArgs(['logs', '--since', before.State.StartedAt, info.container]), { encoding: 'utf8', maxBuffer: 256 << 20 });
   const logRead = { status: logs.status, signal: logs.signal ?? null, error: logs.error?.message ?? null, stdout: logs.stdout ?? '', stderr: logs.stderr ?? '' };
   const verdict = stopVerdict({ log: `${logs.stdout ?? ''}\n${logs.stderr ?? ''}`, exitCode: after.State.ExitCode, oomKilled: after.State.OOMKilled, stopMs: before.State.Running ? stopMs : null });
-  if (logs.status !== 0 || logs.signal || logs.error) { verdict.ok = false; verdict.reasons.push('current stop log read failed'); }
+  const logObservation = processObservation('stop log', { container: info.container, startedAt: before.State.StartedAt }, logs, out => out);
+  if (logObservation.state !== 'complete') { verdict.ok = false; verdict.reasons.push('current stop log read failed'); }
+  const proof = observe('stop proof', { container: info.container, containerId: after.Id, startedAt: before.State.StartedAt }, () => verdict, booleanProof);
   await withPool(async ledger => { const e = ledger.reservations.find(item => item.container === info.container); if (e) Object.assign(e, { state: 'stopped', stoppedAt: now() }); });
   await updateOwner(info, current => {
     if (!current || current.generation !== stopping.generation || current.holder !== stopping.holder || current.lifecycle?.token !== stopping.lifecycle.token) fail('REFUSED', 'slot lifecycle changed during stop');
@@ -711,8 +742,8 @@ async function stopSlot(config, info, opts) {
     return current;
   });
   appendEvent({ event: 'stopped', container: info.container, clean: verdict.ok });
-  const out = { container: info.container, containerId: after.Id, startedAt: before.State.StartedAt, finishedAt: after.State.FinishedAt, stopMs, wasRunning: before.State.Running, logRead, verdict };
-  if (opts.print !== false) process.stdout.write(JSON.stringify(out, null, 2) + '\n');
+  const out = { container: info.container, containerId: after.Id, startedAt: before.State.StartedAt, finishedAt: after.State.FinishedAt, stopMs, wasRunning: before.State.Running, logRead, logObservation, proof, verdict };
+  if (opts.print !== false) { process.stdout.write(JSON.stringify(out, null, 2) + '\n'); if (proof.state !== 'complete') process.exitCode = 1; }
   return out;
 }
 
@@ -720,6 +751,7 @@ async function stopSlot(config, info, opts) {
  * Golden (R26 6.2): settle, freeze record, clean stop, copy into a new write-once volume through a read-only source mount.
  * The slot stays held with its container stopped; release it with `down --remove-volume` or clone onto it.
  */
+// [EXP-K01-R6] Why: Missing semantic fields below refuse or throw; catch paths retain the original failure and cleanup observation, and never publish a golden from defaults. Rejected: converting a failed observation into successful content.
 async function golden(config, info, opts) {
   if (!readOwner(info)) fail('REFUSED', `${info.lane}-${info.slot} has no slot lock`);
   requireHeldXtdbSlot(info, opts);
@@ -734,7 +766,7 @@ async function golden(config, info, opts) {
   const systemConfigSha256 = sha256(JSON.stringify(systemConfig(eff.effective)));
   const k = goldenKey({ seedInputs: manifest.seedInputs, imageId: c.Image, systemConfigSha256 });
   const volume = `tx2-golden-xtdb-${k.key8}`;
-  if (docker(['volume', 'inspect', volume], { allowFail: true })) fail('REFUSED', `${volume} already exists (goldens are write-once; engine.mjs golden-rm first)`);
+  if (inspectVolume(volume)) fail('REFUSED', `${volume} already exists (goldens are write-once; engine.mjs golden-rm first)`);
   const timings = {};
   // [EXP-K01] Why: a clean-stop refusal must retain its successful freeze and actual stop outcome. Rejected: publishing only golden.json on success (loses first-failure evidence).
   const attemptFile = path.join(path.dirname(manifestFile), `golden-attempt-${Date.now()}.json`);
@@ -785,9 +817,9 @@ async function golden(config, info, opts) {
       const [a, b] = sections(out, '@@copy');
       src = parseListing(a);
       dst = parseListing(b);
-    } catch (error) { docker(['volume', 'rm', volume], { allowFail: true }); throw error; }
+    } catch (error) { error.cleanup = observe('failed golden copy cleanup', { volume }, () => docker(['volume', 'rm', volume]), text); throw error; }
     timings.copyS = (Date.now() - t) / 1000;
-    if (src.treeSha256 !== dst.treeSha256) { docker(['volume', 'rm', volume], { allowFail: true }); fail('ENGINE', `golden copy differs from its source (${src.treeSha256.slice(0, 12)} vs ${dst.treeSha256.slice(0, 12)}); golden removed`); }
+    if (src.treeSha256 !== dst.treeSha256) { const cleanup = observe('unequal golden cleanup', { volume }, () => docker(['volume', 'rm', volume]), text); fail('ENGINE', `golden copy differs from its source (${src.treeSha256.slice(0, 12)} vs ${dst.treeSha256.slice(0, 12)}); cleanup=${JSON.stringify(cleanup)}`); }
     Object.assign(attempt, { copy: { source: src, destination: dst }, status: 'REFERENCE_START' });
     writeJson(attemptFile, attempt);
     t = Date.now();
@@ -842,7 +874,7 @@ async function golden(config, info, opts) {
     process.stderr.write(`[lab] golden ${volume} (${fmtBytes(goldenBytes)}, ${dst.count} files, tree ${dst.treeSha256.slice(0, 12)}) from ${info.container}; settle ${timings.settleS.toFixed(1)} s, freeze ${timings.freezeS.toFixed(1)} s, stop ${timings.stopS.toFixed(1)} s, copy ${timings.copyS.toFixed(1)} s\n[lab] record ${recordFile}; ${info.container} is stopped and still held\n`);
     process.stdout.write(JSON.stringify({ record: recordFile, volume, key: k.key, timings }) + '\n');
   } catch (error) {
-    Object.assign(attempt, { failedAt: now(), error: String(error.message ?? error) });
+    Object.assign(attempt, { failedAt: now(), error: String(error.message ?? error), observation: error.observation, cleanup: error.cleanup });
     writeJson(attemptFile, attempt);
     throw error;
   }
@@ -858,6 +890,7 @@ async function oneCutProbe(config, info, opts) {
   const volume = `tx2-k01-singlecut-${Date.now()}`;
   const attempt = { format: 'tx2-k01-singlecut-probe/1', volume, at: now(), diagnosticOnly: true };
   const save = values => { Object.assign(attempt, values); writeJson(file, attempt); };
+  let created = false, firstError;
   try {
     save({ before: cloneCheck(['diagnostic', '--url', info.endpoint, '--container', info.container]) });
     const settled = cloneCheck(['settle', '--cuts', '1', '--url', info.endpoint, '--container', info.container, '--evidence', file + '.settle.json']);
@@ -872,6 +905,7 @@ async function oneCutProbe(config, info, opts) {
     const floor = diskFloorVerdict({ freeBytes: hostDisk().freeBytes, copyBytes: volumeBytes(config, info.volume) });
     if (!floor.ok) fail('REFUSED', floor.reason);
     docker(['volume', 'create', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', 'tx2.diagnostic=K01-R30-T6', volume]);
+    created = true;
     const copied = helper(config, `tx2-clone-singlecut-${info.slot}`, [`${info.volume}:/src:ro`, `${volume}:/dst`],
       `${listingScript('/src')}; echo @@copy; cp -a /src/. /dst/; chown ${XTDB_UID} /dst; sync; ${listingScript('/dst')}`);
     const [a, b] = sections(copied, '@@copy');
@@ -894,15 +928,26 @@ async function oneCutProbe(config, info, opts) {
     if (!attempt.afterWrite.ok || !attempt.afterWrite.c8?.plan?.sha256) fail('REFUSED', 'T6 after-write fingerprint is incomplete');
     save({ t6PlanChanged: attempt.beforeWrite.c8?.plan?.sha256 !== attempt.afterWrite.c8?.plan?.sha256 });
   } catch (error) {
+    // [EXP-K01-R6] Why: cleanup failure must not erase the original failed observation. Rejected: throwing from finally without retaining the first error.
+    firstError = error;
     save({ error: String(error.message ?? error) });
     throw error;
   } finally {
-    const removed = docker(['volume', 'rm', volume], { allowFail: true });
-    save({ snapshotRemoved: !docker(['volume', 'inspect', volume], { allowFail: true }), removalOutput: removed });
+    if (created) {
+      const removal = observe('single-cut removal', { volume }, () => docker(['volume', 'rm', volume]), text);
+      const absence = observe('single-cut absence', { volume }, () => docker(['volume', 'ls', '--filter', `name=^${volume}$`, '--format', '{{.Name}}']), raw => {
+        if (text(raw).trim() !== '') throw Error('snapshot still present');
+        return true;
+      });
+      const cleanup = { removal, absence };
+      save({ snapshotRemoved: removal.state === 'complete' && absence.state === 'complete', cleanup });
+      if (!firstError) { complete(removal); complete(absence); }
+    }
   }
 }
 
 /** Read and check a golden record: its key recomputes, its volume exists with that key, its manifest is unchanged. */
+// [EXP-K01-R6] Why: Persisted optional fields below are required guards: absent proofs/bytes/index/generation refuse, and current inspect/hash observations must complete. Rejected: converting a failed observation into successful content.
 function loadGolden(file) {
   const recordFile = path.resolve(String(file));
   const record = readJson(recordFile);
@@ -919,7 +964,7 @@ function loadGolden(file) {
   if (record.format !== GOLDEN_RECORD_FORMAT) fail('REFUSED', `${recordFile} is not a ${GOLDEN_RECORD_FORMAT} record`);
   const again = goldenKey({ seedInputs: record.keyInputs.seedInputs, imageId: record.keyInputs.engine.imageId, systemConfigSha256: record.keyInputs.engine.systemConfigSha256 });
   if (again.key !== record.key) fail('REFUSED', `${recordFile}: key does not recompute from its inputs`);
-  const vol = docker(['volume', 'inspect', record.volume], { allowFail: true });
+  const vol = inspectVolume(record.volume);
   if (!vol) fail('REFUSED', `golden volume ${record.volume} does not exist`);
   if (!record.creation?.creationId || JSON.parse(vol)[0].Labels?.['tx2.creation-id'] !== record.creation.creationId) fail('REFUSED', 'golden volume generation differs from its creation receipt');
   if (JSON.parse(vol)[0].Labels?.['tx2.seed-key'] !== record.key) fail('REFUSED', `${record.volume} is labelled with another key`);
@@ -957,13 +1002,13 @@ async function clone(config, info, opts) {
       try {
         listing = parseListing(helper(config, `tx2-clone-${info.slot}`, [`${record.volume}:/src:ro`, `${info.volume}:/dst`],
           `cp -a /src/. /dst/; chown ${XTDB_UID} /dst; sync; ${listingScript('/dst')}`));
-      } catch (error) { docker(['volume', 'rm', info.volume], { allowFail: true }); throw error; }
+      } catch (error) { error.cleanup = observe('failed clone copy cleanup', { volume: info.volume }, () => docker(['volume', 'rm', info.volume]), text); throw error; }
       copy = { creationId: randomUUID(), startedAt: new Date(t).toISOString(), copyS: (Date.now() - t) / 1000, goldenBytes, files: listing.count, fileBytes: listing.bytes, treeSha256: listing.treeSha256, hostDisk: { before: disk, floor } };
       copy.c1 = { pass: listing.treeSha256 === record.copy.treeSha256, expected: record.copy.treeSha256, observed: listing.treeSha256, files: listing.count, expectedFiles: record.copy.files };
       if (!copy.c1.pass) {
         const diff = diffListings({ files: readJson(path.resolve(REPO, record.copy.filesFile)) }, listing);
-        docker(['volume', 'rm', info.volume], { allowFail: true });
-        fail('ENGINE', `C1 failed: copy of ${record.volume} differs from the golden (changed ${diff.changed.length}, added ${diff.added.length}, removed ${diff.removed.length}); volume removed, nothing started`);
+        const cleanup = observe('unequal clone cleanup', { volume: info.volume }, () => docker(['volume', 'rm', info.volume]), text);
+        fail('ENGINE', `C1 failed: copy of ${record.volume} differs from the golden (changed ${diff.changed.length}, added ${diff.added.length}, removed ${diff.removed.length}); cleanup=${JSON.stringify(cleanup)}, nothing started`);
       }
     },
   });
@@ -987,6 +1032,7 @@ async function clone(config, info, opts) {
 }
 
 /** C2-C8 on a cloned slot against its golden's freeze record; the verdict lands in owner.json (the driver requires PASS). */
+// [EXP-K01-R6] Why: Optional fields below are refusal/ownership guards and historical metadata only; errors revoke this attempt, never substitute an earlier PASS. Rejected: converting a failed observation into successful content.
 async function verify(config, info, opts) {
   requireHeldXtdbSlot(info, opts);
   const owner = readOwner(info);
@@ -1034,6 +1080,7 @@ async function verify(config, info, opts) {
     const refusal = { verdict: 'ERROR', attemptId, at: now(), error: String(error.message ?? error) };
     let receipt = {};
     try { writeJson(file, refusal); receipt = { file: path.relative(REPO, file), sha256: sha256File(file) }; }
+    // [EXP-K01-R6] Why: a failed failure-receipt write is itself recorded as error metadata; current readiness still becomes ERROR, never PASS. Rejected: resurrecting earlier evidence.
     catch (receiptError) { receipt = { receiptWriteError: String(receiptError.message ?? receiptError) }; }
     // [EXP-K01-R3] Why: only this attempt may replace its readiness, including a failed PASS publication. Rejected: overwriting a newer attempt or resurrecting the historical PASS after an error.
     await updateOwner(info, latest => {
@@ -1055,7 +1102,7 @@ async function listing(config, info, opts) {
   requireHeldXtdbSlot(info, opts);
   const c = inspect(info.container);
   if (c?.State.Running) fail('REFUSED', `${info.container} is running; stop it first (a listing of a live Local log is torn)`);
-  if (!docker(['volume', 'inspect', info.volume], { allowFail: true })) fail('REFUSED', `${info.volume} does not exist`);
+  if (!inspectVolume(info.volume)) fail('REFUSED', `${info.volume} does not exist`);
   const list = parseListing(helper(config, `tx2-clone-list-${info.slot}`, [`${info.volume}:/src:ro`], listingScript('/src')));
   const out = { volume: info.volume, at: now(), count: list.count, bytes: list.bytes, treeSha256: list.treeSha256, files: list.files };
   if (opts['golden-record']) {
@@ -1070,7 +1117,7 @@ async function goldenRm(config, opts) {
   const recordFile = opts['golden-record'] ? path.resolve(String(opts['golden-record'])) : null;
   const volume = recordFile ? readJson(recordFile).volume : opts.volume;
   if (!volume || !/^tx2-golden-xtdb-[0-9a-f]{8}$/.test(volume)) fail('USAGE', 'golden-rm needs --golden-record FILE or --volume tx2-golden-xtdb-<key8>');
-  const vol = docker(['volume', 'inspect', volume], { allowFail: true });
+  const vol = inspectVolume(volume);
   if (vol && JSON.parse(vol)[0].Labels?.['tx2.golden'] !== '1') fail('REFUSED', `${volume} is not labelled tx2.golden=1`);
   if (vol && opts['creation-id'] && JSON.parse(vol)[0].Labels?.['tx2.creation-id'] !== opts['creation-id']) fail('REFUSED', 'golden does not belong to this creation receipt');
   const users = containersOnVolume(volume);
@@ -1092,24 +1139,29 @@ export const TOOLCHECK_EXPECT = {
   'sort-k': out => out.startsWith('a 1'),
   'chown': out => out.includes('20000:20000'),
   'sync': () => true,
+  'mktemp': out => out.includes('checked'),
   'offline-valid': out => out.includes('@@end'),
   'offline-corrupt': out => out.includes('refused'),
   'offline-tmp': out => out.includes('refused'),
   'wget-post-data': out => /GNU Wget/.test(out) && /post-data=1/.test(out),
   'du-k': out => /^\d+\s/.test(out),
 };
-const TOOLCHECK_SCRIPT = `r() { n=$1; shift; if o=$("$@" 2>&1); then s=ok; else s=FAIL; fi; printf '%s|%s|%s\\n' "$n" "$s" "$(printf '%s' "$o" | tr '\\n' ' ' | cut -c1-300)"; };
+// [EXP-K01-R6] Why: capability probes must not hide producer failures either. Rejected: find/wget/printf pipelines whose final command masks an earlier error. Expected corrupt-log refusals are tested in separate child shells.
+const TOOLCHECK_SCRIPT = `set -eu;
+mkdir -p /t;
+r() { n=$1; shift; if "$@" > /t/probe.raw 2>&1; then s=ok; else s=FAIL; fi; tr '\\n' ' ' < /t/probe.raw > /t/probe.flat; cut -c1-300 /t/probe.flat > /t/probe.short; printf '%s|%s|' "$n" "$s"; cat /t/probe.short; echo; };
 mkdir -p /t/src/a/.tmp /t/dst; printf x > /t/src/a/f; printf x > /t/src/a/.tmp/g; chown -R 20000:20000 /t/src; chmod 640 /t/src/a/f; touch -d '2020-01-01 00:00:00' /t/src/a/f;
-r busybox sh -c 'readlink -f /bin/sh; busybox 2>&1 | head -1';
-r cp-a sh -c 'cp -a /t/src/. /t/dst/ && stat -c "%u:%g %a %Y" /t/dst/a/f';
-r find-exec-plus sh -c 'find /t/dst -type f -exec stat -c "%n %s" {} + | sort';
-r find-prune-rm sh -c 'find /t/dst -name .tmp -type d -prune -exec rm -rf {} + && test ! -e /t/dst/a/.tmp && echo removed';
+r busybox sh -c 'set -eu; readlink -f /bin/sh; busybox true; busybox --list > /t/busybox.list; head -1 /t/busybox.list';
+r cp-a sh -c 'set -eu; cp -a /t/src/. /t/dst/; stat -c "%u:%g %a %Y" /t/dst/a/f';
+r find-exec-plus sh -c 'set -eu; find /t/dst -type f -exec stat -c "%n %s" {} + > /t/find.raw; sort /t/find.raw';
+r find-prune-rm sh -c 'set -eu; find /t/dst -name .tmp -type d -prune -exec rm -rf {} +; test ! -e /t/dst/a/.tmp; echo removed';
 r stat-c stat -c '%n|%s|%a|%u|%g' /t/dst/a/f;
 r sha256sum sha256sum /t/dst/a/f;
-r sort-k sh -c 'printf "b 2\\na 1\\n" | LC_ALL=C sort -k 2';
-r chown sh -c 'chown 20000:20000 /t/dst && stat -c %u:%g /t/dst';
+r sort-k sh -c 'set -eu; printf "b 2\\na 1\\n" > /t/sort.raw; LC_ALL=C sort -k 2 /t/sort.raw';
+r chown sh -c 'set -eu; chown 20000:20000 /t/dst; stat -c %u:%g /t/dst';
 r sync sync;
-r wget-post-data sh -c 'readlink -f "$(command -v wget)"; wget --version | head -1; echo post-data=$(wget --help | grep -c -- --post-data)';
+r mktemp sh -c 'set -eu; d=$(mktemp -d); test -d "$d"; rm -rf "$d"; echo checked';
+r wget-post-data sh -c 'set -eu; w=$(command -v wget); readlink -f "$w"; wget --version > /t/wget.version; head -1 /t/wget.version; wget --help > /t/wget.help; n=$(grep -c -- --post-data /t/wget.help); echo post-data=$n';
 r du-k du -s -k /t`;
 
 /** R26 P-g: run the tools R26's procedure assumes inside the pinned image (no network, no volumes). */
@@ -1133,6 +1185,7 @@ async function toolcheck(config) {
   if (!result.pass) process.exitCode = 1;
 }
 
+// [EXP-K01-R6] Why: Optional labels, history arrays and dashes below are display-only; current resource/readiness acquisition still must complete and cannot mint admission. Rejected: converting a failed observation into successful content.
 async function status(config) {
   const all = listTx2Containers({ all: true });
   const stats = Object.fromEntries(dockerStats().map(row => [row.name, row]));
@@ -1192,7 +1245,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     const fol = followerInfo(config, info, options);
     if (command === 'up') return followerUp(config, info, fol, options);
     if (command === 'down') return followerDown(config, info, fol, options);
-    spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), fol.container]), { stdio: 'inherit' });
+    complete(processObservation('follower log', { container: fol.container }, spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), fol.container]), { encoding: 'utf8' }), out => { process.stdout.write(out.stdout); process.stderr.write(out.stderr); return true; }));
     return;
   }
   if (options['cpuset-cpus']) info.cpusetCpus = parseCpuset(options['cpuset-cpus'], config.vm.cpus).join(',');
@@ -1214,5 +1267,5 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'listing') return listing(config, info, options);
   if (command === 'up') return up(config, info, options);
   if (command === 'down') return down(config, info, options);
-  spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), info.container]), { stdio: 'inherit' });
+  complete(processObservation('slot log', { container: info.container }, spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), info.container]), { encoding: 'utf8' }), out => { process.stdout.write(out.stdout); process.stderr.write(out.stderr); return true; }));
 });

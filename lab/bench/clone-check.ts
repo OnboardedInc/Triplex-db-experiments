@@ -17,6 +17,7 @@
  * pull the driver uses (lib/composition.ts); lab/bin takes no dependencies. Rejected: psql (not on the host or in the
  * image); reading engine files directly (a live Local log is torn).
  */
+import { observe, observeAsync, complete, processObservation, sqlNumber, rows, booleanProof } from "../bin/observation.ts";
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -39,38 +40,47 @@ if (!["settle", "freeze", "verify", "start-check", "diagnostic", "probe-write"].
 const log = (line: string) => process.stderr.write(`[clone-check ${new Date().toISOString().slice(11, 19)}] ${line}\n`);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const readJson = (f: string) => JSON.parse(fs.readFileSync(path.resolve(f), "utf8"));
-const print = (value: unknown) => process.stdout.write(JSON.stringify(value, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2) + "\n");
+// [EXP-K01-R6] Why: a diagnostic failure must fail the command too. Rejected: exit zero with ok:false/FAIL that an outer process might mistake for completed proof.
+const print = (value: any) => {
+  process.stdout.write(JSON.stringify(value, (_k, v) => (typeof v === "bigint" ? v.toString() : v), 2) + "\n");
+  if (value?.ok === false || value?.settled === false || value?.verdict === "FAIL") process.exitCode = 1;
+};
 
 /** GNU wget in the XTDB image: -S puts the status line on stderr, --content-on-error keeps a 503 body. */
 function healthz(route: string, post = false) {
   const r = spawnSync("docker", ["-H", DOCKER_HOST, "exec", container!, "wget", "-q", "-S", "--content-on-error", "-O", "-", ...(post ? ["--post-data="] : []), `http://127.0.0.1:8080${route}`], { encoding: "utf8", timeout: 30_000 });
-  const status = r.status === 0 && !r.signal && !r.error ? Number((/HTTP\/[\d.]+ (\d{3})/.exec(r.stderr ?? "") ?? [])[1]) || null : null;
-  return { status, body: (r.stdout ?? "").trim().slice(0, 500) };
+  const observation = processObservation("HTTP readiness", { container, route, post }, r, out => {
+    const match = /HTTP\/[\d.]+ (\d{3})/.exec(out.stderr);
+    if (!match) throw Error("missing HTTP status");
+    return { status: Number(match[1]), body: out.stdout.trim().slice(0, 500) };
+  });
+  // [EXP-K01-R6] Why: retain failed readiness as failed, never as idle evidence. Rejected: accepting partial HTTP status text; callers require status 200.
+  return observation.state === "complete" ? { ...observation.value, observation } : { status: null, observation };
 }
 
 const xtdb: any = await import(pathToFileURL(path.join(REPO, "packages/xtdb/dist/index.js")).href);
 const runtimeApi: any = await import(pathToFileURL(path.join(REPO, "packages/core/dist/runtime/index.js")).href);
 const client = xtdb.makeXtdbClient(url, { maxConnections: 2 });
-const q = async (sql: string, params: unknown[] = []): Promise<any[]> => client.query(sql, params, undefined, { timeoutMs: 600_000 });
-const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
+const q = async (sql: string, params: unknown[] = []): Promise<any[]> => complete(await observeAsync("SQL rows", { url, container, sql, params }, () => client.query(sql, params, undefined, { timeoutMs: 600_000 }), rows));
+// [EXP-K01-R6] Why: missing SQL scalar fields are failed reads, never null values that might compare equal. Rejected: Number(null) and optional row fallbacks.
+const num = sqlNumber;
 
 async function gauges() {
   const rows = await q("SELECT name, value FROM xt.metrics_gauges WHERE name IN ('compactor.jobs.available', 'node.tx.latestCompletedTxId', 'node.tx.lag.MsgId', 'node.tx.latestSubmittedMsgId', 'node.tx.latestProcessedMsgId', 'xtdb.block.last_upload_time')");
   // [EXP-K01] Why: an absent gauge is missing evidence, not an idle compactor. Rejected: reducing an empty set to zero (false settle).
-  const sum = (name: string) => { const found = rows.filter((r) => r.name === name); return found.length ? found.reduce((s, r) => s + Number(r.value), 0) : null; };
+  const sum = (name: string) => { const found = rows.filter((r) => r.name === name); if (!found.length) throw Error(`missing gauge ${name}`); return sqlNumber(found.reduce((s, r) => s + sqlNumber(r.value), 0)); };
   return { jobsAvailable: sum("compactor.jobs.available"), latestCompletedTxId: sum("node.tx.latestCompletedTxId"), lagMsgId: sum("node.tx.lag.MsgId"), latestSubmittedMsgId: sum("node.tx.latestSubmittedMsgId"), latestProcessedMsgId: sum("node.tx.latestProcessedMsgId"), lastUploadTime: sum("xtdb.block.last_upload_time"), rows: rows.length };
 }
 async function liveRows() {
   const rows = await q("SELECT table_name, row_count FROM xt.live_tables ORDER BY table_name");
-  return { total: rows.reduce((s, r) => s + Number(r.row_count), 0), rows: rows.map((r) => [r.table_name, Number(r.row_count)]) };
+  return { total: rows.reduce((s, r) => s + sqlNumber(r.row_count), 0), rows: rows.map((r) => [r.table_name, sqlNumber(r.row_count)]) };
 }
 // [EXP-K01] Why: the pinned node hangs reading a missing block through its memory cache (first live attempt, evidence/settle-engine.log).
 // Rejected: probing dense block numbers until three misses (the very first seed may have no completed block).
 // Enumerate only published block files through a read-only exec, then ask SQL for exactly those rows.
 function blockListing(): string[] {
   const r = spawnSync("docker", ["-H", DOCKER_HOST, "exec", container!, "sh", "-c", "if [ -d /var/lib/xtdb/buffers/v06/blocks ]; then find /var/lib/xtdb/buffers/v06/blocks -maxdepth 1 -type f -name 'b*.binpb'; fi"], { encoding: "utf8", timeout: 30_000 });
-  if (r.status !== 0 || r.signal || r.error) throw new Error(`block file discovery failed: ${r.stderr}`);
-  return publishedBlockIndices(r.stdout ?? "");
+  return complete(processObservation("block listing", { container }, r, out => publishedBlockIndices(out.stdout), { stderrEmpty: true }));
 }
 async function blockFileRows(): Promise<any[]> {
   const rows: any[] = [];
@@ -140,12 +150,13 @@ async function settle() {
   return { settled: true, qualified: false, proofStage: "AWAITING_STOPPED_TAIL", frontiers: (previous as any).frontiers, waitedS: (Date.now() - started) / 1000, before, phases, after: previous };
 }
 async function startCheck(expected: any) {
+  // [EXP-K01-R6] Why: nullable resume/status is explicit refusal below; stdout/stderr defaults only retain failure diagnostics, and cannot produce success without a complete process observation. Rejected: partial logs as proof.
   const proofReads: any = {};
   const read = (name: string, args: string[]) => {
     const r = spawnSync("docker", ["-H", DOCKER_HOST, ...args], { encoding: "utf8", maxBuffer: 16 << 20 });
-    return proofReads[name] = { status: r.status, signal: r.signal ?? null, error: r.error?.message ?? null, stdout: r.stdout ?? "", stderr: r.stderr ?? "" };
+    return proofReads[name] = { observation: processObservation("startup " + name, { container, args }, r, out => out), status: r.status, signal: r.signal ?? null, error: r.error?.message ?? null, stdout: r.stdout ?? "", stderr: r.stderr ?? "" };
   };
-  const success = (r: any) => r.status === 0 && !r.signal && !r.error;
+  const success = (r: any) => r.observation.state === "complete";
   const initial = read("inspect", ["inspect", "--format", "{{.State.StartedAt}}", container!]);
   const identity = initial.stdout.trim();
   if (!success(initial) || !identity || !Number.isFinite(Date.parse(identity))) return { ok: false, reason: "current startup inspect failed or returned invalid identity", proofReads, polls: [] };
@@ -174,15 +185,23 @@ const C8_SUBJECTS = 20;
 async function fingerprint(manifest: any) {
   const timings: Record<string, number> = {};
   const errors: string[] = [];
+  const observations: Record<string, any> = {};
   const timed = async <A>(name: string, fn: () => Promise<A>): Promise<A | null> => {
     const t = Date.now();
-    try { return await fn(); } catch (error: any) { errors.push(`${name}: ${String(error?.message ?? error).slice(0, 400)}`); return null; } finally { timings[name] = Date.now() - t; }
+    try {
+      const observation = await observeAsync("fingerprint " + name, { container, scope: manifest.scope }, fn, value => { if (value === null || value === undefined) throw Error("missing fingerprint value"); return value; });
+      observations[name] = observation;
+      if (observation.state === "failed") errors.push(`${name}: ${observation.error}`);
+      // [EXP-K01-R6] Why: keep all diagnostic failures without certifying any. Rejected: null fallback without an enclosing failed observation; ok below requires every observation complete.
+      return observation.state === "complete" ? observation.value : null;
+    } finally { timings[name] = Date.now() - t; }
   };
   const scopeKey = runtimeApi.DatabaseScope.test(manifest.scope);
   const c3 = await timed("c3", async () => {
     const latest = await q("SHOW LATEST_COMPLETED_TXS");
     const txs = (await q("SELECT COUNT(*) AS n, MIN(system_time) AS min_st, MAX(system_time) AS max_st, MAX(_id) AS max_id FROM xt.txs FOR ALL VALID_TIME"))[0];
     const failed = (await q("SELECT COUNT(*) AS n FROM xt.txs FOR ALL VALID_TIME WHERE committed = false"))[0];
+    if (!latest.length || !txs || num(txs.n) === 0 || !txs.min_st || !txs.max_st || !failed) throw Error("incomplete transaction catalog observation");
     return { latestCompletedTxs: JSON.parse(canonical(latest)), txs: { n: num(txs?.n), minSystemTime: txs?.min_st ? new Date(txs.min_st).toISOString() : null, maxSystemTime: txs?.max_st ? new Date(txs.max_st).toISOString() : null, maxId: num(txs?.max_id), notCommitted: num(failed?.n) } };
   });
   const c4 = await timed("c4", async () => {
@@ -229,7 +248,7 @@ async function fingerprint(manifest: any) {
     const planRows = planShape(await q(sql, [scopeKey, ...roots, basis.recordedAt, basis.validAt, basis.validAt]));
     return { subjects, basis, pulls, resultSha256: digest(pulls), plan: { sql, rows: planRows, sha256: digest(planRows) } };
   });
-  return { ok: errors.length === 0, at: new Date().toISOString(), url, container, scopeKey, c3, c4, c5, c6, c7, c8, timingsMs: timings, errors };
+  return { ok: errors.length === 0, at: new Date().toISOString(), url, container, scopeKey, c3, c4, c5, c6, c7, c8, observations, timingsMs: timings, errors };
 }
 
 // ---------------------------------------------------------------- verify (Q74d)
@@ -240,6 +259,7 @@ async function verify() {
   const manifest = readJson(path.resolve(REPO, record.manifest.path));
   const owner = opt("owner") ? readJson(opt("owner")!) : null;
   const checks: Record<string, Check> = {};
+  // [EXP-K01-R6] Why: missing certificate fields must make C1 false; optional chains below are refusal guards, never replacement observations. Rejected: default matching hashes.
   const content = owner?.volumeContent, copy = content?.copy, c1 = copy?.c1;
   // [EXP-K01-R5] Why: a current certificate can still contain contradictory hashes. Rejected: recertifying the old C1 PASS bit without comparing its exact pre-start tree evidence.
   const hashes = [record.copy?.treeSha256, copy?.treeSha256, c1?.expected, c1?.observed];
@@ -265,7 +285,7 @@ async function verify() {
   checks["C2"]!.pass &&= start.ok && finish.ok;
   checks["C2"]!.observed = { started, alive, start, finish };
   if (!obs.ok) for (const k of ["C3", "C4", "C5", "C6", "C7", "C8"]) if (obs.errors.some((e) => e.startsWith(k.toLowerCase()))) checks[k] = { ...checks[k]!, pass: false, note: `${checks[k]!.note}; error: ${obs.errors.find((e) => e.startsWith(k.toLowerCase()))}` };
-  const verdict = Object.values(checks).every((c) => c.pass) ? "PASS" : "FAIL";
+  const verdict = obs.ok === true && Object.values(checks).every((c) => c.pass) ? "PASS" : "FAIL";
   return {
     format: "tx2-clone-readiness/1", verdict, at: new Date().toISOString(), container, url, golden: { volume: record.volume, key: record.key, record: path.relative(REPO, recordFile) },
     checks, fingerprintMs: Date.now() - t, timingsMs: obs.timingsMs, errors: obs.errors,

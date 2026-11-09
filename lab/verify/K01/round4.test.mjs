@@ -7,7 +7,7 @@ test('Q83e maintenance tail qualifies distinct F/M/T',()=>{ const f=maintenanceF
 test('Q83e application transaction refuses even with unchanged observed T',()=>{const f=maintenanceFixture(true);assert.throws(()=>verifyMaintenanceTail(f.bytes,f.frontiers),/non-maintenance Tx/);});
 import fs from 'node:fs';
 import path from 'node:path';
-import vm from 'node:vm';
+import { runObserved } from './observation-context.mjs';
 import { spawn } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { createHash, randomUUID } from 'node:crypto';
@@ -59,7 +59,7 @@ const child = (program, args, env) => new Promise((resolve,reject)=>{
 });
 for(const order of ['A-then-B','B-then-A']){
  test(`real cross-process owner lock preserves newer ERROR (${order})`,async()=>{
-  const dir=fs.mkdtempSync(path.join(tempRoot,'lock-'));const info={lane:'fixture',slot:'s1',lockDir:path.join(dir,'slot'),ownerFile:path.join(dir,'slot/owner.json')};fs.mkdirSync(info.lockDir);fs.writeFileSync(info.ownerFile,JSON.stringify({volumeContent:{readiness:{verdict:'PENDING',attemptId:'A'}}}));
+  const dir=fs.mkdtempSync(path.join(tempRoot,'lock-'));const info={lane:'fixture',slot:'s1',lockDir:path.join(dir,'slot'),ownerFile:path.join(dir,'slot/owner.json')};fs.mkdirSync(info.lockDir);fs.writeFileSync(info.ownerFile,JSON.stringify({holder:'fixture',volumeContent:{readiness:{verdict:'PENDING',attemptId:'A'}}}));
   const module=pathToFileURL(path.join(root,'lab/bin/owner-state.mjs')).href;
   const program=`import fs from 'node:fs';import {updateOwner} from ${JSON.stringify(module)};const info=JSON.parse(process.argv[1]), role=process.argv[2], order=process.argv[3], signal=info.lockDir+'.signal';const wait=async()=>{for(let n=0;!fs.existsSync(signal);n++){if(n>1000)throw Error('signal timeout');await new Promise(r=>setTimeout(r,5));}};if(order==='A-then-B'){if(role==='A')await updateOwner(info,o=>{fs.writeFileSync(signal,'1');Atomics.wait(new Int32Array(new SharedArrayBuffer(4)),0,0,100);o.volumeContent.readiness={verdict:'PASS',attemptId:'A'};return o;});else{await wait();await updateOwner(info,o=>{o.volumeContent.readiness={verdict:'ERROR',attemptId:'B'};return o;});}}else{if(role==='B'){await updateOwner(info,o=>{o.volumeContent.readiness={verdict:'ERROR',attemptId:'B'};return o;});fs.writeFileSync(signal,'1');}else{await wait();try{await updateOwner(info,o=>{if(o.volumeContent.readiness.attemptId!=='A')throw Error('superseded');o.volumeContent.readiness={verdict:'PASS',attemptId:'A'};return o;});throw Error('older publication succeeded');}catch(e){if(e.message!=='superseded')throw e;}}}`;
   try{await Promise.all(['A','B'].map(role=>child(program,[JSON.stringify(info),role,order],{TX2_LOCKS_DIR:path.join(dir,'shared')})));assert.deepEqual(JSON.parse(fs.readFileSync(info.ownerFile)).volumeContent.readiness,{verdict:'ERROR',attemptId:'B'});}finally{fs.rmSync(dir,{recursive:true,force:true});}
@@ -75,7 +75,7 @@ for(const variation of ['clean','inspect-signal','inspect-error','logs-signal','
  test(`startup acquisition binds completed current reads (${variation})`,async()=>{
   let inspections=0;
   const expected={frontiers:{F:180,M:200,T:100},gauges:{latestProcessedMsgId:200,latestCompletedTxId:100},trie:{sha256:'trie'},listing:['00']};
-  const {startCheck}=vm.runInNewContext(stripTypeScriptTypes(section(checker,'async function startCheck','// ---------------------------------------------------------------- fingerprint'))+';({startCheck})',{
+  const {startCheck}=runObserved(stripTypeScriptTypes(section(checker,'async function startCheck','// ---------------------------------------------------------------- fingerprint'))+';({startCheck})',{
    Number,canonical,container:'fixture',DOCKER_HOST:'offline',sleep:async()=>{},healthz:()=>({status:200}),
    gauges:async()=>({jobsAvailable:0,lagMsgId:0,latestCompletedTxId:100,latestProcessedMsgId:200,latestSubmittedMsgId:200}),liveRows:async()=>({total:0}),tries:async()=>expected.trie,blockListing:()=>expected.listing,
    spawnSync:(_cmd,args)=>{const kind=args.includes('inspect')?'inspect':'logs';if(kind==='inspect')inspections++;let stdout=kind==='inspect'?'2000-01-01T00:00:00Z':'resuming after 200';if(kind==='inspect'&&variation==='empty')stdout='';if(kind==='inspect'&&variation==='invalid')stdout='invalid';if(kind==='inspect'&&variation==='changed'&&inspections>1)stdout='2000-01-02T00:00:00Z';return{status:0,stdout,stderr:'',signal:variation===kind+'-signal'?'SIGTERM':null,error:variation===kind+'-error'?new Error('spawn proof failed'):undefined};},
@@ -87,10 +87,10 @@ for(const variation of ['clean','inspect-signal','inspect-error','logs-signal','
 for(const variation of ['clean','signal','error','inspect-missing','identity-changed']){
  test(`stop acquisition rejects incomplete current evidence (${variation})`,async()=>{
   let n=0; const stopOwner={holder:'fixture'};
-  const {stopSlot}=vm.runInNewContext(section(engine,'async function stopSlot(config, info, opts)','/**\n * Golden')+';({stopSlot})',{
+  const {stopSlot}=runObserved(section(engine,'async function stopSlot(config, info, opts)','/**\n * Golden')+';({stopSlot})',{
    Date,randomUUID,updateOwner:async(_info,action)=>action(stopOwner),readOwner:()=>({holder:'fixture'}),requireHeldXtdbSlot:()=>{},inspect:()=>{
     if(++n===2&&variation==='inspect-missing')return null;
-    return{Id:n===2&&variation==='identity-changed'?'other':'container',Config:{Labels:{'tx2.managed-by':'lab/bin/engine.mjs'}},State:{Running:n===1,ExitCode:143,StartedAt:'2000-01-01T00:00:00Z',FinishedAt:'2000-01-01T00:00:01Z'}};
+    return{Id:n===2&&variation==='identity-changed'?'other':'container',Config:{Labels:{'tx2.managed-by':'lab/bin/engine.mjs'}},State:{Running:n===1,ExitCode:143,OOMKilled:false,StartedAt:'2000-01-01T00:00:00Z',FinishedAt:'2000-01-01T00:00:01Z'}};
    },docker:()=>'',dockerArgs:a=>a,spawnSync:()=>({status:0,signal:variation==='signal'?'SIGTERM':null,error:variation==='error'?new Error('log read failed'):undefined,stdout:'Stopping node...\nNode stopped.\n',stderr:''}),stopVerdict,
    withPool:async f=>f({reservations:[]}),appendEvent:()=>{},now:()=>'',process:{stdout:{write:()=>{}}},fail:(_c,m)=>{throw new Error(m);},
   });
@@ -102,7 +102,7 @@ for(const valid of [true,false]){
  test(`runner cleanup uses only its exact current creation receipt (${valid})`,async()=>{
   const src=fs.readFileSync(path.join(root,'lab/experiments/EXP-K01-seed-clone/round2-live.mjs'),'utf8'), files=new Map(), commands=[];
   let error;
-  try{await vm.runInNewContext(`(async()=>{${src.slice(src.indexOf('const root ='))}\n})()`,{
+  try{await runObserved(`(async()=>{${src.slice(src.indexOf('const root ='))}\n})()`,{
    Date,Math,path,POOL_FILE:()=>'/fixture/pool.json',readJson:()=>({}),process:{cwd:()=>root,env:{TX2_K01_ATTEMPT:'fixture'},execPath:'node',stderr:{write:()=>{}}},
    fs:{mkdirSync:()=>{},statfsSync:()=>({bavail:30,bsize:1024**3}),writeFileSync:(f,v)=>files.set(f,v),existsSync:f=>files.has(f),copyFileSync:()=>{},readFileSync:f=>f==='lab/config/slots.json'?JSON.stringify({slots:{xtdb:{s1:{javaOpts:'-Dlog4j2.shutdownHookEnabled=false'}}}}):files.get(f)},
    spawnSync:(_cmd,args)=>{const cmd=args[1];commands.push(args);const holder=args[args.indexOf('--holder')+1];if(cmd==='up')files.set('/fixture/xtdb-s1/owner.json',JSON.stringify({holder}));if(cmd==='down')files.delete('/fixture/xtdb-s1/owner.json');if(cmd==='golden'){const file=args[args.indexOf('--creation-receipt')+1],invocation=args[args.indexOf('--invocation')+1];files.set(file,JSON.stringify({format:'tx2-golden-creation/1',invocation:valid?invocation:'older',creationId:'creation-token',volume:'tx2-golden-xtdb-12345678'}));return{status:1,stdout:'',stderr:'golden failed after creation'};}return{status:0,stdout:JSON.stringify({verdict:{ok:true,stoppedLine:null}}),stderr:''};},
@@ -121,7 +121,7 @@ for(const variation of ['clean','tail','frontier','gauge','reference']){
   if(variation==='gauge')record.settle.after.gauges.latestProcessedMsgId++;
   if(variation==='reference')record.referenceOffline.maintenance.frontiers.M++;
   let dockerRead=false;
-  const {loadGolden}=vm.runInNewContext(section(engine,'function loadGolden(file)','/**\n * Clone')+';({loadGolden})',{
+  const {loadGolden}=runObserved(section(engine,'function loadGolden(file)','/**\n * Clone')+';({loadGolden})',{
    path,Buffer,readJson:()=>record,canonicalJson:canonical,verifyMaintenanceTail,GOLDEN_RECORD_FORMAT:'golden',goldenKey:()=>({key:'key'}),
    docker:()=>{dockerRead=true;throw Error('reached-volume-inspection');},fail:(_c,m)=>{throw Error(m);},
   });

@@ -1,4 +1,5 @@
 // [EXP-K01-R2] Why: retain every diagnostic and cleanup result under one admitted heavy job. Rejected: ad-hoc commands with unrecorded first failures.
+import { processObservation } from '../../bin/observation.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -14,6 +15,7 @@ const holder = `CX-K01-R2-${attemptTag}`;
 const base = ['--lane', 'xtdb', '--slot', 's1', '--holder', holder, '--exp', 'EXP-K01'];
 let n = 0;
 let goldenInvoked = false;
+let firstFailure;
 function run(label, args, { optional = false, extraEnv = {}, expectCleanStop = false } = {}) {
   const file = `${evidence}/${attemptTag}-${String(++n).padStart(2, '0')}-${label}`;
   process.stderr.write(`[K01-R2] ${label}\n`);
@@ -27,8 +29,9 @@ function run(label, args, { optional = false, extraEnv = {}, expectCleanStop = f
     try { if (JSON.parse(r.stdout).verdict?.ok !== true) semanticFailure = 'required clean-stop proof failed'; }
     catch { semanticFailure = 'required clean-stop proof is unreadable'; }
   }
-  fs.writeFileSync(file + '.result.json', JSON.stringify({ args, semanticFailure, exit: r.status, signal: r.signal, error: r.error?.message, elapsedS: (Date.now() - t) / 1000 }, null, 2) + '\n');
+  fs.writeFileSync(file + '.result.json', JSON.stringify({ args, semanticFailure, observation: processObservation('runner command', { args, holder, attemptTag }, r, out => out), exit: r.status, signal: r.signal, error: r.error?.message, elapsedS: (Date.now() - t) / 1000 }, null, 2) + '\n');
   if (semanticFailure) throw new Error(`${label}: ${semanticFailure}`);
+  // [EXP-K01-R6] Why: optional commands are retained failed observations only for admission retry, the explicit negative T2 control, or cleanup aggregation below; none is a PASS. Rejected: silent successful fallback.
   if ((r.status !== 0 || r.signal || r.error) && !optional) throw new Error(`${label} failed: ${r.stderr?.slice(-1000)}`);
   return r;
 }
@@ -96,15 +99,19 @@ try {
   engine('singlecut-stop', 'stop');
   engine('singlecut-down', 'down', ['--remove-volume']);
 
-} finally {
+} catch (error) { firstFailure = error; throw error; } finally {
+  // [EXP-K01-R6] Why: cleanup must try all current owned resources yet never turn a failed command into success. Rejected: optional cleanup that leaves the runner successful; keep any first body failure as primary.
+  const cleanupFailures = [];
+  const cleanup = (...args) => { const r = engine(...args); if (r.status !== 0 || r.signal || r.error) cleanupFailures.push(args[0]); };
   const ownerFile = path.join(path.dirname(POOL_FILE()), 'xtdb-s1/owner.json');
   const currentOwner = fs.existsSync(ownerFile) ? JSON.parse(fs.readFileSync(ownerFile, 'utf8')) : null;
-  if (currentOwner?.holder === holder) engine('cleanup-source-clone', 'down', ['--remove-volume'], { optional: true });
+  if (currentOwner?.holder === holder) cleanup('cleanup-source-clone', 'down', ['--remove-volume'], { optional: true });
   // [EXP-K01-R4] Why: only this invocation's exclusive creation receipt authorizes cleanup. Rejected: scanning reused seed directories for historical golden/attempt files (can delete retained earlier state).
   if (goldenInvoked && fs.existsSync(creationReceipt)) {
     const created = JSON.parse(fs.readFileSync(creationReceipt, 'utf8'));
     if (created.format === 'tx2-golden-creation/1' && created.invocation === String(attemptTag) && created.creationId)
-      engine('cleanup-golden', 'golden-rm', ['--volume', created.volume, '--creation-id', created.creationId], { optional: true });
+      cleanup('cleanup-golden', 'golden-rm', ['--volume', created.volume, '--creation-id', created.creationId], { optional: true });
   }
-  engine('cleanup-status', 'status', [], { optional: true });
+  cleanup('cleanup-status', 'status', [], { optional: true });
+  if (cleanupFailures.length && !firstFailure) throw new Error(`cleanup incomplete: ${cleanupFailures.join(', ')}`);
 }
