@@ -500,3 +500,9 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   lift the 4-worker cap, scoped journal lookup, no DELETE lookups for new ids) predict 54-74 s at 100k with 4 sweep cores, 71-98 s with 3.
   Main risk is P2 (writer 40-68% busy; fix is putting activation frames in the live group commit). EXP-P5N round 1 queued for the next
   free builder slot (after QH1 round 4); P5B round 3 writes its report from existing evidence without new heavy runs.
+- 2026-11-09 P5B round 3 complete from existing evidence (a3ec47ec; worker fix 9949f8cc): 10k 217.05 B/fact, G0 equals O-DOMAIN at 1k
+  and 10k; activation 92.7 s (W=1) / 33.9 s (W=4) idle, 71-77 s under live load; 100k forecast 230-340 s at W=4. Live ratio arms
+  unusable (A/A 0.52, writer saturated). P2 finding: core transactionByCommand is O(store) on an H1 store (12 s per miss at 1k); the
+  mapped host now resolves commands through the broker claim table. 10k timings predate 9949f8cc. EXP-P5N takes over.
+- 2026-11-09 compress-evidence.sh bug: it compressed P5B's stores while a run still read them (read-only opens do not update mtime).
+  Fixed: skip files any process has open (lsof), and skip SQLite files unless their directory has a .settled marker.
