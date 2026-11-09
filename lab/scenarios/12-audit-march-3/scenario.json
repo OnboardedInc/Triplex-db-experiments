@@ -64,6 +64,10 @@
     "extra.audit.asOfPull (as-of pull latency, reported, no bar)",
     "extra.audit.expectedHash and repeatHashes (compare across lanes)"
   ],
+  "findings": [
+    "GS.12 int64 overflow returns WriteError, not InvalidTripleError (receipt GS-xtdb-20261107T223210Z-1bfd1d). Root cause: core Triples.transact (packages/core/src/store/TriplesLive.ts:277-288) checks only that the adapter supports the value type and never validates the value against TripleValue (Value.ts Int64Decimal), so the XTDB adapter's packValue (packages/xtdb/src/codecs.ts:84, calling Value.ts integer() which throws RangeError at Value.ts:86) fails inside insert and XtdbStorageAdapter.ts:456 wraps it as WriteError('Invalid XTDB assertion'). InvalidTripleError (errors/index.ts:62) is declared but never constructed anywhere. Proposed fix: fix.patch (validate assert values with Schema.is(TripleValue) before the adapter and fail with InvalidTripleError; widen five error unions). Typechecks for core src and core test projects; not exercised at run time; dependants (xtdb, qlever) not typechecked against it.",
+    "CX-W01B: fix.patch applies to isolated core copies; the source project typecheck and eight instrumented Triples.transact cases pass (six malformed/overflow integers return InvalidTripleError before adapter.claimCommand, two legal int64 values reach the adapter boundary). Bound evidence: lab/experiments/EXP-W01-golden-scenarios/evidence/gs12-patch/receipt.json. No packages source was edited; the patch is not integrated or verified against XTDB/QLever."
+  ],
   "faults": [
     "unrepresentable integer writes (int64 overflow; 2^60 beyond QLever's 60-bit inline integers)"
   ],

@@ -21,9 +21,10 @@ function exportTarget(pkgDir, subpath = '.') {
 }
 
 const pkg = dir => path.join(REPO, 'packages', dir);
-const effectDir = fs.realpathSync(path.join(REPO, 'packages/qualification/node_modules/effect'));
+
 
 export async function loadTriplex() {
+  const effectDir = fs.realpathSync(path.join(REPO, 'packages/qualification/node_modules/effect'));
   const [core, runtime, effect, qualification] = await Promise.all([
     import(exportTarget(pkg('core'))),
     import(exportTarget(pkg('core'), './runtime')),

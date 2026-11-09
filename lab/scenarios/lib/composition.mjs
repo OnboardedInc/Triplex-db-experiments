@@ -21,30 +21,36 @@ const TAG_CATEGORY = {
 /** Classify a transact failure: typed rejection, unknown outcome, retryable serialization conflict or defect. */
 export function classify(error) {
   const tag = error?._tag ?? error?.name ?? null;
+  // [EXP-W01b] Why: ReadError's outer message hides timeout evidence. Rejected: assuming every
+  // generic read failure is overload; retain the bounded cause chain for the receipt instead.
+  const causes = []; let cause = error?.cause;
+  for (let n = 0; cause != null && n < 4; n++, cause = cause?.cause)
+    causes.push({ tag: cause?._tag ?? cause?.name ?? null, code: cause?.code ?? null, message: String(cause?.message ?? cause).slice(0, 500) });
   if (error?.reason === 'serialization-conflict') return { status: 'retry', tag };
   if (error?.reason === 'outcome-unknown') return { status: 'unknown', tag, commandId: error.commandId };
   if (error?.reason === 'unsupported-value-type') return { status: 'rejected', tag: 'UnsupportedValueTypeError', category: 'invalid-value', typed: true, message: error.message };
   const category = TAG_CATEGORY[tag];
   if (category) return { status: 'rejected', tag, category, typed: true, transactionId: error.transactionId, message: String(error.message).slice(0, 500) };
-  if (tag === 'WriteError') return { status: 'rejected', tag, category: 'write-error', typed: true, reason: error.reason ?? null, message: String(error.message).slice(0, 500) };
-  return { status: 'error', tag, typed: false, message: String(error?.message ?? error).slice(0, 1000) };
+  if (tag === 'WriteError') return { status: 'rejected', tag, category: 'write-error', typed: true, reason: error.reason ?? null, message: String(error.message).slice(0, 500), causes };
+  return { status: 'error', tag, typed: false, message: String(error?.message ?? error).slice(0, 1000), causes };
 }
 
 /**
  * Open the default composition ("triplex-public"): one Triplex runtime for one database scope.
  * Every method returns a Promise and never throws for a typed Triplex failure (it is classified instead).
  */
-export async function openComposition({ lane, scope: scopeName, tenant = 'test', writerConcurrency = 1 }) {
+export async function openComposition({ lane, scope: scopeName, tenant = 'test', writerConcurrency = 1, load = loadTriplex }) {
   let active = 0; const waiting = [];
   const writerSlot = () => new Promise(resolve => {
     const grant = () => { active++; resolve(() => { active--; waiting.shift()?.(); }); };
     if (active < writerConcurrency) grant(); else waiting.push(grant);
   });
-  const T = await loadTriplex();
+  const T = await load();
   const backend = await T.qualification.loadQualificationBackend(lane);
   const scope = tenant === 'test' ? T.runtime.DatabaseScope.test(scopeName)
     : T.runtime.DatabaseScope.make({ env: 'lab', tenant, database: scopeName, generation: 0 });
   let rt, triples;
+  let reopening = null;
   const open = async () => {
     rt = T.ManagedRuntime.make(backend.makeRuntime().layer({ scope, capabilities: T.runtime.Capabilities.none }));
     triples = await rt.runPromise(T.core.Triples);
@@ -74,6 +80,9 @@ export async function openComposition({ lane, scope: scopeName, tenant = 'test',
     async transact(operations, meta) {
       const release = await writerSlot();
       try {
+        // [EXP-W01b] Why: queued writers can wake while the old runtime is disposing. Rejected:
+        // treating every interrupted fiber as a storage error (the client restart caused it).
+        if (reopening) await reopening;
         let conflicts = 0;
         for (;;) {
           const r = await settle(triples.transact(operations, meta));
@@ -104,9 +113,15 @@ export async function openComposition({ lane, scope: scopeName, tenant = 'test',
     async currentPosition() { return run(triples.currentPosition()); },
     /** Restart the Triplex runtime (client process restart); in-flight calls fail and must be resolved. */
     async restart() {
+      if (reopening) return reopening;
+      let resume;
+      reopening = new Promise(resolve => { resume = resolve; });
       const old = rt; const fire = arm.fire; arm(); fire();
-      await Promise.race([old.dispose().catch(() => {}), new Promise(r => setTimeout(r, 10_000))]);
-      await open();
+      let timeout;
+      try {
+        await Promise.race([old.dispose().catch(() => {}), new Promise(r => { timeout = setTimeout(r, 10_000); })]);
+        await open();
+      } finally { clearTimeout(timeout); reopening = null; resume(); }
     },
     async close() { await rt.dispose(); },
   };

@@ -1,0 +1,21 @@
+failed to load config from /Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/packages/xtdb/packages/xtdb/vitest.config.ts
+
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: Failed to load url /Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/packages/xtdb/packages/xtdb/vitest.config.ts (resolved id: /Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/packages/xtdb/packages/xtdb/vitest.config.ts). Does the file exist?
+    at loadAndTransform (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:20660:31) {
+  code: 'ERR_LOAD_URL',
+  runnerError: Error: RunnerError
+      at reviveInvokeError (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/module-runner.js:557:64)
+      at Object.invoke (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/module-runner.js:630:11)
+      at async ModuleRunner.getModuleInformation (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/module-runner.js:1213:7)
+      at async ModuleRunner.import (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/module-runner.js:1134:23)
+      at async runnerImport (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:36089:18)
+      at async runnerImportConfigFile (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:37006:35)
+      at async loadConfigFromFile (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:36975:42)
+      at async resolveConfig (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:36581:22)
+      at async resolveConfig (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/index.B8VfM7Mf.js:9241:25)
+      at async createVitest (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cli-api.Bx28WXzL.js:13377:17)
+}
+
+
+

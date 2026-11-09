@@ -12,24 +12,42 @@
  * Simplest honest rule: `memory` is valid only when every opening is in the same thread, so the driver
  * runs it with readers in the main thread (see driver: composition "memory" forces in-thread readers).
  */
+import { requirePosition, visibleRows, type WorldRow } from "./w0-world.ts";
 import type { CompositionHandle, Outcome, PullResult, Receipt } from "./composition.ts";
 
 interface Fact { id: string; entityId: string; attribute: string; value: any; validFrom: number; validTo?: number; recordedAt: number; position: number; retractedAt?: number; retractedPosition?: number; txId: string }
-const stores = new Map<string, { facts: Map<string, Fact>; byEntity: Map<string, Fact[]>; journal: any[]; claims: Map<string, any>; position: number; idSeq: number; lastInstant: number }>();
+const stores = new Map<string, { facts: Map<string, Fact>; byEntity: Map<string, Fact[]>; journal: any[]; claims: Map<string, any>; position: number; idSeq: number; lastInstant: number; shared?: boolean; owned?: Set<string> }>();
 
-export function memoryComposition(lane: "xtdb" | "qlever", scope: string, serviceMs = 0): CompositionHandle {
+export function memoryComposition(lane: "xtdb" | "qlever" | "datomic", scope: string, serviceMs = 0, clock?:()=>number): CompositionHandle {
   const st = stores.get(scope) ?? stores.set(scope, { facts: new Map(), byEntity: new Map(), journal: [], claims: new Map(), position: 0, idSeq: 0, lastInstant: 0 }).get(scope)!;
+  const ownEntity=(entity:string)=>{if(st.shared&&!st.owned?.has(entity)){st.byEntity.set(entity,[...(st.byEntity.get(entity)??[])]);(st.owned??=new Set()).add(entity);}};
   const delay = () => (serviceMs ? new Promise((r) => setTimeout(r, serviceMs)) : Promise.resolve());
   const fail = (tag: string, extra: any = {}): Outcome<any> => ({ ok: false, tag, error: { _tag: tag, ...extra, message: tag } });
   const visible = (f: Fact, R: number, V: number) => f.recordedAt <= R && !(f.retractedAt !== undefined && f.retractedAt <= R) && f.validFrom <= V && (f.validTo === undefined || V < f.validTo);
   const transact = async (operations: readonly any[], meta: any): Promise<Outcome<Receipt>> => {
     await delay();
     if (meta?.commandId && st.claims.has(meta.commandId)) return fail("CommandAlreadyCommittedError", { commandId: meta.commandId, transactionId: st.claims.get(meta.commandId).txId });
+    // [EXP-W02-R2] Why: reject invalid operations before allocating a position or changing any row. Rejected: validating while applying (leaves a partial command after a bad tail operation).
+    for (const op of operations) {
+      if (op.op === "retract") { if (!st.facts.has(op.id)) return fail("InvalidTripleError"); }
+      else if (op.op !== "assert") return fail("InvalidTripleError");
+      else if (op.value?.type === "integer") {
+        try {
+          if (!/^(?:0|-[1-9][0-9]*|[1-9][0-9]*)$/.test(op.value.value)) return fail("InvalidTripleError");
+          const n = BigInt(op.value.value), bits = 63n;
+          if (n < -(1n << bits) || n >= (1n << bits)) return fail("InvalidTripleError");
+        } catch { return fail("InvalidTripleError"); }
+      }
+    }
     for (const p of meta?.preconditions ?? []) {
+      if (p._tag === "EntityState") {
+        const live = (st.byEntity.get(p.entityId) ?? []).filter(f => f.retractedPosition === undefined).map(f => f.id).sort();
+        if (JSON.stringify(live) !== JSON.stringify([...(p.tripleIds ?? [])].sort())) return fail("TransactionConflictError");
+      }
       const f = st.facts.get(p.id);
       if (p._tag === "TripleLive" && (!f || f.retractedAt !== undefined)) return fail("TransactionConflictError", { tripleId: p.id });
     }
-    const instant = Math.max(Date.now(), st.lastInstant + 1);
+    const instant = clock ? clock() : Math.max(Date.now(), st.lastInstant + 1);
     st.lastInstant = instant;
     const position = ++st.position;
     const txId = `_tx/mem${position}`;
@@ -37,11 +55,16 @@ export function memoryComposition(lane: "xtdb" | "qlever", scope: string, servic
     const changes: any[] = [];
     for (const op of operations) {
       if (op.op === "retract") {
-        const f = st.facts.get(op.id)!;
+        const prior=st.facts.get(op.id)!;
+        if(!prior)throw new Error("unknown retraction");
+        ownEntity(prior.entityId);
+        const f={...prior};st.facts.set(f.id,f);
+        const entityFacts=st.byEntity.get(f.entityId)!;entityFacts[entityFacts.findIndex(row=>row.id===f.id)]=f;
         f.retractedAt = instant; f.retractedPosition = position;
         changes.push({ op: "retract", tripleId: f.id, entityId: f.entityId, attribute: f.attribute, value: f.value, validFrom: f.validFrom, recordedAt: f.recordedAt, retractedAt: instant, assertionTxId: f.txId, retractionTxId: txId });
       } else {
         const f: Fact = { id: `m${(++st.idSeq).toString(36).padStart(8, "0")}`, entityId: op.entityId, attribute: op.attribute, value: op.value, validFrom: op.validFrom ?? instant, ...(op.validTo !== undefined ? { validTo: op.validTo } : {}), recordedAt: instant, position, txId };
+        ownEntity(f.entityId);
         st.facts.set(f.id, f);
         (st.byEntity.get(f.entityId) ?? st.byEntity.set(f.entityId, []).get(f.entityId)!).push(f);
         triples.push(f);
@@ -73,7 +96,41 @@ export function memoryComposition(lane: "xtdb" | "qlever", scope: string, servic
     return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1, route: "source", language: "memory", waitedMs: 0 };
   };
   const one = { lane, role: "in-process reference store (diagnostic)" };
-  return {
+  const handle: CompositionHandle = {
+    sweepPage: async (subjects, basis, between) => {
+      requirePosition(basis, st.position);
+      const head = st.position;
+      const rows: WorldRow[] = [],
+        seen = new Set(subjects);
+      let roundTrips = 0;
+      let frontier = [...subjects];
+      while (frontier.length) {
+        roundTrips++;
+        const level = visibleRows(
+          frontier.flatMap((e) => (st.byEntity.get(e) ?? []).map((f) => ({ ...f }))),
+          basis,
+        );
+        rows.push(...level);
+        if(roundTrips===1 && between)await between();
+        const next: string[] = [];
+        for (const r of level)
+          if (r.value.type === "ref" && !seen.has(r.value.value)) {
+            seen.add(r.value.value);
+            next.push(r.value.value);
+          }
+        frontier = next;
+      }
+      return { rows, reportedBasis: { ...basis }, position: head, epoch: `memory:${scope}`, roundTrips };
+    },
+    storeCounts: async () => ({
+      position: st.position,
+      assertions: st.facts.size,
+      retired: [...st.facts.values()].filter((f) => f.retractedPosition !== undefined).length,
+      frames: st.journal.length,
+    }),
+    publishOutbox: (records) =>
+      import("./w0-outbox.ts").then((m) => m.publishRecords(handle, records)),
+    scopeName: scope,
     name: "memory",
     assignments: { source: one, current: one, history: one, analytics: one, replicationEdges: [] },
     watermarks: async () => ({ source: st.position }),
@@ -91,4 +148,15 @@ export function memoryComposition(lane: "xtdb" | "qlever", scope: string, servic
     currentPosition: async () => st.position,
     close: async () => {},
   };
+  return handle;
 }
+
+/** Offline-only COW clone; admission still requires fresh content G0. */
+export function forkMemoryScope(source:string,target:string) {
+  const st=stores.get(source);if(!st||stores.has(target))throw new Error("invalid memory fork");
+  // [EXP-P5-R2] Why: immutable source rows with copy-on-write entity arrays keep paired offline arms isolated without multiplying the full population. Rejected: sharing mutable facts (cross-arm retirements).
+  st.shared=true;st.owned=new Set();
+  stores.set(target,{...st,facts:new Map(st.facts),byEntity:new Map(st.byEntity),journal:[...st.journal],claims:new Map(st.claims),shared:true,owned:new Set()});
+  return memoryComposition("xtdb",target);
+}
+export function dropMemoryScope(scope:string){stores.delete(scope);}

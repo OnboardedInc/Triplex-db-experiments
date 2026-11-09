@@ -15,6 +15,7 @@
 // never PASS.
 // Rejected: vitest JSON only (no engine identity); the homebase devloop receipts (format bound
 // to its controller); overwriting a receipt on rerun (a rerun is a new run id with --previous).
+import { GS_LANES, brokerEnv, gsRefusals } from '../scenarios/lib/policy.mjs';
 import { spawnSync } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import fs from 'node:fs';
@@ -23,18 +24,20 @@ import { effectiveConfig, probe } from './engine.mjs';
 import { acquireHeavy } from './heavy-lock.mjs';
 import { RUN_KINDS, caseLanguages, contractClaims, tallyLanguages, verdictOf } from './receipt.mjs';
 import {
-  REPO, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
+  REPO, MAIN, defaultHolder, vmDisk, docker, dockerStats, fail, inspect, listTx2Containers, loadSlots, main, now, parseArgs,
   readJson, readOwner, runLogged, withDirLock, sha256, sha256File, slotInfo, sourceIdentity, storeFile, storeObject, treeFiles, volumeBytes,
 } from './lib.mjs';
 
 const PACKAGES = {
+  w0: { filter: '@triplex-build/w0', dir: 'packages/w0' },
+  datomic: { filter: '@triplex-build/triplex-datomic', dir: 'packages/datomic' },
   core: { filter: '@triplex-build/triplex', dir: 'packages/core' },
   testkit: { filter: '@triplex-build/triplex-testkit', dir: 'packages/testkit' },
   xtdb: { filter: '@triplex-build/triplex-xtdb', dir: 'packages/xtdb' },
   qlever: { filter: '@triplex-build/triplex-qlever', dir: 'packages/qlever' },
   qualification: { filter: '@triplex-build/triplex-qualification', dir: 'packages/qualification' },
 };
-const lanePackages = lane => ['core', 'testkit', lane, 'qualification'];
+const lanePackages = (lane, gate) => ['core', 'testkit', lane, 'qualification', ...(gate === 'GS' ? ['w0'] : [])];
 const EXPECTED_SKIPS = path.join(REPO, 'lab/config/g0-expected-skips.json');
 const PACKET = 'qualification/workloads/temporal-workloads.json';
 const FULL_G2_EXECUTIONS = 142;
@@ -43,7 +46,7 @@ const FULL_G1_CASES = 44;
 // Environment flags that turn live tests on; G0 removes them so its skip list is deterministic.
 const LIVE_FLAGS = ['XTDB_INTEGRATION', 'QLEVER_INTEGRATION', 'TRIPLEX_INTEGRATION', 'TRIPLEX_CONFORMANCE_CASES', 'XTDB_CONFORMANCE_CASES', 'TRIPLEX_DUCKDB'];
 const ENGINE_ENV = ['XTDB_URL', 'QLEVER_URL', 'QLEVER_ACCESS_TOKEN', 'QLEVER_ACCESS_TOKEN_FILE', 'TRIPLEX_BACKEND', 'TRIPLEX_QUERY_PATH',
-  'TRIPLEX_RESOURCE_ADMISSION', 'TRIPLEX_RESOURCE_ADMISSION_SHA256', 'TRIPLEX_RUN_ARTIFACTS', 'TRIPLEX_RUN_DIRECTORY', 'TRIPLEX_LAB_SLOT_OWNER'];
+  'QLEVER_COMMIT_PATH', 'QLEVER_BROKER_DIR', 'TRIPLEX_RESOURCE_ADMISSION', 'TRIPLEX_RESOURCE_ADMISSION_SHA256', 'TRIPLEX_RUN_ARTIFACTS', 'TRIPLEX_RUN_DIRECTORY', 'TRIPLEX_LAB_SLOT_OWNER'];
 const cleanEnv = extra => {
   const env = { ...process.env };
   for (const key of [...LIVE_FLAGS, ...ENGINE_ENV]) delete env[key];
@@ -90,15 +93,15 @@ class Run {
 // ---------------------------------------------------------------- build and identity
 
 async function build(run) {
-  const filters = lanePackages(run.lane).flatMap(name => ['--filter', PACKAGES[name].filter]);
-  const step = await run.step('build', 'pnpm', [...filters, 'build'], { heavy: true, env: cleanEnv() });
+  const filters = lanePackages(run.lane, run.gate).flatMap(name => ['--filter', PACKAGES[name].filter]);
+  const step = await run.step('build', 'pnpm', [`--config.store-dir=${path.join(MAIN, '.pnpm-store')}`, ...filters, 'build'], { heavy: true, env: cleanEnv() });
   if (step.code !== 0) { run.reason(`build failed (exit ${step.code})`); run.failure({ step: 'build', tail: step.tail }); }
   return hashDist(run, 'build-manifest.json');
 }
 
 function hashDist(run, name) {
   const packages = {};
-  for (const pkg of lanePackages(run.lane)) {
+  for (const pkg of lanePackages(run.lane, run.gate)) {
     const files = treeFiles(path.join(REPO, PACKAGES[pkg].dir, 'dist'));
     if (files.length === 0) run.reason(`no built files in ${PACKAGES[pkg].dir}/dist`);
     packages[pkg] = { files: files.length, bytes: files.reduce((s, f) => s + f.bytes, 0), sha256: sha256(files.map(f => `${f.sha256}  ${f.path}\n`).join('')), list: files };
@@ -121,7 +124,7 @@ function identity(run) {
 }
 
 async function toolchain(run) {
-  const pnpm = await run.step('pnpm-version', 'pnpm', ['--version']);
+  const pnpm = await run.step('pnpm-version', 'pnpm', [`--config.store-dir=${path.join(MAIN, '.pnpm-store')}`, '--version']);
   const version = fs.readFileSync(run.raw('pnpm-version.stdout.txt'), 'utf8').trim();
   return { node: process.version, pnpm: pnpm.code === 0 ? version : null, platform: `${process.platform}-${process.arch}` };
 }
@@ -223,7 +226,7 @@ function tapOutcome(run, name, file, counts) {
 async function gateG0(run) {
   const result = {};
   result.build = await build(run);
-  const pkgs = lanePackages(run.lane);
+  const pkgs = lanePackages(run.lane, run.gate);
   const typecheck = await run.step('typecheck', 'pnpm', [...pkgs.flatMap(p => ['--filter', PACKAGES[p].filter]), 'typecheck'], { heavy: true });
   if (typecheck.code !== 0) { run.reason(`typecheck failed (exit ${typecheck.code})`); run.failure({ step: 'typecheck', tail: typecheck.tail }); }
   const expectedFile = readJson(EXPECTED_SKIPS, null);
@@ -347,6 +350,9 @@ async function plannerAfter(run, result, bound, restoreTo) {
 async function engineGate(run, config, entry) {
   const result = {};
   result.build = await build(run);
+  // [EXP-W01b] Why: a failed build must not run stale dist against a shared engine. Rejected:
+  // continuing for diagnostics (those results cannot qualify the source this receipt names).
+  if (run.steps.find(s => s.name === 'build')?.code !== 0) return { result, step: null, bound: null };
   const bound = engineBinding(run, config);
   result.engine = bound.engine ?? null;
   if (!bound.engine) return { result, step: null, bound: null };
@@ -368,7 +374,7 @@ async function engineGate(run, config, entry) {
   const restoreTo = await plannerBefore(run, result, bound);
   const stop = startSampler();
   let step;
-  try { step = await run.step(entry.name, 'node', entry.args, { env, timeoutMs: entry.timeoutMs }); }
+  try { step = await run.step(entry.name, 'node', entry.args, { env, timeoutMs: entry.timeoutMs, heavy: !!entry.heavy }); }
   finally { result.containers = stop(); await plannerAfter(run, result, bound, restoreTo); }
   result.coRunning = listTx2Containers().map(c => ({ name: c.name, memCapBytes: c.memBytes, nanoCpus: c.nanoCpus, health: c.health }));
   result.volumeBytes = volumeBytes(config, bound.info.volume);
@@ -581,25 +587,31 @@ function runGit(args, encoding = 'utf8') {
 // Kept as one function so EXP-N01's NS gate can land beside it without conflicts.
 const GS_TOTAL = 20;
 async function gateGS(run, config) {
+  const extraEnv = brokerEnv(run.lane, run.options['broker-dir'], path.join(REPO, 'runs'));
   const output = run.raw('gs-report.json');
   const rung = String(run.options.rung ?? '10k');
   const args = ['lab/scenarios/run.mjs', '--lane', run.lane, '--rung', rung, '--output', output, '--raw-dir', run.rawDir,
     '--scenarios', String(run.options.scenario ?? 'all'), '--readers', String(run.options.readers ?? 16)];
-  for (const key of ['sweep-cap', 'sweep-concurrency', 'faults', 'drain-timeout-ms']) if (run.options[key]) args.push(`--${key}`, String(run.options[key]));
-  if (run.options['fresh-world']) args.push('--fresh-world');
-  const { result, step, bound } = await engineGate(run, config, { name: 'gs-scenarios', queryPath: `${run.lane}-datalog`, args, timeoutMs: 8 * 3600_000 });
+  for (const key of ['sweep-cap', 'sweep-concurrency', 'faults', 'drain-timeout-ms', 'layout-reader']) if (run.options[key]) args.push(`--${key}`, String(run.options[key]));
+  args.push('--fresh-world');
+  if (extraEnv.QLEVER_BROKER_DIR) args.push('--broker-dir', extraEnv.QLEVER_BROKER_DIR);
+  const { result, step, bound } = await engineGate(run, config, { extraEnv, name: 'gs-scenarios', queryPath: `${run.lane}-datalog`, args, timeoutMs: 8 * 3600_000, heavy: true });
   if (!bound) return result;
-  const scen = path.join(REPO, 'lab/scenarios');
   const fixtureFiles = [];
-  for (const entry of fs.readdirSync(scen, { withFileTypes: true })) {
-    const dir = path.join(scen, entry.name);
-    if (!entry.isDirectory()) { if (entry.name.endsWith('.mjs')) fixtureFiles.push(path.relative(REPO, dir)); continue; }
-    for (const f of fs.readdirSync(dir)) if (/\.(mjs|json)$/.test(f)) fixtureFiles.push(path.relative(REPO, path.join(dir, f)));
-  }
-  for (const f of fs.readdirSync(path.join(REPO, 'lab/oracles/replay'))) if (f.endsWith('.py')) fixtureFiles.push(`lab/oracles/replay/${f}`);
+  const walk = dir => {
+    for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+      const file = path.join(dir, e.name);
+      if (e.isDirectory() && e.name !== '__pycache__') walk(file);
+      else if (e.isFile() && /\.(mjs|ts|json|py|md)$/.test(e.name)) fixtureFiles.push(path.relative(REPO, file));
+    }
+  };
+  for (const dir of ['lab/scenarios', 'lab/oracles/replay', 'lab/oracles/domain', 'lab/world/W0']) walk(path.join(REPO, dir));
+  fixtureFiles.push('lab/acceptance/cases/CS-GS.json');
+  for (const f of fs.readdirSync(path.join(REPO, 'lab/bench/lib')).filter(f => /\.(ts|py)$/.test(f))) fixtureFiles.push(`lab/bench/lib/${f}`);
   result.fixtures = fileHashes(run, fixtureFiles.sort(), 'oracle-fixture');
   const report = readJson(output, null);
   if (!report) { run.reason('no GS report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
+  for (const reason of gsRefusals(report, readJson(path.join(REPO, 'lab/acceptance/obligations.json'), {}).version)) run.reason(reason);
   run.store(output, 'raw-outcome');
   for (const f of fs.readdirSync(run.rawDir).filter(f => f.endsWith('-checkpoint.json'))) run.store(path.join(run.rawDir, f), 'raw-outcome');
   result.contactedEndpoint = report.endpoint ?? null;
@@ -619,9 +631,13 @@ async function gateGS(run, config) {
   result.gs = { rung, readers: report.readers, profile: report.profile, world: report.world, scope: report.scope, composition: report.composition, runTag: report.runTag,
     scenarios: report.scenarios.map(s => ({ scenario: s.scenario, slug: s.slug, verdict: s.verdict, verdicts: s.verdicts, expectedFile: s.expectedFile, wallMs: s.wallMs,
       correctness: s.correctness ? { pass: s.correctness.pass, fail: s.correctness.fail } : null, bars: s.bars?.map(b => ({ id: b.id, observed: b.observed, want: `${b.op} ${b.value}`, ok: b.ok })),
-      accounting: s.metrics?.accounting, subSchedules: s.subSchedules, firstFailures: s.firstFailures })) };
+      accounting: s.metrics?.accounting, subSchedules: s.subSchedules, diagnostics: s.diagnostics, firstFailures: s.firstFailures })) };
   result.cases = ran.map(s => ({ caseId: `GS.${String(s.scenario).padStart(2, '0')}`, mode: rung, status: s.verdict, oracleId: 'O-REPLAY+O-DOMAIN', rawResultSha256: sha256(JSON.stringify(s)), languages: ['triplex-public'] }));
-  result.scopes = { worldScope: report.scope, fresh: !!run.options['fresh-world'] };
+  result.scopes = { worldScope: report.scope, fresh: true };
+  result.gs.qlever = report.qlever;
+  result.gs.slot = bound.info.slot;
+  result.gs.resident = bound.info.mode === 'resident';
+  result.gs.coRunning = result.coRunning;
   return result;
 }
 
@@ -677,13 +693,13 @@ main(async () => {
   // qualify would execute, without locks, builds or engines. OBL (run an obligation's pinned case manifest on a slot) exists
   // only as a plan: no executable case manifests are pinned yet, so it never runs.
   if (options['dry-run']) {
-    if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS', 'OBL'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane)) fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS|OBL --lane xtdb|qlever --slot S --dry-run [--plan FILE]');
+    if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS', 'OBL'].includes(gate) || !(gate === 'GS' ? GS_LANES : ['xtdb', 'qlever']).includes(options.lane)) fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS|OBL --lane xtdb|qlever --slot S --dry-run [--plan FILE]');
     const info = slotInfo(loadSlots(), options.lane, options.slot ?? 'dev');
     console.log(JSON.stringify({ dryRun: true, gate, lane: options.lane, slot: info.slot, endpoint: info.endpoint, container: info.container, mode: info.mode ?? null,
       plan: options.plan ? readJson(path.resolve(options.plan)) : null, executes: gate !== 'OBL', missing: gate === 'OBL' ? 'the OBL gate (run pinned case manifests on a slot) is not implemented' : null }));
     return;
   }
-  if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS'].includes(gate) || !['xtdb', 'qlever'].includes(options.lane))
+  if (!['G0', 'G1', 'G2', 'G4', 'NS', 'GS'].includes(gate) || !(gate === 'GS' ? GS_LANES : ['xtdb', 'qlever']).includes(options.lane))
     fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|GS --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT] [--previous RUN-ID] [--cases N] [--workloads 01,02]\n  NS: --rung 10k|100k|1m|10m [--slot s1] [--ns-profile smoke|screening|acceptance] [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public]\n  GS: [--scenario 2,3] [--rung 10k] [--readers 16]');
   const config = loadSlots();
   // [EXP-000] runKind defaults to diagnostic so an unlabelled run can never close anything (V12, B7).

@@ -278,3 +278,41 @@ The historical administrative `RULINGS-PENDING.md` restoration's `b86222c537567c
 ### Not done / open boundaries
 
 No acceptance edit, repin, version bump, merge, push, publish or promotion. No native PostgreSQL or FoundationDB cluster, native DuckDB or Datomic run. PostgreSQL's BIGINT mismatch is resolved by documented/source-backed early rejection, not a new schema or a server-execution claim. FoundationDB's wrapper/encoded-byte proof uses the documented native size limits and a substituted transport; native conflict-range overhead, retry/durability behavior and performance remain unqualified. The new bounded-FDB admission path adds a preliminary read/encoding pass; its performance cost is not measured. No full root `pnpm check`, browser suite, full G1 or GS.12 `outcomes-match-golden` run. Decimal support and KV integer Datalog support remain outside this fix. Independent review and contract repinning remain pending.
+
+## Round 5 — current-main synchronization only
+
+Merged current main **`e4850f801b8a7771a94e1b3394ecc5ddf24efb5f`** into `exp/GS12F-typed-unholdable`, whose pre-merge head was `f8d1c3da0a871f4c9c724ebae09e380dbb9222a8`. Read the reviewer’s [round 3 report](/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/VERIFY-round3.md) from the `verify-gs12f` worktree. Its functional observations remain historical reviewer evidence; this round addresses its acceptance-tree blocker only.
+
+The three content conflicts were confined to `lab/acceptance/ACCEPTANCE.md`, `RULINGS-PENDING.md` and `obligations.json`. Each was resolved using the exact main blob. Main’s new `cases/CS-GS.json` was imported by the merge. **`git diff main -- lab/acceptance` is empty**, checked before and after the fresh tests. No contract regeneration, version change or repin was authored. The old administrative pin difference is therefore gone. Main’s other changes were imported without authored implementation changes. The reviewer’s nonblocking SQLite source-pointer correction was deliberately left for a later change under this round’s “No other change” instruction.
+
+### Fresh focused verification
+
+The [runner](round5/run.sh) ran under `lab/bin/heavy.mjs --label CX-GS12F-R5` after waiting for a shared slot. Host free disk exceeded 5 GiB both before queueing and at admission. The existing pinned installation was reused; no dependencies were changed. No engine was accessed or reserved.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Core unit suite | **854/854 tests, 59 files passed** | [core.log](round5/evidence/attempt-1/core.log) |
+| Bounds versus actual codecs, copied controls and physical wrapper controls | **55/55 tests, 5 files passed** | [bounds.log](round5/evidence/attempt-1/bounds.log), [fresh observations](round5/evidence/attempt-1/probes/) |
+| Execution-source stability and acceptance equality | **703 source/configuration inputs unchanged; acceptance equals frozen/current main** | [start manifest](round5/evidence/attempt-1/sources.json), [closeout](round5/evidence/attempt-1/closeout.json) |
+
+[Exit statuses](round5/evidence/attempt-1/exits.txt) are all zero. This reruns the existing round 4 offline bounds suite without changing its predicates or vectors; the reviewer’s larger 199-input legacy suite and live controls were not rerun. Vite’s existing future-config-loader warning and Node’s SQLite experimental warning are retained in raw output. The evidence directory is below 1 MB in total and requires no external bulky-evidence relocation.
+
+### Updated direct-pin inventory against current main
+
+The [audit](round5/audit.py) recursively intersects changed paths against the current-main obligations’ direct path/hash pins and input hashes. Exactly one directly pinned path differs; the current-main hash also equals its published hash:
+
+| Pinned path | Current-main / published SHA-256 | Candidate SHA-256 |
+| --- | --- | --- |
+| `packages/testkit/src/index.ts` | `6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988` | `432cec5c6aa33150c5c6f6c54091184edcaece3395ee3c809524c5502594a6d6` |
+
+This supersedes the earlier rounds’ current-comparison inventories while preserving their historical provenance. No acceptance path differs from current main. The next contract builder owns repinning the testkit export.
+
+### Round 5 PASS audit
+
+1. **Existing core and bounds-suite assertions:** content is determined by the unchanged test assertions over exact values, typed errors, callback/claim counters, encoded-byte endpoints and public readback. They execute anew in this merged worktree with fresh per-test backends/runtimes; new observation output is isolated in `round5/evidence/attempt-1/probes/`. Binding is to the actual selected adapter/codec, literal inputs, configured domain and captured source bytes. The FoundationDB transport substitute remains a substitute, and offline success makes no native-cluster claim. Existing predicates are described in the round 4 audit; no new semantic success predicate was introduced here.
+2. **`round5/audit.py`:** acceptance equality checks the real Git content diff against an explicitly frozen main SHA and also asserts that the current main ref still resolves to that SHA. Direct pins compare actual current file bytes with main’s Git blobs and published direct hashes. Fresh start/end manifests hash 703 actual source/configuration files, including the runner/audit, and require identical source rows at closeout. The merge parent, pre-merge head, main SHA, timestamps, offline-only status and null physical slot bind the observations to this attempt. A previous manifest cannot substitute for the fresh closeout calculation.
+3. **`round5/run.sh`, raw logs and this report:** command exits are retained separately and reported only with the test runner’s actual totals and predicate boundaries. This fresh attempt passed both requested suites and the explicit equality/stability checks. No formal acceptance receipt, GS.12 closure, obligation promotion or native-service PASS is generated. [SHA256SUMS](round5/SHA256SUMS) binds the retained raw evidence for inspection; it is an integrity manifest, not semantic acceptance.
+
+### Not done / open boundaries
+
+No authored implementation change, contract rebuild, repin, publish, push or merge into main. No live engine tests, reviewer legacy matrix, full root check, package rebuild/consumer check, full GS.12 or performance qualification in this sync round. Earlier native PostgreSQL/FoundationDB/DuckDB/Datomic and QLever live limitations remain. The testkit repin and the reviewer’s nonblocking SQLite evidence-pointer correction remain with their respective owners/follow-up work.
