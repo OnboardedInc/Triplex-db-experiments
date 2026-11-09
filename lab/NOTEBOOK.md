@@ -1607,3 +1607,18 @@ Where each priority stands, from evidence so far (research probes and baselines;
   RT01's core rounds start from main after RQ01 merges; each lane branch takes its part after it merges main; contract 0.4.0 compiles it all.
 - **For Sam (Q89g):** how a caller names one exact commit in the public API: (A) no new field, (B) a raw position, (C) an opaque
   scope-checked snapshot token. R33 recommends C. After Q90a, recordedAt: receipt.instant already pins one commit exactly.
+
+## 2026-11-09 00:28Z: hourly pass: usage 4%; progress by priority; R34 launched for P5
+- **Where each priority stands:**
+  - **P1 (pinned reads):** record time at decision designed (R33, Q90), its oracle half building (O06), and the route-equivalence harness in
+    round 2 (RQ01). The C8 QLever closure slowdown is under investigation (C8-R4).
+  - **P2 (commits):** the QLever broker (P2Q) is in review round 8; the SQLite log store (SQL01) is accepted default-off and waits for P2Q.
+    Lane D moves to Postgres (DA04) because dev storage can lose acknowledged commits (Q88a).
+  - **P3 (feed):** SQL01's feed has no gaps or repeats across 50 abrupt stops; no P3 qualification yet, since no executing gate exists
+    (G03 is migrating fixtures).
+  - **P4 (current values):** waits for Q89b refusals and RT01; DA03 reads through :f/live (Q89e).
+  - **P5 (release activation):** least advanced; queued behind SQL01 for months of plan time. **R34 (Opus high) writes a three-lane EXP-P5
+    brief now:** sweep reads at one pinned basis without long read transactions, which lane can start first from main, and a measurement
+    design that binds data volume (the C8 lesson) and runs on a dedicated slot.
+- **Rate of learning:** the review loop keeps finding "evidence accepted that should not be" (K01 four rounds, O-OBS four, P2Q seven).
+  Each round narrows the gap, but the same class recurs; the PASS-audit step K01 round 5 introduced should become standard in builder briefs.
