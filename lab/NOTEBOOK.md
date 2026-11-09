@@ -1789,3 +1789,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
   the A0 encoding's pull cost, not the delta, and needs its own look (R17's compact current-graph projection is the candidate).
 - **What it means:** the QLever lane is viable only with a rebuild loop; a rebuild costs seconds, so generations from the log (phase 2) are
   the plan. Phase 2 waits for the broker (P2Q) to merge. Review CX-VQG1 is checking phases 0 and 1.
+
+## 2026-11-09 03:31Z: W02 and QG1 on main; contract 0.3.13 built; the scale window runs the XTDB exclusive reruns
+- **Merged:** QG1 phases 0-1 (diagnostic, with bounded-slot QLever startup in engine.mjs) and W02, the golden scenario harness v2 (with W01b).
+  W02's 26 missing-claim failures per lane are the list of O-DOMAIN checks still to build. Six W02 evidence files over 1 MB went to the
+  durable folder. Q87 gate 108/108 after each merge.
+- **Contract 0.3.13 built:** 494 mutations, evaluator 108/108, XTDB G0 1,218/1,218, Datomic G0 1,253/1,253; in review. It brings lane D's
+  adapter to main.
+- **Reviews:** GS12F round 2 found four more bounds-vs-codec mismatches (sparse arrays, XTDB journal depth, PostgreSQL fractional datetimes,
+  FoundationDB size limit) after 199 round trips and 759 typed rejections passed; P2Q round 9 built reads from one wrapped table and is
+  in review round 10.
+- **Scale window:** X02 and C8 G1/G2 and J01 compact-on G1 on xtdb-s1 (CX-INT-XCJ).
