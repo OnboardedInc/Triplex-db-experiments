@@ -10,7 +10,7 @@ import { seedW0 } from "../lib/w0-seed.ts";
 import { readW0Fingerprint, fingerprintSweep, FingerprintRefusal } from "../lib/w0-fingerprint.ts";
 import { recoverSweep } from "../lib/sweep-recovery.ts";
 import { subjectList, Controller, runW0Sweep } from "../lib/sweep.ts";
-import { applyW0Trace, trafficArm, ratioSummary } from "../lib/w0-traffic.ts";
+import { applyW0Trace, trafficArm, ratioSummary, waitUntil } from "../lib/w0-traffic.ts";
 const dir = () => fs.mkdtempSync(path.join(os.tmpdir(), "p5-r2-"));
 test("shared G0 reads every subject and refuses altered digest/count/binding/partial/deadline", async () => {
   const scope = randomUUID(),
@@ -126,11 +126,27 @@ test("G4 ten actual abrupt controller exits resume a 650-subject sweep without v
     );
     assert.ok(r.ok);
   }
+  const activation = await comp.transact(
+    [
+      {
+        op: "assert",
+        entityId: "p5:tenant",
+        attribute: "p5/activation",
+        value: { type: "string", value: W0.R2.hash },
+        validFrom: V_W0,
+      },
+    ],
+    {},
+  );
+  assert.ok(activation.ok);
   const result = await recoverSweep({
     comp,
     scope,
     subjects: subjectList(650),
-    basis: { position: 650, validAt: V_W0 },
+    basis: { position: activation.value.position, validAt: V_W0 },
+    activations: [
+      { tx: activation.value.position, from: W0.POPULATION_VALID_TIME, release: W0.R2.hash },
+    ],
     cursor: path.join(dir(), "cursor.json"),
     sweepId: "g4-" + scope,
     seed: "actual-stops",
@@ -138,7 +154,9 @@ test("G4 ten actual abrupt controller exits resume a 650-subject sweep without v
   assert.equal(result.status, "PASS");
   assert.equal(result.processes.filter((p) => p.stopped && p.signal === "SIGKILL").length, 10);
   assert.equal(result.complete, true);
-  assert.ok(result.retries >= 5);
+  assert.equal(result.retries, 5);
+  assert.equal(result.referencePublication, false);
+  assert.equal(result.publications, 11);
 });
 test("controller counts consecutive breaches during hold; stopped limit resumes after guard", () => {
   const c = new Controller(4),
@@ -255,4 +273,59 @@ test("paused workers exit when the admitted worker drains remaining pages", asyn
   });
   assert.equal(result.complete, true);
   assert.equal(result.published.length, 11);
+});
+
+test("fractional offer deadlines are checked against the monotonic clock", async () => {
+  let now = 0,
+    calls = 0;
+  await waitUntil(
+    1.5,
+    () => now,
+    async (ms) => {
+      calls++;
+      now += Math.floor(ms);
+    },
+  );
+  assert.ok(now >= 1.5);
+  assert.equal(calls, 2);
+});
+test("G4 refuses publication without activation records", async () => {
+  const scope = randomUUID();
+  await assert.rejects(
+    recoverSweep({
+      comp: memoryComposition("xtdb", scope),
+      scope,
+      subjects: subjectList(650),
+      basis: { position: 0, validAt: V_W0 },
+      cursor: path.join(dir(), "missing.json"),
+      sweepId: scope,
+      seed: "missing",
+    }),
+    /activation/,
+  );
+});
+test("steady scheduled commands never record negative offer-to-ACK latency", async () => {
+  const scope = randomUUID(),
+    comp = memoryComposition("xtdb", scope);
+  await seedW0(comp, 50, path.join(dir(), "seed.ndjson"));
+  const d = dir();
+  const r = await trafficArm({
+    comp,
+    scope,
+    N: 50,
+    dir: d,
+    id: "steady",
+    seed: "steady-offer-1",
+    durationS: 5,
+    traceOffsetS: 0,
+    workers: 1,
+    controllerOn: false,
+    sweep: false,
+    release: "R1",
+  });
+  assert.ok(r.commit.count > 0);
+  for (const line of fs.readFileSync(r.rawWrites, "utf8").trim().split("\n")) {
+    const x = JSON.parse(line);
+    assert.ok(x.ackAtMs >= x.scheduledAtMs);
+  }
 });

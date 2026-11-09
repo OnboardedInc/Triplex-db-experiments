@@ -49,3 +49,17 @@ node lab/bin/heavy.mjs --label CX-P5A-G6 -- node --experimental-strip-types --te
 ```
 
 This registers the actual memory composition's `sweepPage` as `sweep-page` alongside RQ01 source routes, exercises sparse P positions, T/TP refusal, future P, later retirement masking and the harness maintenance model. It is an offline fixture; it cannot qualify real purge leases, checkpoint gates, XTDB compaction, Datomic indexing or generation switches. Those live cases must be implemented on each corresponding lane. Its default RQ01 reference is diagnostic; an independently supplied O-REPLAY reference is still needed for qualification.
+
+## Round-2 offline additions
+
+Round 2 implements the memory traffic path and real controller-process recovery; the older missing-work list above is the round-1 state. Native A1 traffic, engine maintenance/counters and acceptance remain separate work. See the appended round-2 report.
+
+```sh
+node lab/bin/heavy.mjs --label CX-P5A-R2-tests -- node --experimental-strip-types --test lab/bench/test/bench.test.ts lab/bench/test/p5.test.ts lab/bench/test/p5-round2.test.ts
+node lab/bin/heavy.mjs --label CX-P5A-R2-G6 -- node lab/bench/run-rq01-stack.mjs d5cd32e6
+node lab/bin/heavy.mjs --label CX-P5A-R2-memory -- node --max-old-space-size=4096 --experimental-strip-types lab/bench/round2.ts --seed-receipt runs/P5/a0-1k-final/receipt.json --rounds 8 --duration-s 65 --output runs/P5/r2-1k-new/receipt.json
+node lab/bin/heavy.mjs --label CX-P5A-R2-10k -- node --max-old-space-size=6144 --experimental-strip-types lab/bench/round2.ts --seed-receipt runs/P5/a0-10k-01/receipt.json --g4-only --output runs/P5/r2-10k-new/receipt.json
+node lab/bin/heavy.mjs --label CX-P5A-R2-audit -- node --experimental-strip-types lab/bench/audit-traffic.ts runs/P5/r2-1k-new/receipt.json runs/P5/r2-1k-new/raw-audit.json
+```
+
+Use fresh output directories and check >=5 GiB host free before each heavy admission. The restore supports `seed.ndjson.gz` when the original has been losslessly retained with a verified decompression manifest. Restoring bytes, their hash, or the prior receipt status never grants admission: each measuring copy must pass the fresh shared W0 content gate.

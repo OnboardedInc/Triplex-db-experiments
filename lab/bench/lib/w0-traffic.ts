@@ -8,6 +8,14 @@ import { W0, V_W0, canonical, worldOf, sha256 } from "./w0-world.ts";
 import { Rng, seedOf } from "./rng.ts";
 import type { CompositionHandle } from "./composition.ts";
 const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, Math.max(0, ms)));
+export async function waitUntil(
+  target: number,
+  clock: () => number = () => performance.now(),
+  pause: (ms: number) => Promise<void> = sleep,
+) {
+  // [EXP-P5-R2] Why: native timers may wake before fractional deadlines; the monotonic clock owns offer time. Rejected: trusting one setTimeout (negative scheduled-to-ACK latency).
+  while (clock() < target) await pause(Math.max(1, target - clock()));
+}
 const yieldLoop = () => new Promise<void>((r) => setImmediate(r));
 export function percentile(samples: readonly number[], q: number) {
   if (!samples.length || samples.some((n) => !Number.isFinite(n) || n < 0))
@@ -235,7 +243,7 @@ export async function trafficArm(o: ArmOptions) {
   // Open-loop timers enqueue at their absolute offer time, even while prior subject work waits.
   const writer = (async () => {
     for (const event of events) {
-      await sleep(start + event.atMs - performance.now());
+      await waitUntil(start + event.atMs);
       if (failed) break;
       traceIndex++;
       void submit(event, start + event.atMs).catch((e) => {

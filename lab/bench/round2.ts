@@ -7,7 +7,7 @@ import { memoryComposition } from "./lib/memory.ts";
 import { fingerprintSweep } from "./lib/w0-fingerprint.ts";
 import { recoverSweep } from "./lib/sweep-recovery.ts";
 import { runMemoryRounds } from "./lib/w0-rounds.ts";
-import { V_W0, sha256 } from "./lib/w0-world.ts";
+import { W0, V_W0, sha256 } from "./lib/w0-world.ts";
 import { subjectList } from "./lib/sweep.ts";
 const argv = process.argv.slice(2),
   opt = (k: string, d: string) => {
@@ -77,11 +77,29 @@ try {
   report.g0 = await fingerprintSweep(admission);
   save();
   console.error("[P5 R2] ten actual controller process stops");
+  const activation = await comp.transact(
+    [
+      {
+        op: "assert",
+        entityId: "p5:tenant",
+        attribute: "p5/activation",
+        value: { type: "string", value: W0.R2.hash },
+        validFrom: V_W0,
+      },
+    ],
+    { commandId: scope + ":recovery-activation" },
+  );
+  if (!activation.ok || activation.value.position !== basis.position + 1)
+    throw new Error("recovery activation mismatch");
+  report.recoveryActivation = activation.value;
   report.g4 = await recoverSweep({
     comp,
     scope,
     subjects: subjectList(prior.N),
-    basis,
+    basis: { position: activation.value.position, validAt: V_W0 },
+    activations: [
+      { tx: activation.value.position, from: W0.POPULATION_VALID_TIME, release: W0.R2.hash },
+    ],
     sweepId: scope + ":g4",
     cursor: path.join(path.dirname(output), "recovery-cursor.json"),
     seed: "p5-r2-stop-1",

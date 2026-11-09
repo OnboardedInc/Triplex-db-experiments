@@ -1,3 +1,4 @@
+import { DomainOracle, wireRecord, emptyWireState } from "./w0-gates.ts";
 import { fork } from "node:child_process";
 import { Rng, seedOf } from "./rng.ts";
 import { subjectHash } from "./sweep.ts";
@@ -16,16 +17,21 @@ export async function recoverSweep(o: {
   stops?: number;
   validate?: (records: readonly any[]) => Promise<void>;
 }) {
+  if (!o.activations?.length)
+    throw new Error("G4 publication requires activation/reconcile records");
   const pages = Math.ceil(o.subjects.length / 64),
     count = o.stops ?? 10;
   if (pages < count || count < 1)
     throw new Error("G4 needs enough distinct pages for process stops");
+  const oracle = new DomainOracle();
+  let expectedState: any = emptyWireState();
   const rng = new Rng(seedOf(o.seed));
   const targets = new Set<number>();
   while (targets.size < count) targets.add(rng.int(pages));
   const schedule = [...targets]
     .sort((a, b) => a - b)
     .map((page, i) => ({ page, phase: i % 2 ? "checkpoint" : "publish" }));
+  const expectedDeliveries = new Map<string, string>();
   const pageDeliveries = new Map<number, string>();
   const expected = new Map<string, string>(),
     deliveries = new Map<string, string>();
@@ -80,17 +86,38 @@ export async function recoverSweep(o: {
             } else if (expected.get(r.subject) !== bytes)
               throw new Error("G4 recovered output differs");
           }
-          value = await o.comp.publishOutbox(records.map((r: any) => r.record));
-          if (reference) pageDeliveries.set(page, canonical(value.deliveries));
-          else if (pageDeliveries.get(page) !== canonical(value.deliveries))
-            throw new Error("G4 retry delivery bytes differ");
-          if (value.retry) retries++;
-          else {
-            publications++;
-            for (const d of value.deliveries) {
+          // [EXP-P5-R2] Why: an independent reference must not pre-populate the recovery outbox. Rejected: publishing the reference (turns every interrupted attempt into a retry-only test).
+          if (reference) {
+            const expectedPublish = JSON.parse(
+              await oracle.call("publish", {
+                state: expectedState,
+                evaluations: records.map((r: any) => wireRecord(r.record)),
+              }),
+            );
+            expectedState = expectedPublish.state;
+            const referenceDeliveries = expectedPublish.deliveries.map((d: any) => ({
+              ...d,
+              payload: canonical(d.payload),
+            }));
+            pageDeliveries.set(page, canonical(referenceDeliveries));
+            for (const d of referenceDeliveries) {
               const key = d.id + ":" + d.seq;
-              if (deliveries.has(key)) throw new Error("G4 duplicate visible delivery");
-              deliveries.set(key, canonical(d));
+              if (expectedDeliveries.has(key)) throw new Error("independent reference duplicate");
+              expectedDeliveries.set(key, canonical(d));
+            }
+            value = { deliveries: referenceDeliveries, referenceOnly: true };
+          } else {
+            value = await o.comp.publishOutbox(records.map((r: any) => r.record));
+            if (pageDeliveries.get(page) !== canonical(value.deliveries))
+              throw new Error("G4 delivery bytes differ from independent reference");
+            if (value.retry) retries++;
+            else {
+              publications++;
+              for (const d of value.deliveries) {
+                const key = d.id + ":" + d.seq;
+                if (deliveries.has(key)) throw new Error("G4 duplicate visible delivery");
+                deliveries.set(key, canonical(d));
+              }
             }
           }
           if (!reference && stop?.phase === "publish" && stop.page === page) {
@@ -130,28 +157,44 @@ export async function recoverSweep(o: {
     await exit;
     if (stop && !stopped) throw new Error("G4 scheduled process stop did not occur");
   };
-  await run(undefined, true);
-  if (
-    expected.size !== o.subjects.length ||
-    subjectHash([...expected.keys()].sort()) !== subjectHash(o.subjects)
-  )
-    throw new Error("G4 reference coverage mismatch");
-  for (const stop of schedule) await run(stop);
-  await run();
-  // [EXP-P5-R2] Why: actual abrupt controller exits, unchanged owner, persisted page cursor and byte-equal outputs establish restart behavior. Rejected: caught callbacks pretending to be a process stop.
-  return {
-    status: "PASS" as const,
-    scope: o.scope,
-    basis: o.basis,
-    subjects: o.subjects.length,
-    listSha256: subjectHash(o.subjects),
-    seed: o.seed,
-    schedule,
-    processes,
-    retries,
-    publications,
-    visibleDeliveries: deliveries.size,
-    outputsSha256: sha256(canonical([...expected.entries()].sort())),
-    complete: true,
-  };
+  try {
+    const referenceCounts = await o.comp.storeCounts();
+    await run(undefined, true);
+    if (canonical(referenceCounts) !== canonical(await o.comp.storeCounts()))
+      throw new Error("reference mutated store");
+    if (
+      expected.size !== o.subjects.length ||
+      subjectHash([...expected.keys()].sort()) !== subjectHash(o.subjects)
+    )
+      throw new Error("G4 reference coverage mismatch");
+    for (const stop of schedule) await run(stop);
+    await run();
+    if (
+      publications !== pages ||
+      canonical([...deliveries.entries()].sort()) !==
+        canonical([...expectedDeliveries.entries()].sort())
+    )
+      throw new Error("G4 first publications/delivery coverage mismatch");
+    // [EXP-P5-R2] Why: actual abrupt controller exits, unchanged owner, persisted page cursor and byte-equal outputs establish restart behavior. Rejected: caught callbacks pretending to be a process stop.
+    return {
+      status: "PASS" as const,
+      scope: o.scope,
+      basis: o.basis,
+      subjects: o.subjects.length,
+      listSha256: subjectHash(o.subjects),
+      seed: o.seed,
+      schedule,
+      processes,
+      retries,
+      publications,
+      visibleDeliveries: deliveries.size,
+      outputsSha256: sha256(canonical([...expected.entries()].sort())),
+      complete: true,
+      referencePublication: false,
+      referenceCounts,
+      oracle: "fresh O-DOMAIN publish; reference never writes the outbox",
+    };
+  } finally {
+    oracle.close();
+  }
 }
