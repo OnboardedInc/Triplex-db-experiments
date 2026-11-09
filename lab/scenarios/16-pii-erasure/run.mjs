@@ -16,10 +16,10 @@ export function generate(spec, p) {
   const erased = Array.from({ length: p.subjects }, (_, n) => sidOf(n));
   const kept = Array.from({ length: p.negatives }, (_, n) => sidOf(p.subjects + n));
   const events = erased.map((sid, n) => { const at = Math.round((0.2 + 0.7 * (n + 0.5) / erased.length) * p.liveMs); return { at, emit: s => {
+    // O-REPLAY 0.4.1 models erasure (R-ERA-2): the op is spelled `erase`, in a command of its own.
     const c = s.command({ subject: sid, writer: 'person', at, commandId: `erasure/${sid}`, tags: { template: 'erasureRequest', erasure: true } });
-    c.assert(`erasure:${sid}`, ':erasure/requested', VALUE.str(`dsr-${sid}`), 'ErasureLedger', { validFrom: BT.NOW - 1000 })
-      .assert(`erasure:${sid}`, ':erasure/attributes', VALUE.str(PII.join(',')), 'ErasureLedger', { validFrom: BT.NOW - 1000 });
-    c.done();
+    const done = c.done();
+    for (const attribute of PII) done.operations.push({ op: 'erase', entityId: attribute.startsWith(':worker/') ? `worker:${sid}` : `i9:${sid}`, attribute });
   } }; });
   const { stream, traceSubjects } = scenarioStream(spec, p, { subjects: [...erased, ...kept], events });
   return { stream, digestSubjects: [...erased, ...kept, ...traceSubjects], validAts: [BT.NOW, BT.OCT15],

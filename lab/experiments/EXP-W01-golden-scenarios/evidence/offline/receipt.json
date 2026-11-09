@@ -1,0 +1,45 @@
+{
+  "format": "tx2-w01b-offline-checks/1",
+  "sourceCommit": "c9baf21",
+  "node": "v22.23.2",
+  "checks": [
+    {
+      "command": "node lab/bin/heavy.mjs --label CX-W01B-harness-tests -- node --test lab/scenarios/lib/runner.test.mjs lab/bin/test/lab.test.mjs",
+      "exit": 0,
+      "tests": 23,
+      "pass": 23
+    },
+    {
+      "command": "node lab/bin/heavy.mjs --label CX-W01B-golden-check -- node lab/scenarios/expect.mjs --scenarios all --rungs 10k --check",
+      "exit": 0,
+      "same": 20
+    }
+  ],
+  "sourceHashes": {
+    "lab/scenarios/lib/runner.test.mjs": "979ec94fa118f2bd579bb5f5444941d43624f938ca85f1cf46a18910d4d54a63",
+    "lab/scenarios/lib/runner.mjs": "eeb1f8d824b5acbe4e8af56376fde5da0e4351d2b55b69599d166765472fca81",
+    "lab/scenarios/lib/diagnostics.mjs": "1328f792662b17dc9b2bcca3517855123bee777171bb637d0332fcd90c1b7773",
+    "lab/scenarios/lib/composition.mjs": "4bd21e907b31b47c5f272d5318b915f9ef8372091a0ce5d14c8025a43fa3d50c",
+    "lab/bin/test/lab.test.mjs": "5ac1fddf05493dd24c5fc6c78b1b9633023788800f7ed2f968f76b8fac1680df",
+    "lab/bin/gate.mjs": "5a76116e11a8a1a36839b1fd7e9eb2c37cacf92362b40f13152c800ac10a706b",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+  },
+  "logs": [
+    {
+      "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/offline/tests.out.txt",
+      "sha256": "300cd0f1d3cf1a5d1973c6f02ad604fad01fb4e3f3be2bda470a2d18d3fc0ada"
+    },
+    {
+      "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/offline/tests.err.txt",
+      "sha256": "7e5b5a485f95f4cbfce717a7f7a3993d46e1e539d3dc9bc83e1b859f10c351b3"
+    },
+    {
+      "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/offline/goldens.out.txt",
+      "sha256": "66e12197fd9d6faf74073e921fd5f987b5d27e08f4ef8817fcfa5099d9ad97a9"
+    },
+    {
+      "path": "lab/experiments/EXP-W01-golden-scenarios/evidence/offline/goldens.err.txt",
+      "sha256": "af22d8708506dae73995cf57df5930339165d29edfbc9b8a292e1bfe5961be05"
+    }
+  ]
+}

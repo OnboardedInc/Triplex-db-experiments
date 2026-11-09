@@ -16,6 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { BT, GEN_VERSION, WORLD_BATCH, canonRow, digestRows, rngFor, sha256, subjectEntities, worldOps, worldSid } from './gen.mjs';
 import { runOracle, subjectOfEntity } from './oracle.mjs';
+import { diagnostics } from './diagnostics.mjs';
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 export const EMPTY_DIGEST = digestRows([]);
@@ -89,7 +90,7 @@ export async function ensureWorld(comp, { rung, seed, size, log }) {
 
 // ------------------------------------------------------------------ executor
 
-class Executor {
+export class Executor {
   constructor(ctx) {
     this.ctx = ctx; this.queues = new Map(); this.inflight = new Map(); this.refIds = new Map();
     this.attempts = []; this.byIndex = new Map(); this.ledger = new Map(); this.pending = 0;
@@ -153,16 +154,16 @@ class Executor {
     const epoch = this.ctx.epoch;
     const faulted = () => this.ctx.restarting || this.ctx.epoch !== epoch;
     try { r = await comp.transact(this.physOps(cmd), this.physMeta(cmd)); }
-    catch (error) { r = { status: 'error', tag: error?._tag ?? null, message: String(error?.message ?? error).slice(0, 800) }; }
+    catch (error) { const message = String(error?.message ?? error).slice(0, 800); r = /no (assertion )?id for (precondition )?ref/.test(message) ? { status: "blocked", category: "predecessor-not-committed", message } : { status: "error", tag: error?._tag ?? null, message }; }
     a.conflicts = r.conflicts ?? 0;
     // Outcome unknown: a lost ACK by fault (runtime restart), or a transient infrastructure WriteError (a
     // deadline, "Cannot acquire XTDB source cut") after which the command may or may not have committed.
     // Resolve by commandId; re-send with the same commandId only if it never committed (claims make it safe).
     // A ReadError inside transact (seen on XTDB under load: "XTDB read failed") also leaves the outcome open.
-    const transient = x => (x.status === 'rejected' && x.category === 'write-error' && /cannot acquire|deadline|timeout|timed out|econn|connection|outcome/i.test(x.message ?? ''))
+    const transient = x => (x.status === 'rejected' && x.category === 'write-error' && /cannot acquire|cannot read|deadline|timeout|timed out|econn|connection|outcome/i.test(x.message ?? ''))
       || (x.status === 'error' && x.tag === 'ReadError');
     if (r.status === 'unknown' || (r.status !== 'committed' && faulted()) || transient(r)) {
-      a.unknown = { tag: r.tag, message: r.message ?? null };
+      a.unknown = { tag: r.tag, message: r.message ?? null, causes: r.causes ?? [] };
       a.transientRetries = 0;
       const priorCommit = () => this.attempts.find(x => x !== a && x.status === 'committed' && this.ctx.gen.stream.commands[x.index].meta.commandId === cmd.meta.commandId);
       for (let tries = 0; tries < 50; tries++) {
@@ -176,7 +177,7 @@ class Executor {
           r = { status: 'committed', receipt: { txId: found.record.txId, position: found.record.position, instant: found.record.instant, assertionIds: found.record.changes.filter(ch => ch.op === 'assert').map(ch => ch.tripleId) } }; a.resolvedBy = 'transactionByCommand'; break;
         }
         if (found.ok && !found.record) {
-          try { r = await comp.transact(this.physOps(cmd), this.physMeta(cmd)); } catch (error) { r = { status: 'error', message: String(error) }; }
+          try { r = await comp.transact(this.physOps(cmd), this.physMeta(cmd)); } catch (error) { r = { status: 'error', tag: error?._tag ?? null, message: String(error) }; }
           a.resolvedBy = 'retry'; a.transientRetries++;
           if (r.category === 'command-already-committed') { if (priorCommit()) break; continue; } // the earlier attempt did commit: resolve it by commandId
           if (r.status === 'committed' || (r.status === 'rejected' && !this.ctx.restarting && !transient(r))) break;
@@ -184,7 +185,7 @@ class Executor {
       }
     }
     a.doneAt = performance.now();
-    a.status = r.status; a.tag = r.tag ?? null; a.category = r.category ?? null;
+    a.status = r.status; a.tag = r.tag ?? null; a.category = r.category ?? null; a.causes = r.causes ?? [];
     if (r.status === 'committed') {
       a.receipt = { txId: r.receipt.txId, position: r.receipt.position, instant: r.receipt.instant };
       this.bindRefs(cmd, r.receipt.assertionIds, 'receipt');
@@ -206,7 +207,7 @@ class Executor {
       }
     } else {
       a.message = r.message ?? null;
-      check(`command-${cmd.index}-untyped-failure`, false, `${r.tag ?? 'error'}: ${r.message}`);
+      check(`command-${cmd.index}-${r.status === "blocked" ? "blocked-by-uncommitted-predecessor" : "untyped-failure"}`, false, `${r.tag ?? r.status}: ${r.message}`);
     }
     await this.ctx.hooks.onSettled?.(this.ctx, cmd, a);
     return a;
@@ -342,13 +343,27 @@ export async function runScenario({ spec, expected, hooks, comp, world, opts, lo
   const cpu = process.cpuUsage(cpu0); const wall = performance.now() - wall0;
   ctx.extra.clientCpuFraction = round((cpu.user + cpu.system) / 1000 / wall);
   ctx.Pend = await comp.currentPosition();
-  const feedUntil = performance.now() + 30_000;
-  while (ctx.feedSeen.length && ctx.feedSeen[ctx.feedSeen.length - 1].position < ctx.Pend && performance.now() < feedUntil) await sleep(50);
+  const feedUntil = performance.now() + 120_000;
+  // [EXP-W01b] Why: an initially empty feed is still behind Pend. Rejected: waiting only after
+  // the first page (prematurely stops the consumer when the engine delays that first page).
+  while ((ctx.feedSeen.at(-1)?.position ?? ctx.P0) < ctx.Pend && performance.now() < feedUntil) await sleep(50);
   feedStop = true; await feed;
 
   // Final state of every golden subject at latest, after quiescence.
   ctx.finals = {};
-  for (const sid of gen.digestSubjects) { const r = await pullDigest(ctx, sid, { validAt: BT.NOW }); ctx.finals[sid] = r; }
+  // [EXP-W01b] Why: retry failed final I/O, retaining every failure. Rejected: retrying wrong
+  // answers (could mask an inconsistent read) or discarding the first failure after recovery.
+  ctx.extra.finalPullErrors = [];
+  for (const sid of gen.digestSubjects) {
+    let r;
+    for (let t = 0; t < 5; t++) {
+      r = await pullDigest(ctx, sid, { validAt: BT.NOW });
+      if (r.ok) break;
+      ctx.extra.finalPullErrors.push({ sid, attempt: t + 1, error: r.error });
+      if (t < 4) await sleep(1000 * (t + 1));
+    }
+    ctx.finals[sid] = r;
+  }
   log('final pulls done; checking'); await commonChecks(ctx);
   if (hooks.check) await hooks.check(ctx);
   await postRunOracle(ctx);
@@ -421,6 +436,13 @@ async function commonChecks(ctx) {
   const w = ctx.gen.witnesses ?? { positive: [], negative: [] };
   check('witnesses-declared', w.positive.length > 0 && w.negative.length > 0, { positive: w.positive.length, negative: w.negative.length });
   const unchanged = [], changed = [];
+  // Witnesses of another kind (domain, valid-time, erasure) change outside the live-phase writes: the database
+  // check is then that no witness is written in the live phase; the scenario's own check judges the change.
+  if (w.kind) {
+    for (const sid of [...w.positive, ...w.negative]) { const f = await finalOf(sid); const live = (ex.ledger.get(sid) ?? []).filter(e => !setupIdx.has(e.index)); if (!f.ok || f.digest !== postSetup(sid) || live.length) changed.push(sid); }
+    check(`${w.kind}-witnesses-not-written-in-live-phase`, changed.length === 0, { changed: changed.slice(0, 5), count: changed.length });
+    return;
+  }
   for (const sid of w.positive) { const f = await finalOf(sid); if (!f.ok || f.digest === postSetup(sid)) unchanged.push(sid); }
   for (const sid of w.negative) { const f = await finalOf(sid); const live = (ex.ledger.get(sid) ?? []).filter(e => !setupIdx.has(e.index)); if (!f.ok || f.digest !== postSetup(sid) || live.length) changed.push(sid); }
   check('positive-witnesses-changed', unchanged.length === 0, { notChanged: unchanged.slice(0, 5), count: unchanged.length, of: w.positive.length });
@@ -555,5 +577,6 @@ function finish(ctx, checks, extra) {
     bars, metrics: m, positions: { P0: ctx.P0 ?? null, Pend: ctx.Pend ?? null }, oracleCases: ctx.oracleCases ?? [],
     firstFailures: [...dbFailed.slice(0, 5).map(c => ({ check: c.id, detail: c.detail })), ...failedBars.slice(0, 5).map(b => ({ bar: b.id ?? b.metric, observed: b.observed, want: `${b.op} ${b.value}` }))],
     readFailures: ctx.readFailures,
+    diagnostics: diagnostics({ attempts: ctx.ex.attempts, readFailures: [...ctx.readFailures, ...(ctx.extra.finalPullErrors ?? [])], feedErrors: ctx.feedErrors, failedChecks, failedBars }),
   };
 }
