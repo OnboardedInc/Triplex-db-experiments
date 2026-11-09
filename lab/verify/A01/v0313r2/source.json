@@ -1,0 +1,19 @@
+{
+  "candidate": "191f51c173ae605e278bebae319175a143b7ee2a",
+  "main": "e4850f801b8a7771a94e1b3394ecc5ddf24efb5f",
+  "merge": "2ec12111466f53718e1c8420f112402883981c28",
+  "reviewerHead": "d391885e24150cd5f67208d10e5799ea6a457859",
+  "started": 1794197361.205248,
+  "freeBytes": 12858884096,
+  "raw": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0311/contract-0.3.13-round2-attempt1",
+  "mergeExit": 0,
+  "testHead": "897a757fdf7acd84379c0f539e014dc850029e31",
+  "mainSinceDispatch": [
+    "lab/NOTEBOOK.md",
+    "lab/STATE.md"
+  ],
+  "testVsCandidate": [
+    "lab/NOTEBOOK.md",
+    "lab/STATE.md"
+  ]
+}

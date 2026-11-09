@@ -1,0 +1,28 @@
+{
+  "cause": "Normal clone MAIN derives clone-local store and locks; strict store refusal is expected. First G0 failed and is not qualified.",
+  "firstRunId": "G0-xtdb-20261109T041735Z-a76820",
+  "testHead": "897a757fdf7acd84379c0f539e014dc850029e31",
+  "linkedCommonDir": "/Users/sam/projects/triplex-db-2/.git",
+  "movedInstalledDependencyDirs": [
+    "node_modules",
+    "packages/qlever/node_modules",
+    "packages/core/node_modules",
+    "packages/host/node_modules",
+    "packages/cloudflare/node_modules",
+    "packages/sqlite/node_modules",
+    "packages/cli/node_modules",
+    "packages/testkit/node_modules",
+    "packages/dashboard/node_modules",
+    "packages/postgres/node_modules",
+    "packages/http/node_modules",
+    "packages/datomic/node_modules",
+    "packages/duckdb/node_modules",
+    "packages/foundationdb/node_modules",
+    "packages/w0/node_modules",
+    "packages/qualification/node_modules",
+    "packages/xtdb/node_modules",
+    "packages/sql/node_modules"
+  ],
+  "trackedSourceDiff": "empty",
+  "noReviewedFileChanged": true
+}

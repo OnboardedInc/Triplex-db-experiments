@@ -1,0 +1,20 @@
+{
+  "candidate": "191f51c173ae605e278bebae319175a143b7ee2a",
+  "testHead": "897a757fdf7acd84379c0f539e014dc850029e31",
+  "testedMain": "e4850f801b8a7771a94e1b3394ecc5ddf24efb5f",
+  "mainAfterReview": "cd1266d26ebd5838151910d269a0797ccd6c43c2",
+  "trackedSourceDiff": "empty",
+  "untrackedPaths": [
+    "lab/runs/G0/G0-datomic-20261109T042314Z-f3030c.json",
+    "lab/runs/G0/G0-datomic-20261109T042547Z-703fd6.json",
+    "lab/runs/G0/G0-xtdb-20261109T042058Z-82f6e0.json"
+  ],
+  "allCommandsFinished": true,
+  "sealedAt": 1794198658.330373,
+  "freeBytesBeforeCleanup": 12597891072,
+  "scratchRemovedAfterChecks": true,
+  "mainAdvancedPaths": [
+    "lab/NOTEBOOK.md",
+    "lab/STATE.md"
+  ]
+}

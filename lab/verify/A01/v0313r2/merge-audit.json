@@ -1,0 +1,93 @@
+{
+  "checkedAt": 1794198253.244826,
+  "candidate": "191f51c173ae605e278bebae319175a143b7ee2a",
+  "merge": "2ec12111466f53718e1c8420f112402883981c28",
+  "parents": [
+    "6b8d2182d78e567cf8e385622c9a259e8892687a",
+    "9a7996e2a242690edbc86417283d8c7348950adb"
+  ],
+  "testedCurrentMain": "e4850f801b8a7771a94e1b3394ecc5ddf24efb5f",
+  "testHead": "897a757fdf7acd84379c0f539e014dc850029e31",
+  "parentCompositePaths": [
+    "lab/acceptance/ACCEPTANCE.md",
+    "lab/acceptance/RULINGS-PENDING.md",
+    "lab/acceptance/obligations.json",
+    "lab/bin/engine.mjs",
+    "lab/bin/gate.mjs",
+    "lab/experiments/EXP-A01-acceptance-contract/REPORT-0.3.13.md",
+    "lab/experiments/EXP-A01-acceptance-contract/bin/pnpm",
+    "lab/experiments/EXP-A01-acceptance-contract/regressions/merge0313-round2.test.mjs"
+  ],
+  "manualResolutionPaths": [
+    "lab/acceptance/ACCEPTANCE.md",
+    "lab/acceptance/obligations.json",
+    "lab/bin/gate.mjs",
+    "lab/experiments/EXP-A01-acceptance-contract/REPORT-0.3.13.md",
+    "lab/experiments/EXP-A01-acceptance-contract/bin/pnpm",
+    "lab/experiments/EXP-A01-acceptance-contract/regressions/merge0313-round2.test.mjs"
+  ],
+  "obligationsChangedFields": [
+    "/inputs/lab/acceptance/RULINGS-PENDING.md",
+    "/pendingRulings/sha256",
+    "/pendingRulings/ids",
+    "/transitiveContractSha256"
+  ],
+  "pendingAddedRows": [
+    "| Q96a composition | P2 is measured per subject serially and in parallel across subjects, with the queue inside the candidate (Q51a); A0's single-flight composition stays only as a control arm. Golden scenario commit bars measured on single-flight A0 are DIAGNOSTIC (they measure queueing). | R39 3.2; R37 1.2 |",
+    "| Q96b stamps under concurrency | RT01 round A's client stamp is monotone only because A0 serializes every commit; any per-subject concurrent arm uses a decider-side stamp (the engine stamp after probe p9, or the broker's), per Q90c. RT01 round A's added scope-wide scan on A0 is measured on an engine before RT01 merges (G6). | R39 3.3 |",
+    "| Q96c the shortest path and the native check | Lane X's shortest path to P2 is XTDB behind the broker (EXP-P2B, Q51b, Q58b). EXP-P2X2 (lab/experiments/EXP-P2X2/BRIEF.md) runs once on an exclusive xtdb-s1 slot after K01's live run and before P5 A1, to settle whether the native path is closed, with the decision rule written in R39 4.5 before the run (native is closed if F3 p50 > 6 ms, or F5 p50 > 20 ms, or engine resolve > 7 ms per commit). If closed, the lab says so plainly (SCOPE 3.2) and keeps the native arm as a comparison. | R39 2, 4 |",
+    "| Q97a current pulls from H1 | Lane Q serves current-value pulls from the broker's SQLite H1 store, behind a default-off currentRoute: \"h1\" option; QLever keeps history, native SPARQL and analytics. This is the ruled design (Q68a, Q50a, Q68d), which SQL01 used only as an outage fallback. A route that cannot answer a basis exactly refuses (Q89b, Q89c, Q92h). EXP-QH1 (lab/experiments/EXP-QH1/BRIEF.md) builds it after P2Q and SQL01 merge; its G1 to G7 need no slot, G8 takes one exclusive qlever-s1 run. | R40 2-3 |",
+    "| Q97b the keep-alive stall | Every QLever latency measured from the host through QleverClient so far carries a 41 to 45 ms keep-alive stall on about a third of requests, because QLever never sets TCP_NODELAY and QleverClient keeps connections alive. QLever latency receipts record the connection mode; earlier QLever latency numbers are DIAGNOSTIC on this ground too. The fix is measured first as a connection per request from the host (no custom image), with the engine patch as the fallback. | R40 1, 4.3; R17 0.2 |",
+    "| Q97c multi-request pulls | A pull form that needs one request per BFS level cannot meet P4 from the host on QLever (transport alone is 18 to 32 ms per depth-6 pull), so no multi-request QLever pull form is a P4 candidate. | R40 1 |"
+  ],
+  "parentSections": {
+    "W02 GS": {
+      "parent": "9a7996e2a242690edbc86417283d8c7348950adb",
+      "sha256": "b695e4c7c2cc4531956cc1020a7312078c0d6847112c296ef99048b8d276af54"
+    },
+    "DA01 step": {
+      "parent": "6b8d2182d78e567cf8e385622c9a259e8892687a",
+      "sha256": "d3013e0db5bcdabd91f952aa8cc4d55819ff8a82983c979e98bf15d36933e67c"
+    }
+  },
+  "enginePatchesEqualOriginalParents": true,
+  "unchangedEvaluatorAssertionsAndMutationHarness": true,
+  "postMergeCommitPaths": [
+    "lab/experiments/EXP-A01-acceptance-contract/REPORT-0.3.13.md",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/G0-datomic-SHA256SUMS",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/G0-datomic-capture.json",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/G0-datomic-capture.log",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/G0-datomic-receipt.json",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/G0-datomic.log",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/G0-xtdb-SHA256SUMS",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/G0-xtdb-capture.json",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/G0-xtdb-capture.log",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/G0-xtdb-receipt.json",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/G0-xtdb.log",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/INDEX.md",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/SHA256SUMS",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/build.txt",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/capture-g0.py",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/contract-tests-committed.txt",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/contract-tests.txt",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/evaluator.tap",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/gate-conflicts.diff",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/js-tests-committed.tap",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/merge-audit.json",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/merge-tests-final.txt",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/merge-tests.txt",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/negtest.txt",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/q47d.txt",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/review.md",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/source-and-hashes.json",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/validate.py",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/validation-summary.json",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/verify-committed.txt",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/verify-final.txt",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13-round2/verify.txt",
+    "lab/runs/G0/G0-datomic-20261109T040114Z-8dc16e.json",
+    "lab/runs/G0/G0-xtdb-20261109T035923Z-2980c9.json"
+  ],
+  "transitiveContractSha256": "7c67653511b51fb041c3d3115e90f90d347c041ae091f142762889d0afd485e7",
+  "generatorSha256": "07c98812ec83fe8a7e32dd09418d40522b48b3dc53e2d5f3df6f7007288d98e5"
+}

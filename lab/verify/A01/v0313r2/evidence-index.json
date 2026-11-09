@@ -1,0 +1,11 @@
+{
+  "rawRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0311/contract-0.3.13-round2-attempt1",
+  "candidate": "191f51c173ae605e278bebae319175a143b7ee2a",
+  "testHead": "897a757fdf7acd84379c0f539e014dc850029e31",
+  "fileCount": 1931,
+  "bytes": 24540074,
+  "largestFileBytes": 1358118,
+  "rawManifestSha256": "0e2372fdd81290acdad2996f5209c97100347ffcb15b9e7c460630adfb2659c1",
+  "allRawBytesExternal": true,
+  "sealedAt": 1794198668.820544
+}
