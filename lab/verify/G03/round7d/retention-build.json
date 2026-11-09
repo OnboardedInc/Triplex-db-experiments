@@ -1,0 +1,33 @@
+{
+  "at": "2026-11-09T19:21:48.064Z",
+  "coordinatorSha256": "bb9105e18a321438d7b8c2594f9de975862d082acf225f1ea22fae7f3ca5720d",
+  "boxSha256": "a90715c708b6329bc8c07d12531aac4d88b0ce275fa1352bb46a3483e34fe481",
+  "harnessSha256": "83953e94ca22c3e3bf359ef898bc5f94ddcec082f982506bcef2aae0b3b5da8d",
+  "scope": "exact coordinator/Box; builder trusted lifecycle and observer model; independent fs fault and assertions; no Docker",
+  "observations": [
+    {
+      "name": "control-terminal-build",
+      "mode": "reject-hook",
+      "fault": "terminal-build",
+      "runId": "e89b04fce792ec41e773dff5f81ac188",
+      "triggered": 1,
+      "error": "DRIVER-CONTROL-FAILURE FAULT-POINT-DR-CONTRADICTION; TERMINAL-PERSISTENCE-GAP REVIEW-terminal-build",
+      "gapWriteError": null,
+      "persistenceCause": "REVIEW-terminal-build",
+      "nineVolumesSurviveClose": true,
+      "gapExists": true
+    },
+    {
+      "name": "control-terminal-build-gap-failure",
+      "mode": "reject-hook",
+      "fault": "terminal-build-gap",
+      "runId": "f1bc07a4361edd35f646fe62a025fdec",
+      "triggered": 2,
+      "error": "DRIVER-CONTROL-FAILURE FAULT-POINT-DR-CONTRADICTION; TERMINAL-PERSISTENCE-GAP REVIEW-terminal-build-gap",
+      "gapWriteError": "REVIEW-terminal-build-gap",
+      "persistenceCause": "REVIEW-terminal-build-gap",
+      "nineVolumesSurviveClose": true,
+      "gapExists": false
+    }
+  ]
+}

@@ -1,0 +1,1152 @@
+TAP version 13
+# Subtest: contract pins load from explicit commit; missing or mismatched pins fail
+ok 1 - contract pins load from explicit commit; missing or mismatched pins fail
+  ---
+  duration_ms: 30.066083
+  type: 'test'
+  ...
+# Subtest: store receipt supplies placement only, never replacement pins
+ok 2 - store receipt supplies placement only, never replacement pins
+  ---
+  duration_ms: 17.951125
+  type: 'test'
+  ...
+# Subtest: PAIR-0 separates arms, shares each auxiliary core, and refuses impossible layouts
+ok 3 - PAIR-0 separates arms, shares each auxiliary core, and refuses impossible layouts
+  ---
+  duration_ms: 56.949625
+  type: 'test'
+  ...
+# Subtest: gateway uses candidate read-only source, overrides resident entrypoint, and refuses missing pins
+ok 4 - gateway uses candidate read-only source, overrides resident entrypoint, and refuses missing pins
+  ---
+  duration_ms: 0.733958
+  type: 'test'
+  ...
+# Subtest: preflight refuses forged omissions, reachable forbidden target, lost positive and DNS success
+ok 5 - preflight refuses forged omissions, reachable forbidden target, lost positive and DNS success
+  ---
+  duration_ms: 0.417583
+  type: 'test'
+  ...
+# Subtest: cgroup proof refuses invalid identities before constructing a reader
+ok 6 - cgroup proof refuses invalid identities before constructing a reader
+  ---
+  duration_ms: 0.427292
+  type: 'test'
+  ...
+# Subtest: signed memory caps stay bounded and change the execution isolation identity
+ok 7 - signed memory caps stay bounded and change the execution isolation identity
+  ---
+  duration_ms: 146.113541
+  type: 'test'
+  ...
+# Subtest: main contract without reviewed box pins cannot borrow the experiment proposal
+ok 8 - main contract without reviewed box pins cannot borrow the experiment proposal
+  ---
+  duration_ms: 7.68925
+  type: 'test'
+  ...
+# Subtest: input allowlist never includes lab, links or missing dependency roots
+ok 9 - input allowlist never includes lab, links or missing dependency roots
+  ---
+  duration_ms: 3.055875
+  type: 'test'
+  ...
+# Subtest: tar carries exact bytes, executable mode and long ustar path without extracting
+ok 10 - tar carries exact bytes, executable mode and long ustar path without extracting
+  ---
+  duration_ms: 39.840125
+  type: 'test'
+  ...
+# Subtest: inspect check refuses changed containment, limits, image, mounts and environment
+ok 11 - inspect check refuses changed containment, limits, image, mounts and environment
+  ---
+  duration_ms: 1.194833
+  type: 'test'
+  ...
+# Subtest: qualification refuses refs and never calls a supplied candidate callback
+ok 12 - qualification refuses refs and never calls a supplied candidate callback
+  ---
+  duration_ms: 1.523916
+  type: 'test'
+  ...
+# Subtest: failed cleanup reservations survive reconciliation
+ok 13 - failed cleanup reservations survive reconciliation
+  ---
+  duration_ms: 0.954541
+  type: 'test'
+  ...
+# Subtest: a separate clone in a shared writable root is still refused
+ok 14 - a separate clone in a shared writable root is still refused
+  ---
+  duration_ms: 0.257333
+  type: 'test'
+  ...
+# Subtest: box reservations survive stale Docker snapshots before the kill proof starts
+ok 15 - box reservations survive stale Docker snapshots before the kill proof starts
+  ---
+  duration_ms: 0.185041
+  type: 'test'
+  ...
+# Subtest: pool admits the two dev engines when only they run
+ok 16 - pool admits the two dev engines when only they run
+  ---
+  duration_ms: 2.259417
+  type: 'test'
+  ...
+# Subtest: pool counts external research probes and refuses with their names
+ok 17 - pool counts external research probes and refuses with their names
+  ---
+  duration_ms: 1.110125
+  type: 'test'
+  ...
+# Subtest: an uncapped external container counts as the whole VM (fail closed)
+ok 18 - an uncapped external container counts as the whole VM (fail closed)
+  ---
+  duration_ms: 0.46925
+  type: 'test'
+  ...
+# Subtest: a reserved container counts once even while it also runs
+ok 19 - a reserved container counts once even while it also runs
+  ---
+  duration_ms: 0.098083
+  type: 'test'
+  ...
+# Subtest: disk forecast refuses past the 50 GiB used limit
+ok 20 - disk forecast refuses past the 50 GiB used limit
+  ---
+  duration_ms: 0.082041
+  type: 'test'
+  ...
+# Subtest: slotInfo rejects forbidden and probe ports and names containers and volumes
+ok 21 - slotInfo rejects forbidden and probe ports and names containers and volumes
+  ---
+  duration_ms: 0.563
+  type: 'test'
+  ...
+# Subtest: withDirLock serializes and breaks a lock whose owner pid is dead
+ok 22 - withDirLock serializes and breaks a lock whose owner pid is dead
+  ---
+  duration_ms: 234.248583
+  type: 'test'
+  ...
+# [lab] waiting for pool lock (held by pid 8629)
+# [lab] waiting for pool lock (held by pid 8629)
+# [lab] heavy: waiting for one of 2 slots; held by pid 8507 "a", pid 8507 "b"
+# Subtest: withPool read-modify-writes the ledger atomically across processes
+ok 23 - withPool read-modify-writes the ledger atomically across processes
+  ---
+  duration_ms: 677.975917
+  type: 'test'
+  ...
+# Subtest: reconcile drops only reservations with no container and a dead reserving pid
+ok 24 - reconcile drops only reservations with no container and a dead reserving pid
+  ---
+  duration_ms: 0.999291
+  type: 'test'
+  ...
+# Subtest: heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+ok 25 - heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+  ---
+  duration_ms: 127.777791
+  type: 'test'
+  ...
+# Subtest: object store is content addressed and refuses dependency caches and secret-like names
+ok 26 - object store is content addressed and refuses dependency caches and secret-like names
+  ---
+  duration_ms: 2.864916
+  type: 'test'
+  ...
+# Subtest: language classification: pure XTQL, pure SQL, hybrid, strict substeps
+ok 27 - language classification: pure XTQL, pure SQL, hybrid, strict substeps
+  ---
+  duration_ms: 0.776792
+  type: 'test'
+  ...
+# Subtest: verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+ok 28 - verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+  ---
+  duration_ms: 0.481459
+  type: 'test'
+  ...
+# Subtest: caseLanguages lists every substep language in order
+ok 29 - caseLanguages lists every substep language in order
+  ---
+  duration_ms: 0.55125
+  type: 'test'
+  ...
+# Subtest: contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+ok 30 - contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+  ---
+  duration_ms: 1.958417
+  type: 'test'
+  ...
+# Subtest: second-writer guard refuses a second container on a slot volume unless its config is read-only
+ok 31 - second-writer guard refuses a second container on a slot volume unless its config is read-only
+  ---
+  duration_ms: 0.904792
+  type: 'test'
+  ...
+# Subtest: second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+ok 32 - second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+  ---
+  duration_ms: 0.239792
+  type: 'test'
+  ...
+# Subtest: follower config must be read-only and read the writer's own log and storage paths
+ok 33 - follower config must be read-only and read the writer's own log and storage paths
+  ---
+  duration_ms: 0.460625
+  type: 'test'
+  ...
+# Subtest: follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+ok 34 - follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+  ---
+  duration_ms: 30.442083
+  type: 'test'
+  ...
+# Subtest: cpusets parse against the VM and unpinned containers overlap everything
+ok 35 - cpusets parse against the VM and unpinned containers overlap everything
+  ---
+  duration_ms: 1.588292
+  type: 'test'
+  ...
+# Subtest: Datomic addition leaves every existing slot effective-config hash unchanged
+ok 36 - Datomic addition leaves every existing slot effective-config hash unchanged
+  ---
+  duration_ms: 50.778375
+  type: 'test'
+  ...
+# Subtest: Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist with an exclusive slot
+ok 37 - Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist with an exclusive slot
+  ---
+  duration_ms: 29.33675
+  type: 'test'
+  ...
+# Subtest: atomic before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 38 - atomic before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 7.664792
+  type: 'test'
+  ...
+# Subtest: split before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 39 - split before-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.857209
+  type: 'test'
+  ...
+# Subtest: atomic after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 40 - atomic after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.370375
+  type: 'test'
+  ...
+# Subtest: split after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+ok 41 - split after-effect: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.290958
+  type: 'test'
+  ...
+# Subtest: atomic after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+ok 42 - atomic after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.336041
+  type: 'test'
+  ...
+# Subtest: split after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+ok 43 - split after-checkpoint: DR snapshot, proven kill, same-volume restart and byte replay
+  ---
+  duration_ms: 0.306958
+  type: 'test'
+  ...
+# Subtest: three distinct witnesses per point in one attempt, never a declared repetition count
+ok 44 - three distinct witnesses per point in one attempt, never a declared repetition count
+  ---
+  duration_ms: 6.981459
+  type: 'test'
+  ...
+# Subtest: main run uses all three identical hook reports and receives releases without injection data
+ok 45 - main run uses all three identical hook reports and receives releases without injection data
+  ---
+  duration_ms: 2.400959
+  type: 'test'
+  ...
+# Subtest: ignored hook never exercises fault
+ok 46 - ignored hook never exercises fault
+  ---
+  duration_ms: 2.258875
+  type: 'test'
+  ...
+# Subtest: short repetition inventory refused
+ok 47 - short repetition inventory refused
+  ---
+  duration_ms: 0.842041
+  type: 'test'
+  ...
+# Subtest: no cgroup proof refuses witness and restart cannot follow missing kill proof
+ok 48 - no cgroup proof refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.378458
+  type: 'test'
+  ...
+# Subtest: wrong killed ID refuses witness and restart cannot follow missing kill proof
+ok 49 - wrong killed ID refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.1415
+  type: 'test'
+  ...
+# Subtest: stale proof refuses witness and restart cannot follow missing kill proof
+ok 50 - stale proof refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.112042
+  type: 'test'
+  ...
+# Subtest: no pause proof refuses witness and restart cannot follow missing kill proof
+ok 51 - no pause proof refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.0845
+  type: 'test'
+  ...
+# Subtest: fresh volume refuses witness and restart cannot follow missing kill proof
+ok 52 - fresh volume refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.140333
+  type: 'test'
+  ...
+# Subtest: same container refuses witness and restart cannot follow missing kill proof
+ok 53 - same container refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.105042
+  type: 'test'
+  ...
+# Subtest: broker restart on consumer path refuses witness and restart cannot follow missing kill proof
+ok 54 - broker restart on consumer path refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.1835
+  type: 'test'
+  ...
+# Subtest: old snapshot refuses witness and restart cannot follow missing kill proof
+ok 55 - old snapshot refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.478167
+  type: 'test'
+  ...
+# Subtest: no replay comparison refuses witness and restart cannot follow missing kill proof
+ok 56 - no replay comparison refuses witness and restart cannot follow missing kill proof
+  ---
+  duration_ms: 0.751958
+  type: 'test'
+  ...
+# Subtest: foreign source refused
+ok 57 - foreign source refused
+  ---
+  duration_ms: 1.006583
+  type: 'test'
+  ...
+# Subtest: foreign slot refused
+ok 58 - foreign slot refused
+  ---
+  duration_ms: 0.220959
+  type: 'test'
+  ...
+# Subtest: foreign inputs refused
+ok 59 - foreign inputs refused
+  ---
+  duration_ms: 0.092
+  type: 'test'
+  ...
+# Subtest: wrong target role refused
+ok 60 - wrong target role refused
+  ---
+  duration_ms: 0.07875
+  type: 'test'
+  ...
+# Subtest: invented point refused
+ok 61 - invented point refused
+  ---
+  duration_ms: 0.074458
+  type: 'test'
+  ...
+# Subtest: no hook refused
+ok 62 - no hook refused
+  ---
+  duration_ms: 0.073583
+  type: 'test'
+  ...
+# Subtest: reused hook nonce refused
+ok 63 - reused hook nonce refused
+  ---
+  duration_ms: 0.122167
+  type: 'test'
+  ...
+# Subtest: consumer target cannot be the broker
+ok 64 - consumer target cannot be the broker
+  ---
+  duration_ms: 0.058792
+  type: 'test'
+  ...
+# Subtest: C2 broker reuses controller with separately pinned point inventory and broker target
+ok 65 - C2 broker reuses controller with separately pinned point inventory and broker target
+  ---
+  duration_ms: 0.515584
+  type: 'test'
+  ...
+# Subtest: driver ignored-hook result refused
+ok 66 - driver ignored-hook result refused
+  ---
+  duration_ms: 0.643542
+  type: 'test'
+  ...
+# Subtest: driver holds consumer at every hook until private release and never forwards restart bit
+ok 67 - driver holds consumer at every hook until private release and never forwards restart bit
+  ---
+  duration_ms: 0.435834
+  type: 'test'
+  ...
+# Subtest: one reported hook cannot substitute for all mandatory points
+ok 68 - one reported hook cannot substitute for all mandatory points
+  ---
+  duration_ms: 0.195834
+  type: 'test'
+  ...
+# Subtest: private input waits, binds exactly one line, caps and rejects unsolicited release
+ok 69 - private input waits, binds exactly one line, caps and rejects unsolicited release
+  ---
+  duration_ms: 1.941334
+  type: 'test'
+  ...
+# Subtest: private control times out when evaluator does not release
+ok 70 - private control times out when evaluator does not release
+  ---
+  duration_ms: 18.473625
+  type: 'test'
+  ...
+# Subtest: snapshot refuses previous attempt
+ok 71 - snapshot refuses previous attempt
+  ---
+  duration_ms: 2.728334
+  type: 'test'
+  ...
+# Subtest: snapshot refuses other source
+ok 72 - snapshot refuses other source
+  ---
+  duration_ms: 0.313875
+  type: 'test'
+  ...
+# Subtest: snapshot refuses other volume
+ok 73 - snapshot refuses other volume
+  ---
+  duration_ms: 0.127
+  type: 'test'
+  ...
+# Subtest: snapshot refuses other phase
+ok 74 - snapshot refuses other phase
+  ---
+  duration_ms: 0.096458
+  type: 'test'
+  ...
+# Subtest: snapshot refuses other target
+ok 75 - snapshot refuses other target
+  ---
+  duration_ms: 0.145083
+  type: 'test'
+  ...
+# Subtest: snapshot refuses row count
+ok 76 - snapshot refuses row count
+  ---
+  duration_ms: 0.155
+  type: 'test'
+  ...
+# Subtest: snapshot refuses WAL bytes
+ok 77 - snapshot refuses WAL bytes
+  ---
+  duration_ms: 0.129083
+  type: 'test'
+  ...
+# Subtest: snapshot refuses WAL hash
+ok 78 - snapshot refuses WAL hash
+  ---
+  duration_ms: 0.18975
+  type: 'test'
+  ...
+# Subtest: snapshot refuses checkpoint contradiction
+ok 79 - snapshot refuses checkpoint contradiction
+  ---
+  duration_ms: 0.104084
+  type: 'test'
+  ...
+# Subtest: minimum three repetitions cannot be lowered at finish
+ok 80 - minimum three repetitions cannot be lowered at finish
+  ---
+  duration_ms: 0.151
+  type: 'test'
+  ...
+# Subtest: driver restarts through same complete hook path on evaluator-provided endpoint
+ok 81 - driver restarts through same complete hook path on evaluator-provided endpoint
+  ---
+  duration_ms: 0.368917
+  type: 'test'
+  ...
+# Subtest: trusted observer snapshot encodes real SQLite fixture before-effect
+ok 82 - trusted observer snapshot encodes real SQLite fixture before-effect
+  ---
+  duration_ms: 101.565125
+  type: 'test'
+  ...
+# Subtest: trusted observer snapshot encodes real SQLite fixture after-effect
+ok 83 - trusted observer snapshot encodes real SQLite fixture after-effect
+  ---
+  duration_ms: 67.13725
+  type: 'test'
+  ...
+# Subtest: trusted observer snapshot encodes real SQLite fixture after-checkpoint
+ok 84 - trusted observer snapshot encodes real SQLite fixture after-checkpoint
+  ---
+  duration_ms: 71.926083
+  type: 'test'
+  ...
+# Subtest: missing or duplicate manifest case pins cannot pause or inject
+ok 85 - missing or duplicate manifest case pins cannot pause or inject
+  ---
+  duration_ms: 0.325208
+  type: 'test'
+  ...
+# sysctl: sysctl fmt -1 1024 1: Operation not permitted
+# Subtest: Q100q: distinct inodes with equal boot and zero offsets accepted
+ok 86 - Q100q: distinct inodes with equal boot and zero offsets accepted
+  ---
+  duration_ms: 4.195125
+  type: 'test'
+  ...
+# Subtest: Q100q refuses ""
+ok 87 - Q100q refuses ""
+  ---
+  duration_ms: 0.379875
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 0"
+ok 88 - Q100q refuses "monotonic 0 0"
+  ---
+  duration_ms: 0.8365
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 1 0\\nboottime 0 0"
+ok 89 - Q100q refuses "monotonic 1 0\\nboottime 0 0"
+  ---
+  duration_ms: 2.701334
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 1\\nboottime 0 0"
+ok 90 - Q100q refuses "monotonic 0 1\\nboottime 0 0"
+  ---
+  duration_ms: 0.309208
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 0\\nmonotonic 0 0"
+ok 91 - Q100q refuses "monotonic 0 0\\nmonotonic 0 0"
+  ---
+  duration_ms: 0.110125
+  type: 'test'
+  ...
+# Subtest: Q100q refuses "monotonic 0 NaN\\nboottime 0 0"
+ok 92 - Q100q refuses "monotonic 0 NaN\\nboottime 0 0"
+  ---
+  duration_ms: 0.4545
+  type: 'test'
+  ...
+# Subtest: Q100q refuses foreign boot
+ok 93 - Q100q refuses foreign boot
+  ---
+  duration_ms: 0.363542
+  type: 'test'
+  ...
+# Subtest: service role mounts have exactly one state writer; readers none
+ok 94 - service role mounts have exactly one state writer; readers none
+  ---
+  duration_ms: 1.074625
+  type: 'test'
+  ...
+# Subtest: service rejects shared input/state or bridge attachment
+ok 95 - service rejects shared input/state or bridge attachment
+  ---
+  duration_ms: 0.47025
+  type: 'test'
+  ...
+# Subtest: driver mounts isolated trace/key/bundle, output only RW
+ok 96 - driver mounts isolated trace/key/bundle, output only RW
+  ---
+  duration_ms: 1.204042
+  type: 'test'
+  ...
+# Subtest: valid per-role layout accepted as precondition
+ok 97 - valid per-role layout accepted as precondition
+  ---
+  duration_ms: 0.432417
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused output
+ok 98 - candidate foreign mount refused output
+  ---
+  duration_ms: 0.196959
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused secret
+ok 99 - candidate foreign mount refused secret
+  ---
+  duration_ms: 0.069292
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused key
+ok 100 - candidate foreign mount refused key
+  ---
+  duration_ms: 0.035875
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused bundle
+ok 101 - candidate foreign mount refused bundle
+  ---
+  duration_ms: 0.17375
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused consumer
+ok 102 - candidate foreign mount refused consumer
+  ---
+  duration_ms: 0.039875
+  type: 'test'
+  ...
+# Subtest: candidate foreign mount refused obs
+ok 103 - candidate foreign mount refused obs
+  ---
+  duration_ms: 0.117958
+  type: 'test'
+  ...
+# Subtest: observer on arm refused
+ok 104 - observer on arm refused
+  ---
+  duration_ms: 0.208667
+  type: 'test'
+  ...
+# Subtest: fresh bound HR chunks replay
+ok 105 - fresh bound HR chunks replay
+  ---
+  duration_ms: 5.962459
+  type: 'test'
+  ...
+# Subtest: HR refuses bytes
+ok 106 - HR refuses bytes
+  ---
+  duration_ms: 0.129208
+  type: 'test'
+  ...
+# Subtest: HR refuses key
+ok 107 - HR refuses key
+  ---
+  duration_ms: 0.106292
+  type: 'test'
+  ...
+# Subtest: HR refuses binding
+ok 108 - HR refuses binding
+  ---
+  duration_ms: 0.055833
+  type: 'test'
+  ...
+# Subtest: HR refuses seal
+ok 109 - HR refuses seal
+  ---
+  duration_ms: 0.099792
+  type: 'test'
+  ...
+# Subtest: HR refuses missing
+ok 110 - HR refuses missing
+  ---
+  duration_ms: 0.211458
+  type: 'test'
+  ...
+# Subtest: observer bytes and freshness verified
+ok 111 - observer bytes and freshness verified
+  ---
+  duration_ms: 0.995042
+  type: 'test'
+  ...
+# Subtest: guarded driver can stage in private runtime parent beside readonly bundle
+not ok 112 - guarded driver can stage in private runtime parent beside readonly bundle
+  ---
+  duration_ms: 156.805208
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-g03-7d/lab/experiments/EXP-G03/ns/offline.test.mjs:23:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Command failed: /usr/sbin/sysctl -n kern.bootsessionuuid
+    sysctl: sysctl fmt -1 1024 1: Operation not permitted
+    
+  code: 'ERR_TEST_FAILURE'
+  stack: |-
+    genericNodeError (node:internal/errors:983:15)
+    wrappedFn (node:internal/errors:537:14)
+    checkExecSyncError (node:child_process:916:11)
+    execFileSync (node:child_process:952:15)
+    launchArtifact (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-g03-7d/lab/bench/ns-driver/launch-artifact.mjs:104:30)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-g03-7d/lab/experiments/EXP-G03/ns/offline.test.mjs:25:689)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: NS preflight exact coverage succeeds
+ok 113 - NS preflight exact coverage succeeds
+  ---
+  duration_ms: 0.121959
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.runId='old'
+ok 114 - NS preflight omission/binding/positive/denial control d=>d.runId='old'
+  ---
+  duration_ms: 0.153291
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.role='consumer'
+ok 115 - NS preflight omission/binding/positive/denial control d=>d.role='consumer'
+  ---
+  duration_ms: 0.046625
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.denied=[]
+ok 116 - NS preflight omission/binding/positive/denial control d=>d.denied=[]
+  ---
+  duration_ms: 0.040083
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.positive=false
+ok 117 - NS preflight omission/binding/positive/denial control d=>d.positive=false
+  ---
+  duration_ms: 0.036
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.publicDns=true
+ok 118 - NS preflight omission/binding/positive/denial control d=>d.publicDns=true
+  ---
+  duration_ms: 0.386041
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.blocked=[]
+ok 119 - NS preflight omission/binding/positive/denial control d=>d.blocked=[]
+  ---
+  duration_ms: 0.097959
+  type: 'test'
+  ...
+# Subtest: NS preflight omission/binding/positive/denial control d=>d.blocked[0].reachable=true
+ok 120 - NS preflight omission/binding/positive/denial control d=>d.blocked[0].reachable=true
+  ---
+  duration_ms: 0.116417
+  type: 'test'
+  ...
+# Subtest: seed RPC script sends a bounded newline-delimited request with exact run/population
+ok 121 - seed RPC script sends a bounded newline-delimited request with exact run/population
+  ---
+  duration_ms: 128.418833
+  type: 'test'
+  ...
+# Subtest: open-loop ACK completion permutation retains exact offer/receipt correspondence
+ok 122 - open-loop ACK completion permutation retains exact offer/receipt correspondence
+  ---
+  duration_ms: 0.417292
+  type: 'test'
+  ...
+# Subtest: offer matching refuses duplicate
+ok 123 - offer matching refuses duplicate
+  ---
+  duration_ms: 0.12575
+  type: 'test'
+  ...
+# Subtest: offer matching refuses bytes
+ok 124 - offer matching refuses bytes
+  ---
+  duration_ms: 0.286041
+  type: 'test'
+  ...
+# Subtest: offer matching refuses receipt
+ok 125 - offer matching refuses receipt
+  ---
+  duration_ms: 0.071375
+  type: 'test'
+  ...
+# Subtest: offer matching refuses wrong echoed id
+ok 126 - offer matching refuses wrong echoed id
+  ---
+  duration_ms: 0.201
+  type: 'test'
+  ...
+# Subtest: offer matching refuses missing
+ok 127 - offer matching refuses missing
+  ---
+  duration_ms: 0.079083
+  type: 'test'
+  ...
+# Subtest: candidate second network is refused
+ok 128 - candidate second network is refused
+  ---
+  duration_ms: 0.072917
+  type: 'test'
+  ...
+# Subtest: observer writable source mount is refused
+ok 129 - observer writable source mount is refused
+  ---
+  duration_ms: 0.060459
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"trusted":true}
+ok 130 - placement refuses hardening override {"trusted":true}
+  ---
+  duration_ms: 0.093709
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"image":"python"}
+ok 131 - placement refuses hardening override {"image":"python"}
+  ---
+  duration_ms: 0.115084
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"mounts":[]}
+ok 132 - placement refuses hardening override {"mounts":[]}
+  ---
+  duration_ms: 0.03175
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"extra":["--privileged"]}
+ok 133 - placement refuses hardening override {"extra":["--privileged"]}
+  ---
+  duration_ms: 0.046792
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"memory":0}
+ok 134 - placement refuses hardening override {"memory":0}
+  ---
+  duration_ms: 0.041208
+  type: 'test'
+  ...
+# Subtest: placement refuses hardening override {"cpuset":"0"}
+ok 135 - placement refuses hardening override {"cpuset":"0"}
+  ---
+  duration_ms: 0.031542
+  type: 'test'
+  ...
+# Subtest: authentic observer record verifies and the returned seal comes from the chain
+ok 136 - authentic observer record verifies and the returned seal comes from the chain
+  ---
+  duration_ms: 3.969416
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: final consumer effects
+ok 137 - F1: seal-only edit refused: final consumer effects
+  ---
+  duration_ms: 0.646166
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: final consumer marker
+ok 138 - F1: seal-only edit refused: final consumer marker
+  ---
+  duration_ms: 0.653667
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: final source subjects
+ok 139 - F1: seal-only edit refused: final source subjects
+  ---
+  duration_ms: 0.2085
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: final source entries
+ok 140 - F1: seal-only edit refused: final source entries
+  ---
+  duration_ms: 2.958292
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: periodNs value
+ok 141 - F1: seal-only edit refused: periodNs value
+  ---
+  duration_ms: 0.584083
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: periodNs dropped
+ok 142 - F1: seal-only edit refused: periodNs dropped
+  ---
+  duration_ms: 0.6485
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: domain boot id
+ok 143 - F1: seal-only edit refused: domain boot id
+  ---
+  duration_ms: 0.412708
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: head
+ok 144 - F1: seal-only edit refused: head
+  ---
+  duration_ms: 1.319333
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: chunk count
+ok 145 - F1: seal-only edit refused: chunk count
+  ---
+  duration_ms: 0.496458
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: run id
+ok 146 - F1: seal-only edit refused: run id
+  ---
+  duration_ms: 0.366375
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: extra field
+ok 147 - F1: seal-only edit refused: extra field
+  ---
+  duration_ms: 0.379458
+  type: 'test'
+  ...
+# Subtest: F1: seal-only edit refused: removed final
+ok 148 - F1: seal-only edit refused: removed final
+  ---
+  duration_ms: 0.345834
+  type: 'test'
+  ...
+# Subtest: F1: reviewer case, fabricated final consumer and periodNs=[1] on a one-chunk poll stream, refused
+ok 149 - F1: reviewer case, fabricated final consumer and periodNs=[1] on a one-chunk poll stream, refused
+  ---
+  duration_ms: 0.446042
+  type: 'test'
+  ...
+# Subtest: F1: editing the final record inside polls.ndjson without the key is refused
+ok 150 - F1: editing the final record inside polls.ndjson without the key is refused
+  ---
+  duration_ms: 1.342334
+  type: 'test'
+  ...
+# Subtest: F1: re-signing with another key is refused
+ok 151 - F1: re-signing with another key is refused
+  ---
+  duration_ms: 0.720166
+  type: 'test'
+  ...
+# Subtest: F1: dropping the final record (truncation) is refused even with a matching head
+ok 152 - F1: dropping the final record (truncation) is refused even with a matching head
+  ---
+  duration_ms: 1.104917
+  type: 'test'
+  ...
+# Subtest: F1: poll rows after the final record are refused
+ok 153 - F1: poll rows after the final record are refused
+  ---
+  duration_ms: 0.271708
+  type: 'test'
+  ...
+# Subtest: F1: a second final record or periodNs outside the final record is refused
+ok 154 - F1: a second final record or periodNs outside the final record is refused
+  ---
+  duration_ms: 0.193083
+  type: 'test'
+  ...
+# Subtest: F1: wrong run and key refused
+ok 155 - F1: wrong run and key refused
+  ---
+  duration_ms: 0.47
+  type: 'test'
+  ...
+# Subtest: F1: domain changing between chunks is refused
+ok 156 - F1: domain changing between chunks is refused
+  ---
+  duration_ms: 3.746083
+  type: 'test'
+  ...
+# Subtest: F1: the real observer.py emits a final record that verifyObserver accepts, and any edit afterwards is refused
+ok 157 - F1: the real observer.py emits a final record that verifyObserver accepts, and any edit afterwards is refused
+  ---
+  duration_ms: 680.521
+  type: 'test'
+  ...
+# Subtest: F2: checkSmoke refuses a missing, foreign, nonzero, signalled or hook-failed terminal before reading events
+ok 158 - F2: checkSmoke refuses a missing, foreign, nonzero, signalled or hook-failed terminal before reading events
+  ---
+  duration_ms: 0.574
+  type: 'test'
+  ...
+# Subtest: F2: the terminal records the coordinator exec status, not any event content
+ok 159 - F2: the terminal records the coordinator exec status, not any event content
+  ---
+  duration_ms: 0.077125
+  type: 'test'
+  ...
+# Subtest: F2: the reviewer reproduction of the real driver source (hook failure after three handshakes) now records the error and refuses replay
+ok 160 - F2: the reviewer reproduction of the real driver source (hook failure after three handshakes) now records the error and refuses replay
+  ---
+  duration_ms: 136.523209
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (reject-hook) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 161 - F3: rejected control session (reject-hook) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 230.646167
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-timeout) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 162 - F3: rejected control session (control-timeout) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 212.468708
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-truncated) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 163 - F3: rejected control session (control-truncated) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 122.012709
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-json) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 164 - F3: rejected control session (control-json) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 129.4685
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-cap) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 165 - F3: rejected control session (control-cap) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 148.405666
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-null) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 166 - F3: rejected control session (control-null) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 229.157
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-array) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 167 - F3: rejected control session (control-array) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 234.93375
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-scalar) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 168 - F3: rejected control session (control-scalar) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 124.87025
+  type: 'test'
+  ...
+# Subtest: F3 baseline preserved: resolved exec result (nonzero) still exports six digested files before refusing
+ok 169 - F3 baseline preserved: resolved exec result (nonzero) still exports six digested files before refusing
+  ---
+  duration_ms: 111.002916
+  type: 'test'
+  ...
+# Subtest: F3 baseline preserved: resolved exec result (null-exit) still exports six digested files before refusing
+ok 170 - F3 baseline preserved: resolved exec result (null-exit) still exports six digested files before refusing
+  ---
+  duration_ms: 107.197833
+  type: 'test'
+  ...
+# Subtest: F3 baseline preserved: resolved exec result (finish-failure) still exports six digested files before refusing
+ok 171 - F3 baseline preserved: resolved exec result (finish-failure) still exports six digested files before refusing
+  ---
+  duration_ms: 101.297833
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-nonutf8) are exported and digested exactly as received
+ok 172 - F7: raw control bytes (control-nonutf8) are exported and digested exactly as received
+  ---
+  duration_ms: 110.084083
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-split-utf8-garbage) are exported and digested exactly as received
+ok 173 - F7: raw control bytes (control-split-utf8-garbage) are exported and digested exactly as received
+  ---
+  duration_ms: 108.412167
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-split-utf8-truncated) are exported and digested exactly as received
+ok 174 - F7: raw control bytes (control-split-utf8-truncated) are exported and digested exactly as received
+  ---
+  duration_ms: 124.432292
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-split-utf8-valid-then-null) are exported and digested exactly as received
+ok 175 - F7: raw control bytes (control-split-utf8-valid-then-null) are exported and digested exactly as received
+  ---
+  duration_ms: 107.351083
+  type: 'test'
+  ...
+# Subtest: F5: a one-shot stage-10 append failure (stage10-control) keeps volume ownership after close(), keeps the original cause and records the gap
+ok 176 - F5: a one-shot stage-10 append failure (stage10-control) keeps volume ownership after close(), keeps the original cause and records the gap
+  ---
+  duration_ms: 100.974208
+  type: 'test'
+  ...
+# Subtest: F5: a one-shot stage-10 append failure (stage10-nonzero) keeps volume ownership after close(), keeps the original cause and records the gap
+ok 177 - F5: a one-shot stage-10 append failure (stage10-nonzero) keeps volume ownership after close(), keeps the original cause and records the gap
+  ---
+  duration_ms: 96.29825
+  type: 'test'
+  ...
+# Subtest: F5: a one-shot stage-10 append failure (stage10-clean) keeps volume ownership after close(), keeps the original cause and records the gap
+ok 178 - F5: a one-shot stage-10 append failure (stage10-clean) keeps volume ownership after close(), keeps the original cause and records the gap
+  ---
+  duration_ms: 100.784333
+  type: 'test'
+  ...
+# Subtest: F3: when stop or export cannot be proven (retain-walk-failure), the run volumes stay owned and the gap is recorded
+ok 179 - F3: when stop or export cannot be proven (retain-walk-failure), the run volumes stay owned and the gap is recorded
+  ---
+  duration_ms: 108.98025
+  type: 'test'
+  ...
+# Subtest: F3: when stop or export cannot be proven (retain-remove-failure), the run volumes stay owned and the gap is recorded
+ok 180 - F3: when stop or export cannot be proven (retain-remove-failure), the run volumes stay owned and the gap is recorded
+  ---
+  duration_ms: 107.107625
+  type: 'test'
+  ...
+# Subtest: F3: a failed terminal is never clean: requireCleanTerminal refuses controlFailure whatever else it says
+ok 181 - F3: a failed terminal is never clean: requireCleanTerminal refuses controlFailure whatever else it says
+  ---
+  duration_ms: 0.840833
+  type: 'test'
+  ...
+# Subtest: F4 control: constant valid domain is accepted and returned
+ok 182 - F4 control: constant valid domain is accepted and returned
+  ---
+  duration_ms: 1.839292
+  type: 'test'
+  ...
+# Subtest: F4: null first domain followed by a valid domain is refused (the reviewer reproduction)
+ok 183 - F4: null first domain followed by a valid domain is refused (the reviewer reproduction)
+  ---
+  duration_ms: 0.322458
+  type: 'test'
+  ...
+# Subtest: F4: null in every record is refused, including with a null seal domain
+ok 184 - F4: null in every record is refused, including with a null seal domain
+  ---
+  duration_ms: 0.094541
+  type: 'test'
+  ...
+# Subtest: F4: null only in the middle or final record is refused
+ok 185 - F4: null only in the middle or final record is refused
+  ---
+  duration_ms: 0.391417
+  type: 'test'
+  ...
+# Subtest: F4: change between two non-null domains is still refused
+ok 186 - F4: change between two non-null domains is still refused
+  ---
+  duration_ms: 0.257458
+  type: 'test'
+  ...
+# Subtest: F4: a constant but malformed domain is refused (not the boot/zero-offset clock object)
+ok 187 - F4: a constant but malformed domain is refused (not the boot/zero-offset clock object)
+  ---
+  duration_ms: 0.391375
+  type: 'test'
+  ...
+1..187
+# tests 187
+# suites 0
+# pass 186
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2944.267334

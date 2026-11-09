@@ -1,0 +1,16 @@
+{
+  "basis": "Completed process exit statuses observed by this reviewer through exec_command/write_stdin; no running process is counted as successful",
+  "testedHead": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+  "ns": 1,
+  "ns-attempt2": 0,
+  "contract-verify": 0,
+  "control-review": 0,
+  "retention-review": 1,
+  "retention-review-attempt2": 0,
+  "retention-build": 0,
+  "retention-final": 0,
+  "liveness-review": 0,
+  "pin-review": 0,
+  "full": "NOT RUN: explicit no Docker lifecycle restriction",
+  "evaluator": "NOT RUN: explicit no Docker lifecycle restriction"
+}

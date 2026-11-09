@@ -1,0 +1,129 @@
+{
+  "at": "2026-11-09T19:19:00.172Z",
+  "coordinatorSha256": "bb9105e18a321438d7b8c2594f9de975862d082acf225f1ea22fae7f3ca5720d",
+  "boxSha256": "a90715c708b6329bc8c07d12531aac4d88b0ce275fa1352bb46a3483e34fe481",
+  "harnessSha256": "83953e94ca22c3e3bf359ef898bc5f94ddcec082f982506bcef2aae0b3b5da8d",
+  "scope": "exact coordinator/Box; builder trusted lifecycle and observer model; independent fs fault and assertions; no Docker",
+  "observations": [
+    {
+      "name": "control-stage10",
+      "mode": "stage10-control",
+      "fault": null,
+      "runId": "164aa87c5a8e2435604eb7744fd2b1d1",
+      "triggered": 0,
+      "error": "DRIVER-CONTROL-FAILURE FAULT-POINT-DR-CONTRADICTION; TERMINAL-PERSISTENCE-GAP EIO: injected stage-10 append failure",
+      "gapWriteError": null,
+      "persistenceCause": "EIO: injected stage-10 append failure",
+      "nineVolumesSurviveClose": true,
+      "gapExists": true
+    },
+    {
+      "name": "nonzero-stage10",
+      "mode": "stage10-nonzero",
+      "fault": null,
+      "runId": "f08277bf7cf3ae2e49eb4f28ef0f4fc8",
+      "triggered": 0,
+      "error": "DRIVER-EXIT-NONZERO status=7; TERMINAL-PERSISTENCE-GAP EIO: injected stage-10 append failure",
+      "gapWriteError": null,
+      "persistenceCause": "EIO: injected stage-10 append failure",
+      "nineVolumesSurviveClose": true,
+      "gapExists": true
+    },
+    {
+      "name": "clean-stage10",
+      "mode": "stage10-clean",
+      "fault": null,
+      "runId": "c9c2901f01a41e4822b749a7f2bffe37",
+      "triggered": 0,
+      "error": "EIO: injected stage-10 append failure",
+      "gapWriteError": null,
+      "persistenceCause": null,
+      "nineVolumesSurviveClose": true,
+      "gapExists": true
+    },
+    {
+      "name": "control-stage10-gap-failure",
+      "mode": "stage10-control",
+      "fault": "gap",
+      "runId": "f7d1e71f15c809579b93b7f06df8e233",
+      "triggered": 1,
+      "error": "DRIVER-CONTROL-FAILURE FAULT-POINT-DR-CONTRADICTION; TERMINAL-PERSISTENCE-GAP EIO: injected stage-10 append failure",
+      "gapWriteError": "REVIEW-gap",
+      "persistenceCause": "EIO: injected stage-10 append failure",
+      "nineVolumesSurviveClose": true,
+      "gapExists": false
+    },
+    {
+      "name": "nonzero-stage10-gap-failure",
+      "mode": "stage10-nonzero",
+      "fault": "gap",
+      "runId": "b566f579f1ed5dfd9ffde028dc4a88da",
+      "triggered": 1,
+      "error": "DRIVER-EXIT-NONZERO status=7; TERMINAL-PERSISTENCE-GAP EIO: injected stage-10 append failure",
+      "gapWriteError": "REVIEW-gap",
+      "persistenceCause": "EIO: injected stage-10 append failure",
+      "nineVolumesSurviveClose": true,
+      "gapExists": false
+    },
+    {
+      "name": "clean-stage10-gap-failure",
+      "mode": "stage10-clean",
+      "fault": "gap",
+      "runId": "486be22786c13e9905ef7eb356b19d3d",
+      "triggered": 1,
+      "error": "EIO: injected stage-10 append failure",
+      "gapWriteError": "REVIEW-gap",
+      "persistenceCause": null,
+      "nineVolumesSurviveClose": true,
+      "gapExists": false
+    },
+    {
+      "name": "control-stage10-stage14-failure",
+      "mode": "stage10-control",
+      "fault": "stage14",
+      "runId": "0c0816a3a36aecdbe2846610f9644697",
+      "triggered": 1,
+      "error": "DRIVER-CONTROL-FAILURE FAULT-POINT-DR-CONTRADICTION; TERMINAL-PERSISTENCE-GAP EIO: injected stage-10 append failure",
+      "gapWriteError": "REVIEW-stage14",
+      "persistenceCause": "EIO: injected stage-10 append failure",
+      "nineVolumesSurviveClose": true,
+      "gapExists": true
+    },
+    {
+      "name": "control-walk-gap-failure",
+      "mode": "retain-walk-failure",
+      "fault": "gap",
+      "runId": "b3631f2a585f6dd1ec178ccdc551bfda",
+      "triggered": 1,
+      "error": "walker failed (model)",
+      "gapWriteError": "REVIEW-gap",
+      "persistenceCause": null,
+      "nineVolumesSurviveClose": true,
+      "gapExists": false
+    },
+    {
+      "name": "control-stage11",
+      "mode": "reject-hook",
+      "fault": "stage11",
+      "runId": "b9d1e61a2a1a620b4912e8d279b3f63c",
+      "triggered": 1,
+      "error": "REVIEW-stage11",
+      "gapWriteError": null,
+      "persistenceCause": null,
+      "nineVolumesSurviveClose": true,
+      "gapExists": true
+    },
+    {
+      "name": "control-stage12",
+      "mode": "reject-hook",
+      "fault": "stage12",
+      "runId": "713a997ef7891a61695366677ba887f2",
+      "triggered": 1,
+      "error": "REVIEW-stage12",
+      "gapWriteError": null,
+      "persistenceCause": null,
+      "nineVolumesSurviveClose": true,
+      "gapExists": true
+    }
+  ]
+}

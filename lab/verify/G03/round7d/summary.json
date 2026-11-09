@@ -1,0 +1,59 @@
+{
+  "at": "2026-11-09T19:25:07.086Z",
+  "review": "CX-VG03-7D",
+  "testedHead": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+  "verdict": "FIX-FIRST",
+  "reason": "Fresh requested full/evaluator gates require Docker lifecycle prohibited by the task; no remaining F5/F6/F7 code defect reproduced offline",
+  "qualification": false,
+  "checks": [
+    {
+      "name": "ns",
+      "pass": 186,
+      "fail": 1,
+      "total": 187,
+      "exit": 1,
+      "tapSha256": "ab6761d19c9223cc43c0eae98b6bfaa399cceaacb403e467d5247455d57a7e65"
+    },
+    {
+      "name": "ns-attempt2",
+      "pass": 187,
+      "fail": 0,
+      "total": 187,
+      "exit": 0,
+      "tapSha256": "ecd8e26b3a87860250c03d362373b406082841558a399c09729f61be70fb5bd6"
+    }
+  ],
+  "contract": {
+    "exit": 0,
+    "byteIdentical": true
+  },
+  "controlCases": 101,
+  "retentionCases": 12,
+  "regressionCounts": [
+    {
+      "name": "current",
+      "pass": 27,
+      "fail": 0
+    },
+    {
+      "name": "old-both",
+      "pass": 17,
+      "fail": 10
+    },
+    {
+      "name": "old-box",
+      "pass": 20,
+      "fail": 7
+    },
+    {
+      "name": "old-ns",
+      "pass": 24,
+      "fail": 3
+    }
+  ],
+  "full": "NOT RUN: explicit no Docker lifecycle restriction",
+  "evaluator": "NOT RUN: explicit no Docker lifecycle restriction",
+  "rawRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VG03-7D",
+  "rawFiles": 89,
+  "rawBytes": 18540245
+}

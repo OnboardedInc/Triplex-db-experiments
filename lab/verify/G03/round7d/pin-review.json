@@ -1,0 +1,126 @@
+{
+  "at": "2026-11-09T19:20:39.573Z",
+  "base": "67844167",
+  "target": "1432f79a",
+  "testedHead": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+  "reviewedSourceUnchanged": true,
+  "acceptanceUnchanged": true,
+  "changedDirectPins": [],
+  "closure": [
+    {
+      "path": "lab/bin/datomic-context.mjs",
+      "oldSha256": "7d356e590175e6539065dfd7d709e0f2fd0a3748b85229299122ec4df62d6715",
+      "newSha256": "7d356e590175e6539065dfd7d709e0f2fd0a3748b85229299122ec4df62d6715"
+    },
+    {
+      "path": "lab/bin/ns-policy.mjs",
+      "oldSha256": "6063db882961214bcf56881160605ec7297d008889033537b768409813162302",
+      "newSha256": "6063db882961214bcf56881160605ec7297d008889033537b768409813162302"
+    },
+    {
+      "path": "lab/bin/claim.mjs",
+      "oldSha256": "bb819d29c56fc49514bed41f1d69d3db43a6edf86176f4cf766dee93f1567c7f",
+      "newSha256": "bb819d29c56fc49514bed41f1d69d3db43a6edf86176f4cf766dee93f1567c7f"
+    },
+    {
+      "path": "lab/bin/box.mjs",
+      "oldSha256": "589028dca91ca8c90865994dd483df4694999360f9485520c9c963296b1dc906",
+      "newSha256": "a90715c708b6329bc8c07d12531aac4d88b0ce275fa1352bb46a3483e34fe481"
+    },
+    {
+      "path": "lab/bin/box-policy.mjs",
+      "oldSha256": "986125c8c29e5c8c3de237e16bbfc1ae7b319771f37b75270a2edb3e4d19cf83",
+      "newSha256": "986125c8c29e5c8c3de237e16bbfc1ae7b319771f37b75270a2edb3e4d19cf83"
+    },
+    {
+      "path": "lab/experiments/EXP-G03/round2/window.mjs",
+      "oldSha256": "85000e6620c3e8df1dd044164ff6d407524f0c4cb3fe26b7f5780f81017a5df3",
+      "newSha256": "85000e6620c3e8df1dd044164ff6d407524f0c4cb3fe26b7f5780f81017a5df3"
+    },
+    {
+      "path": "lab/bin/box-engine.mjs",
+      "oldSha256": "dc48fe014f49890b58c27b59bd63735541705b05d6e39d5cffba1b9baec247cd",
+      "newSha256": "dc48fe014f49890b58c27b59bd63735541705b05d6e39d5cffba1b9baec247cd"
+    },
+    {
+      "path": "lab/config/box/Dockerfile",
+      "oldSha256": "ed78a8e03b2fc8dfaa9fb9b8ee42c886b4e2c7be8cf7c96cc6f7cacad50b0f2e",
+      "newSha256": "ed78a8e03b2fc8dfaa9fb9b8ee42c886b4e2c7be8cf7c96cc6f7cacad50b0f2e"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "oldSha256": "bc394609630c6d63f8501b1385226351228f4a0fcd6831f07ad86c0f470719e0",
+      "newSha256": "bc394609630c6d63f8501b1385226351228f4a0fcd6831f07ad86c0f470719e0"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "oldSha256": "6d52aeb3a9fc229af8c988a43377d99c5123be26f5c414eefd60d1c65f67d290",
+      "newSha256": "6d52aeb3a9fc229af8c988a43377d99c5123be26f5c414eefd60d1c65f67d290"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "oldSha256": "bef1cf800b201937ffea49f94fd27d34be35023257dd866994dca9c1643c1cd5",
+      "newSha256": "bef1cf800b201937ffea49f94fd27d34be35023257dd866994dca9c1643c1cd5"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "oldSha256": "aaa61a7a48093792aa5d7dbeafb74aa94d3eefdc34efbb00f9984cf6682494d7",
+      "newSha256": "aaa61a7a48093792aa5d7dbeafb74aa94d3eefdc34efbb00f9984cf6682494d7"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "oldSha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+      "newSha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "oldSha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+      "newSha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+    },
+    {
+      "path": "lab/acceptance/build_contract.py",
+      "oldSha256": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6",
+      "newSha256": "259b0c2985985fbdf2c79d1ad6379c2adb6d919d45611b63bf7002502d2499e6"
+    }
+  ],
+  "sourceHashPairs": [
+    {
+      "path": "lab/bin/box.mjs",
+      "oldSha256": "589028dca91ca8c90865994dd483df4694999360f9485520c9c963296b1dc906",
+      "newSha256": "a90715c708b6329bc8c07d12531aac4d88b0ce275fa1352bb46a3483e34fe481"
+    },
+    {
+      "path": "lab/bin/ns-run.mjs",
+      "oldSha256": "aa99c4fae29d72f2558e47fb14e6abcf12748caf7f21fd45a9fbe4e87fcffd82",
+      "newSha256": "bb9105e18a321438d7b8c2594f9de975862d082acf225f1ea22fae7f3ca5720d"
+    }
+  ],
+  "reportRequires041Repin": true,
+  "historical": [
+    {
+      "name": "ns-suites",
+      "total": 187,
+      "pass": 187,
+      "exit": 0,
+      "tapSha256": "4eae7812149dca727884e20acd17363839836e2a2ee8c370fbfc2fa95e32baf9",
+      "status": "historical builder execution; not fresh reviewer evidence"
+    },
+    {
+      "name": "evaluator",
+      "total": 108,
+      "pass": 108,
+      "exit": 0,
+      "tapSha256": "a6a732a3cb4a7dd295e862dc814f979bb0d6be6a17c2cd22f9efa270320b1f95",
+      "status": "historical builder execution; not fresh reviewer evidence"
+    },
+    {
+      "name": "committed-suites",
+      "total": 295,
+      "pass": 295,
+      "exit": 0,
+      "tapSha256": "5ec9b1af3b7b8c11af76378b528b6e6513ac484d37e388c938ed973b19b203af",
+      "status": "historical builder execution; not fresh reviewer evidence"
+    }
+  ],
+  "qualification": false
+}

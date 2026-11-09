@@ -1,0 +1,1673 @@
+{
+  "at": "2026-11-09T19:18:26.730Z",
+  "boxSha256": "a90715c708b6329bc8c07d12531aac4d88b0ce275fa1352bb46a3483e34fe481",
+  "scope": "exact committed Box.execControl; trusted PassThrough producer; no Docker",
+  "observations": [
+    {
+      "name": "envelope-null",
+      "stdoutHex": "6e756c6c0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "38e0b9de817f645c4bec37c0d4a3e58baecccb040f5718dc069a72c7385a0bed",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-ENVELOPE",
+      "exact": true
+    },
+    {
+      "name": "envelope-[]",
+      "stdoutHex": "5b5d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-ENVELOPE",
+      "exact": true
+    },
+    {
+      "name": "envelope-[1]",
+      "stdoutHex": "5b315d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "acc07b62f23f458923737c4cd4a66bd05d1e71eb4f384003baaf2dcc760d6349",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-ENVELOPE",
+      "exact": true
+    },
+    {
+      "name": "envelope-7",
+      "stdoutHex": "370a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "10159baf262b43a92d95db59dae1f72c645127301661e0a3ce4e38b295a97c58",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-ENVELOPE",
+      "exact": true
+    },
+    {
+      "name": "envelope-true",
+      "stdoutHex": "747275650a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "a17fcf0a2f50e2d495e4f90ce263410edc183add6c62699a2facbccf60410f74",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-ENVELOPE",
+      "exact": true
+    },
+    {
+      "name": "envelope-false",
+      "stdoutHex": "66616c73650a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "2ed27c1421e6928dbe13dbfdb5c59e1045b30341fe7ebe05700006bc5ac572c0",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-ENVELOPE",
+      "exact": true
+    },
+    {
+      "name": "envelope-\"hello\"",
+      "stdoutHex": "2268656c6c6f220a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "11fc90bd25a4139f105bf5c0423c47ba4b1066cd221fabd4e255bd7d0f1b3758",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-ENVELOPE",
+      "exact": true
+    },
+    {
+      "name": "ignored-{}",
+      "stdoutHex": "7b7d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "ca3d163bab055381827226140568f3bef7eaac187cebd76878e0b63e9e442356",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "ignored-{\"schema\":\"foreign\"}",
+      "stdoutHex": "7b22736368656d61223a22666f726569676e227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "bae2f1d18a649d5135700c1a7cf4cd141e3069af3ab2e08419a697479dd3e9e9",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "ignored-{\"schema\":null}",
+      "stdoutHex": "7b22736368656d61223a6e756c6c7d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "7bd41c7ca855ebb8652441850eb42ca052b458d43c261f3f728f60bf03b4d95b",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "ignored-{\"schema\":7}",
+      "stdoutHex": "7b22736368656d61223a377d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "3c733adb2a28d5059109f4b799ece5d47e59b90d1290bfef54f63fce16272d6a",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-1",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-2",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-3",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-4",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-5",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-6",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-7",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-8",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-9",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-10",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-11",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-12",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-13",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-14",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-15",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-16",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-17",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-18",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-19",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-20",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-21",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-22",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-23",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-24",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-25",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-26",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-27",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-28",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-29",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-30",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-31",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-32",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-33",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-34",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-35",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-36",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-37",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-38",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-39",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-40",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-41",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-42",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-43",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-44",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-45",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-46",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-47",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-48",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-49",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-50",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-51",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-52",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-53",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-54",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-55",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-56",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-57",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-58",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-59",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-60",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-61",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-62",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-63",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-64",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-65",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-66",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-67",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-68",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-69",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-70",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-71",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-72",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-73",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-74",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-75",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-76",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-77",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-78",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-79",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-80",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "valid-split-81",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "one-byte-chunks",
+      "stdoutHex": "7b22736368656d61223a226e732d636f6e74726f6c2f31222c2262696e64696e67223a7b2272756e4964223a22696e646570656e64656e74227d2c226d657373616765223a22c3a9e282acf09f9880227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "87a942d2396ea21d0b5c1a4f42ceca7429370c05ddaaf78477a646cdae341c0e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [
+        {
+          "schema": "ns-control/1",
+          "binding": {
+            "runId": "independent"
+          },
+          "message": "é€😀"
+        }
+      ],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "literal-replacement-character",
+      "stdoutHex": "7b22736368656d61223a22666f726569676e222c226d657373616765223a22efbfbd227d0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "1e822ac31a4c9c5d4fdb863295145ddcaf73fb9bb382bee1a23669459a98e34f",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": null,
+      "exact": true
+    },
+    {
+      "name": "invalid-utf8-ff0a",
+      "stdoutHex": "ff0a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "e4688624e5f1ad0629505e6768e3bb36244f2f3e33e751215afa820334a76ed3",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-JSON",
+      "exact": true
+    },
+    {
+      "name": "invalid-utf8-c0800a",
+      "stdoutHex": "c0800a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "b03bf1a4039a1450ed88840ad43e4fa417218b43863663132a7f73f8a28a510c",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-JSON",
+      "exact": true
+    },
+    {
+      "name": "invalid-utf8-eda0800a",
+      "stdoutHex": "eda0800a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "31f87665300f4037ae1a1175e9c1c307c9fd09ced211af15b56cc6376e453762",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-JSON",
+      "exact": true
+    },
+    {
+      "name": "invalid-utf8-f49080800a",
+      "stdoutHex": "f49080800a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "0a6519568029e1588e7a529e522d59e4819056c4ae73d3a41d70d3df0be3fb2e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-JSON",
+      "exact": true
+    },
+    {
+      "name": "invalid-utf8-e2820a",
+      "stdoutHex": "e2820a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "709e8d793727a73c9a46b86860beccb8f5477b34ef8f183c8f3fe116030aad2e",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-JSON",
+      "exact": true
+    },
+    {
+      "name": "invalid-utf8-80c30a",
+      "stdoutHex": "80c30a",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "0c1a3da48d87ed16ad829802de77b52c0eaf44ace51707aee55bae879ddf5575",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-JSON",
+      "exact": true
+    },
+    {
+      "name": "raw-tail",
+      "stdoutHex": "e282",
+      "stderrHex": "ff00c3",
+      "stdoutSha256": "eed0eb1f664e53388c1f00a4a9ba9b8da60fe792af9eb5f6f4b5ee852a91f03f",
+      "stderrSha256": "27685550a0acef2414b78a2407b13c2e893dc1b4d8fb22c5f9cf1de9e79b57f7",
+      "calls": [],
+      "error": "FAULT-CONTROL-TRUNCATED",
+      "exact": true
+    }
+  ]
+}

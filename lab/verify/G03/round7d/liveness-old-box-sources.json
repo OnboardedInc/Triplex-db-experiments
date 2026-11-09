@@ -1,0 +1,277 @@
+[
+  {
+    "path": "lab/bench/ns-driver/README.md",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "68258ca830a3fdb0784b5ace0b8e6ed97f9f82d6b2e6c8eeb5556b4987dcaa1d"
+  },
+  {
+    "path": "lab/bench/ns-driver/answer.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "d744b212d526223bdf62de0f60a26bb01c6d1ab6cf192b7a846ba9876c8743bf"
+  },
+  {
+    "path": "lab/bench/ns-driver/build.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "f40e8d7d7ee52b8409265502d1a5cae7729b46985db289cdd5eb053830aefd25"
+  },
+  {
+    "path": "lab/bench/ns-driver/check-imports.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "c5b43c35058ed7427275a6f26e37d28407e861d29d882cb40b16bd45318ea77b"
+  },
+  {
+    "path": "lab/bench/ns-driver/clock.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "d548d1ca8edc5cad9d43b742bc504d50db28780d2e96715851835c5aecf883a8"
+  },
+  {
+    "path": "lab/bench/ns-driver/compile.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "557dde75b83432c5b69d7f581db0b02a9839b481963d96a23663554281dd29c9"
+  },
+  {
+    "path": "lab/bench/ns-driver/driver.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "687061d04c64e2a12becd8f28cb7787840842724739352c71c39847df102c8bb"
+  },
+  {
+    "path": "lab/bench/ns-driver/events.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "f84870ea91908e1b0730cddaf8eced4e23161f30394c93ce34bda9af2f375d6c"
+  },
+  {
+    "path": "lab/bench/ns-driver/fault.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "44e055f8beedc683a38d5e42b85f46110270e8d76b768fac761b7bc298752bfe"
+  },
+  {
+    "path": "lab/bench/ns-driver/feed.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "182ec068f629800a8e3a710367bc652970b34318eeffd4770787a73b8e14f266"
+  },
+  {
+    "path": "lab/bench/ns-driver/launch-artifact.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "2c64786ae1ef7a47ee98a74cc5b24b317acebfaf3e09a11da3cd8889605f776e"
+  },
+  {
+    "path": "lab/bench/ns-driver/layout-audit.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "79b4a6c4d34964b017d9b639e62f2e5fc37b7941cf06ed10755fe32ad31dacc1"
+  },
+  {
+    "path": "lab/bench/ns-driver/p3.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "d94c50333ca09009cf14abfefa1903585fc40671facd4de747dcd4c593a7b48b"
+  },
+  {
+    "path": "lab/bench/ns-driver/rpc.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "e35856d6b19614b5567ad0c2ede0f0a15c0f3429062d4e65e62af559817c9d9e"
+  },
+  {
+    "path": "lab/bench/ns-driver/runtime-guard.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "9511c10d94f3aade3495284135186daf0e679446ec61a42f56c41e42b4c3824e"
+  },
+  {
+    "path": "lab/bench/ns-driver/schema.json",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "8d92b8d64bc0eedca4bcfe164f2eb91fd486c509a59e994db4e9b02cd071547e"
+  },
+  {
+    "path": "lab/bin/agent.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "f9602bdaede7ef064f5825ffc0d405fcf50ba365a40267016caa6c857d31d2ca"
+  },
+  {
+    "path": "lab/bin/box-engine.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "dc48fe014f49890b58c27b59bd63735541705b05d6e39d5cffba1b9baec247cd"
+  },
+  {
+    "path": "lab/bin/box-policy.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "986125c8c29e5c8c3de237e16bbfc1ae7b319771f37b75270a2edb3e4d19cf83"
+  },
+  {
+    "path": "lab/bin/box.mjs",
+    "commit": "67844167643d964dfb010e70bfd37b66fafdc4dd",
+    "sha256": "589028dca91ca8c90865994dd483df4694999360f9485520c9c963296b1dc906"
+  },
+  {
+    "path": "lab/bin/check-packages.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "f556e34af0bbc5316070a373c0fc874cdc67a608711306b08dab01075b730ec6"
+  },
+  {
+    "path": "lab/bin/claim.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "bb819d29c56fc49514bed41f1d69d3db43a6edf86176f4cf766dee93f1567c7f"
+  },
+  {
+    "path": "lab/bin/datomic-context.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "7d356e590175e6539065dfd7d709e0f2fd0a3748b85229299122ec4df62d6715"
+  },
+  {
+    "path": "lab/bin/engine.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "aaa61a7a48093792aa5d7dbeafb74aa94d3eefdc34efbb00f9984cf6682494d7"
+  },
+  {
+    "path": "lab/bin/gate.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "bef1cf800b201937ffea49f94fd27d34be35023257dd866994dca9c1643c1cd5"
+  },
+  {
+    "path": "lab/bin/heavy-lock.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+  },
+  {
+    "path": "lab/bin/heavy.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "37d91c04a32dbaf9a67b6f9fab4c62c6965c37e5fc608e1fcd9a94a4800274a2"
+  },
+  {
+    "path": "lab/bin/lib.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "6d52aeb3a9fc229af8c988a43377d99c5123be26f5c414eefd60d1c65f67d290"
+  },
+  {
+    "path": "lab/bin/ns-fault-box.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "267948648a17ff2b31a626a0dccf0ef70261cbfeafc5d8251f85f21023bab7f7"
+  },
+  {
+    "path": "lab/bin/ns-fault.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "0242d0f3d13ea5f3b543e34e6bd5f4836ac65a8740d3f87be6299f6fae82301c"
+  },
+  {
+    "path": "lab/bin/ns-policy.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "6063db882961214bcf56881160605ec7297d008889033537b768409813162302"
+  },
+  {
+    "path": "lab/bin/ns-run.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "bb9105e18a321438d7b8c2594f9de975862d082acf225f1ea22fae7f3ca5720d"
+  },
+  {
+    "path": "lab/bin/receipt.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+  },
+  {
+    "path": "lab/bin/scorecard.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "c8e632a3c353b5897ef2a82b7d9ee9484702fb3d222963e251c63186f439029e"
+  },
+  {
+    "path": "lab/bin/status.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "643c8a34fedeb7e90cb5d04e153187171b4643dfe250772b6b1eabfedc2ebc2b"
+  },
+  {
+    "path": "lab/bin/test/box-policy.test.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "701157d8e4c5af06fa5bc63d6172eacae3fc45d56d96083f1e107a5a3dd66556"
+  },
+  {
+    "path": "lab/bin/test/box.test.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "81a67af06d947956762c9f47fe227678eebe65d591adbdef48c74f8df73eb8d5"
+  },
+  {
+    "path": "lab/bin/test/claim-fixtures.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "5cf4c1d8583135d34269e62b3a1a2585373d113c4ddd263cb52124c76fe8aa07"
+  },
+  {
+    "path": "lab/bin/test/claim-round2.test.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "10109d5b7e25d9da612e062ab0862bce00cece4138ebea17b9e0f0962b275860"
+  },
+  {
+    "path": "lab/bin/test/claim.test.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "743c55089f79969e5df3950043b5b2312f90362960c040d6a85aefb5eb87e1ba"
+  },
+  {
+    "path": "lab/bin/test/claim_ref.py",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "34c3c40e76085a4b40d853843d0d8470d423ad87790215f480d8dcf6db56c5ab"
+  },
+  {
+    "path": "lab/bin/test/contained-fixtures.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "c3f514ff5b22ff2e76de6d3409caa502872bfc12fc7936d8aeeb99e5a0548752"
+  },
+  {
+    "path": "lab/bin/test/datomic-context.test.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "71f7cc4e2bbed96341041c2338f384615000ca3be175e9d32ad0f94122c92831"
+  },
+  {
+    "path": "lab/bin/test/lab.test.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "c6970e197add4e865211662bcf80adb75b9c345a1aea0d3c341fc219ec4c005c"
+  },
+  {
+    "path": "lab/experiments/EXP-G03/ns/build.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "0762cf22281ac1ff5a663e89289324bd13c9156c6b75c1c6cd590b1263867bb6"
+  },
+  {
+    "path": "lab/experiments/EXP-G03/ns/contract-proposal.json",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "f3092706538591273cecacbeb0975b269e5547776d8e06d907c3e9e2425de7a1"
+  },
+  {
+    "path": "lab/experiments/EXP-G03/ns/exclusive.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "cef7f4672a9e78198f1b4dc0890d748ee62bdd1c6c8c7c71724b01c861359d4f"
+  },
+  {
+    "path": "lab/experiments/EXP-G03/ns/fault.test.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "2088117f93c58aeabd09b8558c4dfbcc2a1d27529654a57c5a5329d94929aae1"
+  },
+  {
+    "path": "lab/experiments/EXP-G03/ns/observer.py",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "d89731b984a0b4dc978d9721fcec58b3f68764e3a4ca84290940b991bdcb8aaa"
+  },
+  {
+    "path": "lab/experiments/EXP-G03/ns/offline.test.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "bcbb0559accf2d6e290aa3cce1db8ca0664e7a2ead9f7e271d6017d6c2172840"
+  },
+  {
+    "path": "lab/experiments/EXP-G03/ns/round7a.test.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "a36b3be328fe5eb4b8add1b5c9664107ee17144a319202ae0d6e8806cca1c1f3"
+  },
+  {
+    "path": "lab/experiments/EXP-G03/ns/round7c-harness.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "83953e94ca22c3e3bf359ef898bc5f94ddcec082f982506bcef2aae0b3b5da8d"
+  },
+  {
+    "path": "lab/experiments/EXP-G03/ns/round7c.test.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "10722dc64b986a56e15cdf8d4ef2bbbcba4c53999139c3349a9d8be299b743b6"
+  },
+  {
+    "path": "lab/experiments/EXP-G03/ns/smoke-provider.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "91b8bc7922619c1c40c747c25aa5db5059cf1ea62fdeaa1dc40483a778ed2c34"
+  },
+  {
+    "path": "lab/experiments/EXP-G03/ns/smoke.mjs",
+    "commit": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+    "sha256": "a5d8cecd5fd48b3abd1b1fcdd4d71c75a177dfc83bacb067b51c58f83b86aaa5"
+  }
+]

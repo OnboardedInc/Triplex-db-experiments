@@ -1,0 +1,172 @@
+TAP version 13
+# Subtest: F3: rejected control session (reject-hook) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 1 - F3: rejected control session (reject-hook) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 106.243625
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-timeout) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 2 - F3: rejected control session (control-timeout) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 164.589958
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-truncated) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 3 - F3: rejected control session (control-truncated) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 113.882375
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-json) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 4 - F3: rejected control session (control-json) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 121.711
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-cap) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 5 - F3: rejected control session (control-cap) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 126.109042
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-null) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 6 - F3: rejected control session (control-null) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 138.3315
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-array) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 7 - F3: rejected control session (control-array) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 109.980375
+  type: 'test'
+  ...
+# Subtest: F3: rejected control session (control-scalar) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+ok 8 - F3: rejected control session (control-scalar) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses
+  ---
+  duration_ms: 124.340292
+  type: 'test'
+  ...
+# Subtest: F3 baseline preserved: resolved exec result (nonzero) still exports six digested files before refusing
+ok 9 - F3 baseline preserved: resolved exec result (nonzero) still exports six digested files before refusing
+  ---
+  duration_ms: 120.888917
+  type: 'test'
+  ...
+# Subtest: F3 baseline preserved: resolved exec result (null-exit) still exports six digested files before refusing
+ok 10 - F3 baseline preserved: resolved exec result (null-exit) still exports six digested files before refusing
+  ---
+  duration_ms: 105.32325
+  type: 'test'
+  ...
+# Subtest: F3 baseline preserved: resolved exec result (finish-failure) still exports six digested files before refusing
+ok 11 - F3 baseline preserved: resolved exec result (finish-failure) still exports six digested files before refusing
+  ---
+  duration_ms: 100.76375
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-nonutf8) are exported and digested exactly as received
+ok 12 - F7: raw control bytes (control-nonutf8) are exported and digested exactly as received
+  ---
+  duration_ms: 111.149792
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-split-utf8-garbage) are exported and digested exactly as received
+ok 13 - F7: raw control bytes (control-split-utf8-garbage) are exported and digested exactly as received
+  ---
+  duration_ms: 108.1035
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-split-utf8-truncated) are exported and digested exactly as received
+ok 14 - F7: raw control bytes (control-split-utf8-truncated) are exported and digested exactly as received
+  ---
+  duration_ms: 99.446666
+  type: 'test'
+  ...
+# Subtest: F7: raw control bytes (control-split-utf8-valid-then-null) are exported and digested exactly as received
+ok 15 - F7: raw control bytes (control-split-utf8-valid-then-null) are exported and digested exactly as received
+  ---
+  duration_ms: 105.665041
+  type: 'test'
+  ...
+# Subtest: F5: a one-shot stage-10 append failure (stage10-control) keeps volume ownership after close(), keeps the original cause and records the gap
+ok 16 - F5: a one-shot stage-10 append failure (stage10-control) keeps volume ownership after close(), keeps the original cause and records the gap
+  ---
+  duration_ms: 100.911625
+  type: 'test'
+  ...
+# Subtest: F5: a one-shot stage-10 append failure (stage10-nonzero) keeps volume ownership after close(), keeps the original cause and records the gap
+ok 17 - F5: a one-shot stage-10 append failure (stage10-nonzero) keeps volume ownership after close(), keeps the original cause and records the gap
+  ---
+  duration_ms: 102.251958
+  type: 'test'
+  ...
+# Subtest: F5: a one-shot stage-10 append failure (stage10-clean) keeps volume ownership after close(), keeps the original cause and records the gap
+ok 18 - F5: a one-shot stage-10 append failure (stage10-clean) keeps volume ownership after close(), keeps the original cause and records the gap
+  ---
+  duration_ms: 130.784875
+  type: 'test'
+  ...
+# Subtest: F3: when stop or export cannot be proven (retain-walk-failure), the run volumes stay owned and the gap is recorded
+ok 19 - F3: when stop or export cannot be proven (retain-walk-failure), the run volumes stay owned and the gap is recorded
+  ---
+  duration_ms: 105.867417
+  type: 'test'
+  ...
+# Subtest: F3: when stop or export cannot be proven (retain-remove-failure), the run volumes stay owned and the gap is recorded
+ok 20 - F3: when stop or export cannot be proven (retain-remove-failure), the run volumes stay owned and the gap is recorded
+  ---
+  duration_ms: 103.764833
+  type: 'test'
+  ...
+# Subtest: F3: a failed terminal is never clean: requireCleanTerminal refuses controlFailure whatever else it says
+ok 21 - F3: a failed terminal is never clean: requireCleanTerminal refuses controlFailure whatever else it says
+  ---
+  duration_ms: 0.422291
+  type: 'test'
+  ...
+# Subtest: F4 control: constant valid domain is accepted and returned
+ok 22 - F4 control: constant valid domain is accepted and returned
+  ---
+  duration_ms: 0.617541
+  type: 'test'
+  ...
+# Subtest: F4: null first domain followed by a valid domain is refused (the reviewer reproduction)
+ok 23 - F4: null first domain followed by a valid domain is refused (the reviewer reproduction)
+  ---
+  duration_ms: 0.236459
+  type: 'test'
+  ...
+# Subtest: F4: null in every record is refused, including with a null seal domain
+ok 24 - F4: null in every record is refused, including with a null seal domain
+  ---
+  duration_ms: 0.365791
+  type: 'test'
+  ...
+# Subtest: F4: null only in the middle or final record is refused
+ok 25 - F4: null only in the middle or final record is refused
+  ---
+  duration_ms: 1.482167
+  type: 'test'
+  ...
+# Subtest: F4: change between two non-null domains is still refused
+ok 26 - F4: change between two non-null domains is still refused
+  ---
+  duration_ms: 2.797083
+  type: 'test'
+  ...
+# Subtest: F4: a constant but malformed domain is refused (not the boot/zero-offset clock object)
+ok 27 - F4: a constant but malformed domain is refused (not the boot/zero-offset clock object)
+  ---
+  duration_ms: 0.878708
+  type: 'test'
+  ...
+1..27
+# tests 27
+# suites 0
+# pass 27
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2452.114167

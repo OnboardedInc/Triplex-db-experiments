@@ -1,0 +1,454 @@
+{
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VG03-7D",
+  "files": 89,
+  "bytes": 18540245,
+  "copyVerifiedBeforeLocalRemoval": true,
+  "retention": "All model raw runs, including first reviewer assertion failure, retained; no Docker resources created",
+  "entries": [
+    {
+      "path": "retention-control-stage10/ns-1be443141c708f4789be64d2a66d4f6a-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-control-stage10/ns-1be443141c708f4789be64d2a66d4f6a-retained.json",
+      "sha256": "89014ca7afb0dc433dc5b623bdaa883eff693227cad9ff987817ccaf6c84c46f",
+      "bytes": 1561
+    },
+    {
+      "path": "retention-control-stage10/ns-1be443141c708f4789be64d2a66d4f6a-stages.ndjson",
+      "sha256": "1a3a6ca9da4256937ba2fb31b8ecf197985ce6698ff9fe38f5630ab4f0ef971d",
+      "bytes": 151385
+    },
+    {
+      "path": "retention-attempt2/retention-clean-stage10-gap-failure/ns-486be22786c13e9905ef7eb356b19d3d-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-attempt2/retention-clean-stage10-gap-failure/ns-486be22786c13e9905ef7eb356b19d3d-stages.ndjson",
+      "sha256": "7a7be9365eb32369b2ef1eb32a328f883e8adf1f41cecaae90ab6e10ca508fb5",
+      "bytes": 151011
+    },
+    {
+      "path": "retention-attempt2/retention-clean-stage10-gap-failure/observation.json",
+      "sha256": "f7ad0fb158e4a312ec0f1873c62d520a6749c9d2e3d8787c67d1ca19245e8504",
+      "bytes": 612990
+    },
+    {
+      "path": "retention-attempt2/retention-clean-stage10/ns-c9c2901f01a41e4822b749a7f2bffe37-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-attempt2/retention-clean-stage10/ns-c9c2901f01a41e4822b749a7f2bffe37-retained.json",
+      "sha256": "9bbefee11c595e2ba691704013d0b82b6f7d6f4de8cb0df2e2b9f774332ca957",
+      "bytes": 1198
+    },
+    {
+      "path": "retention-attempt2/retention-clean-stage10/ns-c9c2901f01a41e4822b749a7f2bffe37-stages.ndjson",
+      "sha256": "d53575a72101cd2237cf94075b451735316fc3040a8391743ba36d1433952cff",
+      "bytes": 151385
+    },
+    {
+      "path": "retention-attempt2/retention-clean-stage10/observation.json",
+      "sha256": "4d5f414b91110b0add759d97fb5228b761a97326e9cfb5274eea3d0fee719b37",
+      "bytes": 613561
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage10-gap-failure/ns-f7d1e71f15c809579b93b7f06df8e233-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage10-gap-failure/ns-f7d1e71f15c809579b93b7f06df8e233-stages.ndjson",
+      "sha256": "65c64c47e11c49e05bd4bad56f0da6334ab9682c1cb272bcceead41ada6c8fb3",
+      "bytes": 151011
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage10-gap-failure/observation.json",
+      "sha256": "6ff79039cc15cb1bb1397a9cbd3f9b67491ad77304d039014b4c70deb5ad4e33",
+      "bytes": 613533
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage10-stage14-failure/ns-0c0816a3a36aecdbe2846610f9644697-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage10-stage14-failure/ns-0c0816a3a36aecdbe2846610f9644697-retained.json",
+      "sha256": "9886cf748a36860c62730b2a5809e1241ea785358e4f0f261ab4d958733a05d5",
+      "bytes": 1561
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage10-stage14-failure/ns-0c0816a3a36aecdbe2846610f9644697-stages.ndjson",
+      "sha256": "178ebabee9cb585690472494a77e9799016585b809c324f45bd8e261af22c66a",
+      "bytes": 151011
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage10-stage14-failure/observation.json",
+      "sha256": "1c6c421d04912c90840d5389a9ad687b28b72a6b7c2e410a1cddd0bf960918fc",
+      "bytes": 613594
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage10/ns-164aa87c5a8e2435604eb7744fd2b1d1-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage10/ns-164aa87c5a8e2435604eb7744fd2b1d1-retained.json",
+      "sha256": "859c7be879dbe26fd411700132fecc498b3ef2f2549cb5606c0f70ce5b23a3ed",
+      "bytes": 1561
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage10/ns-164aa87c5a8e2435604eb7744fd2b1d1-stages.ndjson",
+      "sha256": "66afdac8671e8066c472ac75992eb6b2d5f7408013de4b8d235a08ad8d357531",
+      "bytes": 151385
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage10/observation.json",
+      "sha256": "5226063b5fccf5bd6eb44bbaf297b20f19084752397cbf897df6103e136a7cb3",
+      "bytes": 614104
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage11/ns-b9d1e61a2a1a620b4912e8d279b3f63c-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage11/ns-b9d1e61a2a1a620b4912e8d279b3f63c-retained.json",
+      "sha256": "43e470c2f582bc20a0cda17b1f06f4b87a9c4c864be706e463e207a50841b528",
+      "bytes": 1503
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage11/ns-b9d1e61a2a1a620b4912e8d279b3f63c-stages.ndjson",
+      "sha256": "e949a2beeda354feba4d8d27a00d4cca8d09b18e5158f6976d3371cdfee3aa3b",
+      "bytes": 151919
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage11/observation.json",
+      "sha256": "476e17aae1e7ab5fdefd10ec2e1a8d10e0f856f716e2ef6fb6f503bb71d5fb93",
+      "bytes": 614888
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage12/ns-713a997ef7891a61695366677ba887f2-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage12/ns-713a997ef7891a61695366677ba887f2-retained.json",
+      "sha256": "885399957658abdf99dc0d9cd24124e1e9dfc967c13ef3f29c7d6e34d3fc8a14",
+      "bytes": 1503
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage12/ns-713a997ef7891a61695366677ba887f2-stages.ndjson",
+      "sha256": "0d0b719d2e600e1bce8207a808e91b034ac02bff574d725aee939d39764559db",
+      "bytes": 151988
+    },
+    {
+      "path": "retention-attempt2/retention-control-stage12/observation.json",
+      "sha256": "08a8b0856212e95c701c67e0cc892443d308609ba05ef64eafa08d559f2419bc",
+      "bytes": 615001
+    },
+    {
+      "path": "retention-attempt2/retention-control-walk-gap-failure/ns-b3631f2a585f6dd1ec178ccdc551bfda-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-attempt2/retention-control-walk-gap-failure/ns-b3631f2a585f6dd1ec178ccdc551bfda-stages.ndjson",
+      "sha256": "e93ea23fd6ca4443cfbd957a201917fe1e73ef1a009de858d153ebf4443d3724",
+      "bytes": 151720
+    },
+    {
+      "path": "retention-attempt2/retention-control-walk-gap-failure/observation.json",
+      "sha256": "e92ba3c2673560aca90274f65ab3453f6434d08f0ed7922fab02152b30c752db",
+      "bytes": 614665
+    },
+    {
+      "path": "retention-attempt2/retention-nonzero-stage10-gap-failure/ns-b566f579f1ed5dfd9ffde028dc4a88da-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-attempt2/retention-nonzero-stage10-gap-failure/ns-b566f579f1ed5dfd9ffde028dc4a88da-stages.ndjson",
+      "sha256": "42aebd2ad94001ddfafb091dc514cfe7c384646412fce4a990fac1f2001ee06c",
+      "bytes": 151011
+    },
+    {
+      "path": "retention-attempt2/retention-nonzero-stage10-gap-failure/observation.json",
+      "sha256": "e43272432c29242f14d6234774990bec559b10ecad0691caa9d3905707e9ac5b",
+      "bytes": 613082
+    },
+    {
+      "path": "retention-attempt2/retention-nonzero-stage10/ns-f08277bf7cf3ae2e49eb4f28ef0f4fc8-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-attempt2/retention-nonzero-stage10/ns-f08277bf7cf3ae2e49eb4f28ef0f4fc8-retained.json",
+      "sha256": "bb086187924deb0e01e5a6c01487676b8a47e23001e9f51cde08fdb8aedb8d19",
+      "bytes": 1224
+    },
+    {
+      "path": "retention-attempt2/retention-nonzero-stage10/ns-f08277bf7cf3ae2e49eb4f28ef0f4fc8-stages.ndjson",
+      "sha256": "7d9e11b690f5d441a93ba989b7c5e76139ac66d172eca81a80933e1d6275476f",
+      "bytes": 151385
+    },
+    {
+      "path": "retention-attempt2/retention-nonzero-stage10/observation.json",
+      "sha256": "babf9cc34bf3afacb65bc761b1025cd3f5e5b49c21fb611075b952d741166de5",
+      "bytes": 613653
+    },
+    {
+      "path": "retention-build-attempt1/retention-control-terminal-build-gap-failure/ns-f1bc07a4361edd35f646fe62a025fdec-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-build-attempt1/retention-control-terminal-build-gap-failure/ns-f1bc07a4361edd35f646fe62a025fdec-stages.ndjson",
+      "sha256": "ee4031d48e1cee480add757a839e8d31ca70a711d1bbfdfa51d5c39e41ab07af",
+      "bytes": 151011
+    },
+    {
+      "path": "retention-build-attempt1/retention-control-terminal-build-gap-failure/observation.json",
+      "sha256": "118e7a4c67f08d0ef560c563940d3a84c1bad0fc7afcef1a77511d3bea67c8bc",
+      "bytes": 612936
+    },
+    {
+      "path": "retention-build-attempt1/retention-control-terminal-build/ns-e89b04fce792ec41e773dff5f81ac188-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-build-attempt1/retention-control-terminal-build/ns-e89b04fce792ec41e773dff5f81ac188-retained.json",
+      "sha256": "c6efef6013fc83f213667ee48c4f00a6294c6e199008aa9c3029a9d407b3f000",
+      "bytes": 1081
+    },
+    {
+      "path": "retention-build-attempt1/retention-control-terminal-build/ns-e89b04fce792ec41e773dff5f81ac188-stages.ndjson",
+      "sha256": "98609dfd5be5de8c7112f0892ec50063ebfbde530fed9ea92e0301f5ba9af062",
+      "bytes": 151369
+    },
+    {
+      "path": "retention-build-attempt1/retention-control-terminal-build/observation.json",
+      "sha256": "f7d5ec44af9fc94ff2d6134e497cfc8ba960b9cc1a9ade35692d5d1aa433ff7a",
+      "bytes": 613468
+    },
+    {
+      "path": "retention-final/retention-clean-stage10-gap-failure/ns-e45565a0cdc31ed793a8706b54e62198-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-clean-stage10-gap-failure/ns-e45565a0cdc31ed793a8706b54e62198-stages.ndjson",
+      "sha256": "89297cf52880ea245f3b2c9c03339abf1250d2cadbf2f6d96cc07952c9729a29",
+      "bytes": 151011
+    },
+    {
+      "path": "retention-final/retention-clean-stage10-gap-failure/observation.json",
+      "sha256": "8b4060877fb8c40bd7871015a9edb1842ebfd78e4d4f60a59f34f43728d3702f",
+      "bytes": 612990
+    },
+    {
+      "path": "retention-final/retention-clean-stage10/ns-fb023ac2f3727a053f55a0e896481c4e-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-clean-stage10/ns-fb023ac2f3727a053f55a0e896481c4e-retained.json",
+      "sha256": "ebb4bd105abbd33e289968d6f81aba93153fa2b86c1a42edc12a93f98312a814",
+      "bytes": 1198
+    },
+    {
+      "path": "retention-final/retention-clean-stage10/ns-fb023ac2f3727a053f55a0e896481c4e-stages.ndjson",
+      "sha256": "f5e4a67c1f083c762fe19b0027ab1af458afc1e383c9034ace31ecf7c6e4f0d4",
+      "bytes": 151385
+    },
+    {
+      "path": "retention-final/retention-clean-stage10/observation.json",
+      "sha256": "6de38ebf4fbc1515655f3715da122f3f26a26383a85b2fb6dcee3e36f334991b",
+      "bytes": 613561
+    },
+    {
+      "path": "retention-final/retention-control-stage10-gap-failure/ns-ca3be537da239a9f9cf6d718645fe043-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-control-stage10-gap-failure/ns-ca3be537da239a9f9cf6d718645fe043-stages.ndjson",
+      "sha256": "0c7b5965406d6383c393626cd89867499925eed5204143524fb3288534241f20",
+      "bytes": 151011
+    },
+    {
+      "path": "retention-final/retention-control-stage10-gap-failure/observation.json",
+      "sha256": "32b29c13957ab8ef00a80761d1c09ff210235c9ce3a5a1a9314cb8977db8043f",
+      "bytes": 613533
+    },
+    {
+      "path": "retention-final/retention-control-stage10-stage14-failure/ns-10b546a616a4e17119bf1acb5efbfe09-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-control-stage10-stage14-failure/ns-10b546a616a4e17119bf1acb5efbfe09-retained.json",
+      "sha256": "11e94e51d55e36d2a5c06d6e1171515f6a8d0aaaf5dc8848023cae9487059f90",
+      "bytes": 1561
+    },
+    {
+      "path": "retention-final/retention-control-stage10-stage14-failure/ns-10b546a616a4e17119bf1acb5efbfe09-stages.ndjson",
+      "sha256": "79907eb538e49c1016e9fab5ebc14c6e5d07f1efa2db5e336b17c0df7eecf15b",
+      "bytes": 151011
+    },
+    {
+      "path": "retention-final/retention-control-stage10-stage14-failure/observation.json",
+      "sha256": "27f43d9c50f4b53b1ea7c14d432875f1f6d310b1784542ef61785f945d000147",
+      "bytes": 613594
+    },
+    {
+      "path": "retention-final/retention-control-stage10/ns-75559f5488096120b31ae53f9bd7d4fe-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-control-stage10/ns-75559f5488096120b31ae53f9bd7d4fe-retained.json",
+      "sha256": "9eeefc2010c63f42ffa48ef89656d0c09165abc65a7031f22cd97d1b669176c0",
+      "bytes": 1561
+    },
+    {
+      "path": "retention-final/retention-control-stage10/ns-75559f5488096120b31ae53f9bd7d4fe-stages.ndjson",
+      "sha256": "585d1074f48fea7e63490a6e1f6e23c16e827ff40e598156bb33394a7ff380b7",
+      "bytes": 151385
+    },
+    {
+      "path": "retention-final/retention-control-stage10/observation.json",
+      "sha256": "fd954e1a58ab1d003edfa92d1040a3b1c379e8506b0f4b17c9a13ca79d5a40c3",
+      "bytes": 614104
+    },
+    {
+      "path": "retention-final/retention-control-stage11/ns-7858f1bfa8222950924ae63a131247b2-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-control-stage11/ns-7858f1bfa8222950924ae63a131247b2-retained.json",
+      "sha256": "7d375e89fb47d51a40f563af0f4080edc51d0e911aff62276a7ceb5108622810",
+      "bytes": 1503
+    },
+    {
+      "path": "retention-final/retention-control-stage11/ns-7858f1bfa8222950924ae63a131247b2-stages.ndjson",
+      "sha256": "5ff835a726c55ce1b17225b4589e7d0386d7daa2d9d081a55762a0483a1fabbc",
+      "bytes": 151919
+    },
+    {
+      "path": "retention-final/retention-control-stage11/observation.json",
+      "sha256": "3d4d459495b4f810907f69251699ae93614b4d525e8ca76b3d6afa546a69d089",
+      "bytes": 614888
+    },
+    {
+      "path": "retention-final/retention-control-stage12/ns-d279dad6eb430781bffabc8066e24c29-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-control-stage12/ns-d279dad6eb430781bffabc8066e24c29-retained.json",
+      "sha256": "bdf184011b4c651cc494273a2760b57b996b56ab4ac560fb2ffa8b2dd0d11408",
+      "bytes": 1503
+    },
+    {
+      "path": "retention-final/retention-control-stage12/ns-d279dad6eb430781bffabc8066e24c29-stages.ndjson",
+      "sha256": "e57b0c1ecf8aadd31b0fa41ce3405d316459d565fd9beb6dfba70b4307a6ce71",
+      "bytes": 151988
+    },
+    {
+      "path": "retention-final/retention-control-stage12/observation.json",
+      "sha256": "7150647ed8f03ccb960bd4b8db74cab90617041c311137571db9acc2c9f44df0",
+      "bytes": 615001
+    },
+    {
+      "path": "retention-final/retention-control-terminal-build-gap-failure/ns-625af4f0c9f354c1579eddae1f0966c5-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-control-terminal-build-gap-failure/ns-625af4f0c9f354c1579eddae1f0966c5-stages.ndjson",
+      "sha256": "afffd8a451ade6330edbedd0399d1ff2ebe7f596fa925bc149ded0f418eb0c2b",
+      "bytes": 151011
+    },
+    {
+      "path": "retention-final/retention-control-terminal-build-gap-failure/observation.json",
+      "sha256": "66b8d8b3c90be04f658ee5041c5e843c72069e68df0dd7e1b63625a1ce705393",
+      "bytes": 612936
+    },
+    {
+      "path": "retention-final/retention-control-terminal-build/ns-c0f4ebc6b8092ec7c7f65cc73728d48a-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-control-terminal-build/ns-c0f4ebc6b8092ec7c7f65cc73728d48a-retained.json",
+      "sha256": "655e966e5a15ddf05fa110b195310ba0eb6a5532e55cadc5b8168c165c5186a8",
+      "bytes": 1081
+    },
+    {
+      "path": "retention-final/retention-control-terminal-build/ns-c0f4ebc6b8092ec7c7f65cc73728d48a-stages.ndjson",
+      "sha256": "1890f344d29b6301e848b0544bc12b26faea6b09191fde75aa0e420b1b808273",
+      "bytes": 151369
+    },
+    {
+      "path": "retention-final/retention-control-terminal-build/observation.json",
+      "sha256": "0361ae6dfede07e3f64461866f908bf10a2af0440e8f1e2e299d6a5888e70577",
+      "bytes": 613468
+    },
+    {
+      "path": "retention-final/retention-control-walk-gap-failure/ns-2b84962ea185e4c0fe4fe8eb5e161d57-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-control-walk-gap-failure/ns-2b84962ea185e4c0fe4fe8eb5e161d57-stages.ndjson",
+      "sha256": "25b5e275a3fec74ee76990d75690041c357fa8eef9c23a528936a2a5f71b4375",
+      "bytes": 151720
+    },
+    {
+      "path": "retention-final/retention-control-walk-gap-failure/observation.json",
+      "sha256": "e052aef955f52bc2648b18ad227cd991231709bc096f6dff25ec0f94ad3087e6",
+      "bytes": 614665
+    },
+    {
+      "path": "retention-final/retention-nonzero-stage10-gap-failure/ns-a66c4d8733f107a3cecbb9153ffba347-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-nonzero-stage10-gap-failure/ns-a66c4d8733f107a3cecbb9153ffba347-stages.ndjson",
+      "sha256": "163ede90ff0b63d2951af1b8fe1f9c383a38b932291e24f6931b38750aa65460",
+      "bytes": 151011
+    },
+    {
+      "path": "retention-final/retention-nonzero-stage10-gap-failure/observation.json",
+      "sha256": "f9a211c667efcb940df3db25bc0d4c7c067f80413f4b04a07303002875e38809",
+      "bytes": 613082
+    },
+    {
+      "path": "retention-final/retention-nonzero-stage10/ns-d995576d00cc1a9e183fecbfc60acf40-inputs.json",
+      "sha256": "57f183859b1f937cff16b115158e8f238277a3dae362e3f84d2b0613aee5ba50",
+      "bytes": 187
+    },
+    {
+      "path": "retention-final/retention-nonzero-stage10/ns-d995576d00cc1a9e183fecbfc60acf40-retained.json",
+      "sha256": "37bfe765feb24ecf22da69ce49b77e1b3af11bd021a4e5cade9cf4470f10a680",
+      "bytes": 1224
+    },
+    {
+      "path": "retention-final/retention-nonzero-stage10/ns-d995576d00cc1a9e183fecbfc60acf40-stages.ndjson",
+      "sha256": "15cf70a69fd19f8be5bef4d29d1e3bd6ce9a43a14253e12246966d677ba79415",
+      "bytes": 151385
+    },
+    {
+      "path": "retention-final/retention-nonzero-stage10/observation.json",
+      "sha256": "67356b32233eae199e1fae8c0d5d17dc787b4f89ef4b97583503b542823048fe",
+      "bytes": 613653
+    }
+  ]
+}

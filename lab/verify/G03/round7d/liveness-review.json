@@ -1,0 +1,81 @@
+{
+  "at": "2026-11-09T19:20:03.421Z",
+  "head": "1432f79a63037e2704bfee4c87ff1ea544bc7426",
+  "old": "67844167643d964dfb010e70bfd37b66fafdc4dd",
+  "observations": [
+    {
+      "name": "current",
+      "oldFiles": [],
+      "exit": 0,
+      "total": 27,
+      "pass": 27,
+      "fail": 0,
+      "failures": [],
+      "tapSha256": "9c6d6a9a4fc4757ac630a613167180c1d29a251fe73d9eadd1eb663f607a79de",
+      "manifestSha256": "1ee99b0f21a0be1b05c35e04cd724f64ade6fdb717d7bac48f4687c833b35bb6"
+    },
+    {
+      "name": "old-both",
+      "oldFiles": [
+        "lab/bin/box.mjs",
+        "lab/bin/ns-run.mjs"
+      ],
+      "exit": 1,
+      "total": 27,
+      "pass": 17,
+      "fail": 10,
+      "failures": [
+        "F3: rejected control session (control-null) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses",
+        "F3: rejected control session (control-array) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses",
+        "F3: rejected control session (control-scalar) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses",
+        "F7: raw control bytes (control-nonutf8) are exported and digested exactly as received",
+        "F7: raw control bytes (control-split-utf8-garbage) are exported and digested exactly as received",
+        "F7: raw control bytes (control-split-utf8-truncated) are exported and digested exactly as received",
+        "F7: raw control bytes (control-split-utf8-valid-then-null) are exported and digested exactly as received",
+        "F5: a one-shot stage-10 append failure (stage10-control) keeps volume ownership after close(), keeps the original cause and records the gap",
+        "F5: a one-shot stage-10 append failure (stage10-nonzero) keeps volume ownership after close(), keeps the original cause and records the gap",
+        "F5: a one-shot stage-10 append failure (stage10-clean) keeps volume ownership after close(), keeps the original cause and records the gap"
+      ],
+      "tapSha256": "66b83c166501ab093d146c2ce693adacacc2ce1b8fec51fede6a48e02a4f8b23",
+      "manifestSha256": "75db6f807cdb4dfbd76ef036fbe386fc5c0a5d3581054d3897a442c2d57420a1"
+    },
+    {
+      "name": "old-box",
+      "oldFiles": [
+        "lab/bin/box.mjs"
+      ],
+      "exit": 1,
+      "total": 27,
+      "pass": 20,
+      "fail": 7,
+      "failures": [
+        "F3: rejected control session (control-null) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses",
+        "F3: rejected control session (control-array) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses",
+        "F3: rejected control session (control-scalar) becomes a failed terminal, stops safely, exports and digests raw bytes, then refuses",
+        "F7: raw control bytes (control-nonutf8) are exported and digested exactly as received",
+        "F7: raw control bytes (control-split-utf8-garbage) are exported and digested exactly as received",
+        "F7: raw control bytes (control-split-utf8-truncated) are exported and digested exactly as received",
+        "F7: raw control bytes (control-split-utf8-valid-then-null) are exported and digested exactly as received"
+      ],
+      "tapSha256": "375ec65ad9cba31e1f9f1056019422dcfd729b00f85d90b8596c939d6ec929d7",
+      "manifestSha256": "37f510b72f84c9c116f02bf4a33b4fd74ba3477f4b21fe7faff096836d0777d1"
+    },
+    {
+      "name": "old-ns",
+      "oldFiles": [
+        "lab/bin/ns-run.mjs"
+      ],
+      "exit": 1,
+      "total": 27,
+      "pass": 24,
+      "fail": 3,
+      "failures": [
+        "F5: a one-shot stage-10 append failure (stage10-control) keeps volume ownership after close(), keeps the original cause and records the gap",
+        "F5: a one-shot stage-10 append failure (stage10-nonzero) keeps volume ownership after close(), keeps the original cause and records the gap",
+        "F5: a one-shot stage-10 append failure (stage10-clean) keeps volume ownership after close(), keeps the original cause and records the gap"
+      ],
+      "tapSha256": "949c4ad11366b87d25c2292ecec94cb9c0b08e10ea9735cfc52dfa26821a2f8e",
+      "manifestSha256": "852daa99cd80dfd0e1bc6bcf17f0936566e9e7b4277d10450fc4fb769936d1b7"
+    }
+  ]
+}
