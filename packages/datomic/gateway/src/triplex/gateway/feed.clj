@@ -69,20 +69,31 @@
             (future-cancel (:worker state))
             (d/remove-tx-report-queue conn)
             (swap! wakeups dissoc conn))))))
-(defn poll-log [from limit wait-ms read-page wait!]
-  (let [rows (vec (read-page from limit))]
-    (if (or (seq rows) (zero? wait-ms)) rows
-      (do (wait! wait-ms) (vec (read-page from limit))))))
+(defn poll-log [from limit wait-ms read-page arm-wait]
+  ;; [EXP-DF01-R2] Why: F1 reports can be stale or precede a readable cut; only the log answers.
+  ;; Rejected: one wake/read (returns empty early) or reusing a delivered promise (busy spins).
+  (let [deadline (+ (System/nanoTime) (* wait-ms 1000000))]
+    (loop []
+      (let [wait! (arm-wait) rows (vec (read-page from limit))
+            remaining (- deadline (System/nanoTime))]
+        (cond
+          (seq rows) rows
+          (<= remaining 0) rows
+          :else (do (wait! remaining) (recur)))))))
 (defn log-page [conn input]
   (let [from (natural (get input "fromT" "0")) limit (bounded (get input "limit") 1000 1000)
         wait-ms (bounded (get input "waitMs") 0 30000)]
     (when (zero? limit) (codec/invalid "Empty log limit"))
-    (let [watch (when (pos? wait-ms) (subscribe! conn)) signal (when watch @(:signal watch))]
+    (let [watch (when (pos? wait-ms) (subscribe! conn))]
       (try
         (let [read-page (fn [start n]
                           (let [db (d/db conn) end (inc (d/basis-t db))]
                             (if (>= start end) []
                               (mapv #(project db %) (take n (d/tx-range (d/log conn) start end))))))
-              rows (poll-log from limit wait-ms read-page (fn [ms] (deref signal ms false)))]
+              rows (poll-log from limit wait-ms read-page
+                     (fn []
+                       (let [signal (when watch @(:signal watch))]
+                         (fn [remaining-ns]
+                           (deref signal (quot (+ remaining-ns 999999) 1000000) false)))))]
           {:fromT (str from) :nextT (if (seq rows) (str (inc (natural (:t (last rows))))) (str from)) :rows rows})
         (finally (when watch (unsubscribe! conn)))))))

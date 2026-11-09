@@ -47,9 +47,9 @@
     (is (thrown? Exception (feed/log-page :fake input)))))
 (deftest wait-and-restart
   (let [calls (atom 0) wakes (atom 0)]
-    (is (= pages (feed/poll-log 100 3 100 (fn [_ _] (if (= 1 (swap! calls inc)) [] pages)) (fn [_] (swap! wakes inc)))))
+    (is (= pages (feed/poll-log 100 3 100 (fn [_ _] (if (= 1 (swap! calls inc)) [] pages)) (fn [] (fn [_] (swap! wakes inc))))))
     (is (= 1 @wakes))
-    (is (= pages (feed/poll-log 100 3 100 (fn [_ _] pages) (fn [_] (throw (Exception. "queue lost"))))))))
+    (is (= pages (feed/poll-log 100 3 100 (fn [_ _] pages) (fn [] (fn [_] (throw (Exception. "queue lost")))))))))
 (deftest broadcast-and-cleanup
   (let [queue (java.util.concurrent.LinkedBlockingQueue.) removed (atom 0)]
     (with-redefs [d/tx-report-queue (constantly queue) d/remove-tx-report-queue (fn [_] (swap! removed inc))]
@@ -89,3 +89,58 @@
     (is (thrown-with-msg? Exception #"Erasure sequence" (feed/project {} {:t 100 :data [{:e 1 :a :f/erased-in :added true}]})))
     (with-redefs [d/entity (fn [db id] (let [e (entity db id)] (if (= id 100) (dissoc e :triplex.tx/recorded-at) e)))]
       (is (thrown-with-msg? Exception #"Incomplete" (feed/project {} (first pages)))))))
+
+;; [EXP-DF01-R2] Why: notifications and the immutable read view can disagree during publication.
+;; Rejected: favorable-only fixtures that make data readable before their sole notification (F1).
+(deftest early-report-before-readable-cut
+  (fake-peer
+    (let [queue (java.util.concurrent.LinkedBlockingQueue.) visible (atom 100)
+          ready (promise) second-read (promise) reads (atom 0) removed (atom 0)]
+      (with-redefs [d/tx-report-queue (constantly queue) d/remove-tx-report-queue (fn [_] (swap! removed inc))
+                    d/db (fn [_] (let [cut @visible n (swap! reads inc)]
+                                  (if (= n 1) (deliver ready true) (deliver second-read true)) {:t cut}))
+                    d/basis-t :t]
+        (let [started (System/nanoTime)
+              result (future (feed/log-page :early {"fromT" "105" "waitMs" "180"}))]
+          (is (= true (deref ready 2000 false)))
+          (.put queue {:t 105})
+          (is (= true (deref second-read 2000 false)))
+          (is (= ::pending (deref result 20 ::pending)))
+          (reset! visible 105)
+          ;; No further report: the deadline itself must trigger the final log read.
+          (let [page (deref result 2000 ::timeout)]
+            (is (= ["105"] (mapv :t (:rows page))))
+            (is (= "106" (:nextT page)))
+            (is (>= (/ (- (System/nanoTime) started) 1e6) 180)))
+          (is (<= @reads 5))
+          (is (= 1 @removed))
+          (is (empty? @feed/wakeups)))))))
+
+(deftest old-report-with-empty-log-keeps-deadline-and-rearms
+  (fake-peer
+    (let [queue (java.util.concurrent.LinkedBlockingQueue.) ready (promise) reads (atom 0)]
+      (with-redefs [d/tx-report-queue (constantly queue) d/remove-tx-report-queue (fn [_] nil)
+                    d/db (fn [_] (swap! reads inc) (deliver ready true) {:t 100}) d/basis-t :t]
+        (let [started (System/nanoTime)
+              result (future (feed/log-page :old {"fromT" "105" "waitMs" "150"}))]
+          (is (= true (deref ready 2000 false)))
+          (.put queue {:t 99})
+          (is (= ::pending (deref result 20 ::pending)))
+          (is (= {:fromT "105" :nextT "105" :rows []} (deref result 2000 ::timeout)))
+          (is (>= (/ (- (System/nanoTime) started) 1e6) 150))
+          (is (<= @reads 5) "A consumed signal must not cause a busy loop")
+          (is (empty? @feed/wakeups)))))))
+
+(deftest no-report-with-new-log-entry-still-delivers
+  (fake-peer
+    (let [queue (java.util.concurrent.LinkedBlockingQueue.) ready (promise) visible (atom 100)]
+      (with-redefs [d/tx-report-queue (constantly queue) d/remove-tx-report-queue (fn [_] nil)
+                    d/db (fn [_] (let [cut @visible] (deliver ready true) {:t cut})) d/basis-t :t]
+        (let [result (future (feed/log-page :silent {"fromT" "105" "waitMs" "100"}))]
+          (is (= true (deref ready 2000 false)))
+          (reset! visible 105)
+          (let [page (deref result 2000 ::timeout)]
+            (is (= ["105"] (mapv :t (:rows page))))
+            (is (= "106" (:nextT page))))
+          (is (.isEmpty queue))
+          (is (empty? @feed/wakeups)))))))

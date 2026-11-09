@@ -104,3 +104,62 @@ transaction pages; it does not synthesize empty intermediate logical commits abs
 No P3 latency/256-reader result, O-DOMAIN fanout, real storage/Postgres qualification, production tenant/auth provisioning, G1 live run,
 successful root pack consumer, independent verification or acceptance promotion is claimed. No merge, push, package publication, main-checkout
 edit, shared engine change, unrelated cleanup, original-ZIP modification or subagent launch occurred.
+
+## Round 2 — F1: long-poll results come from the log
+
+**Result: F1 fixed in offline builder execution; fresh G0 PASS.** Review source:
+`verify/DF01` at `d4f06d59e4b42d5201ff321b923ff98ee8c308d1`; builder base `bc8a5edb`.
+North star: P3 correctness under the same SCOPE/NORTH-STAR/TARGETS. Independent review of this fix remains pending.
+
+The reviewer was right: the original route performed only one read after a wake. A stale report could therefore end the
+request empty before its wait budget, even though a newer transaction had become visible. Looping on the original captured
+promise would introduce a second bug: that delivered promise would cause repeated immediate wakeups.
+
+`poll-log` now keeps one monotonic `System/nanoTime` deadline for the request. Before **each** log read it captures the current
+broadcast promise. A nonempty physical log page returns immediately; an empty read returns only after the deadline. Otherwise
+it waits on that captured promise for the remaining budget and loops, including after timeout. Milliseconds round upward for
+`deref`, preventing sub-millisecond polling near expiry. A report is exclusively a wakeup hint. The subscription remains held
+through the loop and is released in the existing `finally` path. Projection, identity bytes, cursors, consumer storage and all
+TypeScript interfaces are unchanged. The internal unit-test callback was adapted to the fresh-signal factory; assertions remain.
+
+### Fresh gates
+
+| Gate | Result | Evidence |
+| --- | --- | --- |
+| Copied reviewer probe, **before** fix | Expected FAIL: original suite 7 tests / 32 assertions passed; copied probe 6 tests / 119 assertions, 1 failure | `round2/before.log`, `round2/attempt-before/`. Exact F1 reproduced: empty page in 0.532958 ms with a 2,000 ms budget and visible t=105. |
+| Gateway regressions plus copied probe, **after** fix | **16 tests / 171 assertions, zero failures/errors** (10/52 original+new; 6/119 copied review) | `round2/after-01.log`, `round2/attempt-after-01/`. Stale-report case reads cuts 100, 100, 105 and delivers t=105 / nextT=106 in 0.564209 ms. These timings are diagnostics, not a live latency result. |
+| Unchanged FD01 TypeScript conformance | **4/4, zero failed/pending** | `round2/focused-tests.json`, `round2/focused.log`; one worker, file parallelism disabled, matching the reviewer's successful invocation. Content/order/gaps/resume/duplicates, M-FEED-GAP, SQLite readback and client HTTP binding remain covered. |
+| Full fresh G0 | **PASS: 1,279/1,279; 66 expected skips; zero unexpected skips** | `lab/runs/G0/G0-datomic-20261109T081416Z-e9ae93.json`, `round2/G0.log`. Previous receipt is the round-1 PASS; the note explicitly identifies the new source/fix. |
+
+The reviewer probe was copied **byte-for-byte**, not edited to pass; its runner was adapted only for this directory layout and
+fresh, exclusively created attempt directories. Each run logs the actual gateway/test/runner/codec/JAR/JVM input hashes before
+and after execution, preserves the child exit code, and records fresh output hashes. The source was not committed during
+these runs: their base is `bc8a5edb`, with the exact modified source bytes bound by the inputs and G0's source snapshot.
+
+New gateway regressions exercise: a report before the transaction is readable, an older-t report with no data until the deadline,
+and publication with **no report at all**. They assert actual t/nextT, pending/empty behavior, elapsed monotonic wait where relevant,
+queue cleanup, and a bounded read count that catches reuse of an already-delivered promise. The copied probe supplies the exact
+stale-report/captured-old-cut interleaving from F1. Its existing excision, restart, skip-page and stamp probes remain unchanged.
+
+All heavy commands used `heavy.mjs`; host free disk was 11–12 GiB before admissions. G0 used the already-required host clock read
+permission; no gate, test timeout, skip policy or assertion was weakened. Existing optional XTDB build artifacts were present.
+No dependency, lockfile, package export or image/slot configuration changed. The review independently confirmed the earlier CLI
+pack failure was missing setup; no new full root pack/consumer run or packed-consumer PASS is claimed in this round.
+
+### Round-2 PASS / verdict / receipt audit
+
+| Place | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| New `feed_test.clj` assertions / test exit | Exact delivered t/nextT, deadline-only empty completion, no early completion, read-count bound and cleanup | New queues, promises, atoms and futures in each process | Actual gateway log route with explicit fake connection/cut; full source bytes in runner inputs; no real slot claim |
+| Unchanged copied `offline_verify.clj` | Same independently authored expected tuples, serialized bytes and desired F1 assertion; before remains a failing result | Fresh baseline and probe executions in distinct attempts | Byte-identical to review `d4f06d59`; current production gateway and vendor namespaces |
+| Adapted `round2/run-offline.mjs` | Preserves actual child status and output hashes; source/runtime hashes checked before/after | Refuses existing attempt directory; creates fresh outputs | Explicit offline kind, slot null, base head plus exact source/test/JAR/JVM bytes; no fabricated clean commit |
+| Focused tests and unchanged G0 verdict | Existing content/mutation/replay/readback checks and unchanged complete gate count/skip/oracle checks | New test processes and gate ID; old F1 failure retained separately | Named tests and canonical G0 source/build/input/parent-grant bindings |
+| Round-2 retention/index command and this report | Copied bytes checked against original/receipt hashes; counts taken from named terminal results | Only terminal outputs copied; before failure retained | Unique round/run paths, source before/after hashes, probe provenance and SHA256 index; retention adds no semantic PASS |
+
+`round2/SOURCE-SHA256.tsv` lists both modified source paths with old/new SHA256 and acceptance-path mention counts. No directly
+pinned acceptance path moved; **no `lab/acceptance/` file is edited**. Existing round-1 manifests and receipts remain historical
+at `bc8a5edb`; appending this report changes its old manifest entry, so use the new `round2/SHA256SUMS` for the current report.
+Durable fresh G0 raw output and preimages are under `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-DF01/round2/`.
+
+No Docker command or engine lifecycle action occurred. Real peer notifications, actual excision/restart, live HTTP-to-peer replay,
+P3 performance, RT01/ER01-D qualification and independent acceptance remain open. No merge, push or subagent launch occurred.
