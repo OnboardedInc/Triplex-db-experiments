@@ -139,3 +139,38 @@ Full raw diffs and the machine-readable 17-hunk review are retained in [evidence
 | `packages/qualification/src/native/qlever-workloads.ts` | `410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3` | `9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da` |
 
 This pre-pin review permits the two repins to land in the same commit as the integration merge (Q45a). Q88a-c will be compiled verbatim; Q78e, Q86g, Q89 and Q90 remain pending for their authorized later work. The known QLever C8 loaded-ancestor timeout remains a separate investigation; this task does not rerun or resolve it. Integration, compilation and fresh gate receipts follow below.
+
+### Round-3 integration and compilation
+
+Merged current-at-dispatch main **`b31ec9429aaeae4dd6243e9d274f8e2e0e4ad56f`** in `ba282b0fa0d6f3e5091c42100e3ece1a2eec21a1`, preserving its pending rows and regenerating the conflicted generated outputs. The hunk review above and its fixed JSON/diff preimages were recorded before pin promotion. Then merged **`b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89`** with both reviewed re-pins and Q88a-c compilation in the single atomic Q45a merge commit **`3de54ac5f5ebc6c2c6d12ed902a6cb1ea360d590`**. Its parents are `ba282b0f` and `b916d5dc`; both parent recipe hashes equal their old contract pins, and both merge recipe hashes equal their new contract pins. Both CS-PKT71 projections carry the new identities. [source-and-hashes.json](evidence-0.3.12-round3/source-and-hashes.json) records that proof. No other workload pin was promoted.
+
+Q88a, Q88b and Q88c moved verbatim from main's pending table to RULINGS.md, including topics and bases, and have literal generated `datomicRules` consumers plus `datomicStoragePolicy`. The policy preserves dev-storage evidence as DIAGNOSTIC, PostgreSQL SQL acceptance storage with fsync and SELECT-only peers, DA04 before DA03, and crypto-shredding with batched excision and a separate key schema. These are acceptance requirements; this change does not migrate, configure or qualify lane D storage. The original 37 round-1 rulings and the round-2 original-instruction provenance remain intact. All five oracle registry entries and both world entries pass the fresh provenance audit. No oracle runner bytes changed.
+
+Exactly **23 unique ruling IDs remain pending**, including Q78e, Q86g, all Q89a-i and Q90a-g. Existing duplicate pending rows are preserved. G03 isolation pins remain deferred; no RT01 requirement is compiled. X02/C8/J01 remain default-off as integrated; the integration's reviewer decisions are context, not fresh live evidence from this task.
+
+Added **12 mutation controls**: literal weakening and dropped consumer for each Q88 ruling, reverted/omitted repin for each recipe, promoted dev evidence and an unsafe peer role. Every new control fails at its intended Q88 or Q45a guard. Two added contract tests check exact Q88 authority/consumers and both pin projections against immutable source commits and the 17-hunk review. No evaluator assertion changed; both required evaluator test files remain byte-identical to the round-2 candidate.
+
+### Round-3 final gates
+
+All gates ran on source **`3de54ac5f5ebc6c2c6d12ed902a6cb1ea360d590`**, after both requested merges. The final receipt commit changes only this report and evidence. Source hashes match before/after all gates.
+
+| Gate | Result | Receipt |
+| --- | --- | --- |
+| Generator --verify | All six outputs byte-identical; final repeat after pending-authority test also passes | [verify-final.txt](evidence-0.3.12-round3/verify-final.txt) |
+| Contract tests | **14/14 PASS** | [contract-tests.txt](evidence-0.3.12-round3/contract-tests.txt) |
+| Contract mutations | **451/451 caught**, zero misses; catalog 532, same 81 retired anchors; all 12 new controls caught at intended guards | [negtest.txt](evidence-0.3.12-round3/negtest.txt) |
+| Required evaluator | **108/108 PASS**, zero failures/skips/cancellations/todo; no weakened assertion | [evaluator.tap](evidence-0.3.12-round3/evaluator.tap) |
+| XTDB G0 | **1168/1168 PASS**, zero failures, 137 expected skips, zero unexpected skips; scope full | [G0-receipt.json](evidence-0.3.12-round3/G0-receipt.json), [G0-raw](evidence-0.3.12-round3/G0-raw/) |
+| Screening / prior reviewer / real payloads | **3/3, 35/35, 5/5 PASS** | [screening-js.tap](evidence-0.3.12-round3/screening-js.tap), [reviewer-regressions.txt](evidence-0.3.12-round3/reviewer-regressions.txt), [real-payloads.txt](evidence-0.3.12-round3/real-payloads.txt) |
+| Pending authority | Q47d PASS, both forbidden mutants detected, generated outputs restored | [q47d.txt](evidence-0.3.12-round3/q47d.txt) |
+| Original instruction provenance | Five oracle and two world entries audited; exact original launch comparisons retained | [brief-audit.json](evidence-0.3.12-round3/brief-audit.json) |
+
+Transitive contract hash: **`ad199b4c915846f24ef6c445dfd9d224bfb2f7a3751cd27a09813706af52f56e`**. Complete source identities, atomic pin proof and machine-checked results are in [source-and-hashes.json](evidence-0.3.12-round3/source-and-hashes.json) and [validation-summary.json](evidence-0.3.12-round3/validation-summary.json). The round-3 evidence has a SHA256SUMS manifest; earlier round evidence is unchanged.
+
+### Round-3 execution details and limits
+
+Long suites, the local dependency install and G0 ran through `lab/bin/heavy.mjs`; admissions observed more than 5 GiB free (the source receipt records the measured capacity). Installed the pinned lockfile offline from the owned pnpm store with pnpm 10.11.0, with zero downloads and no dependency/lockfile changes. G0 used the unchanged INT-XCJ/X02 round-2 pnpm shim: declared build/typecheck scripts and installed filtered Vitest, with version queries directed to the owned store. It unset XTDB_INTEGRATION, QLEVER_INTEGRATION and TRIPLEX_COMMIT_ENCODING, used `--previous G0-xtdb-20261109T001825Z-288416`, and preserved the integration's exact skip inventory. The complete invocation and queue waits are in [G0.log](evidence-0.3.12-round3/G0.log).
+
+G0 run **`G0-xtdb-20261109T003626Z-7069fe`** records the exact tested head, build/fixture/tool identities and an empty executed-source diff (0 bytes, no modified or untracked files in its source scope). Its optional Git stash snapshot failed with `could not write index` under the worktree sandbox, so `stashCommit`/`stashTree` remain null. The receipt honestly marks the tree dirty for out-of-scope evidence and the concurrent temporary mutation harness; it is not claimed clean. The tracked source did not change, all 41 content objects listed by G0 were rehashed successfully, and complete raw outputs/build manifest are copied into the committed evidence. No gate step failed or was rerun to hide a failure.
+
+No engine/container lifecycle, benchmark, live QLever retry, G1/G2, fresh compact-on qualification, lane D storage migration/durability probe, production qualification, root pnpm check, push or merge into actual main was performed. The pre-existing C8 QLever loaded-ancestor timeout remains open in its separate investigation. Independent reviewer delta acceptance remains outstanding; Q78e/Q86g and Q89/Q90 remain pending as instructed.
