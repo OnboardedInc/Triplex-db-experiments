@@ -1,3 +1,4 @@
+// [EXP-G03] Why: preserve main's full-contract read protection via contained fixtureGit's 128 MiB buffer. Rejected: restoring ref-based Mac execution for an 8 MiB read fix.
 // E01 integrity controls migrated under Q86 (EXP-G03 round 3). Every former control remains a named test.
 // Execution needs only synthetic network-none containers; no engine slot or production acceptance.
 import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import {execFileSync,spawnSync} from 'node:child_process';import {test,after} from 'node:test';

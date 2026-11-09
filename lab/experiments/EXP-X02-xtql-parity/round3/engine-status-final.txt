@@ -1,0 +1,17 @@
+slot        port  cap            state            ready  mem       holder                                           
+xtdb-dev    5470  3.00 GiB/2cpu  running/healthy  READY  2.34 GiB  worktree:/Users/sam/projects/triplex-db-2 EXP-000
+xtdb-s1     5471  3.50 GiB/2cpu  -                -      -         -                                                
+xtdb-s2     5472  3.50 GiB/2cpu  -                -      -         -                                                
+xtdb-s3     5473  3.50 GiB/2cpu  -                -      -         -                                                
+qlever-dev  7070  3.50 GiB/2cpu  running/healthy  READY  1.48 GiB  EXP-000                                          
+qlever-s1   7071  3.50 GiB/2cpu  -                -      -         -                                                
+qlever-s2   7072  3.50 GiB/2cpu  -                -      -         -                                                
+qlever-s3   7073  3.50 GiB/2cpu  -                -      -         -                                                
+
+pool: 9.25 GiB of 11.00 GiB reserved; disk 13.63 GiB used + 12.00 GiB forecast of 50.00 GiB
+  reservation tx2-xtdb-dev 3.00 GiB 2cpu state=running holder=EXP-W01
+  reservation tx2-qlever-dev 3.50 GiB 2cpu state=running holder=EXP-000
+  reservation tx2-datomic-dev 2.75 GiB 2cpu state=running holder=EXP-DA00
+  retained volume tx2-qlever-dev-data 0 MiB holder=worktree:/Users/sam/projects/triplex-db-2 note=retained by engine down (default)
+  retained volume tx2-xtdb-s2-data 3.87 GiB holder=EXP-P4 note=CX-P4: inherited 10k measurement completed; retain volume, release exclusive slot
+  retained volume tx2-datomic-dev-data 20 MiB holder=EXP-DA00 note=retained by engine down (default)

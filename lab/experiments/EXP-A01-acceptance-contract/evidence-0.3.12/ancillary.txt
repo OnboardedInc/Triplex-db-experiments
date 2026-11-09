@@ -1,0 +1,17 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 84582 "DA01-r2-G0-hardened", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 2596 "G0-xtdb-20261108T234100Z-b718fc typecheck", pid 44082 "CX-OBS01-R2-x07", pid 91250 "CX-INT-XCJ-C8-G0"
+contract-tests 0
+screening-js 0
+reviewer-regressions 0
+real-payloads 0
+test_observe 0
+test_cli 0
+test_round2 0
+test_round3 0
+test_round4 0
+selfcheck 0

@@ -1,0 +1,25 @@
+{
+  "mergeParents": [
+    "e5909dd1cc4616658b54cb8d00a9850dd6d802b9",
+    "f1e4b116880f143eec9579c6f394df53bbad115e"
+  ],
+  "sourceFiles": {
+    "lab/bin/claim.mjs": "7fe922196bce8c30d21e7205b07f6f32d880498e685f285112ea240969a09faf",
+    "lab/bin/gate.mjs": "7782987ee7b03a11037e648ca46622784a41e3f936051133d86b3dcbbb3bd06d",
+    "lab/bin/receipt.mjs": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+    "lab/bin/box.mjs": "8edd824361864b8636b13081a23a21f82e6f0b7f7b2b1e16873ae1e2e7c1c8dd",
+    "lab/bin/box-policy.mjs": "986125c8c29e5c8c3de237e16bbfc1ae7b319771f37b75270a2edb3e4d19cf83",
+    "lab/bin/box-engine.mjs": "abf8c37529dc88992ff6e4589ca765855e9a43bc1774c255dcf41a3cd55a00e1",
+    "lab/bin/lib.mjs": "6d52aeb3a9fc229af8c988a43377d99c5123be26f5c414eefd60d1c65f67d290",
+    "lab/bin/engine.mjs": "24e0c8f8816f77af4afd1cf874d33bbf620f286b1329003d241644ae49a31eb6",
+    "lab/bin/test/contained-fixtures.mjs": "c3f514ff5b22ff2e76de6d3409caa502872bfc12fc7936d8aeeb99e5a0548752",
+    "lab/bin/test/claim.test.mjs": "743c55089f79969e5df3950043b5b2312f90362960c040d6a85aefb5eb87e1ba",
+    "lab/bin/test/claim-round2.test.mjs": "10109d5b7e25d9da612e062ab0862bce00cece4138ebea17b9e0f0962b275860",
+    "lab/bin/test/claim-fixtures.mjs": "5cf4c1d8583135d34269e62b3a1a2585373d113c4ddd263cb52124c76fe8aa07",
+    "lab/bin/test/box-policy.test.mjs": "a3faef2108474b7c3b2a017b0f3af02650c3f93d89092e77203859e94241ab53",
+    "lab/experiments/EXP-G03/pins-for-0.4.0.json": "d9efc0a362c31846eb21fc88d1059cd7328178208ed92c5b77f52652ae0b1c66",
+    "lab/acceptance/RULINGS-PENDING.md": "6895f8e23d407b395b5720c763bb37387cb8ca66040ba6a5dcc1db017480c22d"
+  },
+  "acceptanceEqualsMergeMain": false,
+  "acceptanceDifference": "only nongenerated RULINGS-PENDING.md legacy cross-reference formatting; generated outputs and generator equal MERGE_HEAD"
+}

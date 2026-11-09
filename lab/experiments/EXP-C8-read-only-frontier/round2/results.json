@@ -1,0 +1,34 @@
+{
+  "implementation": "f049bbf854ee125d7cfcdd108beb014ffa083c06",
+  "adversarial": {
+    "exit": 0,
+    "passed": 15
+  },
+  "offline": {
+    "passed": 1004,
+    "skipped": 155,
+    "initialQualificationExit": 1,
+    "qualificationRerunExit": 0
+  },
+  "typechecks": {
+    "exit": 0,
+    "packages": [
+      "core",
+      "xtdb",
+      "qlever",
+      "qualification"
+    ]
+  },
+  "lightQleverChecks": {
+    "exit": 0,
+    "passed": 3,
+    "c8Readers": 1,
+    "c8LoadMs": 2000
+  },
+  "sourceBinding": {
+    "exit": 0,
+    "committedFiles": 11,
+    "unchangedReviewerFiles": 4
+  },
+  "promotion": "awaiting independent review"
+}

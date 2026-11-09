@@ -1,0 +1,3 @@
+CONTRACT INVALID:
+Q47d: ruling ids both pending and compiled (remove them from RULINGS-PENDING.md when compiling): ['Q74a', 'Q74b', 'Q74c', 'Q74d', 'Q74e', 'Q83a', 'Q83b', 'Q83c', 'Q83d', 'Q83e']
+Q64f: pending rows also present in RULINGS.md: ['Q74a', 'Q74b', 'Q74c', 'Q74d', 'Q74e', 'Q83a', 'Q83b', 'Q83c', 'Q83d', 'Q83e']

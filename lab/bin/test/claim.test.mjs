@@ -1,3 +1,4 @@
+// [EXP-G03] Why: preserve main's full-contract read protection via contained fixtureGit's 128 MiB buffer. Rejected: restoring ref-based Mac execution for an 8 MiB read fix.
 // Claim admission (EXP-E01). Run: node --test lab/bin/test/*.test.mjs (needs git, python3 and private-daemon synthetic containers; no engine slot).
 // Print the document fixture table: node lab/bin/test/claim-fixtures.mjs
 //

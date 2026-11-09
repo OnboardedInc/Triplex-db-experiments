@@ -1,0 +1,4 @@
+{"ms":1360,"row":{"n":"0"},"query":"SELECT COUNT(*) AS n FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = 'j01-none'"}
+{"ms":1861,"row":{"n":"558218"},"query":"SELECT COUNT(*) AS n FROM tx_assertions FOR ALL VALID_TIME"}
+{"ms":31,"row":{"n":"767"},"query":"SELECT COUNT(*) AS n FROM tx_meta FOR ALL VALID_TIME"}
+{"ms":298,"row":{"_id":"621164326"},"query":"SELECT _id FROM xt.txs ORDER BY _id DESC LIMIT 1"}

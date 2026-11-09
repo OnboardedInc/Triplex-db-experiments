@@ -21,7 +21,11 @@ import {
 } from "@triplex-build/triplex";
 import { Capabilities, DatabaseScope } from "@triplex-build/triplex/runtime";
 import type { DatalogQuery } from "@triplex-build/triplex/datalog";
-import { loadQualificationBackend } from "@triplex-build/triplex-qualification";
+import {
+  loadQualificationBackend,
+  startQleverWriteCounter,
+  startXtdbWriteCounter,
+} from "@triplex-build/triplex-qualification";
 
 type JsonRecord = Record<string, any>;
 type Fact = {
@@ -53,6 +57,14 @@ assert.ok(
 );
 const runId = randomUUID();
 const backend = await loadQualificationBackend();
+// [EXP-C8] Contract C8 ("reads never mutate") measured at the engine boundary: every native read
+// of this run goes through a wire-level proxy that counts write statements (XTDB pgwire: DML,
+// DDL, BEGIN READ WRITE, COMMIT) and update requests (QLever HTTP). The native client carries
+// nothing but native reads, so any nonzero count is a read path that wrote; lab/bin/gate.mjs
+// fails G2 on it. Ingest and verification keep their own direct clients and are not counted.
+const writeCounter = backend.queryPath.endsWith("-native")
+  ? await (backend.name === "qlever" ? startQleverWriteCounter : startXtdbWriteCounter)(backend.url)
+  : undefined;
 const output = path.resolve(
   option(
     "--output",
@@ -148,6 +160,8 @@ const report: JsonRecord = {
   format: "triplex-public-workload-packet/3",
   backend: backend.name,
   queryPath: backend.queryPath,
+  // [EXP-X02] The XTDB native language this run used for every task (xtql | xtdb-sql).
+  nativeLanguage: backend.nativeLanguage ?? null,
   runId,
   status: "RUNNING",
   timestampUtc: new Date().toISOString(),
@@ -895,7 +909,7 @@ for (const workload of packet.workloads.filter((entry: JsonRecord) =>
         const triples = yield* Triples;
         const nativeSession = backend.queryPath.endsWith("-native")
           ? yield* Effect.acquireRelease(
-              Effect.sync(() => backend.openNative(scope)),
+              Effect.sync(() => backend.openNative(scope, writeCounter?.url)),
               (session) => Effect.promise(() => session.close()),
             )
           : undefined;
@@ -987,6 +1001,13 @@ report.passedCaseExecutions = report.workloads.reduce(
   0,
 );
 report.unexecutedCaseExecutions = report.expectedCaseExecutions - report.caseExecutions;
+if (writeCounter) {
+  report.readPathEngineWrites = {
+    method: "wire-proxy/engine-write-counter.ts; native read client only",
+    ...writeCounter.counts(),
+  };
+  await writeCounter.close();
+}
 report.status = report.workloads.every(
   (entry: JsonRecord) => entry.status === "PASS_FUNCTIONAL_ONLY",
 )

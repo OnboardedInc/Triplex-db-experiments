@@ -132,3 +132,42 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - R21: file the XTDB DECIMAL-to-BIGINT-through-double and `= ANY` precedence findings upstream? (publishes lab findings; not done)
 - R18: Datomic-style `noHistory` for high-churn attributes? Default kept: history for everything (audit is a must-have).
 - GS.03: a vendor's older revision arriving after a newer one is acknowledged as `superseded`, changes no current value, and is journaled.
+
+- 22:35Z: running now: CX-A01-0311, CX-K01-R2, CX-DA01, CX-SQL01, CX-OBS01, CX-G03, CX-P2Q-R3 (round 4 fix F1), CX-VX02-3 (round 4 review), CX-O05-R2 (round 3 fixes R2-F1..F3). 9 of 10.
+- K01 round 2 (05a23dd): Q83d settle evidence implemented, 41 tests and tsc pass; offline review CX-VK01 launched. Live run waits for the
+  scale window: it needs pool capacity (park tx2-datomic-dev) and slot s1 cleared, but s1 holds CX-OBS01's retained source and canary, so
+  OBS01 must release s1 first. Nothing was deleted.
+- Running (9): CX-DA01, CX-SQL01, CX-A01-0311 (r3: evaluator suite), CX-X02-R3 (r4: Q79f), CX-P2Q-R3 (r5), CX-K01-R2 (r3),
+  CX-VO05-2 (O-OBS r3 review), CX-OBS01 (r2; releases s1), CX-G03 (r2, no-slot work). Contract 0.3.11 merge undone per Q87.
+  Scale window after DA01: park tx2-datomic-dev; K01 live, G03 slot run, W01b GS, J01 compact-on G1, X02/C8 exclusive reruns.
+- SQL01 delivered (53d41ad): 73 package + 23 semantic + 5 live tests, 80 SIGKILLs with zero ACKed commits lost, outage pulls 1 ms at 10k
+  and 30k commands. Open: one unreproduced pinned read that returned 30 of 40 facts (possible P1 torn read). Review CX-VSQL01 launched,
+  told to reproduce that first. EXP-P5 waits for the SQL01 merge.
+- DA01 round 1 delivered (4a540cc): G0 1,024 tests, G1 88/88 plus the full suite twice; resident READY, volume kept. Round 2 (Q85a-d
+  fixes from V-DA00) dispatched; then a joint DA00+DA01 review. The Datomic resident stays up for DA01 round 2, so the scale window
+  opens when K01 (offline review), X02 (review) and G03 (fixture migration) are ready for slot runs, not before.
+- Contract 0.3.11 merged to main (Q87 gate: 108/108 evaluator, --verify byte-identical). O-REPLAY 0.4.9 pinned; lane D registered.
+  Next contract: 0.3.12 compiles Q72, Q79e-f, Q80, Q82-Q87 plus G03's box pins. When CX-G03 round 3 ends, its next round starts by
+  merging main (0.3.11 touched the same fixtures).
+- INT-XCJ: X02 merged on int/X02-C8-J01 (7fcf69e): G0 1,070/1,070, evaluator 108/108; contract --verify fails only because X02 changed
+  pinned packages/qualification/src/native/xtdb-workloads.ts. Pinned sources change only with a contract version, so contract 0.3.12
+  round 2 merges int/X02-C8-J01 and re-pins it after checking the diff does not change the measured workload. INT-XCJ continues with C8, J01.
+- Queued: EXP-DA04 (lane D on Postgres SQL storage, Q88b) after DA01 round 2 and the joint DA00+DA01 review merge; before DA03.
+- Queued for DA01 round 3: Q89d (pin multi-request Datalog to one db, refuse future positions, seek the position-to-t map, enumerate by
+  subject). Queued for SQL01's next round: Q89b on H1's pull predicate (sqlite-worker.ts:158). Running: CX-RQ01 (harness), R33 (design).
+- SQL01 ACCEPT default-off (verify/SQL01 73fbe45); merges after P2Q in one integration round. Contract 0.3.12 (f5e7a41) in review; its
+  round 2 re-pins the INT-XCJ workload files. P2Q round 7 fix (Q89c) running.
+- Queued: EXP-RT01 round A (core, testkit, harness, both A0s) from main after RQ01 merges (Q90g). Running: CX-O06 (O-REPLAY 0.5.0).
+- Pending Sam: Q86g (VM H1/H2), Q78e tenant isolation (lane D), Q89g public commit pin (A/B/C; R33 recommends C).
+- INT-XCJ complete at b916d5d: X02, C8, J01 (default-off) integrated; G0 1,168/1,168, evaluator 108/108, C8 and J01 live tests proven
+  (except the QLever C8 closure timeout, under CX-C8-R4). Main gets it in one step after contract 0.3.12 re-pins the two workload files
+  (0.3.12 round 3 merges int/X02-C8-J01) and C8-R4 reports.
+- Scale window plan (park tx2-datomic-dev once CX-VDA01 finishes; pool then 6.5 of 11 GiB, one 3.5 GiB exclusive slot at a time, run in
+  this order): (1) EXP-QG1 phase 0 and 1 on qlever-s1 (a copy of qlever-dev's data, then the delta sweep; R35, Q91); (2) K01 live on
+  xtdb-s1 once its offline review accepts; (3) G03 slot run per its SLOT-RUN.md once its fixture migration lands; (4) X02 and C8 exclusive
+  G1/G2 reruns; (5) W01b GS rerun; (6) J01 compact-on G1. Unpark tx2-datomic-dev for EXP-DA04 after the window.
+- Scale window adds: (7) EXP-P5 A1 at 1k on an exclusive XTDB slot (CX-P5A writes the commands).
+- Main now has contract 0.3.12 (O-OBS pinned for screening, Q72/Q79e-f/Q80/Q82-Q88 compiled, workload re-pins) plus X02, C8 and J01
+  (default-off); Q87 gate 108/108 on main after the merge. Next contract: 0.4.0 with RT01, O-REPLAY 0.5.0, Q89-Q92 and G03's pins.
+- O-REPLAY 0.5.0 ACCEPT (exp/O06-oracle-record-time fed510e; verify/O06 fc78350): ready to pin in contract 0.4.0 together with RT01
+  (the oracle merge and pin move go in one commit, Q45a). Not merged alone: 0.4.0 needs RT01's product side first.

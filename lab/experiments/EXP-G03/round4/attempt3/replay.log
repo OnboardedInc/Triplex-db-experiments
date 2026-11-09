@@ -1,0 +1,2 @@
+{"kind":"claim","objects":303,"cases":64,"killProofs":66,"offlineVerdict":"DIAGNOSTIC","evaluatorCommit":"9b46ad00e268347d13525ada77592f65138b2e7f","authorityCommit":"5f989b20f251e12e484bce6f5bd3d9cdf0568a8f"}
+{"kind":"integrity","objects":303,"cases":64,"killProofs":66,"offlineVerdict":"DIAGNOSTIC","evaluatorCommit":"a3d08dea9608dc0217240ee04a0a2d1b47fafc2c","authorityCommit":"55111d096fb3b217e8696bfa1e0404e5e21adb50"}

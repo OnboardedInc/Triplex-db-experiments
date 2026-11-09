@@ -1,0 +1,25 @@
+{
+  "started": "2026-11-09T00:17:12.158Z",
+  "ended": "2026-11-09T00:17:24.193Z",
+  "argv": [
+    "/Users/sam/.hermes/node/bin/node",
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/node_modules/vitest/vitest.mjs",
+    "run",
+    "test/commit-encoding.test.ts",
+    "-t",
+    "XTDB compact commit guards against the engine",
+    "--reporter=default",
+    "--reporter=json",
+    "--outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/lab/experiments/INT-XCJ/evidence/round5/J01-live.json"
+  ],
+  "cwd": "packages/xtdb",
+  "exit": 0,
+  "signal": null,
+  "engineStatusExit": 0,
+  "environment": {
+    "QLEVER_INTEGRATION": "0",
+    "XTDB_INTEGRATION": "1",
+    "XTDB_URL": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+    "TRIPLEX_COMMIT_ENCODING": null
+  }
+}

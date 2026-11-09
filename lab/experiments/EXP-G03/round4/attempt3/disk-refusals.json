@@ -1,0 +1,50 @@
+[
+  {
+    "file": "r3-claim-831be414-request-12.json",
+    "claim": "RUN-SUPPLIED-FINGERPRINT",
+    "reasons": [
+      {
+        "code": "ISOLATION-NOT-IN-FORCE",
+        "detail": "Error: engine box create: [lab] REFUSED: host free disk below 5 GiB\n"
+      }
+    ]
+  },
+  {
+    "file": "r3-claim-831be414-request-11.json",
+    "claim": "RUN-UNREGISTERED-SLOT",
+    "reasons": [
+      {
+        "code": "ISOLATION-NOT-IN-FORCE",
+        "detail": "Error: engine box create: [lab] REFUSED: host free disk below 5 GiB\n"
+      }
+    ]
+  },
+  {
+    "file": "r3-claim-831be414-request-10.json",
+    "claim": "RUN-PROMOTION",
+    "reasons": [
+      {
+        "code": "ISOLATION-NOT-IN-FORCE",
+        "detail": "Error: engine box create: [lab] REFUSED: host free disk below 5 GiB\n"
+      }
+    ]
+  },
+  {
+    "file": "r3-claim-831be414-request-9.json",
+    "claim": "RUN-BACKGROUND-HELPER",
+    "reasons": [
+      {
+        "code": "ISOLATION-NOT-IN-FORCE",
+        "detail": "Error: engine box create: [lab] REFUSED: host free disk below 5 GiB\n"
+      },
+      {
+        "code": "EVALUATOR-ERROR",
+        "detail": "qualification stopped: engine box create: [lab] REFUSED: host free disk below 5 GiB\n (fail closed)"
+      },
+      {
+        "code": "EVALUATOR-ERROR",
+        "detail": "the end-of-run checks stopped: engine box create: [lab] REFUSED: host free disk below 5 GiB\n (fail closed)"
+      }
+    ]
+  }
+]

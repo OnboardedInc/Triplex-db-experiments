@@ -1,0 +1,217 @@
+TAP version 13
+# Subtest: contract pins load from explicit commit; missing or mismatched pins fail
+ok 1 - contract pins load from explicit commit; missing or mismatched pins fail
+  ---
+  duration_ms: 19.083959
+  type: 'test'
+  ...
+# Subtest: store receipt supplies placement only, never replacement pins
+ok 2 - store receipt supplies placement only, never replacement pins
+  ---
+  duration_ms: 7.322
+  type: 'test'
+  ...
+# Subtest: PAIR-0 separates arms, shares each auxiliary core, and refuses impossible layouts
+ok 3 - PAIR-0 separates arms, shares each auxiliary core, and refuses impossible layouts
+  ---
+  duration_ms: 21.559542
+  type: 'test'
+  ...
+# Subtest: gateway uses candidate read-only source, overrides resident entrypoint, and refuses missing pins
+ok 4 - gateway uses candidate read-only source, overrides resident entrypoint, and refuses missing pins
+  ---
+  duration_ms: 0.315459
+  type: 'test'
+  ...
+# Subtest: preflight refuses forged omissions, reachable forbidden target, lost positive and DNS success
+ok 5 - preflight refuses forged omissions, reachable forbidden target, lost positive and DNS success
+  ---
+  duration_ms: 0.273667
+  type: 'test'
+  ...
+# Subtest: cgroup proof refuses invalid identities before constructing a reader
+ok 6 - cgroup proof refuses invalid identities before constructing a reader
+  ---
+  duration_ms: 0.087708
+  type: 'test'
+  ...
+# Subtest: signed memory caps stay bounded and change the execution isolation identity
+ok 7 - signed memory caps stay bounded and change the execution isolation identity
+  ---
+  duration_ms: 63.25225
+  type: 'test'
+  ...
+# Subtest: input allowlist never includes lab, links or missing dependency roots
+ok 8 - input allowlist never includes lab, links or missing dependency roots
+  ---
+  duration_ms: 2.775709
+  type: 'test'
+  ...
+# Subtest: tar carries exact bytes, executable mode and long ustar path without extracting
+ok 9 - tar carries exact bytes, executable mode and long ustar path without extracting
+  ---
+  duration_ms: 14.674208
+  type: 'test'
+  ...
+# Subtest: inspect check refuses changed containment, limits, image, mounts and environment
+ok 10 - inspect check refuses changed containment, limits, image, mounts and environment
+  ---
+  duration_ms: 0.5135
+  type: 'test'
+  ...
+# Subtest: qualification refuses refs and never calls a supplied candidate callback
+ok 11 - qualification refuses refs and never calls a supplied candidate callback
+  ---
+  duration_ms: 0.593208
+  type: 'test'
+  ...
+# Subtest: failed cleanup reservations survive reconciliation
+ok 12 - failed cleanup reservations survive reconciliation
+  ---
+  duration_ms: 0.566875
+  type: 'test'
+  ...
+# Subtest: a separate clone in a shared writable root is still refused
+ok 13 - a separate clone in a shared writable root is still refused
+  ---
+  duration_ms: 0.367875
+  type: 'test'
+  ...
+# Subtest: box reservations survive stale Docker snapshots before the kill proof starts
+ok 14 - box reservations survive stale Docker snapshots before the kill proof starts
+  ---
+  duration_ms: 0.161708
+  type: 'test'
+  ...
+# Subtest: pool admits the two dev engines when only they run
+ok 15 - pool admits the two dev engines when only they run
+  ---
+  duration_ms: 1.310625
+  type: 'test'
+  ...
+# Subtest: pool counts external research probes and refuses with their names
+ok 16 - pool counts external research probes and refuses with their names
+  ---
+  duration_ms: 1.432
+  type: 'test'
+  ...
+# Subtest: an uncapped external container counts as the whole VM (fail closed)
+ok 17 - an uncapped external container counts as the whole VM (fail closed)
+  ---
+  duration_ms: 0.147083
+  type: 'test'
+  ...
+# Subtest: a reserved container counts once even while it also runs
+ok 18 - a reserved container counts once even while it also runs
+  ---
+  duration_ms: 0.079208
+  type: 'test'
+  ...
+# Subtest: disk forecast refuses past the 50 GiB used limit
+ok 19 - disk forecast refuses past the 50 GiB used limit
+  ---
+  duration_ms: 0.142708
+  type: 'test'
+  ...
+# Subtest: slotInfo rejects forbidden and probe ports and names containers and volumes
+ok 20 - slotInfo rejects forbidden and probe ports and names containers and volumes
+  ---
+  duration_ms: 0.3965
+  type: 'test'
+  ...
+# Subtest: withDirLock serializes and breaks a lock whose owner pid is dead
+ok 21 - withDirLock serializes and breaks a lock whose owner pid is dead
+  ---
+  duration_ms: 241.748583
+  type: 'test'
+  ...
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] heavy: waiting for one of 2 slots; held by pid 21697 "a", pid 21697 "b"
+# Subtest: withPool read-modify-writes the ledger atomically across processes
+ok 22 - withPool read-modify-writes the ledger atomically across processes
+  ---
+  duration_ms: 589.203
+  type: 'test'
+  ...
+# Subtest: reconcile drops only reservations with no container and a dead reserving pid
+ok 23 - reconcile drops only reservations with no container and a dead reserving pid
+  ---
+  duration_ms: 0.655125
+  type: 'test'
+  ...
+# Subtest: heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+ok 24 - heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+  ---
+  duration_ms: 124.376166
+  type: 'test'
+  ...
+# Subtest: object store is content addressed and refuses dependency caches and secret-like names
+ok 25 - object store is content addressed and refuses dependency caches and secret-like names
+  ---
+  duration_ms: 1.458708
+  type: 'test'
+  ...
+# Subtest: language classification: pure XTQL, pure SQL, hybrid, strict substeps
+ok 26 - language classification: pure XTQL, pure SQL, hybrid, strict substeps
+  ---
+  duration_ms: 0.243917
+  type: 'test'
+  ...
+# Subtest: verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+ok 27 - verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+  ---
+  duration_ms: 0.177083
+  type: 'test'
+  ...
+# Subtest: caseLanguages lists every substep language in order
+ok 28 - caseLanguages lists every substep language in order
+  ---
+  duration_ms: 0.177417
+  type: 'test'
+  ...
+# Subtest: contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+ok 29 - contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+  ---
+  duration_ms: 0.385209
+  type: 'test'
+  ...
+# Subtest: second-writer guard refuses a second container on a slot volume unless its config is read-only
+ok 30 - second-writer guard refuses a second container on a slot volume unless its config is read-only
+  ---
+  duration_ms: 0.379541
+  type: 'test'
+  ...
+# Subtest: second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+ok 31 - second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+  ---
+  duration_ms: 0.185084
+  type: 'test'
+  ...
+# Subtest: follower config must be read-only and read the writer's own log and storage paths
+ok 32 - follower config must be read-only and read the writer's own log and storage paths
+  ---
+  duration_ms: 0.273583
+  type: 'test'
+  ...
+# Subtest: follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+ok 33 - follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+  ---
+  duration_ms: 2.527541
+  type: 'test'
+  ...
+# Subtest: cpusets parse against the VM and unpinned containers overlap everything
+ok 34 - cpusets parse against the VM and unpinned containers overlap everything
+  ---
+  duration_ms: 0.1245
+  type: 'test'
+  ...
+1..34
+# tests 34
+# suites 0
+# pass 34
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1056.097667

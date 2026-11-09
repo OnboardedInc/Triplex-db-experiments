@@ -1,0 +1,15 @@
+{
+  "sourceHead": "5ba1e7585b8e5bd6134ac9f4a301565889caf3d0",
+  "transitiveContractSha256": "52a5ce525172ea1a786fe3da3490d94dbff408fd81dfe929b7e239d49d7d0c0b",
+  "files": {
+    "build_contract.py": "512ef4c1da9e185771bcb94d6fc4680c349a52da37168048fe706a28b5a5cf7e",
+    "RULINGS.md": "b34fd401df7692023efa6a4ceeba5d7212aceaf32b7c77143c933557b6b75891",
+    "RULINGS-PENDING.md": "9ef264b3f3ac449c97e107546e15e919df94cdfe81559594210c83e766182664",
+    "obligations.json": "9d1c015d9fc49698cf54dd5748ebd839c0388cac0627ac5c0ea12566c4554ec4",
+    "ACCEPTANCE.md": "ebbda64aaacfb7963f60b1841c2b43f02bdb4021cb400064f7a319723b56b32d",
+    "load-contract.json": "00169eedc83df0d7541f12c188aaec72f94c11f8ba70992e0411a4999d2adced",
+    "budgets.json": "91a85c688b876f767c25afa73d4a3080eb2831bc21ed1daaf48e7b5a701bda00",
+    "capability-matrix.md": "488db5df92e1974cd4fafc6f16cc349101504d4352777e568f298df78891d0cd",
+    "oracle-contract.json": "9e4b3541c1078a510f258edc4a9eb3331a97ebb9a65bf1c0b4ce75bcec99007c"
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "promptSource": "/Users/sam/Claude/Projects/triplex-db-2/agents/CX-VO05-2/prompt-2026-11-08T23-21-51-923Z.md",
+  "promptSha256": "4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa",
+  "lastSource": "/Users/sam/Claude/Projects/triplex-db-2/agents/CX-VO05-2/last-2026-11-08T23-21-51-923Z.md",
+  "lastSha256": "5956dfd269b4f18b13bda84a0bfa840b164d0d783c6f34dda9ff29ad706bcf7c",
+  "ledgerSource": "/Users/sam/projects/triplex-db-2/lab/agents/ledger.jsonl",
+  "ledgerRows": [
+    {
+      "t": "2026-11-08T23:21:51.927Z",
+      "event": "resume",
+      "id": "CX-VO05-2",
+      "role": "reviewer",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o05",
+      "prompt": "/Users/sam/Claude/Projects/triplex-db-2/agents/CX-VO05-2/prompt-2026-11-08T23-21-51-923Z.md",
+      "log": "/Users/sam/Claude/Projects/triplex-db-2/agents/CX-VO05-2/codex-2026-11-08T23-21-51-923Z.log",
+      "last": "/Users/sam/Claude/Projects/triplex-db-2/agents/CX-VO05-2/last-2026-11-08T23-21-51-923Z.md"
+    },
+    {
+      "t": "2026-11-08T23:31:36.148Z",
+      "event": "exit",
+      "id": "CX-VO05-2",
+      "role": "reviewer",
+      "effort": "high",
+      "code": 0,
+      "session": "01a1bd40-d201-76c1-bd48-d7df3f7d428b",
+      "last": "/Users/sam/Claude/Projects/triplex-db-2/agents/CX-VO05-2/last-2026-11-08T23-21-51-923Z.md"
+    }
+  ],
+  "finding": "The actual dispatched instructions are recoverable, but the candidate hashes the review report instead."
+}

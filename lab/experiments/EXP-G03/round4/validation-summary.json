@@ -1,0 +1,80 @@
+{
+  "mergeParents": [
+    "e5909dd1cc4616658b54cb8d00a9850dd6d802b9",
+    "f1e4b116880f143eec9579c6f394df53bbad115e"
+  ],
+  "evaluatorAttempts": [
+    {
+      "attempt": "first",
+      "log": "lab/experiments/EXP-G03/round4/claim-suites-1.tap",
+      "exitCode": 1,
+      "tests": 108,
+      "pass": 104,
+      "fail": 4,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "failedTests": [
+        "admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check",
+        "qualify Q67b (Codex round 8 finding 2): a candidate with A0's dist bytes and another source runner runs its own instance",
+        "qualify control: a CR-NS claim needs a PAIR_0 paired-rounds measurement, which no runner here produces",
+        "qualify Q67e (Codex round 8 finding 6): a build helper left running is killed with the build's process group"
+      ]
+    },
+    {
+      "attempt": "second",
+      "log": "lab/experiments/EXP-G03/round4/attempt2/claim-suites.tap",
+      "exitCode": 1,
+      "tests": 108,
+      "pass": 102,
+      "fail": 6,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "failedTests": [
+        "V-E01 F11/Q81a: input delete after final use refuses the run",
+        "V-E01 F11/Q81a: input rewrite after final use refuses the run",
+        "qualify resolve, execute and record: every case of the pinned manifests in every mode, each as a case-result/2",
+        "qualify Q67i (Codex round 8 finding 10): case-result/2 is re-judged with its declared comparator on the retained raw objects",
+        "qualify execute: the plan goes through gate.mjs --dry-run, which checks the registered slot",
+        "qualify: no path to QUALIFIED without a gate run; an offline run that passes everything reports offlineVerdict only"
+      ]
+    },
+    {
+      "attempt": "third",
+      "log": "lab/experiments/EXP-G03/round4/attempt3/claim-suites.tap",
+      "exitCode": 1,
+      "tests": 108,
+      "pass": 103,
+      "fail": 5,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "failedTests": [
+        "qualify Q67e (Codex round 8 finding 6): a build helper left running is killed with the build's process group",
+        "qualify Q67j (Codex round 8 finding 11): a log-source promotion is rejected with a typed reason",
+        "qualify Q55e: a claim cannot supply the W0 pin or the O-DOMAIN fingerprint",
+        "qualify execute: the plan goes through gate.mjs --dry-run, which checks the registered slot",
+        "CLI qualify: --offline-sut runs offline and exits 2 with the offline verdict; usage errors exit 1"
+      ]
+    }
+  ],
+  "clean108Verified": false,
+  "poolBox": {
+    "tests": 35,
+    "pass": 35,
+    "fail": 0,
+    "log": "lab/experiments/EXP-G03/round4/pool-box-final.tap"
+  },
+  "contractVerify": {
+    "exitCode": 1,
+    "log": "lab/experiments/EXP-G03/round4/contract-verify-2.log",
+    "staleGeneratedFiles": [
+      "obligations.json",
+      "ACCEPTANCE.md"
+    ]
+  },
+  "cliErrorDetailsUnverified": true,
+  "registeredSlotExecution": false,
+  "readyForPromotion": false
+}

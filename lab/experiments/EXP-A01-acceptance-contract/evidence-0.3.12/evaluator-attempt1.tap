@@ -1,0 +1,929 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 33681 "CX-VSQL01-r2b-unit"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 90885 "DA01-r2-G0-basis"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 90928 "DA01-r2-G1-basis"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 90928 "DA01-r2-G1-basis"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+TAP version 13
+# node:internal/child_process:1120
+#     result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);
+#                    ^
+# <ref *1> Error: spawnSync git ENOBUFS
+#     at Object.spawnSync (node:internal/child_process:1120:20)
+#     at spawnSync (node:child_process:902:24)
+#     at execFileSync (node:child_process:945:15)
+#     at show (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/bin/test/claim-round2.test.mjs:27:19)
+#     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/bin/test/claim-round2.test.mjs:29:25
+#     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+#     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+#     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+#   errno: -55,
+#   code: 'ENOBUFS',
+#   syscall: 'spawnSync git',
+#   path: 'git',
+#   spawnargs: [ 'show', 'main:lab/acceptance/obligations.json' ],
+#   error: [Circular *1],
+#   status: null,
+#   signal: 'SIGTERM',
+#   output: [
+#     null,
+#     '{\\n' +
+#       '  "format": "triplex-db-2/acceptance-obligations/3",\\n' +
+#       '  "version": "0.3.12",\\n' +
+#       `  "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",\\n` +
+#       '  "date": "2026-11-08",\\n' +
+#       '  "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",\\n' +
+#       '  "generatedBy": "lab/acceptance/build_contract.py",\\n' +
+#       '  "inputs": {\\n' +
+#       '    "lab/verify/O02/V-O04i/VERIFY.md": "97bdb670b3a50957f5d0cb805361333817d6190504952ddf92f9cb9bf4ad076d",\\n' +
+#       '    "lab/acceptance/pins/O-REPLAY-0.4.9-SHA256SUMS": "357d747af267eee5863033288143d5f18952e21a43d2038b68258384a3aab322",\\n' +
+#       '    "lab/verify/O02/V-O04i/BRIEF.md": "67c5de230614092d3a648458ecf046a1f7a262db52ae4c47e6252f8a5996bc85",\\n' +
+#       '    "lab/research/R29-datomic-lane-design.md": "9e7c5a6931d2c843647eb3cae69e63029fac65383c1b4c260a6e56b3777f7bf9",\\n' +
+#       '    "lab/world/W0/SHA256SUMS": "b5941569402865a52149ed0116efa60eb5b489dc9a27d15f8591e2daa51b051c",\\n' +
+#       '    "lab/verify/D01/V-D01e/BRIEF.md": "6df85539b0dd6c5a66b524c3c106fff3b8866f6afb3f581737e3a13ddd263dca",\\n' +
+#       '    "lab/verify/D01c/BRIEF.md": "0384a8d6e4f8f615b9582c4e71664adf7caec54062755df92cf62bbb151150a0",\\n' +
+#       '    "lab/oracles/domain/receipts/population-100k.json": "9a48033f8482f55be7af6aa00affab33f69b0015ac70f9de61fae5748d147557",\\n' +
+#       '    "lab/SCOPE.md": "94527879db763dd6f3e7d233470250cd53b86f4fb594c8ade2aedc730cb14f96",\\n' +
+#       '    "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",\\n' +
+#       '    "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",\\n' +
+#       '    "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",\\n' +
+#       '    "lab/acceptance/RULINGS.md": "13a880df8878f3eecec48fa367ade87fe00e22352a4ef61a0799e8aef0634bcd",\\n' +
+#       '    "lab/acceptance/RULINGS-PENDING.md": "fd68847c32784dd20236028efb273f24d8dd74ab39d43f306ac5b28fdc25de6f",\\n' +
+#       '    "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",\\n' +
+#       '    "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",\\n' +
+#       '    "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",\\n' +
+#       '    "lab/verify/O02/v-o04b/results/hashes.a9c1327.json": "256465151a1018faf17432f3706aa34650448b587e52d256b80972de7d9df1f1",\\n' +
+#       '    "lab/verify/O02/BRIEF.md": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4",\\n' +
+#       '    "lab/verify/D01/BRIEF.md": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88",\\n' +
+#       '    "lab/acceptance/pins/O-OBS-V-O05-round4.md": "aa275c634384c42977b6ed294be9cb527423a9ad824b9101556017b065bb12dc",\\n' +
+#       '    "lab/acceptance/pins/O-OBS-23e2273-SHA256SUMS": "486a4209d38fcc70a9ccb64d7c7ed9e0dfe25eef405ca21b097fee67d2697300",\\n' +
+#       '    "lab/acceptance/build_contract.py": "63a5145c6c05c5d1369ce78397f11e460c0818861c268096734a80646dd47b9b"\\n' +
+#       '  },\\n' +
+#       '  "artifacts": {\\n' +
+#       '    "oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",\\n' +
+#       '    "load-contract.json": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428",\\n' +
+#       '    "budgets.json": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159",\\n' +
+#       '    "capability-matrix.md": "36fd4485da5d7b25fc4406722645f0d49cf7cddc519493b6d752f6b731c5cf4f"\\n' +
+#       '  },\\n' +
+#       '  "lanes": [\\n' +
+#       '    "xtdb-xtql",\\n' +
+#       '    "xtdb-sql",\\n' +
+#       '    "qlever-sparql",\\n' +
+#       '    "datomic-datalog"\\n' +
+#       '  ],\\n' +
+#       '  "engineOfLane": {\\n' +
+#       '    "xtdb-xtql": "xtdb",\\n' +
+#       '    "xtdb-sql": "xtdb",\\n' +
+#       '    "qlever-sparql": "qlever",\\n' +
+#       '    "datomic-datalog": "datomic"\\n' +
+#       '  },\\n' +
+#       '  "languageOfLane": {\\n' +
+#       '    "xtdb-xtql": "xtql",\\n' +
+#       '    "xtdb-sql": "sql",\\n' +
+#       '    "qlever-sparql": "sparql",\\n' +
+#       '    "datomic-datalog": "datomic-datalog"\\n' +
+#       '  },\\n' +
+#       '  "sections": [\\n' +
+#       '    {\\n' +
+#       '      "id": "G1",\\n' +
+#       '      "title": "Goal 1. Exact value kinds, schemas, cardinality, uniqueness, references"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "G2",\\n' +
+#       '      "title": "Goal 2. Expressions, arithmetic boundaries, specified error semantics"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "G3",\\n' +
+#       '      "title": "Goal 3. Useful plans, costing, preconstruction admission, recursion"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "G4",\\n' +
+#       '      "title": "Goal 4. Completed absence and negation at coherent cuts"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "G5",\\n' +
+#       '      "title": "Goal 5. Full-support aggregates, typed groups, empties, no silent overflow"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "G6",\\n' +
+#       '      "title": "Goal 6. Cancellation, deadlines, resource ownership, cleanup"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "G7",\\n' +
+#       '      "title": "Goal 7. Atomic writes, receipts, migration and evolution, recovery"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "G8",\\n' +
+#       '      "title": "Goal 8. Bounded reuse, transactional publication, maintained supports"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "G9",\\n' +
+#       '      "title": "Goal 9. Bitemporal intervals, presence, corrections, lineage, deletion, cascades"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "G10",\\n' +
+#       '      "title": "Goal 10. Public TypeScript and schema integration, scope, cursors, lifecycle, capabilities, consumers"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "R",\\n' +
+#       '      "title": "R. Entity API (the ORM) and raw queries make sense"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "NS",\\n' +
+#       `      "title": "NS. North star: Sam's five priorities P1 to P5 on the fixed writer trace"\\n` +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "GS",\\n' +
+#       '      "title": "GS. The 20 real-world golden scenarios"\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "S",\\n' +
+#       '      "title": "S. Year-one measurement population, rungs and budgets"\\n' +
+#       '    }\\n' +
+#       '  ],\\n' +
+#       '  "rulings": [\\n' +
+#       '    {\\n' +
+#       '      "id": "RESCOPE",\\n' +
+#       `      "topic": "Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md)",\\n` +
+#       `      "ruling": "The ten goals stay on both lanes. Performance is measured as Sam's five priorities P1 to P5 on the fixed writer trace, with provisional bars that calibration may tighten and only Sam may loosen; the 20 golden scenarios are part of done; Sam's must-haves are requirements per engine (native or documented workaround with its own passing tests), never knockout gates; year-one size (10m entities, 100m active facts, retained history) is the measurement size, not a target in itself.",\\n` +
+#       '      "compiledInto": [\\n' +
+#       '        "NS.*",\\n' +
+#       '        "GS.*",\\n' +
+#       '        "REQ.*",\\n' +
+#       '        "S.*",\\n' +
+#       '        "load-contract.json",\\n' +
+#       '        "budgets.json",\\n' +
+#       '        "THRESHOLDS (NS-*)"\\n' +
+#       '      ]\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "NUMERIC",\\n' +
+#       `      "topic": "no silent precision loss (Sam's corrected numeric rule)",\\n` +
+#       '      "ruling": "Exact storage and round trip for every value kind in use; order-preserving comparison for any attribute used in a range rule; a hard error, never silent conversion, for any value the engine cannot hold; integer range of at least 2^53; arithmetic over many rows only where a projection needs it. Arithmetic runs in the TypeScript kernel per subject; money is a scaled integer or an order-preserving decimal string; never floats for business values. The full signed 64-bit range is not required.",\\n' +
+#       '      "compiledInto": [\\n' +
+#       '        "VALUE_KINDS",\\n' +
+#       '        "G1.types.*",\\n' +
+#       '        "G1.types.decimal",\\n' +
+#       '        "G1.types.out-of-range-rejected",\\n' +
+#       '        "G2.arith.*",\\n' +
+#       '        "G5.agg.*",\\n' +
+#       '        "MATRIX_ROWS",\\n' +
+#       '        "REQ.no-silent-precision-loss"\\n' +
+#       '      ]\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "Q1",\\n' +
+#       '      "topic": "unrestricted raw exactness",\\n' +
+#       '      "ruling": "Not required for done. Required: (a) repository and every supported native fragment exact over the value domain each lane accepts; (b) the raw dataset exact on its documented exact channels; (c) raw natively typed shapes outside exact ranges are per-cell KNOWN-LIMIT exceptions, each with an exact mapped recipe, the obligation that qualifies it, and the original raw failure kept as a diagnostic with its unchanged expected answer. QLever integers beyond +/-2^59 are rejected at write instead of being an exception. Supported fragments have a fixed minimum coverage set.",\\n' +
+#       '      "compiledInto": [\\n' +
+#       '        "MATRIX_ROWS",\\n' +
+#       '        "RAW_EXCEPTIONS",\\n' +
+#       '        "DIAGNOSTICS",\\n' +
+#       '        "FRAGMENT_COVERAGE",\\n' +
+#       '        "R.raw.mapped-recipes",\\n' +
+#       '        "R.raw.parity",\\n' +
+#       '        "R.raw.capability-matrix",\\n' +
+#       '        "G10.capabilities.truthful"\\n' +
+#       '      ]\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "Q2",\\n' +
+#       '      "status": "SUPERSEDED",\\n' +
+#       '      "topic": "generic load bar",\\n' +
+#       '      "ruling": "Superseded by RESCOPE: performance is measured as NS.P1 to NS.P5 and the GS scenarios.",\\n' +
+#       '      "compiledInto": []\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "Q3",\\n' +
+#       '      "topic": "host post-processing",\\n' +
+#       `      "ruling": "Kept as a declared step that reads no data, counted inside the task's measured call.",\\n` +
+#       '      "compiledInto": [\\n' +
+#       '        "LANGUAGE_RULES",\\n' +
+#       '        "PKT.full142"\\n' +
+#       '      ]\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "Q4",\\n' +
+#       '      "status": "SUPERSEDED",\\n' +
+#       '      "topic": "sparse profile load",\\n' +
+#       '      "ruling": "Superseded by RESCOPE and Q17.",\\n' +
+#       '      "compiledInto": []\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "Q5",\\n' +
+#       '      "topic": "guide-only raw authoring",\\n' +
+#       `      "ruling": "A fresh agent given only the raw-query guide and the engine's public docs authors the raw query set; answers must match the repository at the same basis.",\\n` +
+#       '      "compiledInto": [\\n' +
+#       '        "R.raw.guide-only-authoring",\\n' +
+#       '        "CR-PROVENANCE"\\n' +
+#       '      ]\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "Q6",\\n' +
+#       '      "topic": "proof lineage",\\n' +
+#       '      "ruling": "Assertion-level provenance: every answer row that claims a fact names its supporting assertion ids and transactions.",\\n' +
+#       '      "compiledInto": [\\n' +
+#       '        "G9.lineage.supporting-assertions"\\n' +
+#       '      ]\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "Q7",\\n' +
+#       '      "topic": "CLI",\\n' +
+#       '      "ruling": "Not required for done. The packaged SDK consumer is required.",\\n' +
+#       '      "compiledInto": [\\n' +
+#       '        "G10.pkg.clean-consumer-slice",\\n' +
+#       '        "ENTRYPOINTS (no CLI entrypoint)"\\n' +
+#       '      ]\\n' +
+#       '    },\\n' +
+#       '    {\\n' +
+#       '      "id": "Q8a",\\n' +
+#       '      "topic": "engine-side integer sums",\\n' +
+#       `      "ruling": "Worded per Q20. Where a projection needs an engine-side sum: exact total; typed integer-overflow only when the final result is outside the engine's exact integer range; intermediate partial sums never wrap. Per-subject sums run in the kernel (BigInt).",\\n` +
+#       '      "compiledInto": [\\n' +
+#       '        "AGG'... 1051158 more characters,
+#     ''
+#   ],
+#   pid: 43548,
+#   stdout: '{\\n' +
+#     '  "format": "triplex-db-2/acceptance-obligations/3",\\n' +
+#     '  "version": "0.3.12",\\n' +
+#     `  "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",\\n` +
+#     '  "date": "2026-11-08",\\n' +
+#     '  "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",\\n' +
+#     '  "generatedBy": "lab/acceptance/build_contract.py",\\n' +
+#     '  "inputs": {\\n' +
+#     '    "lab/verify/O02/V-O04i/VERIFY.md": "97bdb670b3a50957f5d0cb805361333817d6190504952ddf92f9cb9bf4ad076d",\\n' +
+#     '    "lab/acceptance/pins/O-REPLAY-0.4.9-SHA256SUMS": "357d747af267eee5863033288143d5f18952e21a43d2038b68258384a3aab322",\\n' +
+#     '    "lab/verify/O02/V-O04i/BRIEF.md": "67c5de230614092d3a648458ecf046a1f7a262db52ae4c47e6252f8a5996bc85",\\n' +
+#     '    "lab/research/R29-datomic-lane-design.md": "9e7c5a6931d2c843647eb3cae69e63029fac65383c1b4c260a6e56b3777f7bf9",\\n' +
+#     '    "lab/world/W0/SHA256SUMS": "b5941569402865a52149ed0116efa60eb5b489dc9a27d15f8591e2daa51b051c",\\n' +
+#     '    "lab/verify/D01/V-D01e/BRIEF.md": "6df85539b0dd6c5a66b524c3c106fff3b8866f6afb3f581737e3a13ddd263dca",\\n' +
+#     '    "lab/verify/D01c/BRIEF.md": "0384a8d6e4f8f615b9582c4e71664adf7caec54062755df92cf62bbb151150a0",\\n' +
+#     '    "lab/oracles/domain/receipts/population-100k.json": "9a48033f8482f55be7af6aa00affab33f69b0015ac70f9de61fae5748d147557",\\n' +
+#     '    "lab/SCOPE.md": "94527879db763dd6f3e7d233470250cd53b86f4fb594c8ade2aedc730cb14f96",\\n' +
+#     '    "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",\\n' +
+#     '    "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",\\n' +
+#     '    "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",\\n' +
+#     '    "lab/acceptance/RULINGS.md": "13a880df8878f3eecec48fa367ade87fe00e22352a4ef61a0799e8aef0634bcd",\\n' +
+#     '    "lab/acceptance/RULINGS-PENDING.md": "fd68847c32784dd20236028efb273f24d8dd74ab39d43f306ac5b28fdc25de6f",\\n' +
+#     '    "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",\\n' +
+#     '    "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",\\n' +
+#     '    "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",\\n' +
+#     '    "lab/verify/O02/v-o04b/results/hashes.a9c1327.json": "256465151a1018faf17432f3706aa34650448b587e52d256b80972de7d9df1f1",\\n' +
+#     '    "lab/verify/O02/BRIEF.md": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4",\\n' +
+#     '    "lab/verify/D01/BRIEF.md": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88",\\n' +
+#     '    "lab/acceptance/pins/O-OBS-V-O05-round4.md": "aa275c634384c42977b6ed294be9cb527423a9ad824b9101556017b065bb12dc",\\n' +
+#     '    "lab/acceptance/pins/O-OBS-23e2273-SHA256SUMS": "486a4209d38fcc70a9ccb64d7c7ed9e0dfe25eef405ca21b097fee67d2697300",\\n' +
+#     '    "lab/acceptance/build_contract.py": "63a5145c6c05c5d1369ce78397f11e460c0818861c268096734a80646dd47b9b"\\n' +
+#     '  },\\n' +
+#     '  "artifacts": {\\n' +
+#     '    "oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",\\n' +
+#     '    "load-contract.json": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428",\\n' +
+#     '    "budgets.json": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159",\\n' +
+#     '    "capability-matrix.md": "36fd4485da5d7b25fc4406722645f0d49cf7cddc519493b6d752f6b731c5cf4f"\\n' +
+#     '  },\\n' +
+#     '  "lanes": [\\n' +
+#     '    "xtdb-xtql",\\n' +
+#     '    "xtdb-sql",\\n' +
+#     '    "qlever-sparql",\\n' +
+#     '    "datomic-datalog"\\n' +
+#     '  ],\\n' +
+#     '  "engineOfLane": {\\n' +
+#     '    "xtdb-xtql": "xtdb",\\n' +
+#     '    "xtdb-sql": "xtdb",\\n' +
+#     '    "qlever-sparql": "qlever",\\n' +
+#     '    "datomic-datalog": "datomic"\\n' +
+#     '  },\\n' +
+#     '  "languageOfLane": {\\n' +
+#     '    "xtdb-xtql": "xtql",\\n' +
+#     '    "xtdb-sql": "sql",\\n' +
+#     '    "qlever-sparql": "sparql",\\n' +
+#     '    "datomic-datalog": "datomic-datalog"\\n' +
+#     '  },\\n' +
+#     '  "sections": [\\n' +
+#     '    {\\n' +
+#     '      "id": "G1",\\n' +
+#     '      "title": "Goal 1. Exact value kinds, schemas, cardinality, uniqueness, references"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "G2",\\n' +
+#     '      "title": "Goal 2. Expressions, arithmetic boundaries, specified error semantics"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "G3",\\n' +
+#     '      "title": "Goal 3. Useful plans, costing, preconstruction admission, recursion"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "G4",\\n' +
+#     '      "title": "Goal 4. Completed absence and negation at coherent cuts"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "G5",\\n' +
+#     '      "title": "Goal 5. Full-support aggregates, typed groups, empties, no silent overflow"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "G6",\\n' +
+#     '      "title": "Goal 6. Cancellation, deadlines, resource ownership, cleanup"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "G7",\\n' +
+#     '      "title": "Goal 7. Atomic writes, receipts, migration and evolution, recovery"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "G8",\\n' +
+#     '      "title": "Goal 8. Bounded reuse, transactional publication, maintained supports"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "G9",\\n' +
+#     '      "title": "Goal 9. Bitemporal intervals, presence, corrections, lineage, deletion, cascades"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "G10",\\n' +
+#     '      "title": "Goal 10. Public TypeScript and schema integration, scope, cursors, lifecycle, capabilities, consumers"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "R",\\n' +
+#     '      "title": "R. Entity API (the ORM) and raw queries make sense"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "NS",\\n' +
+#     `      "title": "NS. North star: Sam's five priorities P1 to P5 on the fixed writer trace"\\n` +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "GS",\\n' +
+#     '      "title": "GS. The 20 real-world golden scenarios"\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "S",\\n' +
+#     '      "title": "S. Year-one measurement population, rungs and budgets"\\n' +
+#     '    }\\n' +
+#     '  ],\\n' +
+#     '  "rulings": [\\n' +
+#     '    {\\n' +
+#     '      "id": "RESCOPE",\\n' +
+#     `      "topic": "Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md)",\\n` +
+#     `      "ruling": "The ten goals stay on both lanes. Performance is measured as Sam's five priorities P1 to P5 on the fixed writer trace, with provisional bars that calibration may tighten and only Sam may loosen; the 20 golden scenarios are part of done; Sam's must-haves are requirements per engine (native or documented workaround with its own passing tests), never knockout gates; year-one size (10m entities, 100m active facts, retained history) is the measurement size, not a target in itself.",\\n` +
+#     '      "compiledInto": [\\n' +
+#     '        "NS.*",\\n' +
+#     '        "GS.*",\\n' +
+#     '        "REQ.*",\\n' +
+#     '        "S.*",\\n' +
+#     '        "load-contract.json",\\n' +
+#     '        "budgets.json",\\n' +
+#     '        "THRESHOLDS (NS-*)"\\n' +
+#     '      ]\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "NUMERIC",\\n' +
+#     `      "topic": "no silent precision loss (Sam's corrected numeric rule)",\\n` +
+#     '      "ruling": "Exact storage and round trip for every value kind in use; order-preserving comparison for any attribute used in a range rule; a hard error, never silent conversion, for any value the engine cannot hold; integer range of at least 2^53; arithmetic over many rows only where a projection needs it. Arithmetic runs in the TypeScript kernel per subject; money is a scaled integer or an order-preserving decimal string; never floats for business values. The full signed 64-bit range is not required.",\\n' +
+#     '      "compiledInto": [\\n' +
+#     '        "VALUE_KINDS",\\n' +
+#     '        "G1.types.*",\\n' +
+#     '        "G1.types.decimal",\\n' +
+#     '        "G1.types.out-of-range-rejected",\\n' +
+#     '        "G2.arith.*",\\n' +
+#     '        "G5.agg.*",\\n' +
+#     '        "MATRIX_ROWS",\\n' +
+#     '        "REQ.no-silent-precision-loss"\\n' +
+#     '      ]\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "Q1",\\n' +
+#     '      "topic": "unrestricted raw exactness",\\n' +
+#     '      "ruling": "Not required for done. Required: (a) repository and every supported native fragment exact over the value domain each lane accepts; (b) the raw dataset exact on its documented exact channels; (c) raw natively typed shapes outside exact ranges are per-cell KNOWN-LIMIT exceptions, each with an exact mapped recipe, the obligation that qualifies it, and the original raw failure kept as a diagnostic with its unchanged expected answer. QLever integers beyond +/-2^59 are rejected at write instead of being an exception. Supported fragments have a fixed minimum coverage set.",\\n' +
+#     '      "compiledInto": [\\n' +
+#     '        "MATRIX_ROWS",\\n' +
+#     '        "RAW_EXCEPTIONS",\\n' +
+#     '        "DIAGNOSTICS",\\n' +
+#     '        "FRAGMENT_COVERAGE",\\n' +
+#     '        "R.raw.mapped-recipes",\\n' +
+#     '        "R.raw.parity",\\n' +
+#     '        "R.raw.capability-matrix",\\n' +
+#     '        "G10.capabilities.truthful"\\n' +
+#     '      ]\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "Q2",\\n' +
+#     '      "status": "SUPERSEDED",\\n' +
+#     '      "topic": "generic load bar",\\n' +
+#     '      "ruling": "Superseded by RESCOPE: performance is measured as NS.P1 to NS.P5 and the GS scenarios.",\\n' +
+#     '      "compiledInto": []\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "Q3",\\n' +
+#     '      "topic": "host post-processing",\\n' +
+#     `      "ruling": "Kept as a declared step that reads no data, counted inside the task's measured call.",\\n` +
+#     '      "compiledInto": [\\n' +
+#     '        "LANGUAGE_RULES",\\n' +
+#     '        "PKT.full142"\\n' +
+#     '      ]\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "Q4",\\n' +
+#     '      "status": "SUPERSEDED",\\n' +
+#     '      "topic": "sparse profile load",\\n' +
+#     '      "ruling": "Superseded by RESCOPE and Q17.",\\n' +
+#     '      "compiledInto": []\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "Q5",\\n' +
+#     '      "topic": "guide-only raw authoring",\\n' +
+#     `      "ruling": "A fresh agent given only the raw-query guide and the engine's public docs authors the raw query set; answers must match the repository at the same basis.",\\n` +
+#     '      "compiledInto": [\\n' +
+#     '        "R.raw.guide-only-authoring",\\n' +
+#     '        "CR-PROVENANCE"\\n' +
+#     '      ]\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "Q6",\\n' +
+#     '      "topic": "proof lineage",\\n' +
+#     '      "ruling": "Assertion-level provenance: every answer row that claims a fact names its supporting assertion ids and transactions.",\\n' +
+#     '      "compiledInto": [\\n' +
+#     '        "G9.lineage.supporting-assertions"\\n' +
+#     '      ]\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "Q7",\\n' +
+#     '      "topic": "CLI",\\n' +
+#     '      "ruling": "Not required for done. The packaged SDK consumer is required.",\\n' +
+#     '      "compiledInto": [\\n' +
+#     '        "G10.pkg.clean-consumer-slice",\\n' +
+#     '        "ENTRYPOINTS (no CLI entrypoint)"\\n' +
+#     '      ]\\n' +
+#     '    },\\n' +
+#     '    {\\n' +
+#     '      "id": "Q8a",\\n' +
+#     '      "topic": "engine-side integer sums",\\n' +
+#     `      "ruling": "Worded per Q20. Where a projection needs an engine-side sum: exact total; typed integer-overflow only when the final result is outside the engine's exact integer range; intermediate partial sums never wrap. Per-subject sums run in the kernel (BigInt).",\\n` +
+#     '      "compiledInto": [\\n' +
+#     '        "AGG'... 1051158 more characters,
+#   stderr: ''
+# }
+# Node.js v22.23.2
+# Subtest: lab/bin/test/claim-round2.test.mjs
+not ok 1 - lab/bin/test/claim-round2.test.mjs
+  ---
+  duration_ms: 8297.236792
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/bin/test/claim-round2.test.mjs:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check
+ok 2 - admitCore makes the contract's executor calls and reaches its verdict on every admit_claim call of its own self-check
+  ---
+  duration_ms: 135.037916
+  type: 'test'
+  ...
+# Subtest: documents: the contract's admit_claim (no executor) and claim.mjs admit both answer DIAGNOSTIC for every document fixture
+ok 3 - documents: the contract's admit_claim (no executor) and claim.mjs admit both answer DIAGNOSTIC for every document fixture
+  ---
+  duration_ms: 0.1945
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-NS-SCREENING documents are QUALIFIED; the verdict is DIAGNOSTIC
+ok 4 - admit: POSITIVE-NS-SCREENING documents are QUALIFIED; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.118166
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-GS-DOMAIN documents are QUALIFIED; the verdict is DIAGNOSTIC
+ok 5 - admit: POSITIVE-GS-DOMAIN documents are QUALIFIED; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.045917
+  type: 'test'
+  ...
+# Subtest: admit: POSITIVE-PROMOTION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 6 - admit: POSITIVE-PROMOTION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.1115
+  type: 'test'
+  ...
+# Subtest: admit: GEN-PREREQS-ONLY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 7 - admit: GEN-PREREQS-ONLY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.038667
+  type: 'test'
+  ...
+# Subtest: admit: GEN-NULL-OREPLAY-PIN documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 8 - admit: GEN-NULL-OREPLAY-PIN documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.097583
+  type: 'test'
+  ...
+# Subtest: admit: GEN-SUPPLIED-NAMES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 9 - admit: GEN-SUPPLIED-NAMES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.041459
+  type: 'test'
+  ...
+# Subtest: admit: GEN-OTHER-TREE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 10 - admit: GEN-OTHER-TREE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.281667
+  type: 'test'
+  ...
+# Subtest: admit: GEN-MISSING-FALSIFIERS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 11 - admit: GEN-MISSING-FALSIFIERS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.289875
+  type: 'test'
+  ...
+# Subtest: admit: GEN-COMPOSITION-UNBOUND documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 12 - admit: GEN-COMPOSITION-UNBOUND documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.094291
+  type: 'test'
+  ...
+# Subtest: admit: GEN-W0-NULL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 13 - admit: GEN-W0-NULL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.034166
+  type: 'test'
+  ...
+# Subtest: admit: GEN-NO-W0-RECEIPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 14 - admit: GEN-NO-W0-RECEIPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.025583
+  type: 'test'
+  ...
+# Subtest: admit: GEN-EXCLUDED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 15 - admit: GEN-EXCLUDED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.023459
+  type: 'test'
+  ...
+# Subtest: admit: GEN-REFUSED-SET documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 16 - admit: GEN-REFUSED-SET documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.023375
+  type: 'test'
+  ...
+# Subtest: admit: GEN-STALE-DEFINITION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 17 - admit: GEN-STALE-DEFINITION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.028875
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R4-FABRICATED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 18 - admit: CODEX-R4-FABRICATED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02925
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-STALE-BINARY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 19 - admit: Q42A-STALE-BINARY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022583
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-EARLIER-COMMIT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 20 - admit: Q42A-EARLIER-COMMIT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022541
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-BEFORE-CLOSURE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 21 - admit: Q42A-BEFORE-CLOSURE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021791
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-OBJECT-CORRUPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 22 - admit: Q42A-OBJECT-CORRUPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020875
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-OBJECT-OF-OTHER-CASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 23 - admit: Q42A-OBJECT-OF-OTHER-CASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.023084
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-MODES-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 24 - admit: Q42A-MODES-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020959
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-FAULT-REPS-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 25 - admit: Q42A-FAULT-REPS-SHORT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.026667
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-UNKNOWN-ID documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 26 - admit: Q42A-UNKNOWN-ID documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.0325
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-NO-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 27 - admit: Q42A-NO-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.023542
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CONTROL-OTHER-SEED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 28 - admit: Q42A-CONTROL-OTHER-SEED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.029458
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CONTROL-OTHER-WINDOW documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 29 - admit: Q42A-CONTROL-OTHER-WINDOW documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.031834
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-CORRECTNESS-FAIL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 30 - admit: Q42A-CORRECTNESS-FAIL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021209
+  type: 'test'
+  ...
+# Subtest: admit: Q42A-NO-VERIFIER documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 31 - admit: Q42A-NO-VERIFIER documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.029167
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-MODULES-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 32 - admit: CODEX-R6-MODULES-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.025209
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-BINARY-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 33 - admit: CODEX-R6-BINARY-NOT-RETAINED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021333
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-NOT-A-VERIFIER-RECORD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 34 - admit: CODEX-R6-NOT-A-VERIFIER-RECORD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019667
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-REFUSAL-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 35 - admit: CODEX-R6-REFUSAL-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02125
+  type: 'test'
+  ...
+# Subtest: admit: Q47A-WRONG-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 36 - admit: Q47A-WRONG-LABELLED-PASS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022792
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-CONTROL-NO-WORKLOAD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 37 - admit: CODEX-R6-CONTROL-NO-WORKLOAD documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.0285
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-CANDIDATE-SELECTED-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 38 - admit: CODEX-R6-CANDIDATE-SELECTED-CONTROL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022292
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-NO-A0-REGISTRY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 39 - admit: CODEX-R6-NO-A0-REGISTRY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.023625
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R6-MIGRATION-INDIRECT-REFUSAL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 40 - admit: CODEX-R6-MIGRATION-INDIRECT-REFUSAL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022291
+  type: 'test'
+  ...
+# Subtest: admit: Q47C-MANIFESTS-UNPINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 41 - admit: Q47C-MANIFESTS-UNPINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.029583
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R7-INVENTED-CASES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 42 - admit: CODEX-R7-INVENTED-CASES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.045042
+  type: 'test'
+  ...
+# Subtest: admit: CODEX-R7-CANDIDATE-AS-A0 documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 43 - admit: CODEX-R7-CANDIDATE-AS-A0 documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.026125
+  type: 'test'
+  ...
+# Subtest: admit: RT-SWAP-ROLES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 44 - admit: RT-SWAP-ROLES documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021
+  type: 'test'
+  ...
+# Subtest: admit: RT-RELABEL-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 45 - admit: RT-RELABEL-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022541
+  type: 'test'
+  ...
+# Subtest: admit: RT-SCREENING-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 46 - admit: RT-SCREENING-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021084
+  type: 'test'
+  ...
+# Subtest: admit: RT-RUNKIND-SWAP documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 47 - admit: RT-RUNKIND-SWAP documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021583
+  type: 'test'
+  ...
+# Subtest: admit: RT-CONTROL-OTHER-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 48 - admit: RT-CONTROL-OTHER-PROFILE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020458
+  type: 'test'
+  ...
+# Subtest: admit: RT-SLOT-ARRAY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 49 - admit: RT-SLOT-ARRAY documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019708
+  type: 'test'
+  ...
+# Subtest: admit: RT-VERIFIER-IS-AUTHOR documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 50 - admit: RT-VERIFIER-IS-AUTHOR documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020833
+  type: 'test'
+  ...
+# Subtest: admit: RT-DROP-FAIL-ATTEMPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 51 - admit: RT-DROP-FAIL-ATTEMPT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020042
+  type: 'test'
+  ...
+# Subtest: admit: RT-COUNTS-EDITED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 52 - admit: RT-COUNTS-EDITED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.024125
+  type: 'test'
+  ...
+# Subtest: admit: RT-CONTRACT-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 53 - admit: RT-CONTRACT-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.023291
+  type: 'test'
+  ...
+# Subtest: admit: RT-FAULTREPS-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 54 - admit: RT-FAULTREPS-RELABEL documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.022958
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-UPPERCASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 55 - admit: RT-DEP-UPPERCASE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.02
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-UNLISTED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 56 - admit: RT-DEP-UNLISTED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019875
+  type: 'test'
+  ...
+# Subtest: admit: RT-DEP-OTHER-WORKSPACE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 57 - admit: RT-DEP-OTHER-WORKSPACE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019209
+  type: 'test'
+  ...
+# Subtest: admit: RT-NARROW-ROOTS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 58 - admit: RT-NARROW-ROOTS documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019833
+  type: 'test'
+  ...
+# Subtest: admit: LAB-BRANCH-PINS-OWN-ORACLE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 59 - admit: LAB-BRANCH-PINS-OWN-ORACLE documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020458
+  type: 'test'
+  ...
+# Subtest: admit: LAB-ORACLE-FILE-DRIFT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 60 - admit: LAB-ORACLE-FILE-DRIFT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.01975
+  type: 'test'
+  ...
+# Subtest: admit: LAB-IMAGE-NOT-PINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 61 - admit: LAB-IMAGE-NOT-PINNED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021167
+  type: 'test'
+  ...
+# Subtest: admit: LAB-FORBIDDEN-ENDPOINT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 62 - admit: LAB-FORBIDDEN-ENDPOINT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.020667
+  type: 'test'
+  ...
+# Subtest: admit: LAB-ADMISSION-BLOCKED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 63 - admit: LAB-ADMISSION-BLOCKED documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019417
+  type: 'test'
+  ...
+# Subtest: admit: LAB-CONTROL-NO-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 64 - admit: LAB-CONTROL-NO-PREREQ documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.019333
+  type: 'test'
+  ...
+# Subtest: admit: DOC-NO-SOURCE-VARIANT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 65 - admit: DOC-NO-SOURCE-VARIANT documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.021125
+  type: 'test'
+  ...
+# Subtest: admit: DOC-UNREGISTERED-VERIFICATION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+ok 66 - admit: DOC-UNREGISTERED-VERIFICATION documents are DIAGNOSTIC; the verdict is DIAGNOSTIC
+  ---
+  duration_ms: 0.024375
+  type: 'test'
+  ...
+# Subtest: every DIAGNOSTIC fixture names its cause; ids are distinct; Codex rounds 4, 6 and 7 are present
+ok 67 - every DIAGNOSTIC fixture names its cause; ids are distinct; Codex rounds 4, 6 and 7 are present
+  ---
+  duration_ms: 0.188667
+  type: 'test'
+  ...
+# Subtest: CLI admit: always exit 2 with DOCUMENT-ONLY, the document verdict shown, --json, usage exits 1
+ok 68 - CLI admit: always exit 2 with DOCUMENT-ONLY, the document verdict shown, --json, usage exits 1
+  ---
+  duration_ms: 2242.262208
+  type: 'test'
+  ...
+# Subtest: uncommitted pins in the working tree have no effect: the contract is read from the claimed commit and the authority ref
+ok 69 - uncommitted pins in the working tree have no effect: the contract is read from the claimed commit and the authority ref
+  ---
+  duration_ms: 228.005083
+  type: 'test'
+  ...
+# Subtest: malformed inputs are DIAGNOSTIC, never an exception (red-team pass 1 finding 5)
+ok 70 - malformed inputs are DIAGNOSTIC, never an exception (red-team pass 1 finding 5)
+  ---
+  duration_ms: 8803.902458
+  type: 'test'
+  ...
+# Subtest: comparators judge canonical answers; unknown comparators and non-canonical answers never pass
+ok 71 - comparators judge canonical answers; unknown comparators and non-canonical answers never pass
+  ---
+  duration_ms: 0.422292
+  type: 'test'
+  ...
+# Subtest: gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, tabs, missing paths, directories and pathspec magic
+ok 72 - gitSource parses cat-file --batch and ls-tree for binary blobs, spaces, tabs, missing paths, directories and pathspec magic
+  ---
+  duration_ms: 250.19575
+  type: 'test'
+  ...
+# Error: A resource generated asynchronous activity after the test ended. This activity created the error "Error: spawnSync git ENOBUFS" which triggered an uncaughtException event, caught by the test runner.
+# Subtest: lab/bin/test/claim.test.mjs
+not ok 2 - lab/bin/test/claim.test.mjs
+  ---
+  duration_ms: 37219.967916
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/bin/test/claim.test.mjs:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..73
+# tests 73
+# suites 0
+# pass 71
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 37226.402333

@@ -1,0 +1,40 @@
+test_q70m_entity_before_float (__main__.ContinuationInputRegressions.test_q70m_entity_before_float) ... ok
+test_q70m_journal_after_boolean (__main__.ContinuationInputRegressions.test_q70m_journal_after_boolean) ... ok
+test_q70m_journal_after_string (__main__.ContinuationInputRegressions.test_q70m_journal_after_string) ... ok
+test_q70o_cursor_page_boolean (__main__.ContinuationInputRegressions.test_q70o_cursor_page_boolean) ... ok
+test_q75c_compiled_runner_cannot_lose_projection_pin (__main__.ReviewRegressions.test_q75c_compiled_runner_cannot_lose_projection_pin) ... ok
+test_q75c_malformed_hash_rejected (__main__.ReviewRegressions.test_q75c_malformed_hash_rejected) ... ok
+test_q75c_replay_entrypoint_alone_is_not_pin (__main__.ReviewRegressions.test_q75c_replay_entrypoint_alone_is_not_pin) ... ok
+test_q75c_runner_argv_file_must_be_pinned (__main__.ReviewRegressions.test_q75c_runner_argv_file_must_be_pinned) ... ok
+test_q75g_actual_oracle_aggregate_answer (__main__.ReviewRegressions.test_q75g_actual_oracle_aggregate_answer) ... ok
+test_q75g_ascii_row_control (__main__.ReviewRegressions.test_q75g_ascii_row_control) ... ok
+test_q75g_bag_preserves_duplicate_count (__main__.ReviewRegressions.test_q75g_bag_preserves_duplicate_count) ... ok
+test_q75g_bag_reorders_inside_second_query (__main__.ReviewRegressions.test_q75g_bag_reorders_inside_second_query) ... ok
+test_q75g_command_outcomes_are_exact (__main__.ReviewRegressions.test_q75g_command_outcomes_are_exact) ... ok
+test_q75g_inflight_bag_reorders (__main__.ReviewRegressions.test_q75g_inflight_bag_reorders) ... ok
+test_q75g_inflight_prefix_identity_is_exact (__main__.ReviewRegressions.test_q75g_inflight_prefix_identity_is_exact) ... ok
+test_q75g_ordered_rejects_reordering (__main__.ReviewRegressions.test_q75g_ordered_rejects_reordering) ... ok
+test_q75g_query_identity_is_exact (__main__.ReviewRegressions.test_q75g_query_identity_is_exact) ... ok
+test_q75g_set_ignores_duplicate_count (__main__.ReviewRegressions.test_q75g_set_ignores_duplicate_count) ... ok
+test_q75g_state_is_exact (__main__.ReviewRegressions.test_q75g_state_is_exact) ... ok
+test_q75g_unicode_equal_rows (__main__.ReviewRegressions.test_q75g_unicode_equal_rows) ... ok
+test_q75g_unicode_inflight_rows (__main__.ReviewRegressions.test_q75g_unicode_inflight_rows) ... ok
+test_q75g_unicode_object_values (__main__.ReviewRegressions.test_q75g_unicode_object_values) ... ok
+test_q75h_no_partial_rows (__main__.ReviewRegressions.test_q75h_no_partial_rows) ... ok
+test_q75h_no_string_or_empty_causes (__main__.ReviewRegressions.test_q75h_no_string_or_empty_causes) ... ok
+test_q75h_optional_cause (__main__.ReviewRegressions.test_q75h_optional_cause) ... ok
+test_q75h_structured_message_cause (__main__.ReviewRegressions.test_q75h_structured_message_cause) ... ok
+test_q75h_structured_tag_cause (__main__.ReviewRegressions.test_q75h_structured_tag_cause) ... ok
+test_q75i_promotion_refused_before_executor_calls (__main__.ReviewRegressions.test_q75i_promotion_refused_before_executor_calls) ... ok
+test_q76c_matrix_records_ignored_tail_constraint_defect (__main__.ReviewRegressions.test_q76c_matrix_records_ignored_tail_constraint_defect) ... ok
+test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) ... ok
+test_q78_composition_schema_allows_datomic (__main__.ReviewRegressions.test_q78_composition_schema_allows_datomic) ... ok
+test_q78_datomic_null_a0 (__main__.ReviewRegressions.test_q78_datomic_null_a0) ... ok
+test_q78_every_generic_obligation_applies_to_d (__main__.ReviewRegressions.test_q78_every_generic_obligation_applies_to_d) ... ok
+test_q78_no_existing_raw_exception_transfers_to_d (__main__.ReviewRegressions.test_q78_no_existing_raw_exception_transfers_to_d) ... ok
+test_q81a_final_input_requirement_survives_generation (__main__.ReviewRegressions.test_q81a_final_input_requirement_survives_generation) ... ok
+
+----------------------------------------------------------------------
+Ran 35 tests in 0.545s
+
+OK

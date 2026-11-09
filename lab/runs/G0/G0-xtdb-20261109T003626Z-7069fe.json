@@ -1,0 +1,519 @@
+{
+  "format": "tx2-gate-receipt/1",
+  "gate": "G0",
+  "lane": "xtdb",
+  "slot": null,
+  "runId": "G0-xtdb-20261109T003626Z-7069fe",
+  "experiment": "CX-A01-0312-R3",
+  "note": "Contract 0.3.12 round 3: integrated b916d5d with reviewed workload repins; default-off; unchanged authorized skip inventory",
+  "previous": "G0-xtdb-20261109T001825Z-288416",
+  "startedAt": "2026-11-09T00:36:26.625Z",
+  "endedAt": "2026-11-09T00:38:35.485Z",
+  "durationMs": 128860,
+  "scope": "full",
+  "runKind": "diagnostic",
+  "mutation": null,
+  "contractVersion": "0.3.12",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/3",
+    "version": "0.3.12",
+    "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
+    "sha256": "2ba0ba03c84e0a02a38d7cd32536530bf5d7999ddda3de429606250633d2b78b"
+  },
+  "obligations": [],
+  "engineName": "xtdb",
+  "git": {
+    "head": "3de54ac5f5ebc6c2c6d12ed902a6cb1ea360d590",
+    "headTree": "a7338b15a01d64c997b018ab8cc52dff490069e3",
+    "branch": "contract/0.3.12",
+    "dirty": true,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [
+      "lab/acceptance/_negtest_tmp.py",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/G0.log",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/INT-XCJ-REPORT.md",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/brief-audit.json",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/build.txt",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/contract-tests-initial.txt",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/contract-tests.txt",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/evaluator.tap",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/install.txt",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/negtest.txt",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/real-payloads.txt",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/reviewer-regressions.txt",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/screening-js.tap",
+      "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/verify.txt"
+    ],
+    "sourceTreeId": "5a297a88175ed826bed933589efe90605c8fe5a1e44c27ffbd9d2d29691293c7"
+  },
+  "lockfileSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "f1cbaa46a08e5a3538ab120aef44257b3e1a8b7471f35d2621f747355a3ca465",
+    "lab/bin/lib.mjs": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e",
+    "lab/bin/receipt.mjs": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+    "lab/bin/engine.mjs": "b2bb06172efd2791ec323285998e560ace543a38e022dff489c601d3c879c608",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/config/slots.json": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8"
+  },
+  "build": {
+    "manifestSha256": "5376376910764c44ecd3614323ba7ead0277d22fedf819c3c225d7e1a6d24f43",
+    "manifest": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 416,
+        "bytes": 2680287,
+        "sha256": "5d78bc4887c599b3b4e08c6c0228fa4f0ff4e1c2ed1b786526adc8fd314d3dc5"
+      },
+      "testkit": {
+        "files": 4,
+        "bytes": 247745,
+        "sha256": "b30558fbe016aa34202d9f260055ea944877ce3176a7604e2522e53a02c7251f"
+      },
+      "xtdb": {
+        "files": 88,
+        "bytes": 460555,
+        "sha256": "2b04d80fdab2d434d6e6dfbe7547eb925d0130000676cf31ba2c632fbecb6c8d"
+      },
+      "qualification": {
+        "files": 32,
+        "bytes": 355269,
+        "sha256": "e0ae5d1dd23d081b73ee0a8d4ae365260fd40846158989ca03b39bf00463c88b"
+      }
+    }
+  },
+  "counts": {
+    "executed": 1168,
+    "pass": 1168,
+    "fail": 0,
+    "skip": 137,
+    "expectedSkip": 137,
+    "unexpectedSkip": 0
+  },
+  "unexpectedSkips": [],
+  "fixtures": {
+    "qualification/workloads/temporal-workloads.json": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "qualification/workloads/event_oracles.py": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02",
+    "qualification/workloads/validate_workloads.py": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+    "qualification/workloads/test_event_oracles.py": "0151831a2a2b0ce60bcbb08cf2234764458cf114057a3e30b1623d5c8dbb26a7",
+    "qualification/workloads/engine_cases.mjs": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50",
+    "qualification/workloads/test_engine_cases.mjs": "7d1d406e659f8a9f917c84a6a9c76517b0262cae07851500b58fa6ead1dd409a",
+    "qualification/adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "lab/config/g0-expected-skips.json": "64f74ee9a77fc3b336f6236428335b789f1c2bceded36ddb88efa2b74c007348"
+  },
+  "packet": {
+    "id": "temporal-workloads/1@sha256:322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "format": "temporal-workloads/1",
+    "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "workloads": 20,
+    "cases": 71
+  },
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 1673,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/pnpm-version.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "build",
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-xtdb --filter @triplex-build/triplex-qualification build",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 9842,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/build.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/build.stderr.txt"
+    },
+    {
+      "name": "typecheck",
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-xtdb --filter @triplex-build/triplex-qualification typecheck",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 9860,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/typecheck.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/typecheck.stderr.txt"
+    },
+    {
+      "name": "vitest-core",
+      "command": "pnpm --filter @triplex-build/triplex exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-core.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 3977,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-core.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-core.stderr.txt"
+    },
+    {
+      "name": "vitest-testkit",
+      "command": "pnpm --filter @triplex-build/triplex-testkit exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-testkit.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 1265,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-testkit.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-testkit.stderr.txt"
+    },
+    {
+      "name": "vitest-xtdb",
+      "command": "pnpm --filter @triplex-build/triplex-xtdb exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-xtdb.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 4930,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-xtdb.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-xtdb.stderr.txt"
+    },
+    {
+      "name": "vitest-qualification",
+      "command": "pnpm --filter @triplex-build/triplex-qualification exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-qualification.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 2679,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-qualification.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-qualification.stderr.txt"
+    },
+    {
+      "name": "node-test-qualification",
+      "command": "node --test --test-reporter=tap ../../qualification/compare.test.mjs load/dispatch.test.ts load/model.test.ts",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 158,
+      "cwd": "packages/qualification",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-qualification.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-qualification.stderr.txt"
+    },
+    {
+      "name": "node-test-engine-cases",
+      "command": "node --test --test-reporter=tap qualification/workloads/test_engine_cases.mjs",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 89,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-engine-cases.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-engine-cases.stderr.txt"
+    },
+    {
+      "name": "node-test-ns-bench",
+      "command": "node --test --test-reporter=tap lab/bench/test/bench.test.ts",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 745,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-ns-bench.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-ns-bench.stderr.txt"
+    },
+    {
+      "name": "oracle-validate-workloads",
+      "command": "python3 -B qualification/workloads/validate_workloads.py",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 55,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-validate-workloads.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-validate-workloads.stderr.txt"
+    },
+    {
+      "name": "oracle-unittest",
+      "command": "python3 -B -m unittest -v test_event_oracles",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 113,
+      "cwd": "qualification/workloads",
+      "stdout": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-unittest.stdout.txt",
+      "stderr": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-unittest.stderr.txt"
+    }
+  ],
+  "firstFailures": [],
+  "rawDir": "runs/G0/G0-xtdb-20261109T003626Z-7069fe",
+  "reasons": [],
+  "verdict": "PASS",
+  "objects": [
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 290287,
+      "sha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 57344,
+      "sha256": "f1cbaa46a08e5a3538ab120aef44257b3e1a8b7471f35d2621f747355a3ca465"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 26584,
+      "sha256": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 5363,
+      "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 30796,
+      "sha256": "b2bb06172efd2791ec323285998e560ace543a38e022dff489c601d3c879c608"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 1841,
+      "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 4619,
+      "sha256": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 107538,
+      "sha256": "5376376910764c44ecd3614323ba7ead0277d22fedf819c3c225d7e1a6d24f43"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-core.json",
+      "role": "raw-outcome",
+      "bytes": 272487,
+      "sha256": "0f7ca4c0655c6af30ea69f07921d3917e1bccae5ec1055efa38ad040ee664d4b"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-testkit.json",
+      "role": "raw-outcome",
+      "bytes": 17989,
+      "sha256": "fcf2970ad32a8d39b6cd79f4a56c7407611160cbf4f85fa9f6c16ef6438c369c"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-xtdb.json",
+      "role": "raw-outcome",
+      "bytes": 52571,
+      "sha256": "027ff3e82eb7230cc0137476996898cdea2807ce41039009d360c0dd00f34a3f"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-qualification.json",
+      "role": "raw-outcome",
+      "bytes": 46038,
+      "sha256": "fb9029952c3cad158e9d267416889dc4fb7ff440b42d3aa328d6fb39546bf046"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/typecheck.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/typecheck.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-core.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 145,
+      "sha256": "866675993033264e9e4e9a8923b527177da24f963432bd5d877339f1c69e0645"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-core.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 347,
+      "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-testkit.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 148,
+      "sha256": "44adeb0d65e282d99dac24d7db187d6a1847a69fc580c94d3db957e239e96800"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-testkit.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 347,
+      "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-xtdb.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 145,
+      "sha256": "c9b86ed67d56725db91dde901cf7025fec20860b93de3320b1cf62a556b28e41"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-xtdb.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 347,
+      "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-qualification.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 154,
+      "sha256": "c954c5051ab924a6e40b2f030142f5db01416ad201914fa635190b246126efd4"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-qualification.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-qualification.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 3968,
+      "sha256": "29b25d9d3adfa5fa7151183f46f253103f5a2d363c1c12117000738c8b2fea20"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-qualification.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-engine-cases.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 3134,
+      "sha256": "16ea8767db04f0da7a60475e96401bab486b76213311186ca077528597d50d99"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-engine-cases.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-ns-bench.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 2266,
+      "sha256": "54d7880eb6d6dae7f738da96c9cf8d773b30919a64f2aecca9eb33abe87caa29"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-ns-bench.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-validate-workloads.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 1218,
+      "sha256": "f2a7cd0a3133b70369859ba9a8636acd61a8b951837618be9dd0bbdd70e79ff0"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-validate-workloads.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-unittest.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-unittest.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 1314,
+      "sha256": "074aa60e9867590e0e323dbebd1b32cbd211eca2750ece3171d00ba27b6ba2d5"
+    },
+    {
+      "path": "qualification/workloads/temporal-workloads.json",
+      "role": "oracle-fixture",
+      "bytes": 124581,
+      "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271"
+    },
+    {
+      "path": "qualification/workloads/event_oracles.py",
+      "role": "oracle-fixture",
+      "bytes": 21459,
+      "sha256": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02"
+    },
+    {
+      "path": "qualification/workloads/validate_workloads.py",
+      "role": "oracle-fixture",
+      "bytes": 11913,
+      "sha256": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61"
+    },
+    {
+      "path": "qualification/workloads/test_event_oracles.py",
+      "role": "oracle-fixture",
+      "bytes": 5168,
+      "sha256": "0151831a2a2b0ce60bcbb08cf2234764458cf114057a3e30b1623d5c8dbb26a7"
+    },
+    {
+      "path": "qualification/workloads/engine_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 17684,
+      "sha256": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50"
+    },
+    {
+      "path": "qualification/workloads/test_engine_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 16808,
+      "sha256": "7d1d406e659f8a9f917c84a6a9c76517b0262cae07851500b58fa6ead1dd409a"
+    },
+    {
+      "path": "qualification/adapter/scale-fixture.mjs",
+      "role": "oracle-fixture",
+      "bytes": 16527,
+      "sha256": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2"
+    },
+    {
+      "path": "lab/config/g0-expected-skips.json",
+      "role": "oracle-fixture",
+      "bytes": 25848,
+      "sha256": "64f74ee9a77fc3b336f6236428335b789f1c2bceded36ddb88efa2b74c007348"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 1063258,
+      "sha256": "2ba0ba03c84e0a02a38d7cd32536530bf5d7999ddda3de429606250633d2b78b"
+    }
+  ]
+}

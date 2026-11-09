@@ -1,0 +1,56 @@
+{
+  "attempt": "first",
+  "startedEpochSeconds": 1794175816.731067,
+  "endedEpochSeconds": 1794175888.209273,
+  "hostDiskFreeBefore": 29100052480,
+  "python": "3.14.6 (main, Jun 10 2026, 10:03:53) [Clang 21.0.0 (clang-2100.0.123.102)]",
+  "sourceBefore": {
+    "lab/acceptance/oracle/bundle_fixtures.py": "731ac31efbf3f8cc90df8cba3666d612fd64e2323ca91704ee1c4ab10412ead3",
+    "lab/acceptance/oracle/fixture_normalizer.py": "886b40be26cc44a6b8078804bd80ab28016f400fe8820aa3e0e2409ccb85785e",
+    "lab/acceptance/oracle/gates.py": "c0ece061a5864e7f4236cba73f0f6ac74ea0bebca2bd67a7d233e941eb6e087c",
+    "lab/acceptance/oracle/gates_round2.py": "9a5aedb4bc2cb1c8cde2b31f32919b89b38f59058ccb7a8c0cc698d094de8f99",
+    "lab/acceptance/oracle/observe.py": "d1a55057da6930c189bef8d0dea628299a6b8ef889616a4a276c1e9650fe953a",
+    "lab/acceptance/oracle/selfcheck.py": "154eeedc4622d5265686477787d088fdb52b58e5279a5e28eda78d1f046b3881",
+    "lab/acceptance/oracle/test_cli.py": "c0aa0f0d7fcba3745789ab3c75943d49b2ce4862d9b117280b7f8ddf14d9ac92",
+    "lab/acceptance/oracle/test_observe.py": "dcc4f01d7b55e4691acfd40709612484377547006a5a7bb040ac7a3f9731501d",
+    "lab/acceptance/oracle/test_round2.py": "6b31c7a2efa2cedab29f067f36d018000b31a9506073cd9bcdcf6a663027687d"
+  },
+  "sourceAfter": {
+    "lab/acceptance/oracle/bundle_fixtures.py": "731ac31efbf3f8cc90df8cba3666d612fd64e2323ca91704ee1c4ab10412ead3",
+    "lab/acceptance/oracle/fixture_normalizer.py": "886b40be26cc44a6b8078804bd80ab28016f400fe8820aa3e0e2409ccb85785e",
+    "lab/acceptance/oracle/gates.py": "c0ece061a5864e7f4236cba73f0f6ac74ea0bebca2bd67a7d233e941eb6e087c",
+    "lab/acceptance/oracle/gates_round2.py": "9a5aedb4bc2cb1c8cde2b31f32919b89b38f59058ccb7a8c0cc698d094de8f99",
+    "lab/acceptance/oracle/observe.py": "4d1a128e7c5074139451310a73ee03753c849b9d3a237950b705208d36782bd3",
+    "lab/acceptance/oracle/selfcheck.py": "154eeedc4622d5265686477787d088fdb52b58e5279a5e28eda78d1f046b3881",
+    "lab/acceptance/oracle/test_cli.py": "c0aa0f0d7fcba3745789ab3c75943d49b2ce4862d9b117280b7f8ddf14d9ac92",
+    "lab/acceptance/oracle/test_observe.py": "dcc4f01d7b55e4691acfd40709612484377547006a5a7bb040ac7a3f9731501d",
+    "lab/acceptance/oracle/test_round2.py": "6b31c7a2efa2cedab29f067f36d018000b31a9506073cd9bcdcf6a663027687d"
+  },
+  "sourceStable": false,
+  "gates": [
+    {
+      "gate": "test_observe.py",
+      "code": 0,
+      "stdout": "lab/experiments/EXP-O05-observation-oracle/evidence/round2-first-test_observe.stdout.txt",
+      "stderr": "lab/experiments/EXP-O05-observation-oracle/evidence/round2-first-test_observe.stderr.txt"
+    },
+    {
+      "gate": "test_cli.py",
+      "code": 1,
+      "stdout": "lab/experiments/EXP-O05-observation-oracle/evidence/round2-first-test_cli.stdout.txt",
+      "stderr": "lab/experiments/EXP-O05-observation-oracle/evidence/round2-first-test_cli.stderr.txt"
+    },
+    {
+      "gate": "test_round2.py",
+      "code": 0,
+      "stdout": "lab/experiments/EXP-O05-observation-oracle/evidence/round2-first-test_round2.stdout.txt",
+      "stderr": "lab/experiments/EXP-O05-observation-oracle/evidence/round2-first-test_round2.stderr.txt"
+    },
+    {
+      "gate": "selfcheck.py",
+      "code": 0,
+      "stdout": "lab/experiments/EXP-O05-observation-oracle/evidence/round2-first-selfcheck.stdout.txt",
+      "stderr": "lab/experiments/EXP-O05-observation-oracle/evidence/round2-first-selfcheck.stderr.txt"
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+[
+  {
+    "file": "r3-claim-b5485fa0-request-1.json",
+    "claim": "RUN-CANDIDATE",
+    "reasons": [
+      {
+        "code": "ISOLATION-NOT-IN-FORCE",
+        "detail": "Error: engine box create: [lab] REFUSED: host free disk below 5 GiB\n"
+      },
+      {
+        "code": "EVALUATOR-ERROR",
+        "detail": "qualification stopped: engine box create: [lab] REFUSED: host free disk below 5 GiB\n (fail closed)"
+      },
+      {
+        "code": "EVALUATOR-ERROR",
+        "detail": "the end-of-run checks stopped: engine box create: [lab] REFUSED: host free disk below 5 GiB\n (fail closed)"
+      }
+    ]
+  },
+  {
+    "file": "r3-integrity-7a545eb3-request-16.json",
+    "claim": "RUN-CANDIDATE",
+    "reasons": [
+      {
+        "code": "ISOLATION-NOT-IN-FORCE",
+        "detail": "the executing evaluator must be in its own clone, with no shared git directory with candidate source (Q86e)"
+      }
+    ]
+  },
+  {
+    "file": "r3-integrity-7a545eb3-request-6.json",
+    "claim": "RUN-CANDIDATE",
+    "reasons": [
+      {
+        "code": "ISOLATION-NOT-IN-FORCE",
+        "detail": "Error: box input is not a regular git blob: runtime/outside.mjs"
+      }
+    ]
+  },
+  {
+    "file": "r3-integrity-7a545eb3-request-1.json",
+    "claim": "RUN-CANDIDATE",
+    "reasons": [
+      {
+        "code": "ISOLATION-NOT-IN-FORCE",
+        "detail": "Error: engine box create: [lab] REFUSED: host free disk below 5 GiB\n"
+      },
+      {
+        "code": "EVALUATOR-ERROR",
+        "detail": "qualification stopped: engine box create: [lab] REFUSED: host free disk below 5 GiB\n (fail closed)"
+      },
+      {
+        "code": "EVALUATOR-ERROR",
+        "detail": "the end-of-run checks stopped: engine box create: [lab] REFUSED: host free disk below 5 GiB\n (fail closed)"
+      }
+    ]
+  }
+]

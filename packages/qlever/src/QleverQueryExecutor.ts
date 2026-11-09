@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { readOnlyQleverClient } from "./ReadOnlyClient.js";
 import {
   assertDatalogQuery,
   assertWrappedQuery,
@@ -23,7 +24,7 @@ import { fieldIri, graphIri, metaIri } from "./rdf.js";
 import type { QleverClient } from "./QleverClient.js";
 import type { QleverDomainPlan } from "./FamilyDomains.js";
 import type { QleverSourcePlan } from "./ScalarSource.js";
-import { materializeQleverRules } from "./recursion.js";
+import { evaluateQleverRules, placeholderQleverRuleRelations } from "./recursion.js";
 import { prepareAggregateAnswers } from "./AggregateAnswers.js";
 
 export interface QleverQueryOptions {
@@ -87,7 +88,7 @@ const metrics = (query: DatalogQuery, elapsed: number): QueryMetrics => ({
 });
 
 /** Public Triplex QueryExecutor backed exclusively by QLever SPARQL operators. */
-export const makeQleverQueryExecutor = (
+const queryExecutor = (
   client: QleverClient,
   scopeKey: string,
   options: QleverQueryOptions = {},
@@ -225,8 +226,9 @@ export const makeQleverQueryExecutor = (
             recordedPosition: position,
             ...(basis?.recordedAt === undefined ? {} : { recordedAt: basis.recordedAt }),
           };
-          const runId = logical.rules?.length
-            ? await materializeQleverRules(client, logical, scopeKey, {
+          // [EXP-C8] Rules are evaluated with SPARQL reads only (recursion.ts); no update.
+          const ruleRelations = logical.rules?.length
+            ? await evaluateQleverRules(client, logical, scopeKey, {
                 basis: resolved,
                 signal,
                 maxRows: maxRecursiveRows,
@@ -253,7 +255,7 @@ export const makeQleverQueryExecutor = (
             maxResultRows,
             ...(sourceView ? { sourceView } : {}),
             ...(cursorValues ? { cursorValues } : {}),
-            ...(runId ? { runId } : {}),
+            ...(ruleRelations ? { ruleRelations } : {}),
           };
           let compiled = compile(compileOptions);
           for (const check of compiled.checks)
@@ -412,7 +414,9 @@ export const makeQleverQueryExecutor = (
           ...(options.negationPlan ? { negationPlan: options.negationPlan } : {}),
           ...(options.retirementPlan ? { retirementPlan: options.retirementPlan } : {}),
           ...(options.scalarOrderPlan ? { scalarOrderPlan: options.scalarOrderPlan } : {}),
-          ...(logical.rules?.length ? { runId: "<query-run>" } : {}),
+          ...(logical.rules?.length
+            ? { ruleRelations: placeholderQleverRuleRelations(logical) }
+            : {}),
           ...(aggregateAnswers
             ? { maxResultRows: Math.min(maxResultRows, maxAggregateAnswerRows) }
             : {}),
@@ -444,3 +448,11 @@ export const makeQleverQueryExecutor = (
     explainPage: explain,
   };
 };
+
+// [EXP-C8] Read entry point: the shared client is handed over as a write-refusing view
+// (ReadOnlyClient.ts), so no read path can reach the engine with a write.
+export const makeQleverQueryExecutor = (
+  client: QleverClient,
+  scopeKey: string,
+  options: QleverQueryOptions = {},
+): QueryExecutorService => queryExecutor(readOnlyQleverClient(client), scopeKey, options);

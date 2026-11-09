@@ -1,0 +1,14 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 4427 "CX-VX02-2-G0", pid 1980 "DA00-G0-final", pid 5185 "G0-xtdb-20261108T215157Z-138fc7 vitest-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 4998 "G0-qlever-20261108T215153Z-3524cf vitest-core", pid 1980 "DA00-G0-final", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5290 "CX-VP2Q-3-fuzz60", pid 5437 "CX-C8-R3-offline", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5290 "CX-VP2Q-3-fuzz60", pid 4910 "CX-E01-R3-reference", pid 5696 "CX-C8-R3-checks"
+[lab] heavy: waiting for one of 4 slots; held by pid 6219 "R25-nosweep-a-r4", pid 5290 "CX-VP2Q-3-fuzz60", pid 4910 "CX-E01-R3-reference", pid 5696 "CX-C8-R3-checks"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16
+
+
+ Test Files  2 passed (2)
+      Tests  25 passed (25)
+   Start at  16:54:44
+   Duration  1.98s (tests 40%, import 37%, transform 23%)
+

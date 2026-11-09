@@ -1,0 +1,129 @@
+{
+  "format": "j01-receipt/1",
+  "id": "service-xtdb-fresh-scope-20261108T013134Z-49520f",
+  "kind": "service-xtdb-fresh-scope",
+  "writtenAt": "2026-11-08T01:31:34.821Z",
+  "identity": {
+    "gitHead": "41517f903a8f71555795b9b515ef4c8a926e65b1",
+    "dirty": false,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "5315e5ffbb95b0d32f7d4788685412a1e6daab53a8b4a34919ecd80f932620b9",
+    "engines": {
+      "xtdb": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "qlever": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "endpoints": {
+      "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "qlever": "http://127.0.0.1:7070"
+    },
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        21.96,
+        18.31,
+        17.99
+      ]
+    }
+  },
+  "lane": "xtdb",
+  "label": "fresh-scope",
+  "blocks": 8,
+  "perBlock": 12,
+  "commandFacts": 10,
+  "hostLoad1m": {
+    "min": 13.05,
+    "max": 23.01
+  },
+  "serviceMs": {
+    "a0": {
+      "all": {
+        "n": 96,
+        "p50": 2887.7,
+        "p90": 4106.8,
+        "p99": 4900.7,
+        "max": 4900.7,
+        "mean": 2931.3
+      },
+      "firstBlock": {
+        "n": 12,
+        "p50": 2127.5,
+        "p90": 3480.6,
+        "p99": 4312.1,
+        "max": 4312.1,
+        "mean": 2462.4
+      },
+      "secondHalf": {
+        "n": 48,
+        "p50": 2866.4,
+        "p90": 4106.8,
+        "p99": 4480.3,
+        "max": 4480.3,
+        "mean": 2909.9
+      }
+    },
+    "compact": {
+      "all": {
+        "n": 96,
+        "p50": 2982.2,
+        "p90": 4424.4,
+        "p99": 6126.7,
+        "max": 6126.7,
+        "mean": 3235.5
+      },
+      "firstBlock": {
+        "n": 12,
+        "p50": 2903,
+        "p90": 3724.4,
+        "p99": 4411.2,
+        "max": 4411.2,
+        "mean": 2989
+      },
+      "secondHalf": {
+        "n": 48,
+        "p50": 3031.8,
+        "p90": 4424.4,
+        "p99": 6126.7,
+        "max": 6126.7,
+        "mean": 3351.7
+      }
+    }
+  },
+  "ratioP50": 0.97,
+  "perBlockP50": [
+    {
+      "a0": 2127.5,
+      "compact": 2903
+    },
+    {
+      "a0": 2887.7,
+      "compact": 2570.9
+    },
+    {
+      "a0": 2914.6,
+      "compact": 2819.1
+    },
+    {
+      "a0": 3431.1,
+      "compact": 3963.7
+    },
+    {
+      "a0": 2248.3,
+      "compact": 3225.7
+    },
+    {
+      "a0": 3447.6,
+      "compact": 2811.4
+    },
+    {
+      "a0": 2964.2,
+      "compact": 3654.2
+    },
+    {
+      "a0": 2809.4,
+      "compact": 2977.7
+    }
+  ],
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/service-xtdb-fresh-scope-20261108T013134Z-49520f.raw.json",
+  "rawSha256": "9111a3e1df1958ae8bf34f4800bc392de2371117173e817a942178906a23c595"
+}

@@ -1,0 +1,84 @@
+{
+  "composition": {
+    "ackOwnership": "the source of truth sends the ACK after its own publication; read-your-own-write holds by routing (the pull at the returned position goes to an eligible index, else the fallback); in normal operation the current index is kept synchronous so the fast path serves that pull; during a current-index outage commits and ACKs continue, pulls fall back, the index catches up from the feed through a bounded queue, and fallback share and recovery time are measured (GS.04b); history and analytics stay asynchronous behind watermarks (RULINGS Q31e, replacing Q28's ACK clause)",
+    "assignments": [
+      "source",
+      "current",
+      "history",
+      "analytics"
+    ],
+    "basis": "a basis is a source-of-truth position (POSITION coordinates (stream, epoch, offset, ordinal)) plus a valid time",
+    "brokerCurrentIndex": "a broker-side current-entity index (the per-subject current document served from the host, QLever kept for history and analytics) is a candidate current-index layer for P4; EXP-Q05 builds and measures it (RULINGS Q50a)",
+    "brokerPromotion": "before a log-source composition becomes a default it must close G7.broker.promotion-hardening: an overlay memory bound with backpressure (typed E-OVERLOADED beyond the bound) for replica outages of the GS.04b kind (RULINGS Q50d), and the SQLite substrate of RULINGS Q58c (replacing Q50d's segment rotation and file-lock items) with log erasure by crypto-shredding (RULINGS Q58e); an out-of-process broker and off-device copies are deferred; merging a broker behind a default-off option needs only the Q62a fixes, independently re-verified (RULINGS Q62b)",
+    "currentPath": {
+      "design": "see experimentDirections EXP-P4 (RULINGS Q68a, Q68g)",
+      "expired": "facts whose valid_to has passed retire from the current structure through a valid-time horizon; EXP-P4 measures the 20% expired path (RULINGS Q68e)",
+      "horizon": "the default H trails head by one hour of positions (the 15% basis bucket); a pinned sweep or reconcile holds H at or below its pin; the broker refuses a new pin that would make H trail head by more than 24 hours (RULINGS Q68b)",
+      "status": "PROVISIONAL (RULINGS Q68)"
+    },
+    "eligibility": "index I is eligible to serve basis B only when all hold: its watermark (a fully resolved prefix) has reached B in B's epoch; C1's eligibility for the query (mapping, valid time, exact cut); I can actually reconstruct B (a current-only index only when B is at or after the last change to every attribute the read touches, the validity interval of R18); and I has applied every erasure published so far, independently of B (ERASURE frontier) (RULINGS Q31d)",
+    "engineIds": [
+      "xtdb",
+      "qlever",
+      "datomic"
+    ],
+    "engines": "each assignment is XTDB, QLever or Datomic",
+    "experimentDirections": {
+      "EXP-P2B": "XTDB as a second replica behind the broker: one pgwire transaction per frame (ASSERT the marker, INSERT rows with a fixed _valid_from, INSERT the new marker; P0004 on guard failure); rows and marker read in one read-only transaction; the marker row is the eligibility authority; XTDB system time never carries broker positions; Local log first, InMemory log plus an epoch bump as an arm; predictions and measurements per R23 section 6; it starts after the Q62a fix round is re-verified, from the same author, so one writer owns the broker files (RULINGS Q58b; Q51b's original direction stays pending)",
+      "EXP-P4": "provisional (RULINGS Q68a, Q68g): P4's fast path is one current structure holding live facts plus facts retired after a retention horizon H, served at basis B only when H <= B <= W (W its applied watermark), else the history path; its first copy lives in the broker, written with the frame (arm H1); engines get a smaller copy in the same transaction or guarded update (XTDB tx_current, QLever cur graph) for list and native queries; EXP-P4 measures arms A0, X1, X2, Q1 and H1 per R24 section 6, exactness gate first, and measures X1 (default temporal bounds) fresh and aged before any write-path change, because FOR ALL VALID_TIME on XTDB current reads forfeits the engine's current and historical split",
+      "P1-replicas": "read scaling on both lanes comes from replicas fed by the broker (Q58b): each XTDB or QLever replica has its own applier and marker, so readers never touch the writer's log or indexer and the shared-log follower is unnecessary; EXP-P2B measures the first XTDB replica and a second-replica arm follows; Kafka (E8, about 7 GiB) is deferred (RULINGS Q63b)",
+      "broker-hardening": "after EXP-P2B: the host log moves to SQLite through better-sqlite3 (WAL, synchronous=FULL, fullfsync=ON, checkpoint_fullfsync=ON, locking_mode=EXCLUSIVE, application-driven PASSIVE checkpoints, a worker thread when readers share the process), keeping a CRC32C prev-chain column, a committed_at column, an epoch row and the marker and checkpoint cross-checks (plain SQLite misses mid-WAL corruption); heads, claims and operations become tables; the overlay becomes a persisted recent_rows table; predictions H1 to H6 of R23 section 6.4 (RULINGS Q58c)"
+    },
+    "fallbackEquivalence": "outage read-your-own-write is tested on every serving surface the composition claims, native surfaces included, each against its readGuarantees guarantee (RULINGS Q55c); a stale fallback is rejected; where a fallback answers in another language, both recipes are bound to one semantic query identity (parameters, basis, meaning) and one expected answer from the oracle; total request latency and language attribution stay recorded (RULINGS Q34b)",
+    "hotSubjects": "a per-subject FIFO queue in the candidate's command router (bounded; the typed E-OVERLOADED beyond the bound, never an unbounded wait) with same-subject group commit (up to 8 queued commands of one subject in one engine transaction, positions by ordinal); optimistic compare-and-set stays for cross-node races; the queue is part of the candidate, never the driver (RULINGS Q51a)",
+    "incarnationFencing": "single-request read surfaces read the replica marker in the same request as the answer; multi-request surfaces (Datalog, executor) use replica incarnation fencing: every replay begins by writing a new incarnation id, and an answer is accepted only if (incarnation, marker) is equal before and after (RULINGS Q67c)",
+    "layerSwaps": "layers are swapped one at a time under matched workloads at small rungs (current-index candidates on P1 and P4; history candidates on past-basis reads and GS.12; source candidates on P2 and P3); only the two or three best compositions go on to end-to-end validation with the golden scenarios",
+    "overlay": "the overlay merge is allowed for entity pulls only, keyed by id with the greater LSN winning, under a tested invariant (identity columns never change; a retraction is a new version); engine aggregates, Datalog and executor reads and paged lists never merge: they wait or fail typed; frames carry explicit tombstones, so erasure and deletes cannot resurrect replica rows (RULINGS Q58d)",
+    "parameterisedSql": "seeders and appliers on XTDB use parameterised statements only; 1,000-row literal INSERTs exhausted a 2 GiB heap (EXP-X05), as per-cell expressions did in EXP-P2X (RULINGS Q63d)",
+    "readGuarantees": {
+      "honesty": "no surface may present an answer as at a basis it was not computed at",
+      "native": "PROVISIONAL, flagged for Sam (RULINGS Q58a, superseding Q55c's native half): native SPARQL, XTQL, SQL and Datalog go through a Triplex facade; engine ports are not a public surface. A request may carry after: position (wait until the replica marker reaches it within the deadline, then the typed E-BASIS-NOT-AVAILABLE {required, observed, replica}) or at: position (exact; the engine must also reconstruct it, else the typed E-BASIS-NOT-RECONSTRUCTIBLE). A client session sends its own high-water mark (its last commit position and last read basis) as an implicit after. A tokenless external caller gets the replica's watermark and the reported position. Every answer carries {basis: {low, high}, route}. With the replica unreachable the answer is the typed E-REPLICA-UNAVAILABLE. The default deadline is 2 s",
+      "nativeDeadlineMs": 2000,
+      "repository": "repository pulls give read-your-own-write by routing (replica, else overlay, else the source's log), never below the caller's basis; with the replica unreachable they fall back to the source (RULINGS Q50a)",
+      "status": "PROVISIONAL, flagged for Sam (RULINGS Q55c, superseding Q50b; the native half is replaced by Q58a)",
+      "testing": "NS.P2 and G7.composition.ack-and-routed-ryow test each surface the composition claims against its own guarantee; NS.P2's repository read-your-own-write never establishes a native-surface guarantee"
+    },
+    "receiptBinding": "every receipt binds, per assignment, the engine image digest, configuration hash and slot; every replication edge (feed consumer source hash, translation generation); and each serving index's watermark at read time",
+    "scopeKey": "an engine-scope receipt's key is (layer, the engine assigned to that layer, its image digest, configuration hash and slot), derived from the composition, never from engineOfLane",
+    "sharedVolumeFollower": "rejected for promotion: XTDB 2.2.0's ReadOnlyLocalLog reads half-written records and dies permanently (9 deaths in 30 minutes), though it never answered wrongly; the second-writer guard and the follower harness stay; the torn-read repro joins the R21 upstream-filing question for Sam, and nothing is filed without him (RULINGS Q63a, Q63c)",
+    "sourceDeclaration": "every composition declares its source implementation: the source assignment carries variant engine-source or log-source (COMMIT_OUTCOMES), and a log source binds its log identity and durability configuration (implementationSha256, fsyncMode, fullFsync, device; LOG_FIELDS) next to the engine identities in every receipt (RULINGS Q55b)",
+    "watermarkRouting": "a read that finds no eligible index waits at most T-WATERMARK-WAIT-MS for one, then routes to an eligible fallback (the source of truth's own query surface or another index); the fallback's latency counts in the read's own latency; the receipt records the route and the surface language, a cross-language fallback is counted per surface, and fallbacks are reported as a share of reads per window; no index answers for a basis it is not eligible for (RULINGS Q31d)"
+  },
+  "compositionFields": [
+    "engine",
+    "imageDigest",
+    "configSha256",
+    "slot"
+  ],
+  "imagePins": {
+    "datomic": {
+      "image": null,
+      "imageId": null
+    },
+    "qlever": {
+      "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "imageId": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "xtdb": {
+      "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77"
+    }
+  },
+  "logFields": {
+    "device": "str",
+    "fsyncMode": "str",
+    "fullFsync": "bool",
+    "implementationSha256": "hex64"
+  },
+  "sourceVariantFields": {
+    "engine-source": [],
+    "log-source": [
+      "log"
+    ]
+  }
+}

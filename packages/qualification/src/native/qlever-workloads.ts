@@ -5,6 +5,7 @@
 import { Effect } from "effect";
 import { integer } from "@triplex-build/triplex";
 import { TypeExpr } from "@triplex-build/triplex/config";
+import { countSupportPaths, SUPPORT_EDGE_LIMIT } from "./support-paths.js";
 import type {
   NativeQueryContract,
   NativeReadBasis,
@@ -197,6 +198,7 @@ export const evaluateQleverNativeWorkload = (
       build: (ctx: Context, input: RecordValue) => string,
       at = entry,
       sourceBasis?: Pick<NativeReadBasis, "recordedPosition">,
+      maxRows = 1000,
     ) => {
       const position = sourceBasis?.recordedPosition ?? taskUpperPosition;
       if (taskUpperPosition !== undefined && position !== undefined && position > taskUpperPosition)
@@ -219,7 +221,7 @@ export const evaluateQleverNativeWorkload = (
               ...basisOf(at),
               ...(position === undefined ? {} : { recordedPosition: position }),
             },
-            maxRows: 1000,
+            maxRows,
             timeoutMs: 20_000,
           },
         )
@@ -577,31 +579,22 @@ export const evaluateQleverNativeWorkload = (
       return answers;
     }
     if (id === "20" && entry["operation"] === "reachability_supports") {
-      let count = 0n;
-      for (let length = 1; length <= 3; length++) {
-        const rows = yield* query(
-          `bounded-dag-witnesses-${length}`,
-          { from: p["from"]["value"], to: p["to"]["value"] },
-          row({ count: TypeExpr.int64 }),
-          (ctx, input) => {
-            const edges = Array["from"]({ length }, (_, index) =>
-              f(
-                ctx,
-                index ? `?node${index}` : ctx.entity(input["from"]),
-                "_support",
-                index === length - 1 ? "?target" : `?node${index + 1}`,
-              ),
-            );
-            return `SELECT (COUNT(*) AS ?count) WHERE { { SELECT DISTINCT ${length === 1 ? "?target" : Array["from"]({ length: length - 1 }, (_, index) => `?node${index + 1}`).join(" ")} WHERE { ${edges.join("\n")} ${eq(ctx, "?target", input["to"])} } } }`;
-          },
-        );
-        count += exact(rows[0]!["count"]);
-      }
+      // [EXP-C8-R2] Why: Q76d requires general simple paths at the pinned cut. Rejected: summing lengths 1-3 (fixture-specific).
+      const edges = yield* query(
+        "support-edges",
+        {},
+        row({ source: TypeExpr.text, target: TypeExpr.text }),
+        (ctx) =>
+          `SELECT DISTINCT ?source ?target WHERE { ${f(ctx, "?source", "_support", "?target")} } LIMIT ${SUPPORT_EDGE_LIMIT + 1}`,
+        entry,
+        undefined,
+        SUPPORT_EDGE_LIMIT + 1,
+      );
+      const paths = yield* countSupportPaths(edges, p["from"]["value"], p["to"]["value"]);
       trace.push({
-        normalization:
-          "Add three final native witness counts for the frozen four-node DAG; not general path counting",
+        normalization: "Exact bounded simple-path count over distinct native support edges",
       });
-      return [[count > 0n, integer(count)]];
+      return [[paths > 0n, integer(paths)]];
     }
     throw new Error(`UNSUPPORTED_PUBLIC_NATIVE_WORKLOAD:qlever:${id}:${entry["operation"]}`);
   });

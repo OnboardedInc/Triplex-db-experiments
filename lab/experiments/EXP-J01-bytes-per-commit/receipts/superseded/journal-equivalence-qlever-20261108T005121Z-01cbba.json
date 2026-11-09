@@ -1,0 +1,79 @@
+{
+  "format": "j01-receipt/1",
+  "id": "journal-equivalence-qlever-20261108T005121Z-01cbba",
+  "kind": "journal-equivalence-qlever",
+  "writtenAt": "2026-11-08T00:51:21.328Z",
+  "identity": {
+    "gitHead": "aeace418ce87a72e4ec769cfe48302bc4f90b6fb",
+    "dirty": true,
+    "diffSha256": "15f5516389ecadc81c4a29ece68c76268c3e8a1f69ac6f25a864cefe03957f74",
+    "distSha256": "5315e5ffbb95b0d32f7d4788685412a1e6daab53a8b4a34919ecd80f932620b9",
+    "engines": {
+      "xtdb": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "qlever": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "endpoints": {
+      "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "qlever": "http://127.0.0.1:7070"
+    },
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        14.94,
+        13.27,
+        11.96
+      ]
+    }
+  },
+  "lane": "qlever",
+  "deterministic": {
+    "startTime": 1762560000000,
+    "seed": "j01-journal-equivalence"
+  },
+  "identical": false,
+  "arms": [
+    {
+      "encoding": "a0",
+      "readsSha256": "93c9700c02c4dfc556e112e2efa753937f3e453dd25ec1bab54a26f1deebdc94",
+      "readsBytes": 161838,
+      "physicalSha256": "c3d9d0217f70cc93bd6a05a8b520883a87ac097d836127828ee33dbd792fcdcc",
+      "physicalRows": 46,
+      "transactions": 5,
+      "journalFacts": 46,
+      "changes": 23
+    },
+    {
+      "encoding": "compact",
+      "readsSha256": "7afb9e63f9a12abce266201813bf4023eaea5880708678b20d8f9cde53c079d8",
+      "readsBytes": 161843,
+      "physicalSha256": "c3d9d0217f70cc93bd6a05a8b520883a87ac097d836127828ee33dbd792fcdcc",
+      "physicalRows": 46,
+      "transactions": 5,
+      "journalFacts": 46,
+      "changes": 23
+    },
+    {
+      "encoding": "a0",
+      "readsSha256": "409cf488705a8ec7e41f919eef4ebc7b3b3a6721968b9c827d66f6e5d42c173a",
+      "readsBytes": 161838,
+      "physicalSha256": "c3d9d0217f70cc93bd6a05a8b520883a87ac097d836127828ee33dbd792fcdcc",
+      "physicalRows": 46,
+      "transactions": 5,
+      "journalFacts": 46,
+      "changes": 23
+    },
+    {
+      "encoding": "compact",
+      "readsSha256": "14a3870b55c2872af4030a403a52cec7014661c2b375d766437c1c4783520fc4",
+      "readsBytes": 161843,
+      "physicalSha256": "c3d9d0217f70cc93bd6a05a8b520883a87ac097d836127828ee33dbd792fcdcc",
+      "physicalRows": 46,
+      "transactions": 5,
+      "journalFacts": 46,
+      "changes": 23
+    }
+  ],
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/journal-equivalence-qlever-20261108T005121Z-01cbba.raw.json",
+  "rawSha256": "22f1c93a579c9254d3d51120460e95789a0a18bf90b1dd2534192e81b1b9ae06"
+}

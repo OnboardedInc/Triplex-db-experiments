@@ -1,0 +1,15 @@
+{
+  "version": "XTDB v2.2.0",
+  "sources": [
+    {
+      "path": "Sql.g4",
+      "url": "https://raw.githubusercontent.com/xtdb/xtdb/v2.2.0/core/src/main/antlr/xtdb/antlr/Sql.g4",
+      "sha256": "46ac30b2a5b2cd94b60d4dba7f3e0e89e0bacdc05ab86f7d6367aed2d891840e"
+    },
+    {
+      "path": "SqlLexer.g4",
+      "url": "https://raw.githubusercontent.com/xtdb/xtdb/v2.2.0/core/src/main/antlr/xtdb/antlr/SqlLexer.g4",
+      "sha256": "3d7f01c3d638fea7765279da259112a805ca8061e374ec952ab253a8b1fd9c0a"
+    }
+  ]
+}

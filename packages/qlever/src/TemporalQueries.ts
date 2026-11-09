@@ -1,4 +1,5 @@
 import { Effect } from "effect";
+import { readOnlyQleverClient } from "./ReadOnlyClient.js";
 import { isPatternClause, type Clause, type DatalogQuery } from "@triplex-build/triplex/datalog";
 import {
   assertDatalogQuery,
@@ -58,7 +59,7 @@ const dependencies = (where: unknown) => {
  * the unchanged Datalog AST at each span under one logical source cut.
  * Host coalescing sees only bounded final bindings, never source fact sets.
  */
-export const makeQleverTemporalQueries = (
+const temporalQueries = (
   client: QleverClient,
   scopeKey: string,
   queryLimits: Omit<QleverQueryOptions, "sourceView"> = {},
@@ -193,3 +194,11 @@ export const makeQleverTemporalQueries = (
           : new ReadError({ message: "QLever interval query failed", cause }),
     }),
 });
+
+// [EXP-C8] Read entry point: the shared client is handed over as a write-refusing view
+// (ReadOnlyClient.ts), so no read path can reach the engine with a write.
+export const makeQleverTemporalQueries = (
+  client: QleverClient,
+  scopeKey: string,
+  queryLimits: Omit<QleverQueryOptions, "sourceView"> = {},
+) => temporalQueries(readOnlyQleverClient(client), scopeKey, queryLimits);

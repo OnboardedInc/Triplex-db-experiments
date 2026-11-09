@@ -1,0 +1,82 @@
+{
+  "format": "j01-receipt/1",
+  "id": "constraint-rerun-20261108T211451Z-66b053",
+  "kind": "constraint-rerun",
+  "writtenAt": "2026-11-08T21:14:51.212Z",
+  "identity": {
+    "gitHead": "f04b81935a8000df4023419e0b634c67de09fed0",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "5315e5ffbb95b0d32f7d4788685412a1e6daab53a8b4a34919ecd80f932620b9",
+    "engines": {
+      "xtdb": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "qlever": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "endpoints": {
+      "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "qlever": "http://127.0.0.1:7070"
+    },
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        39.36,
+        33.18,
+        18.62
+      ]
+    }
+  },
+  "previous": "G1-xtdb-20261108T013218Z-7e7e23",
+  "reason": "ConformanceError, not a deadline error",
+  "lane": "xtdb",
+  "commitEncoding": "a0",
+  "case": "graph constraints reject invalid post-states across valid time",
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"j01-cx-j01-constraint-41b2d830-f975-455d-beab-23767840dd04\",0]",
+  "startedAt": "2026-11-08T21:13:34.723Z",
+  "endedAt": "2026-11-08T21:14:51.211Z",
+  "elapsedMs": 76487.25654199999,
+  "status": "PASS_SUBSET",
+  "error": null,
+  "sourceBefore": {
+    "gitHead": "f04b81935a8000df4023419e0b634c67de09fed0",
+    "dirty": true,
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "distSha256": "5315e5ffbb95b0d32f7d4788685412a1e6daab53a8b4a34919ecd80f932620b9",
+    "engines": {
+      "xtdb": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "qlever": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "endpoints": {
+      "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "qlever": "http://127.0.0.1:7070"
+    },
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        48.15,
+        30.02,
+        16.13
+      ]
+    }
+  },
+  "ownerPath": "/Users/sam/projects/triplex-db-2/lab/locks/xtdb-dev/owner.json",
+  "ownerSha256": "a1ae3fbcd98bb1de559f5ad0d4b18ea159902e58a64c313db391eb771fcec2a6",
+  "owner": {
+    "format": "tx2-slot-owner/1",
+    "lane": "xtdb",
+    "slot": "dev",
+    "mode": "resident",
+    "container": "tx2-xtdb-dev",
+    "volume": "tx2-xtdb-dev-data",
+    "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+    "port": 5470,
+    "holder": "worktree:/Users/sam/projects/triplex-db-2",
+    "experiment": "EXP-000",
+    "pid": 83679,
+    "worktree": "/Users/sam/projects/triplex-db-2",
+    "createdAt": "2026-11-07T18:54:24.240Z"
+  },
+  "rawPath": null,
+  "rawSha256": null
+}

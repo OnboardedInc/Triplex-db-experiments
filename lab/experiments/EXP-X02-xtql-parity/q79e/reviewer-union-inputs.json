@@ -1,0 +1,166 @@
+{
+  "at": "2026-11-08T22:24:56.364Z",
+  "baseline": "bf1ad4d",
+  "round2": "6cd68dc",
+  "target": "200d669",
+  "controls": [
+    {
+      "q": "ANY",
+      "gap": "/**/",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY/**/((SELECT 1) UNION ALL SELECT 2)",
+      "baseline": {
+        "accepted": true
+      },
+      "round2": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "expectedRawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": true
+    },
+    {
+      "q": "ANY",
+      "gap": " /* subquery */ ",
+      "sql": "SELECT 'x' AS v WHERE 1 = ANY /* subquery */ ((SELECT 1) UNION ALL SELECT 2)",
+      "baseline": {
+        "accepted": true
+      },
+      "round2": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "expectedRawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": true
+    },
+    {
+      "q": "SOME",
+      "gap": "/**/",
+      "sql": "SELECT 'x' AS v WHERE 1 = SOME/**/((SELECT 1) UNION ALL SELECT 2)",
+      "baseline": {
+        "accepted": true
+      },
+      "round2": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "expectedRawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": true
+    },
+    {
+      "q": "SOME",
+      "gap": " /* subquery */ ",
+      "sql": "SELECT 'x' AS v WHERE 1 = SOME /* subquery */ ((SELECT 1) UNION ALL SELECT 2)",
+      "baseline": {
+        "accepted": true
+      },
+      "round2": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "expectedRawRows": [
+        {
+          "v": "x"
+        }
+      ],
+      "confirmedRegression": true
+    },
+    {
+      "q": "ALL",
+      "gap": "/**/",
+      "sql": "SELECT 'x' AS v WHERE 1 = ALL/**/((SELECT 1) UNION ALL SELECT 2)",
+      "baseline": {
+        "accepted": true
+      },
+      "round2": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [],
+      "expectedRawRows": [],
+      "confirmedRegression": true
+    },
+    {
+      "q": "ALL",
+      "gap": " /* subquery */ ",
+      "sql": "SELECT 'x' AS v WHERE 1 = ALL /* subquery */ ((SELECT 1) UNION ALL SELECT 2)",
+      "baseline": {
+        "accepted": true
+      },
+      "round2": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "target": {
+        "accepted": false,
+        "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+      },
+      "exit": "Failure(Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))]))",
+      "defect": false,
+      "rawRows": [],
+      "expectedRawRows": [],
+      "confirmedRegression": true
+    }
+  ]
+}

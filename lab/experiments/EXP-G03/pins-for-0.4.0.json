@@ -1,0 +1,131 @@
+{
+  "format": "EXP-G03/draft-isolation-pins/1",
+  "status": "proposal for contract 0.4.0; not admission authority",
+  "sourceCommit": "e5909dd1cc4616658b54cb8d00a9850dd6d802b9",
+  "buildSpec": {
+    "boxSpec": {
+      "base": "node:22.23.2-bookworm-slim@sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9",
+      "buildInputsSha256": "60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334",
+      "buildTimeoutMs": 1800000,
+      "caseTimeoutMs": 120000,
+      "gatewaySpec": {
+        "buildInputsSha256": null,
+        "imageId": null,
+        "storage": "dev"
+      },
+      "imageId": "sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575",
+      "pinEvidence": {
+        "commit": "f7f6c05d4cfcdeda4b11fef1821a2cc6bf35817d",
+        "metadata": "lab/experiments/EXP-G03/build-probes-1794178215198.json",
+        "store": "lab/experiments/EXP-G03/round2/store.json",
+        "receiptSha256": "94e328343dd2057c15e9970dc046b07e66c73936de82925e9ee0d23dd56e8a1a"
+      },
+      "stderrKeepBytes": 65536,
+      "stdoutMaxBytes": 16777216,
+      "storeListingSha256": "64bfed7194f5f8d852286cd923bd050f520f47562dd1937a86c3253d5bbc356e",
+      "storeLockfileSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+    },
+    "boxInputs": [
+      "packages/core/",
+      "packages/testkit/",
+      "packages/xtdb/",
+      "packages/qlever/",
+      "packages/qualification/",
+      "pnpm-lock.yaml",
+      "pnpm-workspace.yaml",
+      "package.json",
+      "examples/compliance-host/package.json",
+      "examples/config-explorer/package.json",
+      "examples/demo/package.json",
+      "examples/http-api/package.json",
+      "examples/tenant-host-cloudflare/package.json",
+      "experiments/qlever-common/generated/56e246a9-cf9a-4249-9de0-129df5289a7f/source/packages/qlever/package.json",
+      "packages/cli/package.json",
+      "packages/cloudflare/package.json",
+      "packages/core/package.json",
+      "packages/dashboard/package.json",
+      "packages/duckdb/package.json",
+      "packages/foundationdb/package.json",
+      "packages/host/package.json",
+      "packages/http/package.json",
+      "packages/postgres/package.json",
+      "packages/qlever/package.json",
+      "packages/qualification/package.json",
+      "packages/sql/package.json",
+      "packages/sqlite/package.json",
+      "packages/testkit/package.json",
+      "packages/w0/package.json",
+      "packages/xtdb/package.json",
+      "test/integration/package.json",
+      "test/stress/package.json",
+      "tsconfig.alchemy.json",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "vendor/duckdb-temporal/runtime/adapter/build-deps/package.json",
+      "vendor/duckdb-temporal/runtime/package.json"
+    ],
+    "installMetadataExclusions": [
+      "node_modules/.modules.yaml",
+      "node_modules/.pnpm-workspace-state.json"
+    ]
+  },
+  "executionIdentity": {
+    "rule": "an execution's identity is its source tree, build spec, lockfile, toolchain versions, runner and config hashes per instance; executions are keyed by instance, never by output hash (RULINGS Q67b)",
+    "fields": [
+      "sourceTreeSha256",
+      "buildSpecSha256",
+      "lockfileSha256",
+      "toolchain",
+      "runnerSha256",
+      "configSha256"
+    ],
+    "toolchain": "the node version, platform and arch, and the pnpm version when the build or run calls pnpm; the Python version that runs an oracle is not part of the build identity but is recorded in each oracle invocation's evidence (oracle-invocation/1), because an oracle's answer can depend on it (RULINGS Q71b)",
+    "installMetadata": "the post-build checkout is in the identity except the contract-owned install-metadata exclusion list BUILD_SPEC.installMetadataExclusions, found by diffing two clean installs of the same lockfile, never claimant-supplied (RULINGS Q71a)",
+    "schema": "execution-identity/2"
+  },
+  "slotsBox": {
+    "image": "tx2-box:60fc3d789137",
+    "imageId": "sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575",
+    "buildInputsSha256": "60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334",
+    "base": "node:22.23.2-bookworm-slim@sha256:48e4b67d85f87bd551df43704e24d252f56cc5f8e9718841aace50f19948f0f9",
+    "note": "EXP-G03 built image only; qualification also requires authority-pinned buildSpec.boxSpec and a freshly prepared, verified Linux store. Probe store is removed at cleanup."
+  },
+  "isolationLayout": {
+    "format": "pair-layout/1",
+    "vmCpus": 6,
+    "cpuWeight": 100,
+    "candidate": {
+      "engine": [
+        0,
+        1
+      ],
+      "sut": [
+        4
+      ],
+      "relay": [
+        4
+      ],
+      "observer": [
+        4
+      ]
+    },
+    "A0": {
+      "engine": [
+        2,
+        3
+      ],
+      "sut": [
+        5
+      ],
+      "relay": [
+        5
+      ],
+      "observer": [
+        5
+      ]
+    }
+  },
+  "isolationAuthority": "explicit authority and evaluator commit ids; engine-side policy uses the same authority blobs, never main by name (Q86e)",
+  "draftContractVersion": "0.3.12",
+  "intendedContractVersion": "0.4.0"
+}

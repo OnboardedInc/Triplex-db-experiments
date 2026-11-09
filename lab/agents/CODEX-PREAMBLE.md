@@ -22,6 +22,9 @@ human is watching this run. Your role and task follow after these rules.
    `Co-Authored-By: Codex gpt-6.1-sol <noreply@openai.com>`
 8. **Code comments** carry the reasoning: `// [EXP-ID] Why: ... Rejected: <alt> (<reason>).`
 9. **Do not spawn other agents.**
+9a. **PASS audit.** Before you commit work that turns observations into a PASS, verdict or receipt, list every place your code does that and
+    confirm each one checks content (the observed bytes match what is expected), freshness (from this attempt, not an earlier one) and
+    binding (tied to the exact source, slot and inputs it claims). Put the list in your report.
 10. **Report.** Write your full report to the report path your task names (or, if none, `REPORT-<your id>.md` at the root of your
     worktree, committed), then end with a short final message: result, head commit, evidence paths, open questions. State plainly
     what you did not do or could not verify.

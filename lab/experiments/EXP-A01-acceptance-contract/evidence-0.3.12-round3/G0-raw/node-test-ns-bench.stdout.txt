@@ -1,0 +1,64 @@
+TAP version 13
+# Subtest: trace: same inputs give byte-identical events; a different seed differs
+ok 1 - trace: same inputs give byte-identical events; a different seed differs
+  ---
+  duration_ms: 43.608375
+  type: 'test'
+  ...
+# Subtest: trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+ok 2 - trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+  ---
+  duration_ms: 9.144208
+  type: 'test'
+  ...
+# Subtest: trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+ok 3 - trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+  ---
+  duration_ms: 8.519083
+  type: 'test'
+  ...
+# Subtest: histogram: percentiles within 1/128 of exact nearest-rank values
+ok 4 - histogram: percentiles within 1/128 of exact nearest-rank values
+  ---
+  duration_ms: 17.062917
+  type: 'test'
+  ...
+# Subtest: scheduler: latency is measured from the scheduled time, including queueing behind the subject
+ok 5 - scheduler: latency is measured from the scheduled time, including queueing behind the subject
+  ---
+  duration_ms: 330.392833
+  type: 'test'
+  ...
+# Subtest: scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+ok 6 - scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+  ---
+  duration_ms: 93.472375
+  type: 'test'
+  ...
+# Subtest: world: hop classes, frozen P4 buckets and closed-form counts match materialization
+ok 7 - world: hop classes, frozen P4 buckets and closed-form counts match materialization
+  ---
+  duration_ms: 68.3475
+  type: 'test'
+  ...
+# Subtest: model: valid-time aware digests equal the materialized world at (R, V)
+ok 8 - model: valid-time aware digests equal the materialized world at (R, V)
+  ---
+  duration_ms: 1.075042
+  type: 'test'
+  ...
+# Subtest: feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+ok 9 - feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+  ---
+  duration_ms: 66.774
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 715.887167

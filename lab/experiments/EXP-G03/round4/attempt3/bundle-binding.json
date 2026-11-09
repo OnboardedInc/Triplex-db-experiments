@@ -1,0 +1,14 @@
+[
+  {
+    "kind": "claim",
+    "authority": "5f989b20f251e12e484bce6f5bd3d9cdf0568a8f",
+    "source": "203bf1d3224630e74f80ebdc79eb2ca0ce8cb863",
+    "preimagesRetained": true
+  },
+  {
+    "kind": "integrity",
+    "authority": "55111d096fb3b217e8696bfa1e0404e5e21adb50",
+    "source": "599591ef931be2127752b2452ca6f5f18e897eee",
+    "preimagesRetained": true
+  }
+]

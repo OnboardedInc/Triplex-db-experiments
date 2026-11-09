@@ -1,0 +1,4 @@
+[lab] G0-xtdb-20261108T230523Z-50f390: raw output runs/G0/G0-xtdb-20261108T230523Z-50f390
+error: could not write index
+PASS G0 xtdb scope=full executed=968 pass=968 fail=0 skip=130
+receipt: lab/runs/G0/G0-xtdb-20261108T230523Z-50f390.json

@@ -51,7 +51,7 @@ def evaluate(c, raw_text=None):
 def result(report, qid):
     for q in report["queries"]:
         if q["id"] == qid:
-            return q.get("result", q.get("error"))
+            return q.get("result", q.get("error", q.get("inFlight")))
     raise KeyError(qid)
 
 
@@ -68,3 +68,8 @@ def committed_receipts(c, start=1, instants=None):
                     "instant": (instants[k] if instants else cmd.get("clock", 1000 + k)),
                     "assertionIds": [f"id-{op['ref']}" if op["op"] == "assert" else None for op in ops]})
     return out
+
+
+def planted_page_output():
+    """Cross-module paged-output negative control for Q70n."""
+    return V.OrderedOut([("rows", []), ("nextPage", 1)])

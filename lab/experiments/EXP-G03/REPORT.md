@@ -338,9 +338,88 @@ receipts are retained; none was relabelled as a successful run.
 - This is the requested **offline fixture migration**, plus the real reservation-race fix it exposed. No exclusive slot was
   requested, no registered-slot qualification or engine benchmark ran, no resident was parked/stopped/recreated, and no Colima
   VM mount/network setting was changed. Neither forbidden port was contacted.
-- No main merge or push was performed. Main/contract integration awaits the orchestrator's instruction; Q87 must be rerun on
+- No merge into main or push was performed. Main/contract integration awaits the orchestrator's instruction; Q87 must be rerun on
   that merged source/contract. The separate foundation, integrity, lifecycle-fix and claim-test commits make those conflicts
   reviewable. Current passing evidence applies to this branch's contract, not an unperformed future integration.
 - Production semantic argv/manifests/A0 acceptance, PAIR-0 statistical execution, registered-slot relay/preflight integration,
   R27 observer integration and Q86g VM hardening remain the earlier report's open work. No full repository pnpm check, production package build/pack
   check or public package change was performed in this round. Independent review is still required; no promotion is requested.
+
+
+# Round 4 — merge main and audit grant paths
+
+North star: correctness floor for all P1–P5 claims. This round integrates reviewed contract/evaluator changes without claiming registered-slot qualification.
+
+## Merge and conflict intent
+
+Merged exact main `f1e4b116` into `exp/G03-executing-gate` from `e5909dd1`; main had advanced beyond the dispatch snapshot. No main checkout edits, merge into main, or push. Main's X02, C8 and J01 code is included by this merge; the requested focused gates do not independently qualify those implementations.
+
+- `lab/bin/test/claim.test.mjs`: retain all contained execution assertions, full commit IDs and protected clone; main's >1 MiB contract-read fix is preserved by `gitSource`'s verified blob reader (1 GiB cap) and `fixtureGit` (128 MiB cap), replacing the obsolete ref-based `git show` setup. No assertion removed or weakened.
+- `lab/bin/test/claim-round2.test.mjs`: retain all 16 integrity controls in their contained form; the same bounded large Git reader preserves main's buffer fix without restoring Mac callbacks. A source comment records this equivalence.
+- `lab/bin/test/claim-fixtures.mjs` (automatic merge): retain main's distinct O-CONTRACT/O-ERR fixture pins, complete per-runner file lists, and the updated refused migration selection. G03's contained executor consumes these committed fixture authorities. These pins qualify synthetic fixture bytes only.
+- `lab/bin/claim.mjs` (automatic merge): retain main's shared complete runner-pin predicate, screening-only refusal and declared compiled-runner hash check, alongside G03's protected evaluator/container path and reservation-race fix.
+- `lab/bin/gate.mjs` (automatic merge): preserve C8's read-path wire-counter refusal and G03's executing OBL forwarding.
+- `lab/acceptance/ACCEPTANCE.md`, `capability-matrix.md`, `obligations.json`: resolve using exact merged main. Also restore main's `build_contract.py` and `load-contract.json`, whose automatic merge had retained draft G03 generator edits. **All generated acceptance outputs and the generator are byte-identical to merged main**; no generated files edited or regenerated here. The nongenerated Q93 table cross-reference formatting fix is described below.
+
+The removed draft isolation fields are preserved at `pins-for-0.4.0.json`: box image/build/store pins, source allowlist, metadata exclusions, execution-identity/2 and PAIR layout, plus slot-box agreement and original source commit. This is a proposal, **not production admission authority**. Main still has no boxSpec, so production execution fails closed until a reviewed contract supplies it. The contained fixture helper and policy unit fixture publish the proposal into their own synthetic committed authority; production `authorityPolicy` still reads only its explicit full commit. Test store caps/listing/lock pins remain fixture-specific. No contract authority is read from main by name.
+
+## Q93a and rule 9a PASS audit
+
+Full path inventory and content/freshness/binding analysis: [round4/grant-audit.md](round4/grant-audit.md). It enumerates comparator/case-record/real-executor grants, reference and document-core labels, final qualifier and CLI/OBL forwarding; all G0/G1/G2/NS/GS/G4 success consumers; and shared receipt verdict construction. It also records why preflight, kill, slot, readiness and resource evidence can only refuse.
+
+There are more than a few surfaces. **Proposal only:** one final evaluator-owned admission constructor that reopens and rejudges a sealed, source/authority/slot/input/attempt-bound bundle after cleanup; all other paths return observations or refusals. No such redesign implemented.
+
+I cannot honestly confirm content/freshness/binding at every existing success expression in isolation: pure comparators rely on callers, semantic core lacks final isolation checks, document labels are diagnostic, and legacy gate receipt construction trusts status/count adapters. The audit explicitly marks these limits, including receipt.verdictOf not independently checking positive counts.fail without a reason. Those are reported design risks, not new PASS claims. The outer qualifier's end checks and offline refusal remain in force.
+
+For **this round's test result statements**, content is actual TAP per-test results and exact summary/exit code; freshness is newly named round4 output files and the protected clone commits retained in `fixture-provenance.json`; binding is `source-snapshot.json`, evaluator bundles, authority/source commit IDs, fixture holders/stores and final cleanup inventory. All original 34 pool/box assertions run on this merged source; one additional regression asserts that main without reviewed box pins cannot borrow the nearby proposal. Contract verify is a failure, never relabelled PASS. No semantic engine or performance acceptance is inferred from passing fixtures.
+
+## Validation
+
+First evaluator run: **104/108**, zero skipped/cancelled/todo (`round4/claim-suites-1.tap`, exit 1). All 16 integrity controls passed. One failure is the inherited Q93 self-check error; three others (alias, missing-pair control, background-helper run) did not reach their expected semantic outcome. Their per-run diagnostic JSON was removed by the normal fixture cleanup, so their earlier refusal cause cannot be established from this TAP and is **not attributed as proven** to disk or pool pressure. Host free disk temporarily approached the 5 GiB admission floor. All first-failure evidence is retained. A second full suite records each exact request and result through fixture cleanup. No test assertion is changed. Initial pool/box: **34/34** (`round4/pool-box.tap`); final with the additional proposal-refusal regression: **35/35**, zero failed/skipped/cancelled/todo (`round4/pool-box-final.tap`).
+
+`build_contract.py --verify` **fails**: Q47d/Q64f detect Q74a–e and Q83a–e both pending and compiled, because Q93's old/new comparison table has old ruling IDs as pending rows. `round4/contract-verify.log` retains this failure. A read-only `python3 -B /Users/sam/projects/triplex-db-2/lab/acceptance/build_contract.py --verify` reproduces it on main (`round4/contract-main-baseline.log`), proving it is inherited from current main. The second attempt makes only a formatting correction in nongenerated `RULINGS-PENDING.md`: existing Q74/Q83 identifiers in Q93's comparison table become inline-code cross references, so the parser does not mistake them for pending declarations. Wording and rule authority are unchanged; the original empty-self-check-error assertion is preserved. Verification now passes the clash checks but reports **REGENERATION NOT BYTE-IDENTICAL: obligations.json, ACCEPTANCE.md** (`round4/contract-verify-2.log`). Those generated outputs remain untouched, as instructed; the contract owner must regenerate them.
+
+## Limits
+
+Offline only; no exclusive slot requested or used, no resident parked/stopped/recreated, no VM mounts/network changes. No live registered-slot preflight/P1–P7/PAIR-0/gateway execution, year-one performance, X02/C8/J01 integration suites, or production QUALIFIED verified. Contract pin promotion and the upstream Q93 pending-table/generation correction remain for the orchestrator/contract owner. Round3's old evidence-manifest REPORT hash describes its historical report bytes; round4 has a new manifest instead of rewriting historical evidence.
+
+
+Round-4 gate commands (from this worktree):
+
+```sh
+node lab/bin/heavy.mjs --label CX-G03-r4-claim -- node --test --test-concurrency=2 lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs
+node lab/bin/heavy.mjs --label CX-G03-r4-pool-final -- node --test lab/bin/test/box.test.mjs lab/bin/test/box-policy.test.mjs lab/bin/test/lab.test.mjs
+python3 lab/acceptance/build_contract.py --verify
+node lab/experiments/EXP-G03/round4/replay-evidence.mjs
+```
+
+`round4/claim-positive.json` and `integrity-positive.json` each retain 303 hash-verified objects, 64 recomputed PASS case-result/2 records and 66 cgroup-removal proofs. Both outer verdicts remain DIAGNOSTIC with exactly GATE-NOT-RUN and RUN-NOT-ON-GATE (`round4/replay.log`). `bundle-binding.json` confirms the saved source/authority bundles contain the exact positive-attempt commits. No cleanup or process observation grants semantic admission.
+
+
+Second-attempt command additionally sets `TX2_FIXTURE_TRACE` to this worktree's `round4/attempt2/attempts` directory. The trusted fixture helper saves the exact request and protected evaluator result there after each call, so a later assertion cannot hide an earlier refusal reason. This is diagnostic retention only; no candidate or production grant behavior changed. `round4/attempt2/source-snapshot.json` records the final fixture helper and nongenerated pending-document bytes separately from the first attempt. The first cleanup audit succeeded with no own resources beyond the retained round-2 store (`round4/cleanup-final.json`).
+
+Attempt two captured the environmental refusal directly: both `request-1.json` results contain `ISOLATION-NOT-IN-FORCE: host free disk below 5 GiB`, plus fail-closed evaluator errors. Their inner core labels are QUALIFIED but their case counts are only 46 and 53 (additional A0 prerequisite execution was interrupted); outer verdicts remain DIAGNOSTIC and resourcesRemaining is empty. This is concrete evidence for the Q93a audit: an inner core label cannot grant final admission. These are **failed attempts**, not positive evidence, even though some content comparisons passed. Files remain under `round4/attempt2/attempts`; no assertion or admission floor is relaxed.
+
+
+Attempt two finished **102/108**, exit 1, zero skipped/cancelled/todo (`round4/attempt2/claim-suites.tap`). Six assertions about the positive runs failed after the recorded low-disk interruption: integrity input-delete/rewrite controls and claim manifest coverage, strict rejudge, gate-plan/execution and offline-result checks. The contract-reference self-check, missing-pair, alias and background-helper assertions now pass unchanged. All exact requests/results remain in `attempt2/attempts`; two environmental disk refusals and the expected source-link/clone negative controls are separated in `attempt2/isolation-refusals.json`. The later background-helper run passed 64 semantic cases with exactly the offline refusal pair (`attempt2/background-positive.json`), but this does not turn the failed suite into PASS.
+
+`round4/attempt2/cleanup-final.json` confirms all new containers/volumes/networks, own reservations and both protected clones are gone, preserving only the declared round-2 store. Attempt three starts the complete unchanged 108-test suite with roughly 10 GiB host free disk (`attempt3/source-snapshot.json`), the same two-module command, a new label `CX-G03-r4-claim-3`, a new trace directory and an explicit terminal exit-code artifact. No retry deletes or relabels an earlier failure. No admission threshold or assertion is weakened.
+
+Attempt three again encountered the shared host disk floor, this time after clean 64-case positive runs and all 16 integrity controls had passed. The background-helper, promotion, unregistered-slot and supplied-fingerprint requests record `host free disk below 5 GiB` (`attempt3/disk-refusals.json`). Host free-byte observations and source binding are retained in `attempt3/disk-observations.jsonl`. No threshold, assertion, resource cap or admission check was relaxed; no other job, resident, VM or unrelated file was changed to obtain a pass. No fourth full-suite admission is made under this recurring external condition. **A clean 108/108 result remains unverified; do not promote this branch on the partial results or combine successful subsets across attempts.**
+
+The clean third-attempt positive artifacts (`attempt3/claim-positive.json`, `integrity-positive.json`) each replay 303 objects, 64 comparator PASS results and 66 cgroup-removal proofs, with outer DIAGNOSTIC and exactly the two offline refusals (`attempt3/replay.log`). Their source and authority preimages are retained and checked (`attempt3/bundle-binding.json`). These are transport/control evidence, not a replacement for the failed complete suite and not production qualification.
+
+
+## Final round-4 result
+
+**Verification blocked; not ready for promotion.** Main `f1e4b116` is integrated in this worktree with every original fixture assertion preserved. Three complete 108-test attempts ended **104/108**, **102/108**, and **103/108**; all had zero skips, cancellations and todo. Final attempt exit 1 and exact summary/failing names are in `round4/attempt3/claim-suites.tap`, `exit-code.txt` and `round4/validation-summary.json`.
+
+The final five failures are the background-helper, promotion, supplied-fingerprint, gate-plan/execution and offline CLI assertions. Four qualification requests explicitly record the host disk floor; the CLI reports two additional EVALUATOR-ERROR codes, but its detailed result was not retained by the CLI helper, so **the underlying CLI error cause is unverified** rather than assumed to be disk. A stable host-disk run is still needed to establish a clean 108/108 result and, if the CLI error repeats, retain its complete stdout/result for diagnosis. No successful subsets are combined into a suite PASS.
+
+**35/35 pool/box checks pass**, including all original 34 plus the unpinned-production-authority regression. Syntax checks, source-snapshot equality and git diff checks pass. Generated acceptance outputs and `build_contract.py` still equal the exact merged main commit; final contract verification fails only byte identity for `obligations.json` and `ACCEPTANCE.md`. The contract owner must regenerate them in its reviewed version; G03 isolation policy remains an explicit proposal for 0.4.0.
+
+Final cleanup (`round4/attempt3/cleanup-final.json`) confirms both final fixture holders and the CLI holder have no containers or networks, no newly made volumes, no reservations, and no protected clones. Only `tx2-g03-r2store-store-b2b3e6e8cdfb` from round 2 is retained as previously declared. No new image or production dependency store was built in round 4.
+
+The Q93a grant inventory and rule 9a audit are in `round4/grant-audit.md`; the single-grant redesign remains a proposal. No exclusive slot, resident lifecycle change, VM mount/network change, registered-slot execution, live preflight/PAIR-0/gateway validation, package integration/performance qualification, merge into main or push was performed. Open work: obtain a stable host-disk verification window, resolve the CLI diagnostic gap if it repeats, regenerate the contract through its owner, and later run the registered-slot plan against explicit reviewed authority/evaluator commit IDs.
+
+Final evidence manifest: `round4/evidence-manifest.json` binds 20 source files and 106 evidence files (including this report), excluding itself. The recorded evaluator commits and Git bundles preserve the exact protected code and positive source/authority preimages.

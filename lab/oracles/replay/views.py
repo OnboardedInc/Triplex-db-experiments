@@ -11,7 +11,7 @@ import json
 from . import exact as X
 from . import replay as RP
 from . import values as V
-from .replay import ErasedValue, _num, assertion_output, is_erased, read_value, record_output, value_matches
+from .replay import ErasedValue, _num, assertion_output, erased, read_value, record_output, value_matches
 
 
 # --------------------------------------------------------------------------- cuts
@@ -274,10 +274,22 @@ def _limit(raw, default=100, maximum=1000):
     return value
 
 
+def continuation_int(query, name, default=None):
+    """Q70m: an integer continuation parameter (`after`, `beforePosition`, and the
+    `snapshotPosition` a continuation is matched on) must be a JSON integer >= 0; a string, a
+    float or a negative value makes the case malformed (exit 2), never a crash."""
+    raw = query.get(name)
+    if raw is None:
+        return default
+    if not isinstance(raw, V.Lex) or not raw.isdigit() or (raw[0] == "0" and raw != "0"):
+        raise V.OracleInputError(f"{query.get('kind')} {name} must be a JSON integer >= 0 (RULINGS Q70m), got {raw!r}")
+    return int(raw)
+
+
 def q_transactions(run, query):
     """transactions({after, limit}): position > after, ascending (R-JNL-3)."""
     scope = query.get("scope") or run.engine.default_scope
-    after = int(query.get("after", V.Lex("0")))
+    after = continuation_int(query, "after", 0)
     limit = _limit(query.get("limit"))
     rows = [r for r in _journal(run, scope) if r.position > after][:limit]
     out = [("transactions", [record_output(r) for r in rows])]
@@ -307,9 +319,8 @@ def q_transactions_for_entity(run, query):
     scope = query.get("scope") or run.engine.default_scope
     entity = query["entityId"]
     limit = _limit(query.get("limit"))
-    snapshot = int(query["snapshotPosition"]) if query.get("snapshotPosition") is not None \
-        else run.engine.scope(scope).last_position
-    before = int(query["beforePosition"]) if query.get("beforePosition") is not None else None
+    snapshot = continuation_int(query, "snapshotPosition", run.engine.scope(scope).last_position)
+    before = continuation_int(query, "beforePosition")
     # Q49a: an erasure commit's identity changes name the entity, so it is listed like any change
     rows = [r for r in _journal(run, scope) if not r.internal and r.position <= snapshot
             and (before is None or r.position < before)
@@ -387,6 +398,27 @@ def _page_limit(raw):
     return int(text)
 
 
+class NoContinuation(V.OracleInputError):
+    """cursorFrom names no page with a next cursor. Under one erasure prefix of the read it
+    continues (Q66b, Q70a) that prefix has no continuation, and run.py leaves it out; with no
+    prefix left the case is malformed (exit 2)."""
+
+
+def cursor_reference(query):
+    # [O-REPLAY-049] Why: validate before issuer lookup or page indexing. Rejected:
+    # int() coercion and Python indexing (accepts booleans/negative indices and can crash).
+    ref = query["cursorFrom"]
+    if not isinstance(ref, V.Obj) or not isinstance(ref.get("query"), str) or isinstance(ref.get("query"), V.Lex):
+        raise V.OracleInputError("cursorFrom must be an object naming a query (RULINGS Q70o)")
+    if "page" in ref and ref["page"] is None:
+        raise V.OracleInputError("cursorFrom.page must be a JSON integer (RULINGS Q70o)")
+    try:
+        continuation_int(ref, "page", 0)
+    except ValueError as error:
+        raise V.OracleInputError("cursorFrom.page exceeds the JSON integer range (RULINGS Q70o)") from error
+    return ref
+
+
 def q_entity_page(run, query):
     """entityPage: ids with a visible assertion carrying entityType, ordered by entity id
     in codepoint order (R-PAGE-2, AMB-15); bodies are all visible triples of the entity in
@@ -403,13 +435,19 @@ def q_entity_page(run, query):
     limit = _page_limit(query.get("limit"))
     token = query.get("cursor")
     if query.get("cursorFrom") is not None:
-        ref = query["cursorFrom"]
-        prior = run.results.get(ref["query"])
+        ref = cursor_reference(query)
+        # Q66b / Q70a: the earlier page is the one computed with the erasure prefix being
+        # answered (run.result_of); an unknown query falls back to the plain results (none)
+        prior = run.result_of(ref["query"])
         if prior is None:
-            raise V.OracleInputError(f"cursorFrom names unknown or failed query {ref['query']!r}")
-        token = prior.get("pages")[int(ref.get("page", 0))].get("nextCursor")
+            raise NoContinuation(f"cursorFrom names unknown or failed query {ref['query']!r}")
+        pages = prior.get("pages")
+        page = continuation_int(ref, "page", 0)
+        if not isinstance(pages, list) or page >= len(pages):
+            raise V.OracleInputError("cursorFrom.page is outside the source page range (RULINGS Q70o)")
+        token = pages[page].get("nextCursor")
         if token is None:
-            raise V.OracleInputError(f"query {ref['query']!r} page {ref.get('page', 0)} has no nextCursor")
+            raise NoContinuation(f"query {ref['query']!r} page {ref.get('page', 0)} has no nextCursor")
     after = None
     if token is not None:
         body = decode_cursor(token)
@@ -461,18 +499,19 @@ def q_value_supports(run, query):
     representation of the support with the lowest (recordedPosition, op index)."""
     cut = resolve_cut(run, query.get("cut"))
     pattern = _decode_pattern(query.get("pattern") or V.Obj([]))
-    groups, erased = {}, {}
+    groups, gone = {}, {}
     for a in ordered(fact_source(run, cut, pattern)):
         if visible(a, cut) and _pattern_match(a, pattern):
-            if a.about is None and is_erased(a, "valueSupports"):
+            if a.about is None and erased(a):
                 # Q49c: all erased values of an attribute form one group keyed by the marker
-                erased.setdefault((a.entityId, a.attribute), []).append(a)
+                # (Q52c: reporting the earliest erasedAt; its count counts each assertion, Q52a)
+                gone.setdefault((a.entityId, a.attribute), []).append(a)
             else:
                 groups.setdefault((a.entityId, a.attribute, read_value(a)), []).append(a.id)
     keys = sorted(groups, key=lambda k: (k[0], k[1], 0, k[2].order_key()))
     rows = [(k[0], k[1], k[2].to_output(), groups[k]) for k in keys]
     rows += [(e, attr, ErasedValue(*members).to_output(), [m.id for m in members])
-             for (e, attr), members in erased.items()]
+             for (e, attr), members in gone.items()]
     rows.sort(key=lambda r: (r[0], r[1]))        # stable: readable values first, the marker group last
     return V.OrderedOut([("cut", cut.to_output()), ("supports", [
         V.OrderedOut([("entityId", e), ("attribute", attr), ("value", value), ("count", len(ids)),
@@ -490,7 +529,7 @@ def q_reachability(run, query):
     edges = {}
     for a in ordered(scope_assertions(run, cut)):
         # Q49c: an erased reference cannot be followed
-        if a.attribute == attribute and visible(a, cut) and not is_erased(a, "reachability") \
+        if a.attribute == attribute and visible(a, cut) and not erased(a) \
                 and a.value.family in ("ref", "string"):
             edges.setdefault(a.entityId, {}).setdefault(a.value.payload, []).append(a.id)
     origin = query["from"]
@@ -548,15 +587,15 @@ def _rows(run, cut, match):
         choices = []
         for name in names:
             attr = match["attributes"][name]
-            distinct, erased = {}, []
+            distinct, gone = {}, []
             for a in facts:
                 if a.attribute == attr:
-                    if is_erased(a, "aggregate"):
-                        erased.append(a)
+                    if erased(a):
+                        gone.append(a)
                     else:
                         distinct.setdefault(a.value, a.value)   # first (lowest creation order) representative
             # Q49c: the entity's erased values of the attribute bind once, as the marker group, last
-            choices.append(sorted(distinct, key=lambda v: v.order_key()) + ([ErasedValue(*erased)] if erased else []))
+            choices.append(sorted(distinct, key=lambda v: v.order_key()) + ([ErasedValue(*gone)] if gone else []))
         if any(not c for c in choices):
             continue
         combos = [[]]
@@ -652,12 +691,14 @@ def q_aggregate(run, query):
             convert = agg.get("convert") or legacy_convert
             values = [r[agg["var"]] for r in members]
             items = [v for v in values if not isinstance(v, ErasedValue)]   # Q49c: value aggregates skip it
-            if agg["op"] == "count":
-                _check_count(values)
             if convert is not None and agg["op"] != "avg":
                 raise V.OracleInputError("convert is defined for avg only (AMB-11)")
             result = X.aggregate(agg["op"], items, convert=convert if agg["op"] == "avg" else None)
             if agg["op"] == "count":
+                # Q52a: AG-COUNT counts distinct values, and the attribute's erased values are one
+                # value (the marker group of Q49c, the same key as GROUP BY), so all erased values
+                # bound here add one. Counts of assertions (valueSupports count, raw count) count
+                # each erased assertion.
                 result = V.integer(result.payload + (1 if len(items) < len(values) else 0))
             if result is None and query.get("emptyAs") is not None:
                 result = V.decode_value(query["emptyAs"])   # AG-PACKET-COALESCE (task-specific)
@@ -667,18 +708,6 @@ def q_aggregate(run, query):
 
 
 _ERASED_KEY = object()      # the marker group key of Q49c
-
-
-def _check_count(values):
-    """AG-COUNT counts distinct values of the variable; Q49c says COUNT of assertions counts
-    an erased value. The marker group counts once as a distinct value; where that differs from
-    counting each erased assertion (two or more erased assertions bound), the two readings
-    disagree and the oracle refuses (R-ERA-4)."""
-    erased = [a for v in values if isinstance(v, ErasedValue) for a in v.assertions]
-    if len(erased) > 1:
-        raise X.TypedError("X-NOT-MODELED", "COUNT over a variable bound to several erased values",
-                           ruling="R-ERA-4: Q49c counts erased assertions while AG-COUNT counts distinct values "
-                           "(ORCHESTRATOR-RULING-NEEDED)")
 
 
 def _decode_expr(node):

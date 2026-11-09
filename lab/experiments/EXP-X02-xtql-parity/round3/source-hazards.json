@@ -1,0 +1,197 @@
+{
+  "startedAt": "2026-11-08T22:16:05.017Z",
+  "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+  "head": "6cd68dcad31039ceeaec943f0258e1c63a853d48",
+  "hashes": {
+    "packages/xtdb/src/native/ReadOnlySql.ts": "7237d0ed24fcef7dfc911cac2b672d46c2eeb668c374be1265cf19342eec4050",
+    "packages/xtdb/src/native/NativeQueries.ts": "1d015ab3dc75cde4fb355bdb7968ea222d3a4927bd70f6fc142eee250e85264c",
+    "packages/xtdb/src/native/Sources.ts": "0b4e07d94873a74eabdcfa5aead4ab2f30e5614a3455b8fb226f326c1b6b0a77",
+    "packages/xtdb/src/query/compiler.ts": "ef2d4163927c0321107a696fd8800ecec418f3c560be07a77b5303c4b8701e5b",
+    "packages/core/src/datalog/compiler.ts": "549f685706fc0de023dd36913216b921591b89ab6fe4fadb1dff58775229ec67",
+    "packages/core/dist/datalog/compiler.js": "ddaa882f8ca66eb49555f85c20d2c128e83eac1d43ddbb63ebdd10fb7668ec03"
+  },
+  "probes": [
+    {
+      "name": "any-control-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY(ARRAY[1,2]) AND 1 = 1",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+    },
+    {
+      "name": "any-control",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY(ARRAY[1,2]) AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])",
+      "elapsedMs": 63
+    },
+    {
+      "name": "any-comment-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY/**/(ARRAY[1,2]) AND 1 = 1",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+    },
+    {
+      "name": "any-comment",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY/**/(ARRAY[1,2]) AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])",
+      "elapsedMs": 20
+    },
+    {
+      "name": "any-bare-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY ARRAY[1,2] AND 1 = 1",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+    },
+    {
+      "name": "any-bare",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = ANY ARRAY[1,2] AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])",
+      "elapsedMs": 46
+    },
+    {
+      "name": "some-comment-envelope",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = SOME/**/(ARRAY[1,2]) AND 1 = 1",
+      "accepted": false,
+      "error": "TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)"
+    },
+    {
+      "name": "some-comment",
+      "sql": "SELECT 'x' AS v FROM (VALUES (1)) t (k) WHERE k = SOME/**/(ARRAY[1,2]) AND 1 = 1",
+      "expected": [
+        {
+          "v": "x"
+        }
+      ],
+      "facade": true,
+      "error": "Cause([Fail(ReadError: XTDB native query failed: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard) (cause: TypeError: Native SQL rejects ANY/SOME/ALL over a non-subquery operand (XTDB 2.2.0 parse hazard)))])",
+      "elapsedMs": 47
+    },
+    {
+      "name": "decimal-bigint",
+      "sql": "SELECT CAST(CAST(CAST('1000000000000000004' AS DECIMAL(32,0)) AS BIGINT) AS TEXT) AS v",
+      "expected": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "facade": false,
+      "result": [
+        {
+          "v": "1000000000000000000"
+        }
+      ],
+      "error": null,
+      "elapsedMs": 1352
+    },
+    {
+      "name": "decimal-text",
+      "sql": "SELECT CAST(CAST('1000000000000000004' AS DECIMAL(32,0)) AS TEXT) AS v",
+      "expected": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "facade": false,
+      "result": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "error": null,
+      "elapsedMs": 6
+    },
+    {
+      "name": "text-bigint",
+      "sql": "SELECT CAST(CAST('1000000000000000004' AS BIGINT) AS TEXT) AS v",
+      "expected": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "facade": false,
+      "result": [
+        {
+          "v": "1000000000000000004"
+        }
+      ],
+      "error": null,
+      "elapsedMs": 6
+    },
+    {
+      "name": "compiler-+",
+      "query": {
+        "find": [
+          "?y"
+        ],
+        "where": [
+          [
+            "e",
+            ":x",
+            "?x"
+          ]
+        ],
+        "compute": [
+          [
+            "+",
+            "?x",
+            {
+              "type": "integer",
+              "value": "0"
+            },
+            "?y"
+          ]
+        ]
+      },
+      "error": "DatalogValidationError: Exact integer computation is not qualified for this SQL dialect; evaluate in the exact TypeScript kernel",
+      "tag": "DatalogValidationError",
+      "expected": "typed refusal"
+    },
+    {
+      "name": "compiler-*",
+      "query": {
+        "find": [
+          "?y"
+        ],
+        "where": [
+          [
+            "e",
+            ":x",
+            "?x"
+          ]
+        ],
+        "compute": [
+          [
+            "*",
+            "?x",
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            "?y"
+          ]
+        ]
+      },
+      "error": "DatalogValidationError: Exact integer computation is not qualified for this SQL dialect; evaluate in the exact TypeScript kernel",
+      "tag": "DatalogValidationError",
+      "expected": "typed refusal"
+    }
+  ],
+  "endedAt": "2026-11-08T22:16:06.602Z"
+}

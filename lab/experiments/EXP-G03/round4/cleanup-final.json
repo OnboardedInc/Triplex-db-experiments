@@ -1,0 +1,25 @@
+{
+  "observedAt": "2026-11-09T01:50:05.997Z",
+  "sourceSnapshotSha256": "2c25ed0bc50ad0d543b61e0868d9e091f5e078ce98e09b2aa0a8420b269e19ce",
+  "inventories": [
+    {
+      "holder": "CX-G03-r3-claim-455e8c1e",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    },
+    {
+      "holder": "CX-G03-r3-integrity-2c78ce04",
+      "containers": "",
+      "volumes": "",
+      "networks": ""
+    }
+  ],
+  "retainedRound2": {
+    "containers": "",
+    "volumes": "{\"Availability\":\"N/A\",\"Driver\":\"local\",\"Group\":\"N/A\",\"Labels\":\"tx2.holder=CX-G03,tx2.managed-by=lab/bin/engine.mjs,tx2.run=r2store\",\"Links\":\"N/A\",\"Mountpoint\":\"/var/lib/docker/volumes/tx2-g03-r2store-store-b2b3e6e8cdfb/_data\",\"Name\":\"tx2-g03-r2store-store-b2b3e6e8cdfb\",\"Scope\":\"local\",\"Size\":\"N/A\",\"Status\":\"N/A\"}",
+    "networks": ""
+  },
+  "reservations": [],
+  "remainingClones": []
+}

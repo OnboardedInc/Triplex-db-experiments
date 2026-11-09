@@ -558,6 +558,17 @@ const compileComputations = (query: DatalogQuery, ctx: CompilerContext): void =>
         query,
         message: "Mixed exact integer and number arithmetic requires an explicit cast",
       });
+    // [EXP-X02-R2] Why: Q79c allows typed refusal until exact lowering is qualified.
+    // Rejected: DECIMAL -> BIGINT on XTDB 2.2.0 (rounds 1e18+4 through binary64).
+    if (
+      a.integer &&
+      (ctx.collector.dialect as SqlDialect & { rejectExactCompute?: boolean }).rejectExactCompute
+    )
+      throw new DatalogValidationError({
+        query,
+        message:
+          "Exact integer computation is not qualified for this SQL dialect; evaluate in the exact TypeScript kernel",
+      });
     const quotient = `(${a.expression} / ${b.expression})`;
     const truncated = `CASE WHEN ${quotient} < 0 THEN CEIL(${quotient}) ELSE FLOOR(${quotient}) END`;
     let expression =
@@ -569,7 +580,9 @@ const compileComputations = (query: DatalogQuery, ctx: CompilerContext): void =>
     if (a.integer) {
       if (operation === "/") expression = truncated;
       const raw = expression;
-      expression = `CAST(CASE WHEN (${raw}) < CAST('-9223372036854775808' AS DECIMAL(32, 0)) OR (${raw}) > CAST('9223372036854775807' AS DECIMAL(32, 0)) THEN 'integer-overflow' ELSE CAST(CAST((${raw}) AS BIGINT) AS TEXT) END AS BIGINT)`;
+      // [EXP-X02-R2] Why: preserve a decimal carrier until the projection reads text.
+      // Rejected: BIGINT conversion (some engines round DECIMAL through binary64, Q39a).
+      expression = `CAST(CASE WHEN (${raw}) < CAST('-9223372036854775808' AS DECIMAL(32, 0)) OR (${raw}) > CAST('9223372036854775807' AS DECIMAL(32, 0)) THEN 'integer-overflow' ELSE CAST((${raw}) AS TEXT) END AS DECIMAL(32, 0))`;
       ctx.integerVariables.add(target);
     }
     if (expression.length > 64_000)

@@ -1,0 +1,14 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 20080 "CX-VE01-3-all", pid 21293 "CX-K01-final-live", pid 12504 "CX-VJ01-checks-r3"
+[lab] heavy: waiting for one of 4 slots; held by pid 16329 "CX-P2Q-R2-final-round", pid 20080 "CX-VE01-3-all", pid 21293 "CX-K01-final-live", pid 12504 "CX-VJ01-checks-r3"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qualification
+
+
+ Test Files  4 passed | 2 skipped (6)
+      Tests  86 passed | 50 skipped (136)
+   Start at  16:37:51
+   Duration  2.26s (import 62%, tests 25%, transform 11%, worker 1%)
+
+    Isolate  6 workers spawned · ~73ms startup each (spawn + environment, per file)
+             at least ~365ms faster with isolate: false — reuses workers across files instead of one per file
+

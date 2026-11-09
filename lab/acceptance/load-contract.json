@@ -160,7 +160,89 @@
       }
     }
   },
-  "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
+  "seedRules": {
+    "Q74a": {
+      "topic": "who may clone",
+      "rule": "Screening and development receipts may be seeded by clone of a golden; the receipt records `seededBy: clone` with the golden key (adapter commit, world and seed-generator hash, driver seed options, image digest, engine config hash) and the golden's freeze fingerprint. Acceptance runs seed fresh (TARGETS 6).",
+      "basis": "R26 design item 2"
+    },
+    "Q74b": {
+      "topic": "freeze state",
+      "rule": "The canonical freeze state is settled: `POST /system/finish-block`, compactor jobs 0, live index empty. A fresh-seeded arm compared with a cloned arm settles the same way before its window. Older unsettled A0 receipts are not compared with settled ones.",
+      "basis": "R26 design item 1",
+      "supersededBy": [
+        "Q83b",
+        "Q83d",
+        "Q83e"
+      ]
+    },
+    "Q74c": {
+      "topic": "validation first",
+      "rule": "No clone-seeded receipt counts, even for screening, until validation E1 passes: a fresh-seeded slot against its clone under the PAIR-0 A/A procedure, holding within 1.10 at p50 and 1.15 at p99, with R26 section 6.9's seven predictions checked.",
+      "basis": "R26 section 6.9"
+    },
+    "Q74d": {
+      "topic": "readiness",
+      "rule": "A cloned slot is ready only after `/healthz/started` (read with `docker exec`) and the R26 C1-C8 checks pass, then the same warm-up on every arm.",
+      "basis": "R26 risk 2"
+    },
+    "Q74e": {
+      "topic": "maintenance in every window",
+      "rule": "Runs that measure P1 force one `finish-block` at a fixed trace time in every window, on every arm, so a settled clone still has a maintenance event.",
+      "basis": "R26 note"
+    },
+    "Q74f": {
+      "topic": "disk",
+      "rule": "A golden or clone is made only when host free disk after the copy stays at or above 5 GiB; clone volumes are removed after each run. At the 10k rung (3.41 GiB per XTDB volume) that allows one clone at a time today.",
+      "basis": "R26 risk 4; host 8.7 GiB free"
+    },
+    "Q74g": {
+      "topic": "broker compositions",
+      "rule": "A broker composition clones the engine volume and the broker directory together, from one stopped moment.",
+      "basis": "R26 design item 3"
+    },
+    "Q83a": {
+      "topic": "log4j flag on slots",
+      "rule": "Slots s1-s3 add `-Dlog4j2.shutdownHookEnabled=false` to javaOpts, so XTDB's shutdown hook can log `Stopping node...`, the three server-stopped lines and `Node stopped.` (Log4j's own hook otherwise drops them). The dev residents are unchanged. This changes the slot config hash and therefore every golden key; receipts before the change name the old hash.",
+      "basis": "R30 Q1, decision D1"
+    },
+    "Q83b": {
+      "topic": "canonical freeze state",
+      "rule": "Settled = two finish-blocks (the second records the post-compaction catalog), compactor jobs 0, and snapshot-independent evidence (new block file whose tx_id and latest_processed_msg_id equal the node gauges, block.last_upload_time advanced, xt.trie_stats showing the new tries, file listing and trie digest unchanged over three readings 5 s apart); never `xt.live_tables` (stale shared snapshot, upstream #6174). Clean stop = exit within 10 s with the stop lines and exit 143, well-formed LOG and REPLICA_LOG tails checked offline, empty `buffers/**/.tmp` (refuse, never delete). The freeze fingerprint is taken on a reference start of the source after the copy, and every arm, fresh or cloned, starts the same way. Re-test the second finish-block and the reference start when XTDB 2.2.1 is pinned.",
+      "basis": "R30 Q2, Q3, Q5; decision D2"
+    },
+    "Q83c": {
+      "topic": "block listing",
+      "rule": "Never read a block that may not exist (MemoryCache hangs the caller): list `buffers/v06/blocks/b*.binpb` first and query `xt.block_files` only for listed indices, re-listing just before each query; block numbers are not dense (GC keeps the latest 10).",
+      "basis": "R30 Q4"
+    },
+    "Q83d": {
+      "topic": "settle evidence after fast compaction",
+      "rule": "Settle evidence does not require observing L0 tries: compaction may merge them before the first poll. Settled means the new block's tx_id and latest_processed_msg_id equal the node gauges, xt.trie_stats covers that block at whatever level it now sits, compactor jobs 0, and the file listing and trie digest are unchanged over three readings 5 s apart.",
+      "basis": "K01 round 2 (G3 blocked by fast compaction)"
+    },
+    "Q83e": {
+      "topic": "three frontiers",
+      "rule": "Settle evidence records three values separately and never equates them: (a) the block-cut frontier F, the immutable block's latest_processed_msg_id; (b) the settled replay frontier M, the processed watcher after maintenance drains (lag 0, jobs 0, tries stable, over the Q83d polls); (c) the stable application transaction T. F < M is accepted only when every source message in (F, M] is read from the stopped log tail and is a maintenance message (TriesAdded, compactor output), never an application transaction; T is unchanged across the window. The final stopped log tails and the reference and clone resume are bound to M. Exact reference/clone equality and the two-start catalog checks stay. This replaces the part of Q83d that refused every F < M.",
+      "basis": "XTDB c6c1962: BlockCutter.kt:235, 280-295; SourceMessage.kt:139-147; Compactor.kt:150-152; SourceLogProcessor.kt:142, 199-211; Database.kt:375-387"
+    }
+  },
+  "freezeProtocol": {
+    "precedence": [
+      "Q83b",
+      "Q83d",
+      "Q83e"
+    ],
+    "frontiers": {
+      "F": "block-cut latest_processed_msg_id",
+      "M": "settled replay processed watcher",
+      "T": "stable application transaction"
+    },
+    "maintenanceGap": "F < M requires stopped-tail proof that every message in (F, M] is maintenance, with unchanged T",
+    "resumeBoundTo": "M",
+    "legacyRule": "Q74b is historical; never use xt.live_tables or require F == M"
+  },
+  "perSurface": "P1, P4 and P5 run separately in each lane language (xtdb-xtql, xtdb-sql, qlever-sparql, datomic-datalog query and pull); P2 and P3 run per engine; a mixed-language run is a diagnostic only",
   "measurements": {
     "P1": {
       "readers": "closed-loop, zero think time, each reader a distinct client id",
@@ -436,42 +518,7 @@
     "aaInAbMode": "provisional: A/B windows grade from the all-round s_d (conservative); acceptance-level claims add a second pair of container lifetimes with roles swapped (RULINGS Q69c)",
     "continuousTrace": "duets run one continuous trace, so both arms see the same content at the same time; ABBA fallback runs keep per-round window randomization (RULINGS Q69d)",
     "liveComposition": "the live A/A uses public-queued, matching EXP-N01's A0 (RULINGS Q69e)",
-    "calibration": "thresholds stay as pre-registered; a passive recorder (signals every 10 s, calibration every 10 minutes) runs for 7 days to set them, started after EXP-M01 merges (RULINGS Q69g)",
-    "isolationLayout": {
-      "format": "pair-layout/1",
-      "vmCpus": 6,
-      "cpuWeight": 100,
-      "candidate": {
-        "engine": [
-          0,
-          1
-        ],
-        "sut": [
-          4
-        ],
-        "relay": [
-          4
-        ],
-        "observer": [
-          4
-        ]
-      },
-      "A0": {
-        "engine": [
-          2,
-          3
-        ],
-        "sut": [
-          5
-        ],
-        "relay": [
-          5
-        ],
-        "observer": [
-          5
-        ]
-      }
-    }
+    "calibration": "thresholds stay as pre-registered; a passive recorder (signals every 10 s, calibration every 10 minutes) runs for 7 days to set them, started after EXP-M01 merges (RULINGS Q69g)"
   },
   "windows": {
     "judging": "absolute bars are judged only in GREEN windows (the pre-registered noise signals and the A/A gate of R22 section 4.2); outside them an absolute bar is reported unjudged, which never counts as met (RULINGS Q60e)",
