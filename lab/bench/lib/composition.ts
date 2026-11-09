@@ -175,6 +175,7 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
   const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : lane === "datomic" ? "triplex-entities(datomic-datalog)" : "triplex-entities(sparql)";
   const journal = lane === "datomic" && process.env.TX2_W0_POINT_JOURNAL === "1"
     ? (await import("./w0-journal.ts")).w0Journal(h) : undefined;
+  const claims = journal ? await (await import("./w0-claims.ts")).w0Claims(h) : undefined;
   const sweep = await (await import("./w0-public.ts")).publicSweep(lane, h, journal?.page);
   const handle: CompositionHandle = {
     scopeName: scope,
@@ -194,12 +195,12 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
       if (result.ok) journal?.record(result.value);
       return result;
     },
-    transactionByCommand: (id) => outcome(T.transactionByCommand(id)),
+    transactionByCommand: claims?.lookup ?? ((id) => outcome(T.transactionByCommand(id))),
     pull,
     sweepPull: pull,
     feedPage: journal?.page ?? ((after, limit) => h.run(T.transactions({ after, limit }))),
     currentPosition: () => h.run(T.currentPosition()),
-    close: async () => { await sweep.close(); await h.close(); },
+    close: async () => { claims?.close(); await sweep.close(); await h.close(); },
   };
   return handle;
 }

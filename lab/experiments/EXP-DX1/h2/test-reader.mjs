@@ -14,15 +14,19 @@ const lease = await measurementLease(async () => {
   clearTimeout(timer);
 });
 try {
-  child = spawn(process.execPath, ["--test", "lab/bench/test/w0-datomic.test.ts"], {
-    stdio: "inherit",
-    env: {
-      ...process.env,
-      DXH2_TEST_DIR: dir,
-      DATOMIC_URL: "http://127.0.0.1:8497",
-      DATOMIC_READ_URLS: "http://127.0.0.1:8498",
+  child = spawn(
+    process.execPath,
+    ["--test", ...process.argv.slice(2), "lab/bench/test/w0-datomic.test.ts"],
+    {
+      stdio: "inherit",
+      env: {
+        ...process.env,
+        DXH2_TEST_DIR: dir,
+        DATOMIC_URL: "http://127.0.0.1:8497",
+        DATOMIC_READ_URLS: "http://127.0.0.1:8498",
+      },
     },
-  });
+  );
   process.exitCode = await new Promise((resolve) => child.on("exit", (code) => resolve(code ?? 1)));
 } finally {
   lease.release();

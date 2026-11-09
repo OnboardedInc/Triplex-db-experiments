@@ -92,6 +92,17 @@ test(
     );
     try {
       const seed = await seedW0(comp, 50, path.join(dir, "seed.ndjson"));
+      for (const id of [
+        "p5:seed:1",
+        "p5:seed:" + Math.floor(seed.basis.tx / 2),
+        "p5:seed:" + seed.basis.tx,
+        "missing-command",
+      ]) {
+        const actual = await comp.transactionByCommand(id);
+        assert.equal(actual.ok, true);
+        const expected = await h.run(h.triples.transactionByCommand(id));
+        assert.equal(canonical(actual.ok ? actual.value : null), canonical(expected));
+      }
       for (let after = 0; after < seed.basis.tx; ) {
         const point = await comp.feedPage(after, 1000);
         const legacy: any = await h.run(h.triples.transactions({ after, limit: 1000 }));

@@ -75,6 +75,7 @@ export async function runW0Driver(argv: string[]) {
     "lab/bench/lib/w0-public.ts",
     "lab/bench/lib/w0-datomic-reader.ts",
     "lab/bench/lib/w0-journal.ts",
+    "lab/bench/lib/w0-claims.ts",
     "lab/bench/lib/w0-live.ts",
     "lab/bench/lib/w0-live-worker.ts",
     "lab/bench/lib/w0-lease.ts",
