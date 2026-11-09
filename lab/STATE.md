@@ -190,3 +190,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   .claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/LIVE-round10.md (K01 r10 e525760, 397 tests; offline review skipped in favor of the
   live run because the remaining risk is native wire fidelity; an independent reviewer reads the live receipts after); then P5 A1 at 1k;
   then G03's slot run; then RT01 live G2 conformance and the G6 latency comparison on one slot; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04.
+- Scale window queue update: EXP-P2X2 on xtdb-s1 (running, CX-P2X2); then the K01 live rerun (LIVE-round11; the first live run stopped
+  correctly because XTDB reports a mixed-width integer column as #{:i32 :i64}, not :union); then P5 A1 at 1k; then G03's slot run; then RT01
+  live G2 and G6; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04. P2Q round 10 review stopped by the Codex content filter
+  after writing its verdict (FIX-FIRST, F1 and F2); its report went to the builder as is.
