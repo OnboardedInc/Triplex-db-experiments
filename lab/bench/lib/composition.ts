@@ -74,6 +74,7 @@ export interface CompositionHandle {
   sweepPage(
     subjects: readonly string[],
     basis: import("./w0-world.ts").PositionBasis,
+    between?:()=>Promise<void>,
   ): Promise<{
     rows: readonly import("./w0-world.ts").WorldRow[];
     position: number;
