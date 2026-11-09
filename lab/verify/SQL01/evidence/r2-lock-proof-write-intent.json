@@ -1,0 +1,53 @@
+{
+  "dir": "/Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/lab/verify/SQL01/data/write-intent-994a0c48-0857-4ed1-87a7-8ba751506a6d",
+  "probe": {
+    "reserved": false,
+    "code": "SQLITE_BUSY"
+  },
+  "held": {
+    "counts": {
+      "busy": 1
+    },
+    "events": [
+      {
+        "at": 1794180702292,
+        "mode": "RESTART",
+        "outcome": "busy",
+        "ms": 8.853125000000091,
+        "busy": 1,
+        "log": 1,
+        "checkpointed": 1
+      }
+    ]
+  },
+  "released": {
+    "counts": {
+      "busy": 1,
+      "complete": 1
+    },
+    "events": [
+      {
+        "at": 1794180702292,
+        "mode": "RESTART",
+        "outcome": "busy",
+        "ms": 8.853125000000091,
+        "busy": 1,
+        "log": 1,
+        "checkpointed": 1
+      },
+      {
+        "at": 1794180702313,
+        "mode": "RESTART",
+        "outcome": "complete",
+        "ms": 5.881750000000011,
+        "busy": 0,
+        "log": 3,
+        "checkpointed": 3
+      }
+    ]
+  },
+  "probeWorkerSha256": "6ae0e3d1cb19d8fd6ba50773dd644e183bd9291d6e1e8e1d59320353292f9b52",
+  "originalWorkerSha256": "f0f6e14edab554996dfebf25762c4b431a6166e7803f4d08da8631d4347769ea",
+  "instrumentedWorkerSha256": "4105c40a8c2d5cc9507fc3728f879e6a9c4c125847b9192b1f74485289cc6c6c",
+  "instrumentation": "const m=marker(); if(a.lsn"
+}

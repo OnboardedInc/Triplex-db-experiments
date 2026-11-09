@@ -223,6 +223,12 @@ export const makeQleverBrokerStorageAdapter = (
   // Q58a default deadline: 2 s for any read that must wait for a basis.
   const basisWaitMs = options.basisWaitMs ?? options.publicationWaitMs ?? 2_000;
   const routes: Record<BrokerReadRoute, number> = { replica: 0, overlay: 0, log: 0 };
+  const storeRead = <A>(read: () => Promise<A>) =>
+    Effect.tryPromise({
+      try: read,
+      catch: (cause) => new ReadError({ message: "Broker store read failed", cause }),
+    });
+
   const current = Effect.map(Transactions, (states) => states.get(key));
   const required = Effect.flatMap(current, (state) =>
     state === undefined
@@ -339,15 +345,27 @@ export const makeQleverBrokerStorageAdapter = (
       const byId = new Map<string, TripleRow>();
       if (replica === undefined) {
         route = "log";
-        for (const row of broker.fromLog(0, scoped, select)) byId.set(row.id, row);
+        // [EXP-SQL01] Why: H1 retires by position only; a record-time cut can still see purged retractions.
+        // Rejected: filtering H1 by recordedAt afterward (cannot restore rows H1 already discarded).
+        const pinned =
+          history || basis?.recordedAt !== undefined
+            ? undefined
+            : yield* Effect.tryPromise({
+                try: () => broker.pullAt(b, scoped),
+                catch: (cause) => new ReadError({ message: "QLever source pull failed", cause }),
+              });
+        const source = pinned?.eligible
+          ? pinned.rows.filter(select)
+          : yield* storeRead(() => broker.fromLogAsync(0, scoped, select));
+        for (const row of source) byId.set(row.id, row);
       } else {
         marker = replica.marker;
         for (const row of replica.rows) byId.set(row.id, row);
         if (marker < b) {
-          let overlay = broker.overlay(marker, scoped, select);
+          let overlay = yield* storeRead(() => broker.overlayAsync(marker, scoped, select));
           route = "overlay";
           if (overlay === undefined) {
-            overlay = broker.fromLog(marker, scoped, select);
+            overlay = yield* storeRead(() => broker.fromLogAsync(marker, scoped, select));
             route = "log";
           }
           for (const row of overlay) byId.set(row.id, row);
@@ -567,7 +585,7 @@ export const makeQleverBrokerStorageAdapter = (
           // that would be discarded.
           const cached = broker.replicaPosition();
           if (cached < b) {
-            const touched = broker.overlay(cached, {}, (row) => wanted.has(row.attribute));
+            const touched = await broker.overlayAsync(cached, {}, (row) => wanted.has(row.attribute));
             if (touched === undefined || touched.length > 0)
               await broker.awaitReplica(
                 b,
@@ -582,10 +600,10 @@ export const makeQleverBrokerStorageAdapter = (
             const answer = rows.find((row) => row !== markerRow);
             const exact =
               observed >= b ||
-              (() => {
-                const touched = broker.overlay(observed, {}, (row) => wanted.has(row.attribute));
+              (await (async () => {
+                const touched = await broker.overlayAsync(observed, {}, (row) => wanted.has(row.attribute));
                 return touched !== undefined && touched.length === 0;
-              })();
+              })());
             if (exact)
               return {
                 sourcePosition: Number(answer?.["sourcePosition"]?.value ?? 0),
@@ -715,14 +733,17 @@ export const makeQleverBrokerStorageAdapter = (
       Effect.flatMap(current, (state) => Effect.succeed(state ? state.sourceK : broker.head())),
     claimCommand: (id, txId, timestamp) =>
       Effect.flatMap(required, (state) =>
-        Effect.sync(() => {
-          const pending = state.claims.get(id);
-          if (pending) return pending.txId;
-          // Lost-ACK resolution from the broker's own record (C2), not from a QLever claim triple.
-          const claimed = broker.claim(id);
-          if (claimed) return claimed.txId;
-          state.claims.set(id, { txId, timestamp });
-          return null;
+        Effect.tryPromise({
+          try: async () => {
+            const pending = state.claims.get(id);
+            if (pending) return pending.txId;
+            // Lost-ACK resolution from the broker's own record (C2), not from a QLever claim triple.
+            const claimed = await broker.claimAsync(id);
+            if (claimed) return claimed.txId;
+            state.claims.set(id, { txId, timestamp });
+            return null;
+          },
+          catch: (cause) => new WriteError({ message: "Broker claim lookup failed", cause }),
         }),
       ),
     insert,

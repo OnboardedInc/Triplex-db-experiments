@@ -1,0 +1,10 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 2651 "CX-G03-r3-smoke"
+[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 55757 "CX-VSQL01-r2-final-review", pid 2651 "CX-G03-r3-smoke", pid 55758 "CX-VSQL01-r2-final-kill50"
+[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 69596 "CX-VSQL01-r2-final-live", pid 2651 "CX-G03-r3-smoke", pid 55760 "CX-VSQL01-r2-final-unit"
+[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 69596 "CX-VSQL01-r2-final-live", pid 2651 "CX-G03-r3-smoke", pid 55760 "CX-VSQL01-r2-final-unit"
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../vitest.workspace-aliases" without a file extension (lab/verify/P2Q/vitest.config.ts:5:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/lab/verify/P2Q
+

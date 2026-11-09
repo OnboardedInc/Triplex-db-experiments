@@ -22,7 +22,13 @@ import { HostBroker } from "../src/broker/broker.js";
 import type { QleverBrokerStorageAdapterService } from "../src/broker/BrokerStorageAdapter.js";
 import { crc32c } from "../src/broker/crc32c.js";
 import { FeedConsumerStore, LogFeed, readConsumerEffects } from "../src/broker/feed.js";
-import { FrameKind, encodeFrame, encodeSegmentHeader, scanSegment, segmentSeed } from "../src/broker/frame.js";
+import {
+  FrameKind,
+  encodeFrame,
+  encodeSegmentHeader,
+  scanSegment,
+  segmentSeed,
+} from "../src/broker/frame.js";
 import { decodeCommitGroup, encodeCommitGroup } from "../src/broker/frames.js";
 import { BrokerLogError, HostLog } from "../src/broker/log.js";
 import { ORDINALS, lsnOf, ordinalOf } from "../src/broker/position.js";
@@ -50,16 +56,23 @@ const nullReplica: QleverClient = {
 
 const openRuntime = async (dir: string, scope = `p2q-test:${randomUUID()}`) => {
   const broker = await HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 256 * 1024 ** 2 });
-  const adapter = makeQleverStorageAdapter(nullReplica, scope, { broker }) as QleverBrokerStorageAdapterService;
+  const adapter = makeQleverStorageAdapter(nullReplica, scope, {
+    broker,
+  }) as QleverBrokerStorageAdapterService;
   const layer = Runtime.define({
     name: "p2q-test",
     storage: Layer.succeed(StorageAdapter, adapter),
-    queries: Layer.succeed(QueryExecutor, makeQleverQueryExecutor(nullReplica, scope, { sourceView: adapter.sourceView })),
+    queries: Layer.succeed(
+      QueryExecutor,
+      makeQleverQueryExecutor(nullReplica, scope, { sourceView: adapter.sourceView }),
+    ),
   }).layer({ scope: DatabaseScope.test(scope), capabilities: Capabilities.none });
   const managed = ManagedRuntime.make(layer);
-  const triples = await managed.runPromise(Effect.gen(function* () {
-    return yield* Triples;
-  }));
+  const triples = await managed.runPromise(
+    Effect.gen(function* () {
+      return yield* Triples;
+    }),
+  );
   return {
     scope,
     broker,
@@ -89,7 +102,13 @@ describe("CRC32C and frames (R13 2.4)", () => {
     let prev = segmentSeed(header);
     const parts = [header];
     for (let lsn = 1; lsn <= 4; lsn++) {
-      const { bytes, crc } = encodeFrame({ lsn, epoch: 1, kind: FrameKind.COMMIT_GROUP, payload: Buffer.alloc(40 + lsn * 13, lsn), prevCrc: prev });
+      const { bytes, crc } = encodeFrame({
+        lsn,
+        epoch: 1,
+        kind: FrameKind.COMMIT_GROUP,
+        payload: Buffer.alloc(40 + lsn * 13, lsn),
+        prevCrc: prev,
+      });
       parts.push(bytes);
       prev = crc;
     }
@@ -105,21 +124,68 @@ describe("CRC32C and frames (R13 2.4)", () => {
   });
   it("accepts an EPOCH_BEGIN that burns exactly one LSN and nothing else that skips", () => {
     const header = encodeSegmentHeader({ epoch: 1, firstLsn: 1 });
-    const a = encodeFrame({ lsn: 1, epoch: 1, kind: FrameKind.COMMIT_GROUP, payload: Buffer.from("a"), prevCrc: segmentSeed(header) });
-    const skip = encodeFrame({ lsn: 3, epoch: 2, kind: FrameKind.EPOCH_BEGIN, payload: Buffer.from("{}"), prevCrc: a.crc });
-    expect(scanSegment(Buffer.concat([header, a.bytes, skip.bytes]))).toMatchObject({ status: "clean-end", nextLsn: 4 });
-    const bad = encodeFrame({ lsn: 3, epoch: 1, kind: FrameKind.COMMIT_GROUP, payload: Buffer.from("b"), prevCrc: a.crc });
+    const a = encodeFrame({
+      lsn: 1,
+      epoch: 1,
+      kind: FrameKind.COMMIT_GROUP,
+      payload: Buffer.from("a"),
+      prevCrc: segmentSeed(header),
+    });
+    const skip = encodeFrame({
+      lsn: 3,
+      epoch: 2,
+      kind: FrameKind.EPOCH_BEGIN,
+      payload: Buffer.from("{}"),
+      prevCrc: a.crc,
+    });
+    expect(scanSegment(Buffer.concat([header, a.bytes, skip.bytes]))).toMatchObject({
+      status: "clean-end",
+      nextLsn: 4,
+    });
+    const bad = encodeFrame({
+      lsn: 3,
+      epoch: 1,
+      kind: FrameKind.COMMIT_GROUP,
+      payload: Buffer.from("b"),
+      prevCrc: a.crc,
+    });
     expect(scanSegment(Buffer.concat([header, a.bytes, bad.bytes])).status).toBe("torn-tail");
   });
   it("round-trips commit groups and re-encodes read-back rows to identical quads", () => {
     const row = {
-      id: "r1", entity_id: "e1", attribute: ":a", value_type: "number", value_string: null, value_number: 1.0000000000000002,
-      value_boolean: null, value_datetime: null, value_json: null, recorded_at: 1_790_000_000_123, recorded_position: 4096,
-      valid_from: 1, valid_to: null, created_by: null, retracted_at: null, retracted_position: null, retract_tx_id: null,
-      entity_type: "t", schema_version: 1, tx_id: "_tx/1",
+      id: "r1",
+      entity_id: "e1",
+      attribute: ":a",
+      value_type: "number",
+      value_string: null,
+      value_number: 1.0000000000000002,
+      value_boolean: null,
+      value_datetime: null,
+      value_json: null,
+      recorded_at: 1_790_000_000_123,
+      recorded_position: 4096,
+      valid_from: 1,
+      valid_to: null,
+      created_by: null,
+      retracted_at: null,
+      retracted_position: null,
+      retract_tx_id: null,
+      entity_type: "t",
+      schema_version: 1,
+      tx_id: "_tx/1",
     } as TripleRow;
-    const member = { operationId: "op", attemptId: "at", positions: [4096], claims: [{ commandId: "c", txId: "_tx/1", timestamp: 5 }], rows: [row], priors: [], subjects: ["e1"] };
-    const decoded = decodeCommitGroup(encodeCommitGroup({ v: 1, stream: "s", lsn: 4, epoch: 1, members: [member] }));
+    const member = {
+      operationId: "op",
+      attemptId: "at",
+      positions: [4096],
+      claims: [{ commandId: "c", txId: "_tx/1", timestamp: 5 }],
+      rows: [row],
+      priors: [],
+      subjects: ["e1"],
+    };
+    const decoded = decodeCommitGroup(
+      encodeCommitGroup({ v: 1, stream: "s", lsn: 4, epoch: 1, members: [member] }),
+    );
     expect(decoded.members[0]!.rows[0]).toEqual(row);
     // R17 2.1 item 6: delete terms come from the broker's encoder, so decode(encode(row)) must re-encode equally.
     expect(rowFields(decodeRow(encodeRow(row)))).toEqual(rowFields(row));
@@ -132,43 +198,32 @@ describe("CRC32C and frames (R13 2.4)", () => {
   });
 });
 
-describe("host log recovery (R13 6.5)", () => {
-  it("backs up and truncates a torn tail, burns its LSN and refuses mid-log corruption", async () => {
-    const dir = freshDir();
-    const first = await HostLog.open(dir, { minFreeBytes: 0 });
-    for (let i = 0; i < 3; i++) await first.log.append(FrameKind.COMMIT_GROUP, Buffer.from(`frame-${i}`));
-    const lastLsn = first.log.nextLsn - 1;
-    await first.log.abandon();
-    const file = path.join(dir, "segment-000001.log");
-    fs.appendFileSync(file, Buffer.from([0x54, 0x58, 0x4c, 0x46, 9, 9])); // half a frame header: torn tail
-    const second = await HostLog.open(dir, { minFreeBytes: 0 });
-    expect(second.recovery).toMatchObject({ status: "torn-tail", tornBytes: 6, abortedLsns: [lastLsn + 1] });
-    expect(fs.existsSync(second.recovery.brokenFile!)).toBe(true);
-    const begin = second.frames[second.frames.length - 1]!;
-    expect(begin).toMatchObject({ kind: FrameKind.EPOCH_BEGIN, lsn: lastLsn + 2 });
-    await second.log.close();
-    const bytes = fs.readFileSync(file);
-    bytes[40]! ^= 0xff; // inside the first frame: later valid frames make it corruption
-    fs.writeFileSync(file, bytes);
-    await expect(HostLog.open(dir, { minFreeBytes: 0 })).rejects.toBeInstanceOf(BrokerLogError);
-  });
-});
+// [EXP-SQL01] Why: SQLite rollback and ACKED/CRC recovery replace byte-tail repair; see sqlite-broker.test.ts.
+// Rejected: mutating the removed segment file (does not exercise the log of record).
 
 describe("broker commit path through Triplex (null replica: overlay and log routes)", () => {
   it("ACKs at the durable frame and serves read-your-own-write from the overlay", async () => {
     const rt = await openRuntime(freshDir());
     try {
-      const result = await rt.run(rt.triples.transact(assertOps("subj:1", 10, "v1"), { commandId: "cmd-1" }));
+      const result = await rt.run(
+        rt.triples.transact(assertOps("subj:1", 10, "v1"), { commandId: "cmd-1" }),
+      );
       expect(result.position).toBeGreaterThan(0);
       expect(lsnOf(result.position)).toBeGreaterThan(1);
       const rows = await rt.run(rt.adapter.getByEntity("subj:1", at(result.position)));
-      expect(rows.map((row) => row.value_string).sort()).toEqual(Array.from({ length: 10 }, (_v, i) => `v1-${i}`).sort());
+      expect(rows.map((row) => row.value_string).sort()).toEqual(
+        Array.from({ length: 10 }, (_v, i) => `v1-${i}`).sort(),
+      );
       expect(rt.adapter.routes.overlay).toBeGreaterThan(0);
       // The same pull from the broker's own record on disk gives the same rows.
-      const fromLog = rt.broker.fromLog(0, { entities: ["subj:1"] }, () => true).filter((row) => row.entity_id === "subj:1");
+      const fromLog = rt.broker
+        .fromLog(0, { entities: ["subj:1"] }, () => true)
+        .filter((row) => row.entity_id === "subj:1");
       expect(fromLog.map((row) => row.id).sort()).toEqual(rows.map((row) => row.id).sort());
       // Duplicate command: the original transaction id, from the broker's claim table.
-      const duplicate = await rt.run(Effect.flip(rt.triples.transact(assertOps("subj:1", 10, "v2"), { commandId: "cmd-1" })));
+      const duplicate = await rt.run(
+        Effect.flip(rt.triples.transact(assertOps("subj:1", 10, "v2"), { commandId: "cmd-1" })),
+      );
       expect(duplicate).toBeInstanceOf(CommandAlreadyCommittedError);
       expect((duplicate as CommandAlreadyCommittedError).transactionId).toBe(result.txId);
     } finally {
@@ -182,7 +237,9 @@ describe("broker commit path through Triplex (null replica: overlay and log rout
     try {
       const distinct = await rt.run(
         Effect.all(
-          Array.from({ length: 32 }, (_v, i) => rt.triples.transact(assertOps(`subj:d${i}`, 5, "x"))),
+          Array.from({ length: 32 }, (_v, i) =>
+            rt.triples.transact(assertOps(`subj:d${i}`, 5, "x")),
+          ),
           { concurrency: "unbounded" },
         ),
       );
@@ -191,7 +248,9 @@ describe("broker commit path through Triplex (null replica: overlay and log rout
       expect(new Set(distinct.map((r) => lsnOf(r.position))).size).toBeLessThan(32);
       const hot = await rt.run(
         Effect.all(
-          Array.from({ length: 8 }, (_v, i) => rt.triples.transact(assertOps("subj:hot", 5, `h${i}`))),
+          Array.from({ length: 8 }, (_v, i) =>
+            rt.triples.transact(assertOps("subj:hot", 5, `h${i}`)),
+          ),
           { concurrency: "unbounded" },
         ),
       );
@@ -210,7 +269,10 @@ describe("broker commit path through Triplex (null replica: overlay and log rout
     try {
       const first = await rt.run(rt.triples.transact(assertOps("subj:r", 3, "a")));
       const second = await rt.run(
-        rt.triples.transact([{ op: "retract", id: first.triples[0]!.id }, ...assertOps("subj:r", 1, "b")]),
+        rt.triples.transact([
+          { op: "retract", id: first.triples[0]!.id },
+          ...assertOps("subj:r", 1, "b"),
+        ]),
       );
       expect((await rt.run(rt.adapter.getByEntity("subj:r", at(first.position)))).length).toBe(3);
       const after = await rt.run(rt.adapter.getByEntity("subj:r", at(second.position)));
@@ -229,19 +291,24 @@ describe("RULINGS Q31c falsifiers on the broker's non-dense positions", () => {
     try {
       const results = await rt.run(
         Effect.all(
-          Array.from({ length: 12 }, (_v, i) => rt.triples.transact(assertOps("subj:nest", 1, `n${i}`))),
+          Array.from({ length: 12 }, (_v, i) =>
+            rt.triples.transact(assertOps("subj:nest", 1, `n${i}`)),
+          ),
           { concurrency: "unbounded" },
         ),
       );
       // Distinct subjects would share a frame; one subject is serial, so use a frame we know is shared:
       const shared = await rt.run(
         Effect.all(
-          Array.from({ length: 6 }, (_v, i) => rt.triples.transact(assertOps(`subj:cut${i}`, 1, "c"))),
+          Array.from({ length: 6 }, (_v, i) =>
+            rt.triples.transact(assertOps(`subj:cut${i}`, 1, "c")),
+          ),
           { concurrency: "unbounded" },
         ),
       );
       const byFrame = new Map<number, number[]>();
-      for (const r of shared) byFrame.set(lsnOf(r.position), [...(byFrame.get(lsnOf(r.position)) ?? []), r.position]);
+      for (const r of shared)
+        byFrame.set(lsnOf(r.position), [...(byFrame.get(lsnOf(r.position)) ?? []), r.position]);
       const [lsn, positions] = [...byFrame].sort((a, b) => b[1].length - a[1].length)[0]!;
       expect(positions.length).toBeGreaterThan(1);
       positions.sort((a, b) => a - b);
@@ -261,17 +328,21 @@ describe("RULINGS Q31c falsifiers on the broker's non-dense positions", () => {
     }
   });
 
-  it("an abort gap, a crash between append and resolution, and resume at the gap", async () => {
+  it("a lost ACK, a recovered epoch boundary, and exact feed resume", async () => {
     const dir = freshDir();
     const scope = `p2q-test:${randomUUID()}`;
     let rt = await openRuntime(dir, scope);
-    const before = await rt.run(rt.triples.transact(assertOps("subj:g", 2, "pre"), { commandId: "g-1" }));
+    const before = await rt.run(
+      rt.triples.transact(assertOps("subj:g", 2, "pre"), { commandId: "g-1" }),
+    );
     // Crash between append and resolution: the frame is durable, the client never sees the ACK.
-    const orphan = await rt.run(rt.triples.transact(assertOps("subj:g", 2, "orphan"), { commandId: "g-2" }));
+    const orphan = await rt.run(
+      rt.triples.transact(assertOps("subj:g", 2, "orphan"), { commandId: "g-2" }),
+    );
     await rt.dispose();
     await rt.broker.abandon();
-    // A torn in-flight frame after it, as a crash mid-write leaves.
-    fs.appendFileSync(path.join(dir, "segment-000001.log"), Buffer.from([0x54, 0x58, 0x4c, 0x46, 1, 2, 3]));
+    // [EXP-SQL01] Why: SQLite hides uncommitted WAL frames; recovery needs an epoch, no exposed abort gap.
+    // Rejected: appending junk to a removed segment file (not the SQLite source of truth).
     const consumerDir = path.join(dir, "consumer");
     const feed = new LogFeed(dir);
     // A consumer that checkpointed right after the orphan frame resumes across the gap.
@@ -280,30 +351,48 @@ describe("RULINGS Q31c falsifiers on the broker's non-dense positions", () => {
     for (;;) {
       const page = feed.poll(cursor);
       if (page.resolutions.length === 0) break;
-      store.recordEffects(page.resolutions.flatMap((r) => r.kind === "commit" ? r.transacts.flatMap((t) => t.subjects.map((s) => ({ position: t.position, subject: s }))) : []), page.cursor);
+      store.recordEffects(
+        page.resolutions.flatMap((r) =>
+          r.kind === "commit"
+            ? r.transacts.flatMap((t) =>
+                t.subjects.map((s) => ({ position: t.position, subject: s })),
+              )
+            : [],
+        ),
+        page.cursor,
+      );
       store.writeCheckpoint(page.cursor);
       cursor = page.cursor;
     }
     rt = await openRuntime(dir, scope);
     try {
       const aborted = rt.broker.abortedLsns();
-      expect(aborted).toHaveLength(1);
+      expect(aborted).toHaveLength(0);
       // The retried command resolves to the original receipt (lost-ACK resolution from the broker's record).
-      const retry = await rt.run(Effect.flip(rt.triples.transact(assertOps("subj:g", 2, "orphan"), { commandId: "g-2" })));
+      const retry = await rt.run(
+        Effect.flip(rt.triples.transact(assertOps("subj:g", 2, "orphan"), { commandId: "g-2" })),
+      );
       expect((retry as CommandAlreadyCommittedError).transactionId).toBe(orphan.txId);
-      const after = await rt.run(rt.triples.transact(assertOps("subj:g", 1, "post"), { commandId: "g-3" }));
-      expect(lsnOf(after.position)).toBeGreaterThan(aborted[0]!);
+      const after = await rt.run(
+        rt.triples.transact(assertOps("subj:g", 1, "post"), { commandId: "g-3" }),
+      );
+      expect(lsnOf(after.position)).toBeGreaterThan(lsnOf(orphan.position));
       // Reads at bases on both sides of the gap are exact.
       expect((await rt.run(rt.adapter.getByEntity("subj:g", at(before.position)))).length).toBe(2);
       expect((await rt.run(rt.adapter.getByEntity("subj:g", at(orphan.position)))).length).toBe(4);
-      expect((await rt.run(rt.adapter.getByEntity("subj:g", at(aborted[0]! * ORDINALS + 5)))).length).toBe(4);
+      expect(
+        (
+          await rt.run(
+            rt.adapter.getByEntity("subj:g", at((lsnOf(orphan.position) + 1) * ORDINALS + 5)),
+          )
+        ).length,
+      ).toBe(4);
       expect((await rt.run(rt.adapter.getByEntity("subj:g", at(after.position)))).length).toBe(5);
       // Resume from the checkpoint at the gap: the aborted LSN is listed, then exactly the later commit.
       const resumed = feed.poll(store.checkpoint()!);
       const kinds = resumed.resolutions.map((r) => r.kind);
-      expect(kinds).toEqual(["aborted", "epoch", "commit"]);
-      expect(resumed.resolutions[0]).toMatchObject({ kind: "aborted", lsn: aborted[0] });
-      const commit = resumed.resolutions[2]!;
+      expect(kinds).toEqual(["epoch", "commit"]);
+      const commit = resumed.resolutions[1]!;
       expect(commit.kind === "commit" && commit.transacts[0]!.position).toBe(after.position);
       store.recordEffects([{ position: after.position, subject: "subj:g" }], resumed.cursor);
       store.writeCheckpoint(resumed.cursor);
@@ -328,12 +417,21 @@ describe("feed consumer store (TARGETS 1.1 P3 items 4 to 6)", () => {
     a.close();
     const b = new FeedConsumerStore(dir, "c", "atomic", true);
     expect(b.checkpoint()).toEqual(cursor(1));
-    b.recordEffects([{ position: 1, subject: "s" }, { position: 2, subject: "s" }], cursor(2));
+    b.recordEffects(
+      [
+        { position: 1, subject: "s" },
+        { position: 2, subject: "s" },
+      ],
+      cursor(2),
+    );
     b.close();
     const c = new FeedConsumerStore(dir, "c", "atomic", true);
     expect(c.checkpoint()).toEqual(cursor(2));
     expect(b.replayAttempts).toBe(1);
-    expect([...readConsumerEffects(dir, "c").entries()]).toEqual([["1|s", 1], ["2|s", 1]]);
+    expect([...readConsumerEffects(dir, "c").entries()]).toEqual([
+      ["1|s", 1],
+      ["2|s", 1],
+    ]);
     c.close();
   });
 });
@@ -345,7 +443,9 @@ describe("feed from the host log (R17 3, TARGETS 1.1 P3)", () => {
     try {
       const committed = await rt.run(
         Effect.all(
-          Array.from({ length: 40 }, (_v, i) => rt.triples.transact(assertOps(`subj:${i % 7}`, 3, `f${i}`))),
+          Array.from({ length: 40 }, (_v, i) =>
+            rt.triples.transact(assertOps(`subj:${i % 7}`, 3, `f${i}`)),
+          ),
           { concurrency: 8 },
         ),
       );
@@ -359,7 +459,9 @@ describe("feed from the host log (R17 3, TARGETS 1.1 P3)", () => {
           if (r.kind === "commit")
             for (const t of r.transacts) {
               seen.push(t.position);
-              expect(t.changes.every((c) => c.attribute.startsWith(":p2q/") && c.validTo === null)).toBe(true);
+              expect(
+                t.changes.every((c) => c.attribute.startsWith(":p2q/") && c.validTo === null),
+              ).toBe(true);
             }
         cursor = page.cursor;
       }

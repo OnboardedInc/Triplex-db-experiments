@@ -7,7 +7,8 @@
 import { HostLog } from "../../src/broker/log.js";
 
 const [dir, mode = "hold", tag = "p"] = process.argv.slice(2);
-const say = (event: Record<string, unknown>) => console.log(JSON.stringify({ pid: process.pid, ...event }));
+const say = (event: Record<string, unknown>) =>
+  console.log(JSON.stringify({ pid: process.pid, ...event }));
 // The test reads stdout; if it has gone, keep running rather than crash on EPIPE.
 process.stdout.on("error", () => {});
 // A server keeps running after its log fail-stops; so does this holder, so the lock stays with a live process.
@@ -22,7 +23,28 @@ let stopping = false;
 const loop = async () => {
   while (!stopping) {
     try {
-      const frame = await log.append(1, Buffer.from(JSON.stringify({ v: 1, s: tag, l: log.nextLsn, e: log.epoch, m: [] })));
+      const frame = await log.append(
+        1,
+        Buffer.from(
+          JSON.stringify({
+            v: 1,
+            s: tag,
+            l: log.nextLsn,
+            e: log.epoch,
+            m: [
+              {
+                o: `${tag}-${log.nextLsn}`,
+                a: tag,
+                p: [log.nextLsn * 1024],
+                c: [],
+                r: [],
+                b: [],
+                s: [],
+              },
+            ],
+          }),
+        ),
+      );
       log.publishWatermark({ epoch: log.epoch, lsn: frame.lsn, position: frame.lsn * 1024 });
       say({ event: "acked", tag, lsn: frame.lsn });
     } catch (error) {

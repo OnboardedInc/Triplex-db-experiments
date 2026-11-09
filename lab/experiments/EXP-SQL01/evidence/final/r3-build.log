@@ -1,0 +1,68 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 76267 "CX-SQL01-r3-verifier", pid 76511 "CX-SQL01-r3-live", pid 74618 "CX-SQL01-r3-kill80", pid 74619 "CX-SQL01-r3-unit"
+[lab] heavy: waiting for one of 4 slots; held by pid 76267 "CX-SQL01-r3-verifier", pid 76511 "CX-SQL01-r3-live", pid 74618 "CX-SQL01-r3-kill80", pid 74619 "CX-SQL01-r3-unit"
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/packages/qlever/tsdown.config.ts 
+ℹ entry: src/AggregateAnswers.ts, src/FamilyDomainDistinct.ts, src/FamilyDomainMask.ts, src/FamilyDomains.ts, src/Operations.ts, src/PersistedScalarSource.ts, src/QleverClient.ts, src/QleverQueryExecutor.ts, src/QleverStorageAdapter.ts, src/ScalarSource.ts, src/TemporalQueries.ts, src/compiler.ts, src/index.ts, src/rdf.ts, src/recursion.ts, src/broker/BrokerStorageAdapter.ts, src/broker/broker.ts, src/broker/crc32c.ts, src/broker/errors.ts, src/broker/feed.ts, src/broker/frame.ts, src/broker/frames.ts, src/broker/http.ts, src/broker/log.ts, src/broker/position.ts, src/broker/sparql.ts, src/broker/sqlite-worker.ts, src/native/BasisRelations.ts, src/native/NativeContext.ts, src/native/NativeQueries.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/compiler.js                         34.54 kB │ gzip:  9.32 kB
+ℹ dist/broker/broker.js                    33.11 kB │ gzip:  9.70 kB
+ℹ dist/broker/BrokerStorageAdapter.js      23.77 kB │ gzip:  7.25 kB
+ℹ dist/QleverStorageAdapter.js             18.60 kB │ gzip:  5.28 kB
+ℹ dist/QleverQueryExecutor.js              15.37 kB │ gzip:  4.14 kB
+ℹ dist/broker/sqlite-worker.js             12.55 kB │ gzip:  4.60 kB
+ℹ dist/broker/log.js                       11.76 kB │ gzip:  3.74 kB
+ℹ dist/native/BasisRelations.js             9.78 kB │ gzip:  3.15 kB
+ℹ dist/broker/feed.js                       9.24 kB │ gzip:  3.39 kB
+ℹ dist/native/NativeQueries.js              8.89 kB │ gzip:  2.92 kB
+ℹ dist/broker/frame.js                      8.70 kB │ gzip:  3.31 kB
+ℹ dist/rdf.js                               8.37 kB │ gzip:  2.58 kB
+ℹ dist/TemporalQueries.js                   6.97 kB │ gzip:  2.47 kB
+ℹ dist/native/NativeContext.js              5.65 kB │ gzip:  1.91 kB
+ℹ dist/index.js                             5.62 kB │ gzip:  1.87 kB
+ℹ dist/broker/sparql.js                     4.94 kB │ gzip:  1.63 kB
+ℹ dist/recursion.js                         4.75 kB │ gzip:  1.80 kB
+ℹ dist/AggregateAnswers.js                  4.25 kB │ gzip:  1.62 kB
+ℹ dist/broker/http.js                       3.81 kB │ gzip:  1.66 kB
+ℹ dist/QleverClient.js                      3.55 kB │ gzip:  1.46 kB
+ℹ dist/broker/errors.js                     2.98 kB │ gzip:  1.40 kB
+ℹ dist/PersistedScalarSource.js             2.21 kB │ gzip:  0.79 kB
+ℹ dist/broker/position.js                   2.13 kB │ gzip:  1.06 kB
+ℹ dist/FamilyDomainMask.js                  1.92 kB │ gzip:  0.84 kB
+ℹ dist/broker/frames.js                     1.37 kB │ gzip:  0.63 kB
+ℹ dist/broker/crc32c.js                     1.31 kB │ gzip:  0.72 kB
+ℹ dist/Operations.js                        1.30 kB │ gzip:  0.66 kB
+ℹ dist/FamilyDomainDistinct.js              1.29 kB │ gzip:  0.64 kB
+ℹ dist/FamilyDomains.js                     0.01 kB │ gzip:  0.03 kB
+ℹ dist/ScalarSource.js                      0.01 kB │ gzip:  0.03 kB
+ℹ dist/compiler.js.map                     70.40 kB │ gzip: 18.32 kB
+ℹ dist/broker/broker.js.map                69.76 kB │ gzip: 19.23 kB
+ℹ dist/broker/BrokerStorageAdapter.js.map  47.54 kB │ gzip: 13.55 kB
+ℹ dist/QleverStorageAdapter.js.map         36.89 kB │ gzip: 10.19 kB
+ℹ dist/QleverQueryExecutor.js.map          31.98 kB │ gzip:  8.28 kB
+ℹ dist/broker/log.js.map                   24.93 kB │ gzip:  7.32 kB
+ℹ dist/native/NativeQueries.js.map         19.04 kB │ gzip:  5.95 kB
+ℹ dist/native/BasisRelations.js.map        17.91 kB │ gzip:  5.41 kB
+ℹ dist/broker/feed.js.map                  17.40 kB │ gzip:  5.73 kB
+ℹ dist/rdf.js.map                          15.64 kB │ gzip:  4.55 kB
+ℹ dist/broker/frame.js.map                 15.05 kB │ gzip:  5.04 kB
+ℹ dist/TemporalQueries.js.map              13.01 kB │ gzip:  4.19 kB
+ℹ dist/broker/sqlite-worker.js.map         12.80 kB │ gzip:  4.65 kB
+ℹ dist/broker/sparql.js.map                10.94 kB │ gzip:  3.64 kB
+ℹ dist/native/NativeContext.js.map         10.88 kB │ gzip:  3.37 kB
+ℹ dist/index.js.map                         9.85 kB │ gzip:  3.22 kB
+ℹ dist/recursion.js.map                     9.48 kB │ gzip:  3.21 kB
+ℹ dist/AggregateAnswers.js.map              8.48 kB │ gzip:  2.99 kB
+ℹ dist/QleverClient.js.map                  7.43 kB │ gzip:  2.74 kB
+ℹ dist/broker/http.js.map                   6.72 kB │ gzip:  2.69 kB
+ℹ dist/broker/errors.js.map                 4.80 kB │ gzip:  1.86 kB
+ℹ dist/broker/frames.js.map                 4.45 kB │ gzip:  1.80 kB
+ℹ dist/PersistedScalarSource.js.map         3.85 kB │ gzip:  1.31 kB
+ℹ dist/FamilyDomainMask.js.map              3.35 kB │ gzip:  1.38 kB
+ℹ dist/broker/position.js.map               2.85 kB │ gzip:  1.34 kB
+ℹ dist/broker/crc32c.js.map                 2.61 kB │ gzip:  1.09 kB
+ℹ dist/Operations.js.map                    2.42 kB │ gzip:  1.07 kB
+ℹ dist/FamilyDomainDistinct.js.map          2.34 kB │ gzip:  1.05 kB
+ℹ 58 files, total: 731.54 kB
+✔ Build complete in 111ms

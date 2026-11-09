@@ -1,0 +1,10 @@
+{
+  "withTokenAboveWatermark": {
+    "error": "RangeError",
+    "message": "The requested native source position is unavailable",
+    "ms": 0.06579199999998764
+  },
+  "withoutToken": {
+    "recordedPosition": 3071
+  }
+}

@@ -1,0 +1,20 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 23904 "CX-P2Q-R4-suites", pid 26813 "CX-VA01-0311-R2-negtest", pid 26420 "CX-SQL01-verifier-semantic", pid 27969 "CX-O05-R3-first"
+
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@triplex-build/triplex' imported from /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/lab/verify/P2Q/tests/harness.ts
+    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:314:9)
+    at packageResolve (node:internal/modules/esm/resolve:768:81)
+    at moduleResolve (node:internal/modules/esm/resolve:855:18)
+    at defaultResolve (node:internal/modules/esm/resolve:985:11)
+    at nextResolve (node:internal/modules/esm/hooks:748:28)
+    at resolveBase (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794177735590:2:3212)
+    at resolveDirectory (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794177735590:2:3584)
+    at resolveTsPaths (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794177735590:2:4073)
+    at resolve (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/node_modules/.pnpm/tsx@4.19.0/node_modules/tsx/dist/esm/index.mjs?1794177735590:2:4447)
+    at nextResolve (node:internal/modules/esm/hooks:748:28) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+Node.js v22.23.2

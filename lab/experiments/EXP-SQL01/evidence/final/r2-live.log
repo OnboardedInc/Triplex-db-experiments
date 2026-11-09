@@ -1,0 +1,16 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 42970 "CX-O05-R3-final", pid 43591 "CX-SQL01-r2-verifier", pid 43132 "CX-SQL01-r2-unit", pid 43135 "CX-SQL01-r2-kill80"
+[lab] heavy: waiting for one of 4 slots; held by pid 42970 "CX-O05-R3-final", pid 43591 "CX-SQL01-r2-verifier", pid 43132 "CX-SQL01-r2-unit", pid 43135 "CX-SQL01-r2-kill80"
+[lab] heavy: waiting for one of 4 slots; held by pid 42970 "CX-O05-R3-final", pid 43591 "CX-SQL01-r2-verifier", pid 44695 "DA01-G1", pid 43135 "CX-SQL01-r2-kill80"
+[lab] heavy: waiting for one of 4 slots; held by pid 42970 "CX-O05-R3-final", pid 43591 "CX-SQL01-r2-verifier", pid 44733 "DA01-G0", pid 44509 "CX-G03-smoke"
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (packages/qlever/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/packages/qlever
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  17:47:17
+   Duration  174.86s (tests 100%)
+

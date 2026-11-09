@@ -1,0 +1,1095 @@
+{
+  "dir": "/Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/lab/verify/SQL01/data/feed-1dca630b-022b-40e8-bef6-a7ae189cb593",
+  "expected": [
+    4096,
+    5120,
+    6144,
+    7168,
+    8192,
+    9216,
+    10240,
+    11264,
+    12288,
+    13312,
+    14336,
+    15360,
+    16384,
+    17408,
+    18432,
+    22528,
+    23552,
+    24576,
+    25600,
+    26624,
+    27648,
+    28672,
+    29696,
+    30720,
+    31744,
+    32768,
+    33792,
+    34816,
+    35840,
+    36864,
+    40960,
+    41984,
+    43008,
+    44032,
+    45056,
+    46080,
+    47104,
+    48128,
+    49152,
+    50176,
+    51200,
+    52224,
+    53248,
+    54272,
+    55296
+  ],
+  "seen": [
+    4096,
+    5120,
+    6144,
+    7168,
+    8192,
+    9216,
+    10240,
+    11264,
+    12288,
+    13312,
+    14336,
+    15360,
+    16384,
+    17408,
+    18432,
+    22528,
+    23552,
+    24576,
+    25600,
+    26624,
+    27648,
+    28672,
+    29696,
+    30720,
+    31744,
+    32768,
+    33792,
+    34816,
+    35840,
+    36864,
+    40960,
+    41984,
+    43008,
+    44032,
+    45056,
+    46080,
+    47104,
+    48128,
+    49152,
+    50176,
+    51200,
+    52224,
+    53248,
+    54272,
+    55296
+  ],
+  "pages": [
+    {
+      "cycle": 0,
+      "before": {
+        "lsn": 0,
+        "offset": 32,
+        "seed": 2854785558,
+        "nextLsn": 1
+      },
+      "after": {
+        "lsn": 1,
+        "offset": 170,
+        "seed": 2224892213,
+        "nextLsn": 2
+      },
+      "kinds": [
+        "epoch"
+      ]
+    },
+    {
+      "cycle": 1,
+      "before": {
+        "lsn": 1,
+        "offset": 170,
+        "seed": 2224892213,
+        "nextLsn": 2
+      },
+      "after": {
+        "lsn": 2,
+        "offset": 308,
+        "seed": 226055920,
+        "nextLsn": 3
+      },
+      "kinds": [
+        "epoch"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 2,
+        "offset": 308,
+        "seed": 226055920,
+        "nextLsn": 3
+      },
+      "after": {
+        "lsn": 3,
+        "offset": 446,
+        "seed": 1826882549,
+        "nextLsn": 4
+      },
+      "kinds": [
+        "epoch"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 3,
+        "offset": 446,
+        "seed": 1826882549,
+        "nextLsn": 4
+      },
+      "after": {
+        "lsn": 4,
+        "offset": 744,
+        "seed": 542824880,
+        "nextLsn": 5
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 4,
+        "offset": 744,
+        "seed": 542824880,
+        "nextLsn": 5
+      },
+      "after": {
+        "lsn": 5,
+        "offset": 1042,
+        "seed": 2067248073,
+        "nextLsn": 6
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 5,
+        "offset": 1042,
+        "seed": 2067248073,
+        "nextLsn": 6
+      },
+      "after": {
+        "lsn": 6,
+        "offset": 1340,
+        "seed": 3184505402,
+        "nextLsn": 7
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 6,
+        "offset": 1340,
+        "seed": 3184505402,
+        "nextLsn": 7
+      },
+      "after": {
+        "lsn": 7,
+        "offset": 1638,
+        "seed": 2891454220,
+        "nextLsn": 8
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 7,
+        "offset": 1638,
+        "seed": 2891454220,
+        "nextLsn": 8
+      },
+      "after": {
+        "lsn": 8,
+        "offset": 1936,
+        "seed": 374277972,
+        "nextLsn": 9
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 8,
+        "offset": 1936,
+        "seed": 374277972,
+        "nextLsn": 9
+      },
+      "after": {
+        "lsn": 9,
+        "offset": 2234,
+        "seed": 372455407,
+        "nextLsn": 10
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 9,
+        "offset": 2234,
+        "seed": 372455407,
+        "nextLsn": 10
+      },
+      "after": {
+        "lsn": 10,
+        "offset": 2535,
+        "seed": 794897587,
+        "nextLsn": 11
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 10,
+        "offset": 2535,
+        "seed": 794897587,
+        "nextLsn": 11
+      },
+      "after": {
+        "lsn": 11,
+        "offset": 2836,
+        "seed": 1093534322,
+        "nextLsn": 12
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 11,
+        "offset": 2836,
+        "seed": 1093534322,
+        "nextLsn": 12
+      },
+      "after": {
+        "lsn": 12,
+        "offset": 3137,
+        "seed": 2466977718,
+        "nextLsn": 13
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 12,
+        "offset": 3137,
+        "seed": 2466977718,
+        "nextLsn": 13
+      },
+      "after": {
+        "lsn": 13,
+        "offset": 3438,
+        "seed": 1738004856,
+        "nextLsn": 14
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 13,
+        "offset": 3438,
+        "seed": 1738004856,
+        "nextLsn": 14
+      },
+      "after": {
+        "lsn": 14,
+        "offset": 3746,
+        "seed": 3290177414,
+        "nextLsn": 15
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 14,
+        "offset": 3746,
+        "seed": 3290177414,
+        "nextLsn": 15
+      },
+      "after": {
+        "lsn": 15,
+        "offset": 4054,
+        "seed": 2607772471,
+        "nextLsn": 16
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 15,
+        "offset": 4054,
+        "seed": 2607772471,
+        "nextLsn": 16
+      },
+      "after": {
+        "lsn": 16,
+        "offset": 4362,
+        "seed": 2965173019,
+        "nextLsn": 17
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 16,
+        "offset": 4362,
+        "seed": 2965173019,
+        "nextLsn": 17
+      },
+      "after": {
+        "lsn": 17,
+        "offset": 4670,
+        "seed": 477866486,
+        "nextLsn": 18
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 2,
+      "before": {
+        "lsn": 17,
+        "offset": 4670,
+        "seed": 477866486,
+        "nextLsn": 18
+      },
+      "after": {
+        "lsn": 18,
+        "offset": 4978,
+        "seed": 1134597404,
+        "nextLsn": 19
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 3,
+      "before": {
+        "lsn": 18,
+        "offset": 4978,
+        "seed": 1134597404,
+        "nextLsn": 19
+      },
+      "after": {
+        "lsn": 19,
+        "offset": 5117,
+        "seed": 1861373837,
+        "nextLsn": 20
+      },
+      "kinds": [
+        "epoch"
+      ]
+    },
+    {
+      "cycle": 4,
+      "before": {
+        "lsn": 19,
+        "offset": 5117,
+        "seed": 1861373837,
+        "nextLsn": 20
+      },
+      "after": {
+        "lsn": 20,
+        "offset": 5256,
+        "seed": 1602018214,
+        "nextLsn": 21
+      },
+      "kinds": [
+        "epoch"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 20,
+        "offset": 5256,
+        "seed": 1602018214,
+        "nextLsn": 21
+      },
+      "after": {
+        "lsn": 21,
+        "offset": 5395,
+        "seed": 1022291130,
+        "nextLsn": 22
+      },
+      "kinds": [
+        "epoch"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 21,
+        "offset": 5395,
+        "seed": 1022291130,
+        "nextLsn": 22
+      },
+      "after": {
+        "lsn": 22,
+        "offset": 5696,
+        "seed": 1313564352,
+        "nextLsn": 23
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 22,
+        "offset": 5696,
+        "seed": 1313564352,
+        "nextLsn": 23
+      },
+      "after": {
+        "lsn": 23,
+        "offset": 5997,
+        "seed": 3642664717,
+        "nextLsn": 24
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 23,
+        "offset": 5997,
+        "seed": 3642664717,
+        "nextLsn": 24
+      },
+      "after": {
+        "lsn": 24,
+        "offset": 6298,
+        "seed": 387288454,
+        "nextLsn": 25
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 24,
+        "offset": 6298,
+        "seed": 387288454,
+        "nextLsn": 25
+      },
+      "after": {
+        "lsn": 25,
+        "offset": 6599,
+        "seed": 4079471485,
+        "nextLsn": 26
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 25,
+        "offset": 6599,
+        "seed": 4079471485,
+        "nextLsn": 26
+      },
+      "after": {
+        "lsn": 26,
+        "offset": 6900,
+        "seed": 357111997,
+        "nextLsn": 27
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 26,
+        "offset": 6900,
+        "seed": 357111997,
+        "nextLsn": 27
+      },
+      "after": {
+        "lsn": 27,
+        "offset": 7201,
+        "seed": 477528617,
+        "nextLsn": 28
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 27,
+        "offset": 7201,
+        "seed": 477528617,
+        "nextLsn": 28
+      },
+      "after": {
+        "lsn": 28,
+        "offset": 7502,
+        "seed": 2367394900,
+        "nextLsn": 29
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 28,
+        "offset": 7502,
+        "seed": 2367394900,
+        "nextLsn": 29
+      },
+      "after": {
+        "lsn": 29,
+        "offset": 7803,
+        "seed": 3217028231,
+        "nextLsn": 30
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 29,
+        "offset": 7803,
+        "seed": 3217028231,
+        "nextLsn": 30
+      },
+      "after": {
+        "lsn": 30,
+        "offset": 8104,
+        "seed": 913802341,
+        "nextLsn": 31
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 30,
+        "offset": 8104,
+        "seed": 913802341,
+        "nextLsn": 31
+      },
+      "after": {
+        "lsn": 31,
+        "offset": 8405,
+        "seed": 1644346827,
+        "nextLsn": 32
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 31,
+        "offset": 8405,
+        "seed": 1644346827,
+        "nextLsn": 32
+      },
+      "after": {
+        "lsn": 32,
+        "offset": 8713,
+        "seed": 1065998629,
+        "nextLsn": 33
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 32,
+        "offset": 8713,
+        "seed": 1065998629,
+        "nextLsn": 33
+      },
+      "after": {
+        "lsn": 33,
+        "offset": 9021,
+        "seed": 1570001221,
+        "nextLsn": 34
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 33,
+        "offset": 9021,
+        "seed": 1570001221,
+        "nextLsn": 34
+      },
+      "after": {
+        "lsn": 34,
+        "offset": 9329,
+        "seed": 1549839078,
+        "nextLsn": 35
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 34,
+        "offset": 9329,
+        "seed": 1549839078,
+        "nextLsn": 35
+      },
+      "after": {
+        "lsn": 35,
+        "offset": 9637,
+        "seed": 2655608264,
+        "nextLsn": 36
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 5,
+      "before": {
+        "lsn": 35,
+        "offset": 9637,
+        "seed": 2655608264,
+        "nextLsn": 36
+      },
+      "after": {
+        "lsn": 36,
+        "offset": 9945,
+        "seed": 1625971588,
+        "nextLsn": 37
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 6,
+      "before": {
+        "lsn": 36,
+        "offset": 9945,
+        "seed": 1625971588,
+        "nextLsn": 37
+      },
+      "after": {
+        "lsn": 37,
+        "offset": 10084,
+        "seed": 79248878,
+        "nextLsn": 38
+      },
+      "kinds": [
+        "epoch"
+      ]
+    },
+    {
+      "cycle": 7,
+      "before": {
+        "lsn": 37,
+        "offset": 10084,
+        "seed": 79248878,
+        "nextLsn": 38
+      },
+      "after": {
+        "lsn": 38,
+        "offset": 10223,
+        "seed": 4161343739,
+        "nextLsn": 39
+      },
+      "kinds": [
+        "epoch"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 38,
+        "offset": 10223,
+        "seed": 4161343739,
+        "nextLsn": 39
+      },
+      "after": {
+        "lsn": 39,
+        "offset": 10362,
+        "seed": 2973553184,
+        "nextLsn": 40
+      },
+      "kinds": [
+        "epoch"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 39,
+        "offset": 10362,
+        "seed": 2973553184,
+        "nextLsn": 40
+      },
+      "after": {
+        "lsn": 40,
+        "offset": 10663,
+        "seed": 1601238013,
+        "nextLsn": 41
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 40,
+        "offset": 10663,
+        "seed": 1601238013,
+        "nextLsn": 41
+      },
+      "after": {
+        "lsn": 41,
+        "offset": 10964,
+        "seed": 2558028546,
+        "nextLsn": 42
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 41,
+        "offset": 10964,
+        "seed": 2558028546,
+        "nextLsn": 42
+      },
+      "after": {
+        "lsn": 42,
+        "offset": 11265,
+        "seed": 898171886,
+        "nextLsn": 43
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 42,
+        "offset": 11265,
+        "seed": 898171886,
+        "nextLsn": 43
+      },
+      "after": {
+        "lsn": 43,
+        "offset": 11566,
+        "seed": 2950023082,
+        "nextLsn": 44
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 43,
+        "offset": 11566,
+        "seed": 2950023082,
+        "nextLsn": 44
+      },
+      "after": {
+        "lsn": 44,
+        "offset": 11867,
+        "seed": 2996467689,
+        "nextLsn": 45
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 44,
+        "offset": 11867,
+        "seed": 2996467689,
+        "nextLsn": 45
+      },
+      "after": {
+        "lsn": 45,
+        "offset": 12168,
+        "seed": 3187402393,
+        "nextLsn": 46
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 45,
+        "offset": 12168,
+        "seed": 3187402393,
+        "nextLsn": 46
+      },
+      "after": {
+        "lsn": 46,
+        "offset": 12469,
+        "seed": 1508762272,
+        "nextLsn": 47
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 46,
+        "offset": 12469,
+        "seed": 1508762272,
+        "nextLsn": 47
+      },
+      "after": {
+        "lsn": 47,
+        "offset": 12770,
+        "seed": 2028186278,
+        "nextLsn": 48
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 47,
+        "offset": 12770,
+        "seed": 2028186278,
+        "nextLsn": 48
+      },
+      "after": {
+        "lsn": 48,
+        "offset": 13071,
+        "seed": 966437739,
+        "nextLsn": 49
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 48,
+        "offset": 13071,
+        "seed": 966437739,
+        "nextLsn": 49
+      },
+      "after": {
+        "lsn": 49,
+        "offset": 13372,
+        "seed": 1925692471,
+        "nextLsn": 50
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 49,
+        "offset": 13372,
+        "seed": 1925692471,
+        "nextLsn": 50
+      },
+      "after": {
+        "lsn": 50,
+        "offset": 13680,
+        "seed": 1868396257,
+        "nextLsn": 51
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 50,
+        "offset": 13680,
+        "seed": 1868396257,
+        "nextLsn": 51
+      },
+      "after": {
+        "lsn": 51,
+        "offset": 13988,
+        "seed": 903495199,
+        "nextLsn": 52
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 51,
+        "offset": 13988,
+        "seed": 903495199,
+        "nextLsn": 52
+      },
+      "after": {
+        "lsn": 52,
+        "offset": 14296,
+        "seed": 3889589456,
+        "nextLsn": 53
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 52,
+        "offset": 14296,
+        "seed": 3889589456,
+        "nextLsn": 53
+      },
+      "after": {
+        "lsn": 53,
+        "offset": 14604,
+        "seed": 2954547733,
+        "nextLsn": 54
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 8,
+      "before": {
+        "lsn": 53,
+        "offset": 14604,
+        "seed": 2954547733,
+        "nextLsn": 54
+      },
+      "after": {
+        "lsn": 54,
+        "offset": 14912,
+        "seed": 3636035092,
+        "nextLsn": 55
+      },
+      "kinds": [
+        "commit"
+      ]
+    },
+    {
+      "cycle": 9,
+      "before": {
+        "lsn": 54,
+        "offset": 14912,
+        "seed": 3636035092,
+        "nextLsn": 55
+      },
+      "after": {
+        "lsn": 55,
+        "offset": 15052,
+        "seed": 1762477390,
+        "nextLsn": 56
+      },
+      "kinds": [
+        "epoch"
+      ]
+    }
+  ],
+  "cursor": {
+    "lsn": 55,
+    "offset": 15052,
+    "seed": 1762477390,
+    "nextLsn": 56
+  }
+}
