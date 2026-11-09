@@ -186,3 +186,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - Note: agents whose worktree was archived and removed (CX-INT-XCJ, CX-X02-R3, CX-VX02-3, CX-VDA01, CX-VSQL01-2, CX-J01-R2, CX-VJ01-2,
   CX-VC8-3 and the older ones in worktree-archive/INDEX.txt) cannot be resumed (codex needs its launch cwd); follow-up work on those
   branches uses a fresh launch with a new worktree. CX-XRUN replaces CX-INT-XCJ for the XTDB exclusive reruns.
+- Scale window queue (one exclusive 3.5 GiB slot at a time; CX-XRUN holds xtdb-s1 now): next K01 live two-start and E1 per
+  .claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/LIVE-round10.md (K01 r10 e525760, 397 tests; offline review skipped in favor of the
+  live run because the remaining risk is native wire fidelity; an independent reviewer reads the live receipts after); then P5 A1 at 1k;
+  then G03's slot run; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04.
