@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
-import { randomUUID, createHash } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { openComposition } from "./lib/composition.ts";
 import { loadW0Pins } from "./lib/evaluate.ts";
 import { seedW0 } from "./lib/w0-seed.ts";
+import { fingerprintSweep } from "./lib/w0-fingerprint.ts";
 import { runW0Sweep, subjectList } from "./lib/sweep.ts";
 import { W0, V_W0, canonical, sha256, triplexValue, worldOf } from "./lib/w0-world.ts";
 import {
@@ -57,6 +58,7 @@ export async function runW0Driver(argv: string[]) {
     "lab/world/W0/SPEC.md",
     "lab/acceptance/oracle-contract.json",
     "lab/bench/lib/w0-world.ts",
+    "lab/bench/lib/w0-fingerprint.ts",
     "lab/bench/lib/w0-seed.ts",
     "lab/bench/lib/sweep.ts",
     "lab/bench/lib/sweep-worker.ts",
@@ -113,43 +115,26 @@ export async function runW0Driver(argv: string[]) {
     };
     const b0 = { position: report.seed.basis.tx, validAt: V_W0 };
     console.error("[P5] G0 preview sweep");
-    report.preview = await runW0Sweep({
-      comp,
-      composition,
-      lane,
-      scope,
-      subjects,
-      basis: b0,
-      sweepId: attempt + ":g0",
-      cursor: path.join(dir, "preview-cursor.json"),
-      workers,
-      onPage: async (records, page) => {
-        fs.writeFileSync(path.join(dir, `preview-${page}.json`), canonical(records));
+    const gate = await fingerprintSweep(
+      {
+        endpoint: comp.backend.url,
+        scope,
+        basis: b0,
+        expected: { ...expected.fingerprint, N },
+        counts: report.seed.counts,
       },
-    });
-    const worlds = createHash("sha256"),
-      outputs = createHash("sha256");
-    worlds.update("[");
-    outputs.update("[");
-    let count = 0,
-      facts = 0;
-    for (let p = 0; p < Math.ceil(N / 64); p++)
-      for (const r of JSON.parse(fs.readFileSync(path.join(dir, `preview-${p}.json`), "utf8"))) {
-        worlds.update(count ? "," : "");
-        worlds.update(canonical(r.world));
-        outputs.update(count ? "," : "");
-        outputs.update(W0.outputJson(r.output));
-        facts += r.world.facts.length;
-        count++;
-      }
-    worlds.update("]");
-    outputs.update("]");
-    const fingerprint = {
-      basisTx: b0.position,
-      facts,
-      worlds: "sha256:" + worlds.digest("hex"),
-      R2: "sha256:" + outputs.digest("hex"),
-    };
+      async () => ({
+        endpoint: comp.backend.url,
+        scope,
+        comp,
+        close: async () => {},
+        observePage: (records, page) =>
+          fs.writeFileSync(path.join(dir, `preview-${page}.json`), canonical(records)),
+      }),
+    );
+    const fingerprint = gate.observed,
+      count = N;
+    report.preview = { ...gate, metrics: [], cpuScope: "fingerprint-controller-process" };
     requireFingerprint(fingerprint, expected, N);
     report.seed.fingerprint = fingerprint;
     report.gates.G0 = { status: "PASS", subjects: count, fingerprint };

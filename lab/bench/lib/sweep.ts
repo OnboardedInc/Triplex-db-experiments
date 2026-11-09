@@ -30,10 +30,11 @@ export class Controller {
   ) {
     if (!Object.values(s).every(Number.isFinite) || s.baselineP99 <= 0)
       throw new Error("invalid controller observation");
-    if (!this.enabled || now < this.holdUntil) return this.limit;
+    if (!this.enabled) return this.limit;
     const ratio = Math.max(s.readRatio, s.commitRatio),
       target = s.baselineP99 * CONTROLLER.queueTargetFactor;
     this.breaches = ratio > CONTROLLER.stopRatio ? this.breaches + 1 : 0;
+    if (now < this.holdUntil && this.breaches < CONTROLLER.stopWindows) return this.limit;
     if (this.breaches >= CONTROLLER.stopWindows) {
       this.limit = 0;
       this.holdUntil = now + CONTROLLER.holdMs;
@@ -66,6 +67,9 @@ export interface SweepOptions {
   activations?: readonly W0.Activation[];
   onPage: (records: readonly any[], page: number) => Promise<void>;
   stopAfterPages?: number;
+  afterCheckpoint?: (page: number) => Promise<void>;
+  controller?: Controller;
+  beforePublish?: () => Promise<void>;
 }
 export async function runW0Sweep(o: SweepOptions) {
   if (
@@ -110,7 +114,7 @@ export async function runW0Sweep(o: SweepOptions) {
   const threads: Worker[] = [];
   try {
     await Promise.all(
-      Array.from({ length: o.workers }, async () => {
+      Array.from({ length: o.workers }, async (_, workerIndex) => {
         const worker = new Worker(new URL("./sweep-worker.ts", import.meta.url), {
           workerData: { composition: o.composition, lane: o.lane, scope: o.scope },
         });
@@ -138,6 +142,9 @@ export async function runW0Sweep(o: SweepOptions) {
           index < remaining.length &&
           (o.stopAfterPages === undefined || completed < o.stopAfterPages)
         ) {
+          while (o.controller && (o.controller.limit === 0 || workerIndex >= o.controller.limit))
+            await new Promise((r) => setTimeout(r, 10));
+          if (index >= remaining.length) break;
           const pageIndex = remaining[index++]!,
             subjects = o.subjects.slice(pageIndex * 64, (pageIndex + 1) * 64);
           const page: any = await new Promise((res, rej) => {
@@ -164,15 +171,22 @@ export async function runW0Sweep(o: SweepOptions) {
           const records = JSON.parse(new TextDecoder().decode(page.bytes));
           if (
             canonical(records.map((r: any) => r.subject)) !== canonical(subjects) ||
-            records.some((r: any) => r.output.basis.tx !== o.basis.position)
+            records.some(
+              (r: any) =>
+                r.output.basis.tx !== o.basis.position ||
+                r.output.basis.validTime !==
+                  new Date(o.basis.validAt).toISOString().replace(".000Z", ".000000Z"),
+            )
           )
             throw new Error("G4/G7 worker coverage or basis mismatch");
+          await o.beforePublish?.();
           await o.onPage(records, pageIndex);
           // [EXP-P5] Why: only an ACKed publication advances the cursor. Rejected: advancing at evaluation (drops results on process stop).
           published.push(pageIndex);
           published.sort((a, b) => a - b);
           fs.writeFileSync(o.cursor + ".tmp", canonical({ binding, published }));
           fs.renameSync(o.cursor + ".tmp", o.cursor);
+          await o.afterCheckpoint?.(pageIndex);
           metrics.push({
             page: pageIndex,
             cpu: page.cpu,
