@@ -1,0 +1,37 @@
+{
+  "code": "ESOCKTNOSUPPORT",
+  "transport": true,
+  "depth": 1,
+  "kind": "fresh",
+  "surface": "datalog",
+  "endpoint": "http://127.0.0.1:51060",
+  "injected": 1,
+  "uv": [
+    -44,
+    [
+      "ESOCKTNOSUPPORT",
+      "socket type not supported"
+    ]
+  ],
+  "injection": "synthetic errno on the real client-owned net.Socket; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: opaque",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "opaque",
+      "reason": null
+    },
+    {
+      "name": "Error",
+      "code": "ESOCKTNOSUPPORT",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

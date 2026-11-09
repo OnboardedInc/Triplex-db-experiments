@@ -1,0 +1,13 @@
+{
+  "expectedUnreachable": false,
+  "boundary": "beyond documented bound",
+  "error": {
+    "tag": "ReadError",
+    "reason": null,
+    "message": "QLever native SELECT failed: TypeError: terminated",
+    "required": null,
+    "observed": null,
+    "replica": null
+  },
+  "preservesCause": true
+}

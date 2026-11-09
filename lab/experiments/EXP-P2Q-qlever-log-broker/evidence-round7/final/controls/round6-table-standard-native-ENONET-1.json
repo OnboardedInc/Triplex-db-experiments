@@ -1,0 +1,43 @@
+{
+  "code": "ENONET",
+  "transport": true,
+  "depth": 1,
+  "kind": "standard",
+  "surface": "native",
+  "endpoint": "http://127.0.0.1:63329",
+  "injected": 1,
+  "uv": [
+    -4056,
+    [
+      "ENONET",
+      "machine is not on the network"
+    ]
+  ],
+  "injection": "one synthetic code after connection establishment with the response held open; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: fetch failed",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "fetch failed",
+      "reason": null
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "opaque",
+      "reason": null
+    },
+    {
+      "name": "Error",
+      "code": "ENONET",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "code": "ENETDOWN",
+  "kind": "standard",
+  "surface": "native",
+  "endpoint": "http://127.0.0.1:50929",
+  "injected": 1,
+  "uv": [
+    -50,
+    [
+      "ENETDOWN",
+      "network is down"
+    ]
+  ],
+  "injection": "synthetic errno on the real client-owned net.Socket; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: fetch failed",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "fetch failed",
+      "reason": null
+    },
+    {
+      "name": "Error",
+      "code": "ENETDOWN",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

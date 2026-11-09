@@ -1,0 +1,30 @@
+{
+  "code": "ENETRESET",
+  "transport": true,
+  "depth": 1,
+  "kind": "fresh",
+  "surface": "native",
+  "endpoint": "http://127.0.0.1:51019",
+  "injected": 1,
+  "injection": "synthetic errno on the real client-owned net.Socket; no OS network outage induced",
+  "chain": [
+    {
+      "name": "ReadError",
+      "code": null,
+      "message": "QLever replica the QLever replica is unreachable for native reads: TypeError: opaque",
+      "reason": "replica-unreachable"
+    },
+    {
+      "name": "TypeError",
+      "code": null,
+      "message": "opaque",
+      "reason": null
+    },
+    {
+      "name": "Error",
+      "code": "ENETRESET",
+      "message": "opaque",
+      "reason": null
+    }
+  ]
+}

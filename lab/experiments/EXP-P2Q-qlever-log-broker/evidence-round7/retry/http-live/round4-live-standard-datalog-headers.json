@@ -1,0 +1,49 @@
+{
+  "kind": "standard",
+  "surface": "datalog",
+  "timing": "headers",
+  "required": 2048,
+  "observed": 4095,
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"v-p2q-round4:4ccda0fb-a2fa-454a-8d6a-62b1ef904479\",0]",
+  "upstream": "http://127.0.0.1:7070",
+  "events": [
+    "answer-acquired",
+    "headers-flushed",
+    "socket-destroyed"
+  ],
+  "answers": 1,
+  "forwarded": 1,
+  "ok": false,
+  "error": {
+    "name": "ReadError",
+    "tag": "ReadError",
+    "reason": "replica-unreachable",
+    "required": 2048,
+    "observed": 4095,
+    "replica": "the QLever replica",
+    "surface": "datalog",
+    "code": null,
+    "message": "QLever replica the QLever replica is unreachable for datalog reads: TypeError: terminated",
+    "cause": {
+      "name": "TypeError",
+      "reason": null,
+      "required": null,
+      "observed": null,
+      "replica": null,
+      "surface": null,
+      "code": null,
+      "message": "terminated",
+      "cause": {
+        "name": "SocketError",
+        "reason": null,
+        "required": null,
+        "observed": null,
+        "replica": null,
+        "surface": null,
+        "code": "UND_ERR_SOCKET",
+        "message": "other side closed",
+        "cause": null
+      }
+    }
+  }
+}

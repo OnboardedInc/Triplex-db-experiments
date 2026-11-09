@@ -38,7 +38,7 @@ export interface QleverQueryOptions {
    * the answer if the replica was reset in between (RULINGS Q67c, Q72b).
    */
   readonly resolveBasis?: ((requested: number | undefined) => Promise<ReplicaSnapshot>) & {
-    readonly inTransaction: (sourceK: number) => Promise<ReplicaSnapshot>;
+    readonly inTransaction: (sourceK: number, requested?: number) => Promise<ReplicaSnapshot>;
     readonly after: (snapshot: ReplicaSnapshot) => Promise<void>;
   };
   readonly sourcePlan?: QleverSourcePlan;
@@ -218,6 +218,7 @@ export const makeQleverQueryExecutor = (
             );
           if (
             sourceView &&
+            !(options.resolveBasis && basis?.recordedPosition !== undefined) &&
             (basis?.recordedAt !== undefined ||
               (basis?.recordedPosition !== undefined &&
                 basis.recordedPosition !== sourceView.sourcePosition))
@@ -233,9 +234,13 @@ export const makeQleverQueryExecutor = (
           const gate = options.resolveBasis;
           const snapshot = gate
             ? sourceView
-              ? await gate.inTransaction(sourceView.sourcePosition)
+              ? await gate.inTransaction(sourceView.sourcePosition, basis?.recordedPosition)
               : await gate(basis?.recordedPosition)
             : undefined;
+          // [EXP-P2Q] Why: an explicit committed cut excludes staged assertions and retractions.
+          // Rejected: inlining the pending view (its visibility rules intentionally include own writes).
+          const compileSourceView =
+            gate && basis?.recordedPosition !== undefined ? undefined : sourceView;
           // [EXP-P2Q] Why: every answer/materialization SELECT needs the broker outage reason.
           // Rejected: classifying the whole run (compiler/validation errors are not transport failures).
           const replicaClient: QleverClient = snapshot
@@ -293,7 +298,7 @@ export const makeQleverQueryExecutor = (
                 onCompilation: (duration: number) => {
                   compilationTimeMs += duration;
                 },
-                ...(sourceView ? { sourceView } : {}),
+                ...(compileSourceView ? { sourceView: compileSourceView } : {}),
               })
             : undefined;
           const compileOptions = {
@@ -304,7 +309,7 @@ export const makeQleverQueryExecutor = (
             ...(options.retirementPlan ? { retirementPlan: options.retirementPlan } : {}),
             ...(options.scalarOrderPlan ? { scalarOrderPlan: options.scalarOrderPlan } : {}),
             maxResultRows,
-            ...(sourceView ? { sourceView } : {}),
+            ...(compileSourceView ? { sourceView: compileSourceView } : {}),
             ...(cursorValues ? { cursorValues } : {}),
             ...(runId ? { runId } : {}),
           };

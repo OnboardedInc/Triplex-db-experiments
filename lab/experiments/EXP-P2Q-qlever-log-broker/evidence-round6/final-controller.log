@@ -1,0 +1,12 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+START controls
+END controls 0
+START unit
+END unit 0
+START typecheck
+END typecheck 0
+START http-offline
+END http-offline 0
+START http-live
+END http-live 0

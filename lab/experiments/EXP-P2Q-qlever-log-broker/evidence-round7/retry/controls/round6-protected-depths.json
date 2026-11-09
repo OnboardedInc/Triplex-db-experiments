@@ -1,0 +1,2273 @@
+{
+  "rows": [
+    {
+      "kind": "syntax",
+      "depth": 0,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 1,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 2,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 3,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 4,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 5,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 6,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 7,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 8,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 9,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 10,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 11,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 12,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 13,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 14,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 15,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 16,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 17,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 18,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 19,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 20,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 21,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 22,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 23,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 24,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 25,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 26,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 27,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 28,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 29,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 30,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 31,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 32,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 33,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 64,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "syntax",
+      "depth": 1000,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 0,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 1,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 2,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 3,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 4,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 5,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 6,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 7,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 8,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 9,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 10,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 11,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 12,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 13,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 14,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 15,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 16,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 17,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 18,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 19,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 20,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 21,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 22,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 23,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 24,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 25,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 26,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 27,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 28,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 29,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 30,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 31,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 32,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 33,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 64,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "decode",
+      "depth": 1000,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 0,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 1,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 2,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 3,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 4,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 5,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 6,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 7,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 8,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 9,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 10,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 11,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 12,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 13,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 14,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 15,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 16,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 17,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 18,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 19,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 20,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 21,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 22,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 23,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 24,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 25,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 26,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 27,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 28,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 29,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 30,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 31,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 32,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 33,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 64,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http400",
+      "depth": 1000,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 0,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 1,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 2,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 3,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 4,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 5,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 6,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 7,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 8,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 9,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 10,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 11,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 12,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 13,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 14,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 15,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 16,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 17,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 18,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 19,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 20,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 21,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 22,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 23,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 24,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 25,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 26,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 27,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 28,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 29,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 30,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 31,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 32,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 33,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 64,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http401",
+      "depth": 1000,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 0,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 1,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 2,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 3,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 4,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 5,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 6,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 7,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 8,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 9,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 10,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 11,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 12,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 13,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 14,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 15,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 16,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 17,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 18,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 19,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 20,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 21,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 22,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 23,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 24,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 25,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 26,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 27,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 28,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 29,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 30,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 31,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 32,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 33,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 64,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http404",
+      "depth": 1000,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 0,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 1,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 2,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 3,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 4,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 5,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 6,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 7,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 8,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 9,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 10,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 11,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 12,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 13,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 14,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 15,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 16,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 17,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 18,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 19,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 20,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 21,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 22,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 23,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 24,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 25,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 26,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 27,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 28,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 29,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 30,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 31,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 32,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 33,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 64,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "http429",
+      "depth": 1000,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 0,
+      "predicate": false,
+      "reasons": {
+        "native": "basis-not-reached",
+        "datalog": "basis-not-reached"
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 1,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 2,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 3,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 4,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 5,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 6,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 7,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 8,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 9,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 10,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 11,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 12,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 13,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 14,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 15,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 16,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 17,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 18,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 19,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 20,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 21,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 22,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 23,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 24,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 25,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 26,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 27,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 28,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 29,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 30,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 31,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 32,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 33,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 64,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    },
+    {
+      "kind": "basis",
+      "depth": 1000,
+      "predicate": false,
+      "reasons": {
+        "native": null,
+        "datalog": null
+      }
+    }
+  ],
+  "mismatches": []
+}

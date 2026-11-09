@@ -1,0 +1,3 @@
+Final process check 2026-11-08T23:44:04.772630+00:00
+No matching worktree lock-holder or round-six heavy-controller processes remain.
+No process cleanup, engine lifecycle action or OS network modification was needed. The first failed worker exited itself; no process was killed.

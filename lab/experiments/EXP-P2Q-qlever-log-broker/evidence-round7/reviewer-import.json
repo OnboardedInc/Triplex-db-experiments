@@ -1,0 +1,20 @@
+{
+  "report": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/VERIFY-round7.md",
+  "reportSha256": "dc347ca8069f8132080c459c23188bd4c09ac042b5f3d7db199c816ce50bec14",
+  "files": [
+    {
+      "source": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/tests/round7-q89c.test.ts",
+      "copy": "lab/verify/P2Q/tests/round7-q89c.test.ts",
+      "sourceSha256": "0666a542a8e531466b3c15235db6088635d5555ef2b440089da4d70a2a6cea88",
+      "copySha256": "0666a542a8e531466b3c15235db6088635d5555ef2b440089da4d70a2a6cea88",
+      "identical": true
+    },
+    {
+      "source": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/tests/round7-q89c-empty.test.ts",
+      "copy": "lab/verify/P2Q/tests/round7-q89c-empty.test.ts",
+      "sourceSha256": "93743d412595e41053136f94e73654c458eba8acc13ee6d4ad35f7bb7be641c1",
+      "copySha256": "93743d412595e41053136f94e73654c458eba8acc13ee6d4ad35f7bb7be641c1",
+      "identical": true
+    }
+  ]
+}
