@@ -1,0 +1,124 @@
+{
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VHS01",
+  "format": "CX-VHS01-offline-review/1",
+  "productCommit": "13ce4978",
+  "reviewedHead": "2f7b42d65976279a13436a6f5d5f7043cb0f3da4",
+  "files": 90,
+  "bytes": 614605472,
+  "manifestSha256": "03e80bf6060f288e94678fda092c73d0163af69c0f830b013e245b71a41c6f0e",
+  "environment": {
+    "node": "v22.23.2",
+    "betterSqlite3": "12.10.0",
+    "sqlite": "3.53.1",
+    "driverEntry": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-hs01/node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/lib/index.js",
+    "driverEntrySha256": "82db11c4ee43a41d859988c5db42c3771dff565371f94bacbd1e4d8d6ceb47cd",
+    "native": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-hs01/node_modules/.pnpm/better-sqlite3@12.10.0/node_modules/better-sqlite3/build/Release/better_sqlite3.node",
+    "nativeSha256": "d74ae4ac4261c1266fed01da1e8474e001253493db3ce062cfac03720385999d",
+    "engineSlot": null,
+    "enginesUsed": []
+  },
+  "attempts": [
+    {
+      "path": "crash-5243cdd4-55d3-4fb6-8a3e-556fabb367f4",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/adversarial/crash.config.ts"
+      ],
+      "head": "2f7b42d65976279a13436a6f5d5f7043cb0f3da4",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "start": "2026-11-09T11:24:41.526Z",
+      "end": "2026-11-09T11:24:47.246Z"
+    },
+    {
+      "path": "independent-f9055259-6e2a-46f3-a062-74ce412ec18a",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/adversarial/vitest.config.ts"
+      ],
+      "head": "2f7b42d65976279a13436a6f5d5f7043cb0f3da4",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "start": "2026-11-09T11:24:35.815Z",
+      "end": "2026-11-09T11:25:15.440Z"
+    },
+    {
+      "path": "independent-final-892d474a-e103-4db7-bc40-dc742bacbd0a",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/adversarial/vitest.config.ts"
+      ],
+      "head": "2f7b42d65976279a13436a6f5d5f7043cb0f3da4",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "start": "2026-11-09T11:29:20.045Z",
+      "end": "2026-11-09T11:32:34.780Z"
+    },
+    {
+      "path": "large-frame-3663771f-8815-489a-a8b9-5470719ead3e",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/adversarial/retention.config.ts"
+      ],
+      "head": "2f7b42d65976279a13436a6f5d5f7043cb0f3da4",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "start": "2026-11-09T11:24:44.138Z",
+      "end": "2026-11-09T11:24:46.270Z"
+    },
+    {
+      "path": "seed-1k-881b50f0-0ba0-4826-bbb3-e46eaeea2ea9",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/adversarial/seed.config.ts"
+      ],
+      "head": "2f7b42d65976279a13436a6f5d5f7043cb0f3da4",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "start": "2026-11-09T11:24:46.854Z",
+      "end": "2026-11-09T11:24:48.665Z"
+    },
+    {
+      "path": "seed-1k-r2-aa01ec32-1140-41f3-a3c7-bccd765914c9",
+      "command": [
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/adversarial/seed.config.ts"
+      ],
+      "head": "2f7b42d65976279a13436a6f5d5f7043cb0f3da4",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceUnchanged": true,
+      "start": "2026-11-09T11:25:42.725Z",
+      "end": "2026-11-09T11:26:49.425Z"
+    }
+  ]
+}
