@@ -1057,7 +1057,8 @@ function writeStore(dir) {
  * lists every symlink whose target resolves outside root, lexically or through the filesystem (V-E01 F3, F10). Paths in exclude
  * (BUILD_SPEC.installMetadataExclusions, Q71a) are left out.
  */
-function walkTree(root, exclude = []) {
+// [EXP-G03] Why: fixture oracle-copy checks need the exact trusted listing used by the re-hash guard. Rejected: a parallel test walker.
+export function walkTree(root, exclude = []) {
   const real = fs.realpathSync(root), entries = [], outside = [], skip = new Set(exclude);
   const visit = rel => {
     for (const d of fs.readdirSync(path.join(real, rel), { withFileTypes: true })) {

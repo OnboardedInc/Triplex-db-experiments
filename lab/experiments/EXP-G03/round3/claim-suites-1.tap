@@ -1,0 +1,145 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 49177 "CX-G03-r3-smoke2"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 33681 "CX-VSQL01-r2b-unit"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 33681 "CX-VSQL01-r2b-unit"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 90885 "DA01-r2-G0-basis"
+TAP version 13
+# Subtest: V-E01 F1/T3: a persistently rewritten evaluator refuses the next run against its Git blobs
+ok 1 - V-E01 F1/T3: a persistently rewritten evaluator refuses the next run against its Git blobs
+  ---
+  duration_ms: 542.862542
+  type: 'test'
+  ...
+# Subtest: V-E01 F2/T5c: replace refs cannot substitute the oracle or qualify a wrong candidate
+ok 2 - V-E01 F2/T5c: replace refs cannot substitute the oracle or qualify a wrong candidate
+  ---
+  duration_ms: 15007.852916
+  type: 'test'
+  ...
+# Subtest: V-E01 F2/Q75c: an unpinned COMPILED runner leaves an otherwise honest run diagnostic
+ok 3 - V-E01 F2/Q75c: an unpinned COMPILED runner leaves an otherwise honest run diagnostic
+  ---
+  duration_ms: 203776.910917
+  type: 'test'
+  ...
+# Subtest: V-E01 F3/F10: outside file and directory links are refused, never followed
+ok 4 - V-E01 F3/F10: outside file and directory links are refused, never followed
+  ---
+  duration_ms: 15503.532833
+  type: 'test'
+  ...
+# Subtest: V-E01 F4/T6: each build and execution gets a fresh HOME and TMPDIR
+ok 5 - V-E01 F4/T6: each build and execution gets a fresh HOME and TMPDIR
+  ---
+  duration_ms: 7915.261166
+  type: 'test'
+  ...
+# Subtest: V-E01 F7/T7: deleting a retained evidence object fails closed
+ok 6 - V-E01 F7/T7: deleting a retained evidence object fails closed
+  ---
+  duration_ms: 3275.358875
+  type: 'test'
+  ...
+# Subtest: V-E01 F8: admitCore refuses promotion before executing candidate code
+ok 7 - V-E01 F8: admitCore refuses promotion before executing candidate code
+  ---
+  duration_ms: 4929.598667
+  type: 'test'
+  ...
+# Subtest: V-E01 F9: every early return and caught exception carries GATE-NOT-RUN
+ok 8 - V-E01 F9: every early return and caught exception carries GATE-NOT-RUN
+  ---
+  duration_ms: 885.718
+  type: 'test'
+  ...
+# Subtest: V-E01 F5/Q75g: O-REPLAY-shaped row comparisons stay UNCOMPARABLE on contract 0.3.10
+ok 9 - V-E01 F5/Q75g: O-REPLAY-shaped row comparisons stay UNCOMPARABLE on contract 0.3.10
+  ---
+  duration_ms: 0.638
+  type: 'test'
+  ...
+# Subtest: V-E01 F6/Q75h: cause is optional but must be structured when present
+ok 10 - V-E01 F6/Q75h: cause is optional but must be structured when present
+  ---
+  duration_ms: 0.436084
+  type: 'test'
+  ...
+# Subtest: V-E01 F9: unreadable evidence becomes a diagnostic instead of an uncaught EACCES
+ok 11 - V-E01 F9: unreadable evidence becomes a diagnostic instead of an uncaught EACCES
+  ---
+  duration_ms: 3.138583
+  type: 'test'
+  ...
+# Subtest: V-E01 F3: modes and internal symlink target bytes are identity-bound
+ok 12 - V-E01 F3: modes and internal symlink target bytes are identity-bound
+  ---
+  duration_ms: 9344.386875
+  type: 'test'
+  ...
+# Subtest: V-E01 F3: recorded PATH node is the binary a child actually runs
+not ok 13 - V-E01 F3: recorded PATH node is the binary a child actually runs
+  ---
+  duration_ms: 3105.5365
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/g03/lab/bin/test/claim-round2.test.mjs:92:1'
+  failureType: 'testCodeFailure'
+  error: 'Unexpected end of JSON input'
+  code: 'ERR_TEST_FAILURE'
+  name: 'SyntaxError'
+  stack: |-
+    JSON.parse (<anonymous>)
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/g03/lab/bin/test/claim-round2.test.mjs:95:18)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Q75b: edits within one build instance fail closed without an instance switch
+ok 14 - Q75b: edits within one build instance fail closed without an instance switch
+  ---
+  duration_ms: 3349.390792
+  type: 'test'
+  ...
+# Subtest: V-E01 F11/Q81a: input delete after final use refuses the run
+ok 15 - V-E01 F11/Q81a: input delete after final use refuses the run
+  ---
+  duration_ms: 4649.687916
+  type: 'test'
+  ...
+# Subtest: V-E01 F11/Q81a: input rewrite after final use refuses the run
+ok 16 - V-E01 F11/Q81a: input rewrite after final use refuses the run
+  ---
+  duration_ms: 3750.27975
+  type: 'test'
+  ...
+# file:///Users/sam/projects/triplex-db-2/.claude/worktrees/g03/lab/bin/test/claim.test.mjs:22
+# import { admitClaim, admitCore, canonText, caseResultVerdict, caseVerdict, coreContext, gitSource, objectStore, openRecord, buildSpecSha256, qualifyClaim, recompute, endChecks, verifyOracleCopy, walkTree, runtimeListing } from '../claim.mjs';
+#                                                                                                                                                                                                    ^^^^^^^^
+# SyntaxError: The requested module '../claim.mjs' does not provide an export named 'walkTree'
+#     at ModuleJob._instantiate (node:internal/modules/esm/module_job:226:21)
+#     at async ModuleJob.run (node:internal/modules/esm/module_job:335:5)
+#     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+#     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+# Node.js v22.23.2
+# Subtest: lab/bin/test/claim.test.mjs
+not ok 2 - lab/bin/test/claim.test.mjs
+  ---
+  duration_ms: 37.976708
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/g03/lab/bin/test/claim.test.mjs:1:1'
+  failureType: 'testCodeFailure'
+  exitCode: 1
+  signal: ~
+  error: 'test failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 15
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 624096.012
