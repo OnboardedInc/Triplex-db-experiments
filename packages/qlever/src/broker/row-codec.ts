@@ -3,7 +3,6 @@
  * Mechanism: R45 5.2 C/D, verified compact rows with verbatim fallback.
  */
 export const rowCodec = String.raw`
-const cols=['id','entity_id','attribute','value_type','value_string','value_number','value_boolean','value_datetime','value_json','recorded_at','recorded_position','valid_from','valid_to','created_by','retracted_at','retracted_position','retract_tx_id','entity_type','schema_version','tx_id'];
 const kinds=['string','number','boolean','datetime','json','ref','integer'];
 const channel=t=>t==='ref'||t==='integer'?'value_string':'value_'+t;
 const alphabet='0123456789ABCDEFGHJKMNPQRSTVWXYZ';

@@ -16,6 +16,22 @@ const Database = createRequire(new URL("../../packages/qlever/package.json", imp
 );
 import { seedCommands, seedOperations, type W0Command } from "./lib/w0-seed.ts";
 import { many, W0, V_W0, canonical } from "./lib/w0-world.ts";
+const artifactHashes = () =>
+  Object.fromEntries(
+    ["core", "qlever", "w0"].flatMap((p) => {
+      const root = path.resolve("packages", p, "dist");
+      return fs
+        .readdirSync(root, { recursive: true })
+        .map((f) => path.join(root, String(f)))
+        .filter((f) => fs.statSync(f).isFile())
+        .sort()
+        .map((f) => [
+          path.relative(process.cwd(), f),
+          createHash("sha256").update(fs.readFileSync(f)).digest("hex"),
+        ]);
+    }),
+  );
+const builds = artifactHashes();
 const out = process.argv[2]!,
   N = Number(process.argv[3]);
 if (!out || ![1000, 10000].includes(N)) throw Error("out N=1000|10000");
@@ -280,6 +296,8 @@ try {
   const logical = pageCount * pageSize;
   const receipt = {
     status,
+    builds,
+    buildsStillMatch: canonical(builds) === canonical(artifactHashes()),
     readBench,
     error,
     N,
@@ -306,6 +324,7 @@ try {
       .update(fs.readFileSync(path.join(out, "position-map.json")))
       .digest("hex"),
   };
+  if (!receipt.buildsStillMatch) process.exitCode = 1;
   fs.writeFileSync(path.join(out, "seed-manifest.json"), JSON.stringify(receipt, null, 2));
   console.log(JSON.stringify(receipt));
 }

@@ -25,6 +25,7 @@ const inputs = () =>
         "lab/bin",
         "lab/acceptance",
         "lab/verify/HS01",
+        "lab/bench",
         "lab/verify/SQL01",
         "lab/verify/P2Q",
         "lab/experiments/EXP-HS01",
@@ -38,6 +39,7 @@ const inputs = () =>
       .filter(
         (f) =>
           !f.includes("/evidence/") &&
+          !f.includes("/data/") &&
           !f.endsWith("REPORT.md") &&
           !f.endsWith("SHA256SUMS") &&
           fs.existsSync(f) &&

@@ -22,7 +22,9 @@ import { FrameKind } from "../../../packages/qlever/src/broker/frame.js";
 import { encodeCommitGroup } from "../../../packages/qlever/src/broker/frames.js";
 import { columns } from "../../../packages/qlever/src/rdf.js";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
-const root = path.resolve("runs/HS01");
+const root = process.env.HS01_RESULT
+  ? path.join(path.dirname(process.env.HS01_RESULT), "stores")
+  : path.resolve("runs/HS01");
 const fresh = () => {
   const dir = path.join(root, randomUUID());
   fs.mkdirSync(dir, { recursive: true });
@@ -59,6 +61,9 @@ const writeStats = () => {
   }
 };
 const client = async (source: string) => {
+  // [EXP-HS01] Why: both stores must observe the same committed_at clock for byte comparison.
+  // Rejected: ignoring frame metadata differences (could conceal a retention regression).
+  source = source.replaceAll("Date.now()", "1790000000000");
   const dir = fresh(),
     worker = new Worker(source, {
       eval: true,

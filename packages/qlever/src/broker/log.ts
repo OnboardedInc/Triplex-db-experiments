@@ -383,9 +383,13 @@ export class HostLog {
         // Rejected: retaining verified payloads for HostBroker (only marker, epochs and LSN headers are needed).
         get frames() {
           const out: LogFrame[] = [];
-          let from = segmentStart(file);
-          while (from.nextLsn < log.nextLsn) {
-            const page = readFramesFrom(file, from, log.nextLsn - 1, 8 * 1024 * 1024);
+          let from = {
+            offset: init.marker.base_end,
+            seed: init.marker.base_crc,
+            nextLsn: init.marker.base_lsn + 1,
+          };
+          while (from.nextLsn <= init.marker.lsn + 1) {
+            const page = readFramesFrom(file, from, init.marker.lsn + 1, 8 * 1024 * 1024);
             if (!page.frames.length) break;
             out.push(...page.frames);
             from = page.next;

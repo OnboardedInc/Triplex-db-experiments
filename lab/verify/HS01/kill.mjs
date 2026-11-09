@@ -3,7 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { spawn } from "node:child_process";
-const root = path.resolve("lab/verify/HS01/data/kill-" + randomUUID());
+const root = process.env.HS01_RESULT
+  ? path.join(path.dirname(process.env.HS01_RESULT), "kill-store-" + randomUUID())
+  : path.resolve("runs/HS01/kill-" + randomUUID());
 const acks = new Map(),
   rounds = [],
   feedSeen = [],
