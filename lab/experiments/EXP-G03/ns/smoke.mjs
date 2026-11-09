@@ -19,12 +19,13 @@ try{
  box=new BoxExecutor({config:base,workDir:out,holder,put});const volume=box.volume('ns-instance');box.seed(volume,instanceFiles);const instance={volume,walk:box.walk(volume,['ns-sut.mjs','provider.mjs'])};
  const otherNet=box.prefix+'other-arm';box.engine('network',['--name',otherNet]);box.resources.push(['network',otherNet]);
  const other=box.create('other-arm',{argv:['node','-e',"require('net').createServer(s=>s.end('other-arm')).listen(9345,'0.0.0.0')"],network:otherNet,memory:67108864});docker(['start',other]);const otherIp=inspect(other).NetworkSettings.Networks[otherNet].IPAddress;
+ box.exec(other,['node','-e',"const s=require('net').connect({host:'127.0.0.1',port:9345});let b='';s.on('data',x=>b+=x);s.on('end',()=>{if(b!=='other-arm')process.exit(2)});s.on('error',()=>process.exit(2));"]);
  const blocked=[{host:otherIp,port:9345},{host:'192.168.5.2',port:canary.address().port},{host:'192.168.5.1',port:canary.address().port},{host:'1.1.1.1',port:443}];
  for(const name of ['tx2-xtdb-dev','tx2-qlever-dev']){const c=inspect(name);if(c)for(const n of Object.values(c.NetworkSettings.Networks))if(n.IPAddress)blocked.push({host:n.IPAddress,port:name.includes('xtdb')?5432:7019})}
  const seed=randomBytes(32),trace=Array.from({length:1000},(_,i)=>({atMs:i*5,command:{id:'offer-'+i,subject:'subject-'+(i%16),value:createHmac('sha256',seed).update(String(i)).digest().readUInt32BE(0)}}));
  const rounds=o.rounds==='1'?[true]:[false,true,true,false];
  for(let i=0;i<rounds.length;i++){
-  const prefix=path.join(out,'round-'+i);const result=await runBoxedNS(box,{instance,bundleFiles,observerFiles:new Map([['observer.py',{mode:'100644',bytes:fs.readFileSync(path.join(import.meta.dirname,'observer.py'))}]]),sourceCommit:source,observe:rounds[i],trace,population:16,readers:4,placement,observerImage,blocked,canary:canary.address().port});
+  const prefix=path.join(out,'round-'+i);const result=await runBoxedNS(box,{instance,bundleFiles,observerFiles:new Map([['observer.py',{mode:'100644',bytes:fs.readFileSync(path.join(import.meta.dirname,'observer.py'))}]]),sourceCommit:source,generatorSeed:seed.toString('hex'),observe:rounds[i],trace,population:16,readers:4,placement,observerImage,blocked,canary:canary.address().port});
   fs.writeFileSync(prefix+'.json',JSON.stringify(result),{flag:'wx',mode:0o600});attempts.push(result);
   events.push({round:i,observer:rounds[i],result:result.semantic});
   // Per-run volumes are not reused across rounds, including frozen inputs and output chunks.

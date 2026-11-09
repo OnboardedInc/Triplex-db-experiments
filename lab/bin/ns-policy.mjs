@@ -31,3 +31,7 @@ export function layoutProblems(roles,privateVolumes){
  if(drv&&(drv.inspect.Mounts??[]).some(m=>m.RW&&m.Name!==privateVolumes.output))problems.push('driver writable mount');
  return problems;
 }
+// [EXP-G03-R5] Why: omissions or a stale preflight row cannot stand in for observed denials. Rejected: a successful probe exit without exact target coverage.
+export function checkNsPreflight(doc,{runId,role,denied,blocked}){
+ if(doc?.runId!==runId||doc.role!==role||doc.positive!==true||doc.publicDns!==false||JSON.stringify(doc.denied)!==JSON.stringify(denied)||JSON.stringify(doc.blocked)!==JSON.stringify(blocked.map(p=>({...p,reachable:false}))))throw Error('ISOLATION-NOT-IN-FORCE: incomplete/stale NS preflight');return doc;
+}

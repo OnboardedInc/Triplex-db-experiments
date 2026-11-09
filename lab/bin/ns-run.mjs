@@ -1,23 +1,26 @@
 // [EXP-G03-R5] Why: stage each NS role separately and export bytes only after proven removal. Rejected: a monolithic Mac bench, shared writable state or acceptance from self-reported metrics.
 import fs from 'node:fs';import path from 'node:path';import {spawnSync} from 'node:child_process';import {randomBytes,createHmac} from 'node:crypto';
 import {docker,dockerArgs,inspect,sha256} from './lib.mjs';import {canonicalAnswer} from '../bench/ns-driver/answer.mjs';
-import {sameClock,layoutProblems,VM_DURABILITY} from './ns-policy.mjs';
+import {sameClock,layoutProblems,checkNsPreflight,VM_DURABILITY} from './ns-policy.mjs';
+export function seedRpcScript(endpoint,runId,population){
+return `const net=require('net');const s=net.connect(${JSON.stringify(endpoint)},()=>s.end(JSON.stringify({schema:'ns-sut/1',runId:${JSON.stringify(runId)},id:'seed',method:'commit',params:{command:{kind:'seed',population:${population}}}})+String.fromCharCode(10)));let b='';s.on('data',x=>b+=x);s.on('end',()=>{const v=JSON.parse(b);if(!v.ok||v.result.seeded!==${population})process.exit(2);console.log(b)});s.on('error',()=>process.exit(2));`;
+}
 export function verifyHr(files,key,binding){
  const seal=JSON.parse(files.get('events/seal.json')),chunks=[...files.keys()].filter(n=>/^events\/\d{8}\.json$/.test(n)).sort();let head='0'.repeat(64),events=[];
  if(!chunks.length||chunks.length!==seal.chunks||JSON.stringify(seal.binding)!==JSON.stringify(binding))throw Error('driver seal binding/count');
  for(let i=0;i<chunks.length;i++){const row=JSON.parse(files.get(chunks[i])),{hmac,...body}=row;
-  if(row.sequence!==i||row.previous!==head||JSON.stringify(row.binding)!==JSON.stringify(binding)||createHmac('sha256',key).update(JSON.stringify(body)).digest('hex')!==hmac)throw Error('driver chunk content/binding');head=hmac;events.push(...row.events);}
+  if(row.schema!=='ns-hr/1'||row.sequence!==i||row.previous!==head||JSON.stringify(row.binding)!==JSON.stringify(binding)||createHmac('sha256',key).update(JSON.stringify(body)).digest('hex')!==hmac)throw Error('driver chunk content/binding');head=hmac;events.push(...row.events);}
  if(head!==seal.head||events.filter(e=>e.kind==='end').length!==1||events.at(-1).kind!=='end'||events.at(-1).data.error!==null)throw Error('driver end/seal');
  return events;
 }
 export function verifyObserver(files,key,runId){const seal=JSON.parse(files.get('seal.json'));let head='0'.repeat(64),seq=0;const polls=[];
- for(const line of files.get('polls.ndjson').toString().trim().split('\n')){const row=JSON.parse(line),body=JSON.parse(row.raw);if(body.runId!==runId||body.sequence!==seq++||body.previous!==head||createHmac('sha256',key).update(row.raw).digest('hex')!==row.hmac)throw Error('observer content/binding');head=row.hmac;polls.push(...body.polls)}
+ for(const line of files.get('polls.ndjson').toString().trim().split('\n')){const row=JSON.parse(line),body=JSON.parse(row.raw);if(body.schema!=='ns-observer/1'||body.runId!==runId||body.sequence!==seq++||body.previous!==head||createHmac('sha256',key).update(row.raw).digest('hex')!==row.hmac)throw Error('observer content/binding');head=row.hmac;polls.push(...body.polls)}
  if(seal.runId!==runId||seq<1||seal.chunks!==seq||seal.head!==head)throw Error('observer seal');return {seal,polls};
 }
 export function checkSmoke(events,observer,trace,population,binding){
  const offers=events.filter(e=>e.kind==='offer');if(offers.length!==trace.length)throw Error('offer coverage');
  for(let i=0;i<trace.length;i++){const o=offers[i].data;if(JSON.stringify(o.command)!==JSON.stringify(trace[i].command)||o.response.status!=='committed'||o.response.receipt.position!==String(i+1))throw Error('offer bytes/receipt');}
- if(events.some(e=>e.kind==='driver-runtime'&&(!e.data.permissionModel||e.data.childPermission||e.data.workerPermission)))throw Error('driver permissions');
+ if(events.filter(e=>e.kind==='driver-runtime').length!==1||events.some(e=>e.kind==='driver-runtime'&&(!e.data.permissionModel||e.data.childPermission||e.data.workerPermission||e.data.bundleSha256!==binding.driverBundleSha256)))throw Error('driver permissions');
  const reads=events.filter(e=>['read','ryow','p4','sweep'].includes(e.kind));if(!reads.length)throw Error('no read observations');
  for(const {data:d}of reads){const r=d.request;let value=0;for(let i=0;i<Math.min(Number(r.basis),trace.length);i++)if(trace[i].command.subject===r.subject)value=trace[i].command.value;const expectedAnswer={subject:r.subject,value,basis:r.basis};if(sha256(Buffer.from(canonicalAnswer(expectedAnswer)))!==d.answerSha256)throw Error('named-cut read content');}
  const expected=new Map(Array.from({length:population},(_,i)=>['subject-'+i,0]));for(const o of trace)expected.set(o.command.subject,o.command.value);
@@ -29,8 +32,8 @@ export function checkSmoke(events,observer,trace,population,binding){
  return {status:'DIAGNOSTIC',qualification:false,runId:binding.runId,offers:offers.length,observedSource:actual.source.marker,observedConsumer:actual.consumer.marker,durabilityClass:VM_DURABILITY};
 }
 const filesOf=walk=>new Map(walk.modules.map(m=>[m.path,Buffer.from(m.base64,'base64')]));
-export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceCommit,observe=true,population=16,trace,readers=4,placement,observerImage,blocked=[],canary,isolations=true}){
- if(!/^[a-f0-9]{40}$/.test(sourceCommit)||!Array.isArray(trace)||!trace.length)throw Error('NS source/trace identity missing');
+export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceCommit,generatorSeed,observe=true,population=16,trace,readers=4,placement,observerImage,blocked=[],canary,isolations=true}){
+ if(!/^[a-f0-9]{64}$/.test(generatorSeed??'')||!/^[a-f0-9]{40}$/.test(sourceCommit)||!Array.isArray(trace)||!trace.length)throw Error('NS source/trace identity missing');
  const runId=randomBytes(16).toString('hex'),key=randomBytes(32),stages=[],volumes={},roles=[],names=[];
  const stage=(step,detail)=>{const row={step,detail,at:new Date().toISOString()};stages.push(row);fs.appendFileSync(path.join(box.workDir,'ns-'+runId+'-stages.ndjson'),JSON.stringify(row)+'\n',{flag:'a',mode:0o600})};stage(1,{sourceCommit,runId,diagnostic:true});
  // [EXP-G03-R5] Why: Docker copies /work ownership to a fresh named volume before mounting it at /state or /out. Rejected: root-owned empty mountpoints that deny uid 10001.
@@ -40,7 +43,8 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
  for(const k of ['broker','consumer','output','observer','trace','key','bundle','observerCode','control'])alloc(k);
  box.seed(volumes.bundle,bundleFiles);seed(volumes.key,{'key':key});
  // Q103a: neither trace nor seed is ever copied into candidate input files or the candidate instance volume.
- const binding={runId,sourceSha256:sourceCommit,inputsSha256:sha256(Buffer.from(JSON.stringify({trace,population,readers}))),slot:'in-memory-smoke',durabilityClass:VM_DURABILITY};
+ const driverManifest=JSON.parse(bundleFiles.get('manifest.json').bytes);
+ const binding={runId,sourceCommit,evaluatorCommit:sourceCommit,sourceSha256:sha256(Buffer.from(JSON.stringify(instance.walk.entries))),driverBundleSha256:driverManifest.bundleSha256,inputsSha256:sha256(Buffer.from(JSON.stringify({trace,population,readers,generatorSeed}))),slot:'in-memory-smoke',durabilityClass:VM_DURABILITY};
  stage(2,{instance:instance.volume,listing:instance.walk.entries});stage(3,{network,observerImage});stage(4,{volumes});
  const ports={broker:9101,readers:9102,consumer:9103};
  for(const role of ['broker','readers','consumer']){
@@ -51,7 +55,7 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
   const ip=inspect(service.name).NetworkSettings.Networks[network].IPAddress;roles.push({...service,ip});names.push(service.name);
  }
  const endpoints=Object.fromEntries(roles.map(r=>[r.role,{host:r.ip,port:ports[r.role]}]));
- const config={offline:true,runtimeParent:'/tmp/nsr',binding,keyFile:'/key/key',output:'/out/events',endpoints,trace,generatorSeed:randomBytes(32).toString('hex'),readers,readRequests:[{subject:'subject-0',basis:'0'}],pulls:[{subject:'subject-0',basis:String(trace.length)}]};seed(volumes.trace,{'config.json':config});
+ const config={offline:true,runtimeParent:'/tmp/nsr',binding,keyFile:'/key/key',output:'/out/events',endpoints,trace,generatorSeed,readers,readRequests:[{subject:'subject-0',basis:'0'}],pulls:[{subject:'subject-0',basis:String(trace.length)}]};seed(volumes.trace,{'config.json':config});
  const drv=box.driver('ns-driver-'+runId.slice(0,6),{bundle:volumes.bundle,inputs:volumes.trace,key:volumes.key,output:volumes.output,network,...(placement?{placement:placement.driver}:{})});roles.push(drv);
  const observerConfig=Buffer.from(JSON.stringify({runId,active:observe}));observerFiles=new Map(observerFiles);observerFiles.set('config.json',{bytes:observerConfig,mode:'100644'});observerFiles.set('key',{bytes:key,mode:'100644'});box.seed(volumes.observerCode,observerFiles);
  const obs=box.create('ns-observer-'+runId.slice(0,6),{image:observerImage,argv:['python3','/observer/observer.py'],mounts:[{name:volumes.observerCode,target:'/observer',rw:false},{name:volumes.broker,target:'/source',rw:false},{name:volumes.consumer,target:'/consumer',rw:false},{name:volumes.observer,target:'/out',rw:true},{name:volumes.control,target:'/control',rw:false}],network:'none',memory:placement?.observer.memory??268435456,cpuset:'5',extra:['--cgroupns','host','-v','/sys/fs/cgroup:/sys/fs/cgroup:ro'],trusted:true});docker(['start',obs]);roles.push({role:'observer',name:obs});
@@ -73,13 +77,14 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
  const tests=[];
  if(isolations){
   for(const role of roles.filter(r=>['broker','readers','consumer'].includes(r.role))){
-   const isolation=`const fs=require('fs'),cp=require('child_process'),net=require('net');const denied=${JSON.stringify(['/out/events','/driver-in/config.json','/key/key','/driver/driver.mjs','/observer','/source/broker.db','/consumer/consumer.db','/lab/oracles','/work/lab/oracles','/work/lab/bench/lib/trace.ts'])};for(const p of denied){try{fs.readFileSync(p);throw Error('readable '+p)}catch(e){if(!['ENOENT','EACCES','EISDIR'].includes(e.code))throw e;if(e.code==='EISDIR')throw Error('mounted '+p)}}if(cp.spawnSync('sh',['-c','command -v python3']).status===0)throw Error('python present');(async()=>{try{await require('dns').promises.resolve4('example.com');throw Error('public DNS')}catch(e){if(e.message==='public DNS')throw e}const positive=await new Promise(r=>{const s=net.connect(${JSON.stringify(endpoints.broker)},()=>{s.destroy();r(true)});s.setTimeout(500,()=>{s.destroy();r(false)});s.on('error',()=>r(false))});if(!positive)throw Error('positive broker route missing');for(const p of ${JSON.stringify(blocked)}){const yes=await new Promise(r=>{const s=net.connect(p,()=>{s.destroy();r(true)});s.setTimeout(200,()=>{s.destroy();r(false)});s.on('error',()=>r(false))});if(yes)throw Error('reachable forbidden peer')}console.log(JSON.stringify({runId:${JSON.stringify(runId)},role:${JSON.stringify(role.role)},denied}))})().catch(e=>{console.error(e);process.exit(2)})`;
-   tests.push(JSON.parse(box.exec(role.name,['node','-e',isolation])));
+   const denied=['/out/events','/driver-in/config.json','/key/key','/driver/driver.mjs','/observer','/source/broker.db','/consumer/consumer.db','/lab/oracles','/work/lab/oracles','/work/lab/bench/lib/trace.ts'];
+   const isolation=`const fs=require('fs'),cp=require('child_process'),net=require('net');const denied=${JSON.stringify(denied)};for(const p of denied){try{fs.readFileSync(p);throw Error('readable '+p)}catch(e){if(!['ENOENT','EACCES','EISDIR'].includes(e.code))throw e;if(e.code==='EISDIR')throw Error('mounted '+p)}}if(cp.spawnSync('sh',['-c','command -v python3']).status===0)throw Error('python present');(async()=>{try{await require('dns').promises.resolve4('example.com');throw Error('public DNS')}catch(e){if(e.message==='public DNS')throw e}const positive=await new Promise(r=>{const s=net.connect(${JSON.stringify(endpoints.broker)},()=>{s.destroy();r(true)});s.setTimeout(500,()=>{s.destroy();r(false)});s.on('error',()=>r(false))});if(!positive)throw Error('positive broker route missing');const checks=[];for(const p of ${JSON.stringify(blocked)}){const yes=await new Promise(r=>{const s=net.connect(p,()=>{s.destroy();r(true)});s.setTimeout(200,()=>{s.destroy();r(false)});s.on('error',()=>r(false))});checks.push({...p,reachable:yes});if(yes)throw Error('reachable forbidden peer')}console.log(JSON.stringify({runId:${JSON.stringify(runId)},role:${JSON.stringify(role.role)},denied,positive:true,publicDns:false,blocked:checks}))})().catch(e=>{console.error(e);process.exit(2)})`;
+   tests.push(checkNsPreflight(JSON.parse(box.exec(role.name,['node','-e',isolation])),{runId,role:role.role,denied,blocked}));
   }
  }
  stage(6,{facts,tests,pingP99Ns,pingRaw:pingValues,inspectDigests:inspections.map(r=>[r.role,box.put(Buffer.from(JSON.stringify(r.inspect)))])});
  // Seeding is an evaluator-controlled RPC, separate from (and not readable as) the frozen driver trace.
- const rpcScript=`const net=require('net');const s=net.connect(${JSON.stringify(endpoints.broker)},()=>s.end(JSON.stringify({schema:'ns-sut/1',runId:${JSON.stringify(runId)},id:'seed',method:'commit',params:{command:{kind:'seed',population:${population}}}})+'\n'));let b='';s.on('data',x=>b+=x);s.on('end',()=>{const v=JSON.parse(b);if(!v.ok||v.result.seeded!==${population})process.exit(2);console.log(b)});s.on('error',()=>process.exit(2));`;
+ const rpcScript=seedRpcScript(endpoints.broker,runId,population);
  helper('seed',['node','-e',rpcScript]);
  const fingerprint=JSON.parse(helper('seed-readback',['python3','-c',"import sqlite3,json; c=sqlite3.connect('file:/source/broker.db?mode=ro',uri=True); print(json.dumps(c.execute('SELECT subject,value FROM subjects ORDER BY subject').fetchall()))"],{mounts:[{name:volumes.broker,target:'/source',rw:false}],net:'none',image:observerImage}));
  const expected=Array.from({length:population},(_,i)=>['subject-'+i,0]).sort(([a],[b])=>a<b?-1:1);if(JSON.stringify(fingerprint)!==JSON.stringify(expected))throw Error('SEED-MISMATCH');stage(7,{fingerprint:sha256(Buffer.from(JSON.stringify(fingerprint))),population});
