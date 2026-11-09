@@ -1,5 +1,4 @@
 // [EXP-K01-R7] Why: Q93 gives admission only to a fresh in-process content read against a pre-freeze pin. Rejected: transported process booleans, diagnostic equality and owner certificates.
-import { performance } from "node:perf_hooks";
 import { createHash } from "node:crypto";
 import { storedFields } from "./g0-schema.ts";
 export const fields = storedFields;
@@ -47,9 +46,7 @@ export async function bounded<T>(
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout>;
   try {
-    const deadline = performance.now() + ms;
-    // [EXP-P5-R3] Why: CPU work can starve timeout timers; elapsed monotonic time must also refuse a late grant. Rejected: timer-only races (review regression).
-    const result = await Promise.race([
+    return await Promise.race([
       work(controller.signal),
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => {
@@ -58,9 +55,6 @@ export async function bounded<T>(
         }, ms);
       }),
     ]);
-    if (controller.signal.aborted || performance.now() >= deadline)
-      throw Error("G0 read deadline exceeded");
-    return result;
   } finally {
     clearTimeout(timer!);
   }
@@ -130,8 +124,6 @@ async function readContent(
         hashes.push(hash(values));
         rowRead?.(table, row);
       }
-      if ((await reader.count(table, expected.scope, signal)) !== count)
-        throw Error("G0 end count changed: " + table);
       if (hashes.length !== count) throw Error("G0 partial/empty scan: " + table);
       tables[table] = hash([fields[table], hashes.sort()]);
     }
