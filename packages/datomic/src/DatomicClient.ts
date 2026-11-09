@@ -2,6 +2,7 @@ import { validateFeedEntry, type FeedTransaction } from "@triplex-build/triplex/
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { encodeRow, decodeRow, type WireRow } from "./protocol.js";
+import { encodeRowText } from "./rowText.js";
 import http from "node:http";
 import { stringifyExact, validateTagged, type TaggedValue } from "./codec.js";
 
@@ -50,6 +51,7 @@ export interface DatomicLogPage {
 // [EXP-DA00] Why: 256 readers plus writers must not queue on the HTTP agent (R16). Rejected: default pool limits.
 export class DatomicClient {
   readonly agent: http.Agent;
+  readonly reachDiagnostics = { faults: 0, declines: {} as Record<string, number> };
   private readonly endpoint: URL;
   constructor(
     endpoint: string,
@@ -180,6 +182,7 @@ export class DatomicClient {
     return this.request("POST", `/v1/db/${db}/transact`, {
       ...input,
       rows: input.rows.map(encodeRow),
+      rowTexts: Object.fromEntries(input.rows.filter(r => input.newIds.includes(r.id) && r.retracted_at === null).map(r => [r.id, encodeRowText(r)])),
     });
   }
   operation(db: string, operationId: string): Promise<{ status: "committed" | "absent" }> {

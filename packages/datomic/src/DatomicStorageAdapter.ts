@@ -1,4 +1,5 @@
 // [EXP-DA01] Why: adapt XTDB staged SPI and savepoint/replay discipline to one Datomic transaction. Rejected: per-row commits (break atomicity).
+import { reachResponse } from "./reach.js";
 import { readFailure } from "./readErrors.js";
 import { randomUUID } from "node:crypto";
 import { Effect, Exit, Semaphore } from "effect";
@@ -325,6 +326,22 @@ export const makeDatomicStorageAdapter = (
       "blob",
     ],
     withTransaction,
+    atomicReach: true,
+    getReachTriples: (root, basis) => Effect.gen(function* () {
+      if (yield* current) return undefined;
+      const response = yield* read(() => client.request<{ declined?: string; position: number; t: string; rows: unknown[]; entities: number; visited: string[] }>("POST", `/v2/db/${db}/reach`, { root, basis }));
+      if (response.declined !== undefined) {
+        client.reachDiagnostics.declines[response.declined] = (client.reachDiagnostics.declines[response.declined] ?? 0) + 1;
+        return undefined;
+      }
+      return yield* Effect.try({ try: () => {
+        if (!Number.isSafeInteger(response.position) || response.position < 0 || !/^\d+$/.test(response.t) ||
+            (basis.recordedPosition !== undefined && response.position !== basis.recordedPosition)) throw new Error("Fast reach basis mismatch");
+        return reachResponse(root, response);
+      }, catch: () => { client.reachDiagnostics.faults++; return undefined; } }).pipe(
+        Effect.matchEffect({ onFailure: () => Effect.succeed(undefined), onSuccess: effect => effect }),
+      );
+    }),
     nextCommitPosition: () =>
       Effect.flatMap(requireTransaction, (state) =>
         Effect.try({

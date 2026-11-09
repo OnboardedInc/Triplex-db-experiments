@@ -2,6 +2,8 @@
   (:require [datomic.api :as d] [triplex.gateway.codec :as codec])
   (:import [java.util UUID]))
 
+(set! *warn-on-reflection* true)
+
 ;; [EXP-DA01] Why: hold an unfiltered immutable db for speculative reads. Rejected: d/with on as-of (filtered db unsupported).
 (def snapshots (atom {}))
 (def ttl-ms 120000)
@@ -59,6 +61,45 @@
            (when (:valid_to row) {:f/valid-to (finite! (:valid_to row))})
            (when (:created_by row) {:f/created-by (:created_by row)})
            (when (:entity_type row) {:f/entity-type (:entity_type row)}) value)))
+ ;; [EXP-DX1] Why: live row datoms are exact write-time wire values. Rejected: rebuilding values on every pull.
+(defn row-prefix [^String id] (str "1" (format "%04x" (.length id)) id))
+(defn row-datom [db eid ^String prefix]
+  (let [datom (first (d/seek-datoms db :eavt eid :triplex.entity/row prefix))]
+    (when (and datom (= eid (:e datom)) (= (d/entid db :triplex.entity/row) (:a datom))
+               (.startsWith ^String (:v datom) prefix)) (:v datom))))
+(defn row-updates [db rows new-ids texts scope source]
+  (let [out (java.util.ArrayList.) times (java.util.ArrayList.) prior (:triplex.scope/max-recorded-at (d/entity db scope))
+        irregular (volatile! false)]
+    (doseq [row rows]
+      (let [fresh (contains? new-ids (:id row)) stamp (if fresh (:recorded_at row) (:retracted_at row))]
+        (when fresh
+          (.add times (double (:recorded_at row)))
+          (when (<= (:recorded_position row) source) (vreset! irregular true)))
+        (when (some? (:retracted_at row))
+          (.add times (double (:retracted_at row)))
+          (when (<= (:retracted_position row) source) (vreset! irregular true)))
+        (if fresh
+          (when (nil? (:retracted_at row))
+            (let [text (get texts (:id row)) prefix (row-prefix (:id row))]
+              (when-not (and (string? text) (.startsWith ^String text prefix)) (codec/invalid "Missing or mismatched row text"))
+              (.add out (if (or (> (.length ^String text) 8000) (and (= "ref" (:value_type row)) (= "" (:value_string row))))
+                          [:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]
+                          [:db/add (str "e:" (:entity_id row)) :triplex.entity/row text]))))
+          (let [eid (d/entid db [:triplex.entity/id (:entity_id row)]) text (row-datom db eid (row-prefix (:id row)))]
+            (when (and (= 1 (:triplex.scope/rows-version (d/entity db scope)))
+                       (not (:triplex.entity/row-overflow (d/entity db eid))) (nil? text))
+              (codec/invalid "Missing live row datom"))
+            (when text (.add out [:db/retract eid :triplex.entity/row text]))))))
+    (when (pos? (.size times))
+      (let [first-time (double (.get times 0)) maximum (volatile! (double (or prior first-time)))]
+        (doseq [time times]
+          (let [v (double time)]
+            (when (or (not= v first-time) (and prior (< v (double prior)))) (vreset! irregular true))
+            (vswap! maximum max v)))
+        (.add out [:db/add scope :triplex.scope/max-recorded-at @maximum])
+        (.add out [:db/add "datomic.tx" :triplex.tx/max-recorded-at @maximum])))
+    (when @irregular (.add out [:db/add scope :triplex.scope/irregular true]))
+    out))
 (defn tx-data [db input]
   (let [rows (mapv decode-row (get input "rows")) new-ids (set (get input "newIds"))
         fresh (filter #(new-ids (:id %)) rows) old (remove #(new-ids (:id %)) rows)
@@ -78,6 +119,7 @@
                    :triplex.tx/operation-id (get input "operationId")
                    :triplex.tx/id (or (:id metadata) "") :triplex.tx/recorded-at (finite! (:recorded-at metadata))}]
                  (upserts fresh) (map #(fact-map % metadata) fresh)
+                 (row-updates db rows new-ids (get input "rowTexts") scope source)
                  (mapcat (fn [row]
                            (let [eid (d/entid db [:f/id (:id row)]) entity (when eid (d/entity db eid))]
                              (when-not (and eid (:f/live entity) (:retracted_at row)) (codec/invalid "Invalid retraction"))

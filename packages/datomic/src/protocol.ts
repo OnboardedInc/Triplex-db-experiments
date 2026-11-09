@@ -1,3 +1,4 @@
+import { encodeRowText } from "./rowText.js";
 import { randomUUID } from "node:crypto";
 import type { TransactionState } from "./TransactionContext.js";
 import {
@@ -51,5 +52,6 @@ export const stagedInput = (state: TransactionState) => ({
   attemptId: randomUUID(),
   rows: [...state.rows.values()].map(encodeRow),
   newIds: [...state.newIds],
+  rowTexts: Object.fromEntries([...state.rows.values()].filter(r => state.newIds.has(r.id) && r.retracted_at === null).map(r => [r.id, encodeRowText(r)])),
   claims: [...state.claims.values()],
 });

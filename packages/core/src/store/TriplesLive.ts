@@ -569,10 +569,16 @@ const makeTriplesServices = Effect.gen(function* () {
     const reach: TriplesService["reach"] = (root, basis) =>
       Effect.gen(function* () {
         const resolvedNow = resolveTemporalBasis(basis, yield* now);
+        // [EXP-DX1] Why: atomic adapters choose their immutable cut in the pull request.
+        // Rejected: unconditional preflight (turns a one-call pull into two).
+        if (adapter.atomicReach && adapter.getReachTriples) {
+          const direct = yield* adapter.getReachTriples(root, resolvedNow);
+          if (direct) return direct;
+        }
         const pinned = yield* (adapter.pullPosition?.() ?? Effect.succeed(undefined));
         const resolved: ResolvedTemporalBasis =
-          pinned === undefined ? resolvedNow : { ...resolvedNow, recordedPosition: pinned };
-        const direct = yield* (adapter.getReachTriples?.(root, resolved) ?? Effect.succeed(undefined));
+          pinned === undefined || resolvedNow.recordedPosition !== undefined ? resolvedNow : { ...resolvedNow, recordedPosition: pinned };
+        const direct = yield* (!adapter.atomicReach ? (adapter.getReachTriples?.(root, resolved) ?? Effect.succeed(undefined)) : Effect.succeed(undefined));
         if (direct) return direct;
         return yield* reachBy((ids) => entitiesAt(ids as readonly EntityId[], resolved), root);
       });

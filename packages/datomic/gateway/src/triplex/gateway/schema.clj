@@ -1,13 +1,21 @@
 (ns triplex.gateway.schema
   (:import [java.security MessageDigest] [java.util HexFormat]))
 
+(set! *warn-on-reflection* true)
+
 ;; [EXP-DA00] Why: fixed R29 4.2 schema makes attributes data. Rejected: dynamic per-world Datomic schema (runtime migration coupling).
-(defn sha256 [text] (.formatHex (HexFormat/of) (.digest (MessageDigest/getInstance "SHA-256") (.getBytes text "UTF-8"))))
+(defn sha256 [^String text] (.formatHex (HexFormat/of) (.digest (MessageDigest/getInstance "SHA-256") (.getBytes text "UTF-8"))))
 (defn attr [ident type & [unique indexed]]
   (cond-> {:db/ident ident :db/valueType type :db/cardinality :db.cardinality/one}
     unique (assoc :db/unique unique) indexed (assoc :db/index true)))
 (def schema
-  [(attr :triplex.scope/bootstrap :db.type/string :db.unique/value)
+  [(assoc (attr :triplex.entity/row :db.type/string) :db/cardinality :db.cardinality/many)
+   (attr :triplex.scope/rows-version :db.type/long)
+   (attr :triplex.scope/irregular :db.type/boolean)
+   (attr :triplex.scope/max-recorded-at :db.type/double)
+   (attr :triplex.tx/max-recorded-at :db.type/double nil true)
+   (attr :triplex.entity/row-overflow :db.type/boolean)
+   (attr :triplex.scope/bootstrap :db.type/string :db.unique/value)
    (attr :triplex.scope/key :db.type/string :db.unique/identity)
    (attr :triplex.scope/position :db.type/long)
    (attr :triplex.scope/schema-hash :db.type/string)

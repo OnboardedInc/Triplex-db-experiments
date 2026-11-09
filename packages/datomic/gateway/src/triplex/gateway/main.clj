@@ -1,7 +1,9 @@
 (ns triplex.gateway.main
   (:require [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
-            [triplex.gateway.feed :as feed] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
+            [triplex.gateway.feed :as feed] [triplex.gateway.reach :as reach] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
   (:gen-class))
+
+(set! *warn-on-reflection* true)
 
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
 (def base-uri (or (System/getenv "DATOMIC_BASE_URI") "datomic:dev://127.0.0.1:4334/"))
@@ -19,7 +21,7 @@
   (try
     @(d/transact (connection uri)
        [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
-        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/schema-hash schema/schema-hash}])
+        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/rows-version 1 :triplex.scope/schema-hash schema/schema-hash}])
     (catch Exception e
       (let [current (sync-db uri)]
         (assert-scope current scope)
@@ -40,6 +42,7 @@
     (when (some #{name} (d/get-database-names (str base "*"))) (assert-scope (sync-db uri) scope))
     ;; [EXP-DA00] Why: releasing the last mem peer may destroy it before delete. Rejected: release-first (selftest-3 returned false).
     (let [deleted (d/delete-database uri)]
+      (.clear ^java.util.concurrent.ConcurrentHashMap reach/ids)
       (when-let [conn (@connections uri)] (d/release conn) (swap! connections dissoc uri))
         {:db name :deleted deleted})))
 (defn basis [base name]
@@ -71,9 +74,14 @@
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/log" uri))
       (let [name (nth (clojure.string/split uri #"/") 3)
             params (into {} (map (fn [part] (let [[k v] (clojure.string/split part #"=" 2)]
-                                             [k (java.net.URLDecoder/decode (or v "") "UTF-8")]))
+                                             (let [^String encoded (or v "")] [k (java.net.URLDecoder/decode encoded "UTF-8")])))
                                   (remove empty? (clojure.string/split (or query-string "") #"&"))))]
         (response 200 (assoc (feed/log-page (connection (str base-uri name)) params) :database name)))
+      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/reach" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)
+            db (sync-db (str base-uri name))]
+        {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
+         :body (reach/response name db input)})
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (str base-uri name)
             input (when (= request-method :post) (request-json body))

@@ -6,6 +6,7 @@
  * their optimal primitives.
  */
 
+import { reachBy } from "../store/reach.js";
 import { Context, Effect } from "effect";
 import type { TripleInput, TripleRow, QueryPattern } from "./types.js";
 import type { ResolvedTemporalBasis } from "../Temporal.js";
@@ -40,6 +41,9 @@ export interface StorageAdapterService {
   // inside one, reads already use the transaction's snapshot and must still see its staged writes, which an explicit committed position
   // would hide (QLever, A0 staged K+n). undefined from the method means "do not pin"; an absent method means the same.
   // Rejected: always using currentCommitPosition (hides staged rows on adapters whose position is the pre-transaction one).
+  // [EXP-DX1] Why: an atomic whole-pull adapter pins its own db in the single request.
+  // Rejected: a separate position HTTP request before every atomic pull.
+  readonly atomicReach?: boolean;
   readonly pullPosition?: () => Effect.Effect<number | undefined, ReadError>;
   /** Optional exact-snapshot policy, propagated to public repository reads. */
   readonly snapshotReadPolicy?: import("./ReadSurface.js").SnapshotReadPolicy;
@@ -132,4 +136,8 @@ export const isSqlStorageAdapter = (
  */
 export class StorageAdapter extends Context.Service<StorageAdapter, StorageAdapterService>()(
   "StorageAdapter",
-) {}
+) {
+  // [EXP-DX1] Why: adapters reorder prefetches with the identical portable BFS.
+  // Rejected: a second traversal implementation with drifting result order.
+  static readonly reachBy = reachBy;
+}
