@@ -1,0 +1,307 @@
+[
+    {
+        "Id": "153875a537aa083d4b6f2ac3cd45a18be5cabb6999a270b4f9dffb85308cc605",
+        "Created": "2026-11-09T09:39:50.421477352Z",
+        "Path": "/bin/bash",
+        "Args": [
+            "/config/entrypoint.sh"
+        ],
+        "State": {
+            "Status": "running",
+            "Running": true,
+            "Paused": false,
+            "Restarting": false,
+            "OOMKilled": false,
+            "Dead": false,
+            "Pid": 989678,
+            "ExitCode": 0,
+            "Error": "",
+            "StartedAt": "2026-11-09T09:39:50.526552574Z",
+            "FinishedAt": "0001-01-01T00:00:00Z",
+            "Health": {
+                "Status": "healthy",
+                "FailingStreak": 0,
+                "Log": [
+                    {
+                        "Start": "2026-11-09T04:40:21.227312512-05:00",
+                        "End": "2026-11-09T04:40:21.273323122-05:00",
+                        "ExitCode": 1,
+                        "Output": "bash: connect: Connection refused\nbash: line 1: /dev/tcp/127.0.0.1/8080: Connection refused\nbash: line 1: 3: Bad file descriptor\nbash: line 1: 3: Bad file descriptor\n"
+                    },
+                    {
+                        "Start": "2026-11-09T04:40:26.156248433-05:00",
+                        "End": "2026-11-09T04:40:26.278124847-05:00",
+                        "ExitCode": 0,
+                        "Output": ""
+                    },
+                    {
+                        "Start": "2026-11-09T04:40:31.285383764-05:00",
+                        "End": "2026-11-09T04:40:31.449946137-05:00",
+                        "ExitCode": 0,
+                        "Output": ""
+                    },
+                    {
+                        "Start": "2026-11-09T04:40:36.459291263-05:00",
+                        "End": "2026-11-09T04:40:36.551844036-05:00",
+                        "ExitCode": 0,
+                        "Output": ""
+                    },
+                    {
+                        "Start": "2026-11-09T04:40:41.553752601-05:00",
+                        "End": "2026-11-09T04:40:41.627081111-05:00",
+                        "ExitCode": 0,
+                        "Output": ""
+                    }
+                ]
+            }
+        },
+        "Image": "sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf",
+        "ResolvConfPath": "/var/lib/docker/containers/153875a537aa083d4b6f2ac3cd45a18be5cabb6999a270b4f9dffb85308cc605/resolv.conf",
+        "HostnamePath": "/var/lib/docker/containers/153875a537aa083d4b6f2ac3cd45a18be5cabb6999a270b4f9dffb85308cc605/hostname",
+        "HostsPath": "/var/lib/docker/containers/153875a537aa083d4b6f2ac3cd45a18be5cabb6999a270b4f9dffb85308cc605/hosts",
+        "LogPath": "/var/lib/docker/containers/153875a537aa083d4b6f2ac3cd45a18be5cabb6999a270b4f9dffb85308cc605/153875a537aa083d4b6f2ac3cd45a18be5cabb6999a270b4f9dffb85308cc605-json.log",
+        "Name": "/tx2-datomic-dev",
+        "RestartCount": 0,
+        "Driver": "overlayfs",
+        "Platform": "linux",
+        "MountLabel": "",
+        "ProcessLabel": "",
+        "AppArmorProfile": "docker-default",
+        "ExecIDs": null,
+        "HostConfig": {
+            "Binds": [
+                "tx2-datomic-dev-data:/data",
+                "/Users/sam/projects/triplex-db-2/runs/engines/datomic-dev/transactor.properties:/config/transactor.properties:ro",
+                "/Users/sam/projects/triplex-db-2/runs/engines/datomic-dev/entrypoint.sh:/config/entrypoint.sh:ro"
+            ],
+            "ContainerIDFile": "",
+            "LogConfig": {
+                "Type": "json-file",
+                "Config": {}
+            },
+            "NetworkMode": "bridge",
+            "PortBindings": {
+                "8080/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "8470"
+                    }
+                ]
+            },
+            "RestartPolicy": {
+                "Name": "no",
+                "MaximumRetryCount": 0
+            },
+            "AutoRemove": false,
+            "VolumeDriver": "",
+            "VolumesFrom": null,
+            "ConsoleSize": [
+                0,
+                0
+            ],
+            "CapAdd": null,
+            "CapDrop": null,
+            "CgroupnsMode": "private",
+            "Dns": null,
+            "DnsOptions": [],
+            "DnsSearch": [],
+            "ExtraHosts": null,
+            "GroupAdd": null,
+            "IpcMode": "private",
+            "Cgroup": "",
+            "Links": null,
+            "OomScoreAdj": 0,
+            "PidMode": "",
+            "Privileged": false,
+            "PublishAllPorts": false,
+            "ReadonlyRootfs": false,
+            "SecurityOpt": null,
+            "UTSMode": "",
+            "UsernsMode": "",
+            "ShmSize": 67108864,
+            "Runtime": "runc",
+            "Isolation": "",
+            "CpuShares": 0,
+            "Memory": 2952790016,
+            "NanoCpus": 2000000000,
+            "CgroupParent": "",
+            "BlkioWeight": 0,
+            "BlkioWeightDevice": [],
+            "BlkioDeviceReadBps": [],
+            "BlkioDeviceWriteBps": [],
+            "BlkioDeviceReadIOps": [],
+            "BlkioDeviceWriteIOps": [],
+            "CpuPeriod": 0,
+            "CpuQuota": 0,
+            "CpuRealtimePeriod": 0,
+            "CpuRealtimeRuntime": 0,
+            "CpusetCpus": "0,1",
+            "CpusetMems": "",
+            "Devices": [],
+            "DeviceCgroupRules": null,
+            "DeviceRequests": null,
+            "MemoryReservation": 0,
+            "MemorySwap": 2952790016,
+            "MemorySwappiness": null,
+            "OomKillDisable": null,
+            "PidsLimit": null,
+            "Ulimits": [],
+            "CpuCount": 0,
+            "CpuPercent": 0,
+            "IOMaximumIOps": 0,
+            "IOMaximumBandwidth": 0,
+            "MaskedPaths": [
+                "/proc/acpi",
+                "/proc/asound",
+                "/proc/interrupts",
+                "/proc/kcore",
+                "/proc/keys",
+                "/proc/latency_stats",
+                "/proc/sched_debug",
+                "/proc/scsi",
+                "/proc/timer_list",
+                "/proc/timer_stats",
+                "/sys/devices/virtual/powercap",
+                "/sys/firmware"
+            ],
+            "ReadonlyPaths": [
+                "/proc/bus",
+                "/proc/fs",
+                "/proc/irq",
+                "/proc/sys",
+                "/proc/sysrq-trigger"
+            ]
+        },
+        "Storage": {
+            "RootFS": {
+                "Snapshot": {
+                    "Name": "overlayfs"
+                }
+            }
+        },
+        "Mounts": [
+            {
+                "Type": "volume",
+                "Name": "tx2-datomic-dev-data",
+                "Source": "/var/lib/docker/volumes/tx2-datomic-dev-data/_data",
+                "Destination": "/data",
+                "Driver": "local",
+                "Mode": "z",
+                "RW": true,
+                "Propagation": ""
+            },
+            {
+                "Type": "bind",
+                "Source": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-dev/transactor.properties",
+                "Destination": "/config/transactor.properties",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": "rprivate"
+            },
+            {
+                "Type": "bind",
+                "Source": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-dev/entrypoint.sh",
+                "Destination": "/config/entrypoint.sh",
+                "Mode": "ro",
+                "RW": false,
+                "Propagation": "rprivate"
+            }
+        ],
+        "Config": {
+            "Hostname": "153875a537aa",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "8080/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "TRANSACTOR_JAVA_OPTS=-Xms640m -Xmx640m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+                "GATEWAY_JAVA_OPTS=-Xms1g -Xmx1g -Ddatomic.objectCacheMax=320m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError",
+                "TX_CPUS=0",
+                "GW_CPUS=1",
+                "DATOMIC_PROFILE=dev",
+                "GATEWAY_SOURCE_SHA256=60f7138040043a1cffb2ee79764775560a71bf4f49fccdb82469d1df99f9ca16",
+                "PATH=/opt/java/openjdk/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "JAVA_HOME=/opt/java/openjdk",
+                "LANG=en_US.UTF-8",
+                "LANGUAGE=en_US:en",
+                "LC_ALL=en_US.UTF-8",
+                "JAVA_VERSION=jdk-21.0.13+9",
+                "DATOMIC_EXT_CLASSPATH=/opt/gateway/src"
+            ],
+            "Cmd": null,
+            "Healthcheck": {
+                "Test": [
+                    "CMD-SHELL",
+                    "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf \"GET /health HTTP/1.0\\r\\n\\r\\n\" >&3; head -n 1 <&3 | grep -q \"HTTP/1.[01] 200\"'"
+                ],
+                "Interval": 5000000000,
+                "Timeout": 3000000000,
+                "StartPeriod": 20000000000,
+                "Retries": 3
+            },
+            "Image": "sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf",
+            "Volumes": null,
+            "WorkingDir": "/opt/datomic",
+            "Entrypoint": [
+                "/bin/bash",
+                "/config/entrypoint.sh"
+            ],
+            "Labels": {
+                "org.opencontainers.image.version": "24.04",
+                "tx2.build-inputs-sha256": "3a010a2b0281d844e03869ca6300b6c459b498ec07d49c691fede848c4f2081f",
+                "tx2.config-sha256": "cb2ece214ac3b43d4640c6d67bc18d4961cb7d393d2c7589c7ee653e986194d8",
+                "tx2.holder": "CX-DF01-live",
+                "tx2.lane": "datomic",
+                "tx2.managed-by": "lab/bin/engine.mjs",
+                "tx2.slot": "dev"
+            }
+        },
+        "NetworkSettings": {
+            "SandboxID": "15d838bdc19ef5f1e1ca4f09a87a75195e8d8440f9cecc090c95ce335a299173",
+            "SandboxKey": "/var/run/docker/netns/15d838bdc19e",
+            "Ports": {
+                "8080/tcp": [
+                    {
+                        "HostIp": "127.0.0.1",
+                        "HostPort": "8470"
+                    }
+                ]
+            },
+            "Networks": {
+                "bridge": {
+                    "IPAMConfig": null,
+                    "Links": null,
+                    "Aliases": null,
+                    "DriverOpts": null,
+                    "GwPriority": 0,
+                    "NetworkID": "6c4637675045e96d3367fd6fdda1800331197e9328e21d8c14d4465198c523e3",
+                    "EndpointID": "2aac7633fc2a11e19df5378cd9d9469dc0d2a1afd8a37383b4e5d31dd22fb524",
+                    "Gateway": "172.17.0.1",
+                    "IPAddress": "172.17.0.3",
+                    "MacAddress": "2e:ab:9c:3d:27:4d",
+                    "IPPrefixLen": 16,
+                    "IPv6Gateway": "",
+                    "GlobalIPv6Address": "",
+                    "GlobalIPv6PrefixLen": 0,
+                    "DNSNames": null
+                }
+            }
+        },
+        "ImageManifestDescriptor": {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": "sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf",
+            "size": 2068,
+            "platform": {
+                "architecture": "arm64",
+                "os": "linux"
+            }
+        }
+    }
+]

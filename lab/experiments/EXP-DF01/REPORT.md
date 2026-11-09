@@ -231,3 +231,82 @@ historical at their respective commits. Fresh G0 raw output and verified preimag
 No engine was started or used, and no Docker command, merge, push or subagent launch occurred. Real Datomic notifications,
 actual peer restart/excision, live HTTP-to-peer replay, P3 load/latency and independent acceptance remain unverified. The
 existing live runbook remains the handoff for an orchestrator-authorized window; no new packed-consumer qualification is claimed.
+
+
+## Live window — 2026-11-09, attempt 001 (DIAGNOSTIC)
+
+**DIAGNOSTIC-FAIL; stopped at the first live gate failure, without retry.** The real Datomic dev resident started successfully,
+but the conformance fixture's first write was rejected before any feed poll or FD01 assertion ran. This attempt provides no
+live feed acceptance and does not revise the independent ACCEPT-OFFLINE verdict at `verify/DF01 c98bbff8`.
+
+The attempted driver `live/conformance.mjs` supplies `schema_version: null`. In the deployed `storage.clj` fact-map,
+`:f/schema-version (long (:schema_version row))` unconditionally converts that field. The gateway returned HTTP 400,
+`TransactionRejected`, `Cannot invoke "java.lang.Number.doubleValue()" because "x" is null`. This is a driver fixture defect,
+not an established defect in the feed. I authored that invalid fixture. Its exact bytes and error remain retained; I did not
+correct it and rerun during this stop-on-first-failure window. A future authorized attempt must supply the adapter's actual
+numeric schema version, preserve this attempt, and use a new exclusive evidence directory. The failed scratch database is
+named in `live/attempt-001/conformance-state.json` and remains on the retained volume for diagnosis.
+
+### Execution and cleanup (all DIAGNOSTIC)
+
+- Checked the required scope/protocol documents and independent offline review. Main and worktree Datomic lane/slot configs
+  matched before the build. The pool had only XTDB/QLever dev reservations (6.50 GiB of 11 GiB); no exclusive slot was held.
+- Initial host free: 11,902,570,496 bytes, 6,533,861,376 bytes above the 5 GiB floor. The distribution was about 299 MiB;
+  budgeted at most 5 GiB additional use for context, image and live writes. Lowest observed free was about 9.8 GiB.
+- `TX2_CONFIG_DIR="$PWD" node lab/bin/heavy.mjs --label CX-DF01-live-build -- node lab/bin/engine.mjs build --lane datomic`
+  exited 0. Image size 371,269,804 bytes. Verified vendor inputs/source manifests and image receipt retained.
+- `TX2_CONFIG_DIR="$PWD" node lab/bin/engine.mjs up --lane datomic --slot dev --holder CX-DF01-live --exp EXP-DF01`
+  exited 0. Used the retained `tx2-datomic-dev-data`, with the existing 2.75 GiB / 2 CPU cap. Container
+  `153875a537aa083d4b6f2ac3cd45a18be5cabb6999a270b4f9dffb85308cc605`; HTTP health returned Datomic 1.0.7745.
+- `node lab/bin/heavy.mjs --label CX-DF01-live-conformance -- node lab/experiments/EXP-DF01/live/conformance.mjs lab/experiments/EXP-DF01/live/attempt-001`
+  exited **1**. The driver intended to call unchanged FD01 `auditFeed`, `auditResume`, `requireGapMutationCaught` and the host
+  SQLite consumer against the real HTTP route. None of those audits was reached. Scope creation succeeded; the first fixture
+  transaction failed. No additional peer JVM was started.
+- Stopped the gate sequence immediately. **Not run:** resume across excision; fresh peer/process replay without a report queue;
+  non-Triplex skipped transaction; stale/early/missing reports and deadline cases on the real report queue; existing live
+  adapter regressions/G1. No live retry, semantic repair, load benchmark or production qualification occurred.
+- `engine.mjs down --lane datomic --slot dev --holder CX-DF01-live` exited 0, retaining the volume and releasing its lock and
+  reservation. `colima ssh -p triplex2 -- sudo fstrim -av` exited 0 (data disk trimmed 2,575,646,720 bytes).
+  `docker context use colima` exited 0. The private DOCKER_HOST remained set during our Docker work; the requested context
+  selection does not unset that environment override. No default VM lifecycle action was performed.
+- Final engine status: Datomic absent, volume retained at about 1.42 GiB; XTDB/QLever dev healthy; pool back to 6.50 GiB.
+  Final host free: 11,577,552,896 bytes. No resident was stopped or recreated except our authorized Datomic slot.
+
+### Source/image pins and evidence
+
+The base was `4c72ed2724b42c651c45b6b87ddc43a6d5a2d627`. No production source, dependency, lockfile or export changed.
+Only this worktree's Datomic image/build/source keys in `lab/config/slots.json` were updated by the engine build:
+
+| Key | Old | New |
+| --- | --- | --- |
+| imageId | `sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf` | `sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf` |
+| buildInputsSha256 | `ff1b91d51131c8860e732fb23cea7acdd24f5356b03c31dab105b4730bedaf34` | `3a010a2b0281d844e03869ca6300b6c459b498ec07d49c691fede848c4f2081f` |
+| sourceInputsSha256 | `41e6e2521b666b94e19492637f2a84428c43cc2eef200294cd772ab3688ed163` | `e61673df76586d71b99898e03ffcb7d2160c97bc359a60b2cc2c0c3f5fc9b60e` |
+
+The full `slots.json` SHA256 changed from `3cd5463b6fda8af3653057e74ae287a34f1ad1478fa173e98f5ceaefc8e5c225`
+to `56e3b2ed1578d11e18b35b9108b20bcdfa828752b24600beb9a04f13b2b7b60e` (`live/SOURCE-SHA256.tsv`). Q64e's
+slots file is read but not directly hash-pinned; its Datomic **image identity** is contract-pinned and the unchanged contract
+still names the old image. Contract-builder review/re-pin is required before this candidate image could be used as a contract
+image. **No `lab/acceptance/` file was edited.** The gateway source hash returned by health and configured on the exact
+container was `60f7138040043a1cffb2ee79764775560a71bf4f49fccdb82469d1df99f9ca16`.
+
+Small raw outputs, container inspections, resource observations and driver preimage are in `live/attempt-001/` and
+`live/conformance.mjs`. `live/summary.json` records observed command exits and unrun gates. `live/index-evidence.py`, run
+through `heavy.mjs`, checks image/source/container/volume/holder binding and retains the build receipt and post-attempt public
+package build bytes under `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-DF01/live-attempt-001/`.
+`live/DURABLE-SHA256SUMS` indexes those durable files; `live/SHA256SUMS` indexes the small repository evidence and this report.
+The built-package copies are post-attempt retention, not proof that all loaded build bytes were stable before/after execution.
+No generated build artifact is committed. The original verified build context remains at the receipt path recorded in build.log.
+
+### Live PASS / verdict / receipt audit (rule 9a)
+
+| Place interpreting observations | Content | Freshness | Binding and limits |
+| --- | --- | --- | --- |
+| Engine build/up readiness (unchanged infrastructure) | Verified vendor/source bytes, source-bound image ID, actual HTTP 200 readiness; this establishes readiness only | Fresh build receipt/container start; source rechecked by builder | Exact image/config and own holder/retained volume in inspections; no semantic feed PASS inferred |
+| `live/conformance.mjs` assertions, hypothetical success branch and actual failure branch | Independently authored identities and write-receipt physical coordinates; unchanged FD01/SQLite content checks would gate success. Actual error interrupted before them | Refuses existing state artifact; unique scratch scope; writes failure state from this process | Fixed private dev endpoint, actual created database and source cursor; external inspections bind image/slot. No success issued; built-asset before/after stability was not checked, so this driver alone is not an acceptance executor |
+| `live/index-evidence.py` and `summary.json` | Requires exact failure status/error and gateway rejection; verifies copied hashes and image/container/env/volume/holder/source manifest equality; generates no semantic PASS | Refuses existing durable destination; exclusively named attempt; preserves raw first failure | Base Git head plus current image pins, exact container and source hash; command exit codes are tool-observed, explicitly recorded as such |
+| Cleanup result and this report's DIAGNOSTIC-FAIL | Down output confirms volume retention/release; final status confirms other residents healthy; failure is not relabeled as successful feed behavior | Fresh down/trim/context/status/disk outputs after the failure | Own holder/dev slot/private VM and exact preserved volume; no production, G0 or live conformance success asserted |
+
+Historical G0 and offline conformance receipts above remain historical. They were not rerun after this first-failure live stop.
+The open work is a new authorized live attempt with a corrected fixture, followed by every unrun gate. No merge, push,
+acceptance promotion, subagent launch or deletion of failed scratch state occurred.
