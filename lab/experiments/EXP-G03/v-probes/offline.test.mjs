@@ -6,7 +6,7 @@ const domain={bootId:'vm-boot',timeNs:123,primitive:'CLOCK_MONOTONIC'};
 function fixture(id){
  if(id==='V1')return ['idle','busy'].map(load=>wrap({load,rowsPerCommit:10,synchronous:2,fdatasync:Array(500).fill(100),sqliteCommit:Array(500).fill(200),mountinfo:'1 2 0:1 / /work rw - ext4 /dev/vda rw,relatime',device:'0:1',writeCache:{'0:1':'write back'},workload:{engineCores:1.9,counts:Array(256).fill(10),errors:[]},durabilityClass:'guest-flush-host-fsync; host-power-loss-UNQUALIFIED'}));
  if(id==='V2')return [wrap({final:1,observations:['before-sync','after-sync'].map(stage=>({stage,values:Array(100).fill(0)})),writer:{data:{committed:1}}})];
- if(id==='V3')return [wrap({commits:12000,rounds:Array.from({length:12},(_,i)=>({active:[false,true,true,false][i%4],samples:Array(1000).fill(i%4===1||i%4===2?104:100),checkpoint:[0,0,0],checkpointNs:100}))}),wrap({pollCost:Array(1000).fill(10),requestedPeriodNs:250000})];
+ if(id==='V3')return [wrap({commits:12000,rounds:Array.from({length:12},(_,i)=>({active:[false,true,true,false][i%4],samples:Array(1000).fill(i%4===1||i%4===2?104:100),checkpoint:[0,0,0],checkpointNs:100}))}),wrap({pollCost:Array(1000).fill(10),pollStarts:Array.from({length:1000},(_,i)=>i*250000),requestedPeriodNs:250000})];
  if(id==='V4')return [wrap({domain,count:2000}),wrap({domain,samples:Array.from({length:2000},()=>({rtt:40000,start:100000,peer:120000,end:140000}))})];
  if(id==='V5')return [wrap({bytes:binding.attempt,events:[{wd:2,mask:2},{wd:2,mask:8}],expectedWd:2}),wrap({bytes:binding.attempt})];
  if(id==='V6')return ['plain','capture'].map(mode=>wrap({mode,counts:Array(256).fill(10),errors:[],elapsedNs:'30000000000',engineCores:1.9,relayCores:.5,captureVerified:mode==='capture'}));
@@ -55,3 +55,14 @@ test('capturing relay preserves bytes and dense authenticated chain',async()=>{
 
 test('V6: absent CPU bytes refused',()=>bad('V6',d=>{delete d[0].engineCores}));
 test('V1: different device cache refused',()=>bad('V1',d=>d[0].device='9:9'));
+
+for(const expected of [true,false])test(`reader validates exact SELECT bytes: ${expected}`,async()=>{
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'g03-reader-'));
+ const server=http.createServer((req,res)=>{req.resume();req.on('end',()=>res.end(JSON.stringify({results:{bindings:[{n:{value:expected?'10000':'9999'}}]}})))});
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{const child=spawn(process.execPath,[path.join(import.meta.dirname,'relay.mjs'),'reader'],{env:{...process.env,PROBE_ROOT:root,PROBE_ATTEMPT:'offline',PROBE_DURATION_MS:'500',PROBE_URL:`http://127.0.0.1:${server.address().port}`,PROBE_QUERY:'SELECT count fixture'},stdio:['ignore','pipe','pipe']});let stdout='';child.stdout.on('data',b=>stdout+=b);assert.equal((await once(child,'exit'))[0],0);const data=JSON.parse(stdout).data;assert.equal(data.counts.length,256);if(expected){assert.deepEqual(data.errors,[]);assert.ok(data.counts.every(n=>n>0))}else{assert.ok(data.errors.length>0);assert.ok(data.counts.every(n=>n===0))}}
+ finally{server.closeAllConnections();await new Promise(r=>server.close(r));fs.rmSync(root,{recursive:true,force:true})}
+});
+
+test('V6: missing elapsed interval refused',()=>bad('V6',d=>{delete d[0].elapsedNs}));
+test('V3: slow actual cadence refused',()=>bad('V3',d=>d[1].pollStarts=d[1].pollStarts.map(x=>x*4)));

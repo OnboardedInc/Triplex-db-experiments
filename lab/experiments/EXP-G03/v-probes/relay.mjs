@@ -8,11 +8,11 @@ const finish=data=>{const raw=JSON.stringify({attempt,op:'V6',data});fs.writeFil
 if(mode==='reader') {
  const url=process.env.PROBE_URL, query=process.env.PROBE_QUERY;
  if(!url||!query) throw Error('explicit URL/query required');
- const started=process.hrtime.bigint(), until=started+30_000_000_000n, counts=Array(256).fill(0), errors=[];
+ const started=process.hrtime.bigint(), until=started+BigInt(process.env.PROBE_DURATION_MS??30000)*1_000_000n, counts=Array(256).fill(0), errors=[];
  await Promise.all(counts.map(async(_,i)=>{while(process.hrtime.bigint()<until){try {
  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/sparql-query','Accept':'application/sparql-results+json'},body:query,signal:AbortSignal.timeout(10000)});
  const b=await r.arrayBuffer(); if(!r.ok||!b.byteLength)throw Error(`HTTP ${r.status}`);
- const answer=JSON.parse(Buffer.from(b));if(!answer.results?.bindings)throw Error('not a SELECT result');counts[i]++;
+ const answer=JSON.parse(Buffer.from(b));if(answer.results?.bindings?.length!==1||answer.results.bindings[0]?.n?.value!=='10000')throw Error('wrong 1000-subject/10000-fact SELECT count');counts[i]++;
  }catch(e){errors.push(String(e));break}}}));
  finish({counts,errors,elapsedNs:String(process.hrtime.bigint()-started),querySha256:createHash('sha256').update(query).digest('hex')});
 } else {

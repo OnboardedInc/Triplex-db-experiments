@@ -20,7 +20,7 @@ export function judge(id,observed,binding){
   const deltas=[];
   for(let i=0;i<12;i+=4){const rs=w.rounds.slice(i,i+4);if(rs.some((r,j)=>r.active!==[false,true,true,false][j]||r.samples.length!==1000||r.checkpoint[0]!==0))bad.push('ABBA/checkpoint');
    const baseline=(quantile(rs[0].samples,.99)+quantile(rs[3].samples,.99))/2, active=(quantile(rs[1].samples,.99)+quantile(rs[2].samples,.99))/2;deltas.push(active/baseline-1);}
-  metrics.p99Changes=deltas;metrics.pollP99Ns=quantile(o.pollCost,.99);metrics.checkpointNs=w.rounds.map(r=>r.checkpointNs);
+  metrics.p99Changes=deltas;metrics.pollP99Ns=quantile(o.pollCost,.99);metrics.pollPeriodP50Ns=quantile(o.pollStarts.slice(1).map((t,i)=>t-o.pollStarts[i]),.5);metrics.pollPeriodP99Ns=quantile(o.pollStarts.slice(1).map((t,i)=>t-o.pollStarts[i]),.99);if(metrics.pollPeriodP50Ns>500000)bad.push('observer cadence too slow');metrics.checkpointNs=w.rounds.map(r=>r.checkpointNs);
   if(deltas.some(x=>x>=.05))bad.push('observer overhead >=5%');
  } else if(id==='V4'){
   const a=ds.find(d=>d.samples),b=ds.find(d=>d.count);
@@ -30,7 +30,7 @@ export function judge(id,observed,binding){
  } else if(id==='V5'){
   const d=ds.find(d=>d.events);if(!d||ds.length!==2||ds.some(d=>d.bytes!==binding.attempt)||!d.events.some(e=>e.wd===d.expectedWd&&(e.mask&2))||!d.events.some(e=>e.wd===d.expectedWd&&(e.mask&8)))bad.push('inotify/nonce');
  } else if(id==='V6'){
-  for(const d of ds){if(d.counts?.length!==256||d.counts.some(n=>n<1)||d.errors.length||!Number.isFinite(d.engineCores)||!Number.isFinite(d.relayCores)||d.engineCores<1.8||d.relayCores>=.8)bad.push('load/CPU saturation');}
+  for(const d of ds){if(!Number.isFinite(Number(d.elapsedNs))||Number(d.elapsedNs)<=0||d.counts?.length!==256||d.counts.some(n=>n<1)||d.errors.length||!Number.isFinite(d.engineCores)||!Number.isFinite(d.relayCores)||d.engineCores<1.8||d.relayCores>=.8)bad.push('load/CPU saturation');}
   const plain=ds.find(d=>d.mode==='plain'),capture=ds.find(d=>d.mode==='capture');
   if(ds.length!==2||!plain||!capture||!capture.captureVerified)bad.push('capture verification');
   else{metrics.captureRateRatio=(capture.counts.reduce((a,b)=>a+b)/Number(capture.elapsedNs))/(plain.counts.reduce((a,b)=>a+b)/Number(plain.elapsedNs));if(metrics.captureRateRatio<.95)bad.push('capture throughput penalty >5%');}

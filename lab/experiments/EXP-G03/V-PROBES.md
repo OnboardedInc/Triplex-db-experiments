@@ -53,3 +53,7 @@ If any exclusive reservation is present, stop; do not retry or wait for admissio
 ## Contract pin impact (rule 9b)
 
 No `lab/acceptance/` file changed. The evaluator source inventory includes `lab/bin/box-engine.mjs`; its old SHA256 at parent 86976d1 is `abf8c37529dc88992ff6e4589ca765855e9a43bc1774c255dcf41a3cd55a00e1`, new SHA256 is `44ef65e4472287b5946575b8d26ec1f45f823aef9cfaf3e20ba65caea1a3cba0`. No literal acceptance pin for that path was found in this checkout's generated JSON. The contract owner must re-pin the evaluator inventory in its next version; G03 does not edit the contract.
+
+### Offline refinement before the VM attempt
+
+`preflight/offline-final-2.tap`: **53/53**, zero skipped/cancelled/todo; `python-final.txt`: **3/3**. Added real 256-loop reader positive/negative controls requiring the exact seeded SELECT count, invalid duration/CPU refusals, and actual poll-cadence refusal. V1 now records synchronous level and row count read back from SQLite, rather than repeating configuration constants. V3 retains poll start times and reports achieved p50/p99 cadence (median above 0.5 ms refuses the 0.25 ms model). These extend the content checks in audit items 1–2. The first queued VM wrapper was explicitly cancelled with exit 143 before heavy admission; it created no probe resources. No measurement is assigned to that cancelled attempt.

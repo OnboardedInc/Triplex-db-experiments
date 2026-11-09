@@ -70,7 +70,7 @@ def v1():
         os.pwrite(fd, bytes([i % 256])*4096, 0)
         t = time.monotonic_ns(); os.fdatasync(fd); raw.append(time.monotonic_ns()-t)
     os.close(fd)
-    c = db(); sql = [commit(c, i+1) for i in range(500)]; c.close()
+    c = db(); sql = [commit(c, i+1) for i in range(500)]; synchronous = c.execute('PRAGMA synchronous').fetchone()[0]; rows = c.execute('SELECT count(*) FROM facts').fetchone()[0]; c.close()
     mounts = Path('/proc/self/mountinfo').read_text()
     device = f'{os.major(os.stat(ROOT).st_dev)}:{os.minor(os.stat(ROOT).st_dev)}'
     sysdev = Path('/sys/dev/block') / device
@@ -78,7 +78,7 @@ def v1():
     cache = next((p/'queue/write_cache' for p in [resolved, *resolved.parents] if (p/'queue/write_cache').exists()), None)
     caches = {device: cache.read_text().strip() if cache else 'UNKNOWN'}
     return dict(fdatasync=raw, sqliteCommit=sql, sqliteVersion=sqlite3.sqlite_version,
-                synchronous=2, rowsPerCommit=10, mountinfo=mounts, device=device, writeCache=caches,
+                synchronous=synchronous, rowsPerCommit=rows, mountinfo=mounts, device=device, writeCache=caches,
                 durabilityClass='guest-flush-host-fsync; host-power-loss-UNQUALIFIED',
                 durabilityBasis='Lima vz Fsync/Cached supplied premise; not inferred from latency')
 
@@ -126,7 +126,7 @@ def v3_writer():
     return dict(rounds=rounds, commits=lsn, rowsPerCommit=10)
 
 def v3_observer():
-    wait('db-ready'); c = readonly(); mark('observer-ready'); polls = []
+    wait('db-ready'); c = readonly(); mark('observer-ready'); polls = []; starts = []
     for i in range(12):
         wait('mode'); active = (i % 4) in [1, 2]
         # Writer writes its mode before waiting for this round's acknowledgment.
@@ -134,9 +134,9 @@ def v3_observer():
         mark('mode-ack-'+str(i))
         while not (ROOT/('round-done-'+str(i))).exists():
             t = time.monotonic_ns()
-            if active: read(c); polls.append(time.monotonic_ns()-t)
+            if active: read(c); polls.append(time.monotonic_ns()-t); starts.append(t)
             time.sleep(max(0, .00025-(time.monotonic_ns()-t)/1e9))
-    c.close(); return dict(pollCost=polls, requestedPeriodNs=250000)
+    c.close(); return dict(pollCost=polls, pollStarts=starts, requestedPeriodNs=250000)
 
 def v4(side):
     if side == 'server':
