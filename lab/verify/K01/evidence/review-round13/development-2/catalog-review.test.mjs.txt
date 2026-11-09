@@ -1,0 +1,128 @@
+// [EXP-K01-VK01-R13] Why: compare N01 policy with actual public-writer/adapter SQL, then exercise catalog/version and import boundaries independently. Rejected: fabricating the expected write set from the policy being tested or touching an engine for an offline review.
+import assert from 'node:assert/strict';
+import {test,after} from 'node:test';
+import fs from 'node:fs';import path from 'node:path';import vm from 'node:vm';import ts from 'typescript';import {pathToFileURL} from 'node:url';import {createHash} from 'node:crypto';
+import {Effect,Layer,ManagedRuntime} from 'effect';
+import * as core from '../../../packages/core/dist/index.js';
+import * as api from '../../../packages/core/dist/runtime/index.js';
+import {makeXtdbStorageAdapter} from '../../../packages/xtdb/dist/index.js';
+import {seedRung} from '../../bench/lib/seed.ts';
+import {expectedN01} from '../../bench/lib/g0-xtdb.ts';
+import {n01SeedCounts} from '../../bench/lib/n01-counts.ts';
+import {fields,readG0,admitG0,bounded} from '../../bench/lib/g0.ts';
+import {typedCatalog} from '../../bench/lib/g0-catalog.ts';
+const root=path.resolve(import.meta.dirname,'../../..'),records=[];
+const out=process.env.TX2_K01_CATALOG_OUT;
+after(()=>{fs.mkdirSync(out,{recursive:true});fs.writeFileSync(path.join(out,'cases.json'),JSON.stringify(records,null,2)+'\n');});
+const sha=b=>createHash('sha256').update(b).digest('hex');
+function manifest(subjects=20){const p=n01SeedCounts(subjects,400);return{subjects,accounts:p.accounts,scope:'offline-catalog',seedInputs:{options:{seedBatchFacts:400}},result:{complete:true,seededSubjects:subjects,commands:p.commands,lastPosition:p.commands,assertions:p.business,expectedAssertions:p.business}};}
+function extract(file,name,imports=false){const source=fs.readFileSync(file,'utf8'),ast=ts.createSourceFile(file,source,ts.ScriptTarget.Latest,true);const fn=ast.statements.find(n=>ts.isFunctionDeclaration(n)&&n.name?.text===name);assert(fn);return ts.transpileModule(fn.getText(ast).replace(/^export /,'').replaceAll('import.meta.dirname',JSON.stringify(path.dirname(file))).replaceAll('await import(',imports?'await fixtureImport(':'await import('),{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ESNext}}).outputText;}
+async function adapterSeed(subjects){
+ const tables={},declared={},calls=[];
+ const client={query:async(sql,params)=>{
+   calls.push({kind:'query',sql});
+   if(sql.startsWith('SELECT position FROM tx_meta'))return [...(tables.tx_meta?.values()??[])].map(r=>({position:r.position}));
+   if(sql.startsWith('SELECT tx_id FROM tx_claims'))return [...(tables.tx_claims?.values()??[])].filter(r=>r.command_id===params[1]).map(r=>({tx_id:r.tx_id}));
+   if(sql.startsWith('SELECT operation_id FROM tx_attempts'))return [...(tables.tx_attempts?.values()??[])].filter(r=>r.operation_id===params[1]).map(r=>({operation_id:r.operation_id}));
+   throw Error('unexpected offline adapter query: '+sql);
+ },submit:async(statements)=>{
+   for(const {sql,params}of statements){calls.push({kind:'submit',sql});
+    let m=/^CREATE TABLE (\w+) \(([^)]+)\)$/.exec(sql);if(m){declared[m[1]]=m[2].split(',').map(c=>c.trim());continue;}
+    if(sql.startsWith('ASSERT '))continue;
+    m=/^INSERT INTO (\w+) \(([^)]+)\) VALUES/.exec(sql);assert(m,'unexpected SQL '+sql);const cols=m[2].split(',').map(c=>c.trim());assert.equal(params.length%cols.length,0);
+    const rows=tables[m[1]]??=new Map();for(let i=0;i<params.length;i+=cols.length){const row=Object.fromEntries(cols.map((c,j)=>[c,params[i+j]]));rows.set(row._id,row);}
+   }
+ },close:async()=>{}};
+ const scope=api.DatabaseScope.test('offline-catalog');
+ const definition=api.Runtime.define({name:'offline-real-adapter',storage:Layer.succeed(api.StorageAdapter,makeXtdbStorageAdapter(client,scope,{maxRetries:0,resolutionTimeoutMs:1000})),queries:Layer.succeed(api.QueryExecutor,{})});
+ const managed=ManagedRuntime.make(definition.layer({scope,capabilities:api.Capabilities.none,deterministic:{startTime:1000,seed:'offline-catalog'}}));
+ try{const triples=await managed.runPromise(Effect.service(core.Triples));
+ const seed=await seedRung({comp:{transact:async(ops,meta)=>({ok:true,value:await managed.runPromise(triples.transact(ops,meta))})},subjects,batchFacts:400,runTag:'seed',budgetMs:Infinity,recordSubjects:new Set(),recordAccounts:new Set(),historySubjects:new Set(),log:()=>{}});
+ return{tables:Object.fromEntries(Object.entries(tables).map(([t,rows])=>[t,[...rows.values()]])),declared,calls,seed};
+ }finally{await managed.dispose();}
+}
+for(const subjects of [1,8,20,500])test('actual public writer and XTDB adapter write-set agrees with policy: '+subjects,async()=>{
+ const f=await adapterSeed(subjects),expected=expectedN01(manifest(subjects)),summary={};
+ for(const [table,p]of Object.entries(expected.tables)){
+   const rows=f.tables[table]??[],nonNull=new Set(rows.flatMap(r=>Object.keys(r).filter(c=>r[c]!==null)));
+   assert.equal(rows.length,expected.counts[table]);assert.equal(rows.length>0,p.written,table);
+   for(const [c,w]of Object.entries(p.columns))assert.equal(nonNull.has(c),w,table+'.'+c);
+   summary[table]={rows:rows.length,nonNull:[...nonNull].sort(),written:p.written};
+ }
+ for(const t of Object.keys(f.tables))assert(Object.hasOwn(expected.tables,t),'adapter wrote unclassified table '+t);
+ for(const [t,rows]of Object.entries(f.tables))for(const row of rows)for(const c of Object.keys(row))assert(Object.hasOwn(expected.tables[t].columns,c),'adapter wrote unclassified column '+t+'.'+c);
+ records.push({case:'real-adapter-policy',subjects,summary,commands:f.seed.commands,declaredTables:Object.keys(f.declared),sqlStatementCount:f.calls.length});
+});
+function fixture(){
+ const expected=expectedN01(manifest()),cat={},tables={},calls=[];
+ for(const [t,p]of Object.entries(expected.tables)){
+   expected.counts[t]=p.written?1:0;tables[t]=[];
+   if(p.written){cat[t]={};const row={};for(const[c,w]of Object.entries(p.columns)){row[c]=w?'present':null;if(w)cat[t][c]=':utf8';}row.scope_key=expected.scope;tables[t]=[row];}
+ }
+ const client={query:async(sql,params)=>{calls.push({sql,params});
+   if(sql.includes('FROM information_schema.tables'))return Object.keys(cat).map(table_name=>({table_name}));
+   if(sql.includes('FROM information_schema.columns'))return Object.entries(cat).flatMap(([table_name,cols])=>Object.entries(cols).map(([column_name,xt_type])=>({table_name,column_name,xt_type})));
+   if(sql.startsWith('SELECT scope_key, position'))return[{scope_key:expected.scope,position:expected.position}];
+   const t=/FROM (tx_\w+)/.exec(sql)?.[1];assert(t&&cat[t],'planned absent table '+sql);
+   assert(sql.startsWith('SELECT COUNT(*)'),'unexpected SQL '+sql);
+   return[{n:tables[t].filter(r=>!params.length||r.scope_key===params[0]).length}];
+ },close:async()=>{}};
+ const code=extract(path.join(root,'lab/bench/lib/g0-xtdb.ts'),'openG0',true);
+ const open=vm.runInNewContext(code+';openG0',{path,pathToFileURL,fields,bounded,typedCatalog,AbortSignal,Object,Number,String,fixtureImport:async url=>url.endsWith('/xtdb/dist/index.js')?{makeXtdbClient:()=>client}:{DatabaseScope:{test:s=>s}},openWire:async()=>({scan:async(sql,params)=>{calls.push({sql,params,wire:true});const t=/FROM (tx_\w+)/.exec(sql)[1];assert(cat[t]);return tables[t].filter(r=>!params.length||r.scope_key===params[0]).map(r=>({...r}));},close:async()=>{}})});
+ return{expected,cat,tables,calls,open};
+}
+for(const table of Object.keys(fields))test('actual SQL reader refuses absent-written / global extra table: '+table,async()=>{
+ const f=fixture(),p=f.expected.tables[table],h=await f.open('offline-reader');
+ try{const pin=await readG0(h.reader,f.expected);
+ if(p.written){delete f.cat[table];f.tables[table]=[];}
+ else{f.cat[table]={scope_key:':utf8'};f.tables[table]=[{scope_key:'foreign'}];}
+ await assert.rejects(()=>admitG0(h.reader,pin,f.expected));
+ if(!p.written){const count=f.calls.filter(c=>c.sql.startsWith('SELECT COUNT(*)')&&c.sql.includes('FROM '+table+' ')).at(-1);assert(count);assert.deepEqual(count.params,[]);assert(!count.sql.includes('scope_key = ?'));}
+ records.push({case:'SQL table refusal',table,written:p.written});
+ }finally{await h.close();}
+});
+test('every written column refuses complete absence through actual SQL reader',async()=>{
+ let checked=0;
+ for(const[t,p]of Object.entries(expectedN01(manifest()).tables))for(const[c,w]of Object.entries(p.columns))if(w){
+  const f=fixture();delete f.cat[t][c];for(const row of f.tables[t])delete row[c];const h=await f.open('offline-missing-column');try{await assert.rejects(()=>readG0(h.reader,f.expected),/missing written column/);checked++;}finally{await h.close();}
+ }
+ records.push({case:'all written columns',checked});
+});
+test('historical-only column remains catalog-present; segment NULLs retained and clone edit refuses',async()=>{
+ const f=fixture();const p=f.expected.tables.tx_assertions;
+ f.expected.counts.tx_assertions=2;
+ const a=f.tables.tx_assertions[0];a.id='old-version';a.value_datetime=1;
+ const b={...a,id:'new-version',value_datetime:null};f.tables.tx_assertions.push(b);
+ f.cat.tx_assertions.value_datetime='[:? :i64]';
+ const h=await f.open('offline-segment-union');try{
+  const pin=await readG0(h.reader,f.expected);assert.equal((await admitG0(h.reader,pin,f.expected)).status,'PASS');
+  b.value_datetime=2;await assert.rejects(()=>admitG0(h.reader,pin,f.expected),/content mismatch/);
+  b.value_datetime=null;delete f.cat.tx_assertions.value_datetime;delete a.value_datetime;
+  await assert.rejects(()=>readG0(h.reader,f.expected),/missing written column/);
+  records.push({case:'historical/live column union',positive:true,changedCellRefused:true,globalAbsenceRefused:true});
+ }finally{await h.close();}
+});
+test('manifest attempts to override written policies are ignored',()=>{
+ const m=manifest(),expected=expectedN01(m);m.tables=Object.fromEntries(Object.keys(fields).map(t=>[t,{written:false,columns:{}}]));m.counts={tx_assertions:0};m.seedInputs.tables=m.tables;assert.deepEqual(expectedN01(m),expected);records.push({case:'policy override ignored'});
+});
+for(const name of ['golden','fresh','loadGolden'])test('execute engine record hash branch offline: '+name,async()=>{
+ const engine=path.join(root,'lab/bin/engine.mjs'),code=extract(engine,name),m={g0:{D:'a'.repeat(64)},result:{complete:true},seedInputs:{}},writes=[],events=[];
+ const record={format:'tx2-xtdb-golden/2',g0:m.g0,L:'layout',key:'key',keyInputs:{seedInputs:{},engine:{imageId:'image',systemConfigSha256:'config'}},manifest:{path:'fixture',sha256:'manifest-hash'}};
+ const options={manifest:'fixture'},info={slot:'s1',container:'offline',volume:'offline-volume',endpoint:'offline://no-engine'};
+ const context={path,REPO:root,fs:{existsSync:()=>false,writeFileSync:(...args)=>writes.push(args)},requireSlot:()=>{},readJson:()=>name==='loadGolden'?record:m,inspect:()=>({Image:'image'}),effectiveConfig:()=>({effective:{}}),goldenKey:()=>({key:'key',key8:'12345678',inputs:{}}),systemConfig:()=>({}),sha256:()=>'',docker:args=>{events.push({fakeDocker:args});return'';},spawnSync:()=>({status:0}),process:{execPath:process.execPath,stdout:{write:()=>{}},stderr:{write:()=>{}}},fail:(_code,msg)=>{throw Error(msg);},stopSlot:async()=>({}),diskFloorVerdict:()=>({ok:true}),hostDisk:()=>({freeBytes:10*1024**3}),volumeBytes:()=>1,helper:()=> 'tree@@copytree',listingScript:()=>'',parseListing:()=>({treeSha256:'same'}),copyToSlot:async()=>{},quietXtdb:async()=>({L:'layout',T:1}),checkXtdb:async()=>events.push('stub-G0'),up:async()=>{},healthXtdb:async()=>{},now:()=> 'offline-time'};
+ const call=async includeHash=>{
+   const ctx={...context,...(includeHash?{sha256File:()=>{events.push('sha256File');return'manifest-hash';}}:{})};
+   const fn=vm.runInNewContext(code+';'+name,ctx);
+   return name==='loadGolden'?fn('fixture'):await fn({},info,options);
+ };
+ await assert.rejects(()=>call(false),/sha256File is not defined/);
+ await call(true);assert(events.includes('sha256File'));if(name!=='loadGolden')assert(writes.length);
+ records.push({case:'executed engine binding',name,missingBindingRefused:true,currentBindingExecuted:true,simulated:true,grantsEngineAdmission:false});
+});
+test('smoke byte provenance is diagnostic; neither diagnostic manifest nor ledger is an admission input',()=>{
+ const fixture=JSON.parse(fs.readFileSync(path.join(root,'lab/bench/test/fixtures/g0-smoke13.json'),'utf8'));
+ for(const [file,want]of [[fixture.provenance.catalog,fixture.provenance.catalogSha256],[fixture.provenance.ledger,fixture.provenance.ledgerSha256],...fixture.errors.map(e=>[e.source,e.sha256])])assert.equal(sha(fs.readFileSync(file)),want);
+ const ledger=JSON.parse(fs.readFileSync(fixture.provenance.ledger,'utf8'));assert.equal(ledger.diagnosticOnly,true);assert.equal(ledger.grantsAdmission,false);assert.equal(ledger.failures.length,2);
+ const source=fs.readFileSync(path.join(root,'lab/bench/driver.ts'),'utf8');assert(!source.includes('ledger.json'));assert(!source.includes('unqualified-manifest'));assert(source.indexOf('await checkXtdb(writer.backend.url')<source.indexOf('report.seedPath={...seedPath,seededBy:'));
+ assert.equal(fixture.errors[0].step,'golden');assert.equal(fixture.errors[1].step,'fresh-freeze');records.push({case:'smoke provenance',failures:2,diagnosticOnly:true,grantsAdmission:false});
+});

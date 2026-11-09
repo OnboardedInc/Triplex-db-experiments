@@ -1,0 +1,75 @@
+{
+  "at": "2026-11-09T06:37:00.009Z",
+  "head": "044f4335b19b4e938ae8ce4e758134c9b27104b5",
+  "sources": {
+    "lab/verify/K01/replay-smoke-round13.mjs": "bf7058802bbb34117f457f690da7f206e67eb86d39015b52db65497faf0aa976",
+    "lab/bench/lib/g0.ts": "63b657ac2b6ad408507e0043b5e05da766ef9ae3324ebed5a0e10cab1f8636e0",
+    "lab/bench/lib/g0-xtdb.ts": "49ef92f312c02a92161ee939f5911626ca167a691c131ae844c5f2f96ad597b6",
+    "lab/bench/lib/g0-values.ts": "31737e6296bbca788ea4946b719d920d41ae86a0d56f250d7cbf332697a56b5c",
+    "lab/bench/lib/g0-normalize.ts": "749037ed2727801ab01cd0ab5ddb134f3db66d3197472f119bb81e04af1e8ef8",
+    "lab/bench/lib/g0-catalog.ts": "6c023fd74f0cd10482e3133ad1fcd6e8c3e70224e96d0308e7cde035fb8efbf6",
+    "lab/bench/lib/n01-counts.ts": "47b86aaff9f2e1bfd1e71258c457d7cbccc710d44183a10799a387d7866ac5fe"
+  },
+  "rawManifest": "lab/experiments/EXP-K01-seed-clone/evidence/round13/RAW-SHA256SUMS",
+  "rawManifestSha256": "733ecfd8047b87de4e0c447adbac9f75afd88d74891eed4c7ffc1f6b69b190e4",
+  "verifiedFiles": 99,
+  "verifiedBytes": 206902402,
+  "ledgerSha256": "e342e743d872002edf6dd09623fe3a21822bd80cdbfb16c3f1b3df3307040c60",
+  "results": [
+    {
+      "capture": "source-capture",
+      "arm": "source",
+      "D": "a6dd488f1db5efcd1b70cdffe290b27bdbdb1636f685912bd03d4092899dcff5",
+      "Dprime": "a154912c2dbb1de7a0dc0e780eacf08e994b27dda3dc287efefe325e07c1878d",
+      "rows": 19048,
+      "diagnosticOnly": true,
+      "grantsAdmission": false
+    },
+    {
+      "capture": "restart-1-capture",
+      "arm": "source",
+      "D": "a6dd488f1db5efcd1b70cdffe290b27bdbdb1636f685912bd03d4092899dcff5",
+      "rows": 19048,
+      "diagnosticOnly": true,
+      "grantsAdmission": false
+    },
+    {
+      "capture": "restart-2-capture",
+      "arm": "source",
+      "D": "a6dd488f1db5efcd1b70cdffe290b27bdbdb1636f685912bd03d4092899dcff5",
+      "rows": 19048,
+      "diagnosticOnly": true,
+      "grantsAdmission": false
+    },
+    {
+      "capture": "fresh-capture",
+      "arm": "fresh",
+      "D": "9e8c627225b2f6483141dc124d1f1653af0fa076afd2e4798638b7636a2ce53e",
+      "Dprime": "a154912c2dbb1de7a0dc0e780eacf08e994b27dda3dc287efefe325e07c1878d",
+      "rows": 19048,
+      "diagnosticOnly": true,
+      "grantsAdmission": false
+    },
+    {
+      "capture": "fresh-final-capture",
+      "arm": "fresh",
+      "D": "9e8c627225b2f6483141dc124d1f1653af0fa076afd2e4798638b7636a2ce53e",
+      "rows": 19048,
+      "diagnosticOnly": true,
+      "grantsAdmission": false
+    }
+  ],
+  "layouts": [
+    {
+      "L": "9c5a1a7932de457a963fa20b5d18885362130fa7ca59bce1e9dc3155807a5c76",
+      "T": 15436755
+    },
+    {
+      "L": "9c5a1a7932de457a963fa20b5d18885362130fa7ca59bce1e9dc3155807a5c76",
+      "T": 15436755
+    }
+  ],
+  "diagnosticOnly": true,
+  "grantsAdmission": false,
+  "inputsUnchanged": true
+}

@@ -1,0 +1,190 @@
+TAP version 13
+# Subtest: independent changed clone refuses: row
+ok 1 - independent changed clone refuses: row
+  ---
+  duration_ms: 3.389959
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: retraction
+ok 2 - independent changed clone refuses: retraction
+  ---
+  duration_ms: 1.104708
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: valid-time
+ok 3 - independent changed clone refuses: valid-time
+  ---
+  duration_ms: 1.060708
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: count
+ok 4 - independent changed clone refuses: count
+  ---
+  duration_ms: 1.692917
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: claim
+ok 5 - independent changed clone refuses: claim
+  ---
+  duration_ms: 1.179791
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: attempt-position
+ok 6 - independent changed clone refuses: attempt-position
+  ---
+  duration_ms: 0.954667
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: duplicate-substitution
+ok 7 - independent changed clone refuses: duplicate-substitution
+  ---
+  duration_ms: 1.014375
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: missing-column
+ok 8 - independent changed clone refuses: missing-column
+  ---
+  duration_ms: 0.601583
+  type: 'test'
+  ...
+# Subtest: independent changed clone refuses: value-identity
+ok 9 - independent changed clone refuses: value-identity
+  ---
+  duration_ms: 1.102375
+  type: 'test'
+  ...
+# Subtest: unchanged full stored content reordered still reads anew and admits
+ok 10 - unchanged full stored content reordered still reads anew and admits
+  ---
+  duration_ms: 1.751917
+  type: 'test'
+  ...
+# Subtest: G0 deadline covers hung scopes
+ok 11 - G0 deadline covers hung scopes
+  ---
+  duration_ms: 27.838125
+  type: 'test'
+  ...
+# Subtest: G0 deadline covers hung count
+ok 12 - G0 deadline covers hung count
+  ---
+  duration_ms: 28.15625
+  type: 'test'
+  ...
+# Subtest: G0 deadline covers hung scan
+ok 13 - G0 deadline covers hung scan
+  ---
+  duration_ms: 26.988916
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_assertions scan
+ok 14 - independent count cannot stand in for a partial tx_assertions scan
+  ---
+  duration_ms: 0.824208
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_attempts scan
+ok 15 - independent count cannot stand in for a partial tx_attempts scan
+  ---
+  duration_ms: 0.563792
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_claims scan
+ok 16 - independent count cannot stand in for a partial tx_claims scan
+  ---
+  duration_ms: 0.566083
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_constraint_generations scan
+ok 17 - independent count cannot stand in for a partial tx_constraint_generations scan
+  ---
+  duration_ms: 0.8845
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_constraint_graphs scan
+ok 18 - independent count cannot stand in for a partial tx_constraint_graphs scan
+  ---
+  duration_ms: 0.688958
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_meta scan
+ok 19 - independent count cannot stand in for a partial tx_meta scan
+  ---
+  duration_ms: 0.481583
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_native_relation_attempts scan
+ok 20 - independent count cannot stand in for a partial tx_native_relation_attempts scan
+  ---
+  duration_ms: 0.808291
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_native_relations scan
+ok 21 - independent count cannot stand in for a partial tx_native_relations scan
+  ---
+  duration_ms: 0.713417
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_query_generations scan
+ok 22 - independent count cannot stand in for a partial tx_query_generations scan
+  ---
+  duration_ms: 0.78375
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_query_members scan
+ok 23 - independent count cannot stand in for a partial tx_query_members scan
+  ---
+  duration_ms: 0.657792
+  type: 'test'
+  ...
+# Subtest: independent count cannot stand in for a partial tx_query_relations scan
+ok 24 - independent count cannot stand in for a partial tx_query_relations scan
+  ---
+  duration_ms: 0.737958
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: matching
+ok 25 - golden publishes only after two content and layout starts: matching
+  ---
+  duration_ms: 4.473917
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: first-D-differs
+ok 26 - golden publishes only after two content and layout starts: first-D-differs
+  ---
+  duration_ms: 1.185292
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: second-D-differs
+ok 27 - golden publishes only after two content and layout starts: second-D-differs
+  ---
+  duration_ms: 1.323875
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: second-L-differs
+ok 28 - golden publishes only after two content and layout starts: second-L-differs
+  ---
+  duration_ms: 1.054334
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: second-T-differs
+ok 29 - golden publishes only after two content and layout starts: second-T-differs
+  ---
+  duration_ms: 1.00425
+  type: 'test'
+  ...
+# Subtest: golden publishes only after two content and layout starts: recipe-fails
+ok 30 - golden publishes only after two content and layout starts: recipe-fails
+  ---
+  duration_ms: 0.692292
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 404.874042

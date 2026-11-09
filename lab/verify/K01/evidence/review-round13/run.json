@@ -1,0 +1,233 @@
+{
+  "head": "044f4335b19b4e938ae8ce4e758134c9b27104b5",
+  "at": "2026-11-09T06:40:48.230Z",
+  "raw": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VK01/round13/attempt-4",
+  "disk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 10284566,
+    "bavail": 10284566,
+    "files": 423049063,
+    "ffree": 411382640
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/verify/K01/run-review-round13.mjs": "7660fa738b3e8730328a83df22f455da09a6dc4ca17581066fa14e01017d3722",
+    "lab/verify/K01/counts-review.test.ts": "4ae289b5db9f0788b34af6eaf6af983963ea501e30a9a7fb07dd3965906b9b79",
+    "lab/verify/K01/catalog-review.test.mjs": "f4ba2f3fd5dbd5725844f164bc84b7a2455375df9b361a3f9e83392c467ece0e",
+    "lab/bench/lib/g0-catalog.ts": "6c023fd74f0cd10482e3133ad1fcd6e8c3e70224e96d0308e7cde035fb8efbf6",
+    "lab/bench/test/g0-catalog.test.ts": "de705e47aab7fd59001bfae4dac162daca365e16b7a323036d84f24f41f0d2ec",
+    "lab/bench/test/engine-binding.test.ts": "3798e4bfbd64613bc81ee6b49b4de37192384a0f63d14528f036b88075ebed8d",
+    "lab/bench/test/fixtures/g0-smoke13.json": "10d166ce76a51e1f3e1a55dfbbc89218e2d44809884d698d5576533e38c43d16",
+    "lab/bench/test/fixtures/g0-missing-live12.json": "1a084a9a0d33718b0bb7b60817cd007d45337000c2334f26ae929a7db4f1dc4c",
+    "lab/verify/K01/smoke-round13.mjs": "550968a59966395e1a42eccdb34b9fd8747bc251543053a415b54995922af09a",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+    "node_modules/typescript/lib/typescript.js": "630f808ac32d968a49a392c42cc06fd72abd939aaa7edfe3302810c067934653",
+    "lab/bench/clone-check.ts": "dcab0fecc0d466386e37a196141c7b79e3d312146c67242ba3092964c1995df5",
+    "lab/bin/test/lab.test.mjs": "ec15951a758117fd9fa79ee9a0435ff70088d96cb5e1b69576419cdb9bc88c26",
+    "lab/bench/test/bench.test.ts": "56d102078a5f96b4f93c68ec58410f71b90ad2d4af8dcd33124bbf9d1b6a3424",
+    "lab/bench/lib/g0.ts": "63b657ac2b6ad408507e0043b5e05da766ef9ae3324ebed5a0e10cab1f8636e0",
+    "lab/bench/lib/n01-counts.ts": "47b86aaff9f2e1bfd1e71258c457d7cbccc710d44183a10799a387d7866ac5fe",
+    "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+    "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+    "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+    "packages/core/src/store/transactionMetadata.ts": "f47e28bb7e5683a1348b8689471fc84de3ebcb8986ed1f6d65198399179055fa",
+    "packages/core/src/store/TriplesLive.ts": "1fc030c442179a937f544b865983b45b577c124aa3b338528823f93dc828a36c",
+    "packages/core/src/store/systemNamespace.ts": "909bcc5e8d92c4545b90d2a9dd65c3484412be880a2586519d4e7876bf693d6b",
+    "packages/core/dist/store/transactionMetadata.js": "605e92a86e18d3faac5796f7e7ed6c5bebb730aa5542dbfdca73c907d690c8dd",
+    "packages/core/dist/store/TriplesLive.js": "dea28c7d29fe072dc933d875e943a71a4bc92f087045f5bd042a15feda825bc6",
+    "packages/xtdb/dist/XtdbStorageAdapter.js": "d26713be4145c02869224b19938cb64dedae872aec45c2ac88d857ca4743abf7",
+    "packages/xtdb/dist/codecs.js": "c510234bef573e267b963032f32a2ba0f56b0174139b8141ce99976fd6206f25",
+    "packages/xtdb/dist/index.js": "902c0eda6b26883a204c6bb9c03c2ae8866333de781cc123630baf3cb0c94ef8",
+    "packages/core/dist/index.js": "58fe9072ed1d383387835600a7131d345005c95a630b75323cc32b1812140103",
+    "packages/core/dist/runtime/index.js": "a558ff64b66dc0ca51688a94ec35f5659c03fa56c3fb3153e6a4c6e1cffdaf2c",
+    "lab/bench/test/g0-counts.test.ts": "e8dc4db4d6dc70a52b475826b7f6f0ad406300b40f6be46c288837891b112d60",
+    "lab/bench/test/fixtures/g0-count-live11.json": "a2a529a260ac432488d145028156cd5a28597bebf99d3c841f5e146be38cdddc",
+    "lab/experiments/EXP-K01-seed-clone/evidence/live-round11/seed.log": "67771de3c680cf8bdd767520a291e4cfd071ff0cad47f1cc707dada25e879c5b",
+    "lab/experiments/EXP-K01-seed-clone/evidence/live-round11/receipt.json": "e88720b60b0bbf3f7dc9a9aa5190a978682976463e5ab253b1c57e594d17d58d",
+    "lab/bench/lib/g0-values.ts": "31737e6296bbca788ea4946b719d920d41ae86a0d56f250d7cbf332697a56b5c",
+    "lab/bench/lib/g0-wire.ts": "47b7a5b44c48d99dd278160084ff7d1c1a6a9af9c18699eb23c78437cc51721e",
+    "lab/bench/lib/g0-native.ts": "a7531ec11c58a37a865198eb0c45d1c469d8b70917bb8c3ea7d38e5c5854e86a",
+    "lab/bench/test/g0-native.test.ts": "ab82213b5fade3cee89c8435348929c91d2dcfe151db2d674f1c5006d45c1bd2",
+    "lab/bench/test/g0-live.test.ts": "7b75356a1098d66cff40fba7fd1c773b19e35ef478595cbb4dff55301e5cc412",
+    "lab/bench/test/fixtures/g0-live-round10.json": "e3a9322f44ee8bb2dd7b35ff31d4bf71a4535db20e9d73bf416e5a0440457606",
+    "lab/experiments/EXP-K01-seed-clone/REPORT-round13.md": "3405b537c4531a58f66ffe15e5563d1d7d02fd89879f27a57fe350f54a3a3a69",
+    "lab/experiments/EXP-K01-seed-clone/evidence/live-round10/wire.log": "786dc024992b24b0522fb39edc30ee1bd57e50962f8bc898a8abf8759a952003",
+    "lab/verify/K01/representation-review.test.mjs": "c03b89ebb341afb7d7d2125d076a9bb57952eab9012de17dedfe8a66aa98f461",
+    "lab/bench/lib/g0-normalize.ts": "749037ed2727801ab01cd0ab5ddb134f3db66d3197472f119bb81e04af1e8ef8",
+    "lab/bench/test/g0-values.test.ts": "ed243b6931331cf02fe47399157e4399491406e10a0c672e134529de29d17d5e",
+    "lab/bench/test/g0-e1.test.ts": "ca4796e0494d0d0df644459f8082cdd86f0231f96b9df89e86542577e603b0df",
+    "lab/verify/K01/columns-review.test.mjs": "5b6b5df75d7d9f0958ef72090a22b25cc8d355336d1f61362f73f24ecaaa25ad",
+    "lab/bench/lib/g0-schema.ts": "72499249d961a60e604bd1913e3ec8ecb6b41b07576be925725f51e6b1e2b40e",
+    "lab/bench/test/g0-schema.test.ts": "e6a215c786cbe0b2b71fa4b62bb9890044a3a073d73c85692e4a676b61af35bf",
+    "lab/verify/K01/g0-review.test.mjs": "4d38df4611e259bc8f0dd7df4de58633f8c9e0944816cd4a4a6782d5daa66fdc",
+    "lab/bench/lib/g0-xtdb.ts": "49ef92f312c02a92161ee939f5911626ca167a691c131ae844c5f2f96ad597b6",
+    "lab/bench/lib/bulk.ts": "30fb15038aa0c945e631db948308a230034d85f90f188556c5a5f59b1e4cb920",
+    "lab/bench/driver.ts": "7f8cdd821903856c0c0be99a2e7da957931332999396bec1b7ba21863daac9b9",
+    "lab/bench/xtdb-seed.ts": "098b36fe1ccfe263dd02ed75c18a29f8f1ed249425712d3d87401c2f6148c21a",
+    "lab/bin/engine.mjs": "f0fe4d3751e107dc2306b7080f99ff502d91c5bbd25f69fecaae2ef094b30fcb",
+    "lab/bin/lib.mjs": "08da34d2f927a64099f2c42c2dbb3ab83e2862b879465e2f4e692c4327efd406",
+    "lab/bench/test/g0.test.ts": "c2b512d014a544b5becb53ce0431df3d3dc4a129c96f4d4df2d5da83e94c68e1",
+    "packages/xtdb/src/ConstraintValidation.ts": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+    "packages/xtdb/src/MaintainedQueries.ts": "a0ec651af8aa68d1c6e63b64109af48996d4c7576930909a50f90306869d8dbd",
+    "packages/xtdb/src/Operations.ts": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66",
+    "packages/xtdb/src/TemporalQueries.ts": "df7163a21d18b5d704fdbd8a6dcd065498eb18edd249e0fcad7e4a92dae555a9",
+    "packages/xtdb/src/TransactionContext.ts": "f4696c6539db3088e940c305ab484fc514fe32a7d09ea6b6f3397cd9878a43ad",
+    "packages/xtdb/src/XtdbClient.ts": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c",
+    "packages/xtdb/src/XtdbQueryExecutor.ts": "71fc5d949a8a9f51449cfeb97afb9cd10b6e869647962a2c6ad006a4ccf69c0c",
+    "packages/xtdb/src/XtdbStorageAdapter.ts": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560",
+    "packages/xtdb/src/codecs.ts": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+    "packages/xtdb/src/index.ts": "5bdb382d4bd424e92ab6098ba0bed9954cae9a256ffe1fde2378c67bf8233de3",
+    "packages/xtdb/src/native/NativeQueries.ts": "f07285b60d00a661551873ab2ffe3995b88b91caedda7e776784185026ff3b01",
+    "packages/xtdb/src/native/Reachability.ts": "3929e03f7ba1b8e20a47d8fa94b71c68f64f0ad021beaf866deb210fa3fba932",
+    "packages/xtdb/src/native/ReadOnlySql.ts": "dacd259603497bffcae0000e57ed5b7d63103f1ad0da42419d21d46a52333529",
+    "packages/xtdb/src/native/Sources.ts": "a32138e18c1a5a963f37f830beb36ceb87f328ed4c6af96bf1498dd0c2c00e31",
+    "packages/xtdb/src/query/compiler.ts": "fd1d8fceb939e0623115ef8072300f9e046f6dabee30d573c3b0c1da56823123",
+    "packages/xtdb/src/query/domains.ts": "e51fc80fb211c265725d7def7cf0ab19bf84b51fc8843e1f807385dc413a92af",
+    "packages/xtdb/src/query/grouping.ts": "2abd261779d9cd648d53b20485eccaee644f2fe4b5cf86d899d86c552bff4586",
+    "packages/xtdb/src/query/overlay.ts": "118b8f8651d69516b64b50cf77c86e43de916a8e7042cdcfe2e3aa1379423491",
+    "packages/xtdb/src/query/recursion.ts": "6c24b1157f9c05124ebef268d1d99234364fa3aabb5514c67e40422767296b89"
+  },
+  "runs": [
+    {
+      "counts": {
+        "tests": 256,
+        "pass": 256,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "summaryOkay": true,
+      "label": "tests",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/g0.test.ts",
+        "lab/bench/test/g0-schema.test.ts",
+        "lab/bench/test/g0-values.test.ts",
+        "lab/bench/test/g0-e1.test.ts",
+        "lab/bench/test/g0-native.test.ts",
+        "lab/bench/test/g0-live.test.ts",
+        "lab/bench/test/g0-counts.test.ts",
+        "lab/bench/test/g0-catalog.test.ts",
+        "lab/bench/test/engine-binding.test.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e327e4e0b4de03dc982f78e04e8749e6e50ed52e15e6c3355d2e11e04c365247"
+    },
+    {
+      "counts": {
+        "tests": 30,
+        "pass": 30,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "summaryOkay": true,
+      "label": "reviewer",
+      "args": [
+        "--test",
+        "lab/verify/K01/g0-review.test.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "b3fde7bb37dd7dc214f965c6ae9a65dc264a4dddfeeaece17e6860277c4127a3"
+    },
+    {
+      "counts": {
+        "tests": 98,
+        "pass": 98,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "summaryOkay": true,
+      "label": "columns",
+      "args": [
+        "--test",
+        "lab/verify/K01/columns-review.test.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "a8de15fb87612427fed6142e0b7fa6772cd75072669795a957402009367e6641"
+    },
+    {
+      "counts": {
+        "tests": 57,
+        "pass": 57,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "summaryOkay": true,
+      "label": "representation",
+      "args": [
+        "--test",
+        "lab/verify/K01/representation-review.test.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e765f66f950901ada806f76566d27d554e46c1ab8eda35304666a84cd303f3ec"
+    },
+    {
+      "counts": {
+        "tests": 22,
+        "pass": 22,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "summaryOkay": true,
+      "label": "catalog-review",
+      "args": [
+        "--test",
+        "lab/verify/K01/catalog-review.test.mjs"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "bcd256e47a08b2bf98df4b015fb447d5edf6c912076990c8b744cde7ff99e788"
+    },
+    {
+      "counts": {
+        "tests": 48,
+        "pass": 48,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "summaryOkay": true,
+      "label": "counts",
+      "args": [
+        "--test",
+        "lab/verify/K01/counts-review.test.ts"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "35130f6e926e2933077e1f0f6b4eed66673087a94069ed089ea992ab917caa4a"
+    },
+    {
+      "counts": {},
+      "summaryOkay": true,
+      "label": "types",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "inputsUnchanged": true
+}

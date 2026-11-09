@@ -178,7 +178,10 @@ test('count expectation ignores observed-count-shaped fields; stale pre-fix bind
 test('extra/missing business or journal rows refuse; same-count class substitutions refuse full digest',async()=>{
   const {batches,seed}=await partition(1,400),p=n01SeedCounts(1,400);
   const m:any={scope:'offline-review',subjects:1,accounts:p.accounts,seedInputs:{options:{seedBatchFacts:400}},result:{...seed,expectedAssertions:p.business}};
-  const expected=expectedN01(m),tables:any=Object.fromEntries(Object.keys(fields).map(t=>[t,[]]));
+  const expected=expectedN01(m);
+  // [EXP-K01-VK01-R13] Why: this retained synthetic fixture tests count/digest corruption; it has no native catalog witness. Rejected: presenting placeholder rows as production catalog evidence; the new adapter/SQL controls exercise that policy.
+  delete expected.tables;
+  const tables:any=Object.fromEntries(Object.keys(fields).map(t=>[t,[]]));
   let id=0;
   const add=(entity_type:string,attribute:string,position:number)=>tables.tx_assertions.push({id:String(++id),entity_type,attribute,recorded_position:position});
   batches.forEach((b,k)=>{

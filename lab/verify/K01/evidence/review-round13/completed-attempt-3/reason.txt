@@ -1,0 +1,1 @@
+All 511 tests passed. Strengthen the three reviewer branch controls to derive the injected hash binding from the actual engine import declaration, so removing that import fails the positive branch as well as the builder compiler regression. Re-run current bytes on new attempt 4.

@@ -1,0 +1,142 @@
+TAP version 13
+# Subtest: actual public writer and XTDB adapter write-set agrees with policy: 1
+ok 1 - actual public writer and XTDB adapter write-set agrees with policy: 1
+  ---
+  duration_ms: 213.325833
+  type: 'test'
+  ...
+# Subtest: actual public writer and XTDB adapter write-set agrees with policy: 8
+ok 2 - actual public writer and XTDB adapter write-set agrees with policy: 8
+  ---
+  duration_ms: 186.273084
+  type: 'test'
+  ...
+# Subtest: actual public writer and XTDB adapter write-set agrees with policy: 20
+ok 3 - actual public writer and XTDB adapter write-set agrees with policy: 20
+  ---
+  duration_ms: 208.059583
+  type: 'test'
+  ...
+# Subtest: actual public writer and XTDB adapter write-set agrees with policy: 500
+ok 4 - actual public writer and XTDB adapter write-set agrees with policy: 500
+  ---
+  duration_ms: 576.210667
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_assertions
+ok 5 - actual SQL reader refuses absent-written / global extra table: tx_assertions
+  ---
+  duration_ms: 27.059
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_attempts
+ok 6 - actual SQL reader refuses absent-written / global extra table: tx_attempts
+  ---
+  duration_ms: 10.011334
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_claims
+ok 7 - actual SQL reader refuses absent-written / global extra table: tx_claims
+  ---
+  duration_ms: 8.607958
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_constraint_generations
+ok 8 - actual SQL reader refuses absent-written / global extra table: tx_constraint_generations
+  ---
+  duration_ms: 7.522667
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_constraint_graphs
+ok 9 - actual SQL reader refuses absent-written / global extra table: tx_constraint_graphs
+  ---
+  duration_ms: 9.461542
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_meta
+ok 10 - actual SQL reader refuses absent-written / global extra table: tx_meta
+  ---
+  duration_ms: 6.83
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_native_relation_attempts
+ok 11 - actual SQL reader refuses absent-written / global extra table: tx_native_relation_attempts
+  ---
+  duration_ms: 9.127792
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_native_relations
+ok 12 - actual SQL reader refuses absent-written / global extra table: tx_native_relations
+  ---
+  duration_ms: 6.237584
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_query_generations
+ok 13 - actual SQL reader refuses absent-written / global extra table: tx_query_generations
+  ---
+  duration_ms: 11.116084
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_query_members
+ok 14 - actual SQL reader refuses absent-written / global extra table: tx_query_members
+  ---
+  duration_ms: 6.288791
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_query_relations
+ok 15 - actual SQL reader refuses absent-written / global extra table: tx_query_relations
+  ---
+  duration_ms: 7.182583
+  type: 'test'
+  ...
+# Subtest: every written column refuses complete absence through actual SQL reader
+ok 16 - every written column refuses complete absence through actual SQL reader
+  ---
+  duration_ms: 145.133958
+  type: 'test'
+  ...
+# Subtest: historical-only column remains catalog-present; segment NULLs retained and clone edit refuses
+ok 17 - historical-only column remains catalog-present; segment NULLs retained and clone edit refuses
+  ---
+  duration_ms: 8.927625
+  type: 'test'
+  ...
+# Subtest: manifest attempts to override written policies are ignored
+ok 18 - manifest attempts to override written policies are ignored
+  ---
+  duration_ms: 10.107
+  type: 'test'
+  ...
+# Subtest: execute engine record hash branch offline: golden
+ok 19 - execute engine record hash branch offline: golden
+  ---
+  duration_ms: 8.436042
+  type: 'test'
+  ...
+# Subtest: execute engine record hash branch offline: fresh
+ok 20 - execute engine record hash branch offline: fresh
+  ---
+  duration_ms: 5.694041
+  type: 'test'
+  ...
+# Subtest: execute engine record hash branch offline: loadGolden
+ok 21 - execute engine record hash branch offline: loadGolden
+  ---
+  duration_ms: 5.083708
+  type: 'test'
+  ...
+# Subtest: smoke byte provenance is diagnostic; neither diagnostic manifest nor ledger is an admission input
+ok 22 - smoke byte provenance is diagnostic; neither diagnostic manifest nor ledger is an admission input
+  ---
+  duration_ms: 1.396458
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1912.68475

@@ -1,0 +1,1549 @@
+TAP version 13
+# Subtest: trace: same inputs give byte-identical events; a different seed differs
+ok 1 - trace: same inputs give byte-identical events; a different seed differs
+  ---
+  duration_ms: 75.096541
+  type: 'test'
+  ...
+# Subtest: trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+ok 2 - trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+  ---
+  duration_ms: 9.983083
+  type: 'test'
+  ...
+# Subtest: trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+ok 3 - trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+  ---
+  duration_ms: 18.941542
+  type: 'test'
+  ...
+# Subtest: histogram: percentiles within 1/128 of exact nearest-rank values
+ok 4 - histogram: percentiles within 1/128 of exact nearest-rank values
+  ---
+  duration_ms: 26.928333
+  type: 'test'
+  ...
+# Subtest: scheduler: latency is measured from the scheduled time, including queueing behind the subject
+ok 5 - scheduler: latency is measured from the scheduled time, including queueing behind the subject
+  ---
+  duration_ms: 335.936209
+  type: 'test'
+  ...
+# Subtest: scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+ok 6 - scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+  ---
+  duration_ms: 97.255334
+  type: 'test'
+  ...
+# Subtest: world: hop classes, frozen P4 buckets and closed-form counts match materialization
+ok 7 - world: hop classes, frozen P4 buckets and closed-form counts match materialization
+  ---
+  duration_ms: 90.323084
+  type: 'test'
+  ...
+# Subtest: model: valid-time aware digests equal the materialized world at (R, V)
+ok 8 - model: valid-time aware digests equal the materialized world at (R, V)
+  ---
+  duration_ms: 1.148167
+  type: 'test'
+  ...
+# Subtest: feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+ok 9 - feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+  ---
+  duration_ms: 81.852875
+  type: 'test'
+  ...
+# Subtest: golden and fresh helper binding reproduces both captured failures and current engine has no unbound names
+ok 10 - golden and fresh helper binding reproduces both captured failures and current engine has no unbound names
+  ---
+  duration_ms: 1186.803167
+  type: 'test'
+  ...
+# Subtest: captured failure bytes bind this absent-table fixture
+ok 11 - captured failure bytes bind this absent-table fixture
+  ---
+  duration_ms: 1.290292
+  type: 'test'
+  ...
+# Subtest: all declared tables and columns have explicit seed policies; catalog-certified absence pins
+ok 12 - all declared tables and columns have explicit seed policies; catalog-certified absence pins
+  ---
+  duration_ms: 5.268875
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_assertions
+ok 13 - catalog/table policy refuses wrong content: tx_assertions
+  ---
+  duration_ms: 0.355625
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_attempts
+ok 14 - catalog/table policy refuses wrong content: tx_attempts
+  ---
+  duration_ms: 0.315625
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_claims
+ok 15 - catalog/table policy refuses wrong content: tx_claims
+  ---
+  duration_ms: 0.380708
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_constraint_generations
+ok 16 - catalog/table policy refuses wrong content: tx_constraint_generations
+  ---
+  duration_ms: 0.366333
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_constraint_graphs
+ok 17 - catalog/table policy refuses wrong content: tx_constraint_graphs
+  ---
+  duration_ms: 0.43475
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_meta
+ok 18 - catalog/table policy refuses wrong content: tx_meta
+  ---
+  duration_ms: 0.375333
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_native_relation_attempts
+ok 19 - catalog/table policy refuses wrong content: tx_native_relation_attempts
+  ---
+  duration_ms: 0.750417
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_native_relations
+ok 20 - catalog/table policy refuses wrong content: tx_native_relations
+  ---
+  duration_ms: 0.755083
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_query_generations
+ok 21 - catalog/table policy refuses wrong content: tx_query_generations
+  ---
+  duration_ms: 0.605667
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_query_members
+ok 22 - catalog/table policy refuses wrong content: tx_query_members
+  ---
+  duration_ms: 0.512458
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_query_relations
+ok 23 - catalog/table policy refuses wrong content: tx_query_relations
+  ---
+  duration_ms: 0.833458
+  type: 'test'
+  ...
+# Subtest: absent nullable column and present NULL column agree; non-NULL refuses
+ok 24 - absent nullable column and present NULL column agree; non-NULL refuses
+  ---
+  duration_ms: 3.757458
+  type: 'test'
+  ...
+# Subtest: every required column requires catalog presence and an observed non-NULL value
+ok 25 - every required column requires catalog presence and an observed non-NULL value
+  ---
+  duration_ms: 24.549959
+  type: 'test'
+  ...
+# Subtest: catalog mutation, incomplete policy and unavailable inventory refuse
+ok 26 - catalog mutation, incomplete policy and unavailable inventory refuse
+  ---
+  duration_ms: 3.242541
+  type: 'test'
+  ...
+# Subtest: typed catalog rejects malformed/partial/duplicate/contradictory observations
+ok 27 - typed catalog rejects malformed/partial/duplicate/contradictory observations
+  ---
+  duration_ms: 0.207042
+  type: 'test'
+  ...
+# Subtest: production SQL reader does not plan a query for any catalog-absent table
+ok 28 - production SQL reader does not plan a query for any catalog-absent table
+  ---
+  duration_ms: 70.162041
+  type: 'test'
+  ...
+# Subtest: every declared NULL-only seed column refuses a non-NULL value
+ok 29 - every declared NULL-only seed column refuses a non-NULL value
+  ---
+  duration_ms: 0.825583
+  type: 'test'
+  ...
+# Subtest: a mutable reused catalog cannot replace the initial observation
+ok 30 - a mutable reused catalog cannot replace the initial observation
+  ---
+  duration_ms: 1.746375
+  type: 'test'
+  ...
+# Subtest: captured command inputs reproduce the old count refusal, corrected count pins real public journal rows
+ok 31 - captured command inputs reproduce the old count refusal, corrected count pins real public journal rows
+  ---
+  duration_ms: 1951.259708
+  type: 'test'
+  ...
+# Subtest: retract/assert in one transaction retains the old physical row and journals both changes
+ok 32 - retract/assert in one transaction retains the old physical row and journals both changes
+  ---
+  duration_ms: 0.86375
+  type: 'test'
+  ...
+# Subtest: input partition count agrees with actual seed writer (1, 400)
+ok 33 - input partition count agrees with actual seed writer (1, 400)
+  ---
+  duration_ms: 34.261958
+  type: 'test'
+  ...
+# Subtest: input partition count agrees with actual seed writer (23, 400)
+ok 34 - input partition count agrees with actual seed writer (23, 400)
+  ---
+  duration_ms: 34.967459
+  type: 'test'
+  ...
+# Subtest: input partition count agrees with actual seed writer (21, 7)
+ok 35 - input partition count agrees with actual seed writer (21, 7)
+  ---
+  duration_ms: 57.71925
+  type: 'test'
+  ...
+# Subtest: count oracle rejects missing or invalid partition inputs
+ok 36 - count oracle rejects missing or invalid partition inputs
+  ---
+  duration_ms: 0.1995
+  type: 'test'
+  ...
+# Subtest: independent seeds match Dprime but raw clone admission refuses changed generated bytes
+ok 37 - independent seeds match Dprime but raw clone admission refuses changed generated bytes
+  ---
+  duration_ms: 35.71625
+  type: 'test'
+  ...
+# Subtest: E1 preserves business value_string
+ok 38 - E1 preserves business value_string
+  ---
+  duration_ms: 5.581916
+  type: 'test'
+  ...
+# Subtest: E1 preserves business value_identity
+ok 39 - E1 preserves business value_identity
+  ---
+  duration_ms: 4.044083
+  type: 'test'
+  ...
+# Subtest: E1 preserves business valid_from
+ok 40 - E1 preserves business valid_from
+  ---
+  duration_ms: 2.897833
+  type: 'test'
+  ...
+# Subtest: E1 preserves business valid_to
+ok 41 - E1 preserves business valid_to
+  ---
+  duration_ms: 8.478958
+  type: 'test'
+  ...
+# Subtest: E1 preserves business created_by
+ok 42 - E1 preserves business created_by
+  ---
+  duration_ms: 3.725
+  type: 'test'
+  ...
+# Subtest: E1 preserves business attribute
+ok 43 - E1 preserves business attribute
+  ---
+  duration_ms: 8.797667
+  type: 'test'
+  ...
+# Subtest: E1 preserves business entity_id
+ok 44 - E1 preserves business entity_id
+  ---
+  duration_ms: 2.350917
+  type: 'test'
+  ...
+# Subtest: normalization entries all have assigning-source comments; business columns are not blanket normalized
+ok 45 - normalization entries all have assigning-source comments; business columns are not blanket normalized
+  ---
+  duration_ms: 2.085166
+  type: 'test'
+  ...
+# Subtest: Dprime refuses nonempty side state without a persisted commit anchor
+ok 46 - Dprime refuses nonempty side state without a persisted commit anchor
+  ---
+  duration_ms: 5.505042
+  type: 'test'
+  ...
+# Subtest: generated transaction metadata and its identity normalize but business JSON text does not
+ok 47 - generated transaction metadata and its identity normalize but business JSON text does not
+  ---
+  duration_ms: 12.949333
+  type: 'test'
+  ...
+# Subtest: normalized cells require intact engine identity relationships
+ok 48 - normalized cells require intact engine identity relationships
+  ---
+  duration_ms: 0.310583
+  type: 'test'
+  ...
+# Subtest: a mutation between the two Dprime scans refuses rather than pinning mixed reads
+ok 49 - a mutation between the two Dprime scans refuses rather than pinning mixed reads
+  ---
+  duration_ms: 0.6795
+  type: 'test'
+  ...
+# Subtest: Dprime refuses a corrupted derived system-instant identity
+ok 50 - Dprime refuses a corrupted derived system-instant identity
+  ---
+  duration_ms: 3.412791
+  type: 'test'
+  ...
+# Subtest: generated change timestamps must still agree with their source transaction
+ok 51 - generated change timestamps must still agree with their source transaction
+  ---
+  duration_ms: 1.222833
+  type: 'test'
+  ...
+# Subtest: E1 instant ranks preserve equal-instants
+ok 52 - E1 instant ranks preserve equal-instants
+  ---
+  duration_ms: 3.1915
+  type: 'test'
+  ...
+# Subtest: E1 instant ranks preserve strict-order
+ok 53 - E1 instant ranks preserve strict-order
+  ---
+  duration_ms: 4.57225
+  type: 'test'
+  ...
+# Subtest: E1 instant ranks preserve tie-split
+ok 54 - E1 instant ranks preserve tie-split
+  ---
+  duration_ms: 3.1835
+  type: 'test'
+  ...
+# Subtest: E1 instant ranks preserve tie-merged
+ok 55 - E1 instant ranks preserve tie-merged
+  ---
+  duration_ms: 2.966792
+  type: 'test'
+  ...
+# Subtest: E1 instant ranks preserve order-reversed
+ok 56 - E1 instant ranks preserve order-reversed
+  ---
+  duration_ms: 4.150708
+  type: 'test'
+  ...
+# Subtest: every instant row must equal the assigning clock even if its derived identity agrees
+ok 57 - every instant row must equal the assigning clock even if its derived identity agrees
+  ---
+  duration_ms: 1.490292
+  type: 'test'
+  ...
+# Subtest: live fixture binds the exact unchanged first-failure log
+ok 58 - live fixture binds the exact unchanged first-failure log
+  ---
+  duration_ms: 7.652375
+  type: 'test'
+  ...
+# Subtest: captured frame replays exactly: tx_wire_int_narrow
+ok 59 - captured frame replays exactly: tx_wire_int_narrow
+  ---
+  duration_ms: 1.956125
+  type: 'test'
+  ...
+# Subtest: captured frame replays exactly: tx_wire_int_wide
+ok 60 - captured frame replays exactly: tx_wire_int_wide
+  ---
+  duration_ms: 0.294083
+  type: 'test'
+  ...
+# Subtest: captured frame replays exactly: tx_wire_float_narrow
+ok 61 - captured frame replays exactly: tx_wire_float_narrow
+  ---
+  duration_ms: 0.184875
+  type: 'test'
+  ...
+# Subtest: captured frame replays exactly: tx_wire_float_wide
+ok 62 - captured frame replays exactly: tx_wire_float_wide
+  ---
+  duration_ms: 0.086709
+  type: 'test'
+  ...
+# Subtest: source-defined scalar and nullable OID: bool
+ok 63 - source-defined scalar and nullable OID: bool
+  ---
+  duration_ms: 0.795792
+  type: 'test'
+  ...
+# Subtest: source-defined scalar and nullable OID: i16
+ok 64 - source-defined scalar and nullable OID: i16
+  ---
+  duration_ms: 0.120459
+  type: 'test'
+  ...
+# Subtest: source-defined scalar and nullable OID: i32
+ok 65 - source-defined scalar and nullable OID: i32
+  ---
+  duration_ms: 0.045375
+  type: 'test'
+  ...
+# Subtest: source-defined scalar and nullable OID: i64
+ok 66 - source-defined scalar and nullable OID: i64
+  ---
+  duration_ms: 0.399166
+  type: 'test'
+  ...
+# Subtest: source-defined scalar and nullable OID: f32
+ok 67 - source-defined scalar and nullable OID: f32
+  ---
+  duration_ms: 0.431167
+  type: 'test'
+  ...
+# Subtest: source-defined scalar and nullable OID: f64
+ok 68 - source-defined scalar and nullable OID: f64
+  ---
+  duration_ms: 0.308959
+  type: 'test'
+  ...
+# Subtest: source-defined scalar and nullable OID: utf8
+ok 69 - source-defined scalar and nullable OID: utf8
+  ---
+  duration_ms: 0.286625
+  type: 'test'
+  ...
+# Subtest: source-defined scalar and nullable OID: varbinary
+ok 70 - source-defined scalar and nullable OID: varbinary
+  ---
+  duration_ms: 0.041417
+  type: 'test'
+  ...
+# Subtest: source-defined scalar and nullable OID: uuid
+ok 71 - source-defined scalar and nullable OID: uuid
+  ---
+  duration_ms: 0.035125
+  type: 'test'
+  ...
+# Subtest: unsupported I8, bpchar, temporal/structured and pure Null do not gain a type witness
+ok 72 - unsupported I8, bpchar, temporal/structured and pure Null do not gain a type witness
+  ---
+  duration_ms: 0.499083
+  type: 'test'
+  ...
+# Subtest: decimal and nullable decimal retain precision, scale and storage width
+ok 73 - decimal and nullable decimal retain precision, scale and storage width
+  ---
+  duration_ms: 0.161375
+  type: 'test'
+  ...
+# Subtest: captured integer Poly and source-defined float/nullable Poly refuse widened rows
+ok 74 - captured integer Poly and source-defined float/nullable Poly refuse widened rows
+  ---
+  duration_ms: 1.594584
+  type: 'test'
+  ...
+# Subtest: same widened OID/bytes do not conceal a native width change
+ok 75 - same widened OID/bytes do not conceal a native width change
+  ---
+  duration_ms: 2.715459
+  type: 'test'
+  ...
+# Subtest: native monotypes and nullable monotypes have the same non-null representation
+ok 76 - native monotypes and nullable monotypes have the same non-null representation
+  ---
+  duration_ms: 0.112167
+  type: 'test'
+  ...
+# Subtest: missing, duplicated or partial native catalog is not proof
+ok 77 - missing, duplicated or partial native catalog is not proof
+  ---
+  duration_ms: 0.500917
+  type: 'test'
+  ...
+# Subtest: every adapter-declared table and column is hashed; there are no exclusions
+ok 78 - every adapter-declared table and column is hashed; there are no exclusions
+  ---
+  duration_ms: 66.415167
+  type: 'test'
+  ...
+# Subtest: adding an assertion column, side-table column or new side table cannot leave an uncovered field
+ok 79 - adding an assertion column, side-table column or new side table cannot leave an uncovered field
+  ---
+  duration_ms: 78.906541
+  type: 'test'
+  ...
+# Subtest: unsupported dynamic DDL and incomplete schema refuse instead of omitting a declaration
+ok 80 - unsupported dynamic DDL and incomplete schema refuse instead of omitting a declaration
+  ---
+  duration_ms: 21.565583
+  type: 'test'
+  ...
+# Subtest: independent declaration audit fails if any stored column lacks coverage
+ok 81 - independent declaration audit fails if any stored column lacks coverage
+  ---
+  duration_ms: 1.16325
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes signed-zero
+ok 82 - typed digest distinguishes signed-zero
+  ---
+  duration_ms: 0.865125
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes NaN-payload
+ok 83 - typed digest distinguishes NaN-payload
+  ---
+  duration_ms: 0.064334
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes infinity
+ok 84 - typed digest distinguishes infinity
+  ---
+  duration_ms: 0.047583
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes integer-float
+ok 85 - typed digest distinguishes integer-float
+  ---
+  duration_ms: 0.048209
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes integer-width-wire
+ok 86 - typed digest distinguishes integer-width-wire
+  ---
+  duration_ms: 0.183625
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes integer-float-wire
+ok 87 - typed digest distinguishes integer-float-wire
+  ---
+  duration_ms: 0.052625
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes decimal-scale
+ok 88 - typed digest distinguishes decimal-scale
+  ---
+  duration_ms: 0.1365
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes string-number
+ok 89 - typed digest distinguishes string-number
+  ---
+  duration_ms: 0.037792
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes boolean
+ok 90 - typed digest distinguishes boolean
+  ---
+  duration_ms: 0.263959
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes null
+ok 91 - typed digest distinguishes null
+  ---
+  duration_ms: 0.252166
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes date
+ok 92 - typed digest distinguishes date
+  ---
+  duration_ms: 0.09
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes bytes
+ok 93 - typed digest distinguishes bytes
+  ---
+  duration_ms: 0.044292
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes bytes-kind
+ok 94 - typed digest distinguishes bytes-kind
+  ---
+  duration_ms: 0.0315
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes unicode
+ok 95 - typed digest distinguishes unicode
+  ---
+  duration_ms: 0.02925
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes array-object
+ok 96 - typed digest distinguishes array-object
+  ---
+  duration_ms: 0.069458
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes nested-negative-zero
+ok 97 - typed digest distinguishes nested-negative-zero
+  ---
+  duration_ms: 0.040917
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes sentinel-string
+ok 98 - typed digest distinguishes sentinel-string
+  ---
+  duration_ms: 0.026166
+  type: 'test'
+  ...
+# Subtest: typed digest distinguishes bigint-precision
+ok 99 - typed digest distinguishes bigint-precision
+  ---
+  duration_ms: 0.022667
+  type: 'test'
+  ...
+# Subtest: canonical never invokes toJSON and rejects unsupported state
+ok 100 - canonical never invokes toJSON and rejects unsupported state
+  ---
+  duration_ms: 0.225625
+  type: 'test'
+  ...
+# Subtest: wire transport refuses representations whose exact bits are unavailable
+ok 101 - wire transport refuses representations whose exact bits are unavailable
+  ---
+  duration_ms: 0.709125
+  type: 'test'
+  ...
+# Subtest: real raw-row decoder preserves OID/bytes and refuses partial protocol frames
+ok 102 - real raw-row decoder preserves OID/bytes and refuses partial protocol frames
+  ---
+  duration_ms: 9.724917
+  type: 'test'
+  ...
+# Subtest: same content in another physical order grants only on fresh read
+ok 103 - same content in another physical order grants only on fresh read
+  ---
+  duration_ms: 24.172292
+  type: 'test'
+  ...
+# Subtest: G0 refuses changed
+ok 104 - G0 refuses changed
+  ---
+  duration_ms: 2.252417
+  type: 'test'
+  ...
+# Subtest: G0 refuses dropped
+ok 105 - G0 refuses dropped
+  ---
+  duration_ms: 0.643084
+  type: 'test'
+  ...
+# Subtest: G0 refuses missing-subject
+ok 106 - G0 refuses missing-subject
+  ---
+  duration_ms: 1.458542
+  type: 'test'
+  ...
+# Subtest: G0 refuses empty
+ok 107 - G0 refuses empty
+  ---
+  duration_ms: 0.810875
+  type: 'test'
+  ...
+# Subtest: G0 refuses missing-field
+ok 108 - G0 refuses missing-field
+  ---
+  duration_ms: 1.24075
+  type: 'test'
+  ...
+# Subtest: G0 refuses historical-position
+ok 109 - G0 refuses historical-position
+  ---
+  duration_ms: 2.110458
+  type: 'test'
+  ...
+# Subtest: G0 refuses retracted-position
+ok 110 - G0 refuses retracted-position
+  ---
+  duration_ms: 1.667542
+  type: 'test'
+  ...
+# Subtest: G0 refuses value
+ok 111 - G0 refuses value
+  ---
+  duration_ms: 3.265916
+  type: 'test'
+  ...
+# Subtest: G0 refuses extra
+ok 112 - G0 refuses extra
+  ---
+  duration_ms: 2.291583
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses foreign
+ok 113 - G0 binding/acquisition refuses foreign
+  ---
+  duration_ms: 1.715333
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-position
+ok 114 - G0 binding/acquisition refuses wrong-position
+  ---
+  duration_ms: 1.004709
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-count
+ok 115 - G0 binding/acquisition refuses wrong-count
+  ---
+  duration_ms: 4.889125
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses partial-count
+ok 116 - G0 binding/acquisition refuses partial-count
+  ---
+  duration_ms: 0.791875
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-scope
+ok 117 - G0 binding/acquisition refuses wrong-scope
+  ---
+  duration_ms: 0.906208
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-pin
+ok 118 - G0 binding/acquisition refuses wrong-pin
+  ---
+  duration_ms: 1.628166
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses missing-pin
+ok 119 - G0 binding/acquisition refuses missing-pin
+  ---
+  duration_ms: 0.694292
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses late
+ok 120 - G0 binding/acquisition refuses late
+  ---
+  duration_ms: 28.610708
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses failed
+ok 121 - G0 binding/acquisition refuses failed
+  ---
+  duration_ms: 1.770458
+  type: 'test'
+  ...
+# Subtest: G0 never grants from diagnostics or a cached external PASS
+ok 122 - G0 never grants from diagnostics or a cached external PASS
+  ---
+  duration_ms: 2.023792
+  type: 'test'
+  ...
+# Subtest: W0 requires the independent oracle and checks every digest
+ok 123 - W0 requires the independent oracle and checks every digest
+  ---
+  duration_ms: 1.469333
+  type: 'test'
+  ...
+# Subtest: wiring: driver reads G0 on its writer endpoint before worker/warm-up creation
+ok 124 - wiring: driver reads G0 on its writer endpoint before worker/warm-up creation
+  ---
+  duration_ms: 0.911042
+  type: 'test'
+  ...
+# Subtest: seed identity: refuse changed generators and stale or expanded adapter builds
+ok 125 - seed identity: refuse changed generators and stale or expanded adapter builds
+  ---
+  duration_ms: 10.321709
+  type: 'test'
+  ...
+# Subtest: W0 admission reads the measured fingerprint anew and refuses oracle drift
+ok 126 - W0 admission reads the measured fingerprint anew and refuses oracle drift
+  ---
+  duration_ms: 1.179666
+  type: 'test'
+  ...
+# Subtest: wiring: the source pins D before any freeze and unprepared XTDB runs refuse
+ok 127 - wiring: the source pins D before any freeze and unprepared XTDB runs refuse
+  ---
+  duration_ms: 0.273917
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions._id
+ok 128 - full schema refuses changed tx_assertions._id
+  ---
+  duration_ms: 0.646708
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.scope_key
+ok 129 - full schema refuses changed tx_assertions.scope_key
+  ---
+  duration_ms: 0.759042
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.id
+ok 130 - full schema refuses changed tx_assertions.id
+  ---
+  duration_ms: 0.574916
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.entity_id
+ok 131 - full schema refuses changed tx_assertions.entity_id
+  ---
+  duration_ms: 3.601417
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.attribute
+ok 132 - full schema refuses changed tx_assertions.attribute
+  ---
+  duration_ms: 0.525709
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_type
+ok 133 - full schema refuses changed tx_assertions.value_type
+  ---
+  duration_ms: 0.524292
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_string
+ok 134 - full schema refuses changed tx_assertions.value_string
+  ---
+  duration_ms: 0.480459
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_number
+ok 135 - full schema refuses changed tx_assertions.value_number
+  ---
+  duration_ms: 0.484625
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_boolean
+ok 136 - full schema refuses changed tx_assertions.value_boolean
+  ---
+  duration_ms: 0.552542
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_datetime
+ok 137 - full schema refuses changed tx_assertions.value_datetime
+  ---
+  duration_ms: 0.486208
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_json
+ok 138 - full schema refuses changed tx_assertions.value_json
+  ---
+  duration_ms: 0.476459
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.recorded_at
+ok 139 - full schema refuses changed tx_assertions.recorded_at
+  ---
+  duration_ms: 1.491
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.recorded_position
+ok 140 - full schema refuses changed tx_assertions.recorded_position
+  ---
+  duration_ms: 0.82
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.valid_from
+ok 141 - full schema refuses changed tx_assertions.valid_from
+  ---
+  duration_ms: 0.658125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.valid_to
+ok 142 - full schema refuses changed tx_assertions.valid_to
+  ---
+  duration_ms: 1.440583
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.created_by
+ok 143 - full schema refuses changed tx_assertions.created_by
+  ---
+  duration_ms: 3.447083
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.retracted_at
+ok 144 - full schema refuses changed tx_assertions.retracted_at
+  ---
+  duration_ms: 0.638833
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.retracted_position
+ok 145 - full schema refuses changed tx_assertions.retracted_position
+  ---
+  duration_ms: 0.56025
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.retract_tx_id
+ok 146 - full schema refuses changed tx_assertions.retract_tx_id
+  ---
+  duration_ms: 0.619708
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.entity_type
+ok 147 - full schema refuses changed tx_assertions.entity_type
+  ---
+  duration_ms: 0.533208
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.schema_version
+ok 148 - full schema refuses changed tx_assertions.schema_version
+  ---
+  duration_ms: 0.538458
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.tx_id
+ok 149 - full schema refuses changed tx_assertions.tx_id
+  ---
+  duration_ms: 0.51425
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_assertions.value_identity
+ok 150 - full schema refuses changed tx_assertions.value_identity
+  ---
+  duration_ms: 0.523542
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_attempts._id
+ok 151 - full schema refuses changed tx_attempts._id
+  ---
+  duration_ms: 0.741791
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_attempts.scope_key
+ok 152 - full schema refuses changed tx_attempts.scope_key
+  ---
+  duration_ms: 1.409584
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_attempts.operation_id
+ok 153 - full schema refuses changed tx_attempts.operation_id
+  ---
+  duration_ms: 1.526291
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_attempts.attempt_id
+ok 154 - full schema refuses changed tx_attempts.attempt_id
+  ---
+  duration_ms: 2.54075
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_attempts.position
+ok 155 - full schema refuses changed tx_attempts.position
+  ---
+  duration_ms: 0.526875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims._id
+ok 156 - full schema refuses changed tx_claims._id
+  ---
+  duration_ms: 0.470875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims.scope_key
+ok 157 - full schema refuses changed tx_claims.scope_key
+  ---
+  duration_ms: 0.462541
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims.command_id
+ok 158 - full schema refuses changed tx_claims.command_id
+  ---
+  duration_ms: 0.458542
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims.tx_id
+ok 159 - full schema refuses changed tx_claims.tx_id
+  ---
+  duration_ms: 0.887833
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims.recorded_at
+ok 160 - full schema refuses changed tx_claims.recorded_at
+  ---
+  duration_ms: 0.515208
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_claims.position
+ok 161 - full schema refuses changed tx_claims.position
+  ---
+  duration_ms: 0.480958
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_generations._id
+ok 162 - full schema refuses changed tx_constraint_generations._id
+  ---
+  duration_ms: 0.516625
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_generations.scope_key
+ok 163 - full schema refuses changed tx_constraint_generations.scope_key
+  ---
+  duration_ms: 0.652166
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_generations.run_id
+ok 164 - full schema refuses changed tx_constraint_generations.run_id
+  ---
+  duration_ms: 0.469167
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_generations.source_k
+ok 165 - full schema refuses changed tx_constraint_generations.source_k
+  ---
+  duration_ms: 0.475125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs._id
+ok 166 - full schema refuses changed tx_constraint_graphs._id
+  ---
+  duration_ms: 0.536125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.scope_key
+ok 167 - full schema refuses changed tx_constraint_graphs.scope_key
+  ---
+  duration_ms: 0.51725
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.run_id
+ok 168 - full schema refuses changed tx_constraint_graphs.run_id
+  ---
+  duration_ms: 0.5185
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.phase
+ok 169 - full schema refuses changed tx_constraint_graphs.phase
+  ---
+  duration_ms: 0.525792
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.id
+ok 170 - full schema refuses changed tx_constraint_graphs.id
+  ---
+  duration_ms: 1.408541
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.entity_id
+ok 171 - full schema refuses changed tx_constraint_graphs.entity_id
+  ---
+  duration_ms: 1.397834
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.attribute
+ok 172 - full schema refuses changed tx_constraint_graphs.attribute
+  ---
+  duration_ms: 0.751792
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.entity_type
+ok 173 - full schema refuses changed tx_constraint_graphs.entity_type
+  ---
+  duration_ms: 0.594125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.valid_from
+ok 174 - full schema refuses changed tx_constraint_graphs.valid_from
+  ---
+  duration_ms: 0.596292
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.valid_to
+ok 175 - full schema refuses changed tx_constraint_graphs.valid_to
+  ---
+  duration_ms: 0.602458
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_type
+ok 176 - full schema refuses changed tx_constraint_graphs.value_type
+  ---
+  duration_ms: 0.587042
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_string
+ok 177 - full schema refuses changed tx_constraint_graphs.value_string
+  ---
+  duration_ms: 4.443208
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_number
+ok 178 - full schema refuses changed tx_constraint_graphs.value_number
+  ---
+  duration_ms: 0.555958
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_boolean
+ok 179 - full schema refuses changed tx_constraint_graphs.value_boolean
+  ---
+  duration_ms: 0.545875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_datetime
+ok 180 - full schema refuses changed tx_constraint_graphs.value_datetime
+  ---
+  duration_ms: 0.504125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_json
+ok 181 - full schema refuses changed tx_constraint_graphs.value_json
+  ---
+  duration_ms: 0.488542
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_constraint_graphs.value_identity
+ok 182 - full schema refuses changed tx_constraint_graphs.value_identity
+  ---
+  duration_ms: 0.484167
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_meta._id
+ok 183 - full schema refuses changed tx_meta._id
+  ---
+  duration_ms: 0.523334
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_meta.scope_key
+ok 184 - full schema refuses changed tx_meta.scope_key
+  ---
+  duration_ms: 0.432708
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_meta.position
+ok 185 - full schema refuses changed tx_meta.position
+  ---
+  duration_ms: 0.433958
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relation_attempts._id
+ok 186 - full schema refuses changed tx_native_relation_attempts._id
+  ---
+  duration_ms: 0.487666
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relation_attempts.scope_key
+ok 187 - full schema refuses changed tx_native_relation_attempts.scope_key
+  ---
+  duration_ms: 0.496125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relation_attempts.run_id
+ok 188 - full schema refuses changed tx_native_relation_attempts.run_id
+  ---
+  duration_ms: 0.460916
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relation_attempts.attempt_id
+ok 189 - full schema refuses changed tx_native_relation_attempts.attempt_id
+  ---
+  duration_ms: 0.784708
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relation_attempts.phase
+ok 190 - full schema refuses changed tx_native_relation_attempts.phase
+  ---
+  duration_ms: 0.720042
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations._id
+ok 191 - full schema refuses changed tx_native_relations._id
+  ---
+  duration_ms: 0.52525
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.scope_key
+ok 192 - full schema refuses changed tx_native_relations.scope_key
+  ---
+  duration_ms: 0.48375
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.run_id
+ok 193 - full schema refuses changed tx_native_relations.run_id
+  ---
+  duration_ms: 0.497416
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.relation_name
+ok 194 - full schema refuses changed tx_native_relations.relation_name
+  ---
+  duration_ms: 0.54825
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.source
+ok 195 - full schema refuses changed tx_native_relations.source
+  ---
+  duration_ms: 0.524917
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.target
+ok 196 - full schema refuses changed tx_native_relations.target
+  ---
+  duration_ms: 0.501333
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_native_relations.depth
+ok 197 - full schema refuses changed tx_native_relations.depth
+  ---
+  duration_ms: 0.495584
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations._id
+ok 198 - full schema refuses changed tx_query_generations._id
+  ---
+  duration_ms: 0.46425
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.scope_key
+ok 199 - full schema refuses changed tx_query_generations.scope_key
+  ---
+  duration_ms: 1.849542
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.generation
+ok 200 - full schema refuses changed tx_query_generations.generation
+  ---
+  duration_ms: 0.488292
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.source_position
+ok 201 - full schema refuses changed tx_query_generations.source_position
+  ---
+  duration_ms: 0.456667
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.row_count
+ok 202 - full schema refuses changed tx_query_generations.row_count
+  ---
+  duration_ms: 0.434542
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.valid_at
+ok 203 - full schema refuses changed tx_query_generations.valid_at
+  ---
+  duration_ms: 0.435542
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.recorded_at
+ok 204 - full schema refuses changed tx_query_generations.recorded_at
+  ---
+  duration_ms: 0.435125
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_generations.strategy
+ok 205 - full schema refuses changed tx_query_generations.strategy
+  ---
+  duration_ms: 0.53325
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_members._id
+ok 206 - full schema refuses changed tx_query_members._id
+  ---
+  duration_ms: 0.496667
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_members.scope_key
+ok 207 - full schema refuses changed tx_query_members.scope_key
+  ---
+  duration_ms: 0.459208
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_members.generation
+ok 208 - full schema refuses changed tx_query_members.generation
+  ---
+  duration_ms: 0.445375
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_members.ordinal
+ok 209 - full schema refuses changed tx_query_members.ordinal
+  ---
+  duration_ms: 0.432542
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations._id
+ok 210 - full schema refuses changed tx_query_relations._id
+  ---
+  duration_ms: 0.442667
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.scope_key
+ok 211 - full schema refuses changed tx_query_relations.scope_key
+  ---
+  duration_ms: 0.443875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.run_id
+ok 212 - full schema refuses changed tx_query_relations.run_id
+  ---
+  duration_ms: 0.43725
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.rule_name
+ok 213 - full schema refuses changed tx_query_relations.rule_name
+  ---
+  duration_ms: 0.442334
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.arg1
+ok 214 - full schema refuses changed tx_query_relations.arg1
+  ---
+  duration_ms: 0.453875
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.arg2
+ok 215 - full schema refuses changed tx_query_relations.arg2
+  ---
+  duration_ms: 0.430959
+  type: 'test'
+  ...
+# Subtest: full schema refuses changed tx_query_relations.depth
+ok 216 - full schema refuses changed tx_query_relations.depth
+  ---
+  duration_ms: 0.429917
+  type: 'test'
+  ...
+# Subtest: G0 covers dynamic stored columns not present in CREATE TABLE
+ok 217 - G0 covers dynamic stored columns not present in CREATE TABLE
+  ---
+  duration_ms: 0.485708
+  type: 'test'
+  ...
+# Subtest: pool admits the two dev engines when only they run
+ok 218 - pool admits the two dev engines when only they run
+  ---
+  duration_ms: 0.768
+  type: 'test'
+  ...
+# Subtest: pool counts external research probes and refuses with their names
+ok 219 - pool counts external research probes and refuses with their names
+  ---
+  duration_ms: 0.41675
+  type: 'test'
+  ...
+# Subtest: an uncapped external container counts as the whole VM (fail closed)
+ok 220 - an uncapped external container counts as the whole VM (fail closed)
+  ---
+  duration_ms: 0.071791
+  type: 'test'
+  ...
+# Subtest: a reserved container counts once even while it also runs
+ok 221 - a reserved container counts once even while it also runs
+  ---
+  duration_ms: 0.06675
+  type: 'test'
+  ...
+# Subtest: disk forecast refuses past the 50 GiB used limit
+ok 222 - disk forecast refuses past the 50 GiB used limit
+  ---
+  duration_ms: 0.066042
+  type: 'test'
+  ...
+# Subtest: slotInfo rejects forbidden and probe ports and names containers and volumes
+ok 223 - slotInfo rejects forbidden and probe ports and names containers and volumes
+  ---
+  duration_ms: 0.325583
+  type: 'test'
+  ...
+# Subtest: withDirLock serializes and breaks a lock whose owner pid is dead
+ok 224 - withDirLock serializes and breaks a lock whose owner pid is dead
+  ---
+  duration_ms: 224.671292
+  type: 'test'
+  ...
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] waiting for pool lock (held by pid 37870)
+# [lab] heavy: waiting for one of 2 slots; held by pid 37859 "a", pid 37859 "b"
+# Subtest: withPool read-modify-writes the ledger atomically across processes
+ok 225 - withPool read-modify-writes the ledger atomically across processes
+  ---
+  duration_ms: 568.138084
+  type: 'test'
+  ...
+# Subtest: reconcile drops only reservations with no container and a dead reserving pid
+ok 226 - reconcile drops only reservations with no container and a dead reserving pid
+  ---
+  duration_ms: 0.817791
+  type: 'test'
+  ...
+# Subtest: heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+ok 227 - heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+  ---
+  duration_ms: 121.890709
+  type: 'test'
+  ...
+# Subtest: object store is content addressed and refuses dependency caches and secret-like names
+ok 228 - object store is content addressed and refuses dependency caches and secret-like names
+  ---
+  duration_ms: 0.986959
+  type: 'test'
+  ...
+# Subtest: language classification: pure XTQL, pure SQL, hybrid, strict substeps
+ok 229 - language classification: pure XTQL, pure SQL, hybrid, strict substeps
+  ---
+  duration_ms: 0.244
+  type: 'test'
+  ...
+# Subtest: verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+ok 230 - verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+  ---
+  duration_ms: 0.17675
+  type: 'test'
+  ...
+# Subtest: caseLanguages lists every substep language in order
+ok 231 - caseLanguages lists every substep language in order
+  ---
+  duration_ms: 0.17675
+  type: 'test'
+  ...
+# Subtest: contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+ok 232 - contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+  ---
+  duration_ms: 0.382708
+  type: 'test'
+  ...
+# Subtest: second-writer guard refuses a second container on a slot volume unless its config is read-only
+ok 233 - second-writer guard refuses a second container on a slot volume unless its config is read-only
+  ---
+  duration_ms: 0.379292
+  type: 'test'
+  ...
+# Subtest: second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+ok 234 - second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+  ---
+  duration_ms: 0.179167
+  type: 'test'
+  ...
+# Subtest: follower config must be read-only and read the writer's own log and storage paths
+ok 235 - follower config must be read-only and read the writer's own log and storage paths
+  ---
+  duration_ms: 0.272625
+  type: 'test'
+  ...
+# Subtest: follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+ok 236 - follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+  ---
+  duration_ms: 261.791417
+  type: 'test'
+  ...
+# Subtest: cpusets parse against the VM and unpinned containers overlap everything
+ok 237 - cpusets parse against the VM and unpinned containers overlap everything
+  ---
+  duration_ms: 0.213083
+  type: 'test'
+  ...
+# Subtest: golden key: canonical over its inputs, changes with any seed or engine input, ignores slot placement
+ok 238 - golden key: canonical over its inputs, changes with any seed or engine input, ignores slot placement
+  ---
+  duration_ms: 0.9145
+  type: 'test'
+  ...
+# Subtest: host disk floor: a copy that would leave less than 5 GiB is refused (Q74f)
+ok 239 - host disk floor: a copy that would leave less than 5 GiB is refused (Q74f)
+  ---
+  duration_ms: 0.159541
+  type: 'test'
+  ...
+# Subtest: volume listings parse, hash every field, fail closed on truncation, as a refusal-only check
+ok 240 - volume listings parse, hash every field, fail closed on truncation, as a refusal-only check
+  ---
+  duration_ms: 0.544708
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid request-memory
+ok 241 - resource validation refuses missing/invalid request-memory
+  ---
+  duration_ms: 0.075
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid request-disk
+ok 242 - resource validation refuses missing/invalid request-disk
+  ---
+  duration_ms: 0.03325
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid reservation-memory
+ok 243 - resource validation refuses missing/invalid reservation-memory
+  ---
+  duration_ms: 0.033208
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid reservation-disk
+ok 244 - resource validation refuses missing/invalid reservation-disk
+  ---
+  duration_ms: 0.029709
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid VM-cap
+ok 245 - resource validation refuses missing/invalid VM-cap
+  ---
+  duration_ms: 0.026
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid pool-cap
+ok 246 - resource validation refuses missing/invalid pool-cap
+  ---
+  duration_ms: 0.118042
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid external-cap
+ok 247 - resource validation refuses missing/invalid external-cap
+  ---
+  duration_ms: 0.037333
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v 100 10 90 10% /)
+ok 248 - VM disk parser requires complete sane bytes (/dev/v 100 10 90 10% /)
+  ---
+  duration_ms: 0.108791
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v NaN 10 90 10% /)
+ok 249 - VM disk parser requires complete sane bytes (/dev/v NaN 10 90 10% /)
+  ---
+  duration_ms: 0.044625
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v 100 -1 90 10% /)
+ok 250 - VM disk parser requires complete sane bytes (/dev/v 100 -1 90 10% /)
+  ---
+  duration_ms: 0.026084
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v 100 10 100 10% /)
+ok 251 - VM disk parser requires complete sane bytes (/dev/v 100 10 100 10% /)
+  ---
+  duration_ms: 0.026042
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (undefined)
+ok 252 - VM disk parser requires complete sane bytes (undefined)
+  ---
+  duration_ms: 0.05975
+  type: 'test'
+  ...
+# Subtest: copy refusal rejects incomplete framing "@@end"
+ok 253 - copy refusal rejects incomplete framing "@@end"
+  ---
+  duration_ms: 0.073458
+  type: 'test'
+  ...
+# Subtest: copy refusal rejects incomplete framing "@@stat\\n@@end"
+ok 254 - copy refusal rejects incomplete framing "@@stat\\n@@end"
+  ---
+  duration_ms: 0.042
+  type: 'test'
+  ...
+# Subtest: copy refusal rejects incomplete framing "@@sha\\n@@stat\\n@@end"
+ok 255 - copy refusal rejects incomplete framing "@@sha\\n@@stat\\n@@end"
+  ---
+  duration_ms: 0.037708
+  type: 'test'
+  ...
+# Subtest: copy refusal rejects incomplete framing "@@stat\\n@@sha\\n@@end\\nunexpected"
+ok 256 - copy refusal rejects incomplete framing "@@stat\\n@@sha\\n@@end\\nunexpected"
+  ---
+  duration_ms: 0.03875
+  type: 'test'
+  ...
+1..256
+# tests 256
+# suites 0
+# pass 256
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2998.531208

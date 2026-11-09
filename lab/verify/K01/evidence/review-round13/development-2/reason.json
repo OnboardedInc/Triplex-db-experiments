@@ -1,0 +1,7 @@
+{
+  "failures": "Four offline SQL spies counted the literal native _valid_from column as a bound parameter; seven cross-VM array prototype comparisons; one missing scope column refused earlier than the expected error regex.",
+  "fix": "Map bound params after excluding the fixed _valid_from literal, compare array length, and allow the specific scope-catalog refusal. No implementation changes.",
+  "oldTests": 511,
+  "passed": 499,
+  "failed": 12
+}

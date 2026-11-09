@@ -1,0 +1,22 @@
+{
+  "at": "2026-11-09T06:43:04.597446+00:00",
+  "builder": "9b764517111683d63d6cfd15a2820506aec3dfbc",
+  "merge": "044f4335b19b4e938ae8ce4e758134c9b27104b5",
+  "testedHead": "044f4335b19b4e938ae8ce4e758134c9b27104b5",
+  "runtimeEqualsBuilder": true,
+  "sourceAndLogsRehashed": true,
+  "reviewerRawRehashed": true,
+  "acceptanceUnchanged": true,
+  "tests": 511,
+  "allTestSummariesPass": true,
+  "upstreamHead": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+  "smokeRawFiles": 99,
+  "smokeRawBytes": 206902402,
+  "smokeCurrentChangedPaths": [
+    "lab/bin/engine.mjs",
+    "lab/bench/lib/g0.ts"
+  ],
+  "replayDiagnosticOnly": true,
+  "noEngineCalls": true,
+  "upstreamSourcesRehashed": true
+}

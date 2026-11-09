@@ -1,0 +1,297 @@
+TAP version 13
+# Subtest: actual public writer and XTDB adapter write-set agrees with policy: 1
+not ok 1 - actual public writer and XTDB adapter write-set agrees with policy: 1
+  ---
+  duration_ms: 1032.129792
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:44:36'
+  failureType: 'testCodeFailure'
+  error: 'Transaction outcome is unknown; resolve operation 1c718d8c-6840-40f7-af99-d56c6a54cd70 before retrying'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: actual public writer and XTDB adapter write-set agrees with policy: 8
+not ok 2 - actual public writer and XTDB adapter write-set agrees with policy: 8
+  ---
+  duration_ms: 1025.007625
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:44:36'
+  failureType: 'testCodeFailure'
+  error: 'Transaction outcome is unknown; resolve operation 7da7e5ad-a025-492d-b2e7-ef87abc929b7 before retrying'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: actual public writer and XTDB adapter write-set agrees with policy: 20
+not ok 3 - actual public writer and XTDB adapter write-set agrees with policy: 20
+  ---
+  duration_ms: 1020.482416
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:44:36'
+  failureType: 'testCodeFailure'
+  error: 'Transaction outcome is unknown; resolve operation 6aa1d6c5-dedf-423a-9e9e-1ecf49e7eec2 before retrying'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: actual public writer and XTDB adapter write-set agrees with policy: 500
+not ok 4 - actual public writer and XTDB adapter write-set agrees with policy: 500
+  ---
+  duration_ms: 1034.292208
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:44:36'
+  failureType: 'testCodeFailure'
+  error: 'Transaction outcome is unknown; resolve operation 03fc279f-5bd5-4e47-ba64-e602b5974de7 before retrying'
+  code: 'ERR_TEST_FAILURE'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_assertions
+ok 5 - actual SQL reader refuses absent-written / global extra table: tx_assertions
+  ---
+  duration_ms: 28.878042
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_attempts
+ok 6 - actual SQL reader refuses absent-written / global extra table: tx_attempts
+  ---
+  duration_ms: 11.529375
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_claims
+ok 7 - actual SQL reader refuses absent-written / global extra table: tx_claims
+  ---
+  duration_ms: 9.707625
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_constraint_generations
+not ok 8 - actual SQL reader refuses absent-written / global extra table: tx_constraint_generations
+  ---
+  duration_ms: 8.793292
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:74:40'
+  failureType: 'testCodeFailure'
+  error: |-
+    Values have same structure but are not reference-equal:
+    
+    []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:80:147)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_constraint_graphs
+not ok 9 - actual SQL reader refuses absent-written / global extra table: tx_constraint_graphs
+  ---
+  duration_ms: 8.716083
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:74:40'
+  failureType: 'testCodeFailure'
+  error: |-
+    Values have same structure but are not reference-equal:
+    
+    []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:80:147)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_meta
+ok 10 - actual SQL reader refuses absent-written / global extra table: tx_meta
+  ---
+  duration_ms: 6.872875
+  type: 'test'
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_native_relation_attempts
+not ok 11 - actual SQL reader refuses absent-written / global extra table: tx_native_relation_attempts
+  ---
+  duration_ms: 9.755375
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:74:40'
+  failureType: 'testCodeFailure'
+  error: |-
+    Values have same structure but are not reference-equal:
+    
+    []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:80:147)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_native_relations
+not ok 12 - actual SQL reader refuses absent-written / global extra table: tx_native_relations
+  ---
+  duration_ms: 6.796333
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:74:40'
+  failureType: 'testCodeFailure'
+  error: |-
+    Values have same structure but are not reference-equal:
+    
+    []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:80:147)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_query_generations
+not ok 13 - actual SQL reader refuses absent-written / global extra table: tx_query_generations
+  ---
+  duration_ms: 11.237875
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:74:40'
+  failureType: 'testCodeFailure'
+  error: |-
+    Values have same structure but are not reference-equal:
+    
+    []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:80:147)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_query_members
+not ok 14 - actual SQL reader refuses absent-written / global extra table: tx_query_members
+  ---
+  duration_ms: 6.664
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:74:40'
+  failureType: 'testCodeFailure'
+  error: |-
+    Values have same structure but are not reference-equal:
+    
+    []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:80:147)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: actual SQL reader refuses absent-written / global extra table: tx_query_relations
+not ok 15 - actual SQL reader refuses absent-written / global extra table: tx_query_relations
+  ---
+  duration_ms: 7.393375
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:74:40'
+  failureType: 'testCodeFailure'
+  error: |-
+    Values have same structure but are not reference-equal:
+    
+    []
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:80:147)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: every written column refuses complete absence through actual SQL reader
+not ok 16 - every written column refuses complete absence through actual SQL reader
+  ---
+  duration_ms: 141.894708
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:84:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /missing written column/. Input:
+    
+    'Error: G0 missing scope catalog'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: 'G0 missing scope catalog'
+  stack: |-
+    Object.scopes (evalmachine.<anonymous>:38:23)
+    checkScopes (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bench/lib/g0.ts:94:35)
+    file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bench/lib/g0.ts:111:11
+    async bounded (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/bench/lib/g0.ts:52:12)
+    async waitForActual (node:assert:644:5)
+    async Function.rejects (node:assert:767:25)
+    async TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:87:134)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/catalog-review.test.mjs:87:134)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: historical-only column remains catalog-present; segment NULLs retained and clone edit refuses
+ok 17 - historical-only column remains catalog-present; segment NULLs retained and clone edit refuses
+  ---
+  duration_ms: 5.90075
+  type: 'test'
+  ...
+# Subtest: manifest attempts to override written policies are ignored
+ok 18 - manifest attempts to override written policies are ignored
+  ---
+  duration_ms: 2.828875
+  type: 'test'
+  ...
+# Subtest: execute engine record hash branch offline: golden
+ok 19 - execute engine record hash branch offline: golden
+  ---
+  duration_ms: 8.230334
+  type: 'test'
+  ...
+# Subtest: execute engine record hash branch offline: fresh
+ok 20 - execute engine record hash branch offline: fresh
+  ---
+  duration_ms: 5.780667
+  type: 'test'
+  ...
+# Subtest: execute engine record hash branch offline: loadGolden
+ok 21 - execute engine record hash branch offline: loadGolden
+  ---
+  duration_ms: 5.277792
+  type: 'test'
+  ...
+# Subtest: smoke byte provenance is diagnostic; neither diagnostic manifest nor ledger is an admission input
+ok 22 - smoke byte provenance is diagnostic; neither diagnostic manifest nor ledger is an admission input
+  ---
+  duration_ms: 3.167708
+  type: 'test'
+  ...
+1..22
+# tests 22
+# suites 0
+# pass 10
+# fail 12
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4831.828292

@@ -1,0 +1,6 @@
+{
+  "status": "setup failed before tests",
+  "cause": "Copied runner referenced nonexistent LIVE-round13.md; round 13 has REPORT-round13.md",
+  "testsRun": 0,
+  "nextAttempt": "Correct source list and use unique attempt-2 raw path."
+}

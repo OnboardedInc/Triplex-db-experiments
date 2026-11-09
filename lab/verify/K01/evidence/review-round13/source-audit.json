@@ -1,0 +1,443 @@
+{
+  "builder": "9b764517111683d63d6cfd15a2820506aec3dfbc",
+  "merge": "044f4335b19b4e938ae8ce4e758134c9b27104b5",
+  "upstreamHead": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+  "upstreamClean": true,
+  "sources": {
+    "core/src/main/clojure/xtdb/information_schema.clj": {
+      "sha256": "ea43725566e4e0274a9e98e5a84cb0430a05d4dd9aca198c79a484d0fa98faa5",
+      "excerpts": [
+        {
+          "start": 44,
+          "end": 60,
+          "lines": [
+            "(defn schema-info->col-rows [schema-info]",
+            "  (for [[^TableRef table cols] schema-info",
+            "        :let [cols (into (when-not (and (contains? #{\"pg_catalog\" \"information_schema\" \"xt\"} (.getSchemaName table))",
+            "                                        (not= 'xt/txs (table/ref->schema+table table)))",
+            "                           (-> '{\"_valid_from\" :instant",
+            "                                 \"_valid_to\" [:? :instant]",
+            "                                 \"_system_from\" :instant",
+            "                                 \"_system_to\" [:? :instant]}",
+            "                               map->vec-types))",
+            "                         cols)",
+            "              {xt-cols true, user-cols false} (group-by (comp #(str/starts-with? % \"_\") key) cols)",
+            "              cols (concat (sort-by key xt-cols)",
+            "                           (sort-by key user-cols))]",
+            "        [idx col] (map-indexed #(vector %1 %2) cols)",
+            "        :let [name (key col)",
+            "              vec-type (val col)]]",
+            ""
+          ]
+        },
+        {
+          "start": 259,
+          "end": 265,
+          "lines": [
+            "(defn tables [db-name table-refs]",
+            "  (for [^TableRef table table-refs]",
+            "    {:table-catalog db-name",
+            "     :table-name (.getTableName table)",
+            "     :table-schema (.getSchemaName table)",
+            "     :table-type (if (views (table/ref->schema+table table)) \"VIEW\" \"BASE TABLE\")}))",
+            ""
+          ]
+        },
+        {
+          "start": 348,
+          "end": 366,
+          "lines": [
+            "(defn columns [db-name col-rows]",
+            "  (for [{:keys [^TableRef table, ^VectorType vec-type, idx], col-name :name} col-rows",
+            "        :let [pg-type (column-pg-type vec-type)",
+            "              oid (.getOid pg-type)",
+            "              precision (numeric-precision-by-oid oid)]]",
+            "    {:table-catalog db-name",
+            "     :table-name (.getTableName table)",
+            "     :table-schema (.getSchemaName table)",
+            "     :column-name (.denormalize ^IKeyFn (identity #xt/key-fn :snake-case-string) (str col-name))",
+            "     :data-type (.getDataType pg-type)",
+            "     :xt-type (pr-str (st/render-type vec-type))",
+            "     :udt-schema \"pg_catalog\"",
+            "     :udt-name (.getTypname pg-type)",
+            "     :ordinal-position (int idx)",
+            "     :column-default nil",
+            "     :is-nullable (if (types/nullable-vec-type? vec-type) \"YES\" \"NO\")",
+            "     :is-identity \"NO\"",
+            "     :is-generated \"NEVER\"",
+            "     :numeric-precision (some-> precision int)"
+          ]
+        },
+        {
+          "start": 566,
+          "end": 592,
+          "lines": [
+            "            db-name (.getName db)",
+            "            trie-catalog (.getTrieCatalog db-state)",
+            "",
+            "            ;; Same key set `schema-info` has, without deriving a single type: `allColumnTypes` is",
+            "            ;; `tableInfo.keys.associateWith { \u2026 }`, so their key sets are equal by construction.",
+            "            table-refs (into (set (keys (.getTableInfo ^Snapshot snap)))",
+            "                             (map table/->ref)",
+            "                             (keys meta-table-schemas))",
+            "",
+            "            oid-by-table (->> (.getEntries (.getTableCatSnap ^Snapshot snap))",
+            "                              (into {} (map (juxt #(.getTable ^TableEntry %) #(.getOid ^TableEntry %)))))",
+            "",
+            "            ;; delayed: only `columns` and `pg_attribute` need types, and this is bound ahead of the",
+            "            ;; dispatch \u2014 eagerly, the other 32 tables would each derive every column of every table.",
+            "            ;; Values stay as the Kotlin maps `allColumnTypes` returns; every consumer reads them as",
+            "            ;; entry seqs, and only the outer map has to be Clojure for `merge` to take a `conj`.",
+            "            schema-info (delay (-> (into {} (.getAllColumnTypes ^Snapshot snap))",
+            "                                   (merge meta-table-schemas)",
+            "                                   (update-keys table/->ref)))]",
+            "",
+            "        (util/with-close-on-catch [out-rel (Relation. ^BufferAllocator allocator",
+            "                                                      ^Map (update-keys derived-table-schema str))]",
+            "",
+            "          (.writeRows out-rel (->> (case (table/ref->schema+table table)",
+            "                                     information_schema/tables (tables db-name table-refs)",
+            "                                     information_schema/columns (columns db-name (schema-info->col-rows @schema-info))",
+            "                                     information_schema/schemata (schemas db-name)"
+          ]
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/indexer/Snapshot.kt": {
+      "sha256": "5aeabdb7ba3650f03539149907b74de3756afd3db448925812f2fce58f659468",
+      "excerpts": [
+        {
+          "start": 26,
+          "end": 33,
+          "lines": [
+            "/**",
+            " * A frozen view of **one partition** at a point in time \u2014 see [DatabaseSnapshot] for the whole database.",
+            " *",
+            " * It pins the in-memory segments, the trie catalog and the historical table metadata, so a reader is not",
+            " * combining pinned data with a catalog read live at call time. The two catalog captures are not atomic with",
+            " * respect to each other, though \u2014 see [open].",
+            " */",
+            "class Snapshot("
+          ]
+        },
+        {
+          "start": 67,
+          "end": 100,
+          "lines": [
+            "",
+            "    /**",
+            "     * The declared type of each of [cols] in [table] - the historical half joined with the live half.",
+            "     *",
+            "     * Takes the columns it is asked about rather than returning whatever it finds. A column can belong to the",
+            "     * table while being absent from one half \u2014 recorded historically, missing from a live segment \u2014 and that",
+            "     * half still has an answer: its rows read null for it. Indexing into a found-columns map would make that",
+            "     * a lookup miss, and the caller would have to invent what a miss means.",
+            "     */",
+            "    fun columnTypes(table: TableRef, cols: Iterable<ColumnName>): Map<ColumnName, VectorType> {",
+            "        val liveSnaps = table(table)",
+            "        val superseded = supersededLiveTypes[table]",
+            "        // Hoisted for the same reason TableSnapshot and TableMeta hold theirs: constant for a fixed map,",
+            "        // and this loop asks once per column. Doubles as the no-superseded-table answer, since a table",
+            "        // that never had one contributes the bottom too.",
+            "        val supersededAbsent = superseded?.let { VectorType.absentContribution(it) } ?: VectorType.Nothing",
+            "",
+            "        return cols.associateWith { col ->",
+            "            mergeTypes(",
+            "                liveSnaps.map { it.contributedType(col) }",
+            "                        + (superseded?.get(col) ?: supersededAbsent)",
+            "                        + tableCatSnap.contributedType(table, col)",
+            "            )",
+            "        }",
+            "    }",
+            "",
+            "    /** [tableInfo] is the one enumeration of a table's columns - typing whatever it lists keeps them agreeing. */",
+            "    fun columnTypes(table: TableRef): Map<ColumnName, VectorType> =",
+            "        columnTypes(table, tableInfo[table].orEmpty())",
+            "",
+            "    val allColumnTypes: Map<TableRef, Map<ColumnName, VectorType>> by lazy {",
+            "        tableInfo.keys.associateWith { columnTypes(it) }",
+            "    }",
+            ""
+          ]
+        },
+        {
+          "start": 115,
+          "end": 129,
+          "lines": [
+            "            liveColumnNames: Map<TableRef, Set<ColumnName>>",
+            "        ): Map<TableRef, Set<ColumnName>> {",
+            "            val tableInfo = HashMap<TableRef, MutableSet<ColumnName>>()",
+            "",
+            "            for ((table, types) in types)",
+            "                tableInfo.getOrPut(table) { mutableSetOf() }.addAll(types.keys)",
+            "",
+            "            for ((table, colNames) in liveColumnNames)",
+            "                tableInfo.getOrPut(table) { mutableSetOf() }.addAll(colNames)",
+            "",
+            "            return tableInfo",
+            "        }",
+            "",
+            "        // Precedence, bottom\u2192top (later layers win): durable live tables \u2295 in-flight staged txs",
+            "        // (oldest\u2192newest) \u2295 the resolving tx's own writes. External snapshots pass neither and see"
+          ]
+        },
+        {
+          "start": 147,
+          "end": 189,
+          "lines": [
+            "            // dropping the live half outright would leave nobody able to answer, declaring a narrower",
+            "            // type than the rows about to be scanned. The write path keeps both copies alive across that",
+            "            // gap (`nextBlock` runs after the catalog update on the leader and follower paths alike);",
+            "            // this keeps the read path inside it. See #5873.",
+            "            val (liveTables, supersededTables) = liveIndex.tableRefs",
+            "                .mapNotNull { liveIndex.table(it) }",
+            "                .partition { it.blockIdx > trieCatSnap.l0MaxBlockIdx(it.table) }",
+            "",
+            "            val supersededLiveTypes = supersededTables.associate { it.table to it.relation.logRelTypes.orEmpty() }",
+            "",
+            "            val stagedTables = resolvedTxs.flatMap { it.allTables }",
+            "",
+            "            // One segment per table, newest wins \u2014 these views subsume rather than complement, so scanning",
+            "            // more than one of them would count a row once per view able to see it. A staged tx's rows are",
+            "            // the committed rows plus its own, and the resolving tx's are those plus its own again, every",
+            "            // one of them over the table's own relation. Newest is whatever writes last here, which is what",
+            "            // makes the resolver's queue order load-bearing.",
+            "            val newestRows = LinkedHashMap<TableRef, Pair<RelationReader, MemoryHashTrie>>()",
+            "            for (lt in liveTables) newestRows[lt.table] = lt.relation to lt.trie",
+            "            for (staged in stagedTables) newestRows[staged.ref] = staged.liveTable.relation to staged.liveTable.trie",
+            "            ownTx?.tables?.forEach { (ref, tableTx) -> newestRows[ref] = tableTx.tx.relation to tableTx.tx.trie }",
+            "",
+            "            val byTable =",
+            "                openAll { newestRows.entries.safeMap { (ref, rows) -> TableSnapshot.open(al, ref, rows.first, rows.second) } }",
+            "                    .groupBy { it.table }",
+            "",
+            "            // tableInfo drives base-table resolution \u2014 an unresolved table throws `Table not found`. It",
+            "            // must carry every staged table's declared columns *including* 0-row ones (e.g. `CREATE TABLE`),",
+            "            // whose segment declares none \u2014 column types are read off the `put` leg, which a table nothing",
+            "            // has written to hasn't got \u2014 so a tx resolving behind a freshly created empty table in the",
+            "            // same batch still sees it exists.",
+            "            val liveColumnNames = LinkedHashMap<TableRef, MutableSet<ColumnName>>()",
+            "            for ((table, snaps) in byTable)",
+            "                snaps.flatMapTo(liveColumnNames.getOrPut(table) { linkedSetOf() }) { it.types.keys }",
+            "            for (t in stagedTables) liveColumnNames.getOrPut(t.ref) { linkedSetOf() }.addAll(t.columnTypes.keys)",
+            "            for ((table, types) in supersededLiveTypes) liveColumnNames.getOrPut(table) { linkedSetOf() }.addAll(types.keys)",
+            "",
+            "            // Captured after the trie-cat and the live tables, deliberately: the type view must not lag the",
+            "            // data view. A declared type narrower than the rows being scanned is unsound; a wider one is",
+            "            // always safe, so a catalog read that's newer than the tries it covers errs in the safe direction.",
+            "            val tableCatSnap = tableCat.snap()",
+            "",
+            "            val tableInfo = tableCatSnap.buildTableInfo(liveColumnNames)"
+          ]
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/api/tx/OpenTx.kt": {
+      "sha256": "e1f1c2d6b4a9262f6a93987311261d9b8a2133eb615eb6848fdb01a527714f4f",
+      "excerpts": [
+        {
+          "start": 338,
+          "end": 341,
+          "lines": [
+            "    private fun createTable(ref: TableRef, colNames: List<String>) {",
+            "        checkNotForbidden(ref)",
+            "        table(ref).declareColumns(colNames)",
+            "    }"
+          ]
+        },
+        {
+          "start": 468,
+          "end": 471,
+          "lines": [
+            "        internal fun declareColumns(colNames: List<String>) {",
+            "            for (colName in colNames) putDocWriter.vectorFor(colName, NULL_TYPE, false)",
+            "        }",
+            ""
+          ]
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/indexer/TableSnapshot.kt": {
+      "sha256": "26d39f1ed58c27d9682db722494073c1e3261acb19518973cf537d1c98e8021a",
+      "excerpts": [
+        {
+          "start": 14,
+          "end": 39,
+          "lines": [
+            "",
+            "class TableSnapshot(",
+            "    val table: TableRef,",
+            "    private val columnTypes: Map<ColumnName, VectorType>,",
+            "    val segment: MemorySegment",
+            ") : AutoCloseable {",
+            "    val relation get() = segment.rel",
+            "    val trie get() = segment.trie",
+            "",
+            "    // A constant of the segment: `columnTypes` is fixed at construction, so what this segment",
+            "    // contributes for a column it doesn't hold is fixed too. Held rather than recomputed because",
+            "    // `Snapshot.columnTypes` asks per column, and a wide table asks many times.",
+            "    private val absentContribution by lazy { VectorType.absentContribution(columnTypes) }",
+            "",
+            "    /** The live half's contribution \u2014 its recorded type for [col], or [VectorType.absentContribution]. */",
+            "    fun contributedType(col: ColumnName): VectorType = columnTypes[col] ?: absentContribution",
+            "",
+            "    /**",
+            "     * The raw record of what this one segment physically holds \u2014 no rule applied and nothing joined in.",
+            "     * A column's *declared* type is [xtdb.indexer.Snapshot.columnTypes]; this is only an input to it.",
+            "     *",
+            "     * Public for `xt.live_columns`, which reports the live index as it stands and would be defeated by",
+            "     * merging \u2014 the merged question is what `information_schema.columns` answers.",
+            "     */",
+            "    val types: Map<ColumnName, VectorType> get() = columnTypes",
+            ""
+          ]
+        }
+      ]
+    },
+    "core/src/main/kotlin/xtdb/catalog/TableCatalog.kt": {
+      "sha256": "beb7717ee35f80a49377651a5a3ad69997764ea0e4043af4ad6923a6a33f6a54",
+      "excerpts": [
+        {
+          "start": 87,
+          "end": 100,
+          "lines": [
+            "class TableCatalog(private val bufferPool: BufferPool, initialBlock: Block? = null) {",
+            "",
+            "    internal data class TableMeta(",
+            "        val vecTypes: Map<ColumnName, VectorType>,",
+            "        val rowCount: Long,",
+            "        val hlls: Map<ColumnName, HLL>",
+            "    ) {",
+            "        /** @see xtdb.indexer.TableSnapshot.contributedType \u2014 the historical side of the same memo. */",
+            "        val absentContribution by lazy { VectorType.absentContribution(vecTypes) }",
+            "    }",
+            "",
+            "    /**",
+            "     * One version of the catalog, and the unit every write replaces wholesale.",
+            "     *"
+          ]
+        },
+        {
+          "start": 120,
+          "end": 132,
+          "lines": [
+            "        // where it is used: `buildTableInfo` reads it once per `Snapshot.open`. Worth knowing before",
+            "        // reaching for it per column.",
+            "        val types: Map<TableRef, Map<ColumnName, VectorType>>",
+            "            get() = tables.mapValues { (_, meta) -> meta.vecTypes }",
+            "",
+            "        fun rowCount(table: TableRef): Long? = tables[table]?.rowCount",
+            "",
+            "        /** The historical half's contribution \u2014 an unknown table has written nothing. */",
+            "        fun contributedType(table: TableRef, col: ColumnName): VectorType =",
+            "            tables[table]?.let { it.vecTypes[col] ?: it.absentContribution } ?: VectorType.Nothing",
+            "",
+            "        /**",
+            "         * The entries the current block records, and so the only tables with a per-table block file to"
+          ]
+        },
+        {
+          "start": 400,
+          "end": 428,
+          "lines": [
+            "",
+            "        /**",
+            "         * Folds a block's types into the accumulated catalog.",
+            "         *",
+            "         * Each side is a partial map read as a total function - its recorded type where it has one, and its",
+            "         * [VectorType.absentContribution] everywhere else. Substituting `Null` unconditionally would be right",
+            "         * only for a side that holds put rows; for one with none (delete-only, or a `CREATE TABLE` declaring",
+            "         * a column and writing nothing) it widens every column that side failed to mention, and since types",
+            "         * only ever widen and this result is serialised into the block file, that would never heal (#5911).",
+            "         */",
+            "        internal fun mergeVecTypes(",
+            "            old: Map<ColumnName, VectorType>?, new: Map<ColumnName, VectorType>?",
+            "        ): Map<ColumnName, VectorType> =",
+            "            when {",
+            "                old == null -> new.orEmpty()",
+            "                new == null -> old",
+            "                else -> {",
+            "                    val oldAbsent = VectorType.absentContribution(old)",
+            "                    val newAbsent = VectorType.absentContribution(new)",
+            "",
+            "                    (old.keys + new.keys).associateWith { col ->",
+            "                        mergeTypes(listOf(old[col] ?: oldAbsent, new[col] ?: newAbsent))",
+            "                    }",
+            "                }",
+            "            }",
+            "",
+            "        internal fun mergeHlls(old: Map<ColumnName, HLL>?, new: Map<ColumnName, HLL>?): Map<ColumnName, HLL> =",
+            "            when {",
+            "                old == null -> new.orEmpty()"
+          ]
+        }
+      ]
+    }
+  },
+  "changes": [
+    {
+      "path": "lab/bench/lib/g0-catalog.ts",
+      "oldSha256": null,
+      "newSha256": "6c023fd74f0cd10482e3133ad1fcd6e8c3e70224e96d0308e7cde035fb8efbf6"
+    },
+    {
+      "path": "lab/bench/lib/g0-xtdb.ts",
+      "oldSha256": "ccd6add7e50b3ce8da3cbe0acc46a2f73b289b8db2ac6bdbfa3e418c36969ca4",
+      "newSha256": "49ef92f312c02a92161ee939f5911626ca167a691c131ae844c5f2f96ad597b6"
+    },
+    {
+      "path": "lab/bench/lib/g0.ts",
+      "oldSha256": "1f98f70db84383b8c3ea489fa9b11f8fab9bbfc0b60193569f778fc34850b1eb",
+      "newSha256": "63b657ac2b6ad408507e0043b5e05da766ef9ae3324ebed5a0e10cab1f8636e0"
+    },
+    {
+      "path": "lab/bench/lib/n01-counts.ts",
+      "oldSha256": "a2a9a613ad6a40108cc200ce7050ffd855f48947945559f0f440d4c6d2971601",
+      "newSha256": "47b86aaff9f2e1bfd1e71258c457d7cbccc710d44183a10799a387d7866ac5fe"
+    },
+    {
+      "path": "lab/bench/xtdb-seed.ts",
+      "oldSha256": "b3f48c0c9caba9bf0751c4663ad0086f09d6533e87f6523a4579d6dc5d0fa99a",
+      "newSha256": "098b36fe1ccfe263dd02ed75c18a29f8f1ed249425712d3d87401c2f6148c21a"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "oldSha256": "1447cbd2db4a51af353d96e234d17e39c4c0510f6ca7995f569e38780fd697cf",
+      "newSha256": "f0fe4d3751e107dc2306b7080f99ff502d91c5bbd25f69fecaae2ef094b30fcb"
+    }
+  ],
+  "acceptanceBefore": {
+    "lab/acceptance/load-contract.json": "e90e97d6f1a6462fb87a05f8b9af924b4a44aa82c8e3f0adc357b8698c80e354",
+    "lab/acceptance/RULINGS.md": "b3e059a2408d45035225b4e04a0ed287826cfa70b83bce56e77af4f819c2e0df",
+    "lab/acceptance/capability-matrix.md": "da543292952ff01ba139c57e868bf576d4cf49c4a49d408275709d6aae8b2e5b",
+    "lab/acceptance/RULINGS-PENDING.md": "746bde5464ba19db0a612ecddc48faf5921f9ff09cc80c0afcd3fac182296ef8",
+    "lab/acceptance/budgets.json": "3c567035c89161a61f0edc67836962d79073d82bf404a0506f31771ca9e38bfe",
+    "lab/acceptance/obligations.json": "d5bb64f2b42a13e5be0e71fc71690687f4cf1153bab31ea5b743dbe4f0f7fa20",
+    "lab/acceptance/build_contract.py": "685b48066f7094d8e9c3cfc9c27840a9f3d2fb29fd4ae315da707e8346860a11",
+    "lab/acceptance/ACCEPTANCE.md": "c159bc5e5432438c133e7a29451b742f777fbe33e86aa8bade43560866e4cef1",
+    "lab/acceptance/golden/g1-int64.json": "b44917652ea97eea6de53c1e32870a3f60bdafa4df403a97f4f7671d085247ff",
+    "lab/acceptance/golden/g9-half-open.json": "35c64ae17756c8e9baf2e2fd233e28203bd449048aecfa67da29c57f073db91f",
+    "lab/acceptance/golden/c6-journal.json": "f3bc068743ddc4926d97aa6a5fc3df1633ecc66e31259a9a1554023bee930439",
+    "lab/acceptance/golden/g9-history-cuts.json": "4338a42e408cd5bc1c731f24eafaa6e90819b34595b53fbfe6a751b46a3f054d",
+    "lab/acceptance/golden/c5-duplicates-conflicts.json": "8472fd3131aa8cb55359d607bd9eb9af98c18cb3375dfe48e236a3733e40c87f",
+    "lab/acceptance/golden/README.md": "e1d751a0e5484a77f3c8fc9dfefa492718955aefdadcac9e151ba44f763e18a9",
+    "lab/acceptance/golden/g9-tiny-v4-retirement.json": "4f48e41d8b87273cded968fc869be3c36b596e1976c76c779a17db2eae9f30fa",
+    "lab/acceptance/golden/g10-cursor.json": "43baef315805a34dfdda207e8b7b5821f6932f33f2f12850536086db84ba60e5",
+    "lab/acceptance/golden/g5-sum-overflow.json": "0346c55216c85f36bb843062ad405268d0ad3432d28a1e66556a4007b6a60b1c",
+    "lab/acceptance/golden/q8f-card-many.json": "2d8988494b529f6d165f27b37a569b72ca7c2b003aa7adfe8dfcea1cd03ede70"
+  },
+  "acceptanceReferences": [
+    {
+      "file": "lab/acceptance/RULINGS.md",
+      "path": "lab/bin/engine.mjs"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/lab/acceptance/RULINGS.md",
+      "path": "lab/bin/engine.mjs"
+    },
+    {
+      "file": "/Users/sam/projects/triplex-db-2/lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md",
+      "path": "lab/bin/engine.mjs"
+    }
+  ]
+}
