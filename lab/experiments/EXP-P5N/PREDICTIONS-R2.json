@@ -1,0 +1,19 @@
+{
+  "format": "EXP-P5N-round2-predictions/1",
+  "writtenAt": "2026-11-09 before any round 2 measurement; builder estimates from round 1 receipts (no planner brief for round 2; orchestrator decisions 1 to 3 are the scope)",
+  "classification": "DIAGNOSTIC",
+  "basis": "round 1: per page the publisher spends about 44 ms (core transact 18 to 25 ms, SQLite writer 8.5 to 13.8 ms of that, harness verify 3 to 4 ms, claim and outbox read small); WAL max 60 to 81 MB; no RESTART completed in an 18 s W4 sweep",
+  "predictions": [
+    { "id": "A1", "measure": "profile: main-thread CPU per page inside core transact and the broker commit path, excluding awaits on the writer thread (ms)", "low": 8, "center": 12, "high": 16 },
+    { "id": "A2", "measure": "profile: synchronous writer round trips on the owner main thread per page (claim, head per guarded entity, operation, ack, purgeFrames), blocking Atomics.wait (ms)", "low": 3, "center": 6, "high": 10 },
+    { "id": "A3", "measure": "profile: harness verification per page, readback wait excluded (canonical witness, content hash, map append) (ms)", "low": 2, "center": 3, "high": 5 },
+    { "id": "B1", "measure": "publisher chain per page after the chosen change (ms)", "low": 22, "center": 30, "high": 38 },
+    { "id": "B2", "measure": "10k wall after the publisher change plus split reads: W4 (s)", "low": 8, "center": 10, "high": 12 },
+    { "id": "B3", "measure": "10k wall: W8 (s)", "low": 6, "center": 8, "high": 10 },
+    { "id": "B4", "measure": "100k projection from the 1k and 10k fit, +20% slope: best of W4 or W8 (s)", "low": 65, "center": 90, "high": 120, "note": "seed 100k only if the best projection is at most 85 s" },
+    { "id": "C1", "measure": "split reads: CPU per subject versus one transaction per page", "low": 1.0, "center": 1.1, "high": 1.25, "unit": "ratio" },
+    { "id": "C2", "measure": "WAL max at 10k W4 and W8 with split reads and the tuned gate (MiB)", "atMost": 64 },
+    { "id": "C3", "measure": "RESTART completions during a 10k W4 sweep of about 10 s", "atLeast": 1 },
+    { "id": "G", "measure": "G-WORLD over all 10,000 subjects: split-read worlds byte-equal to the owner route", "exactly": "10000 of 10000" }
+  ]
+}
