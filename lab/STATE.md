@@ -338,3 +338,9 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   correctness-only wording (seven numbered judge properties plus edge-case fixtures). Rule for reviewer briefs on observer/witness code:
   frame it as a durability measurement tool for our own test database and list concrete correctness properties and fixtures; avoid
   attacker, evade, shape, spoof wording. agent.mjs launch with --worktree also needs --branch.
+- 2026-11-09 contract 0.4.0 round 2 (Sonnet, contract/0.4.0 35cb04b5; gates on committed a2b1271f): F1 fixed (runner hashes computed after
+  every assignment, checks_pin_OCONTRACT fails closed, 7 new mutations, per-hunk repin review: Datomic imageId only), F2 fixed (gate.mjs
+  buildPackages adds w0 to G0; reviewer's empty-dist case passes; W0 dist hashes match the reviewer's build). Main 1c2ee46f merged; 98
+  pending ids kept. --verify byte-identical, contract tests 16/16, mutations 41/41, evaluator 108/108, pack PASS, G0 xtdb 1289, datomic
+  1344, qlever 1513. Q45a: the re-pin landed in a853fe42, not the earlier DF01 merge f3ed6211. Orchestrator decision: do not rewrite
+  history; the reviewer confirms nothing relied on was produced in between, and the gap is recorded as a defect. In review (CX-VA01-040 r2).
