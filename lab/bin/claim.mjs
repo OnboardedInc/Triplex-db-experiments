@@ -54,7 +54,7 @@
 // object repeats; extra fields in the contract's record schemas (Q47a fixes them exactly; proposals go to the next version);
 // any verifier record a claim carries as independent verification (Q55a: only the contract's VERIFIER_REGISTRY counts).
 import { execFileSync, spawnSync } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, createHmac } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -1569,6 +1569,503 @@ function runQualification(claim, env, why, run, state) {
     for (const b of contractBlockers(claimed, prereq, domain, ctx)) why(b.code, b.detail);
     // [EXP-A01-R3] Why: common preflight and admitCore now share the reference's complete runner-pin predicate through contractBlockers. Rejected: a second pin-only implementation that disagrees for contract-output-pinned COMPILED runners.
   }
+}
+
+// ================================================================ CR-NS offline recomputation (R44 B5)
+// [EXP-CRNS] Why: keep pending Q99/Q100 arithmetic independently testable without admitting a claim.
+// Rejected: trusting bench summaries or enabling pending rulings in admitCore (neither is acceptance authority).
+export const NS_ENCODING = 'feed-entry/1\nUTF-8 canonical sorted-key JSON; no whitespace; no trailing newline; identity fields only';
+export const NS_ENCODING_SHA256 = sha256(NS_ENCODING);
+export const NS_EVENT_SCHEMA = Object.freeze({
+  format: 'ns-events/1', E1: 'offers[]', E2: 'reads[]', E3: 'source', E4: 'sourceBrackets[]',
+  E5: 'consumerBrackets[]', E6: 'consumer', E7: 'faults[]', E8: 'readers[]',
+  E9: 'window', E10: 'noise', E11: 'crossChecks[]',
+});
+const nsAssert = (ok, code, detail = code) => { if (!ok) throw Object.assign(new Error(detail), { code }); };
+const nsUint = x => typeof x === 'string' && /^(0|[1-9][0-9]*)$/.test(x);
+const nsTime = x => { nsAssert(nsUint(x), 'EVENT-SCHEMA', 'time/offset must be an unsigned decimal string'); return BigInt(x); };
+const nsArray = (x, name) => { nsAssert(Array.isArray(x), 'RAW-EVENTS-MISSING', name); return x; };
+const nsText = x => typeof x === 'string' && x.length > 0;
+const nsHash = x => typeof x === 'string' && /^[a-f0-9]{64}$/.test(x);
+const nsKey = x => canonText([x.consumer, x.epoch, x.position, x.subject]);
+const nsPos = x => {
+  if (nsUint(x)) return ['', 0n, BigInt(x), 0n];
+  nsAssert(isObj(x) && nsText(x.stream) && nsUint(x.epoch) && nsUint(x.offset) && nsUint(x.ordinal), 'EVENT-SCHEMA', 'position coordinate');
+  return [x.stream, BigInt(x.epoch), BigInt(x.offset), BigInt(x.ordinal)];
+};
+export function nsComparePosition(a, b) {
+  const aa = nsPos(a), bb = nsPos(b);
+  for (let i = 0; i < 4; i++) { if (aa[i] < bb[i]) return -1; if (aa[i] > bb[i]) return 1; }
+  return 0;
+}
+/** Exact nearest rank; BigInt inputs stay exact, including clocks beyond Number.MAX_SAFE_INTEGER. */
+export function nsNearestRank(values, numerator, denominator = 100) {
+  nsAssert(Number.isSafeInteger(numerator) && Number.isSafeInteger(denominator) && numerator > 0 && numerator <= denominator, 'QUANTILE-SCHEMA');
+  nsAssert(values.every(x => typeof x === 'bigint' || (typeof x === 'number' && !Number.isNaN(x))), 'QUANTILE-SCHEMA');
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a < b ? -1 : a > b ? 1 : 0);
+  const rank = (BigInt(sorted.length) * BigInt(numerator) + BigInt(denominator) - 1n) / BigInt(denominator);
+  return sorted[Number(rank - 1n)];
+}
+const nsMs = n => n === null ? null : n === Infinity ? Infinity : Number(n) / 1e6;
+const nsStats = xs => ({ count: xs.length, p50Ms: nsMs(nsNearestRank(xs, 50)), p99Ms: nsMs(nsNearestRank(xs, 99)), maxMs: nsMs(nsNearestRank(xs, 100)) });
+/** This proposed encoding must be pinned by the next contract; it is not an FD01 serialization alias. */
+export function nsFeedEntryBytes(entry) {
+  nsAssert(isObj(entry) && sameKeys(entry, entry.kind === 'commit' ? ['stream', 'epoch', 'offset', 'kind', 'transactions'] : ['stream', 'epoch', 'offset', 'kind']), 'FEED-ENTRY-SCHEMA');
+  nsAssert(nsText(entry.stream) && nsUint(entry.epoch) && nsUint(entry.offset) && ['commit', 'aborted', 'epoch', 'seal'].includes(entry.kind), 'FEED-ENTRY-SCHEMA');
+  if (entry.kind === 'commit') {
+    nsAssert(Array.isArray(entry.transactions) && entry.transactions.length > 0, 'FEED-ENTRY-SCHEMA');
+    for (const tx of entry.transactions) {
+      nsAssert(sameKeys(tx, ['stamp', 'positions', 'txIds', 'operationId', 'commandIds', 'changes']) && tx.stamp !== null && nsText(tx.operationId), 'FEED-ENTRY-SCHEMA');
+      for (const k of ['positions', 'txIds', 'commandIds', 'changes']) nsAssert(Array.isArray(tx[k]) && tx[k].length > 0, 'FEED-ENTRY-SCHEMA');
+      tx.positions.forEach(nsPos);
+      nsAssert(tx.txIds.every(nsText) && tx.commandIds.every(nsText), 'FEED-ENTRY-SCHEMA');
+      for (const op of tx.changes) {
+        nsAssert(sameKeys(op, ['op', 'entity', 'attribute', 'validFrom', 'validTo', 'position', 'assertionId', ...(op.op === 'erase' ? ['erasureSeq'] : [])]), 'FEED-ENTRY-SCHEMA');
+        nsAssert(['assert', 'retract', 'erase'].includes(op.op) && nsText(op.entity) && nsText(op.attribute) && nsText(op.assertionId), 'FEED-ENTRY-SCHEMA');
+        nsPos(op.position);
+        nsAssert(tx.positions.some(p => same(p, op.position)), 'FEED-ENTRY-SCHEMA', 'change position outside transaction');
+      }
+    }
+  }
+  return Buffer.from(canonText(entry));
+}
+// [EXP-CRNS] Why: independently check the SQL01 broker's frame.ts CRC32C header/payload chain using retained bytes.
+// Inspiration: EXP-P2Q frame.ts (R13 framing), adapted to pure byte validation without importing candidate code.
+// Rejected: trusting a normalizer's crcValid boolean (a forged verdict is not a content check).
+export function nsCrc32c(bytes, seed = 0) {
+  let crc = (seed ^ 0xffffffff) >>> 0;
+  for (const byte of bytes) { crc ^= byte; for (let i = 0; i < 8; i++) crc = (crc >>> 1) ^ ((crc & 1) ? 0x82f63b78 : 0); }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+export function nsVerifyBrokerFrames(frames, initialCrc) {
+  nsAssert(Array.isArray(frames) && frames.length > 0 && Number.isSafeInteger(initialCrc) && initialCrc >= 0 && initialCrc <= 0xffffffff, 'SOURCE-CRC-CHAIN');
+  let previous = initialCrc, lastLsn = -1n, lastEpoch = -1;
+  for (const f of frames) {
+    nsAssert(typeof f.hex === 'string' && /^(?:[0-9a-f]{2})+$/.test(f.hex), 'SOURCE-CRC-CHAIN');
+    const bytes = Buffer.from(f.hex, 'hex');
+    nsAssert(bytes.length >= 36 && bytes.readUInt32LE(0) === 0x464c5854 && bytes.readUInt32LE(4) === bytes.length - 36, 'SOURCE-CRC-CHAIN');
+    const headerCrc = bytes.readUInt32LE(28), lsn = bytes.readBigUInt64LE(8), epoch = bytes.readUInt32LE(16);
+    nsAssert(nsUint(f.offset) && lsn === BigInt(f.offset) && lsn > lastLsn && epoch >= lastEpoch && bytes.readUInt32LE(20) === previous && nsCrc32c(bytes.subarray(0, 28), previous) === headerCrc, 'SOURCE-CRC-CHAIN');
+    const crc = bytes.readUInt32LE(bytes.length - 4);
+    nsAssert(nsCrc32c(bytes.subarray(32, bytes.length - 4), headerCrc) === crc, 'SOURCE-CRC-CHAIN');
+    previous = crc; lastLsn = lsn; lastEpoch = epoch;
+  }
+  return previous;
+}
+
+/** Count committed insertions, including delete/reinsert. Validate ranges in WAL commit order, never row order. */
+export function nsConsumerCounts(transactions, initialFrontier, finalEffects = []) {
+  let frontier = initialFrontier, orderViolations = 0, duplicates = 0;
+  nsPos(frontier);
+  const insertions = new Map();
+  for (const tx of transactions) {
+    nsAssert(tx.committed === true, 'WAL-NOT-ESTIMABLE', 'normalizer must supply committed transactions only');
+    nsPos(tx.frontierBefore); nsPos(tx.frontierAfter);
+    if (!same(tx.frontierBefore, frontier) || nsComparePosition(tx.frontierAfter, frontier) <= 0) orderViolations++;
+    for (const row of [...nsArray(tx.effects, 'effect insertions'), ...nsArray(tx.affected, 'affected insertions')]) {
+      nsAssert(nsText(row.consumer) && nsText(row.epoch) && nsText(row.subject), 'EVENT-SCHEMA', 'consumer key');
+      if (nsComparePosition(row.position, frontier) <= 0 || nsComparePosition(row.position, tx.frontierAfter) > 0) orderViolations++;
+    }
+    for (const row of tx.effects) { const key = nsKey(row), count = insertions.get(key) ?? 0; duplicates += count > 0 ? 1 : 0; insertions.set(key, count + 1); }
+    frontier = tx.frontierAfter;
+  }
+  const finalCounts = new Map();
+  for (const row of finalEffects) { const key = nsKey(row), count = finalCounts.get(key) ?? 0; duplicates += count > 0 ? 1 : 0; finalCounts.set(key, count + 1); }
+  return { orderViolations, duplicates, frontier };
+}
+const nsBracket = b => { nsAssert(isObj(b) && nsTime(b.U) >= nsTime(b.L), 'BRACKET-INVALID'); return b; };
+const nsIndex = (xs, key) => {
+  const m = new Map();
+  for (const x of xs) { const k = canonText(x[key]); nsAssert(!m.has(k), 'EVENT-SCHEMA', `duplicate ${key}`); m.set(k, x); }
+  return m;
+};
+const nsDifference = (expected, observed) => ({ misses: expected.filter(x => !observed.includes(x)), extras: observed.filter(x => !expected.includes(x)) });
+/**
+ * Pure evaluator boundary. `trusted` is evaluator-owned, never deserialized from a claim: expected binding, driver pins,
+ * witnessed bundle head, run HMAC key, clock domain, reader level, and oracle functions executing pinned O-DOMAIN/O-REPLAY.
+ * A sealed JSON payload carries the normalized E1-E11 events. Authentication binds the complete payload and exact attempt,
+ * source, slot and inputs. It does not establish that a normalizer correctly decoded SQLite: O-OBS must do that at admission.
+ * RECOMPUTED means arithmetic completed; it never means PASS/QUALIFIED. Pending Q99/Q100 cannot authorize admission.
+ */
+export function recomputeNS(bundle, trusted) {
+  const result = { status: 'REFUSED', reasons: [], bars: {}, measurements: {}, a0: null };
+  const refuse = (code, detail = code) => result.reasons.push({ code, detail });
+  try {
+    nsAssert(isObj(bundle) && typeof bundle.payload === 'string', 'RAW-EVENTS-MISSING');
+    nsAssert(trusted?.key && nsHash(trusted.headSha256) && nsHash(bundle.hmac), 'OBS-UNAUTHENTICATED');
+    const hmac = createHmac('sha256', trusted.key).update(bundle.payload).digest('hex');
+    nsAssert(hmac === bundle.hmac && Array.isArray(bundle.chunks) && bundle.chunks.length > 0, 'OBS-UNAUTHENTICATED');
+    let previous = '0'.repeat(64), payload = '';
+    for (const chunk of bundle.chunks) {
+      nsAssert(typeof chunk.payload === 'string' && chunk.previousSha256 === previous, 'OBS-UNAUTHENTICATED');
+      const bytes = canonText({ previousSha256: previous, payload: chunk.payload });
+      nsAssert(chunk.sha256 === sha256(bytes) && chunk.hmac === createHmac('sha256', trusted.key).update(bytes).digest('hex'), 'OBS-UNAUTHENTICATED');
+      previous = chunk.sha256; payload += chunk.payload;
+    }
+    nsAssert(previous === trusted.headSha256 && payload === bundle.payload, 'OBS-UNAUTHENTICATED');
+    const raw = JSON.parse(bundle.payload);
+    nsAssert(canonText(raw) === bundle.payload, 'EVENT-SCHEMA', 'canonical JSON required, duplicate keys forbidden');
+    nsAssert(raw.format === NS_EVENT_SCHEMA.format && same(raw.binding, trusted.binding), 'EVENT-BINDING');
+    nsAssert(['attemptId', 'sourceSha256', 'slot', 'inputsSha256'].every(k => nsText(raw.binding?.[k])), 'EVENT-BINDING');
+    nsAssert(same(raw.driver, trusted.driver) && nsHash(raw.driver?.bundleSha256) && nsHash(raw.driver?.generatorSha256) && nsText(raw.driver?.imageId), 'DRIVER-NOT-PINNED');
+    nsAssert(trusted.encodingSha256 === NS_ENCODING_SHA256, 'FEED-ENCODING-NOT-PINNED');
+    const e = raw.events;
+    nsAssert(isObj(e) && isObj(e.source) && isObj(e.consumer) && isObj(e.window), 'RAW-EVENTS-MISSING');
+    for (const name of ['offers', 'reads', 'sourceBrackets', 'consumerBrackets', 'faults', 'readers', 'crossChecks']) nsArray(e[name], name);
+    nsAssert(e.source.origin === 'observer-source-store', 'PREFIX-NOT-FROM-SOURCE');
+    nsAssert(e.lagStart === 'observer-bracket', 'LAG-START-CR');
+    nsAssert(same(e.clockDomain, trusted.clockDomain) && Array.isArray(e.clockDomains) && e.clockDomains.length > 0 && e.clockDomains.every(d => same(d, trusted.clockDomain)), 'CLOCK-DOMAIN-MISMATCH');
+    const w = e.window, start = nsTime(w.startNs), end = nsTime(w.endNs), drain = nsTime(w.drainEndNs);
+    nsAssert(end > start && drain >= end, 'EVENT-SCHEMA', 'window bounds');
+    nsArray(w.bursts, 'burst intervals').forEach(b => nsAssert(nsTime(b.startNs) < nsTime(b.endNs), 'EVENT-SCHEMA'));
+    const entries = nsArray(e.source.entries, 'source entries');
+    if (e.source.storage === 'broker-frame/2') {
+      const finalCrc = nsVerifyBrokerFrames(e.source.frames, e.source.initialCrc);
+      nsAssert(finalCrc === e.source.finalCrc && entries.filter(x => x.kind === 'commit').every(x => e.source.frames.some(f => f.offset === x.offset)), 'SOURCE-CRC-CHAIN');
+    } else nsAssert(trusted.verifySource?.(e.source) === true, 'SOURCE-NOT-VERIFIED', 'non-broker source requires evaluator normalizer verification');
+    nsAssert(entries.length > 0 && nsUint(e.source.firstOffset) && nsUint(e.source.finalOffset), 'RAW-EVENTS-MISSING');
+    const byOffset = new Map(), positions = new Map();
+    let next = BigInt(e.source.firstOffset), sourceGaps = 0;
+    for (const entry of entries) {
+      nsFeedEntryBytes(entry);
+      const offset = BigInt(entry.offset);
+      nsAssert(offset >= next, 'SOURCE-GAP', 'source offsets must be unique and increasing');
+      sourceGaps += Number(offset - next); next = offset + 1n; byOffset.set(entry.offset, entry);
+      for (const tx of entry.transactions ?? []) for (const p of tx.positions) {
+        const key = canonText(p); nsAssert(!positions.has(key), 'SOURCE-GAP', 'position repeated in source'); positions.set(key, { p, tx, entry });
+      }
+    }
+    nsAssert(next - 1n <= BigInt(e.source.finalOffset), 'SOURCE-GAP');
+    sourceGaps += Number(BigInt(e.source.finalOffset) - (next - 1n));
+    if (sourceGaps) refuse('SOURCE-GAP');
+    const offered = new Set(e.offers.map(o => o.commandId));
+    for (const { tx } of positions.values()) for (const id of tx.commandIds) if (!offered.has(id)) refuse('FOREIGN-COMMIT', id);
+    for (const offer of e.offers) if (offer.receipt) {
+      const p = positions.get(canonText(offer.receipt.position));
+      if (!p || !p.tx.txIds.includes(offer.receipt.txId) || !p.tx.commandIds.includes(offer.commandId) || !same(offer.receipt.stamp, p.tx.stamp) || !same(offer.receipt.commandIds, p.tx.commandIds)) refuse('LOST-ACKED-COMMIT', offer.commandId);
+    }
+    const sourceBrackets = nsIndex(e.sourceBrackets, 'position'), consumerBrackets = nsIndex(e.consumerBrackets, 'position');
+    sourceBrackets.forEach(nsBracket); consumerBrackets.forEach(nsBracket);
+    const c = e.consumer;
+    nsAssert(c.walComplete === true, 'WAL-NOT-ESTIMABLE');
+    nsAssert(typeof c.tailedWalHex === 'string' && /^(?:[0-9a-f]{2})*$/.test(c.tailedWalHex) && typeof c.finalWalHex === 'string' && /^(?:[0-9a-f]{2})*$/.test(c.finalWalHex), 'EVENT-SCHEMA');
+    nsAssert(c.finalWalHex.startsWith(c.tailedWalHex), 'TAMPER', 'final WAL differs from retained tail');
+    const transactions = nsArray(c.transactions, 'WAL transactions');
+    nsAssert(transactions.length > 0 && c.tailedWalHex.length > 0, 'WAL-NOT-ESTIMABLE');
+    for (const name of ['effects', 'affected', 'deliveries']) nsArray(c[name], `final ${name}`);
+    const counts = nsConsumerCounts(transactions, c.initialFrontier, c.effects);
+    if (counts.orderViolations) refuse('NS-P3-ORDER-VIOLATIONS-MAX');
+    if (counts.duplicates) refuse('NS-P3-VISIBLE-DUP-EFFECTS-MAX');
+    // [EXP-CRNS] Why: tie final rows to all committed mutations, including deletes. Rejected: final-state-only duplicate counting.
+    for (const name of ['effects', 'affected', 'deliveries']) {
+      const rows = new Map();
+      for (const tx of transactions) {
+        for (const row of nsArray(tx.deleted?.[name], `deleted ${name}`)) rows.delete(name === 'deliveries' ? row.offset : nsKey(row));
+        for (const row of nsArray(tx[name], `inserted ${name}`)) rows.set(name === 'deliveries' ? row.offset : nsKey(row), row);
+      }
+      const uniqueFinal = new Map(c[name].map(row => [name === 'deliveries' ? row.offset : nsKey(row), row]));
+      nsAssert(same([...rows].sort(), [...uniqueFinal].sort()), 'TAMPER', `final ${name} disagrees with WAL`);
+    }
+    const deliveries = nsIndex(c.deliveries, 'offset');
+    let gaps = sourceGaps;
+    for (const entry of entries) if (deliveries.get(canonText(entry.offset))?.digest !== sha256(nsFeedEntryBytes(entry))) gaps++;
+    for (const row of c.deliveries) if (!byOffset.has(row.offset)) gaps++;
+    if (gaps) refuse('NS-P3-GAPS-MAX');
+    nsAssert(typeof trusted.domainAffected === 'function', 'O-DOMAIN-NOT-RUN');
+    let misses = 0, extras = 0;
+    for (const row of [...c.effects, ...c.affected]) if (!positions.has(canonText(row.position))) extras++;
+    const observedSubjects = {};
+    for (const name of ['effects', 'affected']) {
+      observedSubjects[name] = new Map();
+      for (const row of c[name]) { const k = canonText(row.position); if (!observedSubjects[name].has(k)) observedSubjects[name].set(k, new Set()); observedSubjects[name].get(k).add(row.subject); }
+    }
+    const lag = [], steady = [], burst = [], widths = [], midpoint = [];
+    for (const [key, { p, tx, entry }] of positions) {
+      const expected = trusted.domainAffected({ position: p, transaction: tx, entry, prefix: entries });
+      nsAssert(Array.isArray(expected) && expected.every(nsText) && new Set(expected).size === expected.length, 'O-DOMAIN-REFUSED');
+      for (const name of ['affected', 'effects']) {
+        const observed = [...(observedSubjects[name].get(key) ?? [])];
+        const diff = nsDifference(expected, observed); misses += diff.misses.length; extras += diff.extras.length;
+      }
+      const s = sourceBrackets.get(key), consumer = consumerBrackets.get(key);
+      if (!s) { refuse('NS-P3-EVERY-POSITION-ACCOUNTED', key); continue; }
+      nsAssert(nsTime(s.U) <= drain, 'BRACKET-INVALID', 'source bracket after drain');
+      if (consumer) nsAssert(nsTime(consumer.U) >= nsTime(s.L) && nsTime(consumer.U) <= drain, 'BRACKET-INVALID');
+      if (nsTime(s.L) >= start && nsTime(s.L) < end) {
+        const delta = consumer ? nsTime(consumer.U) - nsTime(s.L) : Infinity;
+        lag.push(delta);
+        const inBurst = w.bursts.some(b => nsTime(s.L) >= nsTime(b.startNs) && nsTime(s.L) < nsTime(b.endNs));
+        (inBurst ? burst : steady).push(delta);
+        if (!consumer) { gaps++; refuse('NS-P3-EVERY-POSITION-ACCOUNTED', `no durable consumer bracket ${key}`); }
+        else { widths.push(nsTime(s.U) - nsTime(s.L), nsTime(consumer.U) - nsTime(consumer.L)); midpoint.push(Number(nsTime(consumer.L) + nsTime(consumer.U) - nsTime(s.L) - nsTime(s.U)) / 2e6); }
+      }
+    }
+    if (misses || extras) refuse('NS-P3-DOMAIN-AFFECTED-SET');
+    for (const cr of e.crossChecks) {
+      const b = (cr.role === 'source' ? sourceBrackets : consumerBrackets).get(canonText(cr.position));
+      nsAssert(b && nsTime(cr.atNs) >= nsTime(b.L) - 1000000n && nsTime(cr.atNs) <= nsTime(b.U) + 5000000n, 'CR-INCONSISTENT');
+    }
+    nsAssert(Number.isSafeInteger(trusted.readerLevel) && trusted.readerLevel > 0, 'READER-LEVEL-MISMATCH');
+    const seconds = Number((end - start + 999999999n) / 1000000000n), readerSeconds = new Map();
+    for (const r of e.readers) {
+      nsAssert(Number.isSafeInteger(r.second) && r.second >= 0 && r.second < seconds && !readerSeconds.has(r.second) && Array.isArray(r.loops), 'EVENT-SCHEMA', 'reader second');
+      nsAssert(r.loops.every(x => Number.isSafeInteger(x) && x >= 0), 'EVENT-SCHEMA', 'loop identity');
+      const loops = new Set(r.loops).size;
+      nsAssert(Number.isFinite(r.relayConcurrent) && r.relayConcurrent >= 0, 'EVENT-SCHEMA');
+      readerSeconds.set(r.second, loops >= trusted.readerLevel && Math.abs(r.relayConcurrent - loops) <= loops * .1);
+    }
+    const readerShare = [...readerSeconds.values()].filter(Boolean).length / seconds;
+    if (readerShare < .99) refuse('READER-LEVEL-MISMATCH');
+    const witnessHashes = new Set();
+    for (const f of e.faults) {
+      nsAssert(f.format === 'fault-witness/1' && same(f.binding, raw.binding) && nsHash(f.eventsSha256) && f.eventsSha256 === sha256(canonText(f.events)) && !witnessHashes.has(f.eventsSha256) && f.events?.some(x => x.transition === 'cgroup-gone' && nsTime(x.t) <= drain), 'FAULT-WITNESS-INVALID');
+      nsAssert(Array.isArray(f.replay) && f.replay.length > 0, 'FAULT-WITNESS-INVALID', 'recovery delivery bytes absent');
+      for (const delivered of f.replay) {
+        const entry = byOffset.get(delivered.offset);
+        nsAssert(entry && delivered.digest === sha256(nsFeedEntryBytes(entry)), 'FAULT-WITNESS-INVALID', 'resume is not byte exact');
+      }
+      witnessHashes.add(f.eventsSha256);
+    }
+    if (e.faults.length) for (const point of ['before-effect', 'after-effect', 'after-checkpoint']) if (e.faults.filter(f => f.faultPointId === point).length < 3) refuse('CX-FAULT-REPS-SHORT', point);
+    const timing = e.noise?.grade === 'GREEN' && trusted.gradeWindow?.(e.noise, w) === 'GREEN';
+    const lagJudged = timing && !e.faults.length && lag.length > 0;
+    result.measurements.P3 = { gaps, ...counts, misses, extras, readerShare, lag: { pooled: nsStats(lag), steady: nsStats(steady), burst: nsStats(burst), midpointP99Ms: nsNearestRank(midpoint, 99), bracketWidthP99Ms: nsMs(nsNearestRank(widths, 99)) }, lagJudged };
+    result.bars.P3 = { sourcePrefixEnumerated: !result.reasons.some(r => ['SOURCE-GAP', 'LOST-ACKED-COMMIT', 'FOREIGN-COMMIT'].includes(r.code)), everyPositionAccounted: !result.reasons.some(r => r.code === 'NS-P3-EVERY-POSITION-ACCOUNTED'), counts: gaps === 0 && counts.orderViolations === 0 && counts.duplicates === 0 && misses === 0 && extras === 0, lag: lagJudged ? nsStats(lag).p99Ms <= 250 : null };
+    if (lagJudged && !result.bars.P3.lag) refuse('NS-P3-LAG-P99-MS');
+    if (!lagJudged) refuse('TIMING-UNJUDGED');
+    if (trusted.priorities?.some(p => p !== 'P3')) nsOtherPriorities(e, trusted, result, refuse, positions, sourceBrackets, timing);
+    if (trusted.control) result.a0 = nsControlRecord(trusted.control);
+    result.status = result.reasons.length ? 'REFUSED' : 'RECOMPUTED';
+  } catch (error) { refuse(error.code ?? 'EVENT-SCHEMA', error.message); }
+  return result;
+}
+
+/** Q99b proposal: record A0's actual rung. Never substitute this record for a paired comparative/promotion result. */
+export function nsControlRecord({ kind, candidateRung, a0Rung, a0Fits, binding, measuredBinding, grade, aaGrade, paired }) {
+  nsAssert(same(binding, measuredBinding) && isObj(binding) && nsText(binding.attemptId) && nsText(binding.sourceSha256) && nsText(binding.slot) && nsText(binding.inputsSha256), 'A0-RUNG-UNBOUND');
+  nsAssert(Number.isSafeInteger(a0Rung) && a0Rung > 0 && Number.isSafeInteger(candidateRung) && candidateRung > 0, 'A0-RUNG-INVALID');
+  const absolute = kind === 'absolute' && a0Fits === false && a0Rung < candidateRung;
+  nsAssert(absolute ? grade === 'GREEN' && aaGrade === 'GREEN' : paired === true && a0Rung === candidateRung, 'CONTROL-UNMATCHED');
+  return { format: 'a0-rung/1', binding, candidateRung, a0Rung, role: absolute ? 'comparison-and-budgets-only' : 'paired-control', admission: 'PENDING-CONTRACT' };
+}
+
+function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timing) {
+  const requested = new Set(trusted.priorities);
+  const commandPositions = new Map();
+  for (const p of positions.values()) for (const id of p.tx.commandIds) commandPositions.set(id, p);
+  const offers = e.offers, bands = new Map(), receipts = new Map();
+  let unaccounted = 0, ackUndecided = 0, maxWaitNs = 0n;
+  const queue = [];
+  for (const o of offers) {
+    const scheduled = nsTime(o.scheduledAtNs), sent = nsTime(o.sentAtNs);
+    nsAssert(sent >= scheduled && nsText(o.commandId), 'EVENT-SCHEMA');
+    const accounted = Boolean(o.receipt || o.typedError || o.typedConflict);
+    if (!accounted) unaccounted++;
+    const stop = nsTime(o.ackAtNs ?? o.censoredAtNs);
+    nsAssert(stop >= sent, 'EVENT-SCHEMA');
+    const elapsed = stop - scheduled;
+    if (elapsed > maxWaitNs) maxWaitNs = elapsed;
+    const band = o.sizeBand;
+    nsAssert(['5-10', '11-25', '26-50'].includes(band), 'EVENT-SCHEMA');
+    if (!bands.has(band)) bands.set(band, []);
+    // [EXP-CRNS] Why: censored commands cannot improve a tail by disappearing. Rejected: successful-ACK-only histograms.
+    bands.get(band).push(o.ackAtNs ? elapsed : Infinity);
+    if (o.receipt) {
+      const b = brackets.get(canonText(o.receipt.position));
+      if (b && nsTime(o.ackAtNs) < nsTime(b.L)) refuse('ACK-BEFORE-PUBLICATION', o.commandId);
+      else if (b && nsTime(o.ackAtNs) < nsTime(b.U)) ackUndecided++;
+      if (receipts.has(o.commandId) && !same(receipts.get(o.commandId), o.receipt)) refuse('IDEMPOTENCY-RECEIPT-MISMATCH');
+      receipts.set(o.commandId, o.receipt);
+      nsAssert(typeof trusted.ryow === 'function', 'O-REPLAY-NOT-RUN');
+      if (!trusted.ryow(o, e.source.entries, e.reads)) refuse('RYOW-MISMATCH', o.commandId);
+    }
+    nsAssert(typeof trusted.commandValid === 'function', 'O-REPLAY-NOT-RUN');
+    if (trusted.commandValid(o, e.source.entries) && !commandPositions.has(o.commandId)) refuse('VALID-COMMAND-NOT-PUBLISHED', o.commandId);
+    queue.push([scheduled, 1]);
+    const p = commandPositions.get(o.commandId);
+    const b = p && brackets.get(canonText(p.p));
+    if (b) queue.push([nsTime(b.U), -1]);
+  }
+  let depth = 0, maxQueue = 0, maxSteadyQueue = 0;
+  for (const [at, delta] of queue.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : b[1] - a[1])) { depth += delta; maxQueue = Math.max(depth, maxQueue);
+    if (!e.window.bursts.some(b => at >= nsTime(b.startNs) && at < nsTime(b.endNs))) maxSteadyQueue = Math.max(depth, maxSteadyQueue);
+  }
+  const latency = Object.fromEntries([...bands].map(([b, xs]) => [b, nsStats(xs)]));
+  result.measurements.P2 = { latency, unaccounted, ackUndecided, maxWaitMs: nsMs(maxWaitNs), maxQueue, maxSteadyQueue };
+  if (requested.has('P2')) {
+    if (unaccounted) refuse('NS-P2-UNACCOUNTED');
+    nsAssert(Number.isFinite(trusted.steadyRate) && trusted.steadyRate > 0, 'TRACE-NOT-FROZEN');
+    if (maxSteadyQueue > 2 * trusted.steadyRate) refuse('NS-P2-QUEUE');
+    for (const burst of e.window.bursts) for (const o of offers) if (nsTime(o.scheduledAtNs) < nsTime(burst.endNs) && trusted.commandValid(o, e.source.entries)) {
+      const p = commandPositions.get(o.commandId);
+      const b = p && brackets.get(canonText(p.p));
+      if (!b || nsTime(b.U) > nsTime(burst.endNs) + 60000000000n) refuse('NS-P2-BURST-DRAIN');
+    }
+    for (const b of ['5-10', '11-25', '26-50']) {
+      const s = latency[b];
+      if (!s) refuse('P2-BAND-MISSING', b);
+      else if (timing && (s.p99Ms > (b === '26-50' ? 100 : 50) || (b !== '26-50' && s.p50Ms > 10))) refuse('NS-P2-LATENCY', b);
+    }
+  }
+  if (requested.has('P1') || requested.has('P4') || requested.has('P5')) {
+    nsAssert(typeof trusted.replayRead === 'function', 'O-REPLAY-NOT-RUN');
+    const expected = new Map(); let correct = 0, violations = 0;
+    for (const read of e.reads) {
+      nsAssert(nsText(read.subject) && nsText(read.shape) && read.requestedBasis !== undefined && nsHash(read.answerSha256), 'EVENT-SCHEMA');
+      nsAssert(nsTime(read.receivedAtNs) >= nsTime(read.sentAtNs), 'EVENT-SCHEMA');
+      const key = canonText([read.subject, read.shape, read.requestedBasis]);
+      if (!expected.has(key)) expected.set(key, trusted.replayRead(read, e.source.entries));
+      const want = expected.get(key);
+      nsAssert(nsHash(want), 'O-REPLAY-REFUSED');
+      if (want === read.answerSha256 && same(read.echoedBasis, read.requestedBasis)) correct++; else violations++;
+    }
+    if (violations) refuse('NS-P1-VIOLATIONS-MAX');
+    const durations = e.reads.map(r => nsTime(r.receivedAtNs) - nsTime(r.sentAtNs));
+    result.measurements.P1 = { correct, violations, evaluatedShare: 1, goodput: correct * 1e9 / Number(nsTime(e.window.endNs) - nsTime(e.window.startNs)), latency: nsStats(durations) };
+    if (requested.has('P1')) {
+      nsAssert(Array.isArray(e.maintenance) && e.maintenance.some(m => nsTime(m.atNs) >= nsTime(e.window.startNs) && nsTime(m.atNs) < nsTime(e.window.endNs)), 'MAINTENANCE-MISSING');
+      if (timing && nsStats(durations).p99Ms > 100) refuse('NS-P1-LATENCY');
+      // Baseline and ladder data must be separate source-bound raw runs, not inline ratios.
+      result.measurements.P1.ladder = nsP1Ladder(e.ladder, trusted.replayRead, e.source.entries);
+      if (!result.measurements.P1.ladder.met) refuse('P1-LADDER-BAR');
+    }
+  }
+  if (requested.has('P4')) {
+    nsAssert(isObj(e.pullResources) && Array.isArray(e.pullResources.cpuset) && new Set(e.pullResources.cpuset).size > 0, 'P4-RESOURCES-MISSING');
+    const pulls = e.reads.filter(r => r.shape === 'pull-current');
+    nsAssert(pulls.length > 0 && new Set(pulls.map(r => r.loop)).size === 1, 'P4-SINGLE-CLIENT');
+    const bucketCounts = { '50-200': 0, '201-800': 0, '801-2000': 0 }, hopCounts = { 3: 0, 4: 0, 6: 0 };
+    for (const p of pulls) {
+      nsAssert(Number.isSafeInteger(p.facts) && p.facts >= 50 && p.facts <= 2000 && [3, 4, 6].includes(p.hops), 'P4-MIX-MISMATCH');
+      const bucket = p.facts <= 200 ? '50-200' : p.facts <= 800 ? '201-800' : '801-2000';
+      nsAssert(p.bucket === bucket, 'P4-MIX-MISMATCH'); bucketCounts[bucket]++; hopCounts[p.hops]++;
+    }
+    nsAssert(Object.entries({ '50-200': 50, '201-800': 35, '801-2000': 15 }).every(([b, pct]) => bucketCounts[b] * 100 === pulls.length * pct) && Object.entries({ 3: 40, 4: 35, 6: 25 }).every(([b, pct]) => hopCounts[b] * 100 === pulls.length * pct), 'P4-MIX-MISMATCH');
+    const cpuUs = nsTime(e.pullResources.cpuUsageEndUs) - nsTime(e.pullResources.cpuUsageStartUs);
+    nsAssert(cpuUs > 0n && nsTime(e.pullResources.ioReadEndBytes) >= nsTime(e.pullResources.ioReadStartBytes) && nsTime(e.pullResources.historyScansEnd) === nsTime(e.pullResources.historyScansStart), 'P4-RESOURCES-MISSING');
+    const perBucket = Object.fromEntries([...new Set(pulls.map(r => r.bucket))].map(b => [b, nsStats(pulls.filter(r => r.bucket === b).map(r => nsTime(r.receivedAtNs) - nsTime(r.sentAtNs)))]));
+    const latency = nsStats(pulls.map(r => nsTime(r.receivedAtNs) - nsTime(r.sentAtNs)));
+    const perCore = pulls.length * 1e9 / Number(nsTime(e.window.endNs) - nsTime(e.window.startNs)) / e.pullResources.cpuset.length;
+    result.measurements.P4 = { latency, perBucket, pullsPerSecondPerCore: perCore, pullsPerCpuSecond: pulls.length * 1e6 / Number(cpuUs), bytesRead: String(nsTime(e.pullResources.ioReadEndBytes) - nsTime(e.pullResources.ioReadStartBytes)), bucketCounts, hopCounts };
+    if (timing && (latency.p50Ms > 5 || latency.p99Ms > 25 || perCore < 1100)) refuse('NS-P4-LATENCY-THROUGHPUT');
+    result.measurements.P4.history = nsP4History(e.historyPulls);
+    if (!result.measurements.P4.history.met) refuse('P4-HISTORY-BAR');
+  }
+  if (requested.has('P5')) {
+    const s = e.sweep;
+    nsAssert(isObj(s) && s.activationReceipt?.basis !== undefined && Array.isArray(s.subjects) && Array.isArray(s.outputs) && Array.isArray(s.outbox), 'P5-RAW-EVENTS-MISSING');
+    nsAssert(new Set(s.subjects).size === s.subjects.length && sha256(canonText(s.subjects)) === trusted.subjectListSha256, 'P5-COVERAGE-MISMATCH');
+    nsAssert(s.subjects.length === 100000 && s.outputs.length === s.subjects.length, 'P5-COVERAGE-MISMATCH');
+    const outputs = new Map(), outbox = new Map(), subjectSet = new Set(s.subjects);
+    for (const [rows, index] of [[s.outputs, outputs], [s.outbox, outbox]]) for (const row of rows) {
+      nsAssert(subjectSet.has(row.subject), 'P5-COVERAGE-MISMATCH');
+      if (!index.has(row.subject)) index.set(row.subject, []);
+      index.get(row.subject).push(row);
+    }
+    for (const subject of s.subjects) {
+      nsAssert(typeof trusted.domainSweep === 'function', 'O-DOMAIN-NOT-RUN');
+      const expected = trusted.domainSweep(subject, s.activationReceipt.basis, e.source.entries);
+      if (!same(expected, { output: outputs.get(subject) ?? [], outbox: outbox.get(subject) ?? [] })) refuse('P5-DOMAIN-MISMATCH', subject);
+    }
+    nsAssert(nsTime(s.endNs) >= nsTime(s.startNs), 'EVENT-SCHEMA');
+    const wallMs = nsMs(nsTime(s.endNs) - nsTime(s.startNs));
+    result.measurements.P5 = { wallMs, subjects: s.subjects.length, basis: s.activationReceipt.basis };
+    if (timing && wallMs > 100000) refuse('NS-P5-WALL');
+    result.measurements.P5.traffic = nsP5Traffic(e.sweepTraffic);
+    if (!result.measurements.P5.traffic.met) refuse('P5-LIVE-TRAFFIC-BAR');
+  }
+}
+
+// [EXP-CRNS] Why: comparison denominators come from full matched raw windows, never a candidate-supplied ratio.
+// Rejected: trusting summary p99/throughput fields (F18) or matching only reader count without trace phase.
+function nsSegment(segment) {
+  nsAssert(isObj(segment) && nsText(segment.phase) && nsText(segment.traceSegment), 'MATCHED-SEGMENT-MISSING');
+  const width = nsTime(segment.endNs) - nsTime(segment.startNs);
+  nsAssert(width > 0n, 'EVENT-SCHEMA');
+  const reads = nsArray(segment.reads, 'segment reads'), offers = nsArray(segment.offers, 'segment offers');
+  const inWindow = t => nsTime(t) >= nsTime(segment.startNs) && nsTime(t) < nsTime(segment.endNs);
+  for (const r of reads) nsAssert(inWindow(r.sentAtNs) && nsTime(r.receivedAtNs) >= nsTime(r.sentAtNs), 'EVENT-SCHEMA');
+  for (const o of offers) nsAssert(inWindow(o.scheduledAtNs) && nsTime(o.ackAtNs ?? o.censoredAtNs) >= nsTime(o.scheduledAtNs), 'EVENT-SCHEMA');
+  const writer = offers.map(o => o.ackAtNs ? nsTime(o.ackAtNs) - nsTime(o.scheduledAtNs) : Infinity);
+  return { reads, width, writerP99Ms: nsMs(nsNearestRank(writer, 99)), maxWriterWaitMs: nsMs(nsNearestRank(writer, 100)), readP99Ms: nsMs(nsNearestRank(reads.map(r => nsTime(r.receivedAtNs) - nsTime(r.sentAtNs)), 99)) };
+}
+const nsMatchedSegment = (a, b) => a.phase === b.phase && a.traceSegment === b.traceSegment && same(a.offerScheduleSha256, b.offerScheduleSha256) && nsHash(a.offerScheduleSha256);
+
+export function nsP1Ladder(windows, replayRead, prefix) {
+  nsAssert(Array.isArray(windows) && windows.length > 0 && typeof replayRead === 'function', 'P1-LADDER-NOT-VERIFIED');
+  const results = [], expected = new Map();
+  for (const w of windows) {
+    nsAssert([0, 1, 4, 16, 64, 256, 1024].includes(w.level), 'EVENT-SCHEMA');
+    const m = nsSegment(w); let correct = 0, violations = 0;
+    for (const read of m.reads) {
+      const key = canonText([read.subject, read.shape, read.requestedBasis]);
+      if (!expected.has(key)) expected.set(key, replayRead(read, prefix));
+      nsAssert(nsHash(expected.get(key)), 'O-REPLAY-REFUSED');
+      if (expected.get(key) === read.answerSha256 && same(read.requestedBasis, read.echoedBasis)) correct++; else violations++;
+    }
+    results.push({ level: w.level, phase: w.phase, traceSegment: w.traceSegment, goodput: correct * 1e9 / Number(m.width), violations, writerP99Ms: m.writerP99Ms, maxWriterWaitMs: m.maxWriterWaitMs, readP99Ms: m.readP99Ms });
+  }
+  let met = true;
+  for (const level of [0, 1, 4, 16, 64, 256, 1024]) nsAssert(windows.some(w => w.level === level), 'P1-LADDER-NOT-VERIFIED', `missing reader level ${level}`);
+  for (let i = 0; i < windows.length; i++) {
+    const w = windows[i], r = results[i];
+    const baseIndex = windows.findIndex(x => x.level === 0 && nsMatchedSegment(x, w));
+    nsAssert(baseIndex >= 0, 'MATCHED-SEGMENT-MISSING');
+    const base = results[baseIndex];
+    if (r.violations || r.maxWriterWaitMs === null || r.maxWriterWaitMs > 2000 || r.writerP99Ms === null || !Number.isFinite(r.writerP99Ms) || !Number.isFinite(base.writerP99Ms)) met = false;
+    if (w.level === 256 || w.level === 1024) {
+      const lowerIndex = windows.findIndex(x => x.level === (w.level === 256 ? 64 : 256) && nsMatchedSegment(x, w));
+      nsAssert(lowerIndex >= 0, 'MATCHED-SEGMENT-MISSING');
+      const lower = results[lowerIndex];
+      if (r.writerP99Ms > base.writerP99Ms * (w.level === 256 ? 1.25 : 2) || r.goodput < lower.goodput * (w.level === 256 ? 1 : .9) || (w.level === 256 && (r.readP99Ms === null || r.readP99Ms > 100))) met = false;
+    }
+    if (w.level === 1024) {
+      const recoveryIndex = windows.findIndex(x => x.level === 256 && x.recoveryOf === w.id && nsTime(x.startNs) >= nsTime(w.endNs) && nsTime(x.startNs) - nsTime(w.endNs) <= 60000000000n);
+      nsAssert(recoveryIndex >= 0, 'P1-RECOVERY-MISSING');
+      const recovery = results[recoveryIndex];
+      if (recovery.readP99Ms === null || recovery.readP99Ms > 100 || recovery.writerP99Ms > base.writerP99Ms * 1.25) met = false;
+    }
+  }
+  return { met, windows: results, evaluatedShare: 1 };
+}
+
+/** Matched 1,000-subject depth sample; compare both latency and read bytes, retaining per-depth denominators. */
+export function nsP4History(pulls) {
+  nsAssert(Array.isArray(pulls) && pulls.length > 0, 'P4-HISTORY-NOT-VERIFIED');
+  const byDepth = new Map([1, 3, 10].map(d => [d, new Map()]));
+  for (const p of pulls) {
+    nsAssert(byDepth.has(p.depth) && nsText(p.subject) && !byDepth.get(p.depth).has(p.subject) && nsUint(p.bytesRead), 'EVENT-SCHEMA');
+    nsAssert(nsTime(p.receivedAtNs) >= nsTime(p.sentAtNs), 'EVENT-SCHEMA');
+    byDepth.get(p.depth).set(p.subject, p);
+  }
+  const subjects = [...byDepth.get(1).keys()].sort();
+  nsAssert(subjects.length === 1000, 'P4-HISTORY-NOT-VERIFIED', 'requires matched 1000-subject sample');
+  const depths = {};
+  for (const [depth, rows] of byDepth) {
+    nsAssert(same([...rows.keys()].sort(), subjects), 'P4-HISTORY-NOT-VERIFIED', 'unmatched subjects');
+    depths[depth] = { count: rows.size, p99Ns: nsNearestRank([...rows.values()].map(p => nsTime(p.receivedAtNs) - nsTime(p.sentAtNs)), 99), bytesRead: [...rows.values()].reduce((sum, p) => sum + BigInt(p.bytesRead), 0n) };
+  }
+  const met = [3, 10].every(d => depths[d].p99Ns * 10n <= depths[1].p99Ns * 11n && depths[d].bytesRead * 10n <= depths[1].bytesRead * 11n);
+  return { met, depths: Object.fromEntries(Object.entries(depths).map(([d, m]) => [d, { count: m.count, p99Ms: nsMs(m.p99Ns), bytesRead: String(m.bytesRead) }])) };
+}
+
+export function nsP5Traffic(segments) {
+  nsAssert(isObj(segments) && nsMatchedSegment(segments.baseline, segments.sweep), 'P5-LIVE-TRAFFIC-NOT-VERIFIED');
+  const baseline = nsSegment(segments.baseline), sweep = nsSegment(segments.sweep);
+  const valid = m => Number.isFinite(m.readP99Ms) && m.readP99Ms !== null && Number.isFinite(m.writerP99Ms) && m.writerP99Ms !== null;
+  return { met: valid(baseline) && valid(sweep) && sweep.readP99Ms <= baseline.readP99Ms * 1.5 && sweep.writerP99Ms <= baseline.writerP99Ms * 1.5, baseline: { readP99Ms: baseline.readP99Ms, writerP99Ms: baseline.writerP99Ms }, sweep: { readP99Ms: sweep.readP99Ms, writerP99Ms: sweep.writerP99Ms } };
+}
+
+/** Old P3M events have candidate-origin instants, no observer brackets/WAL; compare arithmetic only, never qualify. */
+export function recomputeP3MDiagnostic(observations) {
+  const samples = nsArray(observations?.consumed?.samples, 'P3M samples');
+  const values = samples.map(s => {
+    nsAssert(same(s.publication.domain, s.known.domain), 'CLOCK-DOMAIN-MISMATCH');
+    nsAssert(nsTime(s.known.atNs) >= nsTime(s.publication.atNs), 'BRACKET-INVALID');
+    return { burst: s.burst, ns: nsTime(s.known.atNs) - nsTime(s.publication.atNs) };
+  });
+  return { status: 'DIAGNOSTIC', reason: 'LAG-START-CR', lag: { pooled: nsStats(values.map(s => s.ns)), steady: nsStats(values.filter(s => !s.burst).map(s => s.ns)), burst: nsStats(values.filter(s => s.burst).map(s => s.ns)) } };
 }
 
 // ================================================================ CLI

@@ -1,0 +1,214 @@
+TAP version 13
+# Subtest: CX-CRNS-F1: LAG-START-CR
+ok 1 - CX-CRNS-F1: LAG-START-CR
+  ---
+  duration_ms: 2.400166
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F2: BRACKET-INVALID
+ok 2 - CX-CRNS-F2: BRACKET-INVALID
+  ---
+  duration_ms: 1.588375
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F3: OBS-UNAUTHENTICATED
+ok 3 - CX-CRNS-F3: OBS-UNAUTHENTICATED
+  ---
+  duration_ms: 0.352334
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F4: NS-P3-EVERY-POSITION-ACCOUNTED
+ok 4 - CX-CRNS-F4: NS-P3-EVERY-POSITION-ACCOUNTED
+  ---
+  duration_ms: 1.966208
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F5: PREFIX-NOT-FROM-SOURCE
+ok 5 - CX-CRNS-F5: PREFIX-NOT-FROM-SOURCE
+  ---
+  duration_ms: 1.326583
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F6: LOST-ACKED-COMMIT
+ok 6 - CX-CRNS-F6: LOST-ACKED-COMMIT
+  ---
+  duration_ms: 2.440416
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F7: NS-P3-ORDER-VIOLATIONS-MAX
+ok 7 - CX-CRNS-F7: NS-P3-ORDER-VIOLATIONS-MAX
+  ---
+  duration_ms: 0.754458
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F8: NS-P3-ORDER-VIOLATIONS-MAX
+ok 8 - CX-CRNS-F8: NS-P3-ORDER-VIOLATIONS-MAX
+  ---
+  duration_ms: 0.608291
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F9: NS-P3-VISIBLE-DUP-EFFECTS-MAX
+ok 9 - CX-CRNS-F9: NS-P3-VISIBLE-DUP-EFFECTS-MAX
+  ---
+  duration_ms: 1.059125
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F10: NS-P3-DOMAIN-AFFECTED-SET
+ok 10 - CX-CRNS-F10: NS-P3-DOMAIN-AFFECTED-SET
+  ---
+  duration_ms: 2.061958
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F11: TAMPER
+ok 11 - CX-CRNS-F11: TAMPER
+  ---
+  duration_ms: 0.649542
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F12: NS-P3-GAPS-MAX
+ok 12 - CX-CRNS-F12: NS-P3-GAPS-MAX
+  ---
+  duration_ms: 0.483958
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F13: READER-LEVEL-MISMATCH
+ok 13 - CX-CRNS-F13: READER-LEVEL-MISMATCH
+  ---
+  duration_ms: 0.41975
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F14: CLOCK-DOMAIN-MISMATCH
+ok 14 - CX-CRNS-F14: CLOCK-DOMAIN-MISMATCH
+  ---
+  duration_ms: 1.084791
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F15: NS-P3-EVERY-POSITION-ACCOUNTED
+ok 15 - CX-CRNS-F15: NS-P3-EVERY-POSITION-ACCOUNTED
+  ---
+  duration_ms: 0.670375
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F16: DRIVER-NOT-PINNED
+ok 16 - CX-CRNS-F16: DRIVER-NOT-PINNED
+  ---
+  duration_ms: 0.8845
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F17: FAULT-WITNESS-INVALID
+ok 17 - CX-CRNS-F17: FAULT-WITNESS-INVALID
+  ---
+  duration_ms: 1.164125
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F18: RAW-EVENTS-MISSING
+ok 18 - CX-CRNS-F18: RAW-EVENTS-MISSING
+  ---
+  duration_ms: 0.901125
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F19: TIMING-UNJUDGED
+ok 19 - CX-CRNS-F19: TIMING-UNJUDGED
+  ---
+  duration_ms: 1.0055
+  type: 'test'
+  ...
+# Subtest: CX-CRNS-F20: CR-INCONSISTENT
+ok 20 - CX-CRNS-F20: CR-INCONSISTENT
+  ---
+  duration_ms: 0.927
+  type: 'test'
+  ...
+# Subtest: P3 evaluator runs the real O-DOMAIN child at every committed position
+ok 21 - P3 evaluator runs the real O-DOMAIN child at every committed position
+  ---
+  duration_ms: 97.670917
+  type: 'test'
+  ...
+# Subtest: exact nearest rank, including huge clocks, duplicates and boundaries
+ok 22 - exact nearest rank, including huge clocks, duplicates and boundaries
+  ---
+  duration_ms: 0.590709
+  type: 'test'
+  ...
+# Subtest: range consistency property: all permutations within a transaction preserve validity; each out-of-range insertion is found
+ok 23 - range consistency property: all permutations within a transaction preserve validity; each out-of-range insertion is found
+  ---
+  duration_ms: 16.917417
+  type: 'test'
+  ...
+# Subtest: duplicate property: committed insertion multiset counts every repeat, ignoring delete/reinsert and row ordering
+ok 24 - duplicate property: committed insertion multiset counts every repeat, ignoring delete/reinsert and row ordering
+  ---
+  duration_ms: 19.55375
+  type: 'test'
+  ...
+# Subtest: authenticated bytes, witnessed head, attempt, source, slot, input and encoding all bind
+ok 25 - authenticated bytes, witnessed head, attempt, source, slot, input and encoding all bind
+  ---
+  duration_ms: 1.923958
+  type: 'test'
+  ...
+# Subtest: missing WAL is not estimable; value-bearing feed entries are refused
+ok 26 - missing WAL is not estimable; value-bearing feed entries are refused
+  ---
+  duration_ms: 0.582625
+  type: 'test'
+  ...
+# Subtest: Q99b A0 rung is diagnostic; comparative and promotion still require equal rung paired controls
+ok 27 - Q99b A0 rung is diagnostic; comparative and promotion still require equal rung paired controls
+  ---
+  duration_ms: 0.3055
+  type: 'test'
+  ...
+# Subtest: P3M retained raw samples reproduce bench numbers but cannot establish R44 acceptance
+ok 28 - P3M retained raw samples reproduce bench numbers but cannot establish R44 acceptance
+  ---
+  duration_ms: 4.45
+  type: 'test'
+  ...
+# Subtest: F3 variations: broken intermediate chain, invalid chunk HMAC and unwitnessed head
+ok 29 - F3 variations: broken intermediate chain, invalid chunk HMAC and unwitnessed head
+  ---
+  duration_ms: 1.699875
+  type: 'test'
+  ...
+# Subtest: P2 full raw bands, publication ACK order, progress and idempotency
+ok 30 - P2 full raw bands, publication ACK order, progress and idempotency
+  ---
+  duration_ms: 3.343208
+  type: 'test'
+  ...
+# Subtest: P1 ladder recomputes matched raw goodput, writer ratios and post-stress recovery
+ok 31 - P1 ladder recomputes matched raw goodput, writer ratios and post-stress recovery
+  ---
+  duration_ms: 0.832209
+  type: 'test'
+  ...
+# Subtest: P4 1000 matched subjects compare depth 1/3/10 latency and bytes with exact 1.1 boundary
+ok 32 - P4 1000 matched subjects compare depth 1/3/10 latency and bytes with exact 1.1 boundary
+  ---
+  duration_ms: 8.022792
+  type: 'test'
+  ...
+# Subtest: P5 raw matched live read and writer ratios; a summary alone cannot satisfy it
+ok 33 - P5 raw matched live read and writer ratios; a summary alone cannot satisfy it
+  ---
+  duration_ms: 0.4455
+  type: 'test'
+  ...
+# Subtest: P5 evaluates every one of 100k subjects at activation basis against evaluator oracle
+ok 34 - P5 evaluates every one of 100k subjects at activation basis against evaluator oracle
+  ---
+  duration_ms: 757.10275
+  type: 'test'
+  ...
+1..34
+# tests 34
+# suites 0
+# pass 34
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1040.80675
