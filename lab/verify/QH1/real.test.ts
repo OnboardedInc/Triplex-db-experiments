@@ -40,7 +40,7 @@ const doubles = (count: number) => {
     1e21,
     1e-300,
     4.9406564584124654e-324,
-    9007199254740993.5,
+    Number("9007199254740993.5"),
     0.5,
     1,
   ];
@@ -163,7 +163,7 @@ it("REAL record times and valid-from offsets round trip bit-exactly through the 
       1000.5,
       1e15 + 0.25,
       2 ** 52 + 0.5,
-      123456789.123456789,
+      Number("123456789.123456789"),
       0.1,
     ];
     const rows = instants.map((at, i) => ({

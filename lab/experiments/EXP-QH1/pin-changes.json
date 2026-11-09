@@ -3,6 +3,12 @@
   "base": "2f7b42d6",
   "changed": [
     {
+      "path": "lab/bench/lib/broker-h1.ts",
+      "oldSha256": null,
+      "newSha256": "e76ec9fe603020efee1daa5d9c940b341be23c79ef862875d55a0aa8d3ff4398",
+      "referencedBy": []
+    },
+    {
       "path": "lab/bench/lib/composition.ts",
       "oldSha256": "ffb98e59ee6cc44932b47cb80412c09a2e2c810c2f0116ebb3d814ba5299df23",
       "newSha256": "40562b8e7a2b2563744fb984c278d3cec8c4ffb3dfc3a71a879f13ef91ad38cb",
@@ -15,6 +21,18 @@
       "referencedBy": []
     },
     {
+      "path": "packages/core/src/index.ts",
+      "oldSha256": "34f85c695a10ed8ad1ea4bda1e44da96de836bfa0f4e8a2f5c99e23fb7bb4887",
+      "newSha256": "951bed8ec4cf14b4a123b0928afed085caf2059df13a281db1a884cd2094b6bf",
+      "referencedBy": []
+    },
+    {
+      "path": "packages/core/src/kv/layers/KvTriplesLive.ts",
+      "oldSha256": "44fb68b94810f2d0b662f2a2f409c19f1a0ee0500c7cb9f1b01d29b4433b2e6d",
+      "newSha256": "e4731849770c62cc66d45a7fe298b882cf18a0986de45c0c3922e55acf1d4913",
+      "referencedBy": []
+    },
+    {
       "path": "packages/core/src/runtime/index.ts",
       "oldSha256": "d9cf4bd3ec8fc8e523deacfcd6eb3b72aa77b90faa47155f00f55d0d4d128b3d",
       "newSha256": "bae1c31fbdcee477c25a6f9d3e4ec925b14af2392f41cdc2bd081d8fd4043600",
@@ -23,37 +41,59 @@
     {
       "path": "packages/core/src/storage/StorageAdapter.ts",
       "oldSha256": "14a289f0f94b0f2411d982c011ff1472dd305d1e26fd0a2cf954affde92ae564",
-      "newSha256": "e04ab5268bbe8a14867c49569b514a2ab1d03d61de8996045cc36f50768262b7",
+      "newSha256": "53a7c70ceae167eafa2e761ed24ba53938f7effc6e7716255715638fa175afff",
       "referencedBy": []
+    },
+    {
+      "path": "packages/core/src/store/Triples.ts",
+      "oldSha256": "7e5bd8c3e83e0d468912be4f01719d6bdd4f54c84c9bbc08ee0f10cdf05159c0",
+      "newSha256": "da3515b5013feae546c08cc6865a4b517292a0f5fcb0f679340d5aba2b20060d",
+      "referencedBy": [
+        "lab/acceptance/build_contract.py",
+        "lab/acceptance/obligations.json",
+        "lab/acceptance/golden/README.md"
+      ]
     },
     {
       "path": "packages/core/src/store/TriplesLive.ts",
       "oldSha256": "9b9ce6ed7964dd8edfd5c9e71aa31b34c50c8aa2f86805adc0400f4d2f51bdb8",
-      "newSha256": "c96bcdd927bc17e2a87a1b89bf221af19dc196ad0543a370eefed43e026033ae",
+      "newSha256": "0be6cf60e89196ded46a76ef2194bcd853d0fa4e28b46135d15334a542d8831a",
+      "referencedBy": []
+    },
+    {
+      "path": "packages/core/src/store/reach.ts",
+      "oldSha256": null,
+      "newSha256": "3e99d769bdb0b9f3bcc924e72cb4e8b8052eaeea531583ae0b407318d1afe928",
       "referencedBy": []
     },
     {
       "path": "packages/qlever/src/broker/BrokerStorageAdapter.ts",
       "oldSha256": "cc8450d00a171de6ca5528fc039f8d6452d98217cdbf521016aea83b579e871c",
-      "newSha256": "f0f095a4202ab4a6835687dc5f8b4988492c6684da36bfd333b6ce609316d13e",
+      "newSha256": "a8c894018e4cf08cd50c8ad1bd08a8e24ee9e9cb66fce452f7848d516abe07a0",
       "referencedBy": []
     },
     {
       "path": "packages/qlever/src/broker/broker.ts",
       "oldSha256": "0d45f9ee2c6f53a888f8f983fb57d0fb891eef2ce56e78687290e73bc6b41ea1",
-      "newSha256": "13d75074d788bc736d74e2c45bf49a517a1b1e8fc61d6fd3c07b44941b8b859b",
+      "newSha256": "ba0677e4e7f53f94d5669d2223cf4bb85680d842a80e7413af639c98a2ead18e",
+      "referencedBy": []
+    },
+    {
+      "path": "packages/qlever/src/broker/h1.ts",
+      "oldSha256": null,
+      "newSha256": "6cd2374846f6ae50be716c366875ba69289eb9dc7f2c42fdc6ba77b83e767353",
       "referencedBy": []
     },
     {
       "path": "packages/qlever/src/broker/log.ts",
       "oldSha256": "e55597bccbd9b0f5a93d7b662f41cc14774fd8c408b908ae8cad26a73193bf41",
-      "newSha256": "cec30b1381073b8233f63533c7ca72425fda05eadeedfde4d504e30ede1ab555",
+      "newSha256": "d9dc9d924fc5d410906506f9616d3b59e456d343de473294adc2978f0f15a502",
       "referencedBy": []
     },
     {
       "path": "packages/qlever/src/broker/sqlite-worker.ts",
       "oldSha256": "a5899eae1db0be8f2648e6671be075a9d67ddaeea159a940e0aa8d76f60872db",
-      "newSha256": "281289d271cce834424de011539507ba790189a1766ae20e144cca8f9fdbd6b3",
+      "newSha256": "4a577f924f10bd8ceb34ef60a90bf38a6a64bb8bf299335c8dbbc9020174018f",
       "referencedBy": []
     },
     {

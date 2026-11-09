@@ -18,7 +18,16 @@ const contractFiles = fs
   .filter((p) => fs.statSync(p).isFile());
 const changed = paths.map((p) => ({
   path: p,
-  oldSha256: sha(execFileSync("git", ["show", "2f7b42d6:" + p])),
+  // [EXP-QH1-R3] Why: a file added after the base has no old hash; the audit must still list it. Rejected: failing on new files.
+  oldSha256: (() => {
+    try {
+      return sha(
+        execFileSync("git", ["show", "2f7b42d6:" + p], { stdio: ["ignore", "pipe", "ignore"] }),
+      );
+    } catch {
+      return null;
+    }
+  })(),
   newSha256: sha(fs.readFileSync(p)),
   referencedBy: contractFiles.filter((f) => fs.readFileSync(f, "utf8").includes(p)),
 }));

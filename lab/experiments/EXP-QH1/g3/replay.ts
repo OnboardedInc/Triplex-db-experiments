@@ -145,7 +145,7 @@ const pull = async (rootName: string, basis: any): Promise<{ triples: any[]; hop
 };
 const COUNT = Number(countArg),
   CONC = Number(concArg);
-const lines: string[] = new Array(COUNT);
+const lines: string[] = Array.from<string>({ length: COUNT });
 let next = 0,
   rows = 0,
   hopsTotal = 0;

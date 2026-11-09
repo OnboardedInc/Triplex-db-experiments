@@ -93,12 +93,8 @@ const brokerArm = async (h1: boolean, countPulls: boolean): Promise<Arm> => {
   };
   const counters: any[] = [];
   const adapter = q.makeQleverBrokerStorageAdapter(client, "qh1-r2", broker, {
-    ...(h1
-      ? {
-          currentRoute: "h1" as const,
-          ...(countPulls ? { onPull: (e: any) => counters.push(e) } : {}),
-        }
-      : {}),
+    ...(h1 ? { currentRoute: "h1" as const } : {}),
+    ...(h1 && countPulls ? { onPull: (e: any) => counters.push(e) } : {}),
   });
   const runtime = ManagedRuntime.make(
     rt.Runtime.define({
