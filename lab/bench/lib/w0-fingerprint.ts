@@ -1,3 +1,4 @@
+import { performance } from "node:perf_hooks";
 import { createHash } from "node:crypto";
 import { W0, canonical, worldOf, reachableRows, w0Basis, type PositionBasis } from "./w0-world.ts";
 import type { CompositionHandle } from "./composition.ts";
@@ -105,8 +106,13 @@ export interface FingerprintReader {
   close(): Promise<void>;
   observePage?: (records: readonly any[], page: number) => void;
 }
-export type OpenFingerprintReader = (endpoint: string, scope: string) => Promise<FingerprintReader>;
-const openDefault: OpenFingerprintReader = async (endpoint, scope) => {
+export type OpenFingerprintReader = (
+  endpoint: string,
+  scope: string,
+  signal?: AbortSignal,
+) => Promise<FingerprintReader>;
+const openDefault: OpenFingerprintReader = async (endpoint, scope, signal) => {
+  signal?.throwIfAborted();
   const comp =
     endpoint === `memory://${scope}`
       ? (await import("./memory.ts")).memoryComposition("xtdb", scope)
@@ -151,11 +157,73 @@ export async function fingerprintSweep(
   input: FingerprintInput,
   open: OpenFingerprintReader = openDefault,
 ) {
-  let h: FingerprintReader | undefined, native: { close(): Promise<void> } | undefined;
+  const ms = input.deadlineMs ?? 600_000;
+  if (!Number.isFinite(ms) || ms <= 0) throw new FingerprintRefusal("invalid read deadline");
+  const deadline = performance.now() + ms,
+    controller = new AbortController();
+  const signal = input.signal
+    ? AbortSignal.any([controller.signal, input.signal])
+    : controller.signal;
+  const refusal = () =>
+    controller.signal.aborted
+      ? new FingerprintRefusal("read deadline")
+      : new FingerprintRefusal("aborted");
+  const check = () => {
+    if (signal.aborted) throw refusal();
+    if (performance.now() >= deadline) {
+      controller.abort();
+      throw refusal();
+    }
+  };
+  const timer = setTimeout(() => controller.abort(), ms);
+  let rejectAbort!: () => void;
+  const aborted = new Promise<never>((_resolve, reject) => {
+    rejectAbort = () => reject(refusal());
+    signal.addEventListener("abort", rejectAbort, { once: true });
+    if (signal.aborted) rejectAbort();
+  });
+  void aborted.catch(() => {});
+  const within = async <T>(work: () => Promise<T>): Promise<T> => {
+    check();
+    const value = await Promise.race([
+      Promise.resolve().then(() => {
+        check();
+        return work();
+      }),
+      aborted,
+    ]);
+    check();
+    return value;
+  };
+  const owned = new Set<{ close(): Promise<void> }>(),
+    closing = new Map<object, Promise<void>>();
+  const closeOnce = (resource: { close(): Promise<void> }) => {
+    let promise = closing.get(resource);
+    if (!promise) {
+      promise = Promise.resolve().then(() => resource.close());
+      closing.set(resource, promise);
+    }
+    return promise;
+  };
+  // [EXP-P5-R4] Why: a cancelled open may still resolve; ownership starts on resolution and always schedules exactly one close. Rejected: assigning only the winning raced result (leaks late readers).
+  const acquire = async <T extends { close(): Promise<void> }>(openResource: () => Promise<T>) =>
+    within(async () => {
+      const resource = await openResource();
+      owned.add(resource);
+      try {
+        check();
+      } catch (error) {
+        await closeOnce(resource);
+        throw error;
+      }
+      return resource;
+    });
+  let candidate: any,
+    failure: unknown,
+    failed = false;
   try {
     if (!input.pin) throw new FingerprintRefusal("pre-freeze full-content pin required");
-    if (input.signal?.aborted) throw new FingerprintRefusal("aborted");
-    h = await open(input.endpoint, input.scope);
+    const h = await acquire(() => open(input.endpoint, input.scope, signal));
     if (
       h.endpoint !== input.endpoint ||
       h.scope !== input.scope ||
@@ -165,8 +233,11 @@ export async function fingerprintSweep(
     let reader: Reader;
     if (h.comp.g0Reader) reader = h.comp.g0Reader(input.pin.scope);
     else {
-      const g = await (await import("./g0-xtdb.ts")).openG0(input.endpoint);
-      native = g;
+      const g = await acquire(async () => {
+        const module = await import("./g0-xtdb.ts");
+        check();
+        return module.openG0(input.endpoint);
+      });
       reader = {
         ...g.reader,
         scopes: async (signal) =>
@@ -186,19 +257,35 @@ export async function fingerprintSweep(
       world: "W0",
       counts: input.pin.counts,
     };
-    const checked = w0Check(h.comp, input, h.observePage);
-    if (input.signal) {
-      const read = checked.read;
-      checked.read = (s) => read(AbortSignal.any([s, input.signal!]));
-    }
-    const counts = await h.comp.storeCounts();
+    const source = reader;
+    reader = {
+      endpoint: source.endpoint,
+      scopes: (inner) => within(() => source.scopes(AbortSignal.any([signal, inner]))),
+      count: (t, scope, inner) =>
+        within(() => source.count(t, scope, AbortSignal.any([signal, inner]))),
+      async *scan(t, scope, inner) {
+        check();
+        for await (const row of source.scan(t, scope, AbortSignal.any([signal, inner]))) {
+          check();
+          yield row;
+        }
+        check();
+      },
+    };
+    const checked = w0Check(h.comp, input, h.observePage),
+      read = checked.read;
+    checked.read = (inner) => within(() => read(AbortSignal.any([signal, inner])));
+    const counts = await within(() => h.comp.storeCounts(signal));
     for (const [k, v] of Object.entries(input.counts))
       if (counts[k] !== v) throw new FingerprintRefusal("count mismatch: " + k);
-    const admission = await admitG0(reader, input.pin, expected, checked, input.deadlineMs);
-    const endCounts = await h.comp.storeCounts();
+    // [EXP-P5-R4] Why: opening and count observations spend the same absolute budget as D. Rejected: restarting deadlineMs at the inner coordinator (F5).
+    const admission = await within(() =>
+      admitG0(reader, input.pin!, expected, checked, deadline - performance.now()),
+    );
+    const endCounts = await within(() => h.comp.storeCounts(signal));
     for (const [k, v] of Object.entries(input.counts))
       if (endCounts[k] !== v) throw new FingerprintRefusal("end count mismatch: " + k);
-    return {
+    candidate = {
       status: "complete-and-matching" as const,
       endpoint: input.endpoint,
       scope: input.scope,
@@ -208,9 +295,33 @@ export async function fingerprintSweep(
       admission,
     };
   } catch (e) {
-    throw e instanceof FingerprintRefusal ? e : new FingerprintRefusal(String(e));
+    failure = e;
+    failed = true;
   } finally {
-    await h?.close();
-    await native?.close();
+    // [EXP-P5-R4] Why: close every acquired handle even if one close fails, and never grant while cleanup exceeds freshness. Rejected: serial finally closes (a first failure skips the second).
+    const cleanup = Promise.allSettled([...owned].map(closeOnce)).then((results) => {
+      const bad = results.find((r) => r.status === "rejected");
+      if (bad?.status === "rejected") throw bad.reason;
+    });
+    try {
+      await Promise.race([cleanup, aborted]);
+    } catch (error) {
+      if (!failed) failure = error;
+      failed = true;
+    }
+    clearTimeout(timer);
+    signal.removeEventListener("abort", rejectAbort);
   }
+  if (failed)
+    throw failure instanceof FingerprintRefusal ? failure : new FingerprintRefusal(String(failure));
+  check();
+  return candidate as {
+    status: "complete-and-matching";
+    endpoint: string;
+    scope: string;
+    basis: PositionBasis;
+    observed: Pin["w0"];
+    counts: { start: Record<string, number>; end: Record<string, number> };
+    admission: Awaited<ReturnType<typeof admitG0>>;
+  };
 }
