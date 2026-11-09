@@ -1,0 +1,19 @@
+Round 2 fix-introduced attack hypotheses, written from the REPORT round 2 finding-to-fix table only, before reading the
+claim.mjs round 2 diff (2026-11-09).
+N1 O7 companion: which crash run counts? If the companion attempt id or head is not pinned by trusted, the candidate can pick its
+   best crash run, reuse one companion for many primaries, or supply a companion whose head it chose.
+N2 O7 companion: crash points placed where nothing happens (no traffic, before first commit, after drain) still satisfy 3x3.
+N3 O17 digest: the digest compares content per command but not commit order per subject versus trace order.
+N4 O17 digest: tx carrying several commandIds; how changes split per command; a merged cross-subject tx or a command with no
+   changes inside a merged tx.
+N5 O17 digest: trace pins in trusted.commands; the builder fixture derives the pins from the source itself (fixture weakness).
+N6 O10 memo: semantic key built from a denylist or allowlist of read fields; an unlisted query parameter still collapses.
+N7 O10 basis clipping: basis expressed in another form or naming a position absent from the source clips the prefix wrongly.
+N8 O12 E8 from completed reads: under P3-only or P2-only, read answers are not checked, so instant garbage answers make 256 loops
+   "complete" without real read load.
+N9 O21 minima: minima counted over offers or positions that include typed rejections, retries or initialization events.
+N10 O3 kind: lost-ACK resolution lets any later receipt resolve a censored original; candidate-caused timeouts become retries.
+N11 O8 replay: replay anchored to WAL checkpoints that the candidate's consumer itself writes; a checkpoint chosen to make the
+   interval empty (crash right after checkpoint with nothing pending) proves nothing.
+N12 O14 baseline outside the sweep but in a different load phase or after the run.
+N13 O16 commandValid prefix by pre-offer visibility depends on source brackets; candidate-controlled visibility shifts validity.

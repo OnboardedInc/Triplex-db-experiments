@@ -1,0 +1,30 @@
+B0 baseline world is RECOMPUTED for P3 a  ::  ok  ::  
+B1 removing WAL/CR/resume floors refuses  ::  ok  ::  CR-CROSSCHECK-MISSING | CR-CROSSCHECK-MISSING | CR-CROSSCHECK-MISSING | CR-CROSSCHECK-MISSING | CR-CROSSCHECK-MISSING | CR-CROSSCHECK-MISSING
+R1 truncated chunk chain is refused  ::  ok  ::  -
+R2 receipt to a different tx on retry is  ::  ok  ::  DUPLICATE-COMMIT(c0) | SOURCE-CONTENT-MISMATCH(c0) | P3-RESUME-MISSING | EVENT-ID-DUPLICATE(EVENT-ID-DUPLICATE: missing/duplicate eventId) | SOURCE-CONTENT-MISMATCH(c0) | SOURCE-CONTENT-MISMATCH(c0) | ACK-BEFORE-PUBLICATION(c0) | IDEMPOTENCY-RECEIPT-MISMATCH
+R3 ACK before source bracket L is refuse  ::  ok  ::  P3-RESUME-MISSING | ACK-BEFORE-PUBLICATION(c0)
+R4 duplicate effect row with identical k  ::  ok  ::  WAL-NOT-ESTIMABLE(normalized rows disagree with decoded WAL) | NS-P3-VISIBLE-DUP-EFFECTS-MAX
+O1 P2/P3: the same command committed twi  ::  ok  ::  DUPLICATE-COMMIT(c0) | SOURCE-CONTENT-MISMATCH(c0) | P3-RESUME-MISSING | SOURCE-CONTENT-MISMATCH(c0)
+O2 P2: typed error ACKed in 1 ms while t  ::  ok  ::  P3-RESUME-MISSING | ERROR-BUT-COMMITTED(c0) | VALID-COMMAND-REJECTED(c0) | NS-P2-LATENCY(5-10)
+O3 P2: a duplicate retry answered with a  ::  ok  ::  EVENT-ID-DUPLICATE(EVENT-ID-DUPLICATE: missing/duplicate eventId) | ERROR-BUT-COMMITTED(c0) | VALID-COMMAND-REJECTED(c0) | NS-P2-LATENCY(5-10)
+O4 P3: a second visible effect for the s  ::  ok  ::  WAL-NOT-ESTIMABLE(normalized rows disagree with decoded WAL) | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH
+O4 P3: a second visible effect for the s  ::  ok  ::  WAL-NOT-ESTIMABLE(normalized rows disagree with decoded WAL) | CONSUMER-IDENTITY-MISMATCH | CONSUMER-IDENTITY-MISMATCH
+O5 P3: source entry order (offset) contr  ::  ok  ::  NS-P3-ORDER-VIOLATIONS-MAX(source cursor disagrees with offset order) | NS-P3-ORDER-VIOLATIONS-MAX(source cursor disagrees with offset order) | P3-RESUME-MISSING
+O5b P3: a position whose coordinates dis  ::  ok  ::  NS-P3-ORDER-VIOLATIONS-MAX(source cursor disagrees with offset order) | NS-P3-ORDER-VIOLATIONS-MAX(source cursor disagrees with offset order) | NS-P3-ORDER-VIOLATIONS-MAX(source cursor disagrees with offset order) | P3-RESUME-MISSING
+O6a P3 only: candidate typed-rejects 2 o  ::  ok  ::  EVENT-ID-DUPLICATE(EVENT-ID-DUPLICATE: missing/duplicate eventId) | OFFER-KIND-MISSING | SOURCE-CONTENT-MISMATCH(c1) | VALID-COMMAND-NOT-PUBLISHED(c1) | VALID-COMMAND-REJECTED(c1) | OFFER-KIND-MISSING | SOURCE-CONTENT-MISMATCH(c2) | VALID-COMMAND-NOT-PUBLISHED(c2) | VALID-COMMAND-REJECTED(c2)
+O6b P3 only: ACK before publication (lag  ::  ok  ::  P3-RESUME-MISSING | ACK-BEFORE-PUBLICATION(c0)
+O7 P3: a RECOMPUTED result carries resum  ::  ok  ::  P3-RESUME-MISSING
+O8 P3: fault witnesses that each replay   ::  ok  ::  FAULT-WITNESS-INVALID(recovery checkpoint/range absent)
+O9 P3: a commit published after window e  ::  ok  ::  NS-P3-EVERY-POSITION-ACCOUNTED(no durable consumer bracket "3") | CR-CROSSCHECK-MISSING | LAG-SAMPLES-SHORT | TIMING-UNJUDGED | P3-RESUME-MISSING | ACK-BEFORE-PUBLICATION(c2)
+O12 P3: lag "with 256 readers" accepted   ::  ok  ::  READER-LEVEL-MISMATCH
+O16 oracle "prefix" stops at the positio  ::  ok  ::  
+O17 P2/P3: committed change subject diff  ::  ok  ::  SOURCE-CONTENT-MISMATCH(c0) | P3-RESUME-MISSING | SOURCE-CONTENT-MISMATCH(c0)
+O18/O25 broker-frame/2: self-made CRC fr  ::  ok  ::  SOURCE-STORAGE-MISMATCH
+O22 P2: ACK inside a 150 ms wide publica  ::  ok  ::  BRACKET-TOO-WIDE | P3-RESUME-MISSING | ACK-ORDER-UNDECIDED
+L0 ladder fixture sanity: met  ::  ok  ::  -
+O10 P1: a hops-6 read answered with the   ::  ok  ::  -
+O11 P1: a "1024-reader" window whose rea  ::  ok  ::  -
+O24 P1: recovery window matched although  ::  ok  ::  -
+O29a P1: writer p99 at 256 readers of 12  ::  ok  ::  -
+O13 P4: history-flatness pulls without a  ::  ok  ::  -
+O14 P5: the "during sweep" traffic segme  ::  ok  ::  -
