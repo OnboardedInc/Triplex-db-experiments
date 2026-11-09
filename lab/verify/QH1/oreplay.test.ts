@@ -221,7 +221,8 @@ it("G4: 100000 sampled H1w pulls have zero differences against fresh O-REPLAY", 
         v = i % 2 ? 100 : 200;
       const answer = await client.call("wholePull", { basis: p * 1024, roots: ["s:" + root] });
       // Owner fetch is a superset: reconstruct reach through the per-hop API semantics.
-      const observed = [...h1Rows(wholePullTuples(answer), { validAt: v }).values()].flat();
+      const w = wholePullTuples(answer);
+      const observed = [...h1Rows(w.tuples, { validAt: v }, w.dict).values()].flat();
       const byEntity = new Map<string, any[]>();
       for (const t of observed) {
         const a = byEntity.get(t.entityId) ?? [];

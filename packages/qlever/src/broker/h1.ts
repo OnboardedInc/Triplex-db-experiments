@@ -17,8 +17,8 @@ export interface WholePull {
   readonly entities: readonly string[];
   /** Owners fetched completely: every entity of these owners is answered by `parts`. */
   readonly owners: readonly string[];
-  /** One JSON tuple array per fetch (an owner, or one external entity); parse each once. */
-  readonly parts: readonly string[];
+  /** One fetch per owner or external entity: its row tuples and the dictionaries its ids refer to; parse each text once. */
+  readonly parts: readonly WholePullFetch[];
   readonly counters: {
     readonly hops: number;
     readonly rows: number;
@@ -26,13 +26,58 @@ export interface WholePull {
     readonly statements: number;
   };
 }
+/** Texts of one fetch: `rows` is a JSON array of tuples (ids only), the other three are JSON arrays of dictionary entries. */
+export interface WholePullFetch {
+  readonly rows: string;
+  /** `[position, instant, transaction name]` for every position the rows use. */
+  readonly txs: string;
+  /** `[attribute id, name]` */
+  readonly attrs: string;
+  /** `[string id, text]` (creators and entity types) */
+  readonly strs: string;
+}
+/**
+ * Short tuple: `[idIsBlob, id, entity, attrId, kind, value, position, validFromOffset, creatorId]`.
+ * Long tuple: the short fields plus `[validTo, entityTypeId, schemaVersion, verbatim]` (index 9 to 12), used only when a row differs from
+ * the defaults (no valid-to, no entity type, schema version 1, no verbatim envelope).
+ */
 export type H1Tuple = readonly any[];
-export const wholePullTuples = (answer: Pick<WholePull, "parts">): H1Tuple[] => {
+/** Per-pull dictionaries. Transaction instants and every optional name are built once per entry, not once per row. */
+export interface H1Dict {
+  readonly txAt: Map<number, number>;
+  readonly txId: Map<number, Option.Option<string>>;
+  readonly attr: Map<number, string>;
+  readonly str: Map<number, string>;
+  readonly strOpt: Map<number, Option.Option<string>>;
+}
+const num = (x: any): number => (typeof x === "number" ? x : Number(x));
+export const wholePullTuples = (
+  answer: Pick<WholePull, "parts">,
+): { readonly tuples: H1Tuple[]; readonly dict: H1Dict } => {
+  const dict: H1Dict = {
+    txAt: new Map(),
+    txId: new Map(),
+    attr: new Map(),
+    str: new Map(),
+    strOpt: new Map(),
+  };
   const parts = answer.parts;
-  if (parts.length === 1) return JSON.parse(parts[0]!) as H1Tuple[];
-  const all: H1Tuple[] = [];
-  for (const part of parts) for (const t of JSON.parse(part) as H1Tuple[]) all.push(t);
-  return all;
+  let tuples: H1Tuple[] | undefined;
+  for (const part of parts) {
+    const rows = JSON.parse(part.rows) as H1Tuple[];
+    if (tuples === undefined) tuples = rows;
+    else for (const t of rows) tuples.push(t);
+    for (const [pos, at, name] of JSON.parse(part.txs) as [number, number | string, string | null][]) {
+      dict.txAt.set(pos, num(at));
+      dict.txId.set(pos, name ? Option.some(name) : Option.none());
+    }
+    for (const [id, name] of JSON.parse(part.attrs) as [number, string][]) dict.attr.set(id, name);
+    for (const [id, text] of JSON.parse(part.strs) as [number, string | null][]) {
+      dict.str.set(id, text as string);
+      dict.strOpt.set(id, text ? Option.some(text) : Option.none());
+    }
+  }
+  return { tuples: tuples ?? [], dict };
 };
 const alphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 const idFromHexSlow = (hex: string) => {
@@ -139,10 +184,13 @@ const optional = <A>(value: A | null) => (value === null ? Option.none<A>() : Op
 const types = ["string", "number", "boolean", "datetime", "json", "ref", "integer"];
 // [EXP-QH1-R3] Why: SQL emits integer timestamps and integer values as JSON numbers and only REAL as exact %!.17g text, so the
 // common case needs no Number() call. Rejected: Number() on every field (about 39 us per pull for values that are already numbers).
-const num = (x: any): number => (typeof x === "number" ? x : Number(x));
 /** One tuple to one Triple, or undefined when it is not visible at `basis.validAt`. Values pass the read-side domain check. */
-export const h1Decode = (t: H1Tuple, basis: ResolvedTemporalBasis): Triple | undefined => {
-  const fallback = t[14];
+export const h1Decode = (
+  t: H1Tuple,
+  basis: ResolvedTemporalBasis,
+  dict: H1Dict,
+): Triple | undefined => {
+  const fallback = t[12];
   if (fallback) {
     const row = fallback.row as TripleRow;
     for (const [key, tag] of fallback.special)
@@ -165,17 +213,23 @@ export const h1Decode = (t: H1Tuple, basis: ResolvedTemporalBasis): Triple | und
       retractTxId: Option.none(),
     } as Triple;
   }
-  const validFrom = num(t[8]);
-  const rawTo = t[9];
+  // [EXP-P4N] Why: valid-from = transaction instant + offset, both IEEE doubles here and in SQLite's `tx.at + f.vf` (integer sums stay exact
+  // below 2^53, and above it SQLite's exact int64 sum converted to double equals one rounding of the same sum), so main reproduces the
+  // exact double the SQL used to send. Rejected: sending valid-from per row again (about 14 bytes per row).
+  const pos = t[6] as number;
+  const at = dict.txAt.get(pos)!;
+  const validFrom = at + num(t[7]);
+  const long = t.length > 9;
+  const rawTo = long ? t[9] : null;
   if (validFrom > basis.validAt || (rawTo !== null && num(rawTo) <= basis.validAt))
     return undefined;
   const kind = t[4];
   const type = types[kind] ?? (kind === 8 ? "number" : "datetime");
   const payload =
     kind === 8
-      ? t[7]
+      ? pos
       : kind === 9
-        ? num(t[6])
+        ? at
         : kind === 1 || kind === 3
           ? num(t[5])
           : kind === 2
@@ -187,24 +241,26 @@ export const h1Decode = (t: H1Tuple, basis: ResolvedTemporalBasis): Triple | und
             : kind === 4
               ? JSON.parse(t[5])
               : t[5];
-  const value = decodedPrimitiveValue(type, payload, storedValueDomain(ValueDomains.qlever, t[3]));
-  const schemaVersion = num(t[12]);
+  const attribute = dict.attr.get(t[3])!;
+  const value = decodedPrimitiveValue(type, payload, storedValueDomain(ValueDomains.qlever, attribute));
+  const creator = t[8];
   return {
     id: t[0] ? idFromHex(t[1]) : t[1],
     entityId: t[2],
-    attribute: t[3],
+    attribute,
     value,
-    recordedAt: num(t[6]),
+    recordedAt: at,
     validFrom,
     validTo: rawTo === null ? Option.none() : Option.some(num(rawTo)),
-    createdBy: t[10] ? Option.some(t[10]) : Option.none(),
+    createdBy: creator === null ? Option.none() : (dict.strOpt.get(creator) ?? Option.none()),
     retractedAt: Option.none(),
-    entityType: t[11] ? Option.some(t[11]) : Option.none(),
-    schemaVersion: schemaVersion ? Option.some(schemaVersion) : Option.none(),
-    txId: t[13] ? Option.some(t[13]) : Option.none(),
+    entityType: long && t[10] !== null ? (dict.strOpt.get(t[10]) ?? Option.none()) : Option.none(),
+    schemaVersion: long && num(t[11]) !== 1 ? (num(t[11]) ? Option.some(num(t[11])) : Option.none()) : someOne,
+    txId: dict.txId.get(pos)!,
     retractTxId: Option.none(),
   } as Triple;
 };
+const someOne = Option.some(1);
 // Same stable tie breaker as the row route.
 export const sortTriples = (bucket: Triple[]) =>
   bucket.sort((a, b) => a.recordedAt - b.recordedAt || a.id.localeCompare(b.id));
@@ -213,12 +269,16 @@ export const sortTriples = (bucket: Triple[]) =>
 // [0-9A-Z] compare identically by code unit and by localeCompare; any other id (lowercase, punctuation) falls back to the real sort.
 // Rejected: comparing every pair with localeCompare (the cost being removed), and trusting row order without checking it.
 const plainId = /^[0-9A-Z]*$/;
-const entityBody = (tuples: readonly H1Tuple[], basis: ResolvedTemporalBasis): Triple[] => {
+const entityBody = (
+  tuples: readonly H1Tuple[],
+  basis: ResolvedTemporalBasis,
+  dict: H1Dict,
+): Triple[] => {
   const body: Triple[] = [];
   let exact = true;
   let prev: Triple | undefined;
   for (const t of tuples) {
-    const triple = h1Decode(t, basis);
+    const triple = h1Decode(t, basis, dict);
     if (triple === undefined) continue;
     if (exact) {
       if (!t[0] && !plainId.test(triple.id)) exact = false;
@@ -233,10 +293,12 @@ const entityBody = (tuples: readonly H1Tuple[], basis: ResolvedTemporalBasis): T
   if (!exact && body.length > 1) sortTriples(body);
   return body;
 };
-const entityOf = (t: H1Tuple): string => t[14]?.row.entity_id ?? t[2];
+export const h1TupleEntity = (t: H1Tuple): string => t[12]?.row.entity_id ?? t[2];
+const entityOf = h1TupleEntity;
 export const h1Rows = (
   tuples: readonly H1Tuple[],
   basis: ResolvedTemporalBasis,
+  dict: H1Dict,
 ): ReadonlyMap<string, readonly Triple[]> => {
   const byEntity = new Map<string, H1Tuple[]>();
   for (const t of tuples) {
@@ -247,7 +309,7 @@ export const h1Rows = (
   }
   const result = new Map<string, Triple[]>();
   for (const [key, bucket] of byEntity) {
-    const body = entityBody(bucket, basis);
+    const body = entityBody(bucket, basis, dict);
     if (body.length) result.set(key, body);
   }
   return result;

@@ -208,12 +208,36 @@ const h1Union=sel=>['facts','journal','history'].map(t=>'SELECT '+h1Cols+' FROM 
 // (standalone, W0 10k). Names are blobs only when they hold lone surrogates, and json_array refuses a blob with an error, so the statement
 // runs unguarded and a failed fetch is rerun once with the guarded statement (blob names cross as NULL and only occur in rows that carry
 // their own verbatim envelope). Exactness is unchanged; only the common case is cheaper. Rejected: guarding every name on every row.
-const h1RowWith=T=>"json_array(typeof(f.id)='blob',CASE WHEN typeof(f.id)='blob' THEN hex(f.id) ELSE f.id END,"+T('e.name')+","+T('a.name')+",f.t,CASE WHEN f.t IN (1,3) THEN "+sn('f.v')+" WHEN f.t=5 THEN "+T('ref.name')+" WHEN f.t=7 THEN NULL ELSE f.v END,"+sn('tx.at')+",f.pos,"+sn('(tx.at+f.vf)')+",CASE WHEN f.vto IS NULL THEN NULL ELSE "+sn('f.vto')+" END,"+T('c.s')+","+T('y.s')+","+sn('coalesce(f.sv,1)')+","+T('te.name')+",json(CASE WHEN f.x IS NOT NULL THEN CAST(f.x AS TEXT) WHEN f.t=7 OR (f.t IN (1,3) AND typeof(f.v) NOT IN ('real','integer')) THEN qh_fallback(f.id) ELSE NULL END))";
-const h1Joins=' f JOIN ents e ON e.eid=f.e JOIN attrs a ON a.aid=f.a JOIN txs tx ON tx.pos=f.pos JOIN ents te ON te.eid=tx.tx LEFT JOIN strs c ON c.sid=f.c LEFT JOIN strs y ON y.sid=f.y LEFT JOIN ents ref ON f.t=5 AND ref.eid=f.v';
+// [EXP-P4N] Why (step a): round 3's tuple carried transaction position, instant and name, attribute name, creator name, entity type, schema
+// version and valid-to on every row (about 175 bytes of which more than half repeated: 44 distinct transactions in 458 rows, one creator,
+// 32 attributes). The row now carries ids only, and the instant, transaction name, attribute names and strings cross once per fetch in a
+// second statement; valid-from crosses as its offset from the transaction instant (main adds them). A row with a non-default valid-to,
+// entity type, schema version or verbatim envelope takes the long form (four more fields). Measured standalone (BRIEF appendix A): text
+// 80.8 to 45.7 KB, reader SQL 454 to 340 us. Rejected: grouping rows per entity (json() re-parses each group: 749 us), a cross-pull name
+// cache (round 3 step 4: about 160 unseen entity names and 49 unseen transactions per pull, so it never warmed).
+const fetchValue=T=>"CASE WHEN f.t IN (1,3) THEN "+sn('f.v')+" WHEN f.t=5 THEN "+T('ref.name')+" WHEN f.t=7 THEN NULL ELSE f.v END";
+const fetchFallback="json(CASE WHEN f.x IS NOT NULL THEN CAST(f.x AS TEXT) WHEN f.t=7 OR (f.t IN (1,3) AND typeof(f.v) NOT IN ('real','integer')) THEN qh_fallback(f.id) ELSE NULL END)";
+const fetchPlain="f.vto IS NULL AND f.y IS NULL AND (f.sv IS NULL OR f.sv=1) AND f.x IS NULL AND f.t<>7 AND NOT (f.t IN (1,3) AND typeof(f.v) NOT IN ('real','integer'))";
+const h1RowWith=T=>{
+ const short="typeof(f.id)='blob',CASE WHEN typeof(f.id)='blob' THEN hex(f.id) ELSE f.id END,"+T('e.name')+",f.a,f.t,"+fetchValue(T)+",f.pos,"+sn('f.vf')+",f.c";
+ return "CASE WHEN "+fetchPlain+" THEN json_array("+short+") ELSE json_array("+short+",CASE WHEN f.vto IS NULL THEN NULL ELSE "+sn('f.vto')+" END,f.y,"+sn('coalesce(f.sv,1)')+","+fetchFallback+") END";
+};
+const h1Joins=' f JOIN ents e ON e.eid=f.e LEFT JOIN ents ref ON f.t=5 AND ref.eid=f.v';
 const h1Rows=(sel,T)=>q('SELECT json_group_array('+h1RowWith(T)+') FROM ('+h1Union(sel)+')'+h1Joins).pluck();
+// One statement per fetch for the dictionaries the rows' ids refer to: transactions (position, instant, name), attributes, strings (creators, entity types).
+const h1Head=(sel,T)=>{
+ const u='(SELECT a,pos,c,y FROM ('+h1Union(sel)+'))';
+ return q('SELECT (SELECT json_group_array(json_array(t.pos,'+sn('t.at')+','+T('te.name')+')) FROM txs t JOIN ents te ON te.eid=t.tx WHERE t.pos IN (SELECT pos FROM '+u+')),'+
+ '(SELECT json_group_array(json_array(d.aid,'+T('d.name')+')) FROM attrs d WHERE d.aid IN (SELECT a FROM '+u+')),'+
+ '(SELECT json_group_array(json_array(d.sid,'+T('d.s')+')) FROM strs d WHERE d.sid IN (SELECT c FROM '+u+' UNION SELECT y FROM '+u+'))').raw();
+};
 const h1Fetch=sel=>{
- const fast=h1Rows(sel,x=>x),safe=h1Rows(sel,safeText);
- return args=>{try{return fast.get(args);}catch(e){if(!String(e).includes('JSON cannot hold BLOB'))throw e;return safe.get(args);}};
+ const fast=h1Rows(sel,x=>x),safe=h1Rows(sel,safeText),fastHead=h1Head(sel,x=>x),safeHead=h1Head(sel,safeText);
+ return args=>{
+  let rows,head;
+  try{rows=fast.get(args);head=fastHead.get(args);}catch(e){if(!String(e).includes('JSON cannot hold BLOB'))throw e;rows=safe.get(args);head=safeHead.get(args);}
+  return {rows,txs:head[0],attrs:head[1],strs:head[2]};
+ };
 };
 // All refs are followed as a superset, even expired refs: valid-time filtering stays in the adapter. Refs from verbatim rows (x) are found by JS.
 const h1Refs=(sel,skip)=>q('SELECT DISTINCT f.v,f.x FROM ('+h1Union(sel)+') f WHERE (f.t=5 AND f.x IS NULL'+skip+') OR f.x IS NOT NULL').raw();
@@ -238,7 +262,7 @@ const wholePull = a => {
  const ownerRows=h1Fetch('o=@o'),entityRows=h1Fetch('o=@o AND e=@e');
  const ownerRefs=h1Refs('o=@o'," AND f.v NOT IN (SELECT e FROM facts WHERE o=@o)"),entityRefs=h1Refs('o=@o AND e=@e','');
  const collect=(rows,refs)=>{
-  const text=rows;if(text.length>2)parts.push(text);
+  if(rows.rows.length>2)parts.push(rows);
   const out=[];
   for(const [v,x] of refs){const target=x!==null?unverb(x):null;if(target){if(target.value_type==='ref')out.push(target.value_string);}else out.push(entName(v));}
   return out;
@@ -254,18 +278,18 @@ const wholePull = a => {
    if(o===undefined||owners.has(o))continue;
    if(roots){
     owners.add(o);ownerNames.push(on);
-    const rows=ownerRows({o,b});statements+=2;
+    const rows=ownerRows({o,b});statements+=3;
     next.push(...collect(rows,ownerRefs.all({o,b})));
    }else{
     const e=entId(entity);if(e===undefined)continue;
-    const rows=entityRows({o,b,e});statements+=2;
+    const rows=entityRows({o,b,e});statements+=3;
     next.push(...collect(rows,entityRefs.all({o,b,e})));
    }
   }
   roots=false;
   frontier=next.filter(e=>!seen.has(e));
  }
- return {snapshot:publicMarker(m),basis:b,entities:[...seen],owners:ownerNames,parts,counters:{hops,rows:0,bytes:a.bytes?parts.reduce((n,p)=>n+Buffer.byteLength(p),0):0,statements}};
+ return {snapshot:publicMarker(m),basis:b,entities:[...seen],owners:ownerNames,parts,counters:{hops,rows:0,bytes:a.bytes?parts.reduce((n,p)=>n+Buffer.byteLength(p.rows)+Buffer.byteLength(p.txs)+Buffer.byteLength(p.attrs)+Buffer.byteLength(p.strs),0):0,statements}};
 };
 const handle = (op,a) => {
  if(op==='close'){clearInterval(timer);clearInterval(passiveTimer);db?.close();lock?.close();return;}

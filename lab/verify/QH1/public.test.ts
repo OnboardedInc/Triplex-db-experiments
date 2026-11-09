@@ -120,7 +120,8 @@ it("verbatim fallback preserves non-UTF8 dictionary names and exact timestamp do
   try {
     await append(log, [r]);
     const answer = await log.wholePull(2048, [r.entity_id]);
-    const t = [...h1Rows(wholePullTuples(answer), { validAt: 2000 }).values()][0]![0]!;
+    const w = wholePullTuples(answer);
+    const t = [...h1Rows(w.tuples, { validAt: 2000 }, w.dict).values()][0]![0]!;
     expect(t.entityId).toBe(r.entity_id);
     expect(t.attribute).toBe(r.attribute);
     expect(t.recordedAt).toBe(r.recorded_at);

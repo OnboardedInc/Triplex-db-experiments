@@ -180,15 +180,24 @@ const probeSql = (() => {
 })();
 const probeDb = new D(path.join(store, "broker.db"), { readonly: true, fileMustExist: true });
 probeDb.pragma("mmap_size=268435456");
-const probeOwner = probeDb.prepare("SELECT eid FROM ents WHERE name=?").pluck().get(roots[137]!);
 const probeBasis = probeDb.prepare("SELECT position FROM marker WHERE id=1").pluck().get();
 const probeStmt = probeDb.prepare(probeSql).pluck();
-const probeText: string = (() => {
+// The fixed fixture is the first owner from index 100 of the sorted root list whose statement text is 75,000 to 90,000 bytes (the brief's
+// "fixed 80 KB text"); the choice is deterministic for a given store.
+let probeOwner: unknown, probeRoot = "", probeText = "";
+for (let i = 100; i < roots.length; i++) {
+  const o = probeDb.prepare("SELECT eid FROM ents WHERE name=?").pluck().get(roots[i]!);
   probeDb.exec("BEGIN");
-  const t = probeStmt.get({ o: probeOwner, b: probeBasis }) as string;
+  const t = probeStmt.get({ o, b: probeBasis }) as string;
   probeDb.exec("COMMIT");
-  return t;
-})();
+  if (t.length >= 75000 && t.length <= 90000) {
+    probeOwner = o;
+    probeRoot = roots[i]!;
+    probeText = t;
+    break;
+  }
+}
+if (!probeText) throw Error("no probe fixture of about 80 KB found");
 const tcpu = () => {
   const c = process.threadCpuUsage();
   return c.user + c.system;
@@ -386,7 +395,7 @@ try {
       root,
       clients: CLIENTS,
       seed: SEED,
-      probeFixture: { owner: roots[137], basis: probeBasis, bytes: probeText.length },
+      probeFixture: { owner: probeRoot, basis: probeBasis, bytes: probeText.length },
       segments,
       answerDigests,
       extra: arm.extra?.(),

@@ -193,11 +193,11 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
                 ? [...new Set([...latest.values()].map((r) => r.entity_id))]
                 : [r.entityId];
             const whole = await log.wholePull(b, roots),
-              tuples = wholePullTuples(whole);
+              { tuples, dict } = wholePullTuples(whole);
             const triples = [
-              ...h1Rows(tuples, { validAt: r.basis.validAt ?? history.now }).values(),
+              ...h1Rows(tuples, { validAt: r.basis.validAt ?? history.now }, dict).values(),
             ].flat();
-            const positions = new Map(tuples.map((t: any) => [h1TupleId(t), t[7]]));
+            const positions = new Map(tuples.map((t: any) => [h1TupleId(t), t[6]]));
             rows = triples.map((t) => {
               const columns: any = {
                 value_string: null,

@@ -25,7 +25,14 @@ import {
  *    are guarded per subject; any other read escalates the commit to the scope-wide guard.
  */
 import { AsyncLocalStorage } from "node:async_hooks";
-import { h1Entity, h1Rows, wholePullTuples, type H1Tuple } from "./h1.js";
+import {
+  h1Entity,
+  h1Rows,
+  h1TupleEntity,
+  wholePullTuples,
+  type H1Dict,
+  type H1Tuple,
+} from "./h1.js";
 import { H1SnapshotExpired } from "./log.js";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Exit } from "effect";
@@ -243,21 +250,28 @@ export const makeQleverBrokerStorageAdapter = (
   // Rejected: a process/global LRU (can cross scope, basis or pull lifetime).
   type Prefetch = {
     readonly rows: Map<string, H1Tuple[]>;
+    readonly dict: H1Dict;
     readonly known: Set<string>;
     readonly owners: Set<string>;
   };
   const loadPrefetch = async (b: number, roots: readonly string[]): Promise<Prefetch> => {
     const answer = await broker.wholePullAt(b, roots, options.onPull !== undefined);
-    const tuples = wholePullTuples(answer);
+    const { tuples, dict } = wholePullTuples(answer);
     options.onPull?.({ ...answer.counters, rows: tuples.length });
     const rows = new Map<string, H1Tuple[]>();
     for (const tuple of tuples) {
-      const entity = tuple[14]?.row.entity_id ?? tuple[2];
+      const entity = h1TupleEntity(tuple);
       const bucket = rows.get(entity);
       if (bucket) bucket.push(tuple);
       else rows.set(entity, [tuple]);
     }
-    return { rows, known: new Set(answer.entities), owners: new Set(answer.owners) };
+    return { rows, dict, known: new Set(answer.entities), owners: new Set(answer.owners) };
+  };
+  // [EXP-P4N] Why: an exact same-cut extra fetch brings its own dictionaries; dictionary ids never change inside one schema and epoch
+  // key, so entries merge by id. Rejected: decoding extra rows against their own dictionary (rows from both fetches share one decode).
+  const mergeDict = (into: H1Dict, from: H1Dict) => {
+    for (const k of ["txAt", "txId", "attr", "str", "strOpt"] as const)
+      for (const [id, v] of from[k] as Map<number, unknown>) (into[k] as Map<number, unknown>).set(id, v);
   };
   const unresolved = (all: Prefetch, id: string) =>
     !all.rows.has(id) && !all.known.has(id) && !all.owners.has(id.split("/")[0]!);
@@ -761,12 +775,13 @@ export const makeQleverBrokerStorageAdapter = (
                 // Unexpected non-BFS callers still get exact rows, in a new same-cut fetch.
                 if (missing.length) {
                   const extra = await loadPrefetch(b, missing);
+                  mergeDict(all.dict, extra.dict);
                   for (const [id, rows] of extra.rows) all.rows.set(id, rows);
                   for (const id of extra.known) all.known.add(id);
                   for (const id of extra.owners) all.owners.add(id);
                 }
                 const selected = [...new Set(ids)].flatMap((id) => all.rows.get(id) ?? []);
-                const decoded = h1Rows(selected, basis);
+                const decoded = h1Rows(selected, basis, all.dict);
                 return new Map(ids.map((id) => [id, decoded.get(id) ?? []]));
               },
               catch: (cause) =>
@@ -819,7 +834,8 @@ export const makeQleverBrokerStorageAdapter = (
                   const missing = level.filter((id) => unresolved(all, id));
                   if (missing.length) {
                     const extra = await loadPrefetch(b, missing);
-                    for (const [id, rows] of extra.rows) all.rows.set(id, rows);
+                    mergeDict(all.dict, extra.dict);
+                  for (const [id, rows] of extra.rows) all.rows.set(id, rows);
                     for (const id of extra.known) all.known.add(id);
                     for (const id of extra.owners) all.owners.add(id);
                   }
@@ -827,7 +843,7 @@ export const makeQleverBrokerStorageAdapter = (
                   for (const id of level) {
                     const tuples = all.rows.get(id);
                     if (tuples === undefined) continue;
-                    const body = h1Entity(tuples, basis);
+                    const body = h1Entity(tuples, basis, all.dict);
                     for (const t of body) {
                       triples.push(t);
                       if (t.value.type === "ref" && !seen.has(t.value.value)) {

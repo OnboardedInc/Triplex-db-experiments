@@ -208,11 +208,16 @@ const connect = (
       eval: true,
       // [EXP-SQL01] Why: eval workers contain CommonJS; an ESM CLI parent's --input-type changes eval parsing.
       // Rejected: inheriting that flag (require is undefined), or stripping all flags (loses resource settings).
+      // [EXP-P4N] Why (step e): V8 heap flags set on the serving process (--max-semi-space-size, --single-threaded-gc) are process-wide, so the
+      // worker isolates already use them; Node refuses them in a worker's execArgv (ERR_WORKER_INVALID_EXEC_ARGV), so they are not repeated.
+      // Rejected: forwarding them (the worker would not start).
       execArgv: process.execArgv.filter(
         (arg, i, args) =>
           arg !== "--input-type" &&
           !arg.startsWith("--input-type=") &&
-          args[i - 1] !== "--input-type",
+          args[i - 1] !== "--input-type" &&
+          !arg.startsWith("--max-semi-space-size") &&
+          arg !== "--single-threaded-gc",
       ),
       workerData: { file, role, seed, driver, gateBuffer, requireFullFsync },
     }),
