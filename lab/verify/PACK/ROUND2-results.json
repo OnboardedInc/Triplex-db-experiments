@@ -1,0 +1,253 @@
+[
+  {
+    "id": "baseline",
+    "token": "ddfb7c24-e348-4b19-9e2e-802b32a513ca",
+    "startedAt": "2026-11-09T08:44:17.477Z",
+    "finishedAt": "2026-11-09T08:45:10.849Z",
+    "target": "6a7551b6cb4b593fe727c11e80cef1948daeace6",
+    "head": "e74ae0cab4a941ba6e8a39dfa25c4d040d003bb5",
+    "gateHash": "f556e34af0bbc5316070a373c0fc874cdc67a608711306b08dab01075b730ec6",
+    "holder": {
+      "slot": "3",
+      "pid": 14689,
+      "label": "CX-VPACK-round2",
+      "at": "2026-11-09T08:44:16.782Z"
+    },
+    "attempt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2/baseline/attempts/triplex-pack-l7NevY",
+    "gateStatus": "PASS",
+    "exit": 0,
+    "fixtureHashes": {},
+    "commands": 66,
+    "importCommands": 22,
+    "completedImports": [
+      "@triplex-build/triplex",
+      "@triplex-build/triplex/datalog",
+      "@triplex-build/triplex/subscriptions",
+      "@triplex-build/triplex/config",
+      "@triplex-build/triplex/content",
+      "@triplex-build/triplex/derivation",
+      "@triplex-build/triplex/operational",
+      "@triplex-build/triplex/entity",
+      "@triplex-build/triplex/runtime",
+      "@triplex-build/triplex/internal",
+      "@triplex-build/triplex-cli",
+      "@triplex-build/triplex-cloudflare",
+      "@triplex-build/triplex-foundationdb",
+      "@triplex-build/triplex-host",
+      "@triplex-build/triplex-http",
+      "@triplex-build/triplex-postgres",
+      "@triplex-build/triplex-qlever",
+      "@triplex-build/triplex-sql",
+      "@triplex-build/triplex-sqlite",
+      "@triplex-build/triplex-testkit",
+      "@triplex-build/triplex-testkit/route",
+      "@triplex-build/triplex-xtdb"
+    ],
+    "workspaceAccounting": {
+      "total": 25,
+      "checked": 12,
+      "excluded": 13
+    },
+    "exactInstalledRootBytesChecked": 12,
+    "staleSentinelsRemoved": 12
+  },
+  {
+    "id": "added-package",
+    "token": "27cec79c-c23a-4633-a380-44971e5ba6d0",
+    "startedAt": "2026-11-09T08:45:11.059Z",
+    "finishedAt": "2026-11-09T08:45:21.018Z",
+    "target": "6a7551b6cb4b593fe727c11e80cef1948daeace6",
+    "head": "e74ae0cab4a941ba6e8a39dfa25c4d040d003bb5",
+    "gateHash": "f556e34af0bbc5316070a373c0fc874cdc67a608711306b08dab01075b730ec6",
+    "holder": {
+      "slot": "3",
+      "pid": 14689,
+      "label": "CX-VPACK-round2",
+      "at": "2026-11-09T08:44:16.782Z"
+    },
+    "attempt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2/added-package/attempts/triplex-pack-bs57KS",
+    "gateStatus": "FAIL",
+    "exit": 1,
+    "fixtureHashes": {
+      "packages/cx-vpack-added/package.json": "d6a710fc51e59dd336b790b4f0535e5b9aca4f12cd4d2740e9cbb8a298093163"
+    },
+    "commands": 2,
+    "importCommands": 0,
+    "completedImports": [],
+    "addedPackageBuildSelected": true
+  },
+  {
+    "id": "qlever-runtime-throw",
+    "token": "868bc62b-03bf-48cb-b017-ecce914a5eb2",
+    "startedAt": "2026-11-09T08:45:21.022Z",
+    "finishedAt": "2026-11-09T08:46:32.696Z",
+    "target": "6a7551b6cb4b593fe727c11e80cef1948daeace6",
+    "head": "e74ae0cab4a941ba6e8a39dfa25c4d040d003bb5",
+    "gateHash": "f556e34af0bbc5316070a373c0fc874cdc67a608711306b08dab01075b730ec6",
+    "holder": {
+      "slot": "3",
+      "pid": 14689,
+      "label": "CX-VPACK-round2",
+      "at": "2026-11-09T08:44:16.782Z"
+    },
+    "attempt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2/qlever-runtime-throw/attempts/triplex-pack-pDpwxs",
+    "gateStatus": "FAIL",
+    "exit": 1,
+    "fixtureHashes": {
+      "packages/qlever/src/index.ts": "2cf88a38953e5f27c52700e5226714ca39bdf9df832dc74475b870e1c0c7f552"
+    },
+    "commands": 57,
+    "importCommands": 17,
+    "completedImports": [
+      "@triplex-build/triplex",
+      "@triplex-build/triplex/datalog",
+      "@triplex-build/triplex/subscriptions",
+      "@triplex-build/triplex/config",
+      "@triplex-build/triplex/content",
+      "@triplex-build/triplex/derivation",
+      "@triplex-build/triplex/operational",
+      "@triplex-build/triplex/entity",
+      "@triplex-build/triplex/runtime",
+      "@triplex-build/triplex/internal",
+      "@triplex-build/triplex-cli",
+      "@triplex-build/triplex-cloudflare",
+      "@triplex-build/triplex-foundationdb",
+      "@triplex-build/triplex-host",
+      "@triplex-build/triplex-http",
+      "@triplex-build/triplex-postgres"
+    ],
+    "directImportExit": 1
+  },
+  {
+    "id": "new-export-success",
+    "token": "9e60b705-f2ed-487a-8541-b980709dd187",
+    "startedAt": "2026-11-09T08:46:32.936Z",
+    "finishedAt": "2026-11-09T08:47:40.830Z",
+    "target": "6a7551b6cb4b593fe727c11e80cef1948daeace6",
+    "head": "e74ae0cab4a941ba6e8a39dfa25c4d040d003bb5",
+    "gateHash": "f556e34af0bbc5316070a373c0fc874cdc67a608711306b08dab01075b730ec6",
+    "holder": {
+      "slot": "3",
+      "pid": 14689,
+      "label": "CX-VPACK-round2",
+      "at": "2026-11-09T08:44:16.782Z"
+    },
+    "attempt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2/new-export-success/attempts/triplex-pack-WOhT63",
+    "gateStatus": "PASS",
+    "exit": 0,
+    "fixtureHashes": {
+      "packages/qlever/package.json": "5d925ec7103340e61bc00a1fe2ed916091b85141d6b06940e63d195f8fc99db0",
+      "packages/qlever/src/CXVPACKRound2Entry.ts": "11244c1232678e8c602a7f89b53b1b1caa03a9db276b005fcf09752197ef963c"
+    },
+    "commands": 67,
+    "importCommands": 23,
+    "completedImports": [
+      "@triplex-build/triplex",
+      "@triplex-build/triplex/datalog",
+      "@triplex-build/triplex/subscriptions",
+      "@triplex-build/triplex/config",
+      "@triplex-build/triplex/content",
+      "@triplex-build/triplex/derivation",
+      "@triplex-build/triplex/operational",
+      "@triplex-build/triplex/entity",
+      "@triplex-build/triplex/runtime",
+      "@triplex-build/triplex/internal",
+      "@triplex-build/triplex-cli",
+      "@triplex-build/triplex-cloudflare",
+      "@triplex-build/triplex-foundationdb",
+      "@triplex-build/triplex-host",
+      "@triplex-build/triplex-http",
+      "@triplex-build/triplex-postgres",
+      "@triplex-build/triplex-qlever",
+      "@triplex-build/triplex-qlever/cx-vpack-round2",
+      "@triplex-build/triplex-sql",
+      "@triplex-build/triplex-sqlite",
+      "@triplex-build/triplex-testkit",
+      "@triplex-build/triplex-testkit/route",
+      "@triplex-build/triplex-xtdb"
+    ],
+    "workspaceAccounting": {
+      "total": 25,
+      "checked": 12,
+      "excluded": 13
+    },
+    "exactInstalledRootBytesChecked": 12,
+    "newEntryImportCommand": {
+      "command": "node",
+      "args": [
+        "--input-type=module",
+        "--eval",
+        "await import(\"@triplex-build/triplex-qlever/cx-vpack-round2\");"
+      ],
+      "cwd": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2/new-export-success/attempts/triplex-pack-WOhT63/consumer",
+      "startedAt": "2026-11-09T08:47:36.472Z",
+      "log": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2/new-export-success/attempts/triplex-pack-WOhT63/command-58.log",
+      "exit": 0,
+      "outputSha256": "7c7450d723b3bb19fef1378ec8ef3f5eff9e07feab4a607dd8cc69ccbe62986c",
+      "finishedAt": "2026-11-09T08:47:36.507Z"
+    },
+    "importEvaluationMarker": {
+      "token": "9e60b705-f2ed-487a-8541-b980709dd187",
+      "pid": 68761,
+      "cwd": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2/new-export-success/attempts/triplex-pack-WOhT63/consumer",
+      "url": "file:///Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2/new-export-success/attempts/triplex-pack-WOhT63/consumer/node_modules/@triplex-build/triplex-qlever/dist/CXVPACKRound2Entry.js"
+    }
+  },
+  {
+    "id": "new-export-throw",
+    "token": "87993890-fe67-44b6-a87a-2c65235eb400",
+    "startedAt": "2026-11-09T08:50:00.938Z",
+    "finishedAt": "2026-11-09T08:50:57.219Z",
+    "target": "6a7551b6cb4b593fe727c11e80cef1948daeace6",
+    "head": "e74ae0cab4a941ba6e8a39dfa25c4d040d003bb5",
+    "gateHash": "f556e34af0bbc5316070a373c0fc874cdc67a608711306b08dab01075b730ec6",
+    "holder": {
+      "slot": "3",
+      "pid": 94993,
+      "label": "CX-VPACK-round2-subpath-rerun",
+      "at": "2026-11-09T08:50:00.002Z"
+    },
+    "attempt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2/new-export-throw-rerun/attempts/triplex-pack-xZmdD9",
+    "gateStatus": "FAIL",
+    "exit": 1,
+    "fixtureHashes": {
+      "packages/qlever/package.json": "5d925ec7103340e61bc00a1fe2ed916091b85141d6b06940e63d195f8fc99db0",
+      "packages/qlever/src/CXVPACKRound2Entry.ts": "0d86436535f16dc08f66e5ced59764a9ae7a27606ce4dce5b5b3e6f95c734d5f"
+    },
+    "commands": 58,
+    "importCommands": 18,
+    "completedImports": [
+      "@triplex-build/triplex",
+      "@triplex-build/triplex/datalog",
+      "@triplex-build/triplex/subscriptions",
+      "@triplex-build/triplex/config",
+      "@triplex-build/triplex/content",
+      "@triplex-build/triplex/derivation",
+      "@triplex-build/triplex/operational",
+      "@triplex-build/triplex/entity",
+      "@triplex-build/triplex/runtime",
+      "@triplex-build/triplex/internal",
+      "@triplex-build/triplex-cli",
+      "@triplex-build/triplex-cloudflare",
+      "@triplex-build/triplex-foundationdb",
+      "@triplex-build/triplex-host",
+      "@triplex-build/triplex-http",
+      "@triplex-build/triplex-postgres",
+      "@triplex-build/triplex-qlever"
+    ],
+    "newEntryImportCommand": {
+      "command": "node",
+      "args": [
+        "--input-type=module",
+        "--eval",
+        "await import(\"@triplex-build/triplex-qlever/cx-vpack-round2\");"
+      ],
+      "cwd": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2/new-export-throw-rerun/attempts/triplex-pack-xZmdD9/consumer",
+      "startedAt": "2026-11-09T08:50:57.155Z",
+      "log": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2/new-export-throw-rerun/attempts/triplex-pack-xZmdD9/command-58.log",
+      "exit": 1,
+      "outputSha256": "ac06fd1b301c9c73789b34494fd9b9509eb20c9690f206ec49393e9e605e7713",
+      "finishedAt": "2026-11-09T08:50:57.199Z"
+    }
+  }
+]
