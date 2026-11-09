@@ -14,6 +14,7 @@ import { sqliteWorker as v2 } from "../../../packages/qlever/src/broker/sqlite-w
 import { rowCodec } from "../../../packages/qlever/src/broker/row-codec.js";
 import {
   HostLog,
+  hostLogRecovery,
   BrokerLogError,
   FeedRetentionExpired,
 } from "../../../packages/qlever/src/broker/log.js";
@@ -344,13 +345,13 @@ describe("EXP-HS01", () => {
       expect(anchor.lsn).toBe(29);
       expect(() => new LogFeed(dir).poll(stale)).toThrow(FeedRetentionExpired);
       log.publishWatermark({ epoch: log.epoch, lsn: log.nextLsn - 1, position: 0 });
-      const before = log.snapshot();
+      const before = hostLogRecovery(log).marker;
       await log.close();
       ({ log } = await HostLog.open(dir, { minFreeBytes: 0, frameRetention: { tailFrames: 2 } }));
-      expect(log.snapshot().base_lsn).toBeGreaterThanOrEqual(before.base_lsn);
-      expect(log.epochs()).toHaveLength(2);
+      expect(hostLogRecovery(log).marker.base_lsn).toBeGreaterThanOrEqual(before.base_lsn);
+      expect(hostLogRecovery(log).epochs).toHaveLength(2);
       expect(new LogFeed(dir).poll(anchor).resolutions).toHaveLength(1);
-      log.retain("lease", log.snapshot().base_lsn, 1);
+      log.retain("lease", hostLogRecovery(log).marker.base_lsn, 1);
       await new Promise((r) => setTimeout(r, 5));
       expect(log.purgeFrames().removed).toBeGreaterThanOrEqual(0);
       stats.retention = { anchor: before.base_lsn, epochs: 2, reopen: true };
@@ -379,7 +380,7 @@ describe("EXP-HS01", () => {
         written += frame.end - frame.offset;
         log.publishWatermark({ epoch: log.epoch, lsn: frame.lsn, position: 0 });
       }
-      const before = log.snapshot(),
+      const before = hostLogRecovery(log).marker,
         db = new Database(log.segmentPath, { readonly: true });
       const retained = db
         .prepare("SELECT count(*) n,sum(end-offset) bytes FROM frames")
@@ -389,18 +390,27 @@ describe("EXP-HS01", () => {
       expect(retained.n).toBe(2);
       await log.close();
       ({ log } = await HostLog.open(dir, { minFreeBytes: 0, frameRetention: { tailFrames: 2 } }));
-      expect(log.openVerification.bytes).toBe(retained.bytes);
-      expect(log.openVerification.frames).toBe(2);
-      expect(log.snapshot().base_lsn).toBe(before.base_lsn);
+      expect((log as any).openVerification.bytes).toBe(retained.bytes);
+      expect((log as any).openVerification.frames).toBe(2);
+      expect(hostLogRecovery(log).marker.base_lsn).toBe(before.base_lsn);
       stats.boundedOpen = {
         written,
         purged: written - retained.bytes,
         retained,
-        verification: log.openVerification,
+        verification: (log as any).openVerification,
       };
       writeStats();
     } finally {
       await log.close();
+    }
+  });
+  it("keeps diagnostic opened.frames fixed to the opening prefix", async () => {
+    const opened = await HostLog.open(fresh(), { minFreeBytes: 0 });
+    try {
+      await opened.log.append(FrameKind.APPLIED_HINT, Buffer.from("later"));
+      expect(opened.frames.map((f) => f.lsn)).toEqual([1]);
+    } finally {
+      await opened.log.close();
     }
   });
   it("refuses v1 layout with BrokerLogError", async () => {

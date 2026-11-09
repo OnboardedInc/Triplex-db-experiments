@@ -207,6 +207,7 @@ const connect = (
       workerData: { file, role, seed, driver, gateBuffer, requireFullFsync },
     }),
   );
+const hostStores = new WeakMap<HostLog, Connection>();
 const streams = new Map<string, HostLog>();
 const readers = new Map<string, Connection>();
 const streamReaders = new Map<string, Connection>();
@@ -231,7 +232,7 @@ export class HostLog {
   private writing = false;
   private failed: Error | undefined;
   private readerIndex = 0;
-  readonly openVerification = { frames: 0, bytes: 0, maxPageBytes: 0, peakRss: 0 };
+  private readonly openVerification = { frames: 0, bytes: 0, maxPageBytes: 0, peakRss: 0 };
   private constructor(
     readonly dir: string,
     private readonly writer: Connection,
@@ -367,6 +368,7 @@ export class HostLog {
         encoded.crc,
         tailFrames,
       );
+      hostStores.set(log, writer);
       Object.assign(log.openVerification, verified);
       streams.set(dir, log);
       streamReaders.set(file, pool[0]!);
@@ -539,17 +541,6 @@ export class HostLog {
       },
     };
   }
-  snapshot() {
-    return this.lookup<StoreSnapshot>("marker");
-  }
-  epochs() {
-    return this.lookup<
-      { epoch: number; begin_lsn: number; previous_epoch: number; aborted: string }[]
-    >("epochs");
-  }
-  frameHeaders() {
-    return this.lookup<{ lsn: number; kind: number }[]>("frameHeaders");
-  }
   retain(holder: string, lsn: number, ttlMs?: number) {
     this.lookup("retain", { holder, lsn, ttlMs });
   }
@@ -565,6 +556,7 @@ export class HostLog {
   async abandon() {
     if (this.closed) return;
     this.closed = true;
+    hostStores.delete(this);
     streams.delete(this.dir);
     streamReaders.delete(this.segmentPath);
     await Promise.all(this.pool.map((c) => c.close()));
@@ -580,6 +572,20 @@ export class HostLog {
     await this.abandon();
   }
 }
+// [EXP-HS01] Why: startup metadata is a package-internal recovery concern, not a new public query API.
+// Rejected: exporting snapshot/epochs/frameHeaders as HostLog methods (changes the public class contract).
+export const hostLogRecovery = (log: HostLog) => {
+  const writer = hostStores.get(log);
+  if (!writer) throw new BrokerLogError("Broker log is not open");
+  return {
+    marker: writer.sync<StoreSnapshot>("marker"),
+    epochs:
+      writer.sync<{ epoch: number; begin_lsn: number; previous_epoch: number; aborted: string }[]>(
+        "epochs",
+      ),
+    headers: writer.sync<{ lsn: number; kind: number }[]>("frameHeaders"),
+  };
+};
 export const readWatermark = (dir: string): Watermark | undefined => {
   const file = path.join(dir, "broker.db");
   if (!fs.existsSync(file)) return undefined;

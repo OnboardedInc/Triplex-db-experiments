@@ -31,7 +31,7 @@ import {
   type FrameMember,
   type MemberClaim,
 } from "./frames.js";
-import { HostLog, type LogFrame } from "./log.js";
+import { HostLog, hostLogRecovery, type LogFrame } from "./log.js";
 import { ORDINALS, lastPositionOf, lsnOf, packPosition } from "./position.js";
 import { buildFence, buildPublication, markerQuery, type ReplicaMarker } from "./sparql.js";
 import { BasisNotAvailable, ReplicaUnavailable, type BasisSurface } from "./errors.js";
@@ -290,10 +290,11 @@ export class HostBroker {
     });
     let marker: ReplicaMarker = { position: 0, epoch: 0, incarnation: "" };
     if (options.replica) marker = await broker.readReplicaMarker();
-    const recovered = opened.log.snapshot();
+    const recovery = hostLogRecovery(opened.log);
+    const recovered = recovery.marker;
     const lastLsn = recovered.lsn;
     broker.headPosition = recovered.position;
-    broker.aborted.push(...opened.log.epochs().flatMap((e) => JSON.parse(e.aborted) as number[]));
+    broker.aborted.push(...recovery.epochs.flatMap((e) => JSON.parse(e.aborted) as number[]));
     // [EXP-HS01] Why: replicas without a durable index base may regress all the way to zero.
     // Rejected: retaining only the current replica marker (not restart-safe for QLever).
     if (options.replica) opened.log.retain("replica", 0);
@@ -306,7 +307,7 @@ export class HostBroker {
       );
     broker.evictedThroughLsn = lsnOf(marker.position);
     broker.publishedLsn = lsnOf(marker.position);
-    for (const frame of opened.log.frameHeaders())
+    for (const frame of recovery.headers)
       if (frame.kind === FrameKind.COMMIT_GROUP && frame.lsn > lsnOf(marker.position))
         broker.overlayFrames.push({ lsn: frame.lsn });
     broker.durableLsn = lastLsn;
