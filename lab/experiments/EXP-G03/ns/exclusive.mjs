@@ -25,6 +25,7 @@ try{
 finally{
  try{box?.close();if(createdStore)engine('remove-volume',['--name',store])}catch(e){stages.push({cleanupError:String(e)});process.exitCode=2}
  if(admitted)try{command([process.execPath,'lab/bin/engine.mjs','down','--lane','qlever','--slot',slot,'--holder',holder,'--remove-volume'],'slot-down.json')}catch(e){stages.push({cleanupError:String(e)});process.exitCode=2}
- if(entered){for(const [args,file]of [[['colima','ssh','-p','triplex2','--','sudo','fstrim','-av'],'trim.json'],[['docker','context','use','colima'],'context.json']])try{command(args,file)}catch(e){stages.push({cleanupError:String(e)});process.exitCode=2}}
+ // [EXP-G03-R7c] Why: rule 10 (Q106b): the colima context no longer exists and the global context stays default; the lab VM is reached only through DOCKER_HOST. Rejected: keeping `docker context use colima` and tolerating its failure.
+ if(entered){for(const [args,file]of [[['colima','ssh','-p','triplex2','--','sudo','fstrim','-av'],'trim.json']])try{command(args,file)}catch(e){stages.push({cleanupError:String(e)});process.exitCode=2}}
  canary.close();fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify({source,stages,remaining:box?.resources,retainedVolumes:box?.retained??[],records:box?.records,status:'DIAGNOSTIC',qualification:false},null,2));console.log(JSON.stringify(stages));
 }
