@@ -1,3 +1,4 @@
+import { completeFixture, completeSegment, historyFixture, readerRows, readsFor } from './ns-round2-fixture.mjs';
 // [EXP-CRNS] Why: R44's planted observations exercise the pure evaluator, without any engine or acceptance change.
 // Rejected: asserting a supplied p99 or a fixture's own PASS flag (neither checks retained event content).
 import assert from 'node:assert/strict';
@@ -32,7 +33,7 @@ function fixture() {
     window: { startNs: '1000000000', endNs: '3000000000', drainEndNs: '4000000000', bursts: [{ startNs: '2000000000', endNs: '2500000000' }] },
     noise: { grade: 'GREEN', rounds: [{ phase: 'steady', grade: 'GREEN' }] }, crossChecks: [],
   };
-  return { raw: { format: 'ns-events/1', binding, driver, events }, trusted: { binding: clone(binding), driver: clone(driver), clockDomain: clone(clockDomain), key, encodingSha256: NS_ENCODING_SHA256, readerLevel: 256, priorities: ['P3'], gradeWindow: () => 'GREEN', verifySource: () => true, domainAffected: () => domainCase.expected.affected } };
+  return completeFixture({ raw: { format: 'ns-events/1', binding, driver, events }, trusted: { binding: clone(binding), driver: clone(driver), clockDomain: clone(clockDomain), key, encodingSha256: NS_ENCODING_SHA256, readerLevel: 256, priorities: ['P3'], gradeWindow: () => 'GREEN', verifySource: () => true, domainAffected: () => domainCase.expected.affected } });
 }
 function sealed(f) {
   const payload = canonText(f.raw);
@@ -66,7 +67,7 @@ const forgeries = [
   ['F11', 'TAMPER', e => { e.consumer.finalWalHex = '00020304'; }],
   ['F12', 'NS-P3-GAPS-MAX', e => { e.consumer.deliveries[0].digest = h('candidate encoding'); e.consumer.transactions[0].deliveries[0].digest = h('candidate encoding'); }],
   ['F13', 'READER-LEVEL-MISMATCH', e => { e.readers[0].loops.pop(); }],
-  ['F14', 'CLOCK-DOMAIN-MISMATCH', e => { e.clockDomains[1].bootId = 'another-boot'; }],
+  ['F14', 'CLOCK-DOMAIN-MISMATCH', e => { e.clockDomains[1].domain.bootId = 'another-boot'; }],
   ['F15', 'NS-P3-EVERY-POSITION-ACCOUNTED', e => { e.consumerBrackets.pop(); }],
   ['F16', 'DRIVER-NOT-PINNED', null],
   ['F17', 'FAULT-WITNESS-INVALID', e => { e.faults = [{ format: 'fault-witness/1', eventsSha256: h('unproven') }]; }],
@@ -86,14 +87,23 @@ for (const [id, code, change] of forgeries) test(`CX-CRNS-${id}: ${code}`, () =>
 });
 
 test('P3 evaluator runs the real O-DOMAIN child at every committed position', () => {
-  const f = fixture(); let calls = 0;
-  f.trusted.domainAffected = ({ transaction }) => {
+  const f = fixture(); let calls = 0; const observedStates=[];
+  const frozenValues={cmd1:1750,cmd2:1800};
+  f.trusted.domainAffected = ({ transaction, prefix }) => {
     calls++;
-    const input = { ...domainCase.input, writes: transaction.changes.map(op => [op.entity, op.attribute]) };
+    const input = structuredClone(domainCase.input);
+    for (const entry of prefix) for (const tx of entry.transactions ?? []) for (const op of tx.changes) {
+      for (const world of input.worlds) if (world.facts.some(f=>f.e===op.entity && f.a===op.attribute)) {
+        world.facts=world.facts.filter(f=>!(f.e===op.entity && f.a===op.attribute));
+        world.facts.push({e:op.entity,a:op.attribute,v:frozenValues[tx.commandIds[0]],tx:10});
+      }
+    }
+    observedStates.push([prefix.length,input.worlds[0].facts.find(f=>f.e==='jur:ny'&&f.a==='stateMinWageCents').v]);
+    input.writes=transaction.changes.map(op=>[op.entity,op.attribute]);
     return JSON.parse(execFileSync('python3', ['-I', '-B', path.join(repo, 'lab/oracles/domain/cli.py'), 'affected', '-'], { input: canonText(input), encoding: 'utf8' })).affected;
   };
   const r = run(f);
-  assert.equal(r.status, 'RECOMPUTED', canonText(r)); assert.equal(calls, 2);
+  assert.equal(r.status, 'RECOMPUTED', canonText(r)); assert.equal(calls, 2); assert.deepEqual(observedStates,[[1,1750],[2,1800]]);
   assert.equal(r.measurements.P3.lag.pooled.p99Ms, 10);
   assert.equal(r.measurements.P3.lag.steady.count, 1);
   assert.equal(r.measurements.P3.lag.burst.count, 1);
@@ -169,15 +179,15 @@ test('F3 variations: broken intermediate chain, invalid chunk HMAC and unwitness
 test('P2 full raw bands, publication ACK order, progress and idempotency', () => {
   const f = fixture(); f.trusted.priorities = ['P3', 'P2'];
   f.trusted.ryow = () => true; f.trusted.commandValid = o => !o.typedError; f.trusted.steadyRate = 10;
-  f.raw.events.offers[1].sizeBand = '11-25';
-  f.raw.events.offers.push({ commandId: 'invalid', sizeBand: '26-50', scheduledAtNs: '2500000000', sentAtNs: '2500000000', ackAtNs: '2501000000', typedError: { code: 'OUT-OF-RANGE' } });
+  f.raw.events.offers[1].sizeBand = '11-25'; f.trusted.commands.invalid = {commandSha256:h('invalid'),valid:false};
+  f.raw.events.offers.push({ eventId: 'invalid-offer', kind: 'invalid', commandSha256: h('invalid'), commandId: 'invalid', sizeBand: '26-50', scheduledAtNs: '2500000000', sentAtNs: '2500000000', ackAtNs: '2501000000', typedError: { code: 'OUT-OF-RANGE' } });
   assert.equal(run(f).status, 'RECOMPUTED', canonText(run(f)));
   f.raw.events.offers[0].scheduledAtNs = '990000000';
   assert.equal(run(f).measurements.P2.latency['5-10'].p99Ms, 13);
   f.raw.events.offers[0].ackAtNs = '999000000'; f.raw.events.offers[0].sentAtNs = '990000000';
   assert.ok(codes(run(f)).includes('ACK-BEFORE-PUBLICATION'));
   f.raw.events.offers[0].ackAtNs = '1003000000';
-  const retry = clone(f.raw.events.offers[0]); retry.receipt.txId = 'wrong'; f.raw.events.offers.push(retry);
+  const retry = clone(f.raw.events.offers[0]); retry.eventId='retry'; retry.kind='duplicate'; retry.receipt.txId = 'wrong'; f.raw.events.offers.push(retry);
   assert.ok(codes(run(f)).includes('IDEMPOTENCY-RECEIPT-MISMATCH'));
 });
 
@@ -185,9 +195,9 @@ const rawSegment = (level = 256) => ({ id: `L${level}`, level, phase: 'steady', 
 
 test('P1 ladder recomputes matched raw goodput, writer ratios and post-stress recovery', () => {
   const windows = [0, 1, 4, 16, 64, 256, 1024].map(rawSegment);
-  const recovery = rawSegment(256); recovery.startNs = '2000000000'; recovery.endNs = '3000000000'; recovery.recoveryOf = 'L1024';
+  const recovery = rawSegment(256); recovery.id='recovery'; recovery.startNs = '2000000000'; recovery.endNs = '3000000000'; recovery.recoveryOf = 'L1024';
   recovery.reads[0].sentAtNs = '2000000000'; recovery.reads[0].receivedAtNs = '2001000000'; recovery.offers[0].scheduledAtNs = '2000000000'; recovery.offers[0].ackAtNs = '2001000000';
-  windows.push(recovery);
+  windows.push(recovery); windows.forEach(w => completeSegment(w));
   assert.equal(nsP1Ladder(windows, () => h('correct'), []).met, true);
   windows[5].reads[0].answerSha256 = h('wrong');
   assert.equal(nsP1Ladder(windows, () => h('correct'), []).met, false);
@@ -197,26 +207,31 @@ test('P1 ladder recomputes matched raw goodput, writer ratios and post-stress re
 
 test('P4 1000 matched subjects compare depth 1/3/10 latency and bytes with exact 1.1 boundary', () => {
   const pulls = [1, 3, 10].flatMap(depth => Array.from({ length: 1000 }, (_, i) => ({ depth, subject: `s${i}`, sentAtNs: '0', receivedAtNs: depth === 1 ? '1000000' : '1100000', bytesRead: depth === 1 ? '100' : '110' })));
-  assert.equal(nsP4History(pulls).met, true);
-  pulls[pulls.length - 1].bytesRead = '111'; assert.equal(nsP4History(pulls).met, false);
-  pulls.pop(); assert.throws(() => nsP4History(pulls), /unmatched/);
+  const resources = historyFixture(pulls);
+  assert.equal(nsP4History(pulls, () => h('correct'), [], resources).met, true);
+  resources[2].ioReadEndBytes = '110001'; assert.equal(nsP4History(pulls, () => h('correct'), [], resources).met, false);
+  pulls.pop(); assert.throws(() => nsP4History(pulls, () => h('correct'), [], resources), /unmatched/);
 });
 
 test('P5 raw matched live read and writer ratios; a summary alone cannot satisfy it', () => {
-  const s = { baseline: rawSegment(), sweep: rawSegment() };
-  s.sweep.reads[0].receivedAtNs = '1001500000'; s.sweep.offers[0].ackAtNs = '1001500000';
-  assert.equal(nsP5Traffic(s).met, true);
-  s.sweep.offers[0].ackAtNs = '1001500001'; assert.equal(nsP5Traffic(s).met, false);
-  assert.throws(() => nsP5Traffic({ baseline: { p99Ms: 1 }, sweep: { p99Ms: 1 } }));
+  const s = { baseline: completeSegment(rawSegment(64)), sweep: completeSegment(rawSegment(64)) };
+  s.sweep.id='sweep'; s.sweep.startNs='2000000000'; s.sweep.endNs='3000000000'; completeSegment(s.sweep);
+  s.sweep.offers[0].scheduledAtNs='2000000000'; s.sweep.offers[0].ackAtNs='2001500000';
+  const window = {startNs:'2000000000',endNs:'3000000000'};
+  assert.equal(nsP5Traffic(s, window, () => h('correct'), []).met, true);
+  s.sweep.offers[0].ackAtNs = '2001500001'; assert.equal(nsP5Traffic(s, window, () => h('correct'), []).met, false);
+  assert.equal(nsP5Traffic({ baseline: { p99Ms: 1 }, sweep: { p99Ms: 1 } }).met, false);
 });
 
 test('P5 evaluates every one of 100k subjects at activation basis against evaluator oracle', () => {
   const f = fixture(); f.trusted.priorities = ['P3', 'P5']; f.trusted.ryow = () => true; f.trusted.commandValid = () => true; f.trusted.replayRead = () => h('correct');
+  f.trusted.activationCommandId='cmd1'; f.trusted.releaseSha256=h('release'); f.trusted.commands.cmd1.releaseSha256=h('release'); f.trusted.verifySweepDurability=()=>true;
   const subjects = Array.from({ length: 100000 }, (_, i) => `s${i}`); let calls = 0;
   f.trusted.subjectListSha256 = h(canonText(subjects));
-  f.trusted.domainSweep = (subject, basis) => { assert.equal(basis, 1); calls++; return { output: [{ subject }], outbox: [] }; };
-  f.raw.events.sweep = { activationReceipt: { basis: 1 }, subjects, outputs: subjects.map(subject => ({ subject })), outbox: [], startNs: '1000000000', endNs: '2000000000' };
-  f.raw.events.sweepTraffic = { baseline: rawSegment(), sweep: rawSegment() };
+  f.trusted.domainSweep = (subject, basis) => { assert.equal(basis, '1'); calls++; return { output: [{ subject }], outbox: [] }; };
+  f.raw.events.sweep = { activationReceipt: { basis: '1',releaseSha256:h('release') },durableBracket:{L:'2999999999',U:'3000000000'}, subjects, outputs: subjects.map(subject => ({ subject })), outbox: [], startNs: '2000000000', endNs: '3000000000' };
+  f.raw.events.sweepTraffic = { baseline: completeSegment(rawSegment(64)), sweep: {...rawSegment(64),id:'during-sweep',startNs:'2000000000',endNs:'3000000000'} };
+  f.raw.events.sweepTraffic.sweep.offers[0]={scheduledAtNs:'2000000000',ackAtNs:'2001000000'}; completeSegment(f.raw.events.sweepTraffic.sweep);
   assert.equal(run(f).status, 'RECOMPUTED', canonText(run(f))); assert.equal(calls, 200000);
 });
 
@@ -239,17 +254,18 @@ test('crash counts remain judged; replay witnesses must be unique and byte exact
   const f = fixture(), e = f.raw.events;
   e.faults = ['before-effect', 'after-effect', 'after-checkpoint'].flatMap((point, p) => [0, 1, 2].map(rep => {
     const events = [{ transition: 'cgroup-gone', t: String(3000000000 + p * 3 + rep) }];
-    return { format: 'fault-witness/1', binding: clone(f.raw.binding), faultPointId: point, events, eventsSha256: h(canonText(events)), replay: clone(e.consumer.deliveries) };
+    return { format: 'fault-witness/1', binding: clone(f.raw.binding), faultPointId: point, events, eventsSha256: h(canonText(events)), beforeTransaction:-1,recoveryTransaction:1,checkpointOffset:'0',recoveryOffset:'2',replay: clone(e.consumer.deliveries) };
   }));
-  let r = run(f); assert.equal(r.bars.P3.counts, true); assert.equal(r.bars.P3.lag, null); assert.deepEqual(codes(r), ['TIMING-UNJUDGED']);
+  let r = run(f); assert.equal(r.bars.P3.counts, true); assert.equal(r.bars.P3.lag, null); assert.equal(r.bars.P3.resume,true); assert.equal(r.status,'RECOMPUTED');
   e.faults[1] = clone(e.faults[0]); assert.ok(codes(run(f)).includes('FAULT-WITNESS-INVALID'));
 });
 
 test('P4 full current-pull mix and resource counters feed arithmetic; wrong mix is refused', () => {
   const f = fixture(); f.trusted.priorities = ['P3', 'P4']; f.trusted.ryow = () => true; f.trusted.commandValid = () => true; f.trusted.replayRead = () => h('correct');
-  f.raw.events.reads = Array.from({ length: 20 }, (_, i) => ({ subject: `s${i}`, shape: 'pull-current', loop: 0, requestedBasis: 1, echoedBasis: 1, answerSha256: h('correct'), sentAtNs: '1000000000', receivedAtNs: '1001000000', facts: i < 10 ? 100 : i < 17 ? 500 : 1000, bucket: i < 10 ? '50-200' : i < 17 ? '201-800' : '801-2000', hops: i < 8 ? 3 : i < 15 ? 4 : 6 }));
+  f.raw.events.reads = Array.from({ length: 20 }, (_, i) => ({ subject: `s${i}`, shape: 'pull-current', loop: 0, requestedBasis: 1, echoedBasis: 1, answerSha256: h('correct'), readId:`pull-${i}`, sentAtNs: String(1000000000+i*1000000), receivedAtNs: String(1000100000+i*1000000), facts: i < 10 ? 100 : i < 17 ? 500 : 1000, bucket: i < 10 ? '50-200' : i < 17 ? '201-800' : '801-2000', hops: i < 8 ? 3 : i < 15 ? 4 : 6 }));
   f.raw.events.pullResources = { cpuset: [1], cpuUsageStartUs: '0', cpuUsageEndUs: '1000', ioReadStartBytes: '0', ioReadEndBytes: '1000', historyScansStart: '0', historyScansEnd: '0' };
   f.raw.events.historyPulls = [1, 3, 10].flatMap(depth => Array.from({ length: 1000 }, (_, i) => ({ depth, subject: `s${i}`, sentAtNs: '0', receivedAtNs: '1000000', bytesRead: '100' })));
+  f.raw.events.historyResources = historyFixture(f.raw.events.historyPulls);
   const r = run(f); assert.equal(r.measurements.P4.pullsPerCpuSecond, 20000); assert.ok(codes(r).includes('NS-P4-LATENCY-THROUGHPUT'));
   f.raw.events.reads[0].hops = 6; assert.ok(codes(run(f)).includes('P4-MIX-MISMATCH'));
 });

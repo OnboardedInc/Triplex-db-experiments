@@ -1,3 +1,4 @@
+import { completeFixture, completeSegment, historyFixture, readerRows, readsFor } from '../../bin/test/ns-round2-fixture.mjs';
 // [CX-VCRNS] Why: reuse the reviewed positive fixture verbatim to isolate reviewer mutations. Original fixture reasoning: R44's planted observations exercise the pure evaluator, without any engine or acceptance change.
 // Rejected: asserting a supplied p99 or a fixture's own PASS flag (neither checks retained event content).
 import { createHmac } from 'node:crypto';
@@ -29,7 +30,7 @@ function fixture() {
     window: { startNs: '1000000000', endNs: '3000000000', drainEndNs: '4000000000', bursts: [{ startNs: '2000000000', endNs: '2500000000' }] },
     noise: { grade: 'GREEN', rounds: [{ phase: 'steady', grade: 'GREEN' }] }, crossChecks: [],
   };
-  return { raw: { format: 'ns-events/1', binding, driver, events }, trusted: { binding: clone(binding), driver: clone(driver), clockDomain: clone(clockDomain), key, encodingSha256: NS_ENCODING_SHA256, readerLevel: 256, priorities: ['P3'], gradeWindow: () => 'GREEN', verifySource: () => true, domainAffected: () => domainCase.expected.affected } };
+  return completeFixture({ raw: { format: 'ns-events/1', binding, driver, events }, trusted: { binding: clone(binding), driver: clone(driver), clockDomain: clone(clockDomain), key, encodingSha256: NS_ENCODING_SHA256, readerLevel: 256, priorities: ['P3'], gradeWindow: () => 'GREEN', verifySource: () => true, domainAffected: () => domainCase.expected.affected } });
 }
 function sealed(f) {
   const payload = canonText(f.raw);
@@ -55,11 +56,11 @@ export const segment = (level = 256) => ({
 });
 export function ladder() {
   const windows = [0, 1, 4, 16, 64, 256, 1024].map(segment);
-  const recovery = segment();
+  const recovery = segment(); recovery.id='recovery';
   Object.assign(recovery, { startNs: '2000000000', endNs: '3000000000', recoveryOf: 'L1024' });
   Object.assign(recovery.reads[0], { sentAtNs: '2000000000', receivedAtNs: '2001000000' });
   Object.assign(recovery.offers[0], { scheduledAtNs: '2000000000', ackAtNs: '2001000000' });
-  return [...windows, recovery];
+  return [...windows, recovery].map(w => completeSegment(w));
 }
 function priority(f, p) {
   Object.assign(f.trusted, { priorities: ['P3', p], commandValid: () => true, ryow: () => true, replayRead: () => h('correct') });
@@ -68,18 +69,20 @@ function priority(f, p) {
 export function p1() {
   const f = priority(fixture(), 'P1');
   f.raw.events.ladder = ladder();
-  f.raw.events.maintenance = [{ atNs: '1500000000' }];
+  f.raw.events.maintenance = [{ atNs: '1500000000' }]; f.raw.events.reads=[];
   return f;
 }
 export function p4() {
   const f = priority(fixture(), 'P4');
   f.raw.events.reads = Array.from({ length: 2200 }, (_, i) => ({
-    subject: `s${i}`, shape: 'pull-current', loop: 0, requestedBasis: 1, echoedBasis: 1, answerSha256: h('correct'),
+    readId:`pull-${i}`, subject: `s${i}`, shape: 'pull-current', loop: 0, requestedBasis: 1, echoedBasis: 1, answerSha256: h('correct'),
     sentAtNs: '1000000000', receivedAtNs: '1001000000', facts: i < 1100 ? 100 : i < 1870 ? 500 : 1000,
     bucket: i < 1100 ? '50-200' : i < 1870 ? '201-800' : '801-2000', hops: i < 880 ? 3 : i < 1650 ? 4 : 6,
   }));
   f.raw.events.pullResources = { cpuset: [1], cpuUsageStartUs: '0', cpuUsageEndUs: '1000', ioReadStartBytes: '0', ioReadEndBytes: '1000', historyScansStart: '0', historyScansEnd: '0' };
   f.raw.events.historyPulls = [1, 3, 10].flatMap(depth => Array.from({ length: 1000 }, (_, i) => ({ depth, subject: `s${i}`, sentAtNs: '0', receivedAtNs: '1000000', bytesRead: '100' })));
+  f.trusted.readerLevel=1; f.raw.events.readers=readerRows(f.raw.events.reads,f.raw.events.window);
+  f.raw.events.historyResources=historyFixture(f.raw.events.historyPulls);
   return f;
 }
 
@@ -91,5 +94,8 @@ export function p4Sequential(origin = 1000000000n) {
     const sent = origin + BigInt(i) * 500000n;
     r.sentAtNs = String(sent); r.receivedAtNs = String(sent + 100000n);
   });
+  f.raw.events.readers=readerRows(f.raw.events.reads,f.raw.events.window);
   return f;
 }
+
+export function refreshWal(f) { const c=f.raw.events.consumer; c.finalWalHex=Buffer.from(canonText({transactions:c.transactions,effects:c.effects,affected:c.affected,deliveries:c.deliveries})).toString('hex');c.tailedWalHex=c.finalWalHex; }

@@ -2,8 +2,8 @@
 // Rejected: accepting RECOMPUTED as proof of safety (the counterexamples below expose missing content checks).
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { nsNearestRank, nsP1Ladder, nsConsumerCounts, nsFeedEntryBytes, recomputeNS, nsP5Traffic, nsControlRecord } from '../../bin/claim.mjs';
-import { fixture, sealed, run, codes, clone, h, ladder, segment, p1, p4, p4Sequential } from './fixture.mjs';
+import { canonText, nsNearestRank, nsP1Ladder, nsConsumerCounts, nsFeedEntryBytes, recomputeNS, nsP5Traffic, nsControlRecord } from '../../bin/claim.mjs';
+import { fixture, sealed, run, codes, clone, h, ladder, segment, p1, p4, p4Sequential, refreshWal } from './fixture.mjs';
 
 
 test('CX-VCRNS-C01: positive P3 fixture still recomputes', () => {
@@ -22,12 +22,12 @@ test('CX-VCRNS-C02: exact nearest rank for n=1..151, all percentiles, ties and h
 test('CX-VCRNS-C03: atomic row reordering is range consistent, WAL transaction reordering is refused', () => {
   const f = fixture();
   for (const tx of f.raw.events.consumer.transactions) { tx.effects.reverse(); tx.affected.reverse(); }
-  assert.equal(run(f).status, 'RECOMPUTED');
+  refreshWal(f); assert.equal(run(f).status, 'RECOMPUTED');
   f.raw.events.consumer.transactions.reverse();
   assert.ok(codes(run(f)).includes('NS-P3-ORDER-VIOLATIONS-MAX'));
   const g = fixture(), c = g.raw.events.consumer;
   c.transactions = [{ committed: true, frontierBefore: '0', frontierAfter: '2', effects: [...c.effects].reverse(), affected: [...c.affected].reverse(), deliveries: [...c.deliveries].reverse(), deleted: { effects: [], affected: [], deliveries: [] } }];
-  assert.equal(run(g).status, 'RECOMPUTED');
+  refreshWal(g); assert.equal(run(g).status, 'RECOMPUTED');
   assert.equal(nsConsumerCounts(c.transactions, '0').orderViolations, 0);
 });
 
@@ -39,6 +39,7 @@ test('CX-VCRNS-C04: candidate timestamps and filtered lag summary do not affect 
   f.raw.events.offers[0].receipt.stamp = clone(f.raw.events.source.entries[0].transactions[0].stamp);
   for (const tx of f.raw.events.consumer.transactions) for (const d of tx.deliveries) d.digest = h(nsFeedEntryBytes(f.raw.events.source.entries.find(e => e.offset === d.offset)));
   f.raw.events.consumer.deliveries = f.raw.events.consumer.transactions.flatMap(t => t.deliveries);
+  f.raw.events.source.rawHex=Buffer.from(canonText({entries:f.raw.events.source.entries,commandDigests:f.raw.events.source.commandDigests})).toString('hex'); refreshWal(f);
   assert.deepEqual(run(f).measurements.P3, expected);
 });
 
@@ -111,7 +112,7 @@ test('CX-VCRNS-C12: exact 250ms boundary and enormous monotonic origins', () => 
 test('CX-VCRNS-C13: empty auxiliary P1 writer, P4 history and P5 traffic samples refuse or fail their bar', () => {
   const windows = ladder(); windows[0].offers = [];
   assert.equal(nsP1Ladder(windows, () => h('correct'), []).met, false);
-  const f = p4(); f.raw.events.historyPulls = [];
+  const f = p4Sequential(); f.raw.events.historyPulls = [];
   assert.ok(codes(run(f)).includes('P4-HISTORY-NOT-VERIFIED'));
   for (const name of ['reads', 'offers']) {
     const traffic = { baseline: segment(), sweep: segment() };
@@ -149,7 +150,7 @@ test('CX-VCRNS-C16: sequential, in-window single-client P4 events meet arithmeti
 // Rejected: tests asserting the current unsafe result (would make a green suite look like evaluator acceptance).
 test('CX-VCRNS-R01: requested P1 must refuse an empty main E2 stream', () => {
   const r = run(p1());
-  assert.equal(r.status, 'REFUSED', `empty reads yielded goodput=${r.measurements.P1.goodput}, p99=${r.measurements.P1.latency.p99Ms}`);
+  assert.equal(r.status, 'REFUSED', `empty reads yielded goodput=${r.measurements.P1?.goodput}, p99=${r.measurements.P1?.latency.p99Ms}`);
 });
 
 test('CX-VCRNS-R02: P3 must reject a checkpoint beyond the observed source prefix', () => {

@@ -1688,6 +1688,55 @@ const nsDifference = (expected, observed) => ({ misses: expected.filter(x => !ob
  * source, slot and inputs. It does not establish that a normalizer correctly decoded SQLite: O-OBS must do that at admission.
  * RECOMPUTED means arithmetic completed; it never means PASS/QUALIFIED. Pending Q99/Q100 cannot authorize admission.
  */
+// [EXP-CRNS-R2] Why: every bar needs nonempty, window-bound, identity-bound content before arithmetic.
+// Rejected: adapter promises and declared loop labels (R01-R06, Opus O1-O29 show vacuous success).
+export const nsCommandSha256 = changes => sha256(canonText(changes.map(({ position, ...content }) => content)));
+const nsReadKey = read => canonText(Object.fromEntries(Object.entries(read).filter(([k]) => !['readId', 'loop', 'sentAtNs', 'receivedAtNs', 'answerSha256', 'answer', 'echoedBasis', 'hot', 'splitGroup', 'straddledCommandId', 'step', 'purpose'].includes(k))));
+function nsUniqueEvents(rows, id, code = 'EVENT-ID-DUPLICATE') {
+  const seen = new Set();
+  for (const row of rows) { nsAssert(nsText(row[id]) && !seen.has(row[id]), code, `${code}: missing/duplicate ${id}`); seen.add(row[id]); }
+}
+function nsPrefix(entries, basis) {
+  nsAssert(basis !== undefined && basis !== null, 'BASIS-UNBOUND');
+  if (Number.isSafeInteger(basis) && basis >= 0) basis = String(basis);
+  return entries.filter(entry => BigInt(entry.offset) <= nsPos(basis)[2]).map(entry => entry.kind === 'commit' ? ({ ...entry, transactions: entry.transactions.filter(tx => tx.positions.every(p => nsComparePosition(p, basis) <= 0)) }) : entry);
+}
+function nsReaderEvidence(reads, declared, window, level) {
+  nsAssert(Number.isSafeInteger(level) && level >= 0, 'READER-LEVEL-MISMATCH');
+  const start = nsTime(window.startNs), end = nsTime(window.endNs), seconds = Number((end - start + 999999999n) / 1000000000n);
+  nsAssert(end > start && Array.isArray(declared), 'READER-LEVEL-MISMATCH');
+  nsUniqueEvents(reads, 'readId');
+  if (level === 0) return 1;
+  nsAssert(reads.length > 0, 'READER-LEVEL-MISMATCH', 'no completed reads');
+  const observed = new Map(), labels = nsIndex(declared, 'second');
+  for (const r of reads) {
+    nsAssert(Number.isSafeInteger(r.loop) && r.loop >= 0 && nsTime(r.receivedAtNs) >= nsTime(r.sentAtNs), 'EVENT-SCHEMA');
+    const at = nsTime(r.receivedAtNs);
+    if (at < start || at >= end) continue;
+    const second = Number((at - start) / 1000000000n);
+    if (!observed.has(second)) observed.set(second, new Set()); observed.get(second).add(r.loop);
+  }
+  let qualifying = 0;
+  for (let second = 0; second < seconds; second++) {
+    const loops = observed.get(second) ?? new Set(), d = labels.get(canonText(second));
+    if (d && Array.isArray(d.loops) && same([...new Set(d.loops)].sort((a,b) => a-b), [...loops].sort((a,b) => a-b)) && loops.size >= level && Number.isFinite(d.relayConcurrent) && Math.abs(d.relayConcurrent - loops.size) <= loops.size * .1) qualifying++;
+  }
+  return qualifying / seconds;
+}
+function nsReadSample(reads, window, replayRead, entries) {
+  nsAssert(Array.isArray(reads) && reads.length > 0 && typeof replayRead === 'function', 'READS-NOT-ESTIMABLE');
+  nsUniqueEvents(reads, 'readId');
+  const expected = new Map(); let correct = 0, violations = 0;
+  for (const read of reads) {
+    nsAssert(nsText(read.subject) && nsText(read.shape) && nsHash(read.answerSha256) && nsTime(read.sentAtNs) >= nsTime(window.startNs) && nsTime(read.receivedAtNs) < nsTime(window.endNs) && nsTime(read.receivedAtNs) >= nsTime(read.sentAtNs), 'READ-OUTSIDE-WINDOW');
+    const key = nsReadKey(read);
+    if (!expected.has(key)) expected.set(key, replayRead(read, nsPrefix(entries, read.requestedBasis)));
+    const want = expected.get(key); nsAssert(nsHash(want), 'O-REPLAY-REFUSED');
+    if (want === read.answerSha256 && same(read.echoedBasis, read.requestedBasis)) correct++; else violations++;
+  }
+  return { correct, violations, evaluatedShare: 1, goodput: correct * 1e9 / Number(nsTime(window.endNs) - nsTime(window.startNs)), latency: nsStats(reads.map(r => nsTime(r.receivedAtNs) - nsTime(r.sentAtNs))) };
+}
+
 export function recomputeNS(bundle, trusted) {
   const result = { status: 'REFUSED', reasons: [], bars: {}, measurements: {}, a0: null };
   const refuse = (code, detail = code) => result.reasons.push({ code, detail });
@@ -1715,25 +1764,46 @@ export function recomputeNS(bundle, trusted) {
     for (const name of ['offers', 'reads', 'sourceBrackets', 'consumerBrackets', 'faults', 'readers', 'crossChecks']) nsArray(e[name], name);
     nsAssert(e.source.origin === 'observer-source-store', 'PREFIX-NOT-FROM-SOURCE');
     nsAssert(e.lagStart === 'observer-bracket', 'LAG-START-CR');
-    nsAssert(same(e.clockDomain, trusted.clockDomain) && Array.isArray(e.clockDomains) && e.clockDomains.length > 0 && e.clockDomains.every(d => same(d, trusted.clockDomain)), 'CLOCK-DOMAIN-MISMATCH');
+    nsAssert(same(e.clockDomain, trusted.clockDomain) && Array.isArray(trusted.roles) && trusted.roles.length > 0 && Array.isArray(e.clockDomains) && e.clockDomains.length === trusted.roles.length && new Set(e.clockDomains.map(d => d.role)).size === trusted.roles.length && trusted.roles.every(role => e.clockDomains.some(d => d.role === role && same(d.domain, trusted.clockDomain))), 'CLOCK-DOMAIN-MISMATCH');
     const w = e.window, start = nsTime(w.startNs), end = nsTime(w.endNs), drain = nsTime(w.drainEndNs);
     nsAssert(end > start && drain >= end, 'EVENT-SCHEMA', 'window bounds');
     nsArray(w.bursts, 'burst intervals').forEach(b => nsAssert(nsTime(b.startNs) < nsTime(b.endNs), 'EVENT-SCHEMA'));
     const entries = nsArray(e.source.entries, 'source entries');
+    nsAssert(e.source.storage === trusted.sourceStorage && nsText(trusted.sourceStorage), 'SOURCE-STORAGE-MISMATCH');
+    if (trusted.verifySource?.(e.source) !== true || typeof trusted.normalizeSource !== 'function' || !same(trusted.normalizeSource(e.source, raw.binding), { entries, commandDigests:e.source.commandDigests })) refuse('SOURCE-NOT-VERIFIED');
     if (e.source.storage === 'broker-frame/2') {
       const finalCrc = nsVerifyBrokerFrames(e.source.frames, e.source.initialCrc);
       nsAssert(finalCrc === e.source.finalCrc && entries.filter(x => x.kind === 'commit').every(x => e.source.frames.some(f => f.offset === x.offset)), 'SOURCE-CRC-CHAIN');
-    } else nsAssert(trusted.verifySource?.(e.source) === true, 'SOURCE-NOT-VERIFIED', 'non-broker source requires evaluator normalizer verification');
+    }
     nsAssert(entries.length > 0 && nsUint(e.source.firstOffset) && nsUint(e.source.finalOffset), 'RAW-EVENTS-MISSING');
-    const byOffset = new Map(), positions = new Map();
-    let next = BigInt(e.source.firstOffset), sourceGaps = 0;
+    const byOffset = new Map(), positions = new Map(), resolvedPositions = new Set();
+    let next = BigInt(e.source.firstOffset), sourceGaps = 0, lastPosition = null;
+    const committedCommands = new Map();
     for (const entry of entries) {
       nsFeedEntryBytes(entry);
+      nsAssert(entry.stream === trusted.sourceStream, 'SOURCE-COORDINATE-MISMATCH');
       const offset = BigInt(entry.offset);
       nsAssert(offset >= next, 'SOURCE-GAP', 'source offsets must be unique and increasing');
       sourceGaps += Number(offset - next); next = offset + 1n; byOffset.set(entry.offset, entry);
+      for (const tx of entry.transactions ?? []) {
+        for (const id of tx.commandIds) {
+          if (committedCommands.has(id)) refuse('DUPLICATE-COMMIT', id);
+          committedCommands.set(id, { tx, entry });
+          const frozen = trusted.commands?.[id];
+          if (!frozen || frozen.changesSha256 !== nsCommandSha256(tx.changes) || e.source.commandDigests?.[id] !== frozen.commandSha256) refuse('SOURCE-CONTENT-MISMATCH', id);
+        }
+      }
       for (const tx of entry.transactions ?? []) for (const p of tx.positions) {
+        const coordinate = nsPos(p);
+        if (trusted.epochs?.[canonText(p)] !== entry.epoch) refuse('CONSUMER-IDENTITY-MISMATCH', 'source epoch disagrees with pinned mapping');
+        if ((lastPosition !== null && nsComparePosition(p, lastPosition) <= 0) || coordinate[2] !== BigInt(entry.offset) || (typeof p !== 'string' && (p.stream !== entry.stream || p.epoch !== entry.epoch))) refuse('NS-P3-ORDER-VIOLATIONS-MAX', 'source cursor disagrees with offset order');
+        lastPosition = p; resolvedPositions.add(canonText(p));
         const key = canonText(p); nsAssert(!positions.has(key), 'SOURCE-GAP', 'position repeated in source'); positions.set(key, { p, tx, entry });
+      }
+      if (entry.kind !== 'commit') {
+        const p = trusted.resolveFrontier?.(entry); const coordinate=nsPos(p);
+        nsAssert(coordinate[2] === BigInt(entry.offset) && (typeof p === 'string' || (p.stream===entry.stream && p.epoch===entry.epoch)) && (lastPosition===null || nsComparePosition(p,lastPosition)>0), 'SOURCE-COORDINATE-MISMATCH');
+        lastPosition=p; resolvedPositions.add(canonText(p));
       }
     }
     nsAssert(next - 1n <= BigInt(e.source.finalOffset), 'SOURCE-GAP');
@@ -1747,6 +1817,8 @@ export function recomputeNS(bundle, trusted) {
     }
     const sourceBrackets = nsIndex(e.sourceBrackets, 'position'), consumerBrackets = nsIndex(e.consumerBrackets, 'position');
     sourceBrackets.forEach(nsBracket); consumerBrackets.forEach(nsBracket);
+    nsAssert(nsUint(trusted.maxBracketWidthNs), 'BRACKET-LIMIT-UNBOUND');
+    for (const b of [...sourceBrackets.values(), ...consumerBrackets.values()]) if (nsTime(b.U)-nsTime(b.L)>BigInt(trusted.maxBracketWidthNs)) refuse('BRACKET-TOO-WIDE');
     const c = e.consumer;
     nsAssert(c.walComplete === true, 'WAL-NOT-ESTIMABLE');
     nsAssert(typeof c.tailedWalHex === 'string' && /^(?:[0-9a-f]{2})*$/.test(c.tailedWalHex) && typeof c.finalWalHex === 'string' && /^(?:[0-9a-f]{2})*$/.test(c.finalWalHex), 'EVENT-SCHEMA');
@@ -1754,7 +1826,14 @@ export function recomputeNS(bundle, trusted) {
     const transactions = nsArray(c.transactions, 'WAL transactions');
     nsAssert(transactions.length > 0 && c.tailedWalHex.length > 0, 'WAL-NOT-ESTIMABLE');
     for (const name of ['effects', 'affected', 'deliveries']) nsArray(c[name], `final ${name}`);
+    nsAssert(same(c.initialFrontier,trusted.initialFrontier), 'CHECKPOINT-UNBOUND');
     const counts = nsConsumerCounts(transactions, c.initialFrontier, c.effects);
+    nsAssert(typeof trusted.normalizeWal === 'function', 'WAL-NOT-ESTIMABLE');
+    if (!same(trusted.normalizeWal(c, raw.binding), { transactions, effects: c.effects, affected: c.affected, deliveries: c.deliveries })) refuse('WAL-NOT-ESTIMABLE', 'normalized rows disagree with decoded WAL');
+    for (const tx of transactions) if (!resolvedPositions.has(canonText(tx.frontierAfter))) refuse('NS-P3-ORDER-VIOLATIONS-MAX', 'frontier is not a resolved source position');
+    if (!same(counts.frontier, lastPosition)) refuse('NS-P3-ORDER-VIOLATIONS-MAX', 'final checkpoint must reach exactly the final source frontier');
+    nsAssert(nsText(trusted.consumerId) && isObj(trusted.epochs), 'CONSUMER-IDENTITY-UNBOUND');
+    for (const rows of [c.effects, c.affected, ...transactions.flatMap(t => [t.effects, t.affected, t.deleted.effects, t.deleted.affected])]) for (const row of rows) if (row.consumer !== trusted.consumerId || row.epoch !== trusted.epochs[canonText(row.position)]) refuse('CONSUMER-IDENTITY-MISMATCH');
     if (counts.orderViolations) refuse('NS-P3-ORDER-VIOLATIONS-MAX');
     if (counts.duplicates) refuse('NS-P3-VISIBLE-DUP-EFFECTS-MAX');
     // [EXP-CRNS] Why: tie final rows to all committed mutations, including deletes. Rejected: final-state-only duplicate counting.
@@ -1782,7 +1861,7 @@ export function recomputeNS(bundle, trusted) {
     }
     const lag = [], steady = [], burst = [], widths = [], midpoint = [];
     for (const [key, { p, tx, entry }] of positions) {
-      const expected = trusted.domainAffected({ position: p, transaction: tx, entry, prefix: entries });
+      const expected = trusted.domainAffected({ position: p, transaction: tx, entry, prefix: nsPrefix(entries, p) });
       nsAssert(Array.isArray(expected) && expected.every(nsText) && new Set(expected).size === expected.length, 'O-DOMAIN-REFUSED');
       for (const name of ['affected', 'effects']) {
         const observed = [...(observedSubjects[name].get(key) ?? [])];
@@ -1791,36 +1870,40 @@ export function recomputeNS(bundle, trusted) {
       const s = sourceBrackets.get(key), consumer = consumerBrackets.get(key);
       if (!s) { refuse('NS-P3-EVERY-POSITION-ACCOUNTED', key); continue; }
       nsAssert(nsTime(s.U) <= drain, 'BRACKET-INVALID', 'source bracket after drain');
+      if (!consumer) { gaps++; refuse('NS-P3-EVERY-POSITION-ACCOUNTED', `no durable consumer bracket ${key}`); }
       if (consumer) nsAssert(nsTime(consumer.U) >= nsTime(s.L) && nsTime(consumer.U) <= drain, 'BRACKET-INVALID');
       if (nsTime(s.L) >= start && nsTime(s.L) < end) {
         const delta = consumer ? nsTime(consumer.U) - nsTime(s.L) : Infinity;
         lag.push(delta);
         const inBurst = w.bursts.some(b => nsTime(s.L) >= nsTime(b.startNs) && nsTime(s.L) < nsTime(b.endNs));
         (inBurst ? burst : steady).push(delta);
-        if (!consumer) { gaps++; refuse('NS-P3-EVERY-POSITION-ACCOUNTED', `no durable consumer bracket ${key}`); }
-        else { widths.push(nsTime(s.U) - nsTime(s.L), nsTime(consumer.U) - nsTime(consumer.L)); midpoint.push(Number(nsTime(consumer.L) + nsTime(consumer.U) - nsTime(s.L) - nsTime(s.U)) / 2e6); }
+        if (consumer) { widths.push(nsTime(s.U) - nsTime(s.L), nsTime(consumer.U) - nsTime(consumer.L)); midpoint.push(Number(nsTime(consumer.L) + nsTime(consumer.U) - nsTime(s.L) - nsTime(s.U)) / 2e6); }
       }
     }
     if (misses || extras) refuse('NS-P3-DOMAIN-AFFECTED-SET');
+    const crKeys = new Set();
     for (const cr of e.crossChecks) {
+      nsAssert(['source', 'consumer'].includes(cr.role), 'CR-INCONSISTENT');
+      const key = canonText([cr.role, cr.position]); nsAssert(!crKeys.has(key), 'CR-INCONSISTENT'); crKeys.add(key);
       const b = (cr.role === 'source' ? sourceBrackets : consumerBrackets).get(canonText(cr.position));
-      nsAssert(b && nsTime(cr.atNs) >= nsTime(b.L) - 1000000n && nsTime(cr.atNs) <= nsTime(b.U) + 5000000n, 'CR-INCONSISTENT');
+      if (!b || nsTime(cr.atNs) < nsTime(b.L) - 1000000n || nsTime(cr.atNs) > nsTime(b.U) + 5000000n) refuse('CR-INCONSISTENT');
     }
-    nsAssert(Number.isSafeInteger(trusted.readerLevel) && trusted.readerLevel > 0, 'READER-LEVEL-MISMATCH');
-    const seconds = Number((end - start + 999999999n) / 1000000000n), readerSeconds = new Map();
-    for (const r of e.readers) {
-      nsAssert(Number.isSafeInteger(r.second) && r.second >= 0 && r.second < seconds && !readerSeconds.has(r.second) && Array.isArray(r.loops), 'EVENT-SCHEMA', 'reader second');
-      nsAssert(r.loops.every(x => Number.isSafeInteger(x) && x >= 0), 'EVENT-SCHEMA', 'loop identity');
-      const loops = new Set(r.loops).size;
-      nsAssert(Number.isFinite(r.relayConcurrent) && r.relayConcurrent >= 0, 'EVENT-SCHEMA');
-      readerSeconds.set(r.second, loops >= trusted.readerLevel && Math.abs(r.relayConcurrent - loops) <= loops * .1);
-    }
-    const readerShare = [...readerSeconds.values()].filter(Boolean).length / seconds;
+    for (const { p } of positions.values()) for (const role of ['source', 'consumer']) if (!crKeys.has(canonText([role, p]))) refuse('CR-CROSSCHECK-MISSING');
+    let readerShare = 0;
+    try { readerShare = nsReaderEvidence(e.reads, e.readers, w, trusted.readerLevel); } catch (error) { refuse(error.code ?? 'READER-LEVEL-MISMATCH', error.message); }
     if (readerShare < .99) refuse('READER-LEVEL-MISMATCH');
     const witnessHashes = new Set();
     for (const f of e.faults) {
       nsAssert(f.format === 'fault-witness/1' && same(f.binding, raw.binding) && nsHash(f.eventsSha256) && f.eventsSha256 === sha256(canonText(f.events)) && !witnessHashes.has(f.eventsSha256) && f.events?.some(x => x.transition === 'cgroup-gone' && nsTime(x.t) <= drain), 'FAULT-WITNESS-INVALID');
-      nsAssert(Array.isArray(f.replay) && f.replay.length > 0, 'FAULT-WITNESS-INVALID', 'recovery delivery bytes absent');
+      const checkpoint = f.checkpointOffset === null ? BigInt(e.source.firstOffset)-1n : nsUint(f.checkpointOffset) ? BigInt(f.checkpointOffset) : null;
+      nsAssert(checkpoint !== null && checkpoint >= BigInt(e.source.firstOffset)-1n && nsUint(f.recoveryOffset) && BigInt(f.recoveryOffset) > checkpoint && Array.isArray(f.replay) && f.replay.length > 0, 'FAULT-WITNESS-INVALID', 'recovery checkpoint/range absent');
+      nsAssert(Number.isSafeInteger(f.beforeTransaction) && f.beforeTransaction >= -1 && Number.isSafeInteger(f.recoveryTransaction) && f.recoveryTransaction > f.beforeTransaction && f.recoveryTransaction < transactions.length, 'FAULT-WITNESS-INVALID', 'missing checkpoint transaction anchors');
+      const beforeFrontier = f.beforeTransaction < 0 ? c.initialFrontier : transactions[f.beforeTransaction].frontierAfter;
+      const afterFrontier = transactions[f.recoveryTransaction].frontierAfter;
+      nsAssert(nsPos(beforeFrontier)[2] === checkpoint && nsPos(afterFrontier)[2] === BigInt(f.recoveryOffset), 'FAULT-WITNESS-INVALID', 'checkpoint anchors disagree with WAL');
+      nsAssert(same(f.replay, transactions.slice(f.beforeTransaction+1,f.recoveryTransaction+1).flatMap(t=>t.deliveries)), 'FAULT-WITNESS-INVALID', 'replay disagrees with recovered WAL range');
+      const expectedReplay = entries.filter(x => BigInt(x.offset) > checkpoint && BigInt(x.offset) <= BigInt(f.recoveryOffset)).map(x => ({ offset: x.offset, digest: sha256(nsFeedEntryBytes(x)) }));
+      nsAssert(expectedReplay.length === Number(BigInt(f.recoveryOffset) - checkpoint) && same(f.replay, expectedReplay), 'FAULT-WITNESS-INVALID', 'recovery range missing/reordered/repeated deliveries');
       for (const delivered of f.replay) {
         const entry = byOffset.get(delivered.offset);
         nsAssert(entry && delivered.digest === sha256(nsFeedEntryBytes(entry)), 'FAULT-WITNESS-INVALID', 'resume is not byte exact');
@@ -1829,12 +1912,28 @@ export function recomputeNS(bundle, trusted) {
     }
     if (e.faults.length) for (const point of ['before-effect', 'after-effect', 'after-checkpoint']) if (e.faults.filter(f => f.faultPointId === point).length < 3) refuse('CX-FAULT-REPS-SHORT', point);
     const timing = e.noise?.grade === 'GREEN' && trusted.gradeWindow?.(e.noise, w) === 'GREEN';
-    const lagJudged = timing && !e.faults.length && lag.length > 0;
+    nsAssert(isObj(trusted.minimumSamples) && Number.isSafeInteger(trusted.minimumSamples.lag) && trusted.minimumSamples.lag > 0, 'SAMPLE-FLOOR-UNBOUND');
+    const lagJudged = timing && !e.faults.length && lag.length >= trusted.minimumSamples.lag;
+    if (!e.faults.length && lag.length < trusted.minimumSamples.lag) refuse('LAG-SAMPLES-SHORT');
     result.measurements.P3 = { gaps, ...counts, misses, extras, readerShare, lag: { pooled: nsStats(lag), steady: nsStats(steady), burst: nsStats(burst), midpointP99Ms: nsNearestRank(midpoint, 99), bracketWidthP99Ms: nsMs(nsNearestRank(widths, 99)) }, lagJudged };
     result.bars.P3 = { sourcePrefixEnumerated: !result.reasons.some(r => ['SOURCE-GAP', 'LOST-ACKED-COMMIT', 'FOREIGN-COMMIT'].includes(r.code)), everyPositionAccounted: !result.reasons.some(r => r.code === 'NS-P3-EVERY-POSITION-ACCOUNTED'), counts: gaps === 0 && counts.orderViolations === 0 && counts.duplicates === 0 && misses === 0 && extras === 0, lag: lagJudged ? nsStats(lag).p99Ms <= 250 : null };
     if (lagJudged && !result.bars.P3.lag) refuse('NS-P3-LAG-P99-MS');
-    if (!lagJudged) refuse('TIMING-UNJUDGED');
-    if (trusted.priorities?.some(p => p !== 'P3')) nsOtherPriorities(e, trusted, result, refuse, positions, sourceBrackets, timing);
+    if (!lagJudged && !e.faults.length) refuse('TIMING-UNJUDGED');
+    result.bars.P3.resume = e.faults.length >= 9 && result.reasons.length === 0 && result.bars.P3.counts;
+    if (!e.faults.length) {
+      if (trusted.crashRun) {
+        const ct = trusted.crashRun.trusted;
+        const bound = ct?.binding && ct.binding.attemptId !== raw.binding.attemptId && ['sourceSha256', 'slot', 'inputsSha256'].every(k => ct.binding[k] === raw.binding[k]) && !ct.crashRun;
+        const crash = bound ? recomputeNS(trusted.crashRun.bundle, ct) : null;
+        result.bars.P3.resume = crash?.status === 'RECOMPUTED' && crash.bars.P3.resume === true && crash.bars.P3.counts === true;
+      }
+      if (!result.bars.P3.resume) refuse('P3-RESUME-MISSING');
+    }
+    nsOtherPriorities(e, trusted, result, refuse, positions, sourceBrackets, timing);
+    if (result.reasons.some(r => !['TIMING-UNJUDGED','NS-P3-LAG-P99-MS','P3-RESUME-MISSING'].includes(r.code))) result.bars.P3.counts = false;
+    if (e.faults.length && result.reasons.length) result.bars.P3.resume = false;
+    result.bars.P3.met = result.bars.P3.lag === true && result.bars.P3.resume && result.reasons.length === 0;
+    if (result.reasons.length) result.bars.P3.met = false;
     if (trusted.control) result.a0 = nsControlRecord(trusted.control);
     result.status = result.reasons.length ? 'REFUSED' : 'RECOMPUTED';
   } catch (error) { refuse(error.code ?? 'EVENT-SCHEMA', error.message); }
@@ -1857,35 +1956,47 @@ function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timi
   const offers = e.offers, bands = new Map(), receipts = new Map();
   let unaccounted = 0, ackUndecided = 0, maxWaitNs = 0n;
   const queue = [];
+  try { nsUniqueEvents(offers, 'eventId'); } catch (error) { refuse(error.code, error.message); }
+  nsAssert(offers.length > 0 && typeof trusted.commandValid === 'function' && typeof trusted.ryow === 'function', 'O-REPLAY-NOT-RUN');
   for (const o of offers) {
     const scheduled = nsTime(o.scheduledAtNs), sent = nsTime(o.sentAtNs);
     nsAssert(sent >= scheduled && nsText(o.commandId), 'EVENT-SCHEMA');
-    const accounted = Boolean(o.receipt || o.typedError || o.typedConflict);
-    if (!accounted) unaccounted++;
-    const stop = nsTime(o.ackAtNs ?? o.censoredAtNs);
+    if (!['normal', 'duplicate', 'lost-ACK', 'lost-ACK retry', 'correction', 'invalid'].includes(o.kind)) refuse('OFFER-KIND-MISSING');
+    const frozen = trusted.commands?.[o.commandId];
+    if (!frozen || o.commandSha256 !== frozen.commandSha256) refuse('SOURCE-CONTENT-MISMATCH', o.commandId);
+    const p = commandPositions.get(o.commandId);
+    const prefix = e.source.entries.filter(entry => (entry.transactions ?? []).some(tx => tx.positions.every(pos => { const b = brackets.get(canonText(pos)); return b && nsTime(b.U) <= scheduled; })));
+    const valid = trusted.commandValid(o, prefix);
+    nsAssert(typeof valid === 'boolean', 'O-REPLAY-REFUSED');
+    if (valid && !p) refuse('VALID-COMMAND-NOT-PUBLISHED', o.commandId);
+    if ((o.typedError || o.typedConflict) && p) refuse('ERROR-BUT-COMMITTED', o.commandId);
+    if (valid && (o.typedError || o.typedConflict)) refuse('VALID-COMMAND-REJECTED', o.commandId);
+    const later = offers.find(r => r.commandId === o.commandId && r.receipt && r.ackAtNs && nsTime(r.sentAtNs) >= sent);
+    const resolvedLostAck = o.kind === 'lost-ACK' && !o.receipt && !o.typedError && !o.typedConflict && later;
+    const receipt = o.receipt ?? (resolvedLostAck ? later.receipt : null);
+    if (!o.receipt && !o.typedError && !o.typedConflict && !resolvedLostAck) unaccounted++;
+    if (['duplicate', 'lost-ACK retry'].includes(o.kind) && (!o.receipt || !p)) refuse('IDEMPOTENCY-RECEIPT-MISMATCH', o.commandId);
+    const stop = nsTime(resolvedLostAck ? later.ackAtNs : o.ackAtNs ?? o.censoredAtNs);
     nsAssert(stop >= sent, 'EVENT-SCHEMA');
     const elapsed = stop - scheduled;
     if (elapsed > maxWaitNs) maxWaitNs = elapsed;
     const band = o.sizeBand;
     nsAssert(['5-10', '11-25', '26-50'].includes(band), 'EVENT-SCHEMA');
     if (!bands.has(band)) bands.set(band, []);
-    // [EXP-CRNS] Why: censored commands cannot improve a tail by disappearing. Rejected: successful-ACK-only histograms.
-    bands.get(band).push(o.ackAtNs ? elapsed : Infinity);
-    if (o.receipt) {
-      const b = brackets.get(canonText(o.receipt.position));
-      if (b && nsTime(o.ackAtNs) < nsTime(b.L)) refuse('ACK-BEFORE-PUBLICATION', o.commandId);
-      else if (b && nsTime(o.ackAtNs) < nsTime(b.U)) ackUndecided++;
-      if (receipts.has(o.commandId) && !same(receipts.get(o.commandId), o.receipt)) refuse('IDEMPOTENCY-RECEIPT-MISMATCH');
-      receipts.set(o.commandId, o.receipt);
-      nsAssert(typeof trusted.ryow === 'function', 'O-REPLAY-NOT-RUN');
-      if (!trusted.ryow(o, e.source.entries, e.reads)) refuse('RYOW-MISMATCH', o.commandId);
+    bands.get(band).push(valid && !receipt ? Infinity : o.ackAtNs || resolvedLostAck ? elapsed : Infinity);
+    if (receipt) {
+      const b = brackets.get(canonText(receipt.position));
+      const ack = nsTime(resolvedLostAck ? later.ackAtNs : o.ackAtNs);
+      if (b && ack < nsTime(b.L)) refuse('ACK-BEFORE-PUBLICATION', o.commandId);
+      else if (b && ack < nsTime(b.U)) ackUndecided++;
+      if (receipts.has(o.commandId) && !same(receipts.get(o.commandId), receipt)) refuse('IDEMPOTENCY-RECEIPT-MISMATCH');
+      receipts.set(o.commandId, receipt);
+      if (!resolvedLostAck && !trusted.ryow(o, nsPrefix(e.source.entries, receipt.position), e.reads)) refuse('RYOW-MISMATCH', o.commandId);
     }
-    nsAssert(typeof trusted.commandValid === 'function', 'O-REPLAY-NOT-RUN');
-    if (trusted.commandValid(o, e.source.entries) && !commandPositions.has(o.commandId)) refuse('VALID-COMMAND-NOT-PUBLISHED', o.commandId);
     queue.push([scheduled, 1]);
-    const p = commandPositions.get(o.commandId);
     const b = p && brackets.get(canonText(p.p));
-    if (b) queue.push([nsTime(b.U), -1]);
+    const finished = b ? nsTime(b.U) : stop;
+    queue.push([finished < scheduled ? scheduled : finished, -1]);
   }
   let depth = 0, maxQueue = 0, maxSteadyQueue = 0;
   for (const [at, delta] of queue.sort((a, b) => a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : b[1] - a[1])) { depth += delta; maxQueue = Math.max(depth, maxQueue);
@@ -1893,6 +2004,9 @@ function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timi
   }
   const latency = Object.fromEntries([...bands].map(([b, xs]) => [b, nsStats(xs)]));
   result.measurements.P2 = { latency, unaccounted, ackUndecided, maxWaitMs: nsMs(maxWaitNs), maxQueue, maxSteadyQueue };
+  if (unaccounted) refuse('NS-P2-UNACCOUNTED');
+  if (ackUndecided) refuse('ACK-ORDER-UNDECIDED');
+  result.measurements.P2.ackUndecidedShare = ackUndecided / offers.length;
   if (requested.has('P2')) {
     if (unaccounted) refuse('NS-P2-UNACCOUNTED');
     nsAssert(Number.isFinite(trusted.steadyRate) && trusted.steadyRate > 0, 'TRACE-NOT-FROZEN');
@@ -1904,29 +2018,32 @@ function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timi
     }
     for (const b of ['5-10', '11-25', '26-50']) {
       const s = latency[b];
-      if (!s) refuse('P2-BAND-MISSING', b);
+      const floor = trusted.minimumSamples?.bands?.[b];
+      nsAssert(Number.isSafeInteger(floor) && floor > 0, 'SAMPLE-FLOOR-UNBOUND');
+      if (!s || s.count < floor) refuse('P2-BAND-MISSING', b);
       else if (timing && (s.p99Ms > (b === '26-50' ? 100 : 50) || (b !== '26-50' && s.p50Ms > 10))) refuse('NS-P2-LATENCY', b);
     }
   }
   if (requested.has('P1') || requested.has('P4') || requested.has('P5')) {
     nsAssert(typeof trusted.replayRead === 'function', 'O-REPLAY-NOT-RUN');
-    const expected = new Map(); let correct = 0, violations = 0;
-    for (const read of e.reads) {
-      nsAssert(nsText(read.subject) && nsText(read.shape) && read.requestedBasis !== undefined && nsHash(read.answerSha256), 'EVENT-SCHEMA');
-      nsAssert(nsTime(read.receivedAtNs) >= nsTime(read.sentAtNs), 'EVENT-SCHEMA');
-      const key = canonText([read.subject, read.shape, read.requestedBasis]);
-      if (!expected.has(key)) expected.set(key, trusted.replayRead(read, e.source.entries));
-      const want = expected.get(key);
-      nsAssert(nsHash(want), 'O-REPLAY-REFUSED');
-      if (want === read.answerSha256 && same(read.echoedBasis, read.requestedBasis)) correct++; else violations++;
-    }
-    if (violations) refuse('NS-P1-VIOLATIONS-MAX');
-    const durations = e.reads.map(r => nsTime(r.receivedAtNs) - nsTime(r.sentAtNs));
-    result.measurements.P1 = { correct, violations, evaluatedShare: 1, goodput: correct * 1e9 / Number(nsTime(e.window.endNs) - nsTime(e.window.startNs)), latency: nsStats(durations) };
+    const metrics = nsReadSample(e.reads, e.window, trusted.replayRead, e.source.entries);
+    if (metrics.violations) refuse('NS-P1-VIOLATIONS-MAX');
+    result.measurements.P1 = metrics;
     if (requested.has('P1')) {
       nsAssert(Array.isArray(e.maintenance) && e.maintenance.some(m => nsTime(m.atNs) >= nsTime(e.window.startNs) && nsTime(m.atNs) < nsTime(e.window.endNs)), 'MAINTENANCE-MISSING');
-      if (timing && nsStats(durations).p99Ms > 100) refuse('NS-P1-LATENCY');
+      if (timing && metrics.latency.p99Ms > 100) refuse('NS-P1-LATENCY');
       // Baseline and ladder data must be separate source-bound raw runs, not inline ratios.
+      nsAssert(e.ladder.some(x => x.id === e.mainSegmentId && x.level === trusted.readerLevel && same(x.reads, e.reads) && x.startNs === e.window.startNs && x.endNs === e.window.endNs), 'P1-MAIN-SEGMENT-MISMATCH');
+      nsAssert(e.reads.filter(r => r.hot === true && e.offers.some(o => o.subject === r.subject && o.receipt && nsTime(o.sentAtNs) <= nsTime(r.sentAtNs) && nsTime(r.sentAtNs)-nsTime(o.sentAtNs) <= 60000000000n)).length >= e.reads.length * .5, 'P1-HOT-SET-SHORT');
+      const split = new Map();
+      for (const r of e.reads) if (nsText(r.splitGroup)) { if (!split.has(r.splitGroup)) split.set(r.splitGroup, []); split.get(r.splitGroup).push(r); }
+      let straddles = 0;
+      for (const group of split.values()) {
+        if (group.length < 2 || !group.every(r => same(r.requestedBasis, group[0].requestedBasis) && r.subject === group[0].subject)) continue;
+        const o = e.offers.find(o => o.commandId === group[0].straddledCommandId && o.ackAtNs);
+        if (o && group.some(r => nsTime(r.sentAtNs) < nsTime(o.ackAtNs)) && group.some(r => nsTime(r.sentAtNs) >= nsTime(o.ackAtNs))) straddles += group.length;
+      }
+      nsAssert(straddles >= e.reads.length * .1, 'P1-STRADDLE-SHORT');
       result.measurements.P1.ladder = nsP1Ladder(e.ladder, trusted.replayRead, e.source.entries);
       if (!result.measurements.P1.ladder.met) refuse('P1-LADDER-BAR');
     }
@@ -1935,6 +2052,8 @@ function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timi
     nsAssert(isObj(e.pullResources) && Array.isArray(e.pullResources.cpuset) && new Set(e.pullResources.cpuset).size > 0, 'P4-RESOURCES-MISSING');
     const pulls = e.reads.filter(r => r.shape === 'pull-current');
     nsAssert(pulls.length > 0 && new Set(pulls.map(r => r.loop)).size === 1, 'P4-SINGLE-CLIENT');
+    const sequential = [...pulls].sort((a,b) => nsTime(a.sentAtNs) < nsTime(b.sentAtNs) ? -1 : 1);
+    for (let i = 1; i < sequential.length; i++) nsAssert(nsTime(sequential[i].sentAtNs) >= nsTime(sequential[i-1].receivedAtNs), 'P4-SINGLE-CLIENT', 'overlapping single-client requests');
     const bucketCounts = { '50-200': 0, '201-800': 0, '801-2000': 0 }, hopCounts = { 3: 0, 4: 0, 6: 0 };
     for (const p of pulls) {
       nsAssert(Number.isSafeInteger(p.facts) && p.facts >= 50 && p.facts <= 2000 && [3, 4, 6].includes(p.hops), 'P4-MIX-MISMATCH');
@@ -1949,7 +2068,10 @@ function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timi
     const perCore = pulls.length * 1e9 / Number(nsTime(e.window.endNs) - nsTime(e.window.startNs)) / e.pullResources.cpuset.length;
     result.measurements.P4 = { latency, perBucket, pullsPerSecondPerCore: perCore, pullsPerCpuSecond: pulls.length * 1e6 / Number(cpuUs), bytesRead: String(nsTime(e.pullResources.ioReadEndBytes) - nsTime(e.pullResources.ioReadStartBytes)), bucketCounts, hopCounts };
     if (timing && (latency.p50Ms > 5 || latency.p99Ms > 25 || perCore < 1100)) refuse('NS-P4-LATENCY-THROUGHPUT');
-    result.measurements.P4.history = nsP4History(e.historyPulls);
+    const largeBar = trusted.p4LargestBucketP99Ms;
+    nsAssert(Number.isFinite(largeBar) && largeBar > 0, 'P4-BUCKET-BAR-UNBOUND');
+    if (perBucket['801-2000'].p99Ms > largeBar) refuse('P4-LARGE-BUCKET-BAR');
+    result.measurements.P4.history = nsP4History(e.historyPulls, trusted.replayRead, e.source.entries, e.historyResources);
     if (!result.measurements.P4.history.met) refuse('P4-HISTORY-BAR');
   }
   if (requested.has('P5')) {
@@ -1963,16 +2085,20 @@ function nsOtherPriorities(e, trusted, result, refuse, positions, brackets, timi
       if (!index.has(row.subject)) index.set(row.subject, []);
       index.get(row.subject).push(row);
     }
+    const activation = commandPositions.get(trusted.activationCommandId);
+    nsAssert(activation && same(s.activationReceipt.basis, activation.p) && nsHash(trusted.releaseSha256) && s.activationReceipt.releaseSha256 === trusted.releaseSha256 && trusted.commands[trusted.activationCommandId]?.releaseSha256 === trusted.releaseSha256, 'P5-ACTIVATION-UNBOUND');
+    nsBracket(s.durableBracket);
+    nsAssert(nsTime(s.durableBracket.U) === nsTime(s.endNs) && nsTime(s.durableBracket.L) >= nsTime(s.startNs) && trusted.verifySweepDurability?.(s, result) === true, 'P5-DURABILITY-UNBOUND');
     for (const subject of s.subjects) {
       nsAssert(typeof trusted.domainSweep === 'function', 'O-DOMAIN-NOT-RUN');
-      const expected = trusted.domainSweep(subject, s.activationReceipt.basis, e.source.entries);
+      const expected = trusted.domainSweep(subject, s.activationReceipt.basis, nsPrefix(e.source.entries, s.activationReceipt.basis));
       if (!same(expected, { output: outputs.get(subject) ?? [], outbox: outbox.get(subject) ?? [] })) refuse('P5-DOMAIN-MISMATCH', subject);
     }
     nsAssert(nsTime(s.endNs) >= nsTime(s.startNs), 'EVENT-SCHEMA');
     const wallMs = nsMs(nsTime(s.endNs) - nsTime(s.startNs));
     result.measurements.P5 = { wallMs, subjects: s.subjects.length, basis: s.activationReceipt.basis };
     if (timing && wallMs > 100000) refuse('NS-P5-WALL');
-    result.measurements.P5.traffic = nsP5Traffic(e.sweepTraffic);
+    result.measurements.P5.traffic = nsP5Traffic(e.sweepTraffic, s, trusted.replayRead, e.source.entries);
     if (!result.measurements.P5.traffic.met) refuse('P5-LIVE-TRAFFIC-BAR');
   }
 }
@@ -1984,8 +2110,9 @@ function nsSegment(segment) {
   const width = nsTime(segment.endNs) - nsTime(segment.startNs);
   nsAssert(width > 0n, 'EVENT-SCHEMA');
   const reads = nsArray(segment.reads, 'segment reads'), offers = nsArray(segment.offers, 'segment offers');
+  nsUniqueEvents(reads, 'readId'); nsUniqueEvents(offers, 'eventId');
   const inWindow = t => nsTime(t) >= nsTime(segment.startNs) && nsTime(t) < nsTime(segment.endNs);
-  for (const r of reads) nsAssert(inWindow(r.sentAtNs) && nsTime(r.receivedAtNs) >= nsTime(r.sentAtNs), 'EVENT-SCHEMA');
+  for (const r of reads) nsAssert(inWindow(r.sentAtNs) && inWindow(r.receivedAtNs) && nsTime(r.receivedAtNs) >= nsTime(r.sentAtNs), 'EVENT-SCHEMA');
   for (const o of offers) nsAssert(inWindow(o.scheduledAtNs) && nsTime(o.ackAtNs ?? o.censoredAtNs) >= nsTime(o.scheduledAtNs), 'EVENT-SCHEMA');
   const writer = offers.map(o => o.ackAtNs ? nsTime(o.ackAtNs) - nsTime(o.scheduledAtNs) : Infinity);
   return { reads, width, writerP99Ms: nsMs(nsNearestRank(writer, 99)), maxWriterWaitMs: nsMs(nsNearestRank(writer, 100)), readP99Ms: nsMs(nsNearestRank(reads.map(r => nsTime(r.receivedAtNs) - nsTime(r.sentAtNs)), 99)) };
@@ -1995,12 +2122,14 @@ const nsMatchedSegment = (a, b) => a.phase === b.phase && a.traceSegment === b.t
 export function nsP1Ladder(windows, replayRead, prefix) {
   nsAssert(Array.isArray(windows) && windows.length > 0 && typeof replayRead === 'function', 'P1-LADDER-NOT-VERIFIED');
   const results = [], expected = new Map();
+  nsUniqueEvents(windows, 'id', 'EVENT-SCHEMA');
   for (const w of windows) {
     nsAssert([0, 1, 4, 16, 64, 256, 1024].includes(w.level), 'EVENT-SCHEMA');
     const m = nsSegment(w); let correct = 0, violations = 0;
+    nsAssert(m.reads.length > 0 && nsReaderEvidence(w.reads, w.readers, w, w.level) >= .99, 'READER-LEVEL-MISMATCH');
     for (const read of m.reads) {
-      const key = canonText([read.subject, read.shape, read.requestedBasis]);
-      if (!expected.has(key)) expected.set(key, replayRead(read, prefix));
+      const key = nsReadKey(read);
+      if (!expected.has(key)) expected.set(key, replayRead(read, nsPrefix(prefix, read.requestedBasis)));
       nsAssert(nsHash(expected.get(key)), 'O-REPLAY-REFUSED');
       if (expected.get(key) === read.answerSha256 && same(read.requestedBasis, read.echoedBasis)) correct++; else violations++;
     }
@@ -2013,7 +2142,7 @@ export function nsP1Ladder(windows, replayRead, prefix) {
     const baseIndex = windows.findIndex(x => x.level === 0 && nsMatchedSegment(x, w));
     nsAssert(baseIndex >= 0, 'MATCHED-SEGMENT-MISSING');
     const base = results[baseIndex];
-    if (r.violations || r.maxWriterWaitMs === null || r.maxWriterWaitMs > 2000 || r.writerP99Ms === null || !Number.isFinite(r.writerP99Ms) || !Number.isFinite(base.writerP99Ms)) met = false;
+    if (base.writerP99Ms > 50 || r.violations || r.maxWriterWaitMs === null || r.maxWriterWaitMs > 2000 || r.writerP99Ms === null || !Number.isFinite(r.writerP99Ms) || !Number.isFinite(base.writerP99Ms)) met = false;
     if (w.level === 256 || w.level === 1024) {
       const lowerIndex = windows.findIndex(x => x.level === (w.level === 256 ? 64 : 256) && nsMatchedSegment(x, w));
       nsAssert(lowerIndex >= 0, 'MATCHED-SEGMENT-MISSING');
@@ -2021,7 +2150,7 @@ export function nsP1Ladder(windows, replayRead, prefix) {
       if (r.writerP99Ms > base.writerP99Ms * (w.level === 256 ? 1.25 : 2) || r.goodput < lower.goodput * (w.level === 256 ? 1 : .9) || (w.level === 256 && (r.readP99Ms === null || r.readP99Ms > 100))) met = false;
     }
     if (w.level === 1024) {
-      const recoveryIndex = windows.findIndex(x => x.level === 256 && x.recoveryOf === w.id && nsTime(x.startNs) >= nsTime(w.endNs) && nsTime(x.startNs) - nsTime(w.endNs) <= 60000000000n);
+      const recoveryIndex = windows.findIndex(x => nsText(w.id) && nsText(x.id) && nsText(x.recoveryOf) && x.level === 256 && x.recoveryOf === w.id && nsTime(x.startNs) >= nsTime(w.endNs) && nsTime(x.startNs) - nsTime(w.endNs) <= 60000000000n);
       nsAssert(recoveryIndex >= 0, 'P1-RECOVERY-MISSING');
       const recovery = results[recoveryIndex];
       if (recovery.readP99Ms === null || recovery.readP99Ms > 100 || recovery.writerP99Ms > base.writerP99Ms * 1.25) met = false;
@@ -2031,11 +2160,14 @@ export function nsP1Ladder(windows, replayRead, prefix) {
 }
 
 /** Matched 1,000-subject depth sample; compare both latency and read bytes, retaining per-depth denominators. */
-export function nsP4History(pulls) {
+export function nsP4History(pulls, replayRead, prefix, resources) {
   nsAssert(Array.isArray(pulls) && pulls.length > 0, 'P4-HISTORY-NOT-VERIFIED');
+  nsAssert(typeof replayRead === 'function' && Array.isArray(resources) && resources.length === 3, 'P4-HISTORY-NOT-VERIFIED');
+  nsUniqueEvents(pulls, 'readId');
   const byDepth = new Map([1, 3, 10].map(d => [d, new Map()]));
   for (const p of pulls) {
-    nsAssert(byDepth.has(p.depth) && nsText(p.subject) && !byDepth.get(p.depth).has(p.subject) && nsUint(p.bytesRead), 'EVENT-SCHEMA');
+    nsAssert(byDepth.has(p.depth) && nsText(p.subject) && !byDepth.get(p.depth).has(p.subject) && nsHash(p.answerSha256), 'EVENT-SCHEMA');
+    nsAssert(p.answerSha256 === replayRead(p, nsPrefix(prefix, p.requestedBasis)) && same(p.echoedBasis, p.requestedBasis), 'P4-HISTORY-ANSWER-MISMATCH');
     nsAssert(nsTime(p.receivedAtNs) >= nsTime(p.sentAtNs), 'EVENT-SCHEMA');
     byDepth.get(p.depth).set(p.subject, p);
   }
@@ -2044,17 +2176,26 @@ export function nsP4History(pulls) {
   const depths = {};
   for (const [depth, rows] of byDepth) {
     nsAssert(same([...rows.keys()].sort(), subjects), 'P4-HISTORY-NOT-VERIFIED', 'unmatched subjects');
-    depths[depth] = { count: rows.size, p99Ns: nsNearestRank([...rows.values()].map(p => nsTime(p.receivedAtNs) - nsTime(p.sentAtNs)), 99), bytesRead: [...rows.values()].reduce((sum, p) => sum + BigInt(p.bytesRead), 0n) };
+    const phase = resources.find(r => r.depth === depth);
+    nsAssert(phase && [...rows.values()].every(r => nsTime(r.sentAtNs) >= nsTime(phase.startNs) && nsTime(r.receivedAtNs) <= nsTime(phase.endNs)) && nsTime(phase.ioReadEndBytes) >= nsTime(phase.ioReadStartBytes), 'P4-HISTORY-NOT-VERIFIED');
+    depths[depth] = { count: rows.size, p99Ns: nsNearestRank([...rows.values()].map(p => nsTime(p.receivedAtNs) - nsTime(p.sentAtNs)), 99), bytesRead: nsTime(phase.ioReadEndBytes) - nsTime(phase.ioReadStartBytes) };
   }
-  const met = [3, 10].every(d => depths[d].p99Ns * 10n <= depths[1].p99Ns * 11n && depths[d].bytesRead * 10n <= depths[1].bytesRead * 11n);
+  const baseline = nsStats([...byDepth.get(1).values()].map(p => nsTime(p.receivedAtNs) - nsTime(p.sentAtNs)));
+  const met = baseline.p50Ms <= 5 && baseline.p99Ms <= 25 && [3, 10].every(d => depths[d].p99Ns * 10n <= depths[1].p99Ns * 11n && depths[d].bytesRead * 10n <= depths[1].bytesRead * 11n);
   return { met, depths: Object.fromEntries(Object.entries(depths).map(([d, m]) => [d, { count: m.count, p99Ms: nsMs(m.p99Ns), bytesRead: String(m.bytesRead) }])) };
 }
 
-export function nsP5Traffic(segments) {
-  nsAssert(isObj(segments) && nsMatchedSegment(segments.baseline, segments.sweep), 'P5-LIVE-TRAFFIC-NOT-VERIFIED');
-  const baseline = nsSegment(segments.baseline), sweep = nsSegment(segments.sweep);
-  const valid = m => Number.isFinite(m.readP99Ms) && m.readP99Ms !== null && Number.isFinite(m.writerP99Ms) && m.writerP99Ms !== null;
-  return { met: valid(baseline) && valid(sweep) && sweep.readP99Ms <= baseline.readP99Ms * 1.5 && sweep.writerP99Ms <= baseline.writerP99Ms * 1.5, baseline: { readP99Ms: baseline.readP99Ms, writerP99Ms: baseline.writerP99Ms }, sweep: { readP99Ms: sweep.readP99Ms, writerP99Ms: sweep.writerP99Ms } };
+export function nsP5Traffic(segments, sweep, replayRead, prefix) {
+  try {
+    nsAssert(isObj(segments) && nsMatchedSegment(segments.baseline, segments.sweep) && sweep && nsTime(segments.sweep.startNs) >= nsTime(sweep.startNs) && nsTime(segments.sweep.endNs) <= nsTime(sweep.endNs) && (nsTime(segments.baseline.endNs) <= nsTime(sweep.startNs) || nsTime(segments.baseline.startNs) >= nsTime(sweep.endNs)), 'P5-LIVE-TRAFFIC-NOT-VERIFIED');
+    const baseline = nsSegment(segments.baseline), during = nsSegment(segments.sweep);
+    for (const s of [segments.baseline, segments.sweep]) {
+      nsAssert(nsReaderEvidence(s.reads, s.readers, s, 64) >= .99, 'READER-LEVEL-MISMATCH');
+      nsAssert(nsReadSample(s.reads, s, replayRead, prefix).violations === 0, 'NS-P1-VIOLATIONS-MAX');
+    }
+    const valid = m => m.reads.length > 0 && Number.isFinite(m.readP99Ms) && m.readP99Ms !== null && Number.isFinite(m.writerP99Ms) && m.writerP99Ms !== null;
+    return { met: valid(baseline) && valid(during) && baseline.readP99Ms <= 100 && baseline.writerP99Ms <= 50 && during.readP99Ms <= baseline.readP99Ms * 1.5 && during.writerP99Ms <= baseline.writerP99Ms * 1.5, baseline: { readP99Ms: baseline.readP99Ms, writerP99Ms: baseline.writerP99Ms }, sweep: { readP99Ms: during.readP99Ms, writerP99Ms: during.writerP99Ms } };
+  } catch (error) { return { met: false, reason: error.code ?? 'P5-LIVE-TRAFFIC-NOT-VERIFIED' }; }
 }
 
 /** Old P3M events have candidate-origin instants, no observer brackets/WAL; compare arithmetic only, never qualify. */
