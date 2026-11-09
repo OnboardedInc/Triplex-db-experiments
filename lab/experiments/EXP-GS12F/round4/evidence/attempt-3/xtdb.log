@@ -1,0 +1,16 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/packages/xtdb
+
+
+ Test Files  8 passed | 9 skipped (17)
+      Tests  62 passed | 90 skipped (152)
+   Start at  22:57:55
+   Duration  5.05s (import 73%, tests 22%, transform 4%, worker 1%)
+
+     Import  144 modules were evaluated 191 times · 2.79s total, 73% of tracked time
+             ~687ms faster with isolate: false — shared modules are evaluated once per worker instead of once per file
+             learn more: https://vitest.dev/guide/improving-performance#test-isolation
+

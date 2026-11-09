@@ -1,0 +1,2 @@
+packages/core/src/kv/layers/KvTriplesLive.ts(428,85): error TS2339: Property 'value' does not exist on type '{ readonly value: { readonly type: "string"; readonly value: string; } | { readonly type: "number"; readonly value: number; } | { readonly type: "integer"; readonly value: string; } | { readonly type: "boolean"; readonly value: boolean; } | { ...; } | { ...; } | { ...; } | { ...; }; ... 6 more ...; readonly validTo?...'.
+  Property 'value' does not exist on type '{ readonly op: "retract"; readonly id: string & Brand<"TripleId">; }'.
