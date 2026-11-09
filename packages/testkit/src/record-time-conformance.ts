@@ -155,12 +155,14 @@ export const recordTimeConformanceCases = (
       name: "T6 far-future record cut refuses immediately",
       run: Effect.gen(function* () {
         const t = yield* Triples;
-        const start = performance.now();
         const error = yield* t
           .entity(EntityId.make("rt:future"), { recordedAt: Date.now() + 60000 })
           .pipe(Effect.flip);
         yield* check("axis" in error && error.axis === "recordedAt", "untyped refusal");
-        yield* check(performance.now() - start < 1000, "far future waited");
+        yield* check(
+          "waitedMs" in error && typeof error.waitedMs === "number" && error.waitedMs < 1000,
+          "far future entered the basis wait",
+        );
       }),
     },
     {
