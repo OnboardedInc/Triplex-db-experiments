@@ -2065,3 +2065,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 
 - **verify/A01-0314 aa24b4ef FIX-FIRST:** F1/F2 fixed, and omitting valueDomain now fails to compile. That requirement immediately surfaced F3: the Datomic domain has no integration codec entry (three test failures, TS2741). This is the required field doing its job.
 - **B1:** the Q99 and Q100 pending rows committed on main conflict with the contract branch, so the merged-main Q87 check could not run. **Rule:** while a contract branch is open, new pending rulings still go on main, but the contract builder's final round merges main as a named step, and the orchestrator lists the rows added since the branch point in that prompt.
+
+## 2026-11-09: P5 round B blocked on positions; ruling Q101a maps reference to native positions
+
+- **3d23d208:** round A merged (21 conflicts listed), sweep workers and retention leases added, 10 SQLite and 33 harness tests pass. The preflight stopped correctly: W0's first reference position is 1, and the broker's first commit is 2048 (LSN * 1024 + ordinal; LSN 1 is the epoch frame). First-command ACK took 7.133 ms.
+- **Ruling Q101a (pending):** positions need not be equal; the seed manifest binds an order-preserving map from reference to native positions, and every consumer translates through it. Lane D's position-to-t map (Q89d) is the same idea.
+- **Lesson:** "receipt position equals reference position" held on XTDB by accident of dense numbering. Any assumption that one engine's identifiers equal the oracle's needs an explicit map.
