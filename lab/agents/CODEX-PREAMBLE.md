@@ -28,6 +28,9 @@ human is watching this run. Your role and task follow after these rules.
 9b. **The contract is not yours.** Never edit lab/acceptance/ (rulings, generated files, pins, the contract version) unless your task
     is a contract version. If your change moves a pinned file's hash, list each pinned path with its old and new sha256 in your report and
     leave the contract unchanged; the contract builder re-pins it in the next version.
+9c. **Bulky evidence stays out of git.** Any single evidence file over 1 MB, and any directory of raw oracle or gate output over 5 MB,
+    goes to /Users/sam/Claude/Projects/triplex-db-2/evidence/<your id>/ (durable); commit only a SHA256SUMS manifest and a short index
+    in the repo, so reviewers can verify the files. (DA01 tried to add 1.6M lines of oracle JSON.)
 10. **Report.** Write your full report to the report path your task names (or, if none, `REPORT-<your id>.md` at the root of your
     worktree, committed), then end with a short final message: result, head commit, evidence paths, open questions. State plainly
     what you did not do or could not verify.
