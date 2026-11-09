@@ -1,0 +1,22 @@
+{
+  "startedAt": "2026-11-09T03:46:42Z",
+  "head": "e5257600fb41f393d13f3a22eae110d5601a92f3",
+  "run": "runs/xtdb-seed/k01-r10-20261109T034627Z",
+  "holder": "CX-K01-R10-live",
+  "sources": {
+    "lab/experiments/EXP-K01-seed-clone/LIVE-round10.md": "d41710ce2e805d2101cbf3006bd59ceb2791780b2cc199f7b48f6120b0d98456",
+    "lab/bin/engine.mjs": "1447cbd2db4a51af353d96e234d17e39c4c0510f6ca7995f569e38780fd697cf",
+    "lab/bin/lib.mjs": "08da34d2f927a64099f2c42c2dbb3ab83e2862b879465e2f4e692c4327efd406",
+    "lab/bench/lib/g0.ts": "d2995b912bbe0460b3eb1c53a728f2242046676de73f43a401f26d6b4ad6f195",
+    "lab/bench/lib/g0-wire.ts": "47b7a5b44c48d99dd278160084ff7d1c1a6a9af9c18699eb23c78437cc51721e",
+    "lab/bench/lib/g0-native.ts": "9c507ef4c5e9bb9d0e9c5096a5e0bd6a6dcfddc1f4d94c60cf4c6c63fea33b7f",
+    "lab/bench/lib/g0-values.ts": "3e8a6c85c94f854556634fa46c68a9e747ea13cf1e61ac78f26a3f7d845c3ffb",
+    "lab/bench/lib/g0-normalize.ts": "749037ed2727801ab01cd0ab5ddb134f3db66d3197472f119bb81e04af1e8ef8",
+    "packages/xtdb/dist/index.js": "902c0eda6b26883a204c6bb9c03c2ae8866333de781cc123630baf3cb0c94ef8",
+    "packages/core/dist/runtime/index.js": "a558ff64b66dc0ca51688a94ec35f5659c03fa56c3fb3153e6a4c6e1cffdaf2c",
+    "/Users/sam/projects/triplex-db-2/lab/config/slots.json": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8"
+  },
+  "commands": {
+    "wire": "node lab/bin/heavy.mjs --label CX-K01-R10-wire -- node --experimental-strip-types --input-type=module > \"$run/wire.log\" 2>&1 <<'JS'\nimport assert from 'node:assert/strict';\nimport { makeXtdbClient } from './packages/xtdb/dist/index.js';\nimport { openWire } from './lab/bench/lib/g0-wire.ts';\nimport { canonical } from './lab/bench/lib/g0-values.ts';\nimport { bounded } from './lab/bench/lib/g0.ts';\nassert(process.env.XTDB_URL);\nassert(process.env.TRIPLEX_LAB_SLOT_OWNER?.endsWith('/xtdb-s1/owner.json'));\nconst fs = await import('node:fs');\nconst owner = JSON.parse(fs.readFileSync(process.env.TRIPLEX_LAB_SLOT_OWNER,'utf8'));\nassert.equal(owner.holder,'CX-K01-R10-live');\nconst c = makeXtdbClient(process.env.XTDB_URL,{maxConnections:1});\nconst w = await openWire(process.env.XTDB_URL);\nconst query = s => bounded(signal => c.query(s,[],undefined,{signal,timeoutMs:60000}),60000);\nconst cases = [\n ['int_narrow','INTEGER',':i32'], ['int_wide','BIGINT',':i64'],\n ['float_narrow','REAL',':f32'], ['float_wide','DOUBLE PRECISION',':f64'],\n];\nconst observed = new Map();\ntry {\n for (const [suffix,cast,expected] of cases) {\n  const table='tx_wire_'+suffix;\n  await bounded(() => c.submit([{sql:`INSERT INTO ${table} (_id,scope_key,v) VALUES ('a','wire',CAST(1 AS ${cast}))`}]),60000);\n  const n=await query(`SELECT COUNT(*) AS n FROM ${table}`);\n  assert.equal(Number(n[0].n),1);\n  const cat=await query(`SELECT column_name,xt_type FROM information_schema.columns WHERE table_name='${table}' AND table_schema='public' ORDER BY column_name`);\n  assert.equal(cat.find(r=>r.column_name==='v')?.xt_type,expected);\n  const rows=await bounded(signal=>w.scan(`SELECT v FROM ${table} WHERE scope_key = ?`,['wire'],signal),60000);\n  assert.equal(rows.length,1);\n  observed.set(suffix,canonical(rows[0].v));\n  console.log({table,cat,canonical:canonical(rows)});\n }\n assert.notEqual(observed.get('int_narrow'),observed.get('int_wide'));\n assert.notEqual(observed.get('float_narrow'),observed.get('float_wide'));\n for (const [suffix,narrow,wide] of [['mixed_int','INTEGER','BIGINT'],['mixed_float','REAL','DOUBLE PRECISION']]) {\n  const table='tx_wire_'+suffix;\n  await bounded(()=>c.submit([{sql:`INSERT INTO ${table} (_id,scope_key,v) VALUES ('a','wire',CAST(1 AS ${narrow})),('b','wire',CAST(2 AS ${wide}))`}]),60000);\n  assert.equal(Number((await query(`SELECT COUNT(*) AS n FROM ${table}`))[0].n),2);\n  const cat=await query(`SELECT column_name,xt_type FROM information_schema.columns WHERE table_name='${table}' AND table_schema='public' ORDER BY column_name`);\n  assert.match(cat.find(r=>r.column_name==='v')?.xt_type??'',/:union/);\n  await assert.rejects(()=>bounded(signal=>w.scan(`SELECT v FROM ${table} WHERE scope_key = ?`,['wire'],signal),60000),/ambiguous or inconsistent native type/);\n  console.log({table,cat,refusedAmbiguousUnion:true});\n }\n} finally { await bounded(()=>Promise.all([c.close(),w.close()]),30000); }\nJS\n"
+  }
+}
