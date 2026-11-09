@@ -97,7 +97,13 @@ it("generated histories preserve exact route equivalence for every temporal basi
           try {
             for (let i = 0; i < cuts.length; i++) for (const selection of ["entities", "many"]) {
               const c = cuts[i]!, expectedRows = [...model.values()].filter(r => (selection === "entities" ? r.entity_id === "hot" || r.entity_id === "peer" : r.entity_id === "hot" && r.attribute === ":many") && visible(r, c.basis, b.head()));
-              const expected = canonical(expectedRows), answers: string[] = [];
+              // [CX-INT-Q] Why: Q89i snapshots hide retirement metadata beyond either named cut.
+              // Rejected: importing the product mask into this independent oracle, or expecting raw lifetime rows on snapshot reads.
+              const snapshotExpected = expectedRows.map(r => r.retracted_position !== null &&
+                (r.retracted_position > (c.basis?.recordedPosition ?? b.head()) ||
+                 (r.retracted_at !== null && r.retracted_at > (c.basis?.recordedAt ?? Infinity)))
+                  ? { ...r, retracted_at: null, retracted_position: null, retract_tx_id: null } : r);
+              const expected = canonical(snapshotExpected), answers: string[] = [];
               for (const arm of ["candidate", "forced-source"]) {
                 forced = arm === "forced-source"; pulls = 0; sourceReads = 0; eligible = false;
                 const actualRows = selection === "entities" ? [...(await Effect.runPromise(adapter.getByEntities(["hot", "peer", "absent"], c.basis))).values()].flat() : await Effect.runPromise(adapter.query({ entityId: "hot", attribute: ":many" }, c.basis));
@@ -107,7 +113,7 @@ it("generated histories preserve exact route equivalence for every temporal basi
                 const record = { seed, phase, cut: i, shape: c.shape, selection, arm, route, pulls, sourceReads, eligible, count: actualRows.length, actual: digest(actual), expected: digest(expected) };
                 observations.push(record);
                 if (actual !== expected || (route === "h1" && c.basis?.recordedAt !== undefined) || (arm === "forced-source" && sourceReads !== 1)) {
-                  mismatches.push({ ...record, basis: c.basis, actualRows, expectedRows });
+                  mismatches.push({ ...record, basis: c.basis, actualRows, expectedRows: snapshotExpected });
                   evidence("routes-first-failure", { histories, observations, mismatches, totals });
                   expect(actual, JSON.stringify(record)).toBe(expected);
                   expect(route === "h1" && c.basis?.recordedAt !== undefined).toBe(false);
