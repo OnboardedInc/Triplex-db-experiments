@@ -1,0 +1,455 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 47326 "CX-RQ01-round2-final-packed-consumer", pid 26498 "CX-VO06-regression", pid 67892 "CX-G03-r3-claim-suites3", pid 41288 "CX-A01-0312-R3-install"
+SUPERSEDED Q59e unpinned allowed: Q75c runner hashes independently refuse the same unpinned fixture
+SOURCE sha256=914db3d15e91180e8b449fffeeb27b997dc10eb835fff66e10eca6517e985b59
+CAUGHT Q31a queue bound 5: Q31a: NS-P2-QUEUE-MAX-S = 2 on NS.P2
+CAUGHT Q31a progress text: Q31a: P2 progress rule
+CAUGHT Q31b driver writes: Q31b: split reads straddle trace commands; no driver writes
+CAUGHT Q31c falsifier dropped: Q31c/Q38a: falsifier FX-RESUME-AT-ABORT-GAP not selected
+CAUGHT Q31c oracle text: Q31c: O-REPLAY position text
+CAUGHT Q31c gate removed: Q31c: GS.01 lacks GATE-POSITION
+CAUGHT Q31d wait 250: Q31d: T-WATERMARK-WAIT-MS = 10
+CAUGHT Q31d reconstruct dropped: CS-COMPOSITION: required case CO-RECONSTRUCT-OUTSIDE-VALIDITY not traced
+CAUGHT Q31e old ack: ACCEPTANCE.md: banned text 'ACKs only after the current index' (superseded ACK clause (RULINGS Q31e)) near: 'orded (RULINGS Q34b) |\n| ackOw
+CAUGHT Q31e GS04b: Q31e: GS.04b outage semantics
+CAUGHT Q31f key evidence: Q31f: erasure frontier, cache, reproduction scope, key evidence
+CAUGHT Q31h GS19: ACCEPTANCE.md: banned text 'no duplicate processing' (superseded GS.19 wording (RULINGS Q31h)) near: ' from its checkpoint. Checked beyond e
+CAUGHT Q31i floor: Q31i: W0-R2-CHANGED-SHARE = 0.2
+CAUGHT Q31i gate: Q31i: G7.outbox.atomic-unit is domain-dependent but not gated on W0
+CAUGHT Q31j legacy dropped: Q31j: legacy outcomes differ from the golden scan: missing ['G5-SUM-08'], extra []
+CAUGHT Q31j qlever commits: Q31j: G5-SUM-01 lane outcomes
+CAUGHT Q31k positive dropped: Q31k: closure rules without a positive fixture: ['CR-W0-COVERAGE']
+CAUGHT Q29b agreement: Q29a/b: golden files unchanged and Q8F-05 agreement rule
+CAUGHT Q29a golden rule: Q29a/b: golden files unchanged and Q8F-05 agreement rule
+CAUGHT Q30a guard after canonical: Q30a: JSON guard rule
+CAUGHT Q30a nested dropped: Q30a: JSON guard rule
+CAUGHT Q30b instant: Q30b: instant -0
+CAUGHT Q30c encoding: Q30c: XTDB pinned encodings
+CAUGHT Q30d shadow: Q30d: QLever shadow rule
+CAUGHT Q32b EXP-G02 dropped: Q32b: EXP-G02 follow-up recorded
+CAUGHT Q32c share: Q32c: 0.1% marked invalid trace commands
+CAUGHT Q33a readback: Q33a: read-back-as-written refines Q30a
+CAUGHT Q33d never false: Q33d: ordered cross-family comparison is E-MIXED-FAMILY
+CAUGHT Q33h other-query: Q33g/h: pagination reasons
+CAUGHT Q33i list: Q33i: lists differ; only in Q33i: []; only in Q31j: ['G1-I64-02#min-exact']
+CAUGHT Q33 rule dropped: Q33: R-CMD-12 missing
+CAUGHT Q34b native dropped: Q34b: outage RYOW on every serving surface with stale-fallback rejection and recipe identity
+CAUGHT Q34c pair dropped: G7.journal.logical-contract: selector tag WIRE-JOURNAL-NUMBER-NEGZERO-ROUNDTRIP not in CS-WIRE requiredTags
+CAUGHT Q35 example wrong: Q35a: TDK1 16.50 encodes to p02165, not p021650
+CAUGHT Q35 no terminator: Q35a: TDK1 -0.01 encodes to n9998, not n9998z
+CAUGHT Q35 old wording: ACCEPTANCE.md: banned text 'fixed-width, sign-aware' (superseded decimal key wording (RULINGS Q35a)) near: 'ving-decimal-encodings.md sectio
+CAUGHT Q35 old error: ACCEPTANCE.md: banned text 'E-DECIMAL-UNREPRESENTABLE' (superseded error name (RULINGS Q35e)) near: 'imal to integer with a non-zero fractio
+CAUGHT Q35 prefix allowed: Q35c/d: channel name and use constraints
+CAUGHT Q35 V5 ungated: Q35: V5 vector pin gate
+CAUGHT Q36 zipf 1.0: Q31i: W0-LOCATION-ZIPF-S = 0.5
+CAUGHT Q36e affected: Q36e: expected affected set
+CAUGHT C2 contrast ignored: Q31j: legacy outcomes differ from the golden scan: missing [], extra ['G1-I64-02#min-exact']
+CAUGHT Q31g/Q35b widen: Q31g (as superseded by Q35b): DS-WIDEN and DS-WIDEN-MIGRATE
+CAUGHT Q30 write route dropped v2: Q30: G1.wire.write-guards
+CAUGHT Q38a A0 exempt: Q38a: A0-QLEVER must run the four falsifiers
+CAUGHT Q38a declared density: Q38a: declared density or matching block hashes must never skip the falsifiers
+CAUGHT Q38a static dense: CS-POSITION: required case FX-ABORT-GAP not traced
+CAUGHT Q38a mutant dropped: Q38a: the outside-block mutation must be a mutant the falsifiers kill
+CAUGHT Q38a allowlist back: Q38a: the allowlist must be gone and GATE-POSITION must cover A0
+CAUGHT Q38c ruling uncompiled: Q38c: RULINGS.md entries not compiled and not listed as recorded-not-compiled: ['Q39a', 'Q39b']; listed but compiled or absent: []
+CAUGHT Q38d mutant dropped: Q38d: channel routing on repository, native and raw surfaces with the lexical-order mutant
+CAUGHT Q38d SUM encode: Q38d: SUM decode-compute-encode, key arithmetic invalid, JSON conversion validates
+CAUGHT Q38e status: Q38e: O-TDK1 BUILT with gen_vectors.py pinned
+CAUGHT Q38e reference hash: Q38e: pinned O-TDK1 file lab/oracles/decimal/tdk1_reference.py does not match
+CAUGHT Q38e vector pinned unreviewed: Q38e: the vector pin may be set only with an independent review receipt
+CAUGHT Q38e candidate wrong: Q38e: the candidate vector file under review changed
+CAUGHT Q38f version key: Q38f: outbox delivery identity, rollback example, atomic state, crash replay
+CAUGHT Q38f GS19b: Q36a/Q38f: GS-19B must use the delivery key (id, publication sequence)
+CAUGHT Q39a hazard: Q39a: XTDB DECIMAL sums read as text, with hazard and mutant
+CAUGHT Q39a cast: Q39a: XTDB DECIMAL sums read as text, with hazard and mutant
+CAUGHT C1 gate dropped v2: V-O02 C1: G1.types.value-kinds-roundtrip uses O-REPLAY but is not gated on its pin
+CAUGHT Q38e O-TDK1 unpinned: Q38e: O-TDK1 pinned in ORACLE_PINS, accepted only after review
+CAUGHT Q45a status: V-O04i: O-REPLAY is BUILT-ACCEPTED at lab/oracles/replay/ with receipt V-O04i
+CAUGHT Q45b rule: Q45b: refusal handling
+CAUGHT Q45c key bytes back: Q45c: key-byte cases belong to the O-TDK1 obligations, not G1.types.decimal
+CAUGHT Q45d round: Q45d: DO-ROUND precision for a larger scale
+CAUGHT Q43 avg id: Q43: R-DEC-14 must be E-DECIMAL-AVG
+CAUGHT Q43 round refused: Q43: rounding, literal type and expression limit
+CAUGHT Q43 toInteger: Q43: R-DEC-12 must be E-INTEGER-OVERFLOW
+CAUGHT Q43 negzero basis: Q43: R-CUT-4 must be E-NEGATIVE-ZERO-INSTANT
+CAUGHT Q40 retirement: Q40/Q42/Q44: OUTBOX retirement
+CAUGHT Q40 basis order: Q40/Q42/Q44: OUTBOX basisOrder
+CAUGHT Q40 two hop: Q40/Q44: WORLD_W0 twoHopFloor
+CAUGHT Q44 live only: Q40/Q42/Q44: OUTBOX liveOnly
+CAUGHT Q42a hashes not opened: Q47a/Q54e: retained records are opened, schema-checked and re-judged (a refusal is never PASS)
+CAUGHT Q42a unknown dropped: Q55a/Q47: an unknown obligation id (Q42a) must be a diagnostic
+CAUGHT Q42b regress mutant: mutant M-RECEIVER-REGRESS attached only to the catalog obligation
+CAUGHT Q42b receivers rule: Q40/Q42/Q44: OUTBOX receivers
+CAUGHT Q42c pair dropped: Q42c: a crash case between every pair of the five transitions
+CAUGHT Q42c receiver uses replay: Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': ['G1.types.storage-widening-safe', 'G7
+CAUGHT Q38b pins ignored v2: Q55a/Q47: a claim depending on an unpinned EXISTS oracle (Q59e) must be a diagnostic
+CAUGHT Q38f GS10 v2: Q38f: GS.10 must use (id, publication sequence)
+CAUGHT Q38f mutant dropped v2: Q38f: outbox cases and the version-dedup mutant
+CAUGHT Q38c uncompiled Q45: Q38c: RULINGS.md entries not compiled and not listed as recorded-not-compiled: ['Q45a', 'Q45b', 'Q45c', 'Q45d', 'Q45e']; listed but compiled
+CAUGHT Q39b language key: Q39b: G1.decimal.tdk1-admission could share XTQL and SQL results
+CAUGHT Q31f journal modulo v2: Q31f: modulo erasure on C6, raw and native, SDK
+CAUGHT Q32f no bump v2: Q32f: pinning needs a contract version bump
+CAUGHT Q38d JSON convert v2: Q38d: SUM decode-compute-encode, key arithmetic invalid, JSON conversion validates
+CAUGHT Q45a scope diff unrecorded v2: Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': ['G1.types.storage-widening-safe', 'G7
+CAUGHT Q47d pending ids ignored: 0.3.12 round 3: Sam and RT01 rulings stay pending
+CAUGHT Q47d pending gains authority: Q47d: a pending row is listed by id and gains no authority
+CAUGHT Q47d pending not hashed: Q47d: the pending file is hashed as an input and its rows carry no authority
+CAUGHT Q47a schema ignored: Q47a/Q54e: retained records are opened, schema-checked and re-judged (a refusal is never PASS)
+CAUGHT Q47a refusal counts: Q47a/Q54e: retained records are opened, schema-checked and re-judged (a refusal is never PASS)
+CAUGHT Q47a observation unchecked: Q47a/Q54e: retained records are opened, schema-checked and re-judged (a refusal is never PASS)
+CAUGHT Q47c reach dropped: Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': [], 'onlyVerifierBlocked': ['G1.decima
+CAUGHT Q47c reach ignored: Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': [], 'onlyVerifierBlocked': ['G1.decima
+CAUGHT Q47 CX dropped: Q55a/Q47: counterexample CX-R6-UNOPENED-MEANING is recorded
+CAUGHT Q48a fingerprint wrong: Q40g/Q48a: the pinned fingerprint is O-DOMAIN's reproduced receipt and equals V-D01's final fingerprint
+CAUGHT Q48b rung: Q48b: the scoped-release P5 measurement runs at 100k and binds the reached-subject list and its hash
+CAUGHT Q48b statement: Q48b: the scoped-release P5 measurement runs at 100k and binds the reached-subject list and its hash
+CAUGHT Q49a identities: Q49: ERASURE journalCommit must say: changes list only identities
+CAUGHT Q49a journal case dropped: Q49: G7.journal.logical-contract selects ['ER-COMMIT-JOURNAL-IDENTITY-ONLY', 'ER-EARLIER-CHANGE-MARKER', 'ER-JOURNAL-MODULO']
+CAUGHT Q49b empty commit: Q49: ERASURE idempotence must say: empty change list
+CAUGHT Q49c count: Q49: ERASURE queries must say: COUNT of assertions counts it
+CAUGHT Q49c case dropped: Q49: the erasure commit and query cases are named one per rule
+CAUGHT Q49e as written: Q49e: JSON number to decimal from its as-written reading; decimal text in a JSON string is E-INVALID-VALUE
+CAUGHT Q49e string row: Q49e: JSON number to decimal from its as-written reading; decimal text in a JSON string is E-INVALID-VALUE
+CAUGHT Q38b booleans v2: Q55a/Q47: supplied case names or Booleans with no evaluator run (Q38b) must be a diagnostic
+CAUGHT Q56i commit back: Q55a: the O-REPLAY pin and its predecessor are each accepted by a VERIFIER_REGISTRY entry for that commit
+CAUGHT Q56i unregistered receipt: Q55a: the O-REPLAY pin and its predecessor are each accepted by a VERIFIER_REGISTRY entry for that commit
+CAUGHT Q56i tdk1 refusal dropped: V-O04i: residual refusals are ambiguity, TDK1 keys, envelope facts and scale evolution
+CAUGHT Q56i scope diff unrecorded: Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': ['G1.types.storage-widening-safe', 'G7
+CAUGHT Q55a brief hash wrong: Q55a: VERIFIER_REGISTRY V-D01-W0-1.1.1 names a brief with its hash, a verify/ branch, a full commit, a subject commit and a verdict
+CAUGHT Q55a verdict not accept: Q55a: the O-REPLAY pin and its predecessor are each accepted by a VERIFIER_REGISTRY entry for that commit
+CAUGHT Q55a subject commit wrong: Q55a: the O-REPLAY pin and its predecessor are each accepted by a VERIFIER_REGISTRY entry for that commit
+CAUGHT Q55a records qualify: Q55a/Q47: invented, schema-valid records with no evaluator run (CX-R7-INVENTED-EVIDENCE) must be a diagnostic
+CAUGHT Q55a manifest unchecked: Q55a/Q47: a manifest that does not hash to the pinned one (CX-R7-SELECTION-OVERREACH) must be a diagnostic
+CAUGHT Q55a unpinned manifest used: Q55a/Q47: case sets with no pinned manifest, as in the contract today (Q55a) must be a diagnostic
+CAUGHT Q55a empty selection ok: Q55a/Q47: a selection that resolves to no case in the pinned manifest (Q55a) must be a diagnostic
+CAUGHT Q55a refusal accepted: Q55a/Q47: an oracle refusal on one resolved case (Q45b, Q55a) must be a diagnostic
+CAUGHT Q55a comparator ignored: Q55a/Q47: a claimant selection or case list (ignored; the evaluator resolves every case) (Q55a) must be a diagnostic
+CAUGHT Q55a A0 rebuild trusted: Q55a/Q47: a control whose rebuild does not reproduce the registry's binarySha256 (CX-R7-RELABELLED-CONTROL) must be a diagnostic
+CAUGHT Q55a slot unchecked: Q55a/Q47: an unregistered slot (Q55a) must be a diagnostic
+CAUGHT Q55a claim verification ignored: Q55a/Q47: a claim whose obligation has no VERIFIER_REGISTRY verification (Q55a) must be a diagnostic
+CAUGHT Q55a pin verification ignored: Q55a/Q47: an oracle pin naming the superseded verification (Q55a) must be a diagnostic
+CAUGHT Q55a W0 verification ignored: Q55a/Q47: a W0 pin naming the superseded W0-1.1.1 verification (Q55a) must be a diagnostic
+CAUGHT Q55a CX dropped: Q55a/Q47: counterexample CX-R7-RELABELLED-CONTROL is recorded
+CAUGHT Q55b QT4 merged: Q55b: QT4 splits into QT4s (source durable and readable) and QT4r (replica applied); success only after QT4s
+CAUGHT Q55b success after replica: Q55b: QT4 splits into QT4s (source durable and readable) and QT4r (replica applied); success only after QT4s
+CAUGHT Q55b old table kept: Q55b: one witnessed transition table per protocol variant (log-source, engine-source)
+CAUGHT Q55b variant optional: Q55a/Q47: a composition that does not declare its source variant (Q55b) must be a diagnostic
+CAUGHT Q55b durability unchecked: Q55a/Q47: a log source with an empty fsync mode (Q55b) must be a diagnostic
+CAUGHT Q55b fault case dropped: Q50d/Q51/Q52/Q55: FAULT_Q55_CASES names one case per rule
+CAUGHT Q55b receipt binding: Q55b: compositions declare their source; receipts bind the log identity and durability configuration
+CAUGHT Q55b statement: Q55b/Q51f: G7.commit.protocol-transitions selects its table by variant and covers the new fault points
+CAUGHT Q55c NS.P2 stand-in: Q55c: NS.P2 and G7.composition.ack-and-routed-ryow test each surface against its own guarantee
+CAUGHT Q55c error dropped: G7.composition.ack-and-routed-ryow: unknown error E-REPLICA-UNAVAILABLE
+CAUGHT Q55c replica-down fallback: Q55c: per-surface read guarantees, provisional, superseding Q50b
+CAUGHT Q55d ack clock: Q55d: P3 lag from source publication with every committed position accounted
+CAUGHT Q55d accounting: Q55d: P3 lag from source publication with every committed position accounted
+CAUGHT Q55e claim fingerprint honoured: Q55a/Q47: a domain-dependent claim supplying its own fingerprint (Q55e) must be a diagnostic
+CAUGHT Q55e ownership text: Q55e: the O-DOMAIN fingerprint changes only by a reviewed contract version
+CAUGHT Q52e per value back: Q52e: the per-value in-flight text is replaced
+CAUGHT Q52 residual leaks into queries: Q49: the erasure commit and query cases are named one per rule
+CAUGHT Q52f routing reaches rounding: Q52f: channel-routing never reaches the refused rounding form
+CAUGHT Q52c earliest: Q52/Q56: ERASURE queriesResidual must say: earliest erasedAt
+CAUGHT Q56a unknown target commits: Q52/Q56: ERASURE selectors must say: unknown id is E-INVALID-VALUE
+CAUGHT Q56b no conflict: Q52/Q56: ERASURE presence must say: E-CONFLICTING-VALUES
+CAUGHT Q56 case dropped: Q52/Q56: one named case per ruling
+CAUGHT Q56h synthetic: Q52/Q56: ERASURE syntheticData must say: synthetic values only
+CAUGHT Q50d gate dropped: Q50d: broker promotion hardening obligation and gate
+CAUGHT Q50d case dropped: Q50d/Q51/Q52/Q55: BROKER_HARDENING_CASES names one case per rule
+CAUGHT Q50a index note: Q50a/Q50c/Q50e/Q51d/Q51e: broker index candidate, storage per commit reported, run queue and deferred rung recorded
+CAUGHT Q50e run queue: Q50a/Q50c/Q50e/Q51d/Q51e: broker index candidate, storage per commit reported, run queue and deferred rung recorded
+CAUGHT Q51a driver queue: Q51a: per-subject queue with typed Overloaded and same-subject group commit
+CAUGHT Q51a case dropped: Q51a: per-subject queue with typed Overloaded and same-subject group commit
+CAUGHT Q51c in gate: Q51c: positions opaque, totally ordered and bound after publication (outside the GATE-POSITION falsifier set)
+CAUGHT Q51c binding text: Q51c: positions opaque, totally ordered and bound after publication (outside the GATE-POSITION falsifier set)
+CAUGHT Q51d storage bar: Q50a/Q50c/Q50e/Q51d/Q51e: broker index candidate, storage per commit reported, run queue and deferred rung recorded
+CAUGHT Q51e rung: Q50a/Q50c/Q50e/Q51d/Q51e: broker index candidate, storage per commit reported, run queue and deferred rung recorded
+CAUGHT Q51f error dropped: G7.commit.protocol-transitions: unknown error E-DUAL-COMMIT-PATH
+CAUGHT Q54b reach added: Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': ['G1.types.storage-widening-safe', 'G7
+CAUGHT Q58a facade dropped: Q58a: readGuarantees native must say: engine ports are not a public surface
+CAUGHT Q58a at token dropped: Q58a: readGuarantees native must say: E-BASIS-NOT-RECONSTRUCTIBLE
+CAUGHT Q58a no basis range: Q58a: readGuarantees native must say: {basis: {low, high}, route}
+CAUGHT Q58a deadline: Q58a/Q62a: 2 s default deadline, E-BASIS-NOT-RECONSTRUCTIBLE, and the token and V-P2Q read cases selected
+CAUGHT Q58a error dropped: G7.composition.ack-and-routed-ryow: unknown error E-BASIS-NOT-RECONSTRUCTIBLE
+CAUGHT Q58a case dropped: Q58/Q62: NATIVE_TOKEN_CASES names one case per rule
+CAUGHT Q58a not provisional: Q58a: readGuarantees native must say: PROVISIONAL
+CAUGHT Q58b direction: Q58b: EXP-P2B direction recorded
+CAUGHT Q58c pragma: Q58c: the SQLite substrate direction is recorded
+CAUGHT Q58c flock back: Q50d/Q51/Q52/Q55: BROKER_HARDENING_CASES names one case per rule
+CAUGHT Q58c crc dropped: Q50d/Q51/Q52/Q55: BROKER_HARDENING_CASES names one case per rule
+CAUGHT Q58c statement: Q58c/Q62b: hardening amended (SQLite substrate replaces rotation and lock) and the default-off merge needs only Q62a
+CAUGHT Q58d overlay merges all: Q58d: overlay rules
+CAUGHT Q58d obligation dropped: Q45a: pin scope differs from pin_scope.json beyond the recorded differences: {'onlyGeneratorBlocked': ['G1.types.storage-widening-safe', 'G7
+CAUGHT Q58d tombstones: Q58d: overlay rules
+CAUGHT Q58e log erasure: Q58e: erasure reaches the log through crypto-shredding
+CAUGHT Q58e case unselected: CS-ERASURE: required case ER-LOG-CRYPTO-SHRED not traced
+CAUGHT Q62a case dropped: Q58/Q62: P2Q_READ_CASES names one case per rule
+CAUGHT Q62a two brokers unselected: CS-FAULT: required case C2-TWO-BROKERS-ONE-PROCESS not traced
+CAUGHT Q62b default-off: Q58c/Q62b: hardening amended (SQLite substrate replaces rotation and lock) and the default-off merge needs only Q62a
+CAUGHT Q62c 750 back: Q62c: the measured 653-triple baseline replaces about 750
+CAUGHT Q60a rounds: Q60a: paired rounds (8 to 24, looks at 8, 12, 18, 24 at 98.2%), never a single run
+CAUGHT Q60a single run ok: Q60a: paired rounds (8 to 24, looks at 8, 12, 18, 24 at 98.2%), never a single run
+CAUGHT Q60b margin: Q60b: margins 1.25, 1.10 and 1.15, provisional
+CAUGHT Q60b hold p99: Q60b: margins 1.25, 1.10 and 1.15, provisional
+CAUGHT Q60c regime unrecorded: Q60c: slot regime recorded in receipts; quota and cpuset arms never compared
+CAUGHT Q60d committed only: Q60d/e/g/h/i: censored accounting, GREEN windows, screening series, lease and single-run A0 diagnostic
+CAUGHT Q60e windows: Q60d/e/g/h/i: censored accounting, GREEN windows, screening series, lease and single-run A0 diagnostic
+CAUGHT Q60f modes: Q60f: NS obligations gain paired-rounds next to single-execution
+CAUGHT Q60f CR-NS: Q60f: CR-NS and MODE_RULE carry PAIR_0
+CAUGHT Q60h lease: Q60d/e/g/h/i: censored accounting, GREEN windows, screening series, lease and single-run A0 diagnostic
+CAUGHT Q60i A0 single run: Q60d/e/g/h/i: censored accounting, GREEN windows, screening series, lease and single-run A0 diagnostic
+CAUGHT Q60 CX dropped: Q60: counterexample CX-PAIR0-REGIME-MISMATCH is recorded
+CAUGHT Q61c argv: Q61c: oracleRunners with O-REPLAY's default argv and the answer-extraction rule
+CAUGHT Q61c runner ignored: Q61c: qualification_run refuses a missing oracle runner before invoking it
+CAUGHT Q61d field unpinned: Q61d: case-manifest fields pinned
+CAUGHT Q61d input hash unchecked: Q55a/Q47: a case input that does not hash to its contentSha256 (Q61d) must be a diagnostic
+CAUGHT Q61e mode dropped: Q61e: case-result/2 adds mode, rep, comparator and inputSha256; a record without them fails closed
+CAUGHT Q61f spec filled: Q61f: the build spec is a contract input (null until specified) and build-manifest/2 carries the build inputs
+CAUGHT Q61f spec unchecked: Q55a/Q47: a run while the contract's build spec is null, as today (Q61f) must be a diagnostic
+CAUGHT Q61g workload everywhere: Q61g: a correctness claim needs no workload identity or paired measurement (positive control)
+CAUGHT Q61h frozen filled: Q61h: writerTrace.generator.frozen {sha256, seed, offerScheduleSha256}, a required null input
+CAUGHT Q61h frozen unchecked: Q55a/Q47: a workload that is not the frozen trace (Q61h) must be a diagnostic
+CAUGHT Q61i image unchecked: Q55a/Q47: an assignment whose image is not the contract's pin (Q61i) must be a diagnostic
+CAUGHT Q61i image wrong: Q61i: lab/config/slots.json lane images must agree with the contract's IMAGE_PINS
+CAUGHT Q61j witness unchecked: Q55a/Q47: a fault witness for another fault point (Q61j) must be a diagnostic
+CAUGHT Q61j witness point unchecked: Q55a/Q47: a fault witness for another fault point (Q61j) must be a diagnostic
+CAUGHT Q61k measuredBy unchecked: Q55a/Q47: an A0 entry whose measurement is not verified through the registry (Q61k) must be a diagnostic
+CAUGHT Q61a source: Q61a/Q61j/Q61k: contract source, retained fault witnesses, A0 verified through measuredBy
+CAUGHT Q59c brief rule: Q59c: every verification saves its own brief
+CAUGHT W0 hash wrong: Q31i/Q48a: W0_PIN lab/world/W0/SPEC.md does not match the file
+CAUGHT W0 table digest wrong: Q57/V-D01e: W0_PIN must pin exactly the 146 hashes of lab/world/W0/SHA256SUMS, the table's own sha256 and the frozen expected and input hash
+CAUGHT W0 commit back: 0.3.10: the W0 pin is complete
+CAUGHT W0 verifier old: 0.3.10: the W0 pin is complete
+CAUGHT W0 frozen dropped: Q57/V-D01e: W0_PIN must pin exactly the 146 hashes of lab/world/W0/SHA256SUMS, the table's own sha256 and the frozen expected and input hash
+CAUGHT W0 registry brief: Q55a: VERIFIER_REGISTRY V-D01e-W0-1.1.2 names a brief with its hash, a verify/ branch, a full commit, a subject commit and a verdict
+CAUGHT W0 fingerprint dropped: 0.3.10: the W0 pin is complete
+CAUGHT W0 fingerprint wrong: Q40g/Q48a: the pinned fingerprint is O-DOMAIN's reproduced receipt and equals V-D01's final fingerprint
+CAUGHT OD hash wrong: 0.3.10: with W0-1.1.2 and the O-DOMAIN fingerprint pinned, a complete domain-dependent claim qualifies against the contract's own W0 pin (po
+CAUGHT OD file dropped: V-D01c: O-DOMAIN BUILT-ACCEPTED and pinned at 5d1fd1a with 7 hashes through VERIFIER_REGISTRY
+CAUGHT OD commit wrong: V-D01c: O-DOMAIN BUILT-ACCEPTED and pinned at 5d1fd1a with 7 hashes through VERIFIER_REGISTRY
+CAUGHT OD unregistered: V-D01c: O-DOMAIN BUILT-ACCEPTED and pinned at 5d1fd1a with 7 hashes through VERIFIER_REGISTRY
+CAUGHT OD status: V-D01c: O-DOMAIN BUILT-ACCEPTED and pinned at 5d1fd1a with 7 hashes through VERIFIER_REGISTRY
+CAUGHT OD runner note: Q65a/V-D01c: O-DOMAIN and O-CONTRACT runner entries
+CAUGHT Q65a runner disagrees: Q65a: the O-CONTRACT runner agrees with composition_ok and the image pins on every probe
+CAUGHT Q65a log unchecked: Q65a: the O-CONTRACT runner agrees with composition_ok and the image pins on every probe
+CAUGHT Q65a runner dropped: Q65a/V-D01c: O-DOMAIN and O-CONTRACT runner entries
+CAUGHT Q57 reading dropped: Q53/Q57: SPEC 1.1.2 readings A01 to A15 recorded with V-D01e N1; no W0 edit pending
+CAUGHT Q57 N1 dropped: Q53/Q57: SPEC 1.1.2 readings A01 to A15 recorded with V-D01e N1; no W0 edit pending
+CAUGHT Q63d sql: Q63a/c/d: follower rejected, upstream filing for Sam, parameterised SQL
+CAUGHT Q63a follower: Q63a/c/d: follower rejected, upstream filing for Sam, parameterised SQL
+CAUGHT Q63b direction: Q63b: P1 through broker-fed replicas
+CAUGHT Q64f clash unchecked: Q64f: the pending-row clash check finds a row both pending and in RULINGS.md
+CAUGHT Q64b series dropped: Q69, Q64b: PAIR-0 decisions and frozen screening series
+CAUGHT Q65b spec hash: Q65b/c/d: buildSpecSha256, case-result/2 selection and built packages
+CAUGHT Q65c selection: Q65b/c/d: buildSpecSha256, case-result/2 selection and built packages
+CAUGHT Q65e pinned early: Q61f: the build spec is a contract input (null until specified) and build-manifest/2 carries the build inputs
+CAUGHT Q65f blockers: Q65f/Q67a: the blockers stay until EXP-G03's executing gate
+CAUGHT Q66a prefixes: Q66: prefix semantics, cursor prefixes and scope, residual cases, the explicit conversion as a lane obligation
+CAUGHT Q66 case dropped: Q66: prefix semantics, cursor prefixes and scope, residual cases, the explicit conversion as a lane obligation
+CAUGHT Q66d lane: Q66: prefix semantics, cursor prefixes and scope, residual cases, the explicit conversion as a lane obligation
+CAUGHT Q67b identity: Q67b/e/j, Q71b: execution identity, toolchain, isolation and claim kinds
+CAUGHT Q67c fencing: Q67c/d: incarnation fencing and P3 source-prefix enumeration
+CAUGHT Q67c case dropped: Q67c/d: incarnation fencing and P3 source-prefix enumeration
+CAUGHT Q67d enumeration: Q67c/d: incarnation fencing and P3 source-prefix enumeration
+CAUGHT Q67e isolation: Q67b/e/j, Q71b: execution identity, toolchain, isolation and claim kinds
+CAUGHT Q67f any rounds: Q55a/Q47: a round count that is not a registered look (Q67f) must be a diagnostic
+CAUGHT Q67f per-round unchecked: Q55a/Q47: fewer retained rounds than claimed (Q67f) must be a diagnostic
+CAUGHT Q67f RED admitted: Q55a/Q47: a comparison judged in a RED window (CX-PAIR0-UNJUDGED-WINDOW, Q67f) must be a diagnostic
+CAUGHT Q67f committed-only admitted: Q55a/Q47: committed-only accounting (CX-PAIR0-COMMITTED-ONLY, Q67f) must be a diagnostic
+CAUGHT Q67g overlap allowed: Q55a/Q47: a duet whose cpusets overlap (Q67g) must be a diagnostic
+CAUGHT Q67g capacity unchecked: Q55a/Q47: a duet with unequal capacity (Q67g) must be a diagnostic
+CAUGHT Q67g denominator unchecked: Q55a/Q47: a per-core denominator that is not the cpuset size (Q67g) must be a diagnostic
+CAUGHT Q67g arm slot unchecked: Q55a/Q47: a candidate arm placed on another slot than its composition (Q67g) must be a diagnostic
+CAUGHT Q67g slot back: 0.3.10: with W0-1.1.2 and the O-DOMAIN fingerprint pinned, a complete domain-dependent claim qualifies against the contract's own W0 pin (po
+CAUGHT Q67h shape dropped: Q67h: one error representation
+CAUGHT Q67i hash equality: Q67i/Q71c: case-result/2 verdicts use the declared comparator ([1,2] against [2,1] passes CMP-BAG-ROWS, fails CMP-ORDERED-ROWS); case-result
+CAUGHT Q67i bag as ordered: F1: result row projection preserves ordering policy and exact cut metadata
+CAUGHT Q67j promotion admitted: Q55a/Q47: a promotion claim, rejected explicitly until supported (Q67j) must be a diagnostic
+CAUGHT Q68b horizon: Q68: current path, horizon, sweep frames, host-served reads and current-copy erasure
+CAUGHT Q68c frame size: Q68: current path, horizon, sweep frames, host-served reads and current-copy erasure
+CAUGHT Q68d host reads: Q68: current path, horizon, sweep frames, host-served reads and current-copy erasure
+CAUGHT Q68f current copies: Q68: current path, horizon, sweep frames, host-served reads and current-copy erasure
+CAUGHT Q69e live composition: Q69, Q64b: PAIR-0 decisions and frozen screening series
+CAUGHT Q69f fallback: Q69, Q64b: PAIR-0 decisions and frozen screening series
+CAUGHT Q69 window dropped: Q69, Q64b: PAIR-0 decisions and frozen screening series
+CAUGHT Q71a list filled: Q71a: the install-metadata exclusion list is a contract-owned rule, null until two clean installs are diffed
+CAUGHT Q71b toolchain: Q67b/e/j, Q71b: execution identity, toolchain, isolation and claim kinds
+CAUGHT Q71b invocation schema: Q47/Q55a: workload identity fields, evidence schemas and qualification-run steps
+CAUGHT Q72f error back: Q72f: E-UNAVAILABLE-CUT retired; E-BASIS-NOT-AVAILABLE is the only id
+CAUGHT Q72f retired dropped: Q72f: E-UNAVAILABLE-CUT retired; E-BASIS-NOT-AVAILABLE is the only id
+CAUGHT Q70a rule weakened: Q70a: compiled rule must match authoritative ruling
+CAUGHT Q70b rule weakened: Q70b: compiled rule must match authoritative ruling
+CAUGHT Q70c rule weakened: Q70c: compiled rule must match authoritative ruling
+CAUGHT Q70d rule weakened: Q70d: compiled rule must match authoritative ruling
+CAUGHT Q70e rule weakened: Q70e: compiled rule must match authoritative ruling
+CAUGHT Q70f rule weakened: Q70f: compiled rule must match authoritative ruling
+CAUGHT Q70g rule weakened: Q70g: compiled rule must match authoritative ruling
+CAUGHT Q74a rule weakened: Q74a: compiled rule must match authoritative ruling
+CAUGHT Q74b rule weakened: Q74b: compiled rule must match authoritative ruling
+CAUGHT Q74c rule weakened: Q74c: compiled rule must match authoritative ruling
+CAUGHT Q74d rule weakened: Q74d: compiled rule must match authoritative ruling
+CAUGHT Q74e rule weakened: Q74e: compiled rule must match authoritative ruling
+CAUGHT Q74f rule weakened: Q74f: compiled rule must match authoritative ruling
+CAUGHT Q74g rule weakened: Q74g: compiled rule must match authoritative ruling
+CAUGHT Q70h rule weakened: Q70h: compiled rule must match authoritative ruling
+CAUGHT Q70i rule weakened: Q70i: compiled rule must match authoritative ruling
+CAUGHT Q70j rule weakened: Q70j: compiled rule must match authoritative ruling
+CAUGHT Q70k rule weakened: Q70k: compiled rule must match authoritative ruling
+CAUGHT Q75a rule weakened: Q75a: compiled rule must match authoritative ruling
+CAUGHT Q75b rule weakened: Q75b: compiled rule must match authoritative ruling
+CAUGHT Q75c rule weakened: Q75c: compiled rule must match authoritative ruling
+CAUGHT Q75d rule weakened: Q75d: compiled rule must match authoritative ruling
+CAUGHT Q75e rule weakened: Q75e: compiled rule must match authoritative ruling
+CAUGHT Q75f rule weakened: Q75f: compiled rule must match authoritative ruling
+CAUGHT Q75g rule weakened: Q75g: compiled rule must match authoritative ruling
+CAUGHT Q75h rule weakened: Q75h: compiled rule must match authoritative ruling
+CAUGHT Q75i rule weakened: Q75i: compiled rule must match authoritative ruling
+CAUGHT Q75j rule weakened: Q75j: compiled rule must match authoritative ruling
+CAUGHT Q70l rule weakened: Q70l: compiled rule must match authoritative ruling
+CAUGHT Q70m rule weakened: Q70m: compiled rule must match authoritative ruling
+CAUGHT Q76a rule weakened: Q76a: compiled rule must match authoritative ruling
+CAUGHT Q76b rule weakened: Q76b: compiled rule must match authoritative ruling
+CAUGHT Q76c rule weakened: Q76c: compiled rule must match authoritative ruling
+CAUGHT Q76d rule weakened: Q76d: compiled rule must match authoritative ruling
+CAUGHT Q76e rule weakened: Q76e: compiled rule must match authoritative ruling
+CAUGHT Q76f rule weakened: Q76f: compiled rule must match authoritative ruling
+CAUGHT Q70n rule weakened: Q70n: compiled rule must match authoritative ruling
+CAUGHT Q70o rule weakened: Q70o: compiled rule must match authoritative ruling
+CAUGHT Q77a rule weakened: Q77a: compiled rule must match authoritative ruling
+CAUGHT Q77b rule weakened: Q77b: compiled rule must match authoritative ruling
+CAUGHT Q77c rule weakened: Q77c: compiled rule must match authoritative ruling
+CAUGHT Q78a rule weakened: Q78a: compiled rule must match authoritative ruling
+CAUGHT Q78b rule weakened: Q78b: compiled rule must match authoritative ruling
+CAUGHT Q78c rule weakened: Q78c: compiled rule must match authoritative ruling
+CAUGHT Q78d rule weakened: Q78d: compiled rule must match authoritative ruling
+CAUGHT Q79a rule weakened: Q79a: compiled rule must match authoritative ruling
+CAUGHT Q79b rule weakened: Q79b: compiled rule must match authoritative ruling
+CAUGHT Q79c rule weakened: Q79c: compiled rule must match authoritative ruling
+CAUGHT Q79d rule weakened: Q79d: compiled rule must match authoritative ruling
+CAUGHT Q81a rule weakened: Q81a: compiled rule must match authoritative ruling
+CAUGHT Q75c blocker bypass: Q75c: contractBlockers must enforce runner pins
+CAUGHT Q75c admission bypass: Q55a/Q47: an accepted oracle with only its entrypoint hashed (Q75c) must be a diagnostic
+CAUGHT Q75c COMPILED exemption: Q75c: absent and incomplete runner hash maps cannot pin O-CONTRACT
+CAUGHT Q75g full replay compared as rows: F1/F2: real replay result objects and Unicode must compare equal to themselves
+CAUGHT Q75g state unchecked: Q75g: state stays exact
+CAUGHT Q75g outcomes unchecked: Q75g: command outcomes stay exact
+CAUGHT Q75h cause unchecked: Q75h: cause optional, structured when present
+CAUGHT Q78 null image bypass: Q78: every lane D obligation must stay blocked by its null image
+CAUGHT Q78 D unregistered: G4.neg.correlated-not-exists-raw: lane datomic-datalog
+CAUGHT Q78 D image prematurely pinned: Q61i: lab/config/slots.json lane images must agree with the contract's IMAGE_PINS
+CAUGHT V-O04i hash table corrupt: Q45a: pinned O-REPLAY files differ from the tree: ['lab/oracles/replay/run.py']
+CAUGHT V-O04i wrong version: V-O04i: O-REPLAY pin must equal 29 reviewed 0.4.9 hashes at f195f30
+CAUGHT Q78 D raw obligation omitted: Q78: every lane D obligation must stay blocked by its null image
+CAUGHT Q75c O-CONTRACT projection omitted: Q75c: O-CONTRACT runner retains both source and generated projection
+CAUGHT R2 F1 payload projection disabled: F1/F2: real replay result objects and Unicode must compare equal to themselves
+CAUGHT R2 F1 cut metadata ignored: F1: result row projection preserves ordering policy and exact cut metadata
+CAUGHT R2 F2 Unicode recursion escaped: F1/F2: real replay result objects and Unicode must compare equal to themselves
+CAUGHT R2 F3 composition excludes D: F3: authoritative composition and receipt engine declarations include Datomic
+CAUGHT R2 F3 receipt excludes D: F3: authoritative composition and receipt engine declarations include Datomic
+CAUGHT R2 F4 compiler defect omitted: F4: Q76c compiler tail-constraint defect recorded in matrix and scoped known limit
+CAUGHT Q72a literal weakened: Q72a: literal ruling and consumer must match authority
+CAUGHT Q72a consumer dropped: Q72a: literal ruling and consumer must match authority
+CAUGHT Q72b literal weakened: Q72b: literal ruling and consumer must match authority
+CAUGHT Q72b consumer dropped: Q72b: literal ruling and consumer must match authority
+CAUGHT Q72c literal weakened: Q72c: literal ruling and consumer must match authority
+CAUGHT Q72c consumer dropped: Q72c: literal ruling and consumer must match authority
+CAUGHT Q72d literal weakened: Q72d: literal ruling and consumer must match authority
+CAUGHT Q72d consumer dropped: Q72d: literal ruling and consumer must match authority
+CAUGHT Q72e literal weakened: Q72e: literal ruling and consumer must match authority
+CAUGHT Q72e consumer dropped: Q72e: literal ruling and consumer must match authority
+CAUGHT Q72g literal weakened: Q72g: literal ruling and consumer must match authority
+CAUGHT Q72g consumer dropped: Q72g: literal ruling and consumer must match authority
+CAUGHT Q80a literal weakened: Q80a: literal ruling and consumer must match authority
+CAUGHT Q80a consumer dropped: Q80a: literal ruling and consumer must match authority
+CAUGHT Q80b literal weakened: Q80b: literal ruling and consumer must match authority
+CAUGHT Q80b consumer dropped: Q80b: literal ruling and consumer must match authority
+CAUGHT Q80c literal weakened: Q80c: literal ruling and consumer must match authority
+CAUGHT Q80c consumer dropped: Q80c: literal ruling and consumer must match authority
+CAUGHT Q82a literal weakened: Q82a: literal ruling and consumer must match authority
+CAUGHT Q82a consumer dropped: Q82a: literal ruling and consumer must match authority
+CAUGHT Q82b literal weakened: Q82b: literal ruling and consumer must match authority
+CAUGHT Q82b consumer dropped: Q82b: literal ruling and consumer must match authority
+CAUGHT Q82c literal weakened: Q82c: literal ruling and consumer must match authority
+CAUGHT Q82c consumer dropped: Q82c: literal ruling and consumer must match authority
+CAUGHT Q82d literal weakened: Q82d: literal ruling and consumer must match authority
+CAUGHT Q82d consumer dropped: Q82d: literal ruling and consumer must match authority
+CAUGHT Q82e literal weakened: Q82e: literal ruling and consumer must match authority
+CAUGHT Q82e consumer dropped: Q82e: literal ruling and consumer must match authority
+CAUGHT Q83a literal weakened: Q83a: literal ruling and consumer must match authority
+CAUGHT Q83a consumer dropped: Q83a: literal ruling and consumer must match authority
+CAUGHT Q83b literal weakened: Q83b: literal ruling and consumer must match authority
+CAUGHT Q83b consumer dropped: Q83b: literal ruling and consumer must match authority
+CAUGHT Q83c literal weakened: Q83c: literal ruling and consumer must match authority
+CAUGHT Q83c consumer dropped: Q83c: literal ruling and consumer must match authority
+CAUGHT Q84a literal weakened: Q84a: literal ruling and consumer must match authority
+CAUGHT Q84a consumer dropped: Q84a: literal ruling and consumer must match authority
+CAUGHT Q84b literal weakened: Q84b: literal ruling and consumer must match authority
+CAUGHT Q84b consumer dropped: Q84b: literal ruling and consumer must match authority
+CAUGHT Q84c literal weakened: Q84c: literal ruling and consumer must match authority
+CAUGHT Q84c consumer dropped: Q84c: literal ruling and consumer must match authority
+CAUGHT Q84d literal weakened: Q84d: literal ruling and consumer must match authority
+CAUGHT Q84d consumer dropped: Q84d: literal ruling and consumer must match authority
+CAUGHT Q84e literal weakened: Q84e: literal ruling and consumer must match authority
+CAUGHT Q84e consumer dropped: Q84e: literal ruling and consumer must match authority
+CAUGHT Q83d literal weakened: Q83d: literal ruling and consumer must match authority
+CAUGHT Q83d consumer dropped: Q83d: literal ruling and consumer must match authority
+CAUGHT Q79e literal weakened: Q79e: literal ruling and consumer must match authority
+CAUGHT Q79e consumer dropped: Q79e: literal ruling and consumer must match authority
+CAUGHT Q85a literal weakened: Q85a: literal ruling and consumer must match authority
+CAUGHT Q85a consumer dropped: Q85a: literal ruling and consumer must match authority
+CAUGHT Q85b literal weakened: Q85b: literal ruling and consumer must match authority
+CAUGHT Q85b consumer dropped: Q85b: literal ruling and consumer must match authority
+CAUGHT Q85c literal weakened: Q85c: literal ruling and consumer must match authority
+CAUGHT Q85c consumer dropped: Q85c: literal ruling and consumer must match authority
+CAUGHT Q85d literal weakened: Q85d: literal ruling and consumer must match authority
+CAUGHT Q85d consumer dropped: Q85d: literal ruling and consumer must match authority
+CAUGHT Q86a literal weakened: Q86a: literal ruling and consumer must match authority
+CAUGHT Q86a consumer dropped: Q86a: literal ruling and consumer must match authority
+CAUGHT Q86b literal weakened: Q86b: literal ruling and consumer must match authority
+CAUGHT Q86b consumer dropped: Q86b: literal ruling and consumer must match authority
+CAUGHT Q86c literal weakened: Q86c: literal ruling and consumer must match authority
+CAUGHT Q86c consumer dropped: Q86c: literal ruling and consumer must match authority
+CAUGHT Q86d literal weakened: Q86d: literal ruling and consumer must match authority
+CAUGHT Q86d consumer dropped: Q86d: literal ruling and consumer must match authority
+CAUGHT Q86e literal weakened: Q86e: literal ruling and consumer must match authority
+CAUGHT Q86e consumer dropped: Q86e: literal ruling and consumer must match authority
+CAUGHT Q86f literal weakened: Q86f: literal ruling and consumer must match authority
+CAUGHT Q86f consumer dropped: Q86f: literal ruling and consumer must match authority
+CAUGHT Q79f literal weakened: Q79f: literal ruling and consumer must match authority
+CAUGHT Q79f consumer dropped: Q79f: literal ruling and consumer must match authority
+CAUGHT Q87 literal weakened: Q87: literal ruling and consumer must match authority
+CAUGHT Q87 consumer dropped: Q87: literal ruling and consumer must match authority
+CAUGHT Q83e literal weakened: Q83e: literal ruling and consumer must match authority
+CAUGHT Q83e consumer dropped: Q83e: literal ruling and consumer must match authority
+CAUGHT O-OBS screening scope promoted: O-OBS: reviewed screening pin required
+CAUGHT O-OBS commit replaced: O-OBS: reviewed screening pin required
+CAUGHT O-OBS transitive runner omitted: Q75c: every O-OBS runner file matches the retained hash table
+CAUGHT O-OBS pin hash altered: Q75c: every O-OBS runner file matches the retained hash table
+CAUGHT O-OBS verifier removed: O-OBS: reviewed screening pin required
+CAUGHT Q82c screening admission bypass: Q55a/Q47: screening-only oracle cannot qualify acceptance (Q82c) must be a diagnostic
+CAUGHT Q82c screening blocker bypass: Q82c: screening pin cannot close acceptance obligations
+CAUGHT Q82b single source safety: Q82b: two agreeing independent source kinds required
+CAUGHT Q82d observer outputs omitted: Q82d: complete protected physical-copy inventory required
+CAUGHT Q83e resume bound to F: Q83: three frontiers replace the old freeze interpretation
+CAUGHT Q83b supersession removed: Q83: three frontiers replace the old freeze interpretation
+CAUGHT Q86 isolation prematurely in force: Q86: G03 pins deferred, isolation is not yet in force
+CAUGHT Q87 tests reduced: Q87: mandatory evaluator merge gate
+CAUGHT Q87 weakening assertions allowed: Q87: mandatory evaluator merge gate
+CAUGHT Q59c V-O04i report substituted with matching hash: Q59c: V-O04i must hash the original instruction brief, never its review report
+CAUGHT Q59c V-O03 report substituted with matching hash: Q59c: V-O03 must hash the original instruction brief, never its review report
+CAUGHT Q59c V-O04c report substituted with matching hash: Q59c: V-O04c must hash the original instruction brief, never its review report
+CAUGHT Q59c V-D01-W0-1.1.1 report substituted with matching hash: Q59c: V-D01-W0-1.1.1 must hash the original instruction brief, never its review report
+CAUGHT Q59c V-D01e-W0-1.1.2 report substituted with matching hash: Q59c: V-D01e-W0-1.1.2 must hash the original instruction brief, never its review report
+CAUGHT Q59c V-D01c-O-DOMAIN report substituted with matching hash: Q59c: V-D01c-O-DOMAIN must hash the original instruction brief, never its review report
+CAUGHT Q59c V-O05-round4 report substituted with matching hash: Q59c: V-O05-round4 must hash the original instruction brief, never its review report
+CAUGHT Q88a literal weakened: Q88a: literal ruling and storage consumer must match authority
+CAUGHT Q88a consumer dropped: Q88a: literal ruling and storage consumer must match authority
+CAUGHT Q88b literal weakened: Q88b: literal ruling and storage consumer must match authority
+CAUGHT Q88b consumer dropped: Q88b: literal ruling and storage consumer must match authority
+CAUGHT Q88c literal weakened: Q88c: literal ruling and storage consumer must match authority
+CAUGHT Q88c consumer dropped: Q88c: literal ruling and storage consumer must match authority
+CAUGHT Q45a xtdb-workloads.ts repin reverted: Q45a: reviewed workload repin mismatch: packages/qualification/src/native/xtdb-workloads.ts
+CAUGHT Q45a xtdb-workloads.ts repin omitted: Q45a: both reviewed workload repins required
+CAUGHT Q45a qlever-workloads.ts repin reverted: Q45a: reviewed workload repin mismatch: packages/qualification/src/native/qlever-workloads.ts
+CAUGHT Q45a qlever-workloads.ts repin omitted: Q45a: both reviewed workload repins required
+CAUGHT Q88 dev evidence promoted: Q88: dev evidence stays diagnostic, SQL storage and erasure requirements preserved
+CAUGHT Q88 unsafe peer role: Q88: dev evidence stays diagnostic, SQL storage and erasure requirements preserved
+total 532 run 451 caught 451 missed: [] retired (anchor gone): 81 ['Q31f journal modulo', 'Q31g widen', 'Q31i pin bogus', 'Q30 write route dropped', 'Q32e A0 blocked', 'Q32e falsifiers always', 'Q32e non-dense free', 'Q32e unknown density open', 'Q32f no bump', 'Q34a declared density', 'Q34a static falsifiers', 'Q34a allowlist hash bad', 'Q34d bound ignored', 'Q36 delivery key GS19b', 'Q36 early cutoff P5', 'C1 replay status', 'C1 gate dropped', 'Q38b pins ignored', 'Q38b other tree', 'Q38b W0 skipped', 'Q38d JSON convert', 'Q38f GS10', 'Q38f mutant dropped', 'Q45a hash wrong', 'Q45a exclusion dropped', 'Q45a refusal dropped', 'Q45a scope diff unrecorded', 'Q44 fingerprint gate', 'Q42a manifest ignored', 'Q42a freshness ignored', 'Q42a no control needed', 'Q42a fault reps ignored', 'Pending reads rows', 'Q38b other tree v2', 'Q31i pin bogus v2', 'Q42a manifest ignored v2', 'Q47a binary not retained', 'Q47a modules ignored', 'Q47a verifier unchecked', 'Q47a verdict trusted', 'Q47c extra cases skipped', 'Q47b none matches none', 'Q47b claimant control', 'Q47b registry filled', 'Q47b slot unchecked', 'Q47b types unchecked', 'Q46d pin note', 'Q48a fingerprint pinned', 'Q48a hash dropped', 'Q48a W0 gate dropped', 'Q48c next edit', 'Q49c obligation off replay', 'Q49d in-flight', 'Q56i hash wrong', 'Q56i excludes kept', 'Q56i blanket refusal back', 'Q56i residual refusal emptied', 'Q56i old hash table', 'Q55a one mode', 'Q55a one repetition', 'Q55a measure unchecked', 'Q55a steps changed', 'Q55c not provisional', 'Q55c no typed wait', 'Q55c cases dropped', 'Q55d case dropped', 'Q55e fingerprint pinned', 'Q52 residual case dropped', 'Q53 readings', 'Q53b next edit', 'Q58a cases unselected', 'Q58e inventory', 'Q62a cases unselected', 'Q60g burst', 'Q60 paired not checked', 'Q60 rounds unchecked', 'Q60 regimes unchecked', 'Q60 quota allowed', 'Q61c answer members', 'Q66 not refused', 'Q67i unknown passes']

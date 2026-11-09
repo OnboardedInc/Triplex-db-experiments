@@ -1,0 +1,14 @@
+{
+ "report": "runs/G1/G1-xtdb-20261108T013218Z-7e7e23/g1-report.json",
+ "lane": "xtdb",
+ "scopes": 51,
+ "startedAt": "2026-11-08T01:33:13.685Z",
+ "counts": {
+  "recordsScanned": 435,
+  "runRecords": 68,
+  "a0Guards": 57,
+  "compactGuards": 0,
+  "windowTransactions": 462
+ },
+ "encoding": "a0"
+}

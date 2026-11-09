@@ -63,8 +63,6 @@ type Output = {
 };
 export type NumericDomain = "number" | "integer";
 export type QleverNegationPlan = "exists" | "projected" | "minus";
-export const relationGraphIri = (scopeKey: string, runId: string): string =>
-  graphIri(`${scopeKey}\u0000derived\u0000${runId}`);
 export interface QleverCompiled {
   readonly sparql: string;
   readonly countSparql?: string;
@@ -128,8 +126,11 @@ export const compileQlever = (
     readonly cursorValues?: readonly PaginationValue[];
     readonly numericDomains?: ReadonlyMap<string, NumericDomain>;
     readonly maxResultRows?: number;
-    readonly runId?: string;
-    readonly ruleRound?: number;
+    /**
+     * [EXP-C8] Evaluated rule relations (recursion.ts evaluateQleverRules), inlined as VALUES.
+     * Replaces the per-run derived graph a query call used to write (`runId`, `ruleRound`).
+     */
+    readonly ruleRelations?: ReadonlyMap<string, readonly (readonly [string, string])[]>;
     readonly unboundedIntermediate?: boolean;
     /** Trusted internal SPARQL expression for a server-resident temporal span. */
     readonly validAtOrderExpression?: string;
@@ -137,7 +138,7 @@ export const compileQlever = (
 ): QleverCompiled => {
   const wrapped = "inner" in input;
   const query = wrapped ? assertWrappedQuery(input).inner : assertDatalogQuery(input);
-  if (query.rules?.length && !options.runId)
+  if (query.rules?.length && !options.ruleRelations)
     unsupported(query, "recursive rule execution is not implemented; no host fallback");
   if (query.compute?.length)
     unsupported(query, "arithmetic requires native precision qualification; no lossy computation");
@@ -166,7 +167,7 @@ export const compileQlever = (
     options.scalarOrderPlan === "live" &&
     options.sourcePlan === "persisted" &&
     !wrapped &&
-    !options.runId &&
+    !options.ruleRelations &&
     options.sourceView === undefined &&
     options.cursorValues === undefined &&
     query.limit === undefined &&
@@ -211,11 +212,9 @@ export const compileQlever = (
       ruleNames.has(clause[0]) &&
       !String(clause[1]).startsWith(":")
     ) {
-      if (!options.runId) unsupported(query, "rule relation has no completed run");
-      const conditions = [
-        `${v("rule_name")} = ${literal(clause[0])}`,
-        ...(options.ruleRound === undefined ? [] : [`${v("depth")} < ${options.ruleRound}`]),
-      ];
+      const pairs = options.ruleRelations?.get(clause[0]);
+      if (!pairs) unsupported(query, "rule relation has no evaluated relation");
+      const conditions: string[] = [];
       bind(
         clause[1],
         { family: '"string"', lexical: v("arg1"), order: v("arg1") },
@@ -230,7 +229,10 @@ export const compileQlever = (
         conditions,
         joins,
       );
-      return `{ GRAPH ${relationGraphIri(scopeKey, options.runId!)} { ?${prefix} ${fieldIri("rule_name")} ${v("rule_name")} ; ${fieldIri("arg1")} ${v("arg1")} ; ${fieldIri("arg2")} ${v("arg2")} ; ${fieldIri("depth")} ${v("depth")} . } FILTER(${conditions.join(" && ")}) }`;
+      // [EXP-C8] The evaluated relation inline: one VALUES row per distinct string pair, so the
+      // query reads no derived graph and the call writes nothing (R10 6.9). An empty relation is
+      // an empty VALUES block, which matches no solution.
+      return `{ VALUES (${v("arg1")} ${v("arg2")}) { ${pairs!.map(([arg1, arg2]) => `(${literal(arg1)} ${literal(arg2)})`).join(" ")} }${conditions.length ? ` FILTER(${conditions.join(" && ")})` : ""} }`;
     }
     // One compact assertion relation is used by every logical operator. Payload
     // reconstruction stays inside the leaf; only canonical channels escape it.

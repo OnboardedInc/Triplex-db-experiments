@@ -1,0 +1,42 @@
+{
+  "sourceCommit": "8fad220b88062b6d153b4ffc83915f0af3d5d4f4",
+  "live": {
+    "exit": 1,
+    "attempts": 1,
+    "executed": 4,
+    "pass": 3,
+    "fail": 1,
+    "selectedSkipped": 0,
+    "failedTest": "C8 on QLever: reads never write (engine boundary)",
+    "error": "QLever Datalog execution failed: TimeoutError"
+  },
+  "G0": {
+    "exit": 0,
+    "runId": "G0-xtdb-20261108T235816Z-506037",
+    "executed": 1163,
+    "pass": 1163,
+    "fail": 0,
+    "expectedSkip": 134,
+    "unexpectedSkip": 0
+  },
+  "evaluator": {
+    "exit": 0,
+    "tests": 108,
+    "pass": 108,
+    "fail": 0,
+    "skip": 0
+  },
+  "contract": {
+    "exit": 1,
+    "changedPinnedFiles": [
+      "packages/qualification/src/native/xtdb-workloads.ts",
+      "packages/qualification/src/native/qlever-workloads.ts"
+    ],
+    "expectedSkipsContractPinned": false,
+    "regenerated": false
+  },
+  "J01": {
+    "merged": false,
+    "reason": "stop at newly required live C8 QLever control failure"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "result": "PASS",
+  "assertionExpressions": 19,
+  "queryCalls": 8,
+  "limits": [
+    "LOAD_MS = Number(process.env[\"C8_LOAD_MS\"] ?? 8_000)",
+    "READERS = Number(process.env[\"C8_READERS\"] ?? 8)"
+  ],
+  "comparedTo": "9c1e78f2",
+  "method": "TypeScript AST extraction of expect expressions, query argument text, and load/reader constants"
+}

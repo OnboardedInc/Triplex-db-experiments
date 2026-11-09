@@ -1,0 +1,9 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qualification
+
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 1 skipped (2)
+   Start at  16:53:01
+   Duration  141.94s (tests 100%)
+

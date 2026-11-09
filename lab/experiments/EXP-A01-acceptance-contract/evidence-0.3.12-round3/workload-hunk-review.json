@@ -1,0 +1,156 @@
+{
+  "reviewedBeforeRepin": true,
+  "baseCommit": "f483fb644744da4cc7a7f9296214668e7d55bbf4",
+  "integratedCommit": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+  "mainForMerge": "b31ec9429aaeae4dd6243e9d274f8e2e0e4ad56f",
+  "definition": "Operations means the logical task operations declared by the immutable temporal workload packet. Physical queries, routing, traversal, normalization and refusal costs are measured candidate implementation changes.",
+  "packet": {
+    "path": "qualification/workloads/temporal-workloads.json",
+    "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "byteIdentical": true
+  },
+  "files": [
+    {
+      "path": "packages/qualification/src/native/xtdb-workloads.ts",
+      "previousSha256": "22d785b034e440ca896b3fce7fe2df94e643586cb802fddd940fea84aff31fc3",
+      "sha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+      "baseCommit": "f483fb644744da4cc7a7f9296214668e7d55bbf4",
+      "sourceCommit": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+      "diffSha256": "b31cae3941b058b72f9cda6e890ab600983fde24c0f4b609d9e161f5ba4d4f1f",
+      "hunks": [
+        {
+          "hunk": "@@ -2,16 +2,50 @@",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Comments document hazards; imports provide exact arithmetic, errors and path counting. No operation descriptor, input data or schedule edit."
+        },
+        {
+          "hunk": "@@ -29,7 +63,21 @@ interface ReachabilityContext extends Context {",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Types add explicit closure seeds and reusable reachability selector. Seeds bound the implementation to the same task start; no operation/data/schedule edit."
+        },
+        {
+          "hunk": "@@ -39,17 +87,12 @@ type Select = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Session type exposes both closure-language selectors and supported language names. This selects the native implementation; no operation/data/schedule edit."
+        },
+        {
+          "hunk": "@@ -109,6 +152,23 @@ const integerChannel = (alias: string) => {",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "XTQL integer and attribute-view helpers translate the existing fact filters. No input values, parameter meaning or schedule changes."
+        },
+        {
+          "hunk": "@@ -131,108 +191,160 @@ const valueOf = (value: RecordValue): unknown => {",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Execute/closure helpers add explicit language dispatch, task-wide source-position capture, same contract parameter typing, seeded read-only traversal and a mark-join hazard refusal. Unset routing stays XTQL state reads and SQL otherwise. Additional reads, per-round execution, refusal limits and client work are candidate costs. Requested logical operations, requested valid/recorded cuts, fixture data and offered schedule stay fixed; multi-call coherence is an implementation correctness fix."
+        },
+        {
+          "hunk": "@@ -240,12 +352,17 @@ export const evaluateXtdbNativeWorkload = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Workload 03 purchase-time query gains equivalent XTQL and retains SQL joins/filters. Purchases and at-purchase price requests are unchanged; no data/schedule edit."
+        },
+        {
+          "hunk": "@@ -264,28 +381,37 @@ export const evaluateXtdbNativeWorkload = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Workload 04 coordinate and coverage queries gain XTQL equivalents. The same claim, coverage, policy and event-derived valid subcut feed the existing existence operation. No operation/data/schedule edit."
+        },
+        {
+          "hunk": "@@ -293,41 +419,66 @@ export const evaluateXtdbNativeWorkload = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Workload 05 distinct accepted-event count and highest-revision status gain XTQL; 06/07 replace unsafe aggregate arithmetic with exact split sums and typed overflow. Same account/currency/SKU/ledger operands, grouping and requested outputs. Correct arithmetic/refusal behavior changes execution, not operation definitions, data or schedule."
+        },
+        {
+          "hunk": "@@ -335,54 +486,91 @@ export const evaluateXtdbNativeWorkload = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Workload 07 final subtraction uses typed int64 failure; 08 implements the same capture-minus-refund total exactly; 09 SQL correlated predicates use IS TRUE and gains XTQL; 10 gains XTQL for unchanged deadline/completion/watermark steps. No operation/data/schedule edit; client normalization and native query costs remain measured."
+        },
+        {
+          "hunk": "@@ -396,98 +584,191 @@ export const evaluateXtdbNativeWorkload = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Workloads 11/13/14/15 and 20 closure dispatch use seeded read-only closure and same joins/targets; 13 adds a hazard guard; 12 gains XTQL and SQL null-hazard correction; 16 retains its input/metadata lineage reads in both languages; 17 gains XTQL for the same ordered three-step conversion and bounds. Branch relocation does not remove any operation. Physical traversal, intermediate rows and guard reads change; logical operations/data/schedule do not."
+        },
+        {
+          "hunk": "@@ -513,28 +794,40 @@ export const evaluateXtdbNativeWorkload = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Workload 17 builder closes unchanged SQL assembly; 18 adds equivalent XTQL interval endpoint segmentation and fixes SQL correlated-null predicates; 19 switches to the shared execute helper. Same clipping bounds and recorded-fact relation, union-duration operation and prediction lookup; no input data or schedule change."
+        },
+        {
+          "hunk": "@@ -543,8 +836,12 @@ export const evaluateXtdbNativeWorkload = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Workload 19 adds XTQL for the same customer/predicted-at/feature-known-at/fraud projection, retaining the SQL and subsequent historical feature reads. Requested logical subcuts and parameters remain unchanged; no operation/data/schedule edit."
+        },
+        {
+          "hunk": "@@ -560,49 +857,24 @@ export const evaluateXtdbNativeWorkload = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Workload 20 closure moved to the common closure branch above; support counting replaces three length-1..3 SQL counts with one distinct-edge extraction plus bounded general simple-path counting. The immutable fixture is the acyclic A-B/C-D diamond with edge retirements and path counts 2/1/0, so the requested operation/result meaning stays identical. Query count, intermediate volume, limits and host cost change and are measured. No fixture data, requested cut or offered schedule edit."
+        }
+      ]
+    },
+    {
+      "path": "packages/qualification/src/native/qlever-workloads.ts",
+      "previousSha256": "410963c62f46be95525643f5eb78bf4069dee27d986b251f2aca33d05e48d2b3",
+      "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+      "baseCommit": "f483fb644744da4cc7a7f9296214668e7d55bbf4",
+      "sourceCommit": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+      "diffSha256": "1a40dcce1fb973666abe0385fb2af3f24bf499676b9b595fea4a5aa7c49fb85a",
+      "hunks": [
+        {
+          "hunk": "@@ -5,6 +5,7 @@",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Imports the shared bounded path-count helper. No operation/data/schedule edit."
+        },
+        {
+          "hunk": "@@ -197,6 +198,7 @@ export const evaluateQleverNativeWorkload = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Allows a caller-specific maxRows, keeping the previous 1000 default for all existing calls. The support-edge scan requests a completeness witness up to SUPPORT_EDGE_LIMIT+1. No logical operation, source data or schedule edit."
+        },
+        {
+          "hunk": "@@ -219,7 +221,7 @@ export const evaluateQleverNativeWorkload = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Passes the selected row cap to the native query. This is execution admission/completeness handling; no operation/data/schedule edit."
+        },
+        {
+          "hunk": "@@ -577,31 +579,22 @@ export const evaluateQleverNativeWorkload = (",
+          "changesOperations": false,
+          "changesData": false,
+          "changesSchedule": false,
+          "assessment": "Workload 20 replaces three fixed-length SPARQL witness counts with distinct-edge extraction and bounded general simple-path counting over the same graph, endpoints and captured task cut. The frozen A/B/C/D diamond and its 2/1/0 expected counts are unchanged. Query sequence/volume/client cost/refusal behavior change; the requested support-count operation, data and offered schedule do not."
+        }
+      ]
+    }
+  ],
+  "totalHunks": 17,
+  "workloadChangingHunks": 0,
+  "decision": "ELIGIBLE-FOR-REPIN; no frozen logical operation, data or offered schedule change"
+}

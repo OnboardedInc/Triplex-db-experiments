@@ -1,0 +1,36 @@
+{
+ "receipt": "xtdb-designs-probe-20261108T002252Z-b6e9da",
+ "a0RealRecordBytes": 30061,
+ "layouts": {
+  "A0": {
+   "recordBytes": 30061,
+   "ratioVsA0": 1,
+   "statements": 8,
+   "params": 597
+  },
+  "C1": {
+   "recordBytes": 26397,
+   "ratioVsA0": 1.14,
+   "statements": 6,
+   "params": 572
+  },
+  "H2": {
+   "recordBytes": 15355,
+   "ratioVsA0": 1.96,
+   "statements": 6,
+   "params": 273
+  },
+  "H3": {
+   "recordBytes": 12459,
+   "ratioVsA0": 2.41,
+   "statements": 4,
+   "params": 260
+  },
+  "H4": {
+   "recordBytes": 10795,
+   "ratioVsA0": 2.78,
+   "statements": 4,
+   "params": 260
+  }
+ }
+}

@@ -1,5 +1,14 @@
 import postgres from "postgres";
 
+// [EXP-J01] Why: only compact guards opt into text[]; ordinary public/native arrays
+// retain JSON OID 114. Rejected: inferring transport type from array contents (Q81c).
+class XtdbTextArray {
+  constructor(readonly values: readonly string[]) {}
+}
+
+export const compactTextArray = (values: readonly string[]): XtdbTextArray =>
+  new XtdbTextArray([...values]);
+
 export interface XtdbBasis {
   readonly snapshotToken?: string;
   readonly clockTime?: string;
@@ -138,6 +147,13 @@ export const makeXtdbClient = (
         throw new TypeError(
           "XTDB text requires well-formed Unicode; isolated UTF-16 surrogates are not representable",
         );
+      if (value instanceof XtdbTextArray) {
+        if (!value.values.every((item) => typeof item === "string" && item.isWellFormed()))
+          throw new TypeError(
+            "XTDB text requires well-formed Unicode; isolated UTF-16 surrogates are not representable",
+          );
+        return pool.typed(value.values as never, 1009);
+      }
       // The native-f64-parameters-v1 public probe observed -0 returning as the
       // integer text "0" in SQL and XTQL, while native double literals retained
       // their sign. Number.isSafeInteger(-0) is true, and ordinary numeric text

@@ -1,0 +1,21 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 46869 "CX-VP2Q-4-r7-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 46869 "CX-VP2Q-4-r7-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 46869 "CX-VP2Q-4-r7-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 6303 "CX-OBS01-R2-x09"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 74866 "CX-INT-XCJ-C8-live-once"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 74866 "CX-INT-XCJ-C8-live-once"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 57973 "CX-OBS01-R2-AA", pid 37317 "CX-G03-r3-claim-suites2", pid 74866 "CX-INT-XCJ-C8-live-once"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 57973 "CX-OBS01-R2-AA", pid 37317 "CX-G03-r3-claim-suites2", pid 74866 "CX-INT-XCJ-C8-live-once"
+[lab] heavy: waiting for one of 4 slots; held by pid 58462 "CX-RQ01-test-r2", pid 57973 "CX-OBS01-R2-AA", pid 37317 "CX-G03-r3-claim-suites2", pid 74866 "CX-INT-XCJ-C8-live-once"
+[lab] heavy: waiting for one of 4 slots; held by pid 58462 "CX-RQ01-test-r2", pid 57973 "CX-OBS01-R2-AA", pid 37317 "CX-G03-r3-claim-suites2", pid 74866 "CX-INT-XCJ-C8-live-once"
+[lab] heavy: waiting for one of 4 slots; held by pid 97409 "CX-RQ01-bound-gate", pid 57973 "CX-OBS01-R2-AA", pid 37317 "CX-G03-r3-claim-suites2", pid 74866 "CX-INT-XCJ-C8-live-once"
+contract-tests 0
+screening-js 0
+reviewer-regressions 0
+real-payloads 0
+test_observe 0
+test_cli 0
+test_round2 0
+test_round3 0
+test_round4 0
+selfcheck 0

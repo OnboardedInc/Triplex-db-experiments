@@ -198,6 +198,59 @@ export const decodeRow = (json: string): TripleRow => {
   if (parsed["value_type"] === "integer") integer(String(parsed["value_string"]));
   return parsed as unknown as TripleRow;
 };
+/**
+ * How assertion subjects are written (EXP-J01). `a0` is the unchanged default; `compact` omits the
+ * channels in `UNREAD_CHANNELS`.
+ */
+export type QleverCommitEncoding = "a0" | "compact";
+
+/**
+ * [EXP-J01] Channels `compact` does not write. Why: every assertion subject is 27 to 30 triples, so a
+ * 10-fact command is 663 inserted triples (10 data facts and 14 journal facts at 27 or 30 each, plus
+ * 9 for claim, operation and position; EXP-J01 qlever-attribution). Nine channels per fact are
+ * written but never read by any query in this repository (the adapter, the Datalog compiler, the
+ * native and temporal sources, the qualification workloads): the lexical, exactness and native
+ * shadows of `recorded_at` and the lexical and exactness shadows of `recorded_position`, the four
+ * `schema_version` channels, and on a retraction the same shadows of `retracted_at` and
+ * `retracted_position`. Every one of them stays recoverable from `_row`, which `decodeRow` reads, so
+ * no read loses information. The `_order` channels, `recorded_position_native` and
+ * `retracted_position_native` (dependencyState), `valid_from` and `valid_to` with all their shadows
+ * (native interval sources and qualification recursion read them) and the scalar channels (the
+ * persisted source profile) are kept. Rows written by either encoding read the same, and a row
+ * written by one and retracted by the other is still correct, because a retraction rewrites only
+ * channels it lists and the omitted ones never change after the assertion.
+ * Per fact: 18 triples for a string, ref or json value and 21 for a number or datetime, against 27
+ * and 30; a 10-fact command: 663 -> 447 inserted triples.
+ * Rejected: dropping the journal's own facts (they are logical facts: match and Datalog read them),
+ * dropping `_row` (every adapter read decodes it) and pruning `valid_from` shadows on journal facts
+ * only (a native mapping may name a `:_tx/` attribute).
+ */
+export const UNREAD_CHANNELS: ReadonlySet<string> = new Set([
+  "recorded_at",
+  "recorded_at_exact",
+  "recorded_at_native",
+  "recorded_position",
+  "recorded_position_exact",
+  "schema_version",
+  "schema_version_order",
+  "schema_version_exact",
+  "schema_version_native",
+  "retracted_at",
+  "retracted_at_exact",
+  "retracted_at_native",
+  "retracted_position",
+  "retracted_position_exact",
+]);
+
+/** The channels one assertion subject is written with under `encoding`. */
+export const encodedRowFields = (
+  row: TripleRow,
+  encoding: QleverCommitEncoding = "a0",
+): readonly [string, string][] =>
+  encoding === "compact"
+    ? rowFields(row).filter(([column]) => !UNREAD_CHANNELS.has(column))
+    : rowFields(row);
+
 /** Each canonical channel is lexical. Native shadows are explicitly admitted. */
 export const rowFields = (row: TripleRow): readonly [string, string][] => {
   const fields: [string, string][] = [["_row", literal(encodeRow(row))]];

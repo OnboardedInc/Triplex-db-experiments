@@ -4,9 +4,9 @@
   "counts": {
     "core": 0,
     "testkit": 0,
-    "xtdb": 84,
+    "xtdb": 87,
     "qlever": 21,
-    "qualification": 46
+    "qualification": 50
   },
   "skips": {
     "core": [],
@@ -95,7 +95,10 @@
       "packages/xtdb/test/maintained.test.ts :: XTDB maintained complete generations retains exact sums and explicit result order in persisted generations",
       "packages/xtdb/test/query-integration.test.ts :: XTDB native query integration executes joins, duplicate-sensitive sums, scalar families and anti-joins",
       "packages/xtdb/test/query-integration.test.ts :: XTDB native query integration completes cyclic rules in XTDB and keeps cursor results through corrections",
-      "packages/xtdb/test/query-integration.test.ts :: XTDB native query integration respects bounded recursion depth on deep chains"
+      "packages/xtdb/test/query-integration.test.ts :: XTDB native query integration respects bounded recursion depth on deep chains",
+      "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) lets exactly one of two racing commands with the same id commit, for every tricky id",
+      "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) rejects an existing assertion id and an existing operation as a definite identity conflict",
+      "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) refuses a stale source cut as a serialization conflict"
     ],
     "qlever": [
       "packages/qlever/test/intervals.test.ts :: QLever bounded public interval provider coalesces adjacent support, preserves gaps, and pins historical corrections",
@@ -166,7 +169,20 @@
       "packages/qualification/test/runtime-conformance.test.ts :: xtdb unchanged case diagnostics historical corrections preserve what wa…",
       "packages/qualification/test/runtime-conformance.test.ts :: xtdb unchanged case diagnostics batch entity reads preserve association…",
       "packages/qualification/test/runtime-conformance.test.ts :: xtdb unchanged case diagnostics retract is coherent across write and da…",
-      "packages/qualification/test/runtime-conformance.test.ts :: xtdb unchanged case diagnostics paged queries use deterministic snapsho…"
+      "packages/qualification/test/runtime-conformance.test.ts :: xtdb unchanged case diagnostics paged queries use deterministic snapsho…",
+      "packages/qualification/test/c8-reads-never-write.test.ts :: C8 on XTDB: reads never write (engine boundary) counts zero writes across rule queries, maintained reads, native closures and a load run",
+      "packages/qualification/test/c8-reads-never-write.test.ts :: C8 on QLever: reads never write (engine boundary) counts zero updates across rule queries, native closures and a load run",
+      "packages/qualification/test/engine-write-counter.test.ts :: XTDB write counter (live) reads count zero writes; one submit counts one commit",
+      "packages/qualification/test/engine-write-counter.test.ts :: QLever write counter (live) queries count zero writes; one update counts one write"
     ]
+  },
+  "reasons": {
+    "packages/qualification/test/c8-reads-never-write.test.ts :: C8 on XTDB: reads never write (engine boundary) counts zero writes across rule queries, maintained reads, native closures and a load run": "live control; runs in G1 against the shared dev residents (C8, INT-XCJ)",
+    "packages/qualification/test/c8-reads-never-write.test.ts :: C8 on QLever: reads never write (engine boundary) counts zero updates across rule queries, native closures and a load run": "live control; runs in G1 against the shared dev residents (C8, INT-XCJ)",
+    "packages/qualification/test/engine-write-counter.test.ts :: XTDB write counter (live) reads count zero writes; one submit counts one commit": "live control; runs in G1 against the shared dev residents (C8, INT-XCJ)",
+    "packages/qualification/test/engine-write-counter.test.ts :: QLever write counter (live) queries count zero writes; one update counts one write": "live control; runs in G1 against the shared dev residents (C8, INT-XCJ)",
+    "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) lets exactly one of two racing commands with the same id commit, for every tricky id": "live test; runs in G1 against the shared dev residents (J01, INT-XCJ)",
+    "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) rejects an existing assertion id and an existing operation as a definite identity conflict": "live test; runs in G1 against the shared dev residents (J01, INT-XCJ)",
+    "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) refuses a stale source cut as a serialization conflict": "live test; runs in G1 against the shared dev residents (J01, INT-XCJ)"
   }
 }

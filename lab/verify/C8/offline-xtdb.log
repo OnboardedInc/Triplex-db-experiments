@@ -1,0 +1,15 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/xtdb
+
+
+ Test Files  7 passed | 8 skipped (15)
+      Tests  25 passed | 84 skipped (109)
+   Start at  16:36:31
+   Duration  4.48s (import 88%, transform 8%, tests 3%, worker 1%)
+
+    Isolate  15 workers spawned · ~76ms startup each (spawn + environment, per file)
+             at least ~1.06s faster with isolate: false — reuses workers across files instead of one per file
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.

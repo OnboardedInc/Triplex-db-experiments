@@ -1,0 +1,20 @@
+[
+  {
+    "fullName": "XTDB PostgreSQL parameter encoding binds only explicit compact descriptors as text[] and rejects ill-formed members (EXP-J01)",
+    "status": "passed",
+    "duration": 0.7936669999999992,
+    "failureMessages": []
+  },
+  {
+    "fullName": "XTDB PostgreSQL parameter encoding keeps compact-off public and native arrays byte-identical to the pre-J01 client",
+    "status": "passed",
+    "duration": 20.892207999999982,
+    "failureMessages": []
+  },
+  {
+    "fullName": "XTDB compact commit guards (EXP-J01) selects the encoding from the option, then TRIPLEX_COMMIT_ENCODING, and rejects unknown names",
+    "status": "passed",
+    "duration": 0.662208000000021,
+    "failureMessages": []
+  }
+]

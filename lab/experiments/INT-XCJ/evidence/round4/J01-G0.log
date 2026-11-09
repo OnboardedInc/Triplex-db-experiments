@@ -1,0 +1,14 @@
+[lab] G0-xtdb-20261109T000920Z-414bda: raw output runs/G0/G0-xtdb-20261109T000920Z-414bda
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 36746 "CX-VA01-0312-evaluator", pid 37317 "CX-G03-r3-claim-suites2", pid 37280 "CX-VA01-0312-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 24829 "CX-P2Q-R7-final-suites", pid 37317 "CX-G03-r3-claim-suites2", pid 37280 "CX-VA01-0312-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 24829 "CX-P2Q-R7-final-suites", pid 37317 "CX-G03-r3-claim-suites2", pid 37280 "CX-VA01-0312-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 24829 "CX-P2Q-R7-final-suites", pid 37317 "CX-G03-r3-claim-suites2", pid 37280 "CX-VA01-0312-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 24829 "CX-P2Q-R7-final-suites", pid 37317 "CX-G03-r3-claim-suites2", pid 17994 "CX-INT-XCJ-J01-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 24829 "CX-P2Q-R7-final-suites", pid 37317 "CX-G03-r3-claim-suites2", pid 17994 "CX-INT-XCJ-J01-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 24829 "CX-P2Q-R7-final-suites", pid 37317 "CX-G03-r3-claim-suites2", pid 17994 "CX-INT-XCJ-J01-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 77141 "CX-K01-R5-offline", pid 37317 "CX-G03-r3-claim-suites2", pid 17994 "CX-INT-XCJ-J01-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 26482 "CX-VRQ01-review-a2", pid 37317 "CX-G03-r3-claim-suites2", pid 17994 "CX-INT-XCJ-J01-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 17413 "CX-INT-XCJ-J01-G0", pid 37317 "CX-G03-r3-claim-suites2", pid 42443 "CX-P2Q-R7-retry-suites"
+FAIL G0 xtdb scope=full executed=1168 pass=1168 fail=0 skip=137
+  reason: 3 unexpected skips (not in lab/config/g0-expected-skips.json)
+receipt: lab/runs/G0/G0-xtdb-20261109T000920Z-414bda.json

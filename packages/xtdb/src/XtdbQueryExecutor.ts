@@ -1,4 +1,5 @@
 import { Effect, Layer } from "effect";
+import { readOnlyXtdbClient, readPathBase } from "./ReadOnlyClient.js";
 import {
   QueryExecutor,
   ReadError,
@@ -17,7 +18,7 @@ import { resolveIntegerVariables } from "./query/domains.js";
 import type { DatalogQuery, WrappedQuery } from "@triplex-build/triplex/datalog";
 import type { XtdbClient } from "./XtdbClient.js";
 import { compileXtdb, type XtdbCompiledQuery, type QueryBasis } from "./query/compiler.js";
-import { materializeRules } from "./query/recursion.js";
+import { evaluateRules, placeholderRuleRelations } from "./query/recursion.js";
 import { CurrentTransactions } from "./TransactionContext.js";
 import { clientWithOverlay } from "./query/overlay.js";
 
@@ -125,7 +126,7 @@ export interface XtdbQueryLimits {
 }
 
 /** Dedicated public Triplex executor. XTDB runs all relational operators. */
-export const makeXtdbQueryExecutor = (
+const queryExecutor = (
   client: XtdbClient,
   scopeKey: string,
   limits: XtdbQueryLimits = {},
@@ -155,7 +156,7 @@ export const makeXtdbQueryExecutor = (
           if ("inner" in input) assertWrappedQuery(input);
           else assertDatalogQuery(input);
           const state = [...transactions.values()].findLast(
-            (state) => state.client === client && state.scopeKey === scopeKey,
+            (state) => state.client === readPathBase(client) && state.scopeKey === scopeKey,
           );
           if (state && state.rows.size > maxResultRows)
             throw new ReadError({
@@ -181,8 +182,9 @@ export const makeXtdbQueryExecutor = (
             resolved = { ...resolved, recordedPosition: numeric(rows[0]?.position) ?? 0 };
           }
           const started = performance.now();
-          const runId = recursive
-            ? await materializeRules(source, logical, scopeKey, resolved, signal, maxRecursiveRows)
+          // [EXP-C8] Rules are evaluated with reads only (recursion.ts); nothing is written.
+          const ruleRelations = recursive
+            ? await evaluateRules(source, logical, scopeKey, resolved, signal, maxRecursiveRows)
             : undefined;
           const nonIntegerProjectionVariables: string[] = [];
           const integerVariables = await resolveIntegerVariables(
@@ -190,13 +192,13 @@ export const makeXtdbQueryExecutor = (
             scopeKey,
             logical,
             resolved,
-            { signal, ...(runId ? { runId } : {}), onNonIntegerProjection: variable => nonIntegerProjectionVariables.push(variable) },
+            { signal, ...(ruleRelations ? { ruleRelations } : {}), onNonIntegerProjection: variable => nonIntegerProjectionVariables.push(variable) },
           );
           const compiled = compileXtdb(input, scopeKey, {
             nonIntegerProjectionVariables,
             basis: resolved,
             ...(cursorValues ? { cursorValues } : {}),
-            ...(runId ? { runId } : {}),
+            ...(ruleRelations ? { ruleRelations } : {}),
             debug,
             integerVariables,
           });
@@ -251,7 +253,10 @@ export const makeXtdbQueryExecutor = (
     explain: (query) =>
       Effect.try({
         try: () => {
-          const compiled = compileXtdb(query, scopeKey, { debug: true, runId: "<query-run>" });
+          const compiled = compileXtdb(query, scopeKey, {
+            debug: true,
+            ruleRelations: placeholderRuleRelations(query),
+          });
           return {
             queryPlan: plan(compiled, Boolean(query.rules?.length)),
             metrics: compiled.metrics ?? emptyMetrics,
@@ -263,7 +268,10 @@ export const makeXtdbQueryExecutor = (
       Effect.try({
         try: () => ({
           queryPlan: plan(
-            compileXtdb(query, scopeKey, { debug: true, runId: "<query-run>" }),
+            compileXtdb(query, scopeKey, {
+              debug: true,
+              ruleRelations: placeholderRuleRelations(query.inner),
+            }),
             Boolean(query.inner.rules?.length),
           ),
         }),
@@ -274,3 +282,11 @@ export const makeXtdbQueryExecutor = (
 
 export const makeXtdbQueryExecutorLayer = (client: XtdbClient, scopeKey: string) =>
   Layer.succeed(QueryExecutor, makeXtdbQueryExecutor(client, scopeKey));
+
+// [EXP-C8] Read entry point: the shared client is handed over as a write-refusing view
+// (ReadOnlyClient.ts), so no read path can reach the engine with a write.
+export const makeXtdbQueryExecutor = (
+  client: XtdbClient,
+  scopeKey: string,
+  limits: XtdbQueryLimits = {},
+): QueryExecutorService => queryExecutor(readOnlyXtdbClient(client), scopeKey, limits);

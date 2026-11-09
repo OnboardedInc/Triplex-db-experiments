@@ -1,0 +1,2740 @@
+{
+  "sourceHead": "88d8e40c26c68eebaa51d14dd2afccf7180bd5b3",
+  "mergedMain": "c41bb6db9a0a6fc882ddf24273eaa95b315a73fc",
+  "transitiveContractSha256": "cc32dc539ca7a0c4bca117df2f722511d491e3240feedc68c86e10a1268bc765",
+  "sha256": {
+    "lab/acceptance/build_contract.py": "63a5145c6c05c5d1369ce78397f11e460c0818861c268096734a80646dd47b9b",
+    "lab/bin/claim.mjs": "4069ca82ea877eed39cdddc8e0323b09d392fd013f9a2c8ac8f542a1bed62e2a",
+    "lab/bin/test/claim.test.mjs": "4192957b45d94093b96cfb00d757f429618d57cf53012c6f88416da4030cf3a1",
+    "lab/bin/test/claim-round2.test.mjs": "9fafb1773290d36ff6253299c702841658289ddb8c163a0f85f995f99ab7f144",
+    "lab/experiments/EXP-A01-acceptance-contract/regressions/negtest0312.py": "eee093e81efb2a82c8b2097f58023ef1c3da648b2d2f4791329ca905fc46ab1e",
+    "lab/acceptance/RULINGS.md": "13a880df8878f3eecec48fa367ade87fe00e22352a4ef61a0799e8aef0634bcd",
+    "lab/acceptance/RULINGS-PENDING.md": "fd68847c32784dd20236028efb273f24d8dd74ab39d43f306ac5b28fdc25de6f",
+    "lab/acceptance/obligations.json": "439f7d046f4b59b718230032b501733466796d9e3e334ac91d0073d421e649f8",
+    "lab/acceptance/oracle-contract.json": "a7ec2fe98f8bb066fe6ea55e89344905f5e9c760b076152f5377c414d18adbd0",
+    "lab/acceptance/ACCEPTANCE.md": "37a7c1b798aff5b807818dac7de7178d970d93e7e8b77181e04e487e1cd1a08e",
+    "lab/acceptance/load-contract.json": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428",
+    "lab/acceptance/budgets.json": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159",
+    "lab/acceptance/capability-matrix.md": "36fd4485da5d7b25fc4406722645f0d49cf7cddc519493b6d752f6b731c5cf4f"
+  },
+  "pending": [
+    "Q51b",
+    "Q73a",
+    "Q73b",
+    "Q78e",
+    "Q81b",
+    "Q81c",
+    "Q86g"
+  ],
+  "closability": {
+    "rule": "pin-level blockers per obligation (oracle pins, complete runner file hashes, excludes, refusals, the W0 pin); perSurface and surfaceBlockers also include missing engine images; every claim is also blocked by the evaluator-side blockers of QUALIFICATION_RUN until they clear (RULINGS Q67a)",
+    "total": 157,
+    "closable": [
+      "G1.types.native-parameters",
+      "G1.types.value-kinds-roundtrip",
+      "G1.wire.qlever-shadow",
+      "G1.wire.xtdb-encodings",
+      "G10.composition.identity-bound",
+      "G10.cursor.deep-page-cost",
+      "G10.cursor.stable",
+      "G10.native.entry-checks",
+      "G10.pkg.clean-consumer-slice",
+      "G10.scope.shared-collision",
+      "G3.recursion.scalable",
+      "G5.agg.full-support",
+      "G5.agg.typed-groups",
+      "G7.journal.logical-contract",
+      "G7.outbox.atomic-unit",
+      "G7.outbox.publication-sequence",
+      "G7.outbox.receiver-ordering",
+      "G7.position.bound-after-publication",
+      "G7.position.coordinates",
+      "G7.recovery.backup-restore",
+      "G7.write.atomic",
+      "G8.publish.coherent",
+      "G8.publish.valid-boundary",
+      "G8.support.alternate-maintained",
+      "G9.corrections.preserve",
+      "G9.deletion.entity",
+      "G9.erasure.reproduction-modulo",
+      "G9.erasure.visibility-boundary",
+      "G9.lineage.supporting-assertions",
+      "G9.temporal.recorded-cuts",
+      "NS.SEC.retro-and-audit",
+      "R.evaluator.incomplete-receipts",
+      "R.raw.capability-matrix",
+      "R.raw.guide-only-authoring",
+      "R.repo.entity-suite",
+      "S.correctness.query-families",
+      "S.maintenance.correct-during",
+      "S.restart.at-scale",
+      "S.rungs.ladder",
+      "W0.coverage-floors"
+    ],
+    "blocked": {
+      "G1.decimal.channel-routing": [
+        "oracle-runner-unpinned:O-TDK1",
+        "oracle-unaccepted:O-TDK1",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G1.decimal.tdk1-admission": [
+        "oracle-runner-unpinned:O-TDK1",
+        "oracle-unaccepted:O-TDK1"
+      ],
+      "G1.decimal.tdk1-differential": [
+        "oracle-runner-unpinned:O-TDK1",
+        "oracle-unaccepted:O-TDK1"
+      ],
+      "G1.decimal.tdk1-ranges": [
+        "oracle-runner-unpinned:O-TDK1",
+        "oracle-unaccepted:O-TDK1"
+      ],
+      "G1.decimal.tdk1-serialization": [
+        "oracle-runner-unpinned:O-TDK1",
+        "oracle-unaccepted:O-TDK1"
+      ],
+      "G1.decimal.tdk1-writer-negative": [
+        "oracle-runner-unpinned:O-TDK1",
+        "oracle-unaccepted:O-TDK1",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G1.found.unchanged44": [
+        "oracle-runner-unpinned:O-TESTKIT",
+        "oracle-unpinned:O-TESTKIT"
+      ],
+      "G1.schema.cardinality": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G1.schema.reference-target": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G1.schema.release-derived-contracts": [
+        "oracle-runner-unpinned:O-SPEC",
+        "oracle-unpinned:O-SPEC"
+      ],
+      "G1.schema.required": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G1.schema.unique": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G1.types.decimal": [
+        "refused:O-REPLAY:scale-evolution",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G1.types.invalid-rejected": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G1.types.out-of-range-rejected": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G1.types.storage-widening-safe": [
+        "refused:O-REPLAY:scale-evolution"
+      ],
+      "G1.wire.write-guards": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G10.capabilities.truthful": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G10.cursor.continuation-transitions": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G10.lifecycle.open-close": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "G10.native.read-only-and-safe-params": [
+        "oracle-runner-unpinned:O-ERR",
+        "oracle-screening-only:O-OBS"
+      ],
+      "G10.pkg.type-witnesses": [
+        "oracle-runner-unpinned:O-SPEC",
+        "oracle-unpinned:O-SPEC"
+      ],
+      "G10.scope.ownership-refusal": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G2.arith.binary64": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G2.arith.integer-exact": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G2.errors.typed-taxonomy": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G2.expr.cross-family-comparison": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G2.strings.codepoint-supported": [
+        "oracle-runner-unpinned:O-STR",
+        "oracle-unpinned:O-STR",
+        "oracle-runner-unpinned:O-COLL",
+        "oracle-unpinned:O-COLL"
+      ],
+      "G3.admission.preconstruction": [
+        "oracle-runner-unpinned:O-ERR",
+        "oracle-screening-only:O-OBS"
+      ],
+      "G3.cost.budget-honored": [
+        "oracle-runner-unpinned:O-PLAN",
+        "oracle-unpinned:O-PLAN",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G3.plan.access-path-at-scale": [
+        "oracle-runner-unpinned:O-PLAN",
+        "oracle-unpinned:O-PLAN"
+      ],
+      "G3.plan.explain": [
+        "oracle-runner-unpinned:O-PLAN",
+        "oracle-unpinned:O-PLAN"
+      ],
+      "G3.recursion.read-only-frontier": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G4.cut.task-wide-fixed": [
+        "oracle-runner-unpinned:O-EVT",
+        "oracle-unpinned:O-EVT"
+      ],
+      "G4.neg.conflict-semantics": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G4.neg.correlated-not-exists": [
+        "oracle-runner-unpinned:O-SHAPE",
+        "oracle-unpinned:O-SHAPE"
+      ],
+      "G4.neg.correlated-not-exists-raw": [
+        "oracle-runner-unpinned:O-SHAPE",
+        "oracle-unpinned:O-SHAPE"
+      ],
+      "G5.agg.projection-sums": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G5.agg.shape-controls": [
+        "oracle-runner-unpinned:O-SHAPE",
+        "oracle-unpinned:O-SHAPE"
+      ],
+      "G6.cancel.observed-drain": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "G6.cancel.preaborted-no-work": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G6.cleanup.scratch-zero": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "G6.deadline.enforced": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G6.ownership.bounded-connections": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "G6.resource.memory-failure-contained": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G7.broker.fence-and-epochs": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G7.broker.promotion-hardening": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G7.commit.protocol-transitions": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G7.composition.ack-and-routed-ryow": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G7.composition.overlay-rules": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G7.migration.schema-evolution": [
+        "refused:O-REPLAY:scale-evolution"
+      ],
+      "G7.migration.valid-writes-never-rejected": [
+        "refused:O-REPLAY:scale-evolution"
+      ],
+      "G7.receipt.journal-complete": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G7.write.command-idempotency": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G7.write.preconditions-cas": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G8.composition.watermark-routing": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "G8.eligibility.c1-routing": [
+        "oracle-runner-unpinned:O-PLAN",
+        "oracle-unpinned:O-PLAN"
+      ],
+      "G8.maintenance.bounded-boundaries": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G8.publish.basis-honesty": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G8.reuse.positive-witness": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "G8.support.incremental-witness": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "G9.cascade.restrict-detach-cascade": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G9.erasure.commit-semantics": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G9.erasure.protected-copies": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "G9.erasure.query-semantics": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G9.erasure.residual-shapes": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "G9.erasure.restore-reapplies": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "G9.history.raw-lifetime-compat": [
+        "oracle-runner-unpinned:O-HAM",
+        "oracle-unpinned:O-HAM"
+      ],
+      "G9.history.snapshot-metadata": [
+        "oracle-runner-unpinned:O-CFG8",
+        "oracle-unpinned:O-CFG8",
+        "oracle-runner-unpinned:O-HAM",
+        "oracle-unpinned:O-HAM"
+      ],
+      "G9.presence.explicit": [
+        "oracle-runner-unpinned:O-CFG8",
+        "oracle-unpinned:O-CFG8"
+      ],
+      "G9.temporal.half-open-intervals": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.01": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.02": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.03": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.04": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.05": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.06": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.07": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.08": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.09": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.10": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.11": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.12": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.13": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.14": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.15": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.16": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.17": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.18": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.19": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "GS.20": [
+        "oracle-runner-unpinned:O-HAND",
+        "oracle-unpinned:O-HAND",
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "NS.P1": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "NS.P2": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "NS.P3": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "NS.P4": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "NS.P5": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "NS.SEC.bulk-lane": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "NS.calibration": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "PKT.full142": [
+        "oracle-runner-unpinned:O-EVT",
+        "oracle-unpinned:O-EVT"
+      ],
+      "R.native.fragment-equivalence": [
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "R.raw.mapped-recipes": [
+        "oracle-runner-unpinned:O-STR",
+        "oracle-unpinned:O-STR",
+        "oracle-runner-unpinned:O-COLL",
+        "oracle-unpinned:O-COLL",
+        "oracle-runner-unpinned:O-SHAPE",
+        "oracle-unpinned:O-SHAPE",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "R.raw.parity": [
+        "oracle-runner-unpinned:O-STR",
+        "oracle-unpinned:O-STR"
+      ],
+      "R.repo.mutation-controls": [
+        "refused:O-REPLAY:scale-evolution"
+      ],
+      "REQ.change-feed": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "REQ.commit-idempotent": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "REQ.no-silent-precision-loss": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "REQ.outbox-atomic": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "REQ.pii-erasure": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "REQ.read-your-write": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "REQ.retro-corrections": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "REQ.snapshot-reads": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "REQ.sweep-pins-position": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "REQ.tenant-isolation": [
+        "oracle-screening-only:O-OBS",
+        "oracle-runner-unpinned:O-ERR"
+      ],
+      "S.budgets.cumulative": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "S.capacity.admitted": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "S.metrics.reported": [
+        "oracle-screening-only:O-OBS"
+      ],
+      "S.population.year-one": [
+        "oracle-screening-only:O-OBS"
+      ]
+    },
+    "counts": {
+      "total": 157,
+      "closable": 40,
+      "blocked": 117
+    },
+    "blockerCounts": {
+      "oracle-runner-unpinned:O-CFG8": 2,
+      "oracle-runner-unpinned:O-COLL": 2,
+      "oracle-runner-unpinned:O-ERR": 73,
+      "oracle-runner-unpinned:O-EVT": 2,
+      "oracle-runner-unpinned:O-HAM": 2,
+      "oracle-runner-unpinned:O-HAND": 20,
+      "oracle-runner-unpinned:O-PLAN": 4,
+      "oracle-runner-unpinned:O-SHAPE": 4,
+      "oracle-runner-unpinned:O-SPEC": 2,
+      "oracle-runner-unpinned:O-STR": 3,
+      "oracle-runner-unpinned:O-TDK1": 6,
+      "oracle-runner-unpinned:O-TESTKIT": 1,
+      "oracle-screening-only:O-OBS": 62,
+      "oracle-unaccepted:O-TDK1": 6,
+      "oracle-unpinned:O-CFG8": 2,
+      "oracle-unpinned:O-COLL": 2,
+      "oracle-unpinned:O-EVT": 2,
+      "oracle-unpinned:O-HAM": 2,
+      "oracle-unpinned:O-HAND": 20,
+      "oracle-unpinned:O-PLAN": 4,
+      "oracle-unpinned:O-SHAPE": 4,
+      "oracle-unpinned:O-SPEC": 2,
+      "oracle-unpinned:O-STR": 3,
+      "oracle-unpinned:O-TESTKIT": 1,
+      "refused:O-REPLAY:scale-evolution": 5
+    },
+    "perSurface": {
+      "xtdb-xtql": {
+        "total": 154,
+        "closable": 39,
+        "blocked": 115
+      },
+      "xtdb-sql": {
+        "total": 154,
+        "closable": 39,
+        "blocked": 115
+      },
+      "qlever-sparql": {
+        "total": 155,
+        "closable": 39,
+        "blocked": 116
+      },
+      "datomic-datalog": {
+        "total": 153,
+        "closable": 0,
+        "blocked": 153
+      }
+    },
+    "surfaceBlockers": {
+      "xtdb-xtql": {
+        "G1.found.unchanged44": [
+          "oracle-runner-unpinned:O-TESTKIT",
+          "oracle-unpinned:O-TESTKIT"
+        ],
+        "G1.types.out-of-range-rejected": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.types.decimal": [
+          "refused:O-REPLAY:scale-evolution",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.wire.write-guards": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.decimal.tdk1-admission": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-ranges": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-differential": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-serialization": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-writer-negative": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.decimal.channel-routing": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.types.invalid-rejected": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.types.storage-widening-safe": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G1.schema.required": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.cardinality": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.unique": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.reference-target": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.release-derived-contracts": [
+          "oracle-runner-unpinned:O-SPEC",
+          "oracle-unpinned:O-SPEC"
+        ],
+        "PKT.full142": [
+          "oracle-runner-unpinned:O-EVT",
+          "oracle-unpinned:O-EVT"
+        ],
+        "G2.arith.integer-exact": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.arith.binary64": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.expr.cross-family-comparison": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.errors.typed-taxonomy": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.strings.codepoint-supported": [
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR",
+          "oracle-runner-unpinned:O-COLL",
+          "oracle-unpinned:O-COLL"
+        ],
+        "G3.plan.explain": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G3.plan.access-path-at-scale": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G3.admission.preconstruction": [
+          "oracle-runner-unpinned:O-ERR",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G3.cost.budget-honored": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G3.recursion.read-only-frontier": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G4.neg.correlated-not-exists": [
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE"
+        ],
+        "G4.neg.correlated-not-exists-raw": [
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE"
+        ],
+        "G4.cut.task-wide-fixed": [
+          "oracle-runner-unpinned:O-EVT",
+          "oracle-unpinned:O-EVT"
+        ],
+        "G4.neg.conflict-semantics": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G5.agg.shape-controls": [
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE"
+        ],
+        "G5.agg.projection-sums": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cancel.observed-drain": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.deadline.enforced": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cancel.preaborted-no-work": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cleanup.scratch-zero": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.ownership.bounded-connections": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.resource.memory-failure-contained": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.write.command-idempotency": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.write.preconditions-cas": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.receipt.journal-complete": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.commit.protocol-transitions": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.composition.overlay-rules": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.broker.promotion-hardening": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.migration.schema-evolution": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G7.migration.valid-writes-never-rejected": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G8.eligibility.c1-routing": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G8.publish.basis-honesty": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G8.reuse.positive-witness": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G8.support.incremental-witness": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G9.temporal.half-open-intervals": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.history.raw-lifetime-compat": [
+          "oracle-runner-unpinned:O-HAM",
+          "oracle-unpinned:O-HAM"
+        ],
+        "G9.history.snapshot-metadata": [
+          "oracle-runner-unpinned:O-CFG8",
+          "oracle-unpinned:O-CFG8",
+          "oracle-runner-unpinned:O-HAM",
+          "oracle-unpinned:O-HAM"
+        ],
+        "G9.presence.explicit": [
+          "oracle-runner-unpinned:O-CFG8",
+          "oracle-unpinned:O-CFG8"
+        ],
+        "G9.cascade.restrict-detach-cascade": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.pkg.type-witnesses": [
+          "oracle-runner-unpinned:O-SPEC",
+          "oracle-unpinned:O-SPEC"
+        ],
+        "G10.scope.ownership-refusal": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.cursor.continuation-transitions": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.capabilities.truthful": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.lifecycle.open-close": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G10.native.read-only-and-safe-params": [
+          "oracle-runner-unpinned:O-ERR",
+          "oracle-screening-only:O-OBS"
+        ],
+        "R.repo.mutation-controls": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "R.raw.parity": [
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR"
+        ],
+        "R.raw.mapped-recipes": [
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR",
+          "oracle-runner-unpinned:O-COLL",
+          "oracle-unpinned:O-COLL",
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "R.native.fragment-equivalence": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "NS.P1": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P2": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P3": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P4": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P5": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.SEC.bulk-lane": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.calibration": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "GS.01": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.02": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.03": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.04": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.05": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.06": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.07": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.08": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.09": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.10": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.11": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.12": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.13": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.14": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.15": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.16": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.17": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.18": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.19": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.20": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.commit-idempotent": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.snapshot-reads": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.change-feed": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.no-silent-precision-loss": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.pii-erasure": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.tenant-isolation": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.outbox-atomic": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.read-your-write": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.sweep-pins-position": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.retro-corrections": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.protected-copies": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G9.erasure.restore-reapplies": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G8.composition.watermark-routing": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G7.composition.ack-and-routed-ryow": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.commit-semantics": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.query-semantics": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.residual-shapes": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "S.population.year-one": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.capacity.admitted": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.metrics.reported": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.budgets.cumulative": [
+          "oracle-screening-only:O-OBS"
+        ]
+      },
+      "xtdb-sql": {
+        "G1.found.unchanged44": [
+          "oracle-runner-unpinned:O-TESTKIT",
+          "oracle-unpinned:O-TESTKIT"
+        ],
+        "G1.types.out-of-range-rejected": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.types.decimal": [
+          "refused:O-REPLAY:scale-evolution",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.wire.write-guards": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.decimal.tdk1-admission": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-ranges": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-differential": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-serialization": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-writer-negative": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.decimal.channel-routing": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.types.invalid-rejected": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.types.storage-widening-safe": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G1.schema.required": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.cardinality": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.unique": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.reference-target": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.release-derived-contracts": [
+          "oracle-runner-unpinned:O-SPEC",
+          "oracle-unpinned:O-SPEC"
+        ],
+        "PKT.full142": [
+          "oracle-runner-unpinned:O-EVT",
+          "oracle-unpinned:O-EVT"
+        ],
+        "G2.arith.integer-exact": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.arith.binary64": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.expr.cross-family-comparison": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.errors.typed-taxonomy": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.strings.codepoint-supported": [
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR",
+          "oracle-runner-unpinned:O-COLL",
+          "oracle-unpinned:O-COLL"
+        ],
+        "G3.plan.explain": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G3.plan.access-path-at-scale": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G3.admission.preconstruction": [
+          "oracle-runner-unpinned:O-ERR",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G3.cost.budget-honored": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G3.recursion.read-only-frontier": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G4.neg.correlated-not-exists": [
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE"
+        ],
+        "G4.neg.correlated-not-exists-raw": [
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE"
+        ],
+        "G4.cut.task-wide-fixed": [
+          "oracle-runner-unpinned:O-EVT",
+          "oracle-unpinned:O-EVT"
+        ],
+        "G4.neg.conflict-semantics": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G5.agg.shape-controls": [
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE"
+        ],
+        "G5.agg.projection-sums": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cancel.observed-drain": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.deadline.enforced": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cancel.preaborted-no-work": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cleanup.scratch-zero": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.ownership.bounded-connections": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.resource.memory-failure-contained": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.write.command-idempotency": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.write.preconditions-cas": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.receipt.journal-complete": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.commit.protocol-transitions": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.composition.overlay-rules": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.broker.promotion-hardening": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.migration.schema-evolution": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G7.migration.valid-writes-never-rejected": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G8.eligibility.c1-routing": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G8.publish.basis-honesty": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G8.reuse.positive-witness": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G8.support.incremental-witness": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G9.temporal.half-open-intervals": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.history.raw-lifetime-compat": [
+          "oracle-runner-unpinned:O-HAM",
+          "oracle-unpinned:O-HAM"
+        ],
+        "G9.history.snapshot-metadata": [
+          "oracle-runner-unpinned:O-CFG8",
+          "oracle-unpinned:O-CFG8",
+          "oracle-runner-unpinned:O-HAM",
+          "oracle-unpinned:O-HAM"
+        ],
+        "G9.presence.explicit": [
+          "oracle-runner-unpinned:O-CFG8",
+          "oracle-unpinned:O-CFG8"
+        ],
+        "G9.cascade.restrict-detach-cascade": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.pkg.type-witnesses": [
+          "oracle-runner-unpinned:O-SPEC",
+          "oracle-unpinned:O-SPEC"
+        ],
+        "G10.scope.ownership-refusal": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.cursor.continuation-transitions": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.capabilities.truthful": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.lifecycle.open-close": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G10.native.read-only-and-safe-params": [
+          "oracle-runner-unpinned:O-ERR",
+          "oracle-screening-only:O-OBS"
+        ],
+        "R.repo.mutation-controls": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "R.raw.parity": [
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR"
+        ],
+        "R.raw.mapped-recipes": [
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR",
+          "oracle-runner-unpinned:O-COLL",
+          "oracle-unpinned:O-COLL",
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "R.native.fragment-equivalence": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "NS.P1": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P2": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P3": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P4": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P5": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.SEC.bulk-lane": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.calibration": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "GS.01": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.02": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.03": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.04": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.05": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.06": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.07": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.08": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.09": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.10": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.11": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.12": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.13": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.14": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.15": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.16": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.17": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.18": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.19": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.20": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.commit-idempotent": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.snapshot-reads": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.change-feed": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.no-silent-precision-loss": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.pii-erasure": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.tenant-isolation": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.outbox-atomic": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.read-your-write": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.sweep-pins-position": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.retro-corrections": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.protected-copies": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G9.erasure.restore-reapplies": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G8.composition.watermark-routing": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G7.composition.ack-and-routed-ryow": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.commit-semantics": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.query-semantics": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.residual-shapes": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "S.population.year-one": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.capacity.admitted": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.metrics.reported": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.budgets.cumulative": [
+          "oracle-screening-only:O-OBS"
+        ]
+      },
+      "qlever-sparql": {
+        "G1.found.unchanged44": [
+          "oracle-runner-unpinned:O-TESTKIT",
+          "oracle-unpinned:O-TESTKIT"
+        ],
+        "G1.types.out-of-range-rejected": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.types.decimal": [
+          "refused:O-REPLAY:scale-evolution",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.wire.write-guards": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.decimal.tdk1-admission": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-ranges": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-differential": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-serialization": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-writer-negative": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.decimal.channel-routing": [
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.types.invalid-rejected": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.types.storage-widening-safe": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G1.schema.required": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.cardinality": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.unique": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.reference-target": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.release-derived-contracts": [
+          "oracle-runner-unpinned:O-SPEC",
+          "oracle-unpinned:O-SPEC"
+        ],
+        "PKT.full142": [
+          "oracle-runner-unpinned:O-EVT",
+          "oracle-unpinned:O-EVT"
+        ],
+        "G2.arith.integer-exact": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.arith.binary64": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.expr.cross-family-comparison": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.errors.typed-taxonomy": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.strings.codepoint-supported": [
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR",
+          "oracle-runner-unpinned:O-COLL",
+          "oracle-unpinned:O-COLL"
+        ],
+        "G3.plan.explain": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G3.plan.access-path-at-scale": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G3.admission.preconstruction": [
+          "oracle-runner-unpinned:O-ERR",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G3.cost.budget-honored": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G3.recursion.read-only-frontier": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G4.neg.correlated-not-exists": [
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE"
+        ],
+        "G4.cut.task-wide-fixed": [
+          "oracle-runner-unpinned:O-EVT",
+          "oracle-unpinned:O-EVT"
+        ],
+        "G4.neg.conflict-semantics": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G5.agg.shape-controls": [
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE"
+        ],
+        "G5.agg.projection-sums": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cancel.observed-drain": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.deadline.enforced": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cancel.preaborted-no-work": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cleanup.scratch-zero": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.ownership.bounded-connections": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.resource.memory-failure-contained": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.write.command-idempotency": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.write.preconditions-cas": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.receipt.journal-complete": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.commit.protocol-transitions": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.broker.fence-and-epochs": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.composition.overlay-rules": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.broker.promotion-hardening": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.migration.schema-evolution": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G7.migration.valid-writes-never-rejected": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G8.eligibility.c1-routing": [
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G8.publish.basis-honesty": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G8.maintenance.bounded-boundaries": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G8.reuse.positive-witness": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G8.support.incremental-witness": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G9.temporal.half-open-intervals": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.history.raw-lifetime-compat": [
+          "oracle-runner-unpinned:O-HAM",
+          "oracle-unpinned:O-HAM"
+        ],
+        "G9.history.snapshot-metadata": [
+          "oracle-runner-unpinned:O-CFG8",
+          "oracle-unpinned:O-CFG8",
+          "oracle-runner-unpinned:O-HAM",
+          "oracle-unpinned:O-HAM"
+        ],
+        "G9.presence.explicit": [
+          "oracle-runner-unpinned:O-CFG8",
+          "oracle-unpinned:O-CFG8"
+        ],
+        "G9.cascade.restrict-detach-cascade": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.pkg.type-witnesses": [
+          "oracle-runner-unpinned:O-SPEC",
+          "oracle-unpinned:O-SPEC"
+        ],
+        "G10.scope.ownership-refusal": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.cursor.continuation-transitions": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.capabilities.truthful": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.lifecycle.open-close": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G10.native.read-only-and-safe-params": [
+          "oracle-runner-unpinned:O-ERR",
+          "oracle-screening-only:O-OBS"
+        ],
+        "R.repo.mutation-controls": [
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "R.raw.parity": [
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR"
+        ],
+        "R.raw.mapped-recipes": [
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR",
+          "oracle-runner-unpinned:O-COLL",
+          "oracle-unpinned:O-COLL",
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "R.native.fragment-equivalence": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "NS.P1": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P2": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P3": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P4": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P5": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.SEC.bulk-lane": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.calibration": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "GS.01": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.02": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.03": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.04": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.05": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.06": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.07": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.08": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.09": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.10": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.11": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.12": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.13": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.14": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.15": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.16": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.17": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.18": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.19": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.20": [
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.commit-idempotent": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.snapshot-reads": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.change-feed": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.no-silent-precision-loss": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.pii-erasure": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.tenant-isolation": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.outbox-atomic": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.read-your-write": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.sweep-pins-position": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.retro-corrections": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.protected-copies": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G9.erasure.restore-reapplies": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G8.composition.watermark-routing": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "G7.composition.ack-and-routed-ryow": [
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.commit-semantics": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.query-semantics": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.residual-shapes": [
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "S.population.year-one": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.capacity.admitted": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.metrics.reported": [
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.budgets.cumulative": [
+          "oracle-screening-only:O-OBS"
+        ]
+      },
+      "datomic-datalog": {
+        "G1.found.unchanged44": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-TESTKIT",
+          "oracle-unpinned:O-TESTKIT"
+        ],
+        "G1.types.value-kinds-roundtrip": [
+          "image-unpinned:datomic"
+        ],
+        "G1.types.out-of-range-rejected": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.types.decimal": [
+          "image-unpinned:datomic",
+          "refused:O-REPLAY:scale-evolution",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.wire.write-guards": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.decimal.tdk1-admission": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-ranges": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-differential": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-serialization": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1"
+        ],
+        "G1.decimal.tdk1-writer-negative": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.decimal.channel-routing": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-TDK1",
+          "oracle-unaccepted:O-TDK1",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.outbox.publication-sequence": [
+          "image-unpinned:datomic"
+        ],
+        "G7.outbox.receiver-ordering": [
+          "image-unpinned:datomic"
+        ],
+        "G7.outbox.atomic-unit": [
+          "image-unpinned:datomic"
+        ],
+        "G1.types.invalid-rejected": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.types.storage-widening-safe": [
+          "image-unpinned:datomic",
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G1.types.native-parameters": [
+          "image-unpinned:datomic"
+        ],
+        "G1.schema.required": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.cardinality": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.unique": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.reference-target": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G1.schema.release-derived-contracts": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-SPEC",
+          "oracle-unpinned:O-SPEC"
+        ],
+        "PKT.full142": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-EVT",
+          "oracle-unpinned:O-EVT"
+        ],
+        "G2.arith.integer-exact": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.arith.binary64": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.expr.cross-family-comparison": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.errors.typed-taxonomy": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G2.strings.codepoint-supported": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR",
+          "oracle-runner-unpinned:O-COLL",
+          "oracle-unpinned:O-COLL"
+        ],
+        "G3.plan.explain": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G3.plan.access-path-at-scale": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G3.admission.preconstruction": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G3.cost.budget-honored": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G3.recursion.scalable": [
+          "image-unpinned:datomic"
+        ],
+        "G3.recursion.read-only-frontier": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G4.neg.correlated-not-exists": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE"
+        ],
+        "G4.neg.correlated-not-exists-raw": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE"
+        ],
+        "G4.cut.task-wide-fixed": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-EVT",
+          "oracle-unpinned:O-EVT"
+        ],
+        "G4.neg.conflict-semantics": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G5.agg.shape-controls": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE"
+        ],
+        "G5.agg.full-support": [
+          "image-unpinned:datomic"
+        ],
+        "G5.agg.typed-groups": [
+          "image-unpinned:datomic"
+        ],
+        "G5.agg.projection-sums": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cancel.observed-drain": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.deadline.enforced": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cancel.preaborted-no-work": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G6.cleanup.scratch-zero": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.ownership.bounded-connections": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G6.resource.memory-failure-contained": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.write.atomic": [
+          "image-unpinned:datomic"
+        ],
+        "G7.write.command-idempotency": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.write.preconditions-cas": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.receipt.journal-complete": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.journal.logical-contract": [
+          "image-unpinned:datomic"
+        ],
+        "G7.commit.protocol-transitions": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.composition.overlay-rules": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.broker.promotion-hardening": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.recovery.backup-restore": [
+          "image-unpinned:datomic"
+        ],
+        "G7.migration.schema-evolution": [
+          "image-unpinned:datomic",
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G7.migration.valid-writes-never-rejected": [
+          "image-unpinned:datomic",
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "G8.eligibility.c1-routing": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-PLAN",
+          "oracle-unpinned:O-PLAN"
+        ],
+        "G8.publish.coherent": [
+          "image-unpinned:datomic"
+        ],
+        "G8.publish.basis-honesty": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G8.publish.valid-boundary": [
+          "image-unpinned:datomic"
+        ],
+        "G8.reuse.positive-witness": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G8.support.incremental-witness": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G8.support.alternate-maintained": [
+          "image-unpinned:datomic"
+        ],
+        "G9.temporal.half-open-intervals": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.temporal.recorded-cuts": [
+          "image-unpinned:datomic"
+        ],
+        "G9.history.raw-lifetime-compat": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAM",
+          "oracle-unpinned:O-HAM"
+        ],
+        "G9.history.snapshot-metadata": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-CFG8",
+          "oracle-unpinned:O-CFG8",
+          "oracle-runner-unpinned:O-HAM",
+          "oracle-unpinned:O-HAM"
+        ],
+        "G9.corrections.preserve": [
+          "image-unpinned:datomic"
+        ],
+        "G9.lineage.supporting-assertions": [
+          "image-unpinned:datomic"
+        ],
+        "G9.presence.explicit": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-CFG8",
+          "oracle-unpinned:O-CFG8"
+        ],
+        "G9.deletion.entity": [
+          "image-unpinned:datomic"
+        ],
+        "G9.cascade.restrict-detach-cascade": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.pkg.clean-consumer-slice": [
+          "image-unpinned:datomic"
+        ],
+        "G10.pkg.type-witnesses": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-SPEC",
+          "oracle-unpinned:O-SPEC"
+        ],
+        "G10.scope.ownership-refusal": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.scope.shared-collision": [
+          "image-unpinned:datomic"
+        ],
+        "G10.cursor.stable": [
+          "image-unpinned:datomic"
+        ],
+        "G10.cursor.deep-page-cost": [
+          "image-unpinned:datomic"
+        ],
+        "G10.cursor.continuation-transitions": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.capabilities.truthful": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G10.lifecycle.open-close": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G10.native.entry-checks": [
+          "image-unpinned:datomic"
+        ],
+        "G10.native.read-only-and-safe-params": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR",
+          "oracle-screening-only:O-OBS"
+        ],
+        "R.repo.entity-suite": [
+          "image-unpinned:datomic"
+        ],
+        "R.repo.mutation-controls": [
+          "image-unpinned:datomic",
+          "refused:O-REPLAY:scale-evolution"
+        ],
+        "R.raw.parity": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR"
+        ],
+        "R.raw.mapped-recipes": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-STR",
+          "oracle-unpinned:O-STR",
+          "oracle-runner-unpinned:O-COLL",
+          "oracle-unpinned:O-COLL",
+          "oracle-runner-unpinned:O-SHAPE",
+          "oracle-unpinned:O-SHAPE",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "R.raw.guide-only-authoring": [
+          "image-unpinned:datomic"
+        ],
+        "R.raw.capability-matrix": [
+          "image-unpinned:datomic"
+        ],
+        "R.native.fragment-equivalence": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "NS.P1": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P2": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P3": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P4": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.P5": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.SEC.bulk-lane": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "NS.SEC.retro-and-audit": [
+          "image-unpinned:datomic"
+        ],
+        "NS.calibration": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "GS.01": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.02": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.03": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.04": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.05": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.06": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.07": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.08": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.09": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.10": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.11": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.12": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.13": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.14": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.15": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.16": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.17": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.18": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.19": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "GS.20": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-HAND",
+          "oracle-unpinned:O-HAND",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.commit-idempotent": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.snapshot-reads": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.change-feed": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.no-silent-precision-loss": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.pii-erasure": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.tenant-isolation": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.outbox-atomic": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.read-your-write": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.sweep-pins-position": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "REQ.retro-corrections": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.visibility-boundary": [
+          "image-unpinned:datomic"
+        ],
+        "G9.erasure.protected-copies": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G9.erasure.restore-reapplies": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G8.composition.watermark-routing": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "G7.composition.ack-and-routed-ryow": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G7.position.coordinates": [
+          "image-unpinned:datomic"
+        ],
+        "G7.position.bound-after-publication": [
+          "image-unpinned:datomic"
+        ],
+        "W0.coverage-floors": [
+          "image-unpinned:datomic"
+        ],
+        "G9.erasure.commit-semantics": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.query-semantics": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.residual-shapes": [
+          "image-unpinned:datomic",
+          "oracle-runner-unpinned:O-ERR"
+        ],
+        "G9.erasure.reproduction-modulo": [
+          "image-unpinned:datomic"
+        ],
+        "G10.composition.identity-bound": [
+          "image-unpinned:datomic"
+        ],
+        "R.evaluator.incomplete-receipts": [
+          "image-unpinned:datomic"
+        ],
+        "S.population.year-one": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.rungs.ladder": [
+          "image-unpinned:datomic"
+        ],
+        "S.correctness.query-families": [
+          "image-unpinned:datomic"
+        ],
+        "S.capacity.admitted": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.metrics.reported": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ],
+        "S.maintenance.correct-during": [
+          "image-unpinned:datomic"
+        ],
+        "S.restart.at-scale": [
+          "image-unpinned:datomic"
+        ],
+        "S.budgets.cumulative": [
+          "image-unpinned:datomic",
+          "oracle-screening-only:O-OBS"
+        ]
+      }
+    }
+  },
+  "oObs": {
+    "files": "lab/acceptance/oracle/observe.py",
+    "commit": "23e2273fc6b15b92821b318acd387f5484155d8a",
+    "oracleVersion": "O05-round4",
+    "dependencies": {
+      "O-REPLAY": "f195f30af618d3f9b0525a864e913824a315cc8c"
+    },
+    "sha256": {
+      "lab/oracles/replay/RULES.md": "5e9de540e26e0c370c10a904a625a96ba67f279172aa5000aea043b73cfa4241",
+      "lab/oracles/replay/SCHEMA.md": "baf2c949c6c59538914340dd0b2da5d3556b150f6908be68b2a6741138f459d3",
+      "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+      "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+      "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+      "lab/oracles/replay/constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+      "lab/oracles/replay/entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+      "lab/oracles/replay/errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+      "lab/oracles/replay/exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+      "lab/oracles/replay/examples/entity-mini.case.json": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+      "lab/oracles/replay/examples/entity-mini.expected.json": "d4e7aff8188ffaa902f1014d9527e63c92d6e0dd6925fef446cceb820c6d8b0f",
+      "lab/oracles/replay/replay.py": "3dd06dd0c30930e00ce1665ae7e9f40afcf7e06fa8a37759a8c5e65345fe9016",
+      "lab/oracles/replay/run.py": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
+      "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+      "lab/oracles/replay/selfcheck.py": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+      "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+      "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
+      "lab/oracles/replay/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "lab/oracles/replay/tests/helpers.py": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
+      "lab/oracles/replay/tests/test_contract_section4.py": "99273adb536a3835b62f49c7be7fddf690e871e5f7dccce5b73d9e1f3a44982e",
+      "lab/oracles/replay/tests/test_entities.py": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+      "lab/oracles/replay/tests/test_exact.py": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+      "lab/oracles/replay/tests/test_replay.py": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+      "lab/oracles/replay/tests/test_rulings.py": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+      "lab/oracles/replay/tests/test_scale_and_selfcheck.py": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4",
+      "lab/oracles/replay/tests/test_values.py": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375",
+      "lab/oracles/replay/tests/test_views.py": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584",
+      "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+      "lab/oracles/replay/views.py": "bbfb8989e054ba7ed4998f466478bdef92ede643e9554c313672f7db2a865901",
+      "lab/acceptance/oracle/observe.py": "668136f3c99e09b5332363bb6beaac7f177d07ef7718eb59b2b801faeedcb2cb"
+    },
+    "acceptReceipt": "V-O05 round 4, verify/O05 3e3df9c",
+    "verifierEntry": "V-O05-round4",
+    "excludes": [],
+    "excludesWhy": {},
+    "acceptanceLevel": "screening",
+    "acceptanceRequires": "verifier repeats collection (Q82c); no production observer or engine obligation qualification",
+    "rule": "oracle merge and pin move together (Q45a); every runner file hash listed (Q75c); normalizers and retained objects are evaluator-owned, pinned per context"
+  },
+  "hostDiskFreeBytes": 15142793216
+}

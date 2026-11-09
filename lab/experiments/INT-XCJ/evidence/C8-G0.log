@@ -1,0 +1,27 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 33681 "CX-VSQL01-r2b-unit"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 90885 "DA01-r2-G0-basis"
+[lab] heavy: waiting for one of 4 slots; held by pid 90742 "CX-OBS01-archive-source-check", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91289 "CX-INT-XCJ-C8-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 90928 "DA01-r2-G1-basis"
+[lab] G0-xtdb-20261108T234100Z-b718fc: raw output runs/G0/G0-xtdb-20261108T234100Z-b718fc
+error: could not write index
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 47171 "CX-P2Q-R6-final-suites", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 91531 "CX-A01-0312-evaluator", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 54104 "CX-OBS01-R2-x06", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 84582 "DA01-r2-G0-hardened", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 87446 "CX-G03-r3-claim-suites", pid 22481 "CX-A01-0312-mutations", pid 85258 "CX-A01-0312-evaluator-retry", pid 91250 "CX-INT-XCJ-C8-G0"
+FAIL G0 xtdb scope=full executed=1163 pass=1163 fail=0 skip=134
+  reason: 4 unexpected skips (not in lab/config/g0-expected-skips.json)
+receipt: lab/runs/G0/G0-xtdb-20261108T234100Z-b718fc.json

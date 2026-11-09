@@ -1,0 +1,43 @@
+{
+ "per-id parameters (A0 form)": {
+  "allFresh": {
+   "outcome": "passed",
+   "recordBytes": 5147
+  },
+  "onePresent": {
+   "outcome": "rejected"
+  },
+  "works": true
+ },
+ "text[] parameter, = ANY": {
+  "allFresh": {
+   "outcome": "passed",
+   "recordBytes": 2331
+  },
+  "onePresent": {
+   "outcome": "rejected"
+  },
+  "works": true
+ },
+ "text[] parameter, IN UNNEST": {
+  "allFresh": {
+   "outcome": "passed",
+   "recordBytes": 2363
+  },
+  "onePresent": {
+   "outcome": "rejected"
+  },
+  "works": true
+ },
+ "json parameter, IN UNNEST": {
+  "allFresh": {
+   "outcome": "passed",
+   "recordBytes": 2243
+  },
+  "onePresent": {
+   "outcome": "passed",
+   "recordBytes": 2243
+  },
+  "works": false
+ }
+}

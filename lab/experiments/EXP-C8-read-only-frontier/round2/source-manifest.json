@@ -1,0 +1,90 @@
+{
+  "at": "2026-11-08T21:37:51.625Z",
+  "node": "v22.23.2",
+  "base": "d9b2dc8a568bda85cc78e77f0d53537b2820ad87",
+  "implementation": "f049bbf854ee125d7cfcdd108beb014ffa083c06",
+  "reviewer": "74e5627c2e8ff18b5de0f7c518ef6ca502804236",
+  "sources": [
+    {
+      "path": ".changeset/c8-exact-recursion-budgets.md",
+      "sha256": "932525d424c57485d84cbc711f5f5a3f1fd381df9213fd3c0f42e65a1013d37b",
+      "committedSha256": "932525d424c57485d84cbc711f5f5a3f1fd381df9213fd3c0f42e65a1013d37b"
+    },
+    {
+      "path": "packages/core/src/native/FrontierClosure.ts",
+      "sha256": "664108e81e1104b7cc04e7e5d25f410e38cede5ce11ad32566897a81f10563b2",
+      "committedSha256": "664108e81e1104b7cc04e7e5d25f410e38cede5ce11ad32566897a81f10563b2"
+    },
+    {
+      "path": "packages/core/test/native/frontier-closure.test.ts",
+      "sha256": "91eeb7951876f0e7a73d55628ffd27a006b68fbff288cc36a622057975668161",
+      "committedSha256": "91eeb7951876f0e7a73d55628ffd27a006b68fbff288cc36a622057975668161"
+    },
+    {
+      "path": "packages/qualification/src/engine-write-counter.ts",
+      "sha256": "cde43443c3d073bc563398c864cde98d15c701c24097222e19def4820a5d85e8",
+      "committedSha256": "cde43443c3d073bc563398c864cde98d15c701c24097222e19def4820a5d85e8"
+    },
+    {
+      "path": "packages/qualification/src/native/qlever-workloads.ts",
+      "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+      "committedSha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da"
+    },
+    {
+      "path": "packages/qualification/src/native/support-paths.ts",
+      "sha256": "1ec48a273db59be302324e44d9e33030d06358560846c64386c85bb4990124ba",
+      "committedSha256": "1ec48a273db59be302324e44d9e33030d06358560846c64386c85bb4990124ba"
+    },
+    {
+      "path": "packages/qualification/src/native/xtdb-workloads.ts",
+      "sha256": "a5275af6fc4f71f44e7e68b2181d1cba9bd939ffdab8634b707c2ae1ecae4203",
+      "committedSha256": "a5275af6fc4f71f44e7e68b2181d1cba9bd939ffdab8634b707c2ae1ecae4203"
+    },
+    {
+      "path": "packages/qualification/test/c8-support-paths.test.ts",
+      "sha256": "35f782c45b1e82660846de1cd9f6996b0a246b8250af0e8434014f314707282f",
+      "committedSha256": "35f782c45b1e82660846de1cd9f6996b0a246b8250af0e8434014f314707282f"
+    },
+    {
+      "path": "packages/qualification/test/engine-write-counter.test.ts",
+      "sha256": "911afe91288b81c615d4a669b288740d8ef18ef79aa5a3ec5ed97f9fd8774a57",
+      "committedSha256": "911afe91288b81c615d4a669b288740d8ef18ef79aa5a3ec5ed97f9fd8774a57"
+    },
+    {
+      "path": "packages/qualification/test/xtdb-native-library.test.ts",
+      "sha256": "fef77f3b4cec211a0fa9c48b2300e81fbdf8f377b6c117611322a440564df49b",
+      "committedSha256": "fef77f3b4cec211a0fa9c48b2300e81fbdf8f377b6c117611322a440564df49b"
+    },
+    {
+      "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "sha256": "334c7193f2658e9c01fbee78febb4772587e5c9c522530d861dfe9c23400547d",
+      "committedSha256": "334c7193f2658e9c01fbee78febb4772587e5c9c522530d861dfe9c23400547d"
+    }
+  ],
+  "probes": [
+    {
+      "path": "lab/verify/C8/adversarial.test.ts",
+      "sha256": "00d856d747e0394c012923290e2e2942f75532aab9ff36862221872dc02b42d8",
+      "reviewerSha256": "00d856d747e0394c012923290e2e2942f75532aab9ff36862221872dc02b42d8",
+      "unchanged": true
+    },
+    {
+      "path": "lab/verify/C8/light-live.test.ts",
+      "sha256": "a855bf0b4fd53004ed76d0fafe07ec3a3ed7b6ca68fc2ea0a75ba13e2a3fc50a",
+      "reviewerSha256": "a855bf0b4fd53004ed76d0fafe07ec3a3ed7b6ca68fc2ea0a75ba13e2a3fc50a",
+      "unchanged": true
+    },
+    {
+      "path": "lab/verify/C8/vitest.config.ts",
+      "sha256": "536eb009cc119c30e74e090388c8e405a1844d506b01266a11a3d4430d134a63",
+      "reviewerSha256": "536eb009cc119c30e74e090388c8e405a1844d506b01266a11a3d4430d134a63",
+      "unchanged": true
+    },
+    {
+      "path": "lab/verify/C8/run-offline.mjs",
+      "sha256": "b30691ed3d98cfb2f58b64c8f65951f31489db34e742daa037c81e65857eec26",
+      "reviewerSha256": "b30691ed3d98cfb2f58b64c8f65951f31489db34e742daa037c81e65857eec26",
+      "unchanged": true
+    }
+  ]
+}

@@ -200,14 +200,16 @@ available; the matched71-case library qualifies those authored tasks separately.
 answer. Paging is explicitly authored at `result.basis`. Cancellation bounds the
 caller's wait; a client abort alone does not prove backend resource reclamation.
 
-`selectSqlWithReachability(contract, input, definitions, build, options)` provides
-optional bounded native relational rounds. Each definition's `edges(ctx, input)`
-returns SQL columns `source,target`; the final builder uses `ctx.relation(name)`.
-One resolved source cut spans all rounds. Exceeding row/round budgets is an error,
-not a partial closure. Scratch writes never assert Triplex application facts.
-The trace records reads, working writes and cleanup. Unknown write outcomes are
-observed through atomic receipts before cleanup; unresolved state is retained.
-Cleanup retains a small charged receipt and does not claim physical reclamation.
+`selectSqlWithReachability(contract, input, definitions, build, options)` (SQL) and
+`selectWithReachability(...)` (XTQL) answer bounded closures with reads only (contract
+C8, EXP-C8). Each definition's `edges(ctx, input)` returns columns `source,target` in
+the call's language; optional `seeds(ctx, input)` (ids, or `{ query }` yielding `seed`)
+restricts the relation to pairs from those starts, otherwise every source is closed.
+The closure runs in the shared `frontierClosure` (`@triplex-build/triplex/runtime`) at
+one resolved source cut and reaches the final builder as one inline parameter through
+`ctx.relation(name)`. `strategy: "single-read"` (default) reads each edge relation once;
+`"rounds"` reads once per frontier round. Exceeding pair, visited, edge, row or round
+budgets fails with `RecursionBudgetExceeded`, never a partial closure. Nothing is written.
 
 ## Additional temporal and reuse APIs
 
@@ -217,11 +219,12 @@ source position. XTDB creates elementary spans, evaluates correlated relations,
 and coalesces adjacent identical answers. Recursive interval evaluation is an
 explicit open gate. Oversized answers fail rather than returning a partial set.
 
-`makeXtdbMaintainedQueries(client, scope).query(query, options)` retains complete
-generations keyed by source position, query, compiler identity and temporal cut.
-It reuses persisted generations and rebuilds after source changes. Recursive
-alternate support is preserved by rebuilding complete results. This baseline
-does not claim incremental support maintenance or automatic background refresh.
+`makeXtdbMaintainedQueries(client, scope)` keeps complete generations keyed by source
+position, query, compiler identity and temporal cut. `query(query, options)` is read-only
+(C8): it returns a published generation when one exists and otherwise evaluates the same
+answer directly, unpublished (`reused: false`). `publish(query, options)` is the write-path
+call that stores a missing generation. This baseline does not claim incremental support
+maintenance or automatic background refresh.
 
 ## Evidence and limits
 

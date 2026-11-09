@@ -1,0 +1,1 @@
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-qualification.json
