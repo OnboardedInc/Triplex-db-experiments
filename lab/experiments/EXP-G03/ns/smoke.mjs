@@ -7,7 +7,7 @@ const source=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();i
 const disk=fs.statfsSync(REPO);if(disk.bavail*disk.bsize<5*1024**3)throw Error('disk <5 GiB');
 const holder='CX-G03-R5',run=randomBytes(8).toString('hex'),store=`tx2-g03-${run}-store`,events=[],attempts=[];let entered=false,box,cleanupError;
 const engine=(action,args=[])=>{const r=spawnSync(process.execPath,['lab/bin/engine.mjs','box',action,'--run',run,'--holder',holder,'--controller-pid',String(process.pid),...args],{encoding:'utf8',timeout:180000});if(r.status!==0)throw Error(r.stderr||r.stdout);return JSON.parse(r.stdout)};
-const base={imageId:'sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575',buildInputsSha256:'60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334',store,storeListingSha256:sha256(Buffer.from('[]')),walkMemoryBytes:67108864};
+const base={imageId:'sha256:302cbcd48d5b68ca49d020204c08814fac74c451fb51e13a62b908f368423575',buildInputsSha256:'60fc3d78913757014366477ba46259ee71e61d89039676a45986160f4cb02334',store,storeListingSha256:sha256(Buffer.from('[]')),walkMemoryBytes:536870912};
 const observerImage='sha256:3344768f0ab951cb8053083a57e2a923d062dfeb21ac4392171fcf17f9cd11ac';
 const canary=net.createServer(s=>s.end('mac-canary'));await new Promise(r=>canary.listen(0,'127.0.0.1',r));
 const put=b=>{const h=sha256(b);fs.writeFileSync(path.join(out,h),b);return h};

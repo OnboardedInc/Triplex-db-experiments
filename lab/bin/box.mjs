@@ -142,8 +142,9 @@ export class BoxExecutor {
   walk(volume, outputs = []) {
     const name = this.create(`walk-${randomBytes(3).toString('hex')}`, { argv: ['node', '--input-type=module', '-', JSON.stringify(outputs)], mounts: [{ name: volume, target: '/work', rw: false }], memory: this.config.walkMemoryBytes ?? 536870912, input: true, trusted: true });
     const r = this.start(name, { input: Buffer.from(WALKER), max: 96 * 1024 * 1024 });
+    const execution={walker:name,status:r.status,inspect:inspect(name),stderr:r.stderr.toString()};this.records.push({walkerExecution:this.put(Buffer.from(JSON.stringify(execution)))});
     this.engine('remove', ['--name', name]); this.resources = this.resources.filter(([, n]) => n !== name);
-    if (r.status !== 0) throw Error(`walker failed ${r.stderr}`);
+    if (r.status !== 0) throw Error(`walker failed status=${r.status} ${r.stderr}`);
     return JSON.parse(r.stdout);
   }
   attestStore() {

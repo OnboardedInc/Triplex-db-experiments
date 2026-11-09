@@ -96,6 +96,12 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
  const candidateLogs=Object.fromEntries(names.map(n=>[n,docker(['logs',n],{allowFail:true})]));for(const name of names)box.remove(name);box.remove(drv.name);box.remove(obs);stage(12,{candidateCgroupsGone:true});
  const output=filesOf(box.walk(volumes.output,['events/'])),observed=filesOf(box.walk(volumes.observer,['seal.json','polls.ndjson','ready.json']));
  const stateExports={source:box.walk(volumes.broker,['broker.db','broker.db-wal','broker.db-shm']),consumer:box.walk(volumes.consumer,['consumer.db','consumer.db-wal','consumer.db-shm'])};
+ // [EXP-G03-R5] Why: semantic refusal must retain the exact raw bytes and key for independent replay. Rejected: judging in memory before saving failed-attempt evidence.
+ const rawDir=path.join(box.workDir,'raw-'+runId);fs.mkdirSync(rawDir,{mode:0o700});
+ fs.writeFileSync(path.join(rawDir,'key'),key,{flag:'wx',mode:0o600});fs.writeFileSync(path.join(rawDir,'binding.json'),JSON.stringify(binding),{flag:'wx',mode:0o600});
+ for(const [kind,files]of [['driver',output],['observer',observed],['source',filesOf(stateExports.source)],['consumer',filesOf(stateExports.consumer)]]){
+  for(const [relative,bytes]of files){if(relative.split('/').some(p=>!p||p==='.'||p==='..')||relative.startsWith('/'))throw Error('unsafe walker export path');const destination=path.join(rawDir,kind,relative);fs.mkdirSync(path.dirname(destination),{recursive:true,mode:0o700});fs.writeFileSync(destination,bytes,{flag:'wx',mode:0o600})}
+ }
  const events=verifyHr(output,key,binding),observer=verifyObserver(observed,key,runId),semantic=checkSmoke(events,observer,trace,population,binding);stage(13,{rawExportOnly:true,CRNSAdmission:false});
- return {semantic,candidateLogs,stateExports,keyBase64:key.toString('base64'),binding,stages,events,observer,output:[...output].map(([p,b])=>[p,b.toString()]),observerOutput:[...observed].map(([p,b])=>[p,b.toString()]),driverStdout:result.stdout.toString(),driverStderr:result.stderr.toString(),records:box.records};
+ return {semantic,rawDir,candidateLogs,stateExports:{source:stateExports.source.entries,consumer:stateExports.consumer.entries},keyBase64:key.toString('base64'),binding,stages,events,observer,output:[...output].map(([p,b])=>[p,b.toString()]),observerOutput:[...observed].map(([p,b])=>[p,b.toString()]),driverStdout:result.stdout.toString(),driverStderr:result.stderr.toString(),records:box.records};
 }
