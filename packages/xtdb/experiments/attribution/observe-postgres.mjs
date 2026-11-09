@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] injected callbacks inferred from zero-parameter no-op defaults; callback receiver supplied with call/apply. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Experimental observation of the pinned postgres3.4.9 objects, never SQL evaluation. */
 import { createHash } from "node:crypto";
 

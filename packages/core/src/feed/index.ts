@@ -177,7 +177,13 @@ export interface FeedPosition {
   readonly position: string;
 }
 /** Explicit common-host numerical origin; process-relative clocks are not interchangeable. */
-export interface FeedClockDomain {
+export type FeedClockDomain = LinuxFeedClockDomain | HostFeedClockDomain;
+export interface LinuxFeedClockDomain {
+  readonly primitive: "CLOCK_MONOTONIC";
+  readonly bootId: string;
+  readonly timeNs: string;
+}
+export interface HostFeedClockDomain {
   readonly primitive: "node-hrtime-v1";
   readonly host: string;
   readonly boot: string;
@@ -193,7 +199,21 @@ export interface FeedPublication extends FeedInstant {
   readonly recordId: string;
 }
 export function sameFeedClock(a: FeedClockDomain, b: FeedClockDomain): boolean {
-  const valid = (d: FeedClockDomain) =>
+  if (a?.primitive === "CLOCK_MONOTONIC" || b?.primitive === "CLOCK_MONOTONIC") {
+    const valid = (d: FeedClockDomain) =>
+      d?.primitive === "CLOCK_MONOTONIC" &&
+      /^[a-f0-9-]{36}$/i.test(d.bootId) &&
+      /^[1-9][0-9]*$/.test(d.timeNs);
+    return (
+      valid(a) &&
+      valid(b) &&
+      a.primitive === "CLOCK_MONOTONIC" &&
+      b.primitive === "CLOCK_MONOTONIC" &&
+      a.bootId === b.bootId &&
+      a.timeNs === b.timeNs
+    );
+  }
+  const valid = (d: HostFeedClockDomain) =>
     d?.primitive === "node-hrtime-v1" &&
     d.origin === "host-boot" &&
     /^[a-f0-9]{64}$/.test(d.host) &&

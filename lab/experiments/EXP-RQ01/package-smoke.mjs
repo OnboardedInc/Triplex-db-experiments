@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-RQ01] Why: check the packed public API using existing pinned dependencies.
 // Rejected: source-alias smoke tests (would not exercise the tarball exports).
 import { spawnSync } from "node:child_process";

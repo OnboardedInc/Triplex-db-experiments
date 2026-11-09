@@ -1,0 +1,39 @@
+{
+  "datomic": {
+    "removed": [],
+    "added": []
+  },
+  "core": {
+    "removed": [],
+    "added": []
+  },
+  "testkit": {
+    "removed": [],
+    "added": []
+  },
+  "xtdb": {
+    "removed": [],
+    "added": [
+      "packages/xtdb/test/value-limits.test.ts :: GS12F xtdb value limits GS12F W0 wire kinds retain exact boundary representations",
+      "packages/xtdb/test/value-limits.test.ts :: GS12F xtdb value limits GS12F exact integer boundaries round trip with receipt and historical binding",
+      "packages/xtdb/test/value-limits.test.ts :: GS12F xtdb value limits GS12F invalid wire values fail typed before claims on every write entry point"
+    ]
+  },
+  "qlever": {
+    "removed": [],
+    "added": [
+      "packages/qlever/test/broker-qlever.test.ts :: EXP-P2Q broker with a live QLever replica Q72b regression case (V-P2Q live residual): a zero-downtime reset replayed past B between the executor's requests is refused",
+      "packages/qlever/test/broker-qlever.test.ts :: EXP-P2Q broker with a live QLever replica dependencyState answers in one request that carries the marker (Q72b) on a live replica",
+      "packages/qlever/test/broker-qlever.test.ts :: EXP-P2Q broker with a live QLever replica publishes asynchronously, keeps RYOW at every returned position, and the replica converges",
+      "packages/qlever/test/broker-qlever.test.ts :: EXP-P2Q broker with a live QLever replica recovers when the replica's marker goes backwards (a restart without persisted updates)",
+      "packages/qlever/test/broker-qlever.test.ts :: EXP-P2Q broker with a live QLever replica replays unpublished frames after a crash, fences the old epoch, and a re-sent update is a no-op",
+      "packages/qlever/test/value-limits.test.ts :: GS12F qlever value limits GS12F W0 wire kinds retain exact boundary representations",
+      "packages/qlever/test/value-limits.test.ts :: GS12F qlever value limits GS12F exact integer boundaries round trip with receipt and historical binding",
+      "packages/qlever/test/value-limits.test.ts :: GS12F qlever value limits GS12F invalid wire values fail typed before claims on every write entry point"
+    ]
+  },
+  "qualification": {
+    "removed": [],
+    "added": []
+  }
+}

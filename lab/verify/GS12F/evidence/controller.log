@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 95139 "CX-P5A-R2-all-final-tests", pid 3719 "CX-W02-r2-check1", pid 82644 "CX-INT-D-evaluator-committed"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 50573 "CX-RT01-stable-0089", pid 40246 "CX-INT-D-G0-datomic", pid 82644 "CX-INT-D-evaluator-committed"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 50573 "CX-RT01-stable-0089", pid 40246 "CX-INT-D-G0-datomic", pid 82644 "CX-INT-D-evaluator-committed"

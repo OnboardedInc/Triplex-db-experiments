@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing; Node overloads over dynamic option/result unions. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-RQ01] Why: retain each offline attempt with source hashes and actual exits.
 // Rejected: a mutable PASS file (cannot bind a result to the code it exercised).
 import { randomUUID } from "node:crypto";

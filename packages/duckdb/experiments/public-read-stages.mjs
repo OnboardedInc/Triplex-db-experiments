@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing; option bags inferred from defaults omit optional fields; Node overloads over dynamic option/result unions. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Measured diagnostic only: real public Triplex reads over the existing C++
  * owner, unchanged finite profile and an untouched already-admitted scope.
  * No optimization, fixture rewrite or application write is performed.

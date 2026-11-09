@@ -1,0 +1,1 @@
+Updated tracked JavaScript roots; run lab:check to validate them.

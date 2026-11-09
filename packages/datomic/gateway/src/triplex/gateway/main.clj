@@ -1,6 +1,6 @@
 (ns triplex.gateway.main
   (:require [datomic.api :as d] [clojure.data.json :as json] [ring.adapter.jetty :as jetty]
-            [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
+            [triplex.gateway.feed :as feed] [triplex.gateway.scope :as scope] [triplex.gateway.query :as query] [triplex.gateway.storage :as storage] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema])
   (:gen-class))
 
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
@@ -56,7 +56,7 @@
   (let [bytes (.readNBytes ^java.io.InputStream body 4194305)]
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
     (json/read-str (String. bytes "UTF-8"))))
-(defn handler [{:keys [request-method uri body]}]
+(defn handler [{:keys [request-method uri body query-string]}]
   (try
     (cond
       (and (= :get request-method) (= "/health" uri))
@@ -68,6 +68,12 @@
       (response 200 (delete-scope! base-uri (get (request-json body) "scope")))
       (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/basis" uri))
       (response 200 (basis base-uri (nth (clojure.string/split uri #"/") 3)))
+      (and (= :get request-method) (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/log" uri))
+      (let [name (nth (clojure.string/split uri #"/") 3)
+            params (into {} (map (fn [part] (let [[k v] (clojure.string/split part #"=" 2)]
+                                             [k (java.net.URLDecoder/decode (or v "") "UTF-8")]))
+                                  (remove empty? (clojure.string/split (or query-string "") #"&"))))]
+        (response 200 (assoc (feed/log-page (connection (str base-uri name)) params) :database name)))
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (str base-uri name)
             input (when (= request-method :post) (request-json body))

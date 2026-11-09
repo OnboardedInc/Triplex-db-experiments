@@ -1,0 +1,16 @@
+{
+  "main": "1a83095c",
+  "acceptanceDiffFromMain": "",
+  "referencesToChangedPaths": [
+    {
+      "artifact": "lab/acceptance/RULINGS.md",
+      "path": "lab/bin/engine.mjs",
+      "oldHashPresent": false
+    },
+    {
+      "artifact": "lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md",
+      "path": "lab/bin/engine.mjs",
+      "oldHashPresent": false
+    }
+  ]
+}

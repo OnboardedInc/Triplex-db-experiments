@@ -250,7 +250,7 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")(
                 {
                   entityId: EntityId.make("pending"),
                   attribute: ":pending",
-                  value: integer("9223372036854775807"),
+                  value: integer("576460752303423487"),
                   validFrom: 0,
                 },
                 "change",
@@ -285,7 +285,7 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")(
               expect(
                 (yield* query.execute({ find: ["?v"], where: [["pending", ":pending", "?v"]] }))
                   .results,
-              ).toEqual([{ "?v": integer("9223372036854775807") }]);
+              ).toEqual([{ "?v": integer("576460752303423487") }]);
               expect(
                 (yield* query.execute({
                   find: ["?e"],
@@ -298,7 +298,7 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")(
                   where: [["pending", ":pending", "?v"]],
                   aggregate: [["sum", "?v", "?sum"]],
                 })).results,
-              ).toEqual([{ "?sum": integer("9223372036854775807") }]);
+              ).toEqual([{ "?sum": integer("576460752303423487") }]);
             }),
           ),
         );
@@ -609,12 +609,12 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")(
             {
               entityId: EntityId.make("min"),
               attribute: ":i",
-              value: integer("-9223372036854775808"),
+              value: integer("-576460752303423488"),
             },
             {
               entityId: EntityId.make("max"),
               attribute: ":i",
-              value: integer("9223372036854775807"),
+              value: integer("576460752303423487"),
             },
             {
               entityId: EntityId.make("fraction"),
@@ -631,7 +631,7 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")(
                 [">", "?i", integer("9007199254740992")],
               ],
             })).results,
-          ).toEqual([{ "?i": integer("9223372036854775807") }]);
+          ).toEqual([{ "?i": integer("576460752303423487") }]);
           const aggregate = yield* t.queryAll({
             find: ["?min", "?max", "?sum"],
             where: [["?e", ":i", "?i"]],
@@ -643,8 +643,8 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")(
           });
           expect(aggregate.results).toEqual([
             {
-              "?min": integer("-9223372036854775808"),
-              "?max": integer("9223372036854775807"),
+              "?min": integer("-576460752303423488"),
+              "?max": integer("576460752303423487"),
               "?sum": integer("-1"),
             },
           ]);

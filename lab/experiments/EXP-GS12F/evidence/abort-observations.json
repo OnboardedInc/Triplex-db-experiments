@@ -1,0 +1,7 @@
+{
+  "kind": "builder-notes-not-a-qualification-receipt",
+  "attempt1": {"xtdbLiveExit": 130, "qleverLiveExit": 130, "runnerExit": 0, "reason": "stop after callback-wrapping and helper-type failures; old runner continued after interrupted commands"},
+  "attempt2": {"runnerExit": 130, "reason": "stop expensive live work after generic Effect.suspend typecheck failure"},
+  "qleverOnlyAttempt4": {"runnerExit": 130, "executed": false, "reason": "cancelled while waiting for a heavy token; consolidated with expanded final matrix"},
+  "cleanup": "No resident lifecycle or namespace deletion. Client exits observed; remote in-flight request quiescence was not independently proven. Retain backend state and first-failure evidence."
+}

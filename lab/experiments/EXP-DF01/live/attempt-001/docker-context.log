@@ -1,0 +1,3 @@
+colima
+Current context is now "colima"
+Warning: DOCKER_HOST environment variable overrides the active context. To use "colima", either set the global --context flag, or unset DOCKER_HOST environment variable.

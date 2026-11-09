@@ -94,3 +94,8 @@ export const missingSnapshotError: Layer.Layer<
   MigrationError | CapabilityError,
   Connection | ChangeEmitter
 > = sql.layer({ scope, capabilities: installed });
+
+// [CX-A01-0314-R2] Why: a new adapter must declare its domain before it can enter a public runtime. Rejected: a broker-only runtime assertion that leaves future omissions compilable.
+declare const missingDomain: Omit<StorageAdapterService, "valueDomain">;
+// @ts-expect-error An adapter without a domain must not satisfy the SPI.
+export const undeclaredDomain: StorageAdapterService = missingDomain;

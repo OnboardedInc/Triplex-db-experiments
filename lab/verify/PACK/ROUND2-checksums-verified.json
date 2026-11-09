@@ -1,0 +1,16 @@
+[
+  {
+    "name": "SHA256SUMS",
+    "base": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK",
+    "startedAt": "2026-11-09T08:51:37.223Z",
+    "finishedAt": "2026-11-09T08:51:37.318Z",
+    "checked": 391
+  },
+  {
+    "name": "ROUND2-SHA256SUMS",
+    "base": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VPACK/round2",
+    "startedAt": "2026-11-09T08:51:37.318Z",
+    "finishedAt": "2026-11-09T08:51:37.405Z",
+    "checked": 459
+  }
+]

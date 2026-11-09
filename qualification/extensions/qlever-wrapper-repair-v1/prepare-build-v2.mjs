@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-built or optional package modules absent from this standalone project. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Metadata only: capture existing files/resolution, never run a compiler or SDK.
  * Reuse the reviewed installed-package collector; optional/conditional gaps remain
  * explicit. The resulting exact manifest still needs its separate build grant.

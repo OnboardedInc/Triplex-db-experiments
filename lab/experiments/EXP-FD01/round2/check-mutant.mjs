@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-FD01-R2] Why: prove the concrete suite rejects QA's original split, not just a synthetic partial-state object.
 // Rejected: treating idempotent recovery or a nonzero test exit from import errors as an atomicity rejection.
 import fs from "node:fs";

@@ -1,0 +1,54 @@
+{
+  "id": "ae2240cd-eede-40af-980a-b4ad34831d59",
+  "startedAt": "2026-11-09T05:54:01.203Z",
+  "classification": "OFFLINE SOURCE-EXACT READER UNIT WITH MOCKED CONTROLLER/IO; not a verified real attempt",
+  "reader": "qualification/reviews/load-observations-independent.mjs",
+  "readerSha256": "7e1fefa29edb9f7e47f2ab8eedcc2eeb66bf00651a340d56d275eff7f74178e9",
+  "observations": [
+    {
+      "label": "modeless-qlever",
+      "parsed": false,
+      "metrics": {
+        "population": "Offers inside the fixed window; goodput requires completion inside, latency retains successful bounded-drain calls",
+        "fixedSeconds": 1,
+        "classes": {
+          "point-current": {
+            "offered": 1,
+            "correctThroughDrain": 1,
+            "completedInsideWindow": 1,
+            "goodput": 1,
+            "p50Ms": 10,
+            "p95Ms": 10,
+            "p99Ms": 10
+          }
+        }
+      },
+      "terminal": "SYNTHETIC-FIXTURE-NOT-VERIFIED"
+    },
+    {
+      "label": "mixed-qlever",
+      "parsed": false,
+      "metrics": {
+        "population": "Offers inside the fixed window; goodput requires completion inside, latency retains successful bounded-drain calls",
+        "fixedSeconds": 1,
+        "classes": {
+          "point-current": {
+            "offered": 2,
+            "correctThroughDrain": 2,
+            "completedInsideWindow": 2,
+            "goodput": 2,
+            "p50Ms": 2,
+            "p95Ms": 10,
+            "p99Ms": 10
+          }
+        }
+      },
+      "terminal": "SYNTHETIC-FIXTURE-NOT-VERIFIED"
+    }
+  ],
+  "audit": {},
+  "runnerSha256": "fec100923a6b7d62594d24e836c8dc17c5d2957a4618d5e4fd99ad55821e629e",
+  "endedAt": "2026-11-09T05:54:01.205Z"
+}
+(node:10311) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

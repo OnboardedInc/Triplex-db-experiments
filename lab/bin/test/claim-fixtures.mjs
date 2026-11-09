@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing; option bags inferred from defaults omit optional fields; negative fixtures deliberately delete fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // One fixture set for claim admission (EXP-E01), in the contract 0.3.7 receipt and record formats (EVIDENCE_SCHEMAS,
 // WORKLOAD_IDENTITY, A0_REGISTRY), plus the lab's run ledger and build provenance records.
 //

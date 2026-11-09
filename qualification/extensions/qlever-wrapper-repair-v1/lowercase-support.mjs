@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Independent bounded inventory for the NEW lowercase probe; no service API.
  * Reuses the reviewed string extension's response/basis/phase primitives. Array
  * order remains evidence; this helper never sorts or repairs a backend answer.

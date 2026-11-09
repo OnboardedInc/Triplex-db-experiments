@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 5: background-check results burst (TARGETS 6 row 5). Spec and golden only.
 import { BT, VALUE, ents, scenarioStream } from '../lib/gen.mjs';
 

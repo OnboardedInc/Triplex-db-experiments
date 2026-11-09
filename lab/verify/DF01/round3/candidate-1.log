@@ -1,0 +1,41 @@
+04:14:39.834 [main] DEBUG org.eclipse.jetty.util.log -- Logging to Logger[org.eclipse.jetty.util.log] via org.eclipse.jetty.util.log.Slf4jLog
+04:14:39.838 [main] INFO org.eclipse.jetty.util.log -- Logging initialized @1167ms to org.eclipse.jetty.util.log.Slf4jLog
+
+Testing triplex.gateway.feed-test
+
+Ran 12 tests containing 83 assertions.
+0 failures, 0 errors.
+
+Testing offline-verify
+{"probe":"restart-empty-queue","observed":{"equal":true,"created":2,"removed":2}}
+{"probe":"inside-skipped-range","observed":{"fromT":"102","nextT":"104","rows":[{"t":"103","kind":"skipped","reason":"non-triplex"}]}}
+{"probe":"notification-lost","observed":{"elapsedMs":158.159333,"nextT":"106"}}
+{"probe":"delayed-old-report","observed":{"page":{"fromT":"105","nextT":"106","rows":[{"t":"105","kind":"commit","transaction":{"positions":["9"],"txIds":["tx9"],"operationId":"op9","commandIds":[],"changes":[{"op":"retract","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"9"}],"stamp":"9000","stampStatus":"decided"}}]},"elapsedMs":0.506375,"visibleT":105,"events":[{"event":"capture-db","cut":100,"read":1},{"event":"old-report-enqueued","t":100},{"event":"capture-db","cut":100,"read":2},{"event":"new-db-published","t":105},{"event":"capture-db","cut":105,"read":3}]}}
+{"probe":"different-txInstant","observed":{"t":"100","kind":"commit","transaction":{"positions":["3","7"],"txIds":["tx3","tx7"],"operationId":"op7","commandIds":["cmd7"],"changes":[{"op":"assert","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"3"}],"stamp":"7000","stampStatus":"decided"}}}
+{"probe":"excision-wire-equality","observed":{"equal":true,"bytes":687}}
+
+Ran 6 tests containing 119 assertions.
+0 failures, 0 errors.
+
+Testing deadline-cut-verify
+
+FAIL in (empty-cut-straddles-deadline-after-predeadline-publication) (deadline_cut_verify.clj:45)
+Fixture must publish approximately 1 ms before the real deadline
+expected: (<= 0.7 lead-min lead-max 1.3)
+  actual: (not (<= 0.7 0.65875 0.689208 1.3))
+{"probe":"predeadline-publication-old-cut","observed":{"leadMinMs":0.65875,"leadMaxMs":0.689208,"captures":[100,100,105],"visibleT":105,"elapsedMs":107.499375,"page":{"fromT":"105","nextT":"106","rows":[{"t":"105","kind":"commit","transaction":{"positions":["9"],"txIds":["tx9"],"operationId":"op9","commandIds":[],"changes":[{"op":"retract","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"9"}],"stamp":"9000","stampStatus":"decided"}}]}}}
+
+Ran 1 tests containing 6 assertions.
+1 failures, 0 errors.
+
+Testing round3-verify
+{"probe":"slow-final-route-read","observed":{"present":true,"waitMs":20,"finalReadMs":85.061375,"elapsedMs":107.847833,"captures":[100,100,105],"removed":1,"page":{"fromT":"105","nextT":"106","rows":[{"t":"105","kind":"commit","transaction":{"positions":["9"],"txIds":["tx9"],"operationId":"op9","commandIds":[],"changes":[{"op":"retract","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"9"}],"stamp":"9000","stampStatus":"decided"}}]}}}
+{"probe":"slow-final-route-read","observed":{"present":false,"waitMs":20,"finalReadMs":78.417167,"elapsedMs":108.721,"captures":[100,100,100],"removed":1,"page":{"fromT":"105","nextT":"105","rows":[]}}}
+{"probe":"publication-exactly-at-deadline-old-cut","observed":{"present":true,"deadlineNs":5000000,"captures":[{"at":0,"rows":[]},{"at":5000000,"rows":[{"t":"105","kind":"commit","transaction":{"positions":["9"],"txIds":["tx9"],"operationId":"op9","commandIds":[],"stamp":"9000","stampStatus":"decided","changes":[{"op":"retract","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"9"}]}}]}],"rows":[{"t":"105","kind":"commit","transaction":{"positions":["9"],"txIds":["tx9"],"operationId":"op9","commandIds":[],"stamp":"9000","stampStatus":"decided","changes":[{"op":"retract","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"9"}]}}],"arms":1,"waits":0}}
+{"probe":"publication-exactly-at-deadline-old-cut","observed":{"present":false,"deadlineNs":5000000,"captures":[{"at":0,"rows":[]},{"at":5000000,"rows":[]}],"rows":[],"arms":1,"waits":0}}
+{"probe":"publication-exactly-at-deadline-wakeup","observed":{"present":true,"deadlineNs":5000000,"captures":[{"at":0,"rows":[]},{"at":5000000,"rows":[{"t":"105","kind":"commit","transaction":{"positions":["9"],"txIds":["tx9"],"operationId":"op9","commandIds":[],"stamp":"9000","stampStatus":"decided","changes":[{"op":"retract","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"9"}]}}]}],"rows":[{"t":"105","kind":"commit","transaction":{"positions":["9"],"txIds":["tx9"],"operationId":"op9","commandIds":[],"stamp":"9000","stampStatus":"decided","changes":[{"op":"retract","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"9"}]}}],"arms":2,"waits":[5000000]}}
+{"probe":"publication-exactly-at-deadline-wakeup","observed":{"present":false,"deadlineNs":5000000,"captures":[{"at":0,"rows":[]},{"at":5000000,"rows":[]},{"at":5000000,"rows":[]}],"rows":[],"arms":2,"waits":[5000000]}}
+
+Ran 3 tests containing 39 assertions.
+0 failures, 0 errors.
+{"probe":"round3-counts","observed":{"baseline":{"test":12,"pass":83,"fail":0,"error":0,"type":"summary"},"originalProbe":{"test":6,"pass":119,"fail":0,"error":0,"type":"summary"},"deadlineProbe":{"test":1,"pass":5,"fail":1,"error":0,"type":"summary"},"edgeCases":{"test":3,"pass":39,"fail":0,"error":0,"type":"summary"}}}

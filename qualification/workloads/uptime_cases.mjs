@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] interval endpoints are runtime bigint values; unannotated subtraction inferred as number. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from 'node:assert/strict';
 
 function int(cell){

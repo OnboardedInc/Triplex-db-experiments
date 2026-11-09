@@ -1,0 +1,20 @@
+[
+  {
+    "path": "lab/experiments/EXP-GS12F/evidence/attempt3/qlever-live.log",
+    "sha256": "dc29230fc7e30329f7749ede0b08da42af937bdb0b1a4df3a88666d597af2558",
+    "timeoutMs": 30000,
+    "classification": "DIAGNOSTIC",
+    "historical": true,
+    "semanticQualification": false,
+    "reason": "Q91a/R35: qlever-dev reads from its update delta; not a qualifying built-base composition"
+  },
+  {
+    "path": "lab/experiments/EXP-GS12F/evidence/qlever-live.log",
+    "sha256": "c28c06fc930acc1ad096dd7a1bca256280c8b17f0e4b2d56dd62a828e9d460b8",
+    "timeoutMs": 120000,
+    "classification": "DIAGNOSTIC",
+    "historical": true,
+    "semanticQualification": false,
+    "reason": "Q91a/R35: qlever-dev reads from its update delta; not a qualifying built-base composition"
+  }
+]

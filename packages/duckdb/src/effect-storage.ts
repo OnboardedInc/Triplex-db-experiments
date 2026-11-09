@@ -1,3 +1,4 @@
+import { ValueDomains } from "@triplex-build/triplex/runtime";
 /** Acknowledged Effect lifecycle adapted from the native-engine integration; see SOURCE-ADAPTATION.json. */
 import { Context, Effect, Exit, Layer, Option } from "effect";
 import {
@@ -217,6 +218,7 @@ export const makeEffectStorage = (backend: GranularBackend, schema: string) => {
   const withTransaction = transaction(false);
   const withReadTransaction = transaction(true);
   const storage: StorageAdapterService = {
+    valueDomain: ValueDomains.duckdb,
     supportedValueTypes: [
       "string",
       "number",

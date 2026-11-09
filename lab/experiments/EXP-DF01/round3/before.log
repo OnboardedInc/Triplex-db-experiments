@@ -1,0 +1,32 @@
+03:53:31.773 [main] DEBUG org.eclipse.jetty.util.log -- Logging to Logger[org.eclipse.jetty.util.log] via org.eclipse.jetty.util.log.Slf4jLog
+03:53:31.785 [main] INFO org.eclipse.jetty.util.log -- Logging initialized @1984ms to org.eclipse.jetty.util.log.Slf4jLog
+
+Testing triplex.gateway.feed-test
+
+Testing offline-verify
+{"probe":"restart-empty-queue","observed":{"equal":true,"created":2,"removed":2}}
+{"probe":"inside-skipped-range","observed":{"fromT":"102","nextT":"104","rows":[{"t":"103","kind":"skipped","reason":"non-triplex"}]}}
+{"probe":"notification-lost","observed":{"elapsedMs":155.916292,"nextT":"106"}}
+{"probe":"delayed-old-report","observed":{"page":{"fromT":"105","nextT":"106","rows":[{"t":"105","kind":"commit","transaction":{"positions":["9"],"txIds":["tx9"],"operationId":"op9","commandIds":[],"changes":[{"op":"retract","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"9"}],"stamp":"9000","stampStatus":"decided"}}]},"elapsedMs":0.675166,"visibleT":105,"events":[{"event":"capture-db","cut":100,"read":1},{"event":"old-report-enqueued","t":100},{"event":"capture-db","cut":100,"read":2},{"event":"new-db-published","t":105},{"event":"capture-db","cut":105,"read":3}]}}
+{"probe":"different-txInstant","observed":{"t":"100","kind":"commit","transaction":{"positions":["3","7"],"txIds":["tx3","tx7"],"operationId":"op7","commandIds":["cmd7"],"changes":[{"op":"assert","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"3"}],"stamp":"7000","stampStatus":"decided"}}}
+{"probe":"excision-wire-equality","observed":{"equal":true,"bytes":687}}
+
+Testing deadline-cut-verify
+
+FAIL in (empty-cut-straddles-deadline-after-predeadline-publication) (deadline_cut_verify.clj:45)
+Fixture must publish approximately 1 ms before the real deadline
+expected: (<= 0.7 lead-min lead-max 1.3)
+  actual: (not (<= 0.7 -0.128542 -0.075959 1.3))
+{"probe":"predeadline-publication-old-cut","observed":{"leadMinMs":-0.128542,"leadMaxMs":-0.075959,"captures":[100,100],"visibleT":105,"elapsedMs":107.600959,"page":{"fromT":"105","nextT":"105","rows":[]}}}
+
+FAIL in (empty-cut-straddles-deadline-after-predeadline-publication) (deadline_cut_verify.clj:50)
+A predeadline transaction must be observed after an empty cut crosses expiry
+expected: (= ["105"] (mapv :t (:rows page)))
+  actual: (not (= ["105"] []))
+
+FAIL in (empty-cut-straddles-deadline-after-predeadline-publication) (deadline_cut_verify.clj:51)
+expected: (= "106" (:nextT page))
+  actual: (not (= "106" "105"))
+
+Ran 17 tests containing 177 assertions.
+3 failures, 0 errors.

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
 import { join, relative, resolve } from 'node:path';

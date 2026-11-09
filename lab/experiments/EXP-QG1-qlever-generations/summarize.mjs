@@ -1,3 +1,7 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
+import { readLatencyRun } from "../../receipts/parse.ts";
+import { summarizeGridCell } from "./summary-cell.mjs";
+import { qleverLatencyReceipt, requireQleverConnectionMode } from "../../receipts/latency.mjs";
 import fs from "node:fs";
 import path from "node:path";
 const root = process.argv[2];
@@ -7,34 +11,16 @@ const cells = [];
 for (const arm of ["M", "U"]) {
   const dir = path.join(root, `grid-${arm}-attempt2`);
   if (!fs.existsSync(path.join(dir, "summary.json"))) continue;
-  for (const cell of JSON.parse(fs.readFileSync(path.join(dir, "summary.json")))) {
-    let p4 = null;
-    try {
-      p4 = JSON.parse(fs.readFileSync(path.join(dir, `${cell.label}-p4.json`)));
-    } catch {}
-    cells.push({
-      arm,
-      label: cell.label,
-      base: cell.before.baseTriples,
-      delta: cell.before.deltaTriples.total,
-      inserted: cell.before.deltaTriples.inserted,
-      deleted: cell.before.deltaTriples.deleted,
-      rss: cell.before.rss,
-      c8Status: cell.c8.status,
-      p4Status: cell.p4?.status,
-      p4Summary: p4?.summary,
-      p4ContentChecks: p4
-        ? { n: p4.sample.length, matched: p4.sample.filter((x) => x.contentEqual).length }
-        : null,
-      queries: Object.fromEntries(
-        Object.entries(cell.results).map(([k, v]) => [
-          k,
-          { coldMs: v[0].ms, warmMs: v[1].ms, rows: v[0].rows },
-        ]),
-      ),
-    });
+  const cellFile = path.join(dir, "summary.json");
+  const grid = readLatencyRun(cellFile, { lane: "qlever", expectedWriter: "qg1-cell/1" }).unwrap();
+  for (const [entry, cell] of grid.records.entries()) {
+    const p4File = path.join(dir, `${cell.label}-p4.json`);
+    cells.push(summarizeGridCell(arm, cellFile, fs.existsSync(p4File) ? p4File : null, entry));
   }
 }
+const qleverConnectionMode = requireQleverConnectionMode(cells[0]?.qleverConnectionMode);
+if (cells.some(cell => cell.qleverConnectionMode !== qleverConnectionMode))
+  throw new TypeError("cannot fit cells with different direct-query connection modes");
 const fit = (xy) => {
   const n = xy.length;
   if (n < 2) return null;
@@ -72,6 +58,7 @@ for (const arm of ["M", "U"]) {
       ? (armCells
           .filter(
             (c) =>
+              c.p4QleverConnectionMode === zero.p4QleverConnectionMode &&
               c.c8Status === 0 &&
               c.p4Status === 0 &&
               c.p4ContentChecks?.matched === c.p4ContentChecks?.n &&
@@ -85,7 +72,7 @@ for (const arm of ["M", "U"]) {
 fs.writeFileSync(
   out,
   JSON.stringify(
-    { cells, fits, screening, verdict: "DIAGNOSTIC; correlation fits, no performance PASS" },
+    qleverLatencyReceipt({ qleverConnectionMode, p4ConnectionModes: [...new Set(cells.map(c => c.p4QleverConnectionMode))], cells, fits, screening, verdict: "DIAGNOSTIC; correlation fits, no performance PASS" }),
     null,
     2,
   ),

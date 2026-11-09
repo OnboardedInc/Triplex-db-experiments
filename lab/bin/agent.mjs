@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // lab/bin/agent.mjs: the only way the triplex-db-2 loop launches Codex agents.
 //
 // [PROTOCOL 2026-11-08] Why: Sam's instruction of 2026-11-08 fixes the roles and effort levels: Codex gpt-6.1-sol at medium

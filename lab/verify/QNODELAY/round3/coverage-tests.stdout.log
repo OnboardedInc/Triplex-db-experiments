@@ -1,0 +1,130 @@
+TAP version 13
+# Subtest: discovers an unregistered mode-less timing writer under lab: new-summary.mjs
+ok 1 - discovers an unregistered mode-less timing writer under lab: new-summary.mjs
+  ---
+  duration_ms: 5.540916
+  type: 'test'
+  ...
+# Subtest: discovers an unregistered mode-less timing writer under lab: new-writer.ts
+ok 2 - discovers an unregistered mode-less timing writer under lab: new-writer.ts
+  ---
+  duration_ms: 1.333625
+  type: 'test'
+  ...
+# Subtest: discovers an unregistered mode-less timing writer under lab: new-writer.tsx
+ok 3 - discovers an unregistered mode-less timing writer under lab: new-writer.tsx
+  ---
+  duration_ms: 1.144083
+  type: 'test'
+  ...
+# Subtest: discovers an unregistered mode-less timing writer under lab: new-writer.jsx
+ok 4 - discovers an unregistered mode-less timing writer under lab: new-writer.jsx
+  ---
+  duration_ms: 0.740375
+  type: 'test'
+  ...
+# Subtest: discovers an unregistered mode-less timing writer under lab: new-writer.py
+ok 5 - discovers an unregistered mode-less timing writer under lab: new-writer.py
+  ---
+  duration_ms: 0.674833
+  type: 'test'
+  ...
+# Subtest: discovers an unregistered mode-less timing writer under lab: new-writer.sh
+ok 6 - discovers an unregistered mode-less timing writer under lab: new-writer.sh
+  ---
+  duration_ms: 0.662
+  type: 'test'
+  ...
+# Subtest: discovers an unregistered mode-less timing writer under packages: new-summary.mjs
+ok 7 - discovers an unregistered mode-less timing writer under packages: new-summary.mjs
+  ---
+  duration_ms: 0.835167
+  type: 'test'
+  ...
+# Subtest: discovers an unregistered mode-less timing writer under packages: new-writer.ts
+ok 8 - discovers an unregistered mode-less timing writer under packages: new-writer.ts
+  ---
+  duration_ms: 0.700792
+  type: 'test'
+  ...
+# Subtest: discovers an unregistered mode-less timing writer under packages: new-writer.tsx
+ok 9 - discovers an unregistered mode-less timing writer under packages: new-writer.tsx
+  ---
+  duration_ms: 1.1135
+  type: 'test'
+  ...
+# Subtest: discovers an unregistered mode-less timing writer under packages: new-writer.jsx
+ok 10 - discovers an unregistered mode-less timing writer under packages: new-writer.jsx
+  ---
+  duration_ms: 1.388708
+  type: 'test'
+  ...
+# Subtest: discovers an unregistered mode-less timing writer under packages: new-writer.py
+ok 11 - discovers an unregistered mode-less timing writer under packages: new-writer.py
+  ---
+  duration_ms: 0.635958
+  type: 'test'
+  ...
+# Subtest: discovers an unregistered mode-less timing writer under packages: new-writer.sh
+ok 12 - discovers an unregistered mode-less timing writer under packages: new-writer.sh
+  ---
+  duration_ms: 0.500583
+  type: 'test'
+  ...
+# Subtest: changed exclusions and removed mode fields cannot retain prior approval
+ok 13 - changed exclusions and removed mode fields cannot retain prior approval
+  ---
+  duration_ms: 0.645333
+  type: 'test'
+  ...
+# Subtest: actual C8 summary retains/refuses recorded mode keep-alive
+ok 14 - actual C8 summary retains/refuses recorded mode keep-alive
+  ---
+  duration_ms: 31.281458
+  type: 'test'
+  ...
+# Subtest: actual C8 summary retains/refuses recorded mode per-request
+ok 15 - actual C8 summary retains/refuses recorded mode per-request
+  ---
+  duration_ms: 33.154334
+  type: 'test'
+  ...
+# Subtest: actual C8 summary retains/refuses recorded mode undefined
+ok 16 - actual C8 summary retains/refuses recorded mode undefined
+  ---
+  duration_ms: 32.525875
+  type: 'test'
+  ...
+# Subtest: actual C8 summary retains/refuses recorded mode unknown
+ok 17 - actual C8 summary retains/refuses recorded mode unknown
+  ---
+  duration_ms: 28.031083
+  type: 'test'
+  ...
+# Subtest: server-log parser requires attribution, never the parser environment
+ok 18 - server-log parser requires attribution, never the parser environment
+  ---
+  duration_ms: 55.136917
+  type: 'test'
+  ...
+# Subtest: execution-tree profiler labels every output line and refuses absent attribution
+ok 19 - execution-tree profiler labels every output line and refuses absent attribution
+  ---
+  duration_ms: 82.553958
+  type: 'test'
+  ...
+# Subtest: a labeled file cannot serialize another mode-less timing literal
+ok 20 - a labeled file cannot serialize another mode-less timing literal
+  ---
+  duration_ms: 0.551958
+  type: 'test'
+  ...
+1..20
+# tests 20
+# suites 0
+# pass 20
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 515.777875

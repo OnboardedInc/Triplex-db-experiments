@@ -1,0 +1,115 @@
+{
+  "baseline": 0,
+  "tests": 0,
+  "mutations": [
+    {
+      "name": "js-elapsed-positive",
+      "file": "lab/new-qlever-writer.mjs",
+      "code": "console.log(JSON.stringify({lane:\"qlever\",elapsedMsDiagnostic:42}));\n",
+      "sourceSha256": "9ec97f998a66f1d8026c38d4240bfac9233595668e94c6cbbbf169ea2d3e4434",
+      "guardStatus": 1,
+      "rejectedForNewSource": true
+    },
+    {
+      "name": "shell-queryms-positive",
+      "file": "packages/new-qlever-writer.sh",
+      "code": "echo '{\"lane\":\"qlever\",\"queryMs\":42}'\n",
+      "sourceSha256": "14d8131276472239ca116c108051580476d571cf55e2e33c00d07d0fa2093548",
+      "guardStatus": 1,
+      "rejectedForNewSource": true
+    },
+    {
+      "name": "shell-seconds",
+      "file": "lab/new-qlever-writer.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"seconds\":0.042}'\n",
+      "sourceSha256": "e801ca1b4d94c6e3c29ca0a1f0e4d151e37f474820824802ef44c12b0fc2f835",
+      "guardStatus": 0,
+      "rejectedForNewSource": false
+    },
+    {
+      "name": "shell-time",
+      "file": "packages/new-qlever-writer.sh",
+      "code": "printf '%s\\n' '{\"engine\":\"qlever\",\"time\":42}'\n",
+      "sourceSha256": "d3661cdba0196b96b9ca925b8197c6786cf470daeb83ef4a9f382becd885af9d",
+      "guardStatus": 0,
+      "rejectedForNewSource": false
+    },
+    {
+      "name": "python-seconds-alias",
+      "file": "lab/new-qlever-writer.py",
+      "code": "import json as j\nimport sys\nsys.stdout.write(j.dumps({\"lane\":\"qlever\",\"seconds\":0.042}) + \"\\n\")\n",
+      "sourceSha256": "4a9e6c0db7db4f8e36277314353c8e4c081097ddb056b9b2cbf182b7981d9975",
+      "guardStatus": 1,
+      "rejectedForNewSource": true
+    },
+    {
+      "name": "js-seconds-stderr",
+      "file": "packages/new-qlever-writer.mjs",
+      "code": "process.stderr.write('{\"lane\":\"qlever\",\"seconds\":0.042}\\n');\n",
+      "sourceSha256": "de7b291d837a515e47a18512450e8d98c42723924e2705c4081379e874e8cce6",
+      "guardStatus": 0,
+      "rejectedForNewSource": false
+    },
+    {
+      "name": "shell-duration-positive",
+      "file": "lab/new-qlever-writer.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"duration_s\":0.042}'\n",
+      "sourceSha256": "8240b0d255ea4d4020636588a9bf5ac4ad6c025094f6ccb3bd4d2d25747d6d5e",
+      "guardStatus": 1,
+      "rejectedForNewSource": true
+    }
+  ],
+  "c8": [
+    {
+      "mode": "keep-alive",
+      "status": 0,
+      "row": {
+        "qleverConnectionMode": "keep-alive",
+        "lane": "qlever",
+        "label": "1cf9a955-97c7-4344-89f7-a1a25bc923a1",
+        "graph": "g",
+        "edges": 1,
+        "reach": 1,
+        "nativeTotalMs": "7-7",
+        "nativeFailures": 0,
+        "engineWriteTransactionsPerCall": 0,
+        "phasesMs": {
+          "read": "3-3 (n=1)"
+        },
+        "datalogMs": [
+          5
+        ]
+      }
+    },
+    {
+      "mode": "per-request",
+      "status": 0,
+      "row": {
+        "qleverConnectionMode": "per-request",
+        "lane": "qlever",
+        "label": "1cf9a955-97c7-4344-89f7-a1a25bc923a1",
+        "graph": "g",
+        "edges": 1,
+        "reach": 1,
+        "nativeTotalMs": "7-7",
+        "nativeFailures": 0,
+        "engineWriteTransactionsPerCall": 0,
+        "phasesMs": {
+          "read": "3-3 (n=1)"
+        },
+        "datalogMs": [
+          5
+        ]
+      }
+    },
+    {
+      "mode": "absent",
+      "status": 1
+    },
+    {
+      "mode": "unknown",
+      "status": 1
+    }
+  ],
+  "sources": 934
+}

@@ -1,0 +1,19 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 48236 "CX-NSR-G0-3", pid 20247 "CX-DI01-final-r5", pid 72811 "CX-DF01-G0-r3", pid 73727 "CX-P2B-R3-build5e"
+[lab] heavy: waiting for one of 4 slots; held by pid 48236 "CX-NSR-G0-3", pid 20247 "CX-DI01-final-r5", pid 72811 "CX-DF01-G0-r3", pid 73727 "CX-P2B-R3-build5e"
+[lab] heavy: waiting for one of 4 slots; held by pid 48236 "CX-NSR-G0-3", pid 74556 "CX-VM01R-R2-install", pid 72811 "CX-DF01-G0-r3", pid 73011 "CX-P2B-R3-archive"
+{
+  "paired": "GREEN",
+  "single": "RED",
+  "hardRules": 14,
+  "pairedComparisons": 216,
+  "legacy": [
+    {
+      "match": true,
+      "editedMatch": false
+    },
+    {
+      "match": true,
+      "editedMatch": false
+    }
+  ]
+}

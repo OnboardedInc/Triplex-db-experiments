@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 import fs from "node:fs";
 // [EXP-QG1] Why: decode only the pinned v1 envelope to count inserted/deleted IDs,
 // not local-vocab pointer values. Rejected: live COUNT minus base (misses tombstones).

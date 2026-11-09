@@ -1,0 +1,737 @@
+{
+  "format": "tx2-gate-receipt/1",
+  "gate": "G0",
+  "lane": "datomic",
+  "slot": null,
+  "runId": "G0-datomic-20261109T085657Z-6815e5",
+  "experiment": "EXP-DF01",
+  "note": "Round 3: bounded final post-deadline log read; real-time reviewer and exact synthetic deadline regressions pass; no gate or timeout changes",
+  "previous": "G0-datomic-20261109T081416Z-e9ae93",
+  "startedAt": "2026-11-09T08:56:57.193Z",
+  "endedAt": "2026-11-09T09:00:33.806Z",
+  "durationMs": 216613,
+  "scope": "full",
+  "runKind": "diagnostic",
+  "mutation": null,
+  "contractVersion": "0.3.13",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/3",
+    "version": "0.3.13",
+    "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
+    "sha256": "8820efb6fe399aab4447bd7d99b551e423449bd804396c2675febaaf86e95f2a"
+  },
+  "obligations": [],
+  "engineName": "datomic",
+  "git": {
+    "head": "0f6c28c08daf9d370d2370eca8d152931b0ac512",
+    "headTree": "65c494b97ca6c6a91493ccfa6226f1e3d75e2150",
+    "branch": "exp/DF01-datomic-feed",
+    "dirty": true,
+    "stashCommit": "c107996aedbfb3dfb2c53ce86861aba461b07c66",
+    "stashTree": "7182e1bbef26e9a0492ea513b7b64f38230d622d",
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "763e0090a8fe83851d8c33f864fe84d4e50b221cbd5b4746ef89d3a7cb1f1a13",
+    "diffBytes": 4616,
+    "modifiedFiles": [
+      {
+        "path": "packages/datomic/gateway/src/triplex/gateway/feed.clj",
+        "bytes": 6911,
+        "sha256": "e3a6b9effe6524aeb679399f368d5f3da16a74135e96b11b4fa4c0cf91d974df"
+      },
+      {
+        "path": "packages/datomic/gateway/src/triplex/gateway/feed_test.clj",
+        "bytes": 10985,
+        "sha256": "d2bcbbf2a991169bfc38da43643b6606bfd46daf1a4bc0a1fb73e19f13298b4b"
+      }
+    ],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [
+      "lab/experiments/EXP-DF01/round3/"
+    ],
+    "sourceTreeId": "890466e1d665fbdaed7de6f1159fba0e48f9d0688aaa2f086255152de19aa5fb"
+  },
+  "lockfileSha256": "8c138ab3d1972de4660ff5e4e082250a581f13cd091ba358c62eed7521544ab3",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "ee8c40b95ac6dba2dc3a75ae3c5891b6818489cd5bf2caaaedddf61d31eef2a6",
+    "lab/bin/lib.mjs": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e",
+    "lab/bin/receipt.mjs": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+    "lab/bin/engine.mjs": "78f1a6b9a2a8fba62ff35be34b426e723c39587a2104e69ff4b9b05889589a1f",
+    "lab/bin/heavy-lock.mjs": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "lab/config/slots.json": "3cd5463b6fda8af3653057e74ae287a34f1ad1478fa173e98f5ceaefc8e5c225"
+  },
+  "build": {
+    "manifestSha256": "ac130dc1daa7c38b475dde33b6647b71cb48a78ab11c651d44ce3a3ec5b23d22",
+    "manifest": "runs/G0/G0-datomic-20261109T085657Z-6815e5/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 420,
+        "bytes": 2703419,
+        "sha256": "10f272341320a03c99a681cfd8919b45988300bfad00745ddbb42172ddf42385"
+      },
+      "host": {
+        "files": 46,
+        "bytes": 334476,
+        "sha256": "69921e9733fc004c8122ca2ad71e65da2a9d1c8684ec2dbac100154bf9a70eaf"
+      },
+      "testkit": {
+        "files": 34,
+        "bytes": 437009,
+        "sha256": "b3ea89d30727f21f5620ac4f3ae3fb42a46ee4323eea9aa9dacec16e848b46a5"
+      },
+      "datomic": {
+        "files": 50,
+        "bytes": 173804,
+        "sha256": "2569d9bafea827ee56c2c7e90d5be2ad5a1347effaabf575f781925f5c557615"
+      },
+      "qualification": {
+        "files": 32,
+        "bytes": 356499,
+        "sha256": "b03ffb9ab9cb846d5b2ae93fb047043e32e45942580851ee59ce4fb9909b4be4"
+      }
+    }
+  },
+  "counts": {
+    "executed": 1279,
+    "pass": 1278,
+    "fail": 1,
+    "skip": 66,
+    "expectedSkip": 66,
+    "unexpectedSkip": 0
+  },
+  "unexpectedSkips": [],
+  "fixtures": {
+    "qualification/workloads/temporal-workloads.json": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "qualification/workloads/event_oracles.py": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02",
+    "qualification/workloads/validate_workloads.py": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+    "qualification/workloads/test_event_oracles.py": "0151831a2a2b0ce60bcbb08cf2234764458cf114057a3e30b1623d5c8dbb26a7",
+    "qualification/workloads/engine_cases.mjs": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50",
+    "qualification/workloads/test_engine_cases.mjs": "7d1d406e659f8a9f917c84a6a9c76517b0262cae07851500b58fa6ead1dd409a",
+    "qualification/adapter/scale-fixture.mjs": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+    "lab/config/g0-expected-skips.json": "dd02c60ddf42737963e7f72a0dbda1565e1d707c49b629b08f7ba572b6ece59e"
+  },
+  "packet": {
+    "id": "temporal-workloads/1@sha256:322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "format": "temporal-workloads/1",
+    "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "workloads": 20,
+    "cases": 71
+  },
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 619,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/pnpm-version.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "build",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 47131,
+          "label": "CX-DF01-R3-G0",
+          "at": "2026-11-09T08:56:57.109Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 83,
+          "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+        }
+      },
+      "command": "pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store --filter @triplex-build/triplex --filter @triplex-build/triplex-host --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-datomic --filter @triplex-build/triplex-qualification build",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 8510,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/build.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/build.stderr.txt"
+    },
+    {
+      "name": "typecheck",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 47131,
+          "label": "CX-DF01-R3-G0",
+          "at": "2026-11-09T08:56:57.109Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 83,
+          "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-host --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-datomic --filter @triplex-build/triplex-qualification typecheck",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 11242,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/typecheck.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/typecheck.stderr.txt"
+    },
+    {
+      "name": "vitest-core",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 47131,
+          "label": "CX-DF01-R3-G0",
+          "at": "2026-11-09T08:56:57.109Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 83,
+          "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/df01/runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-core.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 4044,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-core.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-core.stderr.txt"
+    },
+    {
+      "name": "vitest-host",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 47131,
+          "label": "CX-DF01-R3-G0",
+          "at": "2026-11-09T08:56:57.109Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 83,
+          "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex-host exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/df01/runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-host.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 130270,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-host.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-host.stderr.txt"
+    },
+    {
+      "name": "vitest-testkit",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 47131,
+          "label": "CX-DF01-R3-G0",
+          "at": "2026-11-09T08:56:57.109Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 83,
+          "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex-testkit exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/df01/runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-testkit.json",
+      "code": 1,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 51569,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-testkit.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-testkit.stderr.txt"
+    },
+    {
+      "name": "vitest-datomic",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 47131,
+          "label": "CX-DF01-R3-G0",
+          "at": "2026-11-09T08:56:57.109Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 83,
+          "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex-datomic exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/df01/runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-datomic.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 2837,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-datomic.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-datomic.stderr.txt"
+    },
+    {
+      "name": "vitest-qualification",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 47131,
+          "label": "CX-DF01-R3-G0",
+          "at": "2026-11-09T08:56:57.109Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 83,
+          "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex-qualification exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/df01/runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-qualification.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 3593,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-qualification.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-qualification.stderr.txt"
+    },
+    {
+      "name": "node-test-qualification",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 47131,
+          "label": "CX-DF01-R3-G0",
+          "at": "2026-11-09T08:56:57.109Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 83,
+          "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+        }
+      },
+      "command": "node --test --test-reporter=tap ../../qualification/compare.test.mjs load/dispatch.test.ts load/model.test.ts",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 197,
+      "cwd": "packages/qualification",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-qualification.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-qualification.stderr.txt"
+    },
+    {
+      "name": "node-test-engine-cases",
+      "command": "node --test --test-reporter=tap qualification/workloads/test_engine_cases.mjs",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 146,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-engine-cases.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-engine-cases.stderr.txt"
+    },
+    {
+      "name": "node-test-ns-bench",
+      "command": "node --test --test-reporter=tap lab/bench/test/bench.test.ts",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 2951,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-ns-bench.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-ns-bench.stderr.txt"
+    },
+    {
+      "name": "oracle-validate-workloads",
+      "command": "python3 -B qualification/workloads/validate_workloads.py",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 59,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/oracle-validate-workloads.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/oracle-validate-workloads.stderr.txt"
+    },
+    {
+      "name": "oracle-unittest",
+      "command": "python3 -B -m unittest -v test_event_oracles",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 120,
+      "cwd": "qualification/workloads",
+      "stdout": "runs/G0/G0-datomic-20261109T085657Z-6815e5/oracle-unittest.stdout.txt",
+      "stderr": "runs/G0/G0-datomic-20261109T085657Z-6815e5/oracle-unittest.stderr.txt"
+    }
+  ],
+  "firstFailures": [
+    {
+      "package": "testkit",
+      "test": "packages/testkit/test/route-equivalence-round3.test.ts :: round3: retired stores cannot omit policies/cuts or silently decline purge execution",
+      "message": "Error: Test timed out in 5000ms.\nIf this is a long-running test, pass a timeout value as the last argument or configure it globally with \"testTimeout\".\n    at task (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/df01/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2692:43)\n    at Object.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/df01/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2709:16)\n    at Object.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/df01/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2482:28)\n    at chain (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/df01/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1870:14)\n    at /Users/sam/projects/triplex-db-2/.claude/worktrees/df01/packages/testkit/test/route-equivalence-round3.test.ts:225:1\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at VitestModuleEvaluator._runInlinedModule (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/df01/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/module-evaluator.js:261:4)\n    at VitestModuleRunner.directRequest (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/df01/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/module-runner.js:1273:59)\n    at VitestModuleR"
+    }
+  ],
+  "rawDir": "runs/G0/G0-datomic-20261109T085657Z-6815e5",
+  "reasons": [
+    "1 failed tests"
+  ],
+  "verdict": "FAIL",
+  "objects": [
+    {
+      "path": "git diff HEAD --binary",
+      "role": "git-diff-head-binary",
+      "bytes": 4616,
+      "sha256": "763e0090a8fe83851d8c33f864fe84d4e50b221cbd5b4746ef89d3a7cb1f1a13"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/feed.clj",
+      "role": "modified-input",
+      "bytes": 6911,
+      "sha256": "e3a6b9effe6524aeb679399f368d5f3da16a74135e96b11b4fa4c0cf91d974df"
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/feed_test.clj",
+      "role": "modified-input",
+      "bytes": 10985,
+      "sha256": "d2bcbbf2a991169bfc38da43643b6606bfd46daf1a4bc0a1fb73e19f13298b4b"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 290715,
+      "sha256": "8c138ab3d1972de4660ff5e4e082250a581f13cd091ba358c62eed7521544ab3"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 63668,
+      "sha256": "ee8c40b95ac6dba2dc3a75ae3c5891b6818489cd5bf2caaaedddf61d31eef2a6"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 26584,
+      "sha256": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 5363,
+      "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 45403,
+      "sha256": "78f1a6b9a2a8fba62ff35be34b426e723c39587a2104e69ff4b9b05889589a1f"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 1841,
+      "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 7442,
+      "sha256": "3cd5463b6fda8af3653057e74ae287a34f1ad1478fa173e98f5ceaefc8e5c225"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 83,
+      "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 115762,
+      "sha256": "ac130dc1daa7c38b475dde33b6647b71cb48a78ab11c651d44ce3a3ec5b23d22"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 83,
+      "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 83,
+      "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-core.json",
+      "role": "raw-outcome",
+      "bytes": 271965,
+      "sha256": "0b4d96a1ea635d27fc21d8a5b02b9bd7d88fe1692fe622466294b6e5ba6181eb"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 83,
+      "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-host.json",
+      "role": "raw-outcome",
+      "bytes": 9218,
+      "sha256": "9571e278e46a601931cb51b2efa63d1b0e1d9e9c120bae786c94e79e45845609"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 83,
+      "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-testkit.json",
+      "role": "raw-outcome",
+      "bytes": 36030,
+      "sha256": "05928c366c7ea356e3a3cb5238d492d6f83719bb1be8ee94ef1b7217ab34c4d7"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 83,
+      "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-datomic.json",
+      "role": "raw-outcome",
+      "bytes": 36426,
+      "sha256": "ebe45f3ee24008932914bcd1f87a8f1ff2efd351ffc65536c18602f4596a8808"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 83,
+      "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-qualification.json",
+      "role": "raw-outcome",
+      "bytes": 45957,
+      "sha256": "26bdf6c7aa5628d24cda706f43596998c1a34039875946d468b8ea724669d4e2"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 83,
+      "sha256": "cd13683dd0251a62998b8f6ae0753e1cbd80db4a2c12092e152a561c415556f0"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/typecheck.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 495,
+      "sha256": "6e7b48cc63776ac35c1fa41cd2457fc1d5553d9bdadb0d524a629f514781c903"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/typecheck.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-core.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 139,
+      "sha256": "5a2775ba7055e602cd20bff59ca1bb42e8773bf23bdf9750969dcb12218036cc"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-core.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 347,
+      "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-host.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 139,
+      "sha256": "d59fba944921167f16c2ec8a622fdde0df0442310cdf3739669b56de15a7c986"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-host.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 1023,
+      "sha256": "9aec49dd4640a3c5d8adf271a994cb339539b1bcb497aad5aa7270b03ba39df1"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-testkit.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 459,
+      "sha256": "dad144039d32b06774c3ae0f4fc9dbb59364f9eff11f23df5199348a7ff2aee7"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-testkit.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 347,
+      "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-datomic.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 142,
+      "sha256": "5597e504e052f1fbb139e00f9f95bcbfaad8b96f8bd9ae94471a0a65fa382682"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-datomic.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-qualification.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 148,
+      "sha256": "ae6c5e110b04ef87c6571f137fc712db1fdd91e68d4eec712abdb2bbd79d2d0a"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/vitest-qualification.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-qualification.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 3965,
+      "sha256": "3cadead3bfb7157a27ca6e7b25667101f959ddd8abbddb5da7c171665c9b265e"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-qualification.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-engine-cases.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 3137,
+      "sha256": "68ac0d22bcd891c45a8e4ce5ab23e7e9d6d4e79e857faa08f76ecd63d5d2abd4"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-engine-cases.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-ns-bench.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 2825,
+      "sha256": "90b3ea6fbe2f3fa51d90870a71affa0a369c8a5dd1b0fa53f5ca2a0cfb5856b9"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/node-test-ns-bench.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/oracle-validate-workloads.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 1218,
+      "sha256": "f2a7cd0a3133b70369859ba9a8636acd61a8b951837618be9dd0bbdd70e79ff0"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/oracle-validate-workloads.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/oracle-unittest.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-datomic-20261109T085657Z-6815e5/oracle-unittest.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 1314,
+      "sha256": "5576dd27db6c91ba3639040ca72ce85b028725cf92a6b7668637225be7f32143"
+    },
+    {
+      "path": "qualification/workloads/temporal-workloads.json",
+      "role": "oracle-fixture",
+      "bytes": 124581,
+      "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271"
+    },
+    {
+      "path": "qualification/workloads/event_oracles.py",
+      "role": "oracle-fixture",
+      "bytes": 21459,
+      "sha256": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02"
+    },
+    {
+      "path": "qualification/workloads/validate_workloads.py",
+      "role": "oracle-fixture",
+      "bytes": 11913,
+      "sha256": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61"
+    },
+    {
+      "path": "qualification/workloads/test_event_oracles.py",
+      "role": "oracle-fixture",
+      "bytes": 5168,
+      "sha256": "0151831a2a2b0ce60bcbb08cf2234764458cf114057a3e30b1623d5c8dbb26a7"
+    },
+    {
+      "path": "qualification/workloads/engine_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 17684,
+      "sha256": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50"
+    },
+    {
+      "path": "qualification/workloads/test_engine_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 16808,
+      "sha256": "7d1d406e659f8a9f917c84a6a9c76517b0262cae07851500b58fa6ead1dd409a"
+    },
+    {
+      "path": "qualification/adapter/scale-fixture.mjs",
+      "role": "oracle-fixture",
+      "bytes": 16527,
+      "sha256": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2"
+    },
+    {
+      "path": "lab/config/g0-expected-skips.json",
+      "role": "oracle-fixture",
+      "bytes": 28286,
+      "sha256": "dd02c60ddf42737963e7f72a0dbda1565e1d707c49b629b08f7ba572b6ece59e"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 1076295,
+      "sha256": "8820efb6fe399aab4447bd7d99b551e423449bd804396c2675febaaf86e95f2a"
+    }
+  ]
+}

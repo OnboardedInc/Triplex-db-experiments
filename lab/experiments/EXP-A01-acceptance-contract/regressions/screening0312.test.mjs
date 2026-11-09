@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-A01-0312] Why: a complete parser pin accepted for screening is insufficient acceptance authority. Rejected: treating pin existence as verifier recollection.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

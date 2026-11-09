@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 60988 "CX-VA01-0314-R3-evaluator", pid 35923 "CX-CRNS-r2-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 60988 "CX-VA01-0314-R3-evaluator", pid 35923 "CX-CRNS-r2-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 60988 "CX-VA01-0314-R3-evaluator", pid 35923 "CX-CRNS-r2-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 60988 "CX-VA01-0314-R3-evaluator", pid 35923 "CX-CRNS-r2-final"
+{"durableFiles": 74, "localFiles": 23, "run": "G0-datomic-20261109T081416Z-e9ae93"}

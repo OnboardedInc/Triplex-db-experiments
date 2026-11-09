@@ -1,0 +1,140 @@
+No projects matched the filters "@triplex-build/triplex-core" in "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-m01r"
+Scope: 4 of 25 workspace projects
+packages/testkit build$ tsdown
+packages/w0 build$ tsc -p tsconfig.json
+packages/testkit build: ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+packages/testkit build: ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-m01r/packages/testkit/tsdown.config.ts 
+packages/testkit build: ℹ entry: src/index.ts, src/offline-route-fixtures.ts, src/route-coverage.ts, src/route-equivalence.ts, src/route-history-grammar.ts, src/route.ts, src/routeEquivalence.ts, src/routeHistory.ts
+packages/testkit build: ℹ target: esnext
+packages/testkit build: ℹ tsconfig: tsconfig.json
+packages/testkit build: ℹ Build start
+packages/w0 build: Done
+packages/testkit build: ℹ dist/index.js                          87.58 kB │ gzip: 16.13 kB
+packages/testkit build: ℹ dist/route-equivalence.js              20.75 kB │ gzip:  6.05 kB
+packages/testkit build: ℹ dist/route-coverage.js                  8.55 kB │ gzip:  2.61 kB
+packages/testkit build: ℹ dist/offline-route-fixtures.js          5.50 kB │ gzip:  2.09 kB
+packages/testkit build: ℹ dist/route-history-grammar.js           5.17 kB │ gzip:  1.66 kB
+packages/testkit build: ℹ dist/routeEquivalence.js                2.44 kB │ gzip:  0.99 kB
+packages/testkit build: ℹ dist/routeHistory.js                    2.16 kB │ gzip:  0.94 kB
+packages/testkit build: ℹ dist/route.js                           1.02 kB │ gzip:  0.32 kB
+packages/testkit build: ℹ dist/index.js.map                     157.59 kB │ gzip: 27.54 kB
+packages/testkit build: ℹ dist/route-equivalence.js.map          46.18 kB │ gzip: 12.39 kB
+packages/testkit build: ℹ dist/route-coverage.js.map             16.56 kB │ gzip:  4.76 kB
+packages/testkit build: ℹ dist/route-history-grammar.js.map      10.30 kB │ gzip:  3.23 kB
+packages/testkit build: ℹ dist/offline-route-fixtures.js.map     10.04 kB │ gzip:  3.54 kB
+packages/testkit build: ℹ dist/routeEquivalence.js.map            5.29 kB │ gzip:  1.96 kB
+packages/testkit build: ℹ dist/routeHistory.js.map                5.05 kB │ gzip:  1.94 kB
+packages/testkit build: ℹ dist/route-equivalence.d.ts.map         3.88 kB │ gzip:  1.05 kB
+packages/testkit build: ℹ dist/index.d.ts.map                     0.84 kB │ gzip:  0.35 kB
+packages/testkit build: ℹ dist/routeEquivalence.d.ts.map          0.59 kB │ gzip:  0.28 kB
+packages/testkit build: ℹ dist/routeHistory.d.ts.map              0.52 kB │ gzip:  0.25 kB
+packages/testkit build: ℹ dist/route-coverage.d.ts.map            0.32 kB │ gzip:  0.18 kB
+packages/testkit build: ℹ dist/offline-route-fixtures.d.ts.map    0.21 kB │ gzip:  0.17 kB
+packages/testkit build: ℹ dist/route-history-grammar.d.ts.map     0.16 kB │ gzip:  0.14 kB
+packages/testkit build: ℹ dist/route-equivalence.d.ts             8.09 kB │ gzip:  2.17 kB
+packages/testkit build: ℹ dist/route-coverage.d.ts                3.65 kB │ gzip:  0.83 kB
+packages/testkit build: ℹ dist/index.d.ts                         2.63 kB │ gzip:  0.96 kB
+packages/testkit build: ℹ dist/route.d.ts                         1.71 kB │ gzip:  0.42 kB
+packages/testkit build: ℹ dist/offline-route-fixtures.d.ts        1.21 kB │ gzip:  0.63 kB
+packages/testkit build: ℹ dist/routeHistory.d.ts                  1.06 kB │ gzip:  0.40 kB
+packages/testkit build: ℹ dist/routeEquivalence.d.ts              0.98 kB │ gzip:  0.39 kB
+packages/testkit build: ℹ dist/route-history-grammar.d.ts         0.29 kB │ gzip:  0.20 kB
+packages/testkit build: ℹ 30 files, total: 410.34 kB
+packages/testkit build: ✔ Build complete in 1715ms
+packages/testkit build: Done
+packages/qualification build$ tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist
+packages/xtdb build$ tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist
+packages/qualification build: ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+packages/qualification build: ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-m01r/packages/qualification/tsdown.config.ts 
+packages/qualification build: ℹ entry: src/index.ts
+packages/qualification build: ℹ target: esnext
+packages/qualification build: ℹ tsconfig: tsconfig.json
+packages/qualification build: ℹ Build start
+packages/qualification build: ℹ dist/index.js                           9.23 kB │ gzip:  2.79 kB
+packages/qualification build: ℹ dist/native/xtdb-workloads.js.map      83.53 kB │ gzip: 19.66 kB
+packages/qualification build: ℹ dist/native/xtdb-workloads.js          44.12 kB │ gzip: 11.02 kB
+packages/qualification build: ℹ dist/native/qlever-workloads.js.map    42.40 kB │ gzip: 11.14 kB
+packages/qualification build: ℹ dist/engine-write-counter.js.map       37.24 kB │ gzip: 12.19 kB
+packages/qualification build: ℹ dist/native/qlever-recursion.js.map    24.01 kB │ gzip:  6.69 kB
+packages/qualification build: ℹ dist/native/qlever-workloads.js        19.98 kB │ gzip:  5.76 kB
+packages/qualification build: ℹ dist/index.js.map                      19.02 kB │ gzip:  5.57 kB
+packages/qualification build: ℹ dist/engine-write-counter.js           16.90 kB │ gzip:  5.96 kB
+packages/qualification build: ℹ dist/native/qlever-recursion.js        10.67 kB │ gzip:  3.41 kB
+packages/qualification build: ℹ dist/native/xtdb-exact-sum.js.map       7.69 kB │ gzip:  3.35 kB
+packages/qualification build: ℹ dist/native/xtdb-exact-sum.js           4.92 kB │ gzip:  2.35 kB
+packages/qualification build: ℹ dist/native/xtdb-native-errors.js.map   3.85 kB │ gzip:  1.72 kB
+packages/qualification build: ℹ dist/native/xtdb-native-errors.js       2.36 kB │ gzip:  1.14 kB
+packages/qualification build: ℹ dist/native/support-paths.js.map        1.26 kB │ gzip:  0.73 kB
+packages/qualification build: ℹ dist/native/support-paths.js            0.62 kB │ gzip:  0.37 kB
+packages/qualification build: ℹ 16 files, total: 327.82 kB
+packages/qualification build: ✔ Build complete in 25ms
+packages/xtdb build: ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+packages/xtdb build: ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-m01r/packages/xtdb/tsdown.config.ts 
+packages/xtdb build: ℹ entry: src/ConstraintValidation.ts, src/MaintainedQueries.ts, src/Operations.ts, src/ReadOnlyClient.ts, src/TemporalQueries.ts, src/TransactionContext.ts, src/XtdbClient.ts, src/XtdbQueryExecutor.ts, src/XtdbStorageAdapter.ts, src/codecs.ts, src/index.ts, src/native/NativeQueries.ts, src/native/Reachability.ts, src/native/ReadOnlySql.ts, src/native/Sources.ts, src/native/SqlLexerPatterns.ts, src/native/SqlTokens.ts, src/query/compiler.ts, src/query/domains.ts, src/query/grouping.ts, src/query/overlay.ts, src/query/recursion.ts
+packages/xtdb build: ℹ target: esnext
+packages/xtdb build: ℹ tsconfig: tsconfig.json
+packages/xtdb build: ℹ Build start
+packages/xtdb build: ℹ dist/XtdbStorageAdapter.js           22.19 kB │ gzip:  6.50 kB
+packages/xtdb build: ℹ dist/ConstraintValidation.js         12.62 kB │ gzip:  3.77 kB
+packages/xtdb build: ℹ dist/MaintainedQueries.js            11.46 kB │ gzip:  3.69 kB
+packages/xtdb build: ℹ dist/XtdbQueryExecutor.js             8.46 kB │ gzip:  2.73 kB
+packages/xtdb build: ℹ dist/TemporalQueries.js               8.00 kB │ gzip:  2.88 kB
+packages/xtdb build: ℹ dist/codecs.js                        7.56 kB │ gzip:  2.15 kB
+packages/xtdb build: ℹ dist/query/recursion.js               7.30 kB │ gzip:  2.84 kB
+packages/xtdb build: ℹ dist/native/Reachability.js           7.29 kB │ gzip:  2.96 kB
+packages/xtdb build: ℹ dist/XtdbClient.js                    7.17 kB │ gzip:  2.44 kB
+packages/xtdb build: ℹ dist/query/domains.js                 6.45 kB │ gzip:  2.13 kB
+packages/xtdb build: ℹ dist/native/Sources.js                6.40 kB │ gzip:  2.41 kB
+packages/xtdb build: ℹ dist/query/compiler.js                6.11 kB │ gzip:  2.59 kB
+packages/xtdb build: ℹ dist/native/NativeQueries.js          5.34 kB │ gzip:  1.85 kB
+packages/xtdb build: ℹ dist/native/ReadOnlySql.js            5.08 kB │ gzip:  1.68 kB
+packages/xtdb build: ℹ dist/query/grouping.js                4.61 kB │ gzip:  1.72 kB
+packages/xtdb build: ℹ dist/native/SqlLexerPatterns.js       3.27 kB │ gzip:  0.91 kB
+packages/xtdb build: ℹ dist/index.js                         2.90 kB │ gzip:  1.08 kB
+packages/xtdb build: ℹ dist/query/overlay.js                 2.28 kB │ gzip:  1.03 kB
+packages/xtdb build: ℹ dist/native/SqlTokens.js              2.07 kB │ gzip:  0.88 kB
+packages/xtdb build: ℹ dist/ReadOnlyClient.js                1.77 kB │ gzip:  0.91 kB
+packages/xtdb build: ℹ dist/Operations.js                    1.37 kB │ gzip:  0.74 kB
+packages/xtdb build: ℹ dist/TransactionContext.js            0.29 kB │ gzip:  0.21 kB
+packages/xtdb build: ℹ dist/XtdbStorageAdapter.js.map       41.89 kB │ gzip: 11.38 kB
+packages/xtdb build: ℹ dist/ConstraintValidation.js.map     22.47 kB │ gzip:  6.55 kB
+packages/xtdb build: ℹ dist/MaintainedQueries.js.map        21.58 kB │ gzip:  6.55 kB
+packages/xtdb build: ℹ dist/XtdbQueryExecutor.js.map        16.48 kB │ gzip:  5.07 kB
+packages/xtdb build: ℹ dist/XtdbClient.js.map               16.12 kB │ gzip:  5.21 kB
+packages/xtdb build: ℹ dist/TemporalQueries.js.map          14.83 kB │ gzip:  4.88 kB
+packages/xtdb build: ℹ dist/codecs.js.map                   14.09 kB │ gzip:  3.93 kB
+packages/xtdb build: ℹ dist/native/Reachability.js.map      13.92 kB │ gzip:  5.09 kB
+packages/xtdb build: ℹ dist/query/domains.js.map            13.32 kB │ gzip:  4.32 kB
+packages/xtdb build: ℹ dist/query/recursion.js.map          12.77 kB │ gzip:  4.56 kB
+packages/xtdb build: ℹ dist/native/NativeQueries.js.map     12.43 kB │ gzip:  3.95 kB
+packages/xtdb build: ℹ dist/query/compiler.js.map           12.26 kB │ gzip:  4.68 kB
+packages/xtdb build: ℹ dist/native/Sources.js.map           11.57 kB │ gzip:  4.13 kB
+packages/xtdb build: ℹ dist/native/ReadOnlySql.js.map       10.68 kB │ gzip:  3.39 kB
+packages/xtdb build: ℹ dist/query/grouping.js.map            8.05 kB │ gzip:  2.77 kB
+packages/xtdb build: ℹ dist/index.js.map                     6.24 kB │ gzip:  2.20 kB
+packages/xtdb build: ℹ dist/native/SqlLexerPatterns.js.map   5.86 kB │ gzip:  1.21 kB
+packages/xtdb build: ℹ dist/native/SqlTokens.js.map          4.41 kB │ gzip:  1.79 kB
+packages/xtdb build: ℹ dist/query/overlay.js.map             4.18 kB │ gzip:  1.73 kB
+packages/xtdb build: ℹ dist/Operations.js.map                2.55 kB │ gzip:  1.16 kB
+packages/xtdb build: ℹ dist/ReadOnlyClient.js.map            2.43 kB │ gzip:  1.20 kB
+packages/xtdb build: ℹ dist/TransactionContext.js.map        0.90 kB │ gzip:  0.47 kB
+packages/xtdb build: ℹ 44 files, total: 409.04 kB
+packages/xtdb build: ✔ Build complete in 30ms
+packages/qualification build: src/index.ts(6,35): error TS2307: Cannot find module '@triplex-build/triplex/datalog' or its corresponding type declarations.
+packages/qualification build: src/index.ts(11,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+packages/qualification build: src/native/qlever-recursion.ts(3,25): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+packages/qualification build: src/native/qlever-recursion.ts(4,26): error TS2307: Cannot find module '@triplex-build/triplex/config' or its corresponding type declarations.
+packages/qualification build: src/native/qlever-recursion.ts(10,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+packages/qualification build: src/native/qlever-workloads.ts(6,25): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+packages/qualification build: src/native/qlever-workloads.ts(7,26): error TS2307: Cannot find module '@triplex-build/triplex/config' or its corresponding type declarations.
+packages/qualification build: src/native/qlever-workloads.ts(14,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+packages/qualification build: src/native/qlever-workloads.ts(231,49): error TS18048: 'taskUpperPosition' is possibly 'undefined'.
+packages/qualification build: src/native/support-paths.ts(2,64): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+packages/qualification build: src/native/xtdb-native-errors.ts(11,25): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+packages/qualification build: src/native/xtdb-workloads.ts(36,25): error TS2307: Cannot find module '@triplex-build/triplex' or its corresponding type declarations.
+packages/qualification build: src/native/xtdb-workloads.ts(37,26): error TS2307: Cannot find module '@triplex-build/triplex/config' or its corresponding type declarations.
+packages/qualification build: src/native/xtdb-workloads.ts(44,8): error TS2307: Cannot find module '@triplex-build/triplex/runtime' or its corresponding type declarations.
+packages/qualification build: Failed
+/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-m01r/packages/qualification:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  @triplex-build/triplex-qualification@0.1.0 build: `tsdown && tsc --declaration --emitDeclarationOnly --rootDir src --outDir dist`
+Exit status 1

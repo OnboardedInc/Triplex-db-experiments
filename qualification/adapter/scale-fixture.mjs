@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters; unannotated destructured parameters; runtime error inspection. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from 'node:assert/strict';
 
 export const SCALE_INFINITY = 9223372036854775807n;

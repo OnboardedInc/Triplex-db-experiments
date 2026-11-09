@@ -1,0 +1,4 @@
+lab/bin/engine.mjs(77,13): error TS2304: Cannot find name 'sha256File'.
+lab/bin/engine.mjs(99,7): error TS2304: Cannot find name 'sha256File'.
+lab/bin/engine.mjs(102,25): error TS2304: Cannot find name 'sha256File'.
+CX-VCHECKJS overlay: {"target":"/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/verify/CHECKJS/round2/scratch-s6MxKa/lab/bin/engine.mjs","mutation":"engine-import","reads":2,"originalUnchanged":true}

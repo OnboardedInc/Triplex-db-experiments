@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] heterogeneous test tuples inferred as string-or-callback arrays. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Independent component rejection tests; this never qualifies an engine. */
 import assert from 'node:assert/strict';
 import {createHash,randomUUID} from 'node:crypto';

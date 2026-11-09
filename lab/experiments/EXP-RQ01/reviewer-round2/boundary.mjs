@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-RQ01-QA2] Why: show that the missing real purge cuts can hide an actual route disagreement.
 // Rejected: relying only on structural booleans without a wrong-answer witness.
 import assert from 'node:assert/strict';

@@ -1,3 +1,4 @@
+import { ValueDomains, storedValueDomain } from "@triplex-build/triplex/runtime";
 /**
  * PostgresqlAdapter - PostgreSQL implementation of StorageAdapter
  *
@@ -210,7 +211,10 @@ export const makePostgresqlAdapter = (config: PostgresqlAdapterConfig = {}) =>
       const insert: StorageAdapterService["insert"] = (input, txId, timestamp, id, position) =>
         provide(
           Effect.gen(function* () {
-            const packed = packValue(input.value);
+            const packed = packValue(
+              input.value,
+              storedValueDomain(ValueDomains.postgres, input.attribute),
+            );
 
             yield* sql`
               INSERT INTO triples (
@@ -281,7 +285,10 @@ export const makePostgresqlAdapter = (config: PostgresqlAdapterConfig = {}) =>
         // Pre-generate IDs and pack values upfront
         const prepared = inputs.map((input, index) => {
           const id = ids[index]!;
-          const packed = packValue(input.value);
+          const packed = packValue(
+            input.value,
+            storedValueDomain(ValueDomains.postgres, input.attribute),
+          );
           return { id, input, packed };
         });
 
@@ -508,7 +515,7 @@ export const makePostgresqlAdapter = (config: PostgresqlAdapterConfig = {}) =>
             }
 
             if (pattern.value && !isPatternVariable(pattern.value)) {
-              const packed = packValue(pattern.value);
+              const packed = packValue(pattern.value, ValueDomains.postgres);
               conditions.push(`value_type = ${collector.add(packed.value_type)}`);
 
               switch (packed.value_type) {
@@ -618,6 +625,7 @@ export const makePostgresqlAdapter = (config: PostgresqlAdapterConfig = {}) =>
       const close: StorageAdapterService["close"] = () => Effect.void;
 
       return {
+        valueDomain: ValueDomains.postgres,
         withTransaction,
         nextCommitPosition,
         currentCommitPosition,

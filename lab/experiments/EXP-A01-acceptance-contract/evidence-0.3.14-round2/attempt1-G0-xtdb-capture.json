@@ -1,0 +1,26 @@
+{
+  "runId": "G0-xtdb-20261109T063905Z-4d5988",
+  "lane": "xtdb",
+  "source": "b9444df2fed1e7a5e8577cd5789d9d56097ce183",
+  "verdict": "PASS",
+  "counts": {
+    "executed": 1223,
+    "pass": 1223,
+    "fail": 0,
+    "skip": 140,
+    "expectedSkip": 140,
+    "unexpectedSkip": 0
+  },
+  "previous": null,
+  "capturedAtEpoch": 1794206511.9578822,
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/round2/g0/G0-xtdb-20261109T063905Z-4d5988",
+  "files": 649,
+  "bytes": 7081599,
+  "builtFiles": 586,
+  "objects": 41,
+  "manifestSha256": "051d97935b671d55d531e3b9d975e1ca32d2a8340bce9166b7cda4944108f0fc",
+  "sourceDiffBytes": 0,
+  "slot": null,
+  "startedAt": "2026-11-09T06:39:05.426Z",
+  "endedAt": "2026-11-09T06:40:33.448Z"
+}

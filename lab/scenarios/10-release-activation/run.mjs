@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 10: release activation (TARGETS 6 row 10; P5 semantics in TARGETS 1.1).
 //
 // Releases R1 and R2 are content-addressed configuration; activation is a fact on the account. After the

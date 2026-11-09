@@ -1,0 +1,13 @@
+{
+  "sources": 1539,
+  "readers": 25,
+  "changes": [
+    {
+      "path": "packages/qlever/test/client-parity.test.ts",
+      "previousSha256": "16e2067f424afc5ae352dad81031fb4b77685fbd33f95b158532e9d76a1d9d94",
+      "sha256": "82256a74dc603fd4e526d9fa91d3bb78e556143fc6252affcaaef6de7ecc4255",
+      "role": "non-reader",
+      "reason": "Offline/source or semantic fixture; no external QLever timing receipt promoted to a comparison."
+    }
+  ]
+}

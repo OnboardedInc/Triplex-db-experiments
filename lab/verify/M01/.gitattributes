@@ -1,0 +1,3 @@
+# [CX-VM01R] Why: preserve exact captured output. Rejected: trimming raw logs (changes observed bytes).
+*.log -whitespace
+*.tap -whitespace

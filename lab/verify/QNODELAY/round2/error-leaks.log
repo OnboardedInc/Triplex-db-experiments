@@ -1,0 +1,188 @@
+(node:45260) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "id": "0e30d6d9-2a52-4ab0-9adc-484df9b93b20",
+  "startedAt": "2026-11-09T04:38:06.449Z",
+  "node": "v22.23.2",
+  "head": "5c240a0a9c4884c8bfcbc93dc660e9e4411f2deb",
+  "sources": {
+    "packages/qlever/src/QleverClient.ts": "27c6228887c9484c7c9c4ef69e84889431a200b9ef083c4d68952e5e98f17de2",
+    "lab/verify/QNODELAY/round2/bootstrap.mjs": "575ccd46fc15e59851b6916843eed38743c0294be5cd115fed668d6d3bb4dd4d",
+    "lab/verify/QNODELAY/round2/resolve.mjs": "1496df6a87d5472fa4b2c4d4bd7a6ba64fe489fab641e0ad71988e40ffd6e48a",
+    "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici@7.29.1/node_modules/undici/index.js": "dca95e2bbf4bae18325a4e5d9c887427a8a63a1345ed92a46f1067360dec0ffa",
+    "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici@7.29.1/node_modules/undici/package.json": "10e55f4adb6a43e72823ea235ff6a0c777db1ef68e3a1c810f0246e1b9332d8b",
+    "lab/verify/QNODELAY/round2/common.mjs": "14e3b9cfac09b5226a759b57814de66d1467a8bee0da1ca1c15281d6c56d0aa0",
+    "lab/verify/QNODELAY/round2/error-leaks.mjs": "ac91420e2f716cec352eb1d8eb09cac46256077bc811b9a1181b3214264cb885"
+  },
+  "classification": "LOCAL ERROR-PATH LIFECYCLE ONLY",
+  "modes": [
+    {
+      "mode": "keep-alive",
+      "counts": {
+        "http500": 250,
+        "bad-gzip": 250,
+        "budget": 250,
+        "deadline": 250
+      },
+      "accepted": 252,
+      "openAtEnd": 2,
+      "samples": [
+        {
+          "n": 100,
+          "accepted": 27,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 200,
+          "accepted": 52,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 300,
+          "accepted": 77,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 400,
+          "accepted": 102,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 500,
+          "accepted": 127,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 600,
+          "accepted": 152,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 700,
+          "accepted": 177,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 800,
+          "accepted": 202,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 900,
+          "accepted": 227,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 1000,
+          "accepted": 252,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        }
+      ]
+    },
+    {
+      "mode": "per-request",
+      "counts": {
+        "http500": 250,
+        "bad-gzip": 250,
+        "budget": 250,
+        "deadline": 250
+      },
+      "accepted": 1000,
+      "openAtEnd": 0,
+      "samples": [
+        {
+          "n": 100,
+          "accepted": 100,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 200,
+          "accepted": 200,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 300,
+          "accepted": 300,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 400,
+          "accepted": 400,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 500,
+          "accepted": 500,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 600,
+          "accepted": 600,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 700,
+          "accepted": 700,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 800,
+          "accepted": 800,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 900,
+          "accepted": 900,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 1000,
+          "accepted": 1000,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        }
+      ]
+    }
+  ],
+  "sourcesUnchanged": true,
+  "endedAt": "2026-11-09T04:38:14.929Z"
+}

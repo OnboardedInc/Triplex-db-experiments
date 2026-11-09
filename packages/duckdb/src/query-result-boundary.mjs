@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Owned finite query-result boundary. No Effect, Triplex, driver or filesystem imports. */
 export class QueryResultBoundaryError extends Error {
   constructor(message) {

@@ -1,0 +1,1 @@
+{"qleverConnectionMode":"keep-alive","lane":"qlever","label":"1cf9a955-97c7-4344-89f7-a1a25bc923a1","graph":"g","edges":1,"reach":1,"nativeTotalMs":"7-7","nativeFailures":0,"engineWriteTransactionsPerCall":0,"phasesMs":{"read":"3-3 (n=1)"},"datalogMs":[5]}

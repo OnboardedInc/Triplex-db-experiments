@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { hostname, platform } from "node:os";
-import { readFileSync } from "node:fs";
+import { platform } from "node:os";
+import { readFileSync, statSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import {
   feedPositionKey,
@@ -29,12 +29,21 @@ export function openHostFeedClock(): HostFeedClock {
         ? readFileSync("/proc/sys/kernel/random/boot_id", "utf8").trim()
         : "";
   if (!boot) throw new Error("Host boot identity unavailable; refusing feed measurement");
-  const domain: FeedClockDomain = Object.freeze({
-    primitive: "node-hrtime-v1",
-    host: hash(platform() + ":" + hostname()),
-    boot: hash(boot),
-    origin: "host-boot",
-  });
+  // [EXP-NSR] Why: one kernel/time namespace is shared across differently named containers. Rejected: hostname, which both splits one clock and conflates separate VMs.
+  const domain: FeedClockDomain = Object.freeze(
+    platform() === "linux"
+      ? {
+          primitive: "CLOCK_MONOTONIC" as const,
+          bootId: boot,
+          timeNs: String(statSync("/proc/self/ns/time", { bigint: true }).ino),
+        }
+      : {
+          primitive: "node-hrtime-v1" as const,
+          host: hash(platform() + ":" + boot),
+          boot: hash(boot),
+          origin: "host-boot" as const,
+        },
+  );
   const clock = Object.freeze({ domain });
   clocks.add(clock);
   return clock;
@@ -61,18 +70,7 @@ export function readProducerPublication(
   return reader.get(key);
 }
 const payload = (r: Omit<FeedPublication, "recordId">) =>
-  JSON.stringify([
-    r.source,
-    r.stream,
-    r.epoch,
-    r.position,
-    r.publicationId,
-    r.domain.primitive,
-    r.domain.host,
-    r.domain.boot,
-    r.domain.origin,
-    r.atNs,
-  ]);
+  JSON.stringify([r.source, r.stream, r.epoch, r.position, r.publicationId, r.domain, r.atNs]);
 /** Producer-owned append-only position record. Invoke publish at source publication, never at ACK/poll. */
 export function openPublicationWriter(
   file: string,

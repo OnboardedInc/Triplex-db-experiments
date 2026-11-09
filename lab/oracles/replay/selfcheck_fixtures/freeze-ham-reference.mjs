@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Freezes O-HAM v2 expectations for the O-REPLAY self-check.
 // Usage (repo root): node lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs > lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json
 // Imports only the O-HAM v2 oracle, which itself imports only node:assert/strict.

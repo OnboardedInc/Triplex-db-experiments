@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 11722 "CX-VA01-0314-g0-qlever", pid 14000 "CX-CRNS-final", pid 90353 "CX-NSR-G0", pid 10164 "G0-qlever-20261109T072300Z-84a267 vitest-testkit"
+[lab] heavy: waiting for one of 4 slots; held by pid 11722 "CX-VA01-0314-g0-qlever", pid 14000 "CX-CRNS-final", pid 90353 "CX-NSR-G0", pid 10164 "G0-qlever-20261109T072300Z-84a267 vitest-qlever"

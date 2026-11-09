@@ -1,0 +1,13 @@
+{
+  "start": "2026-11-09T07:58:33.893Z",
+  "end": "2026-11-09T07:58:34.216Z",
+  "args": [
+    "--test",
+    "--test-name-pattern=^project checks or explicitly excludes",
+    "lab/bin/test/checkjs.test.mjs"
+  ],
+  "env": {},
+  "status": 0,
+  "signal": null,
+  "error": null
+}

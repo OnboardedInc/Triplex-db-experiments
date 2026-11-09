@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; dynamic record keys; runtime error inspection. Binding errors remain checked by lab/bin/checkjs.mjs.
 /**
  * Source-only portable fixture recipe. No service, driver or writer is imported.
  * Uses the public Attribute/EntityType/TypeSchema vocabulary already owned by

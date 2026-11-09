@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; runtime error inspection. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scratch verification of the naming functions proposed in R3. Pure functions, no I/O.
 
 // Port of xtdb.util.NormalForm.normalForm0 (references/xtdb/api/src/main/kotlin/xtdb/util/NormalForm.kt:8-12)

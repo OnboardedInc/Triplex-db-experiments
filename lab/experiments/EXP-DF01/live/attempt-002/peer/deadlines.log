@@ -1,0 +1,7 @@
+{:olderT "1004", :page {:fromT "1005", :nextT "1006", :rows [{:t "1005", :kind "skipped", :reason "non-triplex"}]}, :case "stale-report-new-log-entry", :label "DIAGNOSTIC"}
+{:page {:fromT "1007", :nextT "1007", :rows []}, :elapsedMs 104.782493, :case "older-report-no-new-entry", :label "DIAGNOSTIC"}
+{:page {:fromT "1007", :nextT "1008", :rows [{:t "1007", :kind "skipped", :reason "non-triplex"}]}, :bases [1006 1006 1007], :case "report-before-readable-cut", :label "DIAGNOSTIC"}
+{:page {:fromT "1008", :nextT "1009", :rows [{:t "1008", :kind "skipped", :reason "non-triplex"}]}, :bases [1007 1008], :elapsedMs 257.152034, :case "no-report-new-log-entry", :label "DIAGNOSTIC"}
+{:rows [{:t "1009", :kind "skipped", :reason "non-triplex"}], :captures [{:clock 0, :basis 1008} {:clock 5000000, :basis 1009}], :publicationLogicalNs 4999999, :case "logical-one-ns-before-deadline", :label "DIAGNOSTIC"}
+{:rows [{:t "1010", :kind "skipped", :reason "non-triplex"}], :captures [{:clock 0, :basis 1009} {:clock 5000000, :basis 1010}], :publicationLogicalNs 5000000, :case "logical-exact-deadline", :label "DIAGNOSTIC"}
+{:db "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsImRmMDEtZGVhZGxpbmVzIiwiZDM4NzdlMTQtNjBmOC00ZjgxLWIxMjAtYzcwOTgyZTA0ZmNmIiwwXQ", :deleted true, :case "cleanup", :label "DIAGNOSTIC"}

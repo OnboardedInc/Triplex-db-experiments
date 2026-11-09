@@ -1,0 +1,12 @@
+
+  ! eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
+     ,-[test/integration/test/value-domains.test.ts:138:7]
+ 137 |       cycle,
+ 138 |       new Array(1),
+     :       ^^^^^^^^^^^^
+ 139 |       { x: undefined },
+     `----
+  help: It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.
+
+Found 1 warning and 0 errors.
+Finished in 45ms on 11 files with 93 rules using 12 threads.

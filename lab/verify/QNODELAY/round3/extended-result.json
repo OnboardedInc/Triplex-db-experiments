@@ -1,0 +1,184 @@
+{
+  "id": "6e16fde0-81da-452f-b6bf-ce55b5d94dbd",
+  "startedAt": "2026-11-09T05:11:11.351Z",
+  "classification": "STATIC GUARD QA with synthetic output fixtures; no engine timings",
+  "baseline": 521,
+  "fields": [
+    {
+      "field": "queryMs",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"queryMs\":0.042}'\n",
+      "sha256": "1b07c6d32cdaafea375a433c247487e3bf1d24f8b648d9d25d7405fae5863c6a",
+      "discovered": true,
+      "errors": [
+        "lab/field-probe.sh: new timing/serialization source requires review"
+      ]
+    },
+    {
+      "field": "elapsedMsDiagnostic",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"elapsedMsDiagnostic\":0.042}'\n",
+      "sha256": "dfa22f6716ebf2180929dc2802186a7681d7200d21ab02eab25a8043425ee1b6",
+      "discovered": true,
+      "errors": [
+        "lab/field-probe.sh: new timing/serialization source requires review"
+      ]
+    },
+    {
+      "field": "p99",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"p99\":0.042}'\n",
+      "sha256": "1bd45a1b36d7a287a940a97b6ad592aae476a1caf65436ac49473931ac46e5db",
+      "discovered": true,
+      "errors": [
+        "lab/field-probe.sh: new timing/serialization source requires review"
+      ]
+    },
+    {
+      "field": "duration_s",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"duration_s\":0.042}'\n",
+      "sha256": "8240b0d255ea4d4020636588a9bf5ac4ad6c025094f6ccb3bd4d2d25747d6d5e",
+      "discovered": true,
+      "errors": [
+        "lab/field-probe.sh: new timing/serialization source requires review"
+      ]
+    },
+    {
+      "field": "elapsed_s",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"elapsed_s\":0.042}'\n",
+      "sha256": "78d78c608bb5153f724a1c7cdcf3d8a35bd06389e4507260206779c27e11022f",
+      "discovered": true,
+      "errors": [
+        "lab/field-probe.sh: new timing/serialization source requires review"
+      ]
+    },
+    {
+      "field": "seconds",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"seconds\":0.042}'\n",
+      "sha256": "e801ca1b4d94c6e3c29ca0a1f0e4d151e37f474820824802ef44c12b0fc2f835",
+      "discovered": false,
+      "errors": []
+    },
+    {
+      "field": "time",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"time\":0.042}'\n",
+      "sha256": "9b81833f5da2c753773308998c5aa262af8685d74cc3f1cc173f7d3a920ea0f2",
+      "discovered": false,
+      "errors": []
+    },
+    {
+      "field": "milliseconds",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"milliseconds\":0.042}'\n",
+      "sha256": "1a570ea8854bbd20978ab63d3fcc16ed7338fc084b279979d621ba55c025ddd9",
+      "discovered": false,
+      "errors": []
+    },
+    {
+      "field": "microseconds",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"microseconds\":0.042}'\n",
+      "sha256": "da6b2f6700c84d5c177c83cdac5c454042cb2a56651a8f843ec5afefd37df2dd",
+      "discovered": false,
+      "errors": []
+    },
+    {
+      "field": "ns",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"ns\":0.042}'\n",
+      "sha256": "8bb32fa59627d32f9c85b000a334c3e3e30f019ff838cf750740311ffed8e6d4",
+      "discovered": false,
+      "errors": []
+    },
+    {
+      "field": "us",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"us\":0.042}'\n",
+      "sha256": "fd926567347b0daa5188485012c4967d102e3bc5439ccd3ebf21af842db2c3b5",
+      "discovered": false,
+      "errors": []
+    },
+    {
+      "field": "execution_time",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"execution_time\":0.042}'\n",
+      "sha256": "ca5ab7233218287929fdeca6486acff4c4edfd8f03329e2e1966dcae8c880198",
+      "discovered": false,
+      "errors": []
+    },
+    {
+      "field": "queryLatency",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"queryLatency\":0.042}'\n",
+      "sha256": "50a424d40dd02a453212dd63c8e4aeb7c228836ab66c39962682a1eb6fe274ec",
+      "discovered": false,
+      "errors": []
+    },
+    {
+      "field": "wall_s",
+      "file": "lab/field-probe.sh",
+      "code": "printf '%s\\n' '{\"lane\":\"qlever\",\"wall_s\":0.042}'\n",
+      "sha256": "693c757185015badbac900eb846bf814b91da5d23bd394784d610386d99e3abb",
+      "discovered": false,
+      "errors": []
+    }
+  ],
+  "extra": [
+    {
+      "file": "packages/alias-writer.py",
+      "code": "import json as j\nwith open(\"fixture-timing.json\", \"w\") as output:\n    output.write(j.dumps({\"lane\":\"qlever\",\"seconds\":0.042}))\n",
+      "sha256": "52be780e4ff6135fabffbe390e78df719d59fcdb3375928d512a96bc9a9369ed",
+      "discovered": false,
+      "errors": [],
+      "observedOutput": "{\"lane\": \"qlever\", \"seconds\": 0.042}"
+    },
+    {
+      "file": "lab/alternate-writer.mjs",
+      "code": "process.stderr.write('{\"lane\":\"qlever\",\"seconds\":0.042}\\n');\n",
+      "sha256": "de7b291d837a515e47a18512450e8d98c42723924e2705c4081379e874e8cce6",
+      "discovered": false,
+      "errors": [],
+      "observedOutput": "{\"lane\":\"qlever\",\"seconds\":0.042}\n"
+    }
+  ],
+  "standalone": [
+    {
+      "field": "p99",
+      "text": "latencyReceipt({qleverConnectionMode:\"keep-alive\"}); console.log(JSON.stringify({p99:42}));",
+      "errors": [
+        "packages/standalone-fixture.mjs: standalone timing literal lacks mode"
+      ]
+    },
+    {
+      "field": "\"p99\"",
+      "text": "latencyReceipt({qleverConnectionMode:\"keep-alive\"}); console.log(JSON.stringify({\"p99\":42}));",
+      "errors": []
+    },
+    {
+      "field": "queryLatency",
+      "text": "latencyReceipt({qleverConnectionMode:\"keep-alive\"}); console.log(JSON.stringify({queryLatency:42}));",
+      "errors": []
+    },
+    {
+      "field": "seconds",
+      "text": "latencyReceipt({qleverConnectionMode:\"keep-alive\"}); console.log(JSON.stringify({seconds:42}));",
+      "errors": []
+    },
+    {
+      "field": "\"elapsedMs\"",
+      "text": "latencyReceipt({qleverConnectionMode:\"keep-alive\"}); console.log(JSON.stringify({\"elapsedMs\":42}));",
+      "errors": []
+    }
+  ],
+  "endedAt": "2026-11-09T05:11:13.913Z",
+  "bindings": {
+    "lab/receipts/coverage.mjs": "71daf51b7b1b3d39736e8755ab5149d1b6a983de1bab84902684f1f001aaac99",
+    "lab/receipts/source-inventory.json": "5280a2902320569a153a3141b495ad3a5d92c2a743f83ce821fa88a7faa9d998",
+    "lab/receipts/check-writers.mjs": "a3fa153ebaea2a1feef6187e30303623f6cdd6f4f957b9bfc05c12dc827658d0"
+  },
+  "runnerSha256": "d11cb5e4ec782d199570b3d431a9d716a47d0ad5bc769f0dddeaefe2c6782756"
+}

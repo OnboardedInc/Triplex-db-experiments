@@ -1,0 +1,10 @@
+{
+  "name": "foundationdb",
+  "legacyVectors": 26,
+  "policyRejected": 6,
+  "accepted": 20,
+  "rejected": 32,
+  "publicRejected": 96,
+  "callbacks": 0,
+  "claims": 0
+}

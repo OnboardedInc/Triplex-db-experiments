@@ -1,0 +1,117 @@
+{
+  "scope": "review-r2-63008cf3-ad53-48e0-9b94-c0ab0ededc3a",
+  "observations": [
+    {
+      "index": 0,
+      "kind": "string",
+      "txId": "_tx/01M6Z6XP0PBY8HA8D4VADJ0SSY",
+      "position": 1,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 1,
+      "kind": "ref",
+      "txId": "_tx/01M6Z6XSMEWBEFKT80SKEHWY6D",
+      "position": 2,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 2,
+      "kind": "blob",
+      "txId": "_tx/01M6Z6XX60WPVE4G124SPKKACH",
+      "position": 3,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 3,
+      "kind": "number",
+      "txId": "_tx/01M6Z6Y107RGRM5MTAE17KT988",
+      "position": 4,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 4,
+      "kind": "number",
+      "txId": "_tx/01M6Z6Y4BH0YTNBXGXDQX0T7MC",
+      "position": 5,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 5,
+      "kind": "number",
+      "txId": "_tx/01M6Z6Y803SCZWNJTTHWGXXRHX",
+      "position": 6,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 6,
+      "kind": "datetime",
+      "txId": "_tx/01M6Z6YBB85V5WAHKA120PS7SA",
+      "position": 7,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 7,
+      "kind": "datetime",
+      "txId": "_tx/01M6Z6YEQZHWQZ3SHPGQP808NP",
+      "position": 8,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 8,
+      "kind": "datetime",
+      "txId": "_tx/01M6Z6YJ1AY34AQBZWPGN9DDPE",
+      "position": 9,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 9,
+      "kind": "datetime",
+      "txId": "_tx/01M6Z6YNDJSBZCWX6Z3XWEH70E",
+      "position": 10,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 10,
+      "kind": "integer",
+      "txId": "_tx/01M6Z6YSR39GSXXBK9P5A2QSSX",
+      "position": 11,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 11,
+      "kind": "integer",
+      "txId": "_tx/01M6Z6YX7M1RWYMMMYYKF5CR3Y",
+      "position": 12,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 12,
+      "kind": "integer",
+      "txId": "_tx/01M6Z6Z0GR4MHQ32Y98R2HHX6X",
+      "position": 13,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 13,
+      "kind": "boolean",
+      "txId": "_tx/01M6Z6Z3XMTQ97QBVTVSBW1P0F",
+      "position": 14,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 14,
+      "kind": "boolean",
+      "txId": "_tx/01M6Z6Z772AGA8NE575R0CWEWM",
+      "position": 15,
+      "getReceiptAndHistoryExact": true
+    },
+    {
+      "index": 15,
+      "kind": "json",
+      "txId": "_tx/01M6Z6ZAKSERM5JJQN4FSDZWN4",
+      "position": 16,
+      "getReceiptAndHistoryExact": true
+    }
+  ]
+}

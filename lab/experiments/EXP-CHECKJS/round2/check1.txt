@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 66021 "CX-VA01-0314-mutations", pid 20973 "CX-DI01-final-r4", pid 90353 "CX-NSR-G0", pid 10164 "G0-qlever-20261109T072300Z-84a267 vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 66021 "CX-VA01-0314-mutations", pid 20973 "CX-DI01-final-r4", pid 90353 "CX-NSR-G0", pid 10164 "G0-qlever-20261109T072300Z-84a267 vitest-host"
+checkjs: 370 JavaScript roots checked; no diagnostics or suppressed binding errors

@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 import type { TransactionState } from "./TransactionContext.js";
-import type { TripleRow } from "@triplex-build/triplex/runtime";
+import {
+  decodeValueColumns,
+  storedValueDomain,
+  ValueDomains,
+  type TripleRow,
+} from "@triplex-build/triplex/runtime";
 import { validateTagged, type TaggedValue } from "./codec.js";
 
 // [EXP-DA01] Why: tag every scalar at the HTTP boundary. Rejected: JSON numeric longs (precision loss).
@@ -21,7 +26,7 @@ export function encodeRow(row: TripleRow): WireRow {
   );
 }
 export function decodeRow(row: WireRow): TripleRow {
-  return Object.fromEntries(
+  const decoded = Object.fromEntries(
     Object.entries(row).map(([key, value]) => {
       if (value === null) return [key, null];
       const tag = validateTagged(value);
@@ -34,6 +39,9 @@ export function decodeRow(row: WireRow): TripleRow {
       return [key, tag.v];
     }),
   ) as unknown as TripleRow;
+  // [CX-A01-0314-R3] Why: validate the actual gateway read path against the stored attribute domain. Rejected: a test-only decoder (leaves production reads unchecked).
+  decodeValueColumns(decoded, storedValueDomain(ValueDomains.datomic, decoded.attribute));
+  return decoded;
 }
 
 export const stagedInput = (state: TransactionState) => ({

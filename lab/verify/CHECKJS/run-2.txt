@@ -1,0 +1,16 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 82343 "CX-RT01-live2-testkit-budget", pid 79558 "G0-xtdb-20261109T070913Z-711e06 typecheck", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 82343 "CX-RT01-live2-testkit-budget", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 82343 "CX-RT01-live2-testkit-budget", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 82343 "CX-RT01-live2-testkit-budget", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 82343 "CX-RT01-live2-testkit-budget", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 96066 "CX-P2B-R3-build4", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 96066 "CX-P2B-R3-build4", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+printer: 105 files, 104 identical, 3 matching original pins; project: 110 roots
+baseline: exit=0
+engine-dormant: exit=1
+engine-original-missing-import: exit=1
+gs-omitted: exit=0
+gs-cases-omitted: exit=0
+gate model: all 3 lanes retain existing steps/results; checker failure cannot skip steps or yield PASS
+regression-tests: exit=0
+Completed independent review; evidence lab/verify/CHECKJS/evidence/2026-11-09T07-12-54-453Z

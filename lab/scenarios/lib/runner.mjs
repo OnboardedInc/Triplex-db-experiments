@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing; runtime-added fields not in the initial object shape; injected callbacks inferred from zero-parameter no-op defaults. Binding errors remain checked by lab/bin/checkjs.mjs.
 // lab/scenarios/lib/runner.mjs: run one GS scenario against one composition and judge it.
 //
 // [EXP-W01] Why: TARGETS section 6 rule 4: a scenario fails on any wrong answer, any lost or duplicated

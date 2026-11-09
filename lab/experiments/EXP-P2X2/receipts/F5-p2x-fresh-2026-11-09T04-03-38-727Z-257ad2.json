@@ -1,0 +1,215 @@
+{
+  "format": "p2x2-diagnostic/1",
+  "id": "F5-p2x-fresh-2026-11-09T04-03-38-727Z-257ad2",
+  "evidenceDir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P2X2/F5-p2x-fresh-2026-11-09T04-03-38-727Z-257ad2",
+  "arm": "C",
+  "phase": "fresh",
+  "scope": "F5-p2x-fresh-2026-11-09T04-03-38-727Z-257ad2",
+  "n": 150,
+  "facts": 10,
+  "buildHead": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+  "buildManifestSha256": "a794f3aed64928992056b7350cd02d135a3139df561e6f8d2bbc8c0766961767",
+  "binding": {
+    "at": "2026-11-09T04:03:39.104Z",
+    "head": "9a7996e2a242690edbc86417283d8c7348950adb",
+    "container": "837cf4565f35f589677a339c83ee703ae7bb04767f04368143f0c64228da54e7",
+    "startedAt": "2026-11-09T03:53:07.254409619Z",
+    "image": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "labels": {
+      "org.opencontainers.image.created": "2026-10-21T15:18:32.333Z",
+      "org.opencontainers.image.description": "An immutable SQL database for application development, time-travel reporting and data compliance. Developed by @juxt",
+      "org.opencontainers.image.licenses": "MPL-2.0",
+      "org.opencontainers.image.revision": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+      "org.opencontainers.image.source": "https://github.com/xtdb/xtdb",
+      "org.opencontainers.image.title": "xtdb",
+      "org.opencontainers.image.url": "https://github.com/xtdb/xtdb",
+      "org.opencontainers.image.version": "2.2.0",
+      "tx2.config-sha256": "c3ff6b95a576512e8135a57ad58eb1630b33a33ae508b8556997613b2a40a2d5",
+      "tx2.holder": "CX-P2X2",
+      "tx2.lane": "xtdb",
+      "tx2.managed-by": "lab/bin/engine.mjs",
+      "tx2.slot": "s1",
+      "usage": "For custom logging: --volume .:/config --env JDK_JAVA_OPTIONS='-Dlog4j2.configurationFile=/config/log4j2.xml'"
+    },
+    "configSha256": "cd493af54bd74adca2c9ba57431260639d3bd704aee581c4aae15f3a14239914",
+    "caps": {
+      "memory": 3758096384,
+      "cpus": 2000000000,
+      "cpuset": "4,5"
+    },
+    "owner": {
+      "format": "tx2-slot-owner/1",
+      "lane": "xtdb",
+      "slot": "s1",
+      "mode": "exclusive",
+      "container": "tx2-xtdb-s1",
+      "volume": "tx2-xtdb-s1-data",
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5471/xtdb",
+      "port": 5471,
+      "holder": "CX-P2X2",
+      "experiment": "EXP-P2X2",
+      "pid": 45530,
+      "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p2x2",
+      "createdAt": "2026-11-09T03:53:06.722Z"
+    },
+    "files": {
+      "analysis.mjs": "9289e54977b5552aca2143afba6aa6208b3f68e5a12da0bc6beca443bfdb667f",
+      "analysis.test.mjs": "87ae98fa2a5ad261d0b3e9c97592835dda640b9a18039cc0ef8d3dd86460f121",
+      "bare.mjs": "bbc3a1ee0e2b73688661e0fc7c7b14f885701dd065e00e6d5936cb2cce868130",
+      "candidate.mjs": "b1b489aa8beaaa230717de5aaa9ba0375e21e85aa4b2eb28c07df29af9a180da",
+      "candidate.test.mjs": "28e314c897836807602625e091752623f0ac629ddbff1bec0745160c3ac690ea",
+      "observe.mjs": "f8bdc04b5b05c247200251abd9faae70fa7aeb4dd32a1da15a0f7668d65146e3",
+      "preload.mjs": "b99b4fe38757af538ab09c0dbcc7b483556ce55251abfb521097533db95d8987",
+      "runtime.mjs": "f8185dbd65e1ce2713a0faf6b0d8cfd7e664b0db39aaa6a46cd6f4e9c3e24fdc",
+      "service.mjs": "ef1499f07905c45430c08470d866cf68de1ccfee22d3f4b74c80a61a7bf32f7c",
+      "trace.mjs": "c93f3064c7715bac90c6a40e05cd55e53565202b949269bb1410417c25291a4e",
+      "wire.mjs": "7ef8c20a58da658d3bcc32f211910c0d9fbb6b65bec735594a1e9058d1b9a9ea"
+    }
+  },
+  "afterBinding": {
+    "at": "2026-11-09T04:03:50.227Z",
+    "head": "9a7996e2a242690edbc86417283d8c7348950adb",
+    "container": "837cf4565f35f589677a339c83ee703ae7bb04767f04368143f0c64228da54e7",
+    "startedAt": "2026-11-09T03:53:07.254409619Z",
+    "image": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+    "labels": {
+      "org.opencontainers.image.created": "2026-10-21T15:18:32.333Z",
+      "org.opencontainers.image.description": "An immutable SQL database for application development, time-travel reporting and data compliance. Developed by @juxt",
+      "org.opencontainers.image.licenses": "MPL-2.0",
+      "org.opencontainers.image.revision": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+      "org.opencontainers.image.source": "https://github.com/xtdb/xtdb",
+      "org.opencontainers.image.title": "xtdb",
+      "org.opencontainers.image.url": "https://github.com/xtdb/xtdb",
+      "org.opencontainers.image.version": "2.2.0",
+      "tx2.config-sha256": "c3ff6b95a576512e8135a57ad58eb1630b33a33ae508b8556997613b2a40a2d5",
+      "tx2.holder": "CX-P2X2",
+      "tx2.lane": "xtdb",
+      "tx2.managed-by": "lab/bin/engine.mjs",
+      "tx2.slot": "s1",
+      "usage": "For custom logging: --volume .:/config --env JDK_JAVA_OPTIONS='-Dlog4j2.configurationFile=/config/log4j2.xml'"
+    },
+    "configSha256": "cd493af54bd74adca2c9ba57431260639d3bd704aee581c4aae15f3a14239914",
+    "caps": {
+      "memory": 3758096384,
+      "cpus": 2000000000,
+      "cpuset": "4,5"
+    },
+    "owner": {
+      "format": "tx2-slot-owner/1",
+      "lane": "xtdb",
+      "slot": "s1",
+      "mode": "exclusive",
+      "container": "tx2-xtdb-s1",
+      "volume": "tx2-xtdb-s1-data",
+      "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5471/xtdb",
+      "port": 5471,
+      "holder": "CX-P2X2",
+      "experiment": "EXP-P2X2",
+      "pid": 45530,
+      "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/p2x2",
+      "createdAt": "2026-11-09T03:53:06.722Z"
+    },
+    "files": {
+      "analysis.mjs": "9289e54977b5552aca2143afba6aa6208b3f68e5a12da0bc6beca443bfdb667f",
+      "analysis.test.mjs": "87ae98fa2a5ad261d0b3e9c97592835dda640b9a18039cc0ef8d3dd86460f121",
+      "bare.mjs": "bbc3a1ee0e2b73688661e0fc7c7b14f885701dd065e00e6d5936cb2cce868130",
+      "candidate.mjs": "b1b489aa8beaaa230717de5aaa9ba0375e21e85aa4b2eb28c07df29af9a180da",
+      "candidate.test.mjs": "28e314c897836807602625e091752623f0ac629ddbff1bec0745160c3ac690ea",
+      "observe.mjs": "f8bdc04b5b05c247200251abd9faae70fa7aeb4dd32a1da15a0f7668d65146e3",
+      "preload.mjs": "b99b4fe38757af538ab09c0dbcc7b483556ce55251abfb521097533db95d8987",
+      "runtime.mjs": "f8185dbd65e1ce2713a0faf6b0d8cfd7e664b0db39aaa6a46cd6f4e9c3e24fdc",
+      "service.mjs": "ef1499f07905c45430c08470d866cf68de1ccfee22d3f4b74c80a61a7bf32f7c",
+      "trace.mjs": "c93f3064c7715bac90c6a40e05cd55e53565202b949269bb1410417c25291a4e",
+      "wire.mjs": "7ef8c20a58da658d3bcc32f211910c0d9fbb6b65bec735594a1e9058d1b9a9ea"
+    }
+  },
+  "serviceMs": {
+    "n": 135,
+    "p50": 32.99845800000003,
+    "p90": 42.17216699999972,
+    "p99": 63.25891700000011,
+    "max": 67.515625,
+    "mean": 34.98698705925937
+  },
+  "warmupDropped": 15,
+  "commitsPerS": 16.793222569471396,
+  "timings": {
+    "submit": {
+      "n": 151,
+      "p50": 23.221000000000004,
+      "p90": 30.202000000000226,
+      "p99": 48.18995799999993,
+      "max": 49.905250000000706,
+      "mean": 24.853390721854343
+    },
+    "sourceCut": {
+      "n": 150,
+      "p50": 3.075042000000394,
+      "p90": 3.6623749999998836,
+      "p99": 5.494249999999738,
+      "max": 7.389791999999943,
+      "mean": 3.1787833066666464
+    },
+    "claim": {
+      "n": 150,
+      "p50": 2.6870829999998023,
+      "p90": 3.4228750000002037,
+      "p99": 5.6076249999996435,
+      "max": 32.13154200000008,
+      "mean": 2.956455206666627
+    },
+    "receipt": {
+      "n": 150,
+      "p50": 2.939292000000023,
+      "p90": 3.826000000000022,
+      "p99": 5.516791000000012,
+      "max": 17.685083000000304,
+      "mean": 3.163084126666569
+    },
+    "other": {
+      "n": 300,
+      "p50": 10.849582999999711,
+      "p90": 15.32891600000039,
+      "p99": 31.073249999999916,
+      "max": 48.68962499999998,
+      "mean": 12.150322259999966
+    }
+  },
+  "engine": {
+    "node_tx_execute_seconds": {
+      "sumSeconds": 1.4257624230000019,
+      "count": 150,
+      "meanMs": 9.505082820000013,
+      "perCommitMs": 9.505082820000013
+    },
+    "node_tx_await_seconds": {
+      "sumSeconds": 0.9389530219999997,
+      "count": 150,
+      "meanMs": 6.259686813333332,
+      "perCommitMs": 6.259686813333332
+    },
+    "node_tx_submit_seconds": {
+      "sumSeconds": 0,
+      "count": 0,
+      "meanMs": null,
+      "perCommitMs": 0
+    },
+    "tx_op_timer_seconds": {
+      "sumSeconds": 0.8282145789999973,
+      "count": 1200,
+      "meanMs": 0.6901788158333311,
+      "perCommitMs": 5.521430526666649
+    },
+    "sourceAppendMs": 3.245396006666681,
+    "awaitShare": 0.6585620485244045
+  },
+  "gates": {
+    "G-QUIET": true,
+    "G-ACCT": true,
+    "G-RYOW": "UNVERIFIED_WAIT_TELEMETRY",
+    "exactCutContents": true
+  },
+  "ryowNote": "exact returned receipt position; observed contents and absence of explicit client awaits; no engine waitedMs telemetry exists in this build",
+  "runKind": "diagnostic",
+  "manifestSha256": "262ea14edc58e419002d57e4926456d330c54760d9978db9f39d3c4ed1ceac48"
+}

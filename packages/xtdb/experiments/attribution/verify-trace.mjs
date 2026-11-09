@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; dynamic record keys. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Read-only verification of retained driver observations, not engine execution proof. */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";

@@ -1,0 +1,17 @@
+{
+  "args": [
+    "lab/bin/heavy.mjs",
+    "--label",
+    "CX-VM01R-R2-install",
+    "--",
+    "pnpm",
+    "--store-dir",
+    "/Users/sam/projects/triplex-db-2/.pnpm-store",
+    "install",
+    "--offline",
+    "--frozen-lockfile"
+  ],
+  "status": 0,
+  "signal": null,
+  "logSha256": "be397a08613aa0867567902f1d6b79a4da22b342142e63d70a4051b67b3cc2b1"
+}

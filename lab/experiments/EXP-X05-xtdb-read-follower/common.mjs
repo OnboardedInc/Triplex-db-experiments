@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated local values; unannotated dynamic parameters; unannotated destructured parameters; initially empty collections; dynamic record keys; runtime-validated optional values. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-X05 shared pieces: the client, the basis-token codec, the deterministic data model, the frozen
 // trace segment and the oracle. Imported by driver.mjs (main thread) and reader-worker.mjs.
 //

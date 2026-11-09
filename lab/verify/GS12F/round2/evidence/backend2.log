@@ -1,0 +1,169 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../../vitest.workspace-aliases" without a file extension (lab/verify/GS12F/round2/backend.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f
+
+ ❯ lab/verify/GS12F/round2/backend-boundaries.test.ts (1 test | 1 failed) 199ms
+   × FoundationDB rejects its catalog text endpoints before entering a transaction or claim 198ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lab/verify/GS12F/round2/backend-boundaries.test.ts > FoundationDB rejects its catalog text endpoints before entering a transaction or claim
+AssertionError: expected [ { kind: 'string', …(6) }, …(3) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "admittedByCatalog": true,
++     "after": {
++       "claimSets": 1,
++       "sets": 5,
++       "transactions": 1,
++     },
++     "before": {
++       "claimSets": 0,
++       "sets": 0,
++       "transactions": 0,
++     },
++     "error": "FdbKvBackendError: FDB tx.set value is 1048696 bytes; FoundationDB values must be <= 100000 bytes
++     at makeConstraintError (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:334:3)
++     at assertValueWithinLimit (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:361:11)
++     at PrimitiveImpl.~effect/Effect/args (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:654:19)
++     at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:698:29)
++     at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)
++     at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)
++     at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
++     at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27 {
++   operation: 'tx.set',
++   kind: 'constraint',
++   retryable: false,
++   code: undefined,
++   cause: undefined
++ }",
++     "kind": "string",
++     "textUtf8Bytes": 1048576,
++     "typed": false,
++   },
++   {
++     "admittedByCatalog": true,
++     "after": {
++       "claimSets": 2,
++       "sets": 11,
++       "transactions": 2,
++     },
++     "before": {
++       "claimSets": 1,
++       "sets": 5,
++       "transactions": 1,
++     },
++     "error": "FdbKvBackendError: FDB tx.set value is 1048696 bytes; FoundationDB values must be <= 100000 bytes
++     at makeConstraintError (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:334:3)
++     at assertValueWithinLimit (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:361:11)
++     at PrimitiveImpl.~effect/Effect/args (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:654:19)
++     at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:698:29)
++     at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)
++     at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)
++     at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
++     at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27 {
++   operation: 'tx.set',
++   kind: 'constraint',
++   retryable: false,
++   code: undefined,
++   cause: undefined
++ }",
++     "kind": "ref",
++     "textUtf8Bytes": 1048576,
++     "typed": false,
++   },
++   {
++     "admittedByCatalog": true,
++     "after": {
++       "claimSets": 3,
++       "sets": 16,
++       "transactions": 3,
++     },
++     "before": {
++       "claimSets": 2,
++       "sets": 11,
++       "transactions": 2,
++     },
++     "error": "FdbKvBackendError: FDB tx.set value is 1048707 bytes; FoundationDB values must be <= 100000 bytes
++     at makeConstraintError (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:334:3)
++     at assertValueWithinLimit (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:361:11)
++     at PrimitiveImpl.~effect/Effect/args (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:654:19)
++     at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:698:29)
++     at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)
++     at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)
++     at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
++     at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27 {
++   operation: 'tx.set',
++   kind: 'constraint',
++   retryable: false,
++   code: undefined,
++   cause: undefined
++ }",
++     "kind": "json",
++     "textUtf8Bytes": 1048576,
++     "typed": false,
++   },
++   {
++     "admittedByCatalog": true,
++     "after": {
++       "claimSets": 4,
++       "sets": 21,
++       "transactions": 4,
++     },
++     "before": {
++       "claimSets": 3,
++       "sets": 16,
++       "transactions": 3,
++     },
++     "error": "FdbKvBackendError: FDB tx.set value is 1048724 bytes; FoundationDB values must be <= 100000 bytes
++     at makeConstraintError (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:334:3)
++     at assertValueWithinLimit (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:361:11)
++     at PrimitiveImpl.~effect/Effect/args (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/foundationdb/src/FdbKvBackend.ts:654:19)
++     at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:698:29)
++     at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)
++     at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)
++     at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
++     at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27 {
++   operation: 'tx.set',
++   kind: 'constraint',
++   retryable: false,
++   code: undefined,
++   cause: undefined
++ }",
++     "kind": "blob",
++     "textUtf8Bytes": 1048576,
++     "typed": false,
++   },
++ ]
+
+ ❯ lab/verify/GS12F/round2/backend-boundaries.test.ts:77:5
+     75|         r.before.claimSets !== r.after.claimSets,
+     76|     ),
+     77|   ).toEqual([]);
+       |     ^
+     78| });
+     79|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed (1)
+   Start at  22:17:28
+   Duration  1.04s (transform 52%, import 27%, tests 21%)
+

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 probe 0: what xt.source_log_msgs exposes for one record (columns and sizes).
 // Run: XTDB_URL=... node p0-log-columns.mjs
 import postgres from '../../../../packages/xtdb/node_modules/postgres/src/index.js';

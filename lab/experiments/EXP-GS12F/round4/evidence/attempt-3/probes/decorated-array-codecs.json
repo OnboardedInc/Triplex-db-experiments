@@ -1,0 +1,146 @@
+[
+  {
+    "profile": "memory",
+    "key": "4294967295",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n  message: \"Value is outside memory/kv's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "memory",
+    "key": "9007199254740993",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] },\n  message: \"Value is outside memory/kv's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "foundationdb",
+    "key": "4294967295",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n  message: \"Value is outside memory/kv's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "foundationdb",
+    "key": "9007199254740993",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] },\n  message: \"Value is outside memory/kv's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "xtdb",
+    "key": "4294967295",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n  message: \"Value is outside xtdb's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "xtdb",
+    "key": "9007199254740993",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] },\n  message: \"Value is outside xtdb's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "qlever",
+    "key": "4294967295",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n  message: \"Value is outside qlever's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "qlever",
+    "key": "9007199254740993",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] },\n  message: \"Value is outside qlever's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "sqlite",
+    "key": "4294967295",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n  message: \"Value is outside sqlite's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "sqlite",
+    "key": "9007199254740993",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] },\n  message: \"Value is outside sqlite's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "postgres",
+    "key": "4294967295",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n  message: \"Value is outside postgres's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "postgres",
+    "key": "9007199254740993",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] },\n  message: \"Value is outside postgres's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "cloudflare",
+    "key": "4294967295",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n  message: \"Value is outside cloudflare's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "cloudflare",
+    "key": "9007199254740993",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] },\n  message: \"Value is outside cloudflare's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "duckdb",
+    "key": "4294967295",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '4294967295': 7 ] },\n  message: \"Value is outside duckdb's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  },
+  {
+    "profile": "duckdb",
+    "key": "9007199254740993",
+    "admittedByTable": false,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "undefined",
+    "error": "{\n  field: 'value',\n  value: { type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] },\n  message: \"Value is outside duckdb's exact storage domain\",\n  _tag: 'InvalidTripleError'\n}",
+    "typed": true
+  }
+]

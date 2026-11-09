@@ -1,3 +1,5 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Fresh public-schema edge cases for the predeclared native query repair wave.
  * The independent fixture has tied int64 maxima beyond QLever's native integer
  * range, no matching object, and empty grouped contributions. This is a small
@@ -33,7 +35,8 @@ const struct = (fields: Record<string, TypeExpr.TypeExpr>) =>
   TypeExpr.struct(
     Object.fromEntries(Object.entries(fields).map(([key, type]) => [key, TypeExpr.required(type)])),
   );
-const report: Record<string, any> = {
+const report: Record<string, any> = qleverLatencyReceipt({
+  qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-native-query-shape-edges/1",
   runId,
   scope,
@@ -46,7 +49,7 @@ const report: Record<string, any> = {
     "Control correlation mismatches are retained separately and never called semantic PASS.",
     "No ordinary relation is evaluated on the host; tied maximum rows are native results.",
   ],
-};
+});
 const save = () => writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 save();
 try {

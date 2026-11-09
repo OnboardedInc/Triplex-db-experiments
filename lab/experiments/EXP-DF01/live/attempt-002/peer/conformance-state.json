@@ -1,0 +1,123 @@
+{
+  "label": "DIAGNOSTIC",
+  "scope": "[\"triplex-scope-v1\",\"test\",\"df01-live\",\"69011638-ede8-4cb4-86cf-849e28189fb5\",0]",
+  "started": "2026-11-09T09:48:06.567Z",
+  "database": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsImRmMDEtbGl2ZSIsIjY5MDExNjM4LWVkZTgtNGNiNC04NmNmLTg0OWUyODE4OWZiNSIsMF0",
+  "writeReports": [
+    {
+      "t": {
+        "t": "long",
+        "v": "1004"
+      },
+      "position": {
+        "t": "long",
+        "v": "1"
+      },
+      "datoms": 22
+    },
+    {
+      "t": {
+        "t": "long",
+        "v": "1009"
+      },
+      "position": {
+        "t": "long",
+        "v": "2"
+      },
+      "datoms": 15
+    }
+  ],
+  "pages": [
+    {
+      "entries": [
+        {
+          "stream": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsImRmMDEtbGl2ZSIsIjY5MDExNjM4LWVkZTgtNGNiNC04NmNmLTg0OWUyODE4OWZiNSIsMF0",
+          "epoch": "0",
+          "offset": "1004",
+          "kind": "commit",
+          "transactions": [
+            {
+              "positions": [
+                "1"
+              ],
+              "txIds": [
+                "tx1"
+              ],
+              "operationId": "op1",
+              "commandIds": [
+                "cmd1"
+              ],
+              "changes": [
+                {
+                  "op": "assert",
+                  "entity": "subject",
+                  "attribute": "status",
+                  "assertionId": "fact-1",
+                  "validFrom": 0,
+                  "validTo": 20,
+                  "position": "1"
+                }
+              ],
+              "stamp": "7000",
+              "stampStatus": "decided"
+            }
+          ]
+        }
+      ],
+      "cursor": {
+        "source": "[\"triplex-scope-v1\",\"test\",\"df01-live\",\"69011638-ede8-4cb4-86cf-849e28189fb5\",0]",
+        "token": "1005"
+      }
+    },
+    {
+      "entries": [
+        {
+          "stream": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsImRmMDEtbGl2ZSIsIjY5MDExNjM4LWVkZTgtNGNiNC04NmNmLTg0OWUyODE4OWZiNSIsMF0",
+          "epoch": "0",
+          "offset": "1009",
+          "kind": "commit",
+          "transactions": [
+            {
+              "positions": [
+                "2"
+              ],
+              "txIds": [
+                "tx2"
+              ],
+              "operationId": "op2",
+              "commandIds": [
+                "cmd2"
+              ],
+              "changes": [
+                {
+                  "op": "retract",
+                  "entity": "subject",
+                  "attribute": "status",
+                  "assertionId": "fact-1",
+                  "validFrom": 0,
+                  "validTo": 20,
+                  "position": "2"
+                }
+              ],
+              "stamp": "9000",
+              "stampStatus": "decided"
+            }
+          ]
+        }
+      ],
+      "cursor": {
+        "source": "[\"triplex-scope-v1\",\"test\",\"df01-live\",\"69011638-ede8-4cb4-86cf-849e28189fb5\",0]",
+        "token": "1010"
+      }
+    }
+  ],
+  "audit": {
+    "positions": 2,
+    "resolutions": 2
+  },
+  "deleted": {
+    "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsImRmMDEtbGl2ZSIsIjY5MDExNjM4LWVkZTgtNGNiNC04NmNmLTg0OWUyODE4OWZiNSIsMF0",
+    "deleted": true
+  },
+  "result": "DIAGNOSTIC-PASS"
+}

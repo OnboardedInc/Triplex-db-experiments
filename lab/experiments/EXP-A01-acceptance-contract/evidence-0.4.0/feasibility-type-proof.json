@@ -1,0 +1,8 @@
+{
+  "path": "packages/qualification/experiments/verify-feasibility-contract.ts",
+  "sourceCommit": "00589f842b99fe78fa9d2aff865d6b6202e8c2a6",
+  "beforeSha256": "429f4ee1c3d46388180e692c7fc2ccf95f7820fa5d8cf53e252eb5bd46062848",
+  "sha256": "247210384f8cd67f7fcac19abb61b9bfc330c3f06060c4f946b9b801d65d891f",
+  "emittedJavaScriptIdentical": true,
+  "emittedSha256": "27a3b24e8858a8d00684f41b421319093b02db862aa598656d72183924180379"
+}

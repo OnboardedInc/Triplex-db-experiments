@@ -34,6 +34,45 @@ stands; each bar has its own pass/miss in `ns.bars`; a missed bar is a fitness r
 | `lib/hist.ts` | Log-linear histogram (0.79% bucket width), JSON round trip, merge. |
 | `lib/oracle.ts` | O-REPLAY sample case builder and comparison. |
 | `lib/evaluate.ts` | P5 seams: `evaluate(world, release)` and outbox `publish`, both fail closed until EXP-D01. |
+| `duet.ts` | PAIR-0 coordinator: two drivers at one absolute start, noise recorder, calibration, looks, analysis; `recompute`. |
+| `lib/paired.ts` | Paired statistics: pooled-quantile ratios with a round bootstrap, censoring, s_d, slot bias, sign flip, decisions, planner, window grade. |
+| `lib/noise.ts` | Round plan, host sampler, VM agent (one `colima ssh`), calibration spin, hiccup meter, round summaries, rules (`lab/config/noise.json`). |
+| `lib/rounds.ts` | Per-round histograms: commit, commitAll and commitCensored over every offered command, read probe, per-second goodput and max. |
+| `lib/single-analysis.ts` | Q100k sequential same-arm timing-grade helper for G03; retains all hard-rule history; no runner or acceptance admission. |
+| `lib/pair-analysis.ts` | The one function that turns rounds and noise into a PAIR receipt's `stats` and `noise`. |
+
+## Paired rounds (PAIR-0, EXP-M01; R22, RULINGS Q60)
+
+A comparison is a duet: A0 (arm A) and the candidate (arm B) replay the same trace window at the same instant on two
+identically configured slots in the cpuset regime (`lab/config/slots-pair.json`, explicitly selected with `TX2_SLOTS_FILE`: xtdb s1 on vCPUs 0-1, s3 on 2-3, no quota),
+inside a measurement lease (every heavy token; pool admission frozen). Rounds are aligned to the series' burst period
+(`screening-b180`: a 60 s burst every 180 s, so each 150 s measured window holds about 3,300 commands). Per round, both
+arms, pre-registered rules (`lab/config/noise.json`) exclude disturbed rounds; the statistics never look at latency
+to decide what counts.
+
+```sh
+export TX2_CONFIG_DIR="$PWD"
+export TX2_SLOTS_FILE="$PWD/lab/config/slots-pair.json" # opt in; shared defaults stay unchanged
+node lab/bench/wait-slot.mjs --after none --slots 2 --lane xtdb --need-gib 3.5      # two exclusive XTDB slots fit
+node lab/bin/engine.mjs up --lane xtdb --slot s1 --exp EXP-M01
+node lab/bin/engine.mjs up --lane xtdb --slot s3 --exp EXP-M01
+node lab/bin/gate.mjs PAIR --lane xtdb --slots s1,s3 --mode aa --rounds 8 --series screening-b180 \
+  --composition public-queued --exp EXP-M01 --run-kind calibration --raw-archive ~/Claude/Projects/triplex-db-2/EXP-M01
+node lab/bench/duet.ts recompute --receipt lab/runs/PAIR/<run-id>.json             # every number, from the receipt alone
+```
+
+Primary metric: `commitAll` p50 (every offered frozen-trace command; expired, failed, rejected and still-pending ones at
+their censor time, Q60d); `commit` (committed only) and `probeAll` (open-loop read probe, 20/s) are reported next to it.
+A quantile that censored values can reach is not identified and gets no interval. Receipt fields: `pair` (both arms'
+image, effective config hash, effective `cpu.max`, `cpuset.cpus.effective`, `cpu.weight`; plan and rules by hash;
+`analysisInputJson`), `stats.p50`/`p99` (`ratio`, `lo`, `hi`, `mdr`), `stats.metrics.<metric>` (per-round log ratios,
+A/A s_d, slot bias, sign flip, procedure false-positive rate, p99 floor), `noise` (A/A s_d, exclusions by rule id, rule
+values per round, calibration reference, `windowGrade`). Verdicts: `PAIRED_DECIDED`, `PAIRED_INCONCLUSIVE`,
+`INVALID_NOISE` (RED, or over a third of rounds excluded), `INVALID` (protocol departure), `FAIL` (harness, identity,
+correctness). Offline pipeline check: `--composition memory --no-lease` with development round sizes (FAILs by design).
+
+PAIR-0 stays default-off: only an explicit PAIR gate runs the duet. See
+[the current Q69a runbook](../experiments/EXP-M01-paired-measurement/RUNBOOK-rebase.md) for capacity, partitioning, timing and restoration prerequisites.
 
 ## Trace definition (frozen; `lib/trace.ts`)
 
@@ -146,3 +185,12 @@ position). It refuses any query it does not recognize. The driver's `--seed-mani
 equals the manifest's last position before it starts. 10k rung (ns-v2): 384,785 assertions (closed form matches),
 1,031 commands, 24,550,838 quads, 6.74 GB decompressed, 150 MB gzipped. Not yet indexed or read back on a live QLever:
 `-F nq` on QLever 0.6.0 and the first pulls on the indexed scope are the first checks when a QLever slot is free.
+
+## Native P3 window
+
+EXP-P3M adds `p3-driver.mjs`, an isolated-consumer NS P3 entry point using FD01 native
+feed adapters and source-enumerated prefixes. See [the provider and receipt contract](../experiments/EXP-P3M/README.md).
+Its offline fixture runs 256 closed loops; it does not enable a real lane provider.
+The original driver remains the A0 journal control.
+
+Paired R22 GREEN can survive hard-rule exclusions; it never substitutes for Q100k single-arm timing GREEN. See the runbook for Q100l single-arm NS capacity and the unresolved three-median preflight sample count. New duet evidence uses gradingVersion 2 to retain hard-rule history; historical evidence retains its original recomputation shape.

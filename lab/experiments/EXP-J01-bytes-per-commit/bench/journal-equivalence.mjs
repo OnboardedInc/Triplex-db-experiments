@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 journal equivalence: the same deterministic command script on a0 and compact, per lane, then
 // every read surface of the logical journal (and of the data the compact QLever encoding re-encodes),
 // compared byte for byte. The runtimes share seed and start time, so ids, instants and positions agree.

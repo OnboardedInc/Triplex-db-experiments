@@ -1,0 +1,17 @@
+{
+  "experiment": "EXP-P2X2",
+  "frozenAt": "2026-11-09T03:53:06.620493+00:00",
+  "sourceHead": "9a7996e2a242690edbc86417283d8c7348950adb",
+  "seed": "EXP-P2X2-v1",
+  "subjects": 10000,
+  "durationS": 600,
+  "generatorSha256": "c93f3064c7715bac90c6a40e05cd55e53565202b949269bb1410417c25291a4e",
+  "p2xHead": "fb6681a4c5b54bfef63ad5ee670047946a24617c",
+  "decisionRule": {
+    "D1": "F3 p50 > 6 ms OR F5 fresh p50 > 20 ms OR F5 resolve per commit > 7 ms",
+    "D2": "F3 p50 <= 6 ms AND F5 fresh p50 <= 20 ms AND F5 resolve per commit <= 7 ms"
+  },
+  "offlineTests": "5/5 harness; P2X 13/13 live on resident fresh UUID scopes; see evidence/CX-P2X2/goff-subject-stamp.log",
+  "runKind": "diagnostic",
+  "configNote": "server.numThreads 300 throughout; no follower; residents left running"
+}

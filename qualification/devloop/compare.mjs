@@ -1,3 +1,5 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated local values; unannotated dynamic parameters; recursive helper inference; recursive callback inference; unannotated destructured parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
+import { readLatencyRun } from "../../lab/receipts/parse.ts";
 import { createReadStream, promises as fs } from 'node:fs';
 import { createInterface } from 'node:readline';
 import { join } from 'node:path';
@@ -70,16 +72,18 @@ export async function loadRun(context, reference) {
   assert(Array.isArray(profile.requiredClasses) && profile.requiredClasses.length && new Set(profile.requiredClasses).size === profile.requiredClasses.length, 'PROFILE', 'Required logical-task classes are explicit');
   assert(typeof profile.fixtureIdentity === 'string' && typeof profile.cohortIdentity === 'string' && typeof profile.resourceIdentity === 'string', 'PROFILE', 'Fixture, co-runner and resource identities are required');
   const source = await ownedPath(directory, manifest.evidence.events);
-  const rawSha256 = await hashFile(source);
+  const timingRun = manifest.queryPath.startsWith("qlever")
+    ? readLatencyRun(source, { lane: manifest.queryPath, encoding: "ndjson", expectedWriter: "triplex-public-load-event/1" }).unwrap() : null;
+  const rawSha256 = timingRun?.source.sha256 ?? await hashFile(source);
   const oracle = await readOracle(context, manifest);
   const latencies = Object.fromEntries(profile.requiredClasses.map(key => [key, []]));
   const completed = Object.fromEntries(profile.requiredClasses.map(key => [key, 0]));
   const clientProgress = new Set();
   const writes = []; let rejects = 0; let readCount = 0;
-  const lines = createInterface({ input: createReadStream(source), crlfDelay: Infinity });
+  const lines = timingRun ? timingRun.records : createInterface({ input: createReadStream(source), crlfDelay: Infinity });
   for await (const line of lines) {
-    if (!line.trim()) continue;
-    const value = JSON.parse(line);
+    if (typeof line === 'string' && !line.trim()) continue;
+    const value = timingRun ? line : JSON.parse(line);
     if (value.type === 'read') {
       assert(profile.requiredClasses.includes(value.taskClass), 'EVENT', 'Unknown logical task class');
       assert(Number.isSafeInteger(value.clientId) && value.clientId >= 0 && value.clientId < profile.clients, 'EVENT', 'Read client id exceeds the declared population');
@@ -110,6 +114,8 @@ export async function loadRun(context, reference) {
   const backlogAt = instant => writes.filter(write => write.offeredMs <= instant && write.visibleMs > instant).length;
   const maximumBacklog = Math.max(0, ...writes.map(write => backlogAt(write.offeredMs)));
   return {
+    qleverConnectionMode: timingRun?.transportMode ?? null,
+    latencyReceipt: timingRun ? { receiptVersion: timingRun.receiptVersion, writer: timingRun.writer, units: timingRun.units, source: timingRun.source } : null,
     reference, jobId, attemptId, manifest, terminal: verification.terminal, terminalSha256: verification.terminalSha256,
     eventsSha256: rawSha256, profile, classes, readCount, rejectedReads: rejects, clientsWithProgress: clientProgress.size,
     executionResources: executionResourceIdentity(manifest, admission),
@@ -119,9 +125,9 @@ export async function loadRun(context, reference) {
   };
 }
 
-function compatibility(run) {
+function compatibility(run, comparisonQleverMode = null) {
   const profile = run.profile;
-  return json({ profile: profile.id, clients: profile.clients, duration: profile.endMilliseconds - profile.startMilliseconds, requiredClasses: [...profile.requiredClasses].sort(), fixture: profile.fixtureIdentity, resource: profile.resourceIdentity, cohort: profile.cohortIdentity, overloadPolicy: profile.overloadPolicy ?? 'none', calibration: profile.calibration ?? null });
+  return json({ qleverConnectionMode: run.qleverConnectionMode ?? comparisonQleverMode, profile: profile.id, clients: profile.clients, duration: profile.endMilliseconds - profile.startMilliseconds, requiredClasses: [...profile.requiredClasses].sort(), fixture: profile.fixtureIdentity, resource: profile.resourceIdentity, cohort: profile.cohortIdentity, overloadPolicy: profile.overloadPolicy ?? 'none', calibration: profile.calibration ?? null });
 }
 
 export async function calibrate(context, references, output) {
@@ -130,8 +136,10 @@ export async function calibrate(context, references, output) {
   const lanes = Object.keys(context.policy.lanes);
   for (const lane of lanes) assert(runs.filter(run => run.manifest.queryPath === lane).length >= context.policy.promotion.minimumIndependentRuns, 'CALIBRATION', 'Three correct capacity controls are required for every surface: ' + lane);
   assert(runs.every(run => run.profile.clients === 256 && run.profile.phase === 'capacity-calibration' && !run.profile.synthetic && run.clientsWithProgress === 256 && run.rejectedReads === 0 && run.writer.visibleCommandsPerSecond > 0), 'CALIBRATION', 'Calibration needs actual 256-client capacity controls, not synthetic/zero/unknown writer capacity');
-  const identity = compatibility(runs[0]);
-  assert(runs.every(run => compatibility(run) === identity), 'COMPARABILITY', 'Calibration controls differ in population, window, fixture, resources or co-runners');
+  const qleverModes = [...new Set(runs.map(run => run.qleverConnectionMode).filter(Boolean))];
+  assert(qleverModes.length <= 1, 'COMPARABILITY', 'Different QLever modes require separate treatment populations');
+  const identity = compatibility(runs[0], qleverModes[0] ?? null);
+  assert(runs.every(run => compatibility(run, qleverModes[0] ?? null) === identity), 'COMPARABILITY', 'Calibration controls differ in population, window, fixture, resources or co-runners');
   const writerRate = .5 * Math.min(...runs.map(run => run.writer.visibleCommandsPerSecond));
   const result = {
     format: 'triplex-devloop-calibration/1', at: now(), profileId: runs[0].profile.id,
@@ -162,8 +170,10 @@ export async function compare(context, controlReferences, candidateReferences, o
   assert(runs.every(run => run.profile.clients === 256 && !run.profile.synthetic), 'PROFILE', 'Promotion compares actual 256-client acceptance profiles');
   assert(new Set(runs.map(run => run.manifest.queryPath)).size === 1, 'LANE', 'Within-lane promotion cannot silently compare different public query surfaces');
   assert(runs.every(run => run.clientsWithProgress === 256 && run.rejectedReads === 0), 'FAIRNESS', 'Every acceptance client must progress without overload rejection');
-  const identity = compatibility(runs[0]);
-  assert(runs.every(run => compatibility(run) === identity), 'COMPARABILITY', 'Comparison mixes different workload/window/fixture/resource/co-runner/calibration profiles');
+  const qleverModes = [...new Set(runs.map(run => run.qleverConnectionMode).filter(Boolean))];
+  assert(qleverModes.length <= 1, 'COMPARABILITY', 'Different QLever modes require separate treatment populations');
+  const identity = compatibility(runs[0], qleverModes[0] ?? null);
+  assert(runs.every(run => compatibility(run, qleverModes[0] ?? null) === identity), 'COMPARABILITY', 'Comparison mixes different workload/window/fixture/resource/co-runner/calibration profiles');
   for (const run of runs) checkComparisonInputs(controls[0].manifest, run.manifest);
   assert(runs.every(run => run.executionResources === runs[0].executionResources && run.controllerFingerprint === runs[0].controllerFingerprint), 'EXECUTION_RESOURCES', 'Within-lane runs differ in actual reservations, admitted owners/co-runners or controller bytes');
   assert(runs.every(run => Object.values(run.classes).every(value => value.observations >= policy.minimumObservationsPerRequiredClass)), 'SAMPLES', 'Required tail populations are too small');

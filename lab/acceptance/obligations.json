@@ -1,13 +1,13 @@
 {
   "format": "triplex-db-2/acceptance-obligations/3",
-  "version": "0.3.13",
+  "version": "0.4.0",
   "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
   "date": "2026-11-09",
   "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",
   "generatedBy": "lab/acceptance/build_contract.py",
   "inputs": {
     "lab/verify/O02/V-O04i/VERIFY.md": "97bdb670b3a50957f5d0cb805361333817d6190504952ddf92f9cb9bf4ad076d",
-    "lab/acceptance/pins/O-REPLAY-0.4.9-SHA256SUMS": "357d747af267eee5863033288143d5f18952e21a43d2038b68258384a3aab322",
+    "lab/acceptance/pins/O-REPLAY-0.4.9-SHA256SUMS": "0e252326e6c7a13076b9cae2234de4eeeb707a52b6c54d6787042c68c68753e6",
     "lab/verify/O02/V-O04i/BRIEF.md": "67c5de230614092d3a648458ecf046a1f7a262db52ae4c47e6252f8a5996bc85",
     "lab/research/R29-datomic-lane-design.md": "9e7c5a6931d2c843647eb3cae69e63029fac65383c1b4c260a6e56b3777f7bf9",
     "lab/world/W0/SHA256SUMS": "b5941569402865a52149ed0116efa60eb5b489dc9a27d15f8591e2daa51b051c",
@@ -18,8 +18,8 @@
     "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",
     "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
-    "lab/acceptance/RULINGS.md": "c2535ca27faefba04e85cb9e1456f6481a341a0433a205a204cf5ae1d41e1d59",
-    "lab/acceptance/RULINGS-PENDING.md": "ec3516e8ca8b45cb0dfd0bc8a364ee8db7caafe62ace8266d43bfd092368628d",
+    "lab/acceptance/RULINGS.md": "077ee96f74d4da8e6fc956d8a93357bf9485f70db3970c15be089215d0dc8d0f",
+    "lab/acceptance/RULINGS-PENDING.md": "35a487c484e1d16b1478e124e24c9a41a347f99b43da5323eb11144e2a2dc61e",
     "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",
     "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",
     "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",
@@ -27,7 +27,7 @@
     "lab/verify/O02/BRIEF.md": "38d3c81f99da26438ff09ba0e6b6a88e75c5f402c4362a7d28d9b8df387376c4",
     "lab/verify/D01/BRIEF.md": "8fbdaaf67d2cbc1ae000d780ce7fcc45825ec6ba81edbbc9ed179ce517b5df88",
     "lab/acceptance/pins/O-OBS-V-O05-round4.md": "aa275c634384c42977b6ed294be9cb527423a9ad824b9101556017b065bb12dc",
-    "lab/acceptance/pins/O-OBS-23e2273-SHA256SUMS": "486a4209d38fcc70a9ccb64d7c7ed9e0dfe25eef405ca21b097fee67d2697300",
+    "lab/acceptance/pins/O-OBS-23e2273-SHA256SUMS": "a05f2f5471c57e2f91b1828f10b992241d9d5f4053d286041658dea7ed674c26",
     "lab/acceptance/pins/O-OBS-V-O05-round4-BRIEF.md": "4207182cbbda61f04e9647e1dcde291bdc345dc30f49926abeed6e157e2c1baa",
     "lab/acceptance/pins/O-OBS-V-O05-round4-brief-provenance.json": "50fe4ca21c0e0769136b1a77d9f2ab71afff0f4e454668e4654acc0030f19fdd",
     "lab/acceptance/pins/O-OBS-V-O05-round4-last.md": "5956dfd269b4f18b13bda84a0bfa840b164d0d783c6f34dda9ff29ad706bcf7c",
@@ -36,13 +36,33 @@
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/qlever-workloads.ts.diff": "1a40dcce1fb973666abe0385fb2af3f24bf499676b9b595fea4a5aa7c49fb85a",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13/authority-and-pin-review.json": "b1f7dd9f18527b5f374b80ef2afe161d104781e273fe2d881c376f8ed890a26b",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13/testkit-index.diff": "ff037fd9eb720d2e167d8a6e8452c52d97a73e91f554f43719cce613fddf3d3f",
-    "lab/acceptance/build_contract.py": "07c98812ec83fe8a7e32dd09418d40522b48b3dc53e2d5f3df6f7007288d98e5"
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/authority-and-pin-review.json": "cebe85003b3d0cff5bde495b622cef909772bb35ee55367e654946d144a2869e",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/pending-authority.md": "42f0ba89780694d876c7cb41d912a31ede858d8ef11a0ef5a916e58872c7339e",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/packages__testkit__src__index.ts.diff": "41929c2d3f25f64c0d8980f9b4fd74316c93553de357d1dc1ebc7c8cdf07a2db",
+    "lab/verify/P2X2/VERIFY.md": "462456077e50a4a6a4027deb2f1e55f36361b69751323ff0f37dddee2943a159",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-repin-review.json": "0a414b2d80fe57c991751d6e2d60a70a752c26f7eba3d0430f61ae1d6be511fa",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-packages__qlever__experiments__native-entry.ts.diff": "7b656f2155a25e2380497824889fd2d3f50f1afb55b282bc38c80a3e271df97c",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/M01-repin-review.json": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-repin-review.json": "7effb005a06ca7438815990dff19784a48e5378b48bd811076f5fb2a66d7f74d",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-lab__bin__test__claim-round2.test.mjs.diff": "8a985c3bfc17580ac89d40bb99838e8ebd83fb7d91c3161ea2049d96bd1d66d3",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-lab__bin__test__claim.test.mjs.diff": "d91ce1a545a842c7f840c651f88096319d5fa63910fd2429794ae2b645901387",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__configured-entities-v1__oracle.mjs.diff": "421422cf5d0643051bafa72f80270a9b1b13b009841e8301f4d13e060ee8a4f7",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__historical-assertion-metadata-v1__oracle.mjs.diff": "38466870a94edfa3666abeb16c41d9266c5f78b7bc7ca9e4f8f8eff1e929e32d",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__historical-assertion-metadata-v2__oracle.mjs.diff": "81c053d13b42ca48d9ff24b9b4b090ee60efbee79c3afb80140a79f76db984b0",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/authority-review.json": "10bb0303850c4a61f4697194996cf92d7a8a0142bdc5425939a630e1fc5a50ea",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/pending-authority.md": "cff6d49d7fb2329852610e85553a6b25cb808c3adacd49fe8a138fc17ce85ede",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/DF01-image-review.json": "c9e2880c211893e59b8847ddf423e730677d179f4318ffbc839cd686147b4866",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS_FINAL-repin-review.json": "861c19433507e91abe52e78007d9649890166faadd99e91d54e5eb2dd462c58b",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-FINAL-freeze-ham-reference.mjs.diff": "030e63d57c5e74fdef57c0a25bc67b5a0f20f1dc59495239ecf7c28a39f4dc96",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/OCONTRACT-repin-review.json": "2ce4af34fa745b198e6dcec0134853bfa0c2a45e613113025becf66965ecd726",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/OCONTRACT-oracle-contract.json.diff": "d97a0c4d91bfc0119e6094a68934b9ca8a622aff66c0552f52668f5ac3e98441",
+    "lab/acceptance/build_contract.py": "05a8bffe27edf6a669fa405120a2ebad401ea241ef88f1f4b935befb2d6d19f5"
   },
   "artifacts": {
-    "oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9",
-    "load-contract.json": "c37bb4499b0bceec0d020388ffab6f53db16433b27616e008f692860ace186c6",
-    "budgets.json": "c7f72c715b74c4630ef13b6e62b8c8a387b4ec318f205044cdfd640166ca2dc2",
-    "capability-matrix.md": "33cc8f7dcae26fdd5f280234f870bb2a10a9d9f0c5afdebbcd234b26ac0b47ec"
+    "oracle-contract.json": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266",
+    "load-contract.json": "f08456081846fd44f71d5a7e50e0df0f678db674fd28e175af7d2b40062ab8db",
+    "budgets.json": "5ac9f83af125c50fbf04a62669c2b18e7ac4eaba023b560bfe1fb57e833503d3",
+    "capability-matrix.md": "af5b66305ffffe4f427cdfb6624dddb09c50067a3e88680722ea06b0f95fb1ff"
   },
   "lanes": [
     "xtdb-xtql",
@@ -2051,6 +2071,150 @@
       "compiledInto": [
         "seedRules"
       ]
+    },
+    {
+      "id": "Q96a",
+      "topic": "composition",
+      "ruling": "P2 is measured per subject serially and in parallel across subjects, with the queue inside the candidate (Q51a); A0's single-flight composition stays only as a control arm. Golden scenario commit bars measured on single-flight A0 are DIAGNOSTIC (they measure queueing).",
+      "compiledInto": [
+        "laneXP2Rules"
+      ]
+    },
+    {
+      "id": "Q96b",
+      "topic": "stamps under concurrency",
+      "ruling": "RT01 round A's client stamp is monotone only because A0 serializes every commit; any per-subject concurrent arm uses a decider-side stamp (the engine stamp after probe p9, or the broker's), per Q90c. RT01 round A's added scope-wide scan on A0 is measured on an engine before RT01 merges (G6).",
+      "compiledInto": [
+        "laneXP2Rules"
+      ]
+    },
+    {
+      "id": "Q96c",
+      "topic": "the shortest path and the native check",
+      "ruling": "Lane X's shortest path to P2 is XTDB behind the broker (EXP-P2B, Q51b, Q58b). EXP-P2X2 (lab/experiments/EXP-P2X2/BRIEF.md) runs once on an exclusive xtdb-s1 slot after K01's live run and before P5 A1, to settle whether the native path is closed, with the decision rule written in R39 4.5 before the run (native is closed if F3 p50 > 6 ms, or F5 p50 > 20 ms, or engine resolve > 7 ms per commit). If closed, the lab says so plainly (SCOPE 3.2) and keeps the native arm as a comparison.",
+      "compiledInto": [
+        "laneXP2Rules"
+      ]
+    },
+    {
+      "id": "Q97a",
+      "topic": "current pulls from H1",
+      "ruling": "Lane Q serves current-value pulls from the broker's SQLite H1 store, behind a default-off currentRoute: \"h1\" option; QLever keeps history, native SPARQL and analytics. This is the ruled design (Q68a, Q50a, Q68d), which SQL01 used only as an outage fallback. A route that cannot answer a basis exactly refuses (Q89b, Q89c, Q92h). EXP-QH1 (lab/experiments/EXP-QH1/BRIEF.md) builds it after P2Q and SQL01 merge; its G1 to G7 need no slot, G8 takes one exclusive qlever-s1 run.",
+      "compiledInto": [
+        "laneQP4Rules"
+      ]
+    },
+    {
+      "id": "Q97b",
+      "topic": "the keep-alive stall",
+      "ruling": "Every QLever latency measured from the host through QleverClient so far carries a 41 to 45 ms keep-alive stall on about a third of requests, because QLever never sets TCP_NODELAY and QleverClient keeps connections alive. QLever latency receipts record the connection mode; earlier QLever latency numbers are DIAGNOSTIC on this ground too. The fix is measured first as a connection per request from the host (no custom image), with the engine patch as the fallback.",
+      "compiledInto": [
+        "laneQP4Rules"
+      ]
+    },
+    {
+      "id": "Q97c",
+      "topic": "multi-request pulls",
+      "ruling": "A pull form that needs one request per BFS level cannot meet P4 from the host on QLever (transport alone is 18 to 32 ms per depth-6 pull), so no multi-request QLever pull form is a P4 candidate.",
+      "compiledInto": [
+        "laneQP4Rules"
+      ]
+    },
+    {
+      "id": "Q96d",
+      "topic": "native lane X P2 is closed",
+      "ruling": "EXP-P2X2 (exp/P2X2-commit-floor b9a76c0, one exclusive xtdb-s1 run) met Q96c's preregistered rule: F3 p50 7.68 ms (bar 6) and F5 fresh 33.00 ms (bar 20). The XTDB-native commit path cannot meet P2 in this VM, which the lab states plainly (SCOPE 3.2); lane X's P2 candidate is XTDB behind the broker (EXP-P2B), and the native per-subject arm stays as a comparison. Aged F6, F7 to F9 and strict no-wait checks remain open as diagnostics, and the run awaits an independent review of its receipts.",
+      "compiledInto": [
+        "laneXP2Rules"
+      ]
+    },
+    {
+      "id": "Q98a",
+      "topic": "",
+      "ruling": "**The feed contract.** P3 is measured only on identity-only feeds whose entries carry, per transaction, stream, epoch, offset or LSN, positions, txIds, operationId, commandIds and the decided stamp, and per change op (`assert`, `retract`, `erase`), entity, attribute, validFrom, validTo, position and assertion id, plus the erasure seq on erase changes. Entries never carry a value, an envelope or a key id. Resolutions are `commit`, `aborted`, `epoch` and `seal`. Core's value-bearing journal route (`transactions()` and its siblings) is a history API and serves P3 only as the A0 control. Consumer outputs hold subject ids and positions only",
+      "compiledInto": [
+        "feedRules"
+      ]
+    },
+    {
+      "id": "Q98b",
+      "topic": "",
+      "ruling": "**Consumer state off the engine's write path.** A P3 consumer writes its effects, affected set and checkpoint in one transaction of a host SQLite store with the Q84a pragmas. An engine-resident consumer (P2X `tx_feed_checkpoints`, a Datomic consumer entity) is a control arm only. Amends R29:244 and refines R18 3.4 item 5 (the checkpoint shares a transaction with the consumer's own outputs, not with the source)",
+      "compiledInto": [
+        "feedRules"
+      ]
+    },
+    {
+      "id": "Q98c",
+      "topic": "",
+      "ruling": "**Publication instant per arm.** Broker: `watermarkAt` per LSN. XTDB as source: the host monotonic instant when the writer's COMMIT SYNC returns, recorded per tx id by the writer apart from the ACK, with XTDB `system_time` beside it as a cross-check. Datomic as source: the host monotonic instant when the TS client receives the transact result. Engine clocks are never subtracted from host clocks. A position without an instant fails the run",
+      "compiledInto": [
+        "feedRules"
+      ]
+    },
+    {
+      "id": "Q98d",
+      "topic": "",
+      "ruling": "**Stamp and publication instant are separate.** The decided stamp is the entry's record time; it never starts a lag interval, and a publication instant is never a record time. A consumer re-runs a subject at the delivered entry's stamp or position, never at the wall clock's \"now\"",
+      "compiledInto": [
+        "feedRules"
+      ]
+    },
+    {
+      "id": "Q98e",
+      "topic": "",
+      "ruling": "**The gap unit.** Gaps are counted over positions (Q31c coordinates), with every LSN or offset in the read range accounted as a commit, an abort, an epoch boundary or a seal. A seal is never a gap. Positions acknowledged after the consumer stopped are outside the run (the 7ed77c65 fix) and the run's end is the final published prefix (Q67d)",
+      "compiledInto": [
+        "feedRules"
+      ]
+    },
+    {
+      "id": "Q98f",
+      "topic": "",
+      "ruling": "**Exact resume is byte-exact for identity-only feeds,** including across an erasure and, on lane D, across an excision; no \"modulo erasure\" relaxation applies to feed entries. A re-sent or lost-ACK command creates no new position",
+      "compiledInto": [
+        "feedRules"
+      ]
+    },
+    {
+      "id": "Q98g",
+      "topic": "",
+      "ruling": "**The affected set for P3 is O-DOMAIN's** (W0 SPEC 10; Q36e; Q40b). A direct-subject affected set is DIAGNOSTIC for NS-P3-DOMAIN-AFFECTED-SET; the N01 bar \"affected-subject set matches\" and every consumer before EXP-DI01 are diagnostic on it",
+      "compiledInto": [
+        "feedRules"
+      ]
+    },
+    {
+      "id": "Q98h",
+      "topic": "",
+      "ruling": "**The P3 reader load is real.** A P3 lag receipt counts only with 256 closed-loop readers per TARGETS 1.1 P1 on the lane's read composition, the consumer in its own worker or process, and the reader level taken from the run. Lag is pooled over the whole window, bursts included, and reported split steady and burst",
+      "compiledInto": [
+        "feedRules"
+      ]
+    },
+    {
+      "id": "Q98i",
+      "topic": "",
+      "ruling": "**Every P3 receipt so far is DIAGNOSTIC** (P2X, P2Q, SQL01 kill-50, N01, all GS receipts): none ran with 256 readers, none used the O-DOMAIN affected set, none ran through an executing gate, all predate contract 0.4.0. Their correctness findings (0 gaps, 0 order violations, 0 keyed duplicates over 100 crashes per variant) stay as design evidence",
+      "compiledInto": [
+        "feedRules"
+      ]
+    },
+    {
+      "id": "Q101a",
+      "topic": "(orchestrator, from EXP-P5 round B)",
+      "ruling": "**Reference positions map to native positions; they need not be equal.** A source whose native positions are sparse but strictly increasing (the broker packs LSN * 1024 + ordinal, so its first commit is 2048) is seeded by recording, in the seed manifest, the order-preserving bijection from each W0 reference position to the native position of its receipt, built from the receipts in submission order. A gap in the reference sequence, a non-increasing native position, or a receipt whose readback bytes differ from the submitted command refuses the seed. Every consumer of positions (O-REPLAY, activation bases, sweep pins, feed resume, history reads, G0 fingerprints) translates through the bound map; the map's hash binds into every receipt that uses it. This follows the lane D position-to-t map (Q89d) and changes no bar",
+      "compiledInto": [
+        "positionMappingRules"
+      ]
+    },
+    {
+      "id": "Q104a",
+      "topic": "(orchestrator, from EXP-RT01 live round 3)",
+      "ruling": "**No-regression gates (G6 and similar) use a statistically sound rule fixed before the B runs.** A tolerance band from one A/A pair is not a noise estimate: RT01's compact five-fact p99 band was 0.237% from two 150-sample arms, where a nearest-rank p99 at n=150 is the second-highest sample. From now on: the band comes from M01's PAIR-0 grading (accepted, verify/M01-rebase 3a354133) over at least three A/A rounds, giving s_d per metric; p50 is judged at n >= 150 per arm; p99 is judged only at n >= 1,000 per arm or with a bootstrap 95% interval of the B/A ratio whose lower bound must exceed 1 + the A/A band to count as a regression; the window grade (Q100k) applies. A receipt failed under an earlier frozen rule stays FAILED and is kept; a rerun under the new rule is a new receipt, never a replacement",
+      "compiledInto": [
+        "noRegressionRules"
+      ]
     }
   ],
   "languageRules": {
@@ -3688,6 +3852,11 @@
       "topic": "two digests",
       "rule": "G0 admits a clone by the full digest D over every stored column (byte-level identity with its golden). E1, which compares a clone with a fresh seed of the same inputs, uses a second digest D' over the same columns with engine-assigned values normalized: engine-generated ids and system timestamps are replaced by their rank in commit order, and every other column is kept as is. A fresh seed must match the golden's D', never its D. The normalization list is part of the G0 module, each entry with a comment naming the engine source that assigns it, and a test fails if a column is normalized without one.",
       "basis": "CX-K01-R2 round 8"
+    },
+    "Q101a": {
+      "topic": "(orchestrator, from EXP-P5 round B)",
+      "rule": "**Reference positions map to native positions; they need not be equal.** A source whose native positions are sparse but strictly increasing (the broker packs LSN * 1024 + ordinal, so its first commit is 2048) is seeded by recording, in the seed manifest, the order-preserving bijection from each W0 reference position to the native position of its receipt, built from the receipts in submission order. A gap in the reference sequence, a non-increasing native position, or a receipt whose readback bytes differ from the submitted command refuses the seed. Every consumer of positions (O-REPLAY, activation bases, sweep pins, feed resume, history reads, G0 fingerprints) translates through the bound map; the map's hash binds into every receipt that uses it. This follows the lane D position-to-t map (Q89d) and changes no bar",
+      "basis": "EXP-P5 roundB 3d23d208 (BLOCKED-REFERENCE-POSITION-MISMATCH, 1 vs 2048); R34 1.2 item 2; Q89d"
     }
   },
   "recursionRules": {
@@ -3910,8 +4079,8 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "07c98812ec83fe8a7e32dd09418d40522b48b3dc53e2d5f3df6f7007288d98e5",
-        "lab/acceptance/oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9"
+        "lab/acceptance/build_contract.py": "05a8bffe27edf6a669fa405120a2ebad401ea241ef88f1f4b935befb2d6d19f5",
+        "lab/acceptance/oracle-contract.json": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266"
       }
     },
     "O-OBS": {
@@ -4041,7 +4210,7 @@
   "imagePins": {
     "datomic": {
       "image": "tx2-datomic:1.0.7745-da00",
-      "imageId": "sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf"
+      "imageId": "sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf"
     },
     "xtdb": {
       "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
@@ -4767,6 +4936,172 @@
       }
     }
   },
+  "pinChanges0314": {
+    "packages/testkit/src/index.ts": {
+      "previousSha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+      "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
+    }
+  },
+  "feedRules": {
+    "Q98a": {
+      "topic": "",
+      "rule": "**The feed contract.** P3 is measured only on identity-only feeds whose entries carry, per transaction, stream, epoch, offset or LSN, positions, txIds, operationId, commandIds and the decided stamp, and per change op (`assert`, `retract`, `erase`), entity, attribute, validFrom, validTo, position and assertion id, plus the erasure seq on erase changes. Entries never carry a value, an envelope or a key id. Resolutions are `commit`, `aborted`, `epoch` and `seal`. Core's value-bearing journal route (`transactions()` and its siblings) is a history API and serves P3 only as the A0 control. Consumer outputs hold subject ids and positions only",
+      "basis": "R41 a; TARGETS 1.1 P3, 3 row 3, 7 items 3 and 8; Q31c; R38 2.3, 3.2, 5.3; R33 3.6"
+    },
+    "Q98b": {
+      "topic": "",
+      "rule": "**Consumer state off the engine's write path.** A P3 consumer writes its effects, affected set and checkpoint in one transaction of a host SQLite store with the Q84a pragmas. An engine-resident consumer (P2X `tx_feed_checkpoints`, a Datomic consumer entity) is a control arm only. Amends R29:244 and refines R18 3.4 item 5 (the checkpoint shares a transaction with the consumer's own outputs, not with the source)",
+      "basis": "R41 b; P2X trace-C 88da3e: consumer write p50 431 ms, p99 2,212 ms in the serial indexer; TARGETS 1.1 P3 item 4 needs one durable write, not the source's store"
+    },
+    "Q98c": {
+      "topic": "",
+      "rule": "**Publication instant per arm.** Broker: `watermarkAt` per LSN. XTDB as source: the host monotonic instant when the writer's COMMIT SYNC returns, recorded per tx id by the writer apart from the ACK, with XTDB `system_time` beside it as a cross-check. Datomic as source: the host monotonic instant when the TS client receives the transact result. Engine clocks are never subtracted from host clocks. A position without an instant fails the run",
+      "basis": "R41 c; TARGETS 1.1 P3 item 1; Q55d; Q67d; P2X trace-C 88da3e had 63 positions without one"
+    },
+    "Q98d": {
+      "topic": "",
+      "rule": "**Stamp and publication instant are separate.** The decided stamp is the entry's record time; it never starts a lag interval, and a publication instant is never a record time. A consumer re-runs a subject at the delivered entry's stamp or position, never at the wall clock's \"now\"",
+      "basis": "R41 d; Q90a, Q90d; R33 1.3 Q14-Q15"
+    },
+    "Q98e": {
+      "topic": "",
+      "rule": "**The gap unit.** Gaps are counted over positions (Q31c coordinates), with every LSN or offset in the read range accounted as a commit, an abort, an epoch boundary or a seal. A seal is never a gap. Positions acknowledged after the consumer stopped are outside the run (the 7ed77c65 fix) and the run's end is the final published prefix (Q67d)",
+      "basis": "R41 e; Q31c; R33 3.6; N01 6f67e0's 11 gaps"
+    },
+    "Q98f": {
+      "topic": "",
+      "rule": "**Exact resume is byte-exact for identity-only feeds,** including across an erasure and, on lane D, across an excision; no \"modulo erasure\" relaxation applies to feed entries. A re-sent or lost-ACK command creates no new position",
+      "basis": "R41 f; TARGETS 1.1 P3 item 5, 7 item 2; Q90c; Q95h"
+    },
+    "Q98g": {
+      "topic": "",
+      "rule": "**The affected set for P3 is O-DOMAIN's** (W0 SPEC 10; Q36e; Q40b). A direct-subject affected set is DIAGNOSTIC for NS-P3-DOMAIN-AFFECTED-SET; the N01 bar \"affected-subject set matches\" and every consumer before EXP-DI01 are diagnostic on it",
+      "basis": "R41 g; TARGETS 1.1 P3 item 3; W0 SPEC 10 items 3 and 4"
+    },
+    "Q98h": {
+      "topic": "",
+      "rule": "**The P3 reader load is real.** A P3 lag receipt counts only with 256 closed-loop readers per TARGETS 1.1 P1 on the lane's read composition, the consumer in its own worker or process, and the reader level taken from the run. Lag is pooled over the whole window, bursts included, and reported split steady and burst",
+      "basis": "R41 h; TARGETS 1.1 P3 bar; N01 6f67e0 label defect"
+    },
+    "Q98i": {
+      "topic": "",
+      "rule": "**Every P3 receipt so far is DIAGNOSTIC** (P2X, P2Q, SQL01 kill-50, N01, all GS receipts): none ran with 256 readers, none used the O-DOMAIN affected set, none ran through an executing gate, all predate contract 0.4.0. Their correctness findings (0 gaps, 0 order violations, 0 keyed duplicates over 100 crashes per variant) stay as design evidence",
+      "basis": "R41 i; Q90f, Q94e; R41-g, R41-h"
+    }
+  },
+  "feedPolicy": {
+    "identityOnly": true,
+    "forbiddenFields": [
+      "value",
+      "envelope",
+      "keyId"
+    ],
+    "resolutions": [
+      "commit",
+      "aborted",
+      "epoch",
+      "seal"
+    ],
+    "consumerStore": "off-engine SQLite; Q84a; effects, affected set and checkpoint in one transaction",
+    "publicationClock": "per-position source publication on the host monotonic clock, independent of ACK; absent instant fails",
+    "stampIsPublicationInstant": false,
+    "resume": "byte-exact, including erasure and excision",
+    "affectedSetOracle": "O-DOMAIN",
+    "directSubjectOnly": "DIAGNOSTIC",
+    "readers": 256,
+    "consumerPlacement": "own worker or process",
+    "lagPooling": "whole window including bursts; also split steady/burst",
+    "historicalReceipts": "DIAGNOSTIC",
+    "qualification": "blocked until executing gate and qualification pins exist"
+  },
+  "positionMappingRules": {
+    "Q101a": {
+      "topic": "(orchestrator, from EXP-P5 round B)",
+      "rule": "**Reference positions map to native positions; they need not be equal.** A source whose native positions are sparse but strictly increasing (the broker packs LSN * 1024 + ordinal, so its first commit is 2048) is seeded by recording, in the seed manifest, the order-preserving bijection from each W0 reference position to the native position of its receipt, built from the receipts in submission order. A gap in the reference sequence, a non-increasing native position, or a receipt whose readback bytes differ from the submitted command refuses the seed. Every consumer of positions (O-REPLAY, activation bases, sweep pins, feed resume, history reads, G0 fingerprints) translates through the bound map; the map's hash binds into every receipt that uses it. This follows the lane D position-to-t map (Q89d) and changes no bar",
+      "basis": "EXP-P5 roundB 3d23d208 (BLOCKED-REFERENCE-POSITION-MISMATCH, 1 vs 2048); R34 1.2 item 2; Q89d"
+    }
+  },
+  "positionMappingPolicy": {
+    "seedManifest": "order-preserving bijection built from receipts in submission order",
+    "refuse": [
+      "reference gap",
+      "non-increasing native position",
+      "readback bytes differ from submitted command"
+    ],
+    "consumers": [
+      "O-REPLAY",
+      "activation bases",
+      "sweep pins",
+      "feed resume",
+      "history reads",
+      "G0 fingerprints"
+    ],
+    "receiptBinding": "map sha256 in every using receipt"
+  },
+  "noRegressionRules": {
+    "Q104a": {
+      "topic": "(orchestrator, from EXP-RT01 live round 3)",
+      "rule": "**No-regression gates (G6 and similar) use a statistically sound rule fixed before the B runs.** A tolerance band from one A/A pair is not a noise estimate: RT01's compact five-fact p99 band was 0.237% from two 150-sample arms, where a nearest-rank p99 at n=150 is the second-highest sample. From now on: the band comes from M01's PAIR-0 grading (accepted, verify/M01-rebase 3a354133) over at least three A/A rounds, giving s_d per metric; p50 is judged at n >= 150 per arm; p99 is judged only at n >= 1,000 per arm or with a bootstrap 95% interval of the B/A ratio whose lower bound must exceed 1 + the A/A band to count as a regression; the window grade (Q100k) applies. A receipt failed under an earlier frozen rule stays FAILED and is kept; a rerun under the new rule is a new receipt, never a replacement",
+      "basis": "EXP-RT01 43f9d590 live3-run; M01 PAIR-0; Q100k; R22"
+    }
+  },
+  "noRegressionPolicy": {
+    "frozenBeforeB": true,
+    "noiseSource": "M01 PAIR-0",
+    "minAaRounds": 3,
+    "dispersion": "s_d per metric",
+    "p50MinSamplesPerArm": 150,
+    "p99MinSamplesPerArm": 1000,
+    "p99Alternative": "bootstrap 95% interval of B/A; lower bound must exceed 1 + A/A band for regression",
+    "windowGrade": "Q100k",
+    "windowGradeAuthority": "Q104a reference only; Q100k remains pending",
+    "earlierFailedReceipts": "retained FAILED; rerun creates a new receipt"
+  },
+  "laneXP2Rules": {
+    "Q96a": {
+      "topic": "composition",
+      "rule": "P2 is measured per subject serially and in parallel across subjects, with the queue inside the candidate (Q51a); A0's single-flight composition stays only as a control arm. Golden scenario commit bars measured on single-flight A0 are DIAGNOSTIC (they measure queueing).",
+      "basis": "R39 3.2; R37 1.2"
+    },
+    "Q96b": {
+      "topic": "stamps under concurrency",
+      "rule": "RT01 round A's client stamp is monotone only because A0 serializes every commit; any per-subject concurrent arm uses a decider-side stamp (the engine stamp after probe p9, or the broker's), per Q90c. RT01 round A's added scope-wide scan on A0 is measured on an engine before RT01 merges (G6).",
+      "basis": "R39 3.3"
+    },
+    "Q96c": {
+      "topic": "the shortest path and the native check",
+      "rule": "Lane X's shortest path to P2 is XTDB behind the broker (EXP-P2B, Q51b, Q58b). EXP-P2X2 (lab/experiments/EXP-P2X2/BRIEF.md) runs once on an exclusive xtdb-s1 slot after K01's live run and before P5 A1, to settle whether the native path is closed, with the decision rule written in R39 4.5 before the run (native is closed if F3 p50 > 6 ms, or F5 p50 > 20 ms, or engine resolve > 7 ms per commit). If closed, the lab says so plainly (SCOPE 3.2) and keeps the native arm as a comparison.",
+      "basis": "R39 2, 4"
+    },
+    "Q96d": {
+      "topic": "native lane X P2 is closed",
+      "rule": "EXP-P2X2 (exp/P2X2-commit-floor b9a76c0, one exclusive xtdb-s1 run) met Q96c's preregistered rule: F3 p50 7.68 ms (bar 6) and F5 fresh 33.00 ms (bar 20). The XTDB-native commit path cannot meet P2 in this VM, which the lab states plainly (SCOPE 3.2); lane X's P2 candidate is XTDB behind the broker (EXP-P2B), and the native per-subject arm stays as a comparison. Aged F6, F7 to F9 and strict no-wait checks remain open as diagnostics, and the run awaits an independent review of its receipts.",
+      "basis": "EXP-P2X2 report"
+    }
+  },
+  "laneQP4Rules": {
+    "Q97a": {
+      "topic": "current pulls from H1",
+      "rule": "Lane Q serves current-value pulls from the broker's SQLite H1 store, behind a default-off currentRoute: \"h1\" option; QLever keeps history, native SPARQL and analytics. This is the ruled design (Q68a, Q50a, Q68d), which SQL01 used only as an outage fallback. A route that cannot answer a basis exactly refuses (Q89b, Q89c, Q92h). EXP-QH1 (lab/experiments/EXP-QH1/BRIEF.md) builds it after P2Q and SQL01 merge; its G1 to G7 need no slot, G8 takes one exclusive qlever-s1 run.",
+      "basis": "R40 2-3"
+    },
+    "Q97b": {
+      "topic": "the keep-alive stall",
+      "rule": "Every QLever latency measured from the host through QleverClient so far carries a 41 to 45 ms keep-alive stall on about a third of requests, because QLever never sets TCP_NODELAY and QleverClient keeps connections alive. QLever latency receipts record the connection mode; earlier QLever latency numbers are DIAGNOSTIC on this ground too. The fix is measured first as a connection per request from the host (no custom image), with the engine patch as the fallback.",
+      "basis": "R40 1, 4.3; R17 0.2"
+    },
+    "Q97c": {
+      "topic": "multi-request pulls",
+      "rule": "A pull form that needs one request per BFS level cannot meet P4 from the host on QLever (transport alone is 18 to 32 ms per depth-6 pull), so no multi-request QLever pull form is a P4 candidate.",
+      "basis": "R40 1"
+    }
+  },
+  "rulingReview0314": {
+    "commit": "4155fda7",
+    "record": "lab/verify/P2X2/VERIFY.md",
+    "sha256": "462456077e50a4a6a4027deb2f1e55f36361b69751323ff0f37dddee2943a159",
+    "verdict": "ACCEPT for D1 under preregistered R39 4.5; native P2 closed on this host/profile only"
+  },
   "mergeGates": {
     "Q87": {
       "topic": "contract merges need the evaluator suite",
@@ -4784,7 +5119,7 @@
   },
   "pendingRulings": {
     "file": "lab/acceptance/RULINGS-PENDING.md",
-    "sha256": "ec3516e8ca8b45cb0dfd0bc8a364ee8db7caafe62ace8266d43bfd092368628d",
+    "sha256": "35a487c484e1d16b1478e124e24c9a41a347f99b43da5323eb11144e2a2dc61e",
     "ids": [
       "Q51b",
       "Q73a",
@@ -4830,12 +5165,60 @@
       "Q95g",
       "Q95h",
       "Q95",
-      "Q96a",
-      "Q96b",
-      "Q96c",
-      "Q97a",
-      "Q97b",
-      "Q97c"
+      "Q98j",
+      "Q99a",
+      "Q99b",
+      "Q99c",
+      "Q99d",
+      "Q99e",
+      "Q99-S1",
+      "Q100a",
+      "Q100b",
+      "Q100c",
+      "Q100d",
+      "Q100e",
+      "Q100f",
+      "Q100g",
+      "Q100h",
+      "Q100i",
+      "Q100j",
+      "Q100k",
+      "Q100l",
+      "Q100m",
+      "Q100n",
+      "Q100o",
+      "Q100p",
+      "Q100-S1",
+      "Q100q",
+      "Q100r",
+      "Q102a",
+      "Q102b",
+      "Q102c",
+      "Q102d",
+      "Q102e",
+      "Q103a",
+      "Q103b",
+      "Q103c",
+      "Q103d",
+      "Q103e",
+      "Q105a",
+      "Q105b",
+      "Q100s",
+      "Q106a",
+      "Q106b",
+      "Q106c",
+      "Q106d",
+      "Q106e",
+      "Q106f",
+      "Q106g",
+      "Q107a",
+      "Q107b",
+      "Q107c",
+      "Q107",
+      "Q108a",
+      "Q108b",
+      "Q108c",
+      "Q108d"
     ],
     "authority": "none",
     "rule": "RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled into this contract and never count as compiled RULINGS.md entries; the generator records the file's hash under inputs and lists the pending ids, and their presence never invalidates generation or --verify (RULINGS Q47d)"
@@ -7406,7 +7789,7 @@
         "lab/oracles/replay/run.py": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
         "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
         "lab/oracles/replay/selfcheck.py": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
-        "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+        "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": "752aaa5c706c514ec265ed6865458fd6bd78795486764e200c088c3f52f53f28",
         "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
         "lab/oracles/replay/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "lab/oracles/replay/tests/helpers.py": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
@@ -7479,7 +7862,7 @@
         "lab/oracles/replay/run.py": "c967ad2d6d811f006da6f5766a0ca7aa7ef0c4c220ad239f7a55b7b994a4f856",
         "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
         "lab/oracles/replay/selfcheck.py": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
-        "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+        "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": "752aaa5c706c514ec265ed6865458fd6bd78795486764e200c088c3f52f53f28",
         "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
         "lab/oracles/replay/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "lab/oracles/replay/tests/helpers.py": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
@@ -8648,7 +9031,25 @@
       "Q94f",
       "Q94g",
       "Q94h",
-      "Q94i"
+      "Q94i",
+      "Q96a",
+      "Q96b",
+      "Q96c",
+      "Q97a",
+      "Q97b",
+      "Q97c",
+      "Q96d",
+      "Q98a",
+      "Q98b",
+      "Q98c",
+      "Q98d",
+      "Q98e",
+      "Q98f",
+      "Q98g",
+      "Q98h",
+      "Q98i",
+      "Q101a",
+      "Q104a"
     ],
     "recordedNotCompiled": []
   },
@@ -11177,17 +11578,17 @@
     "O-HAM": [
       {
         "path": "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs",
-        "sha256": "bc93f24c88365add1d215747cd95705a3c2a2b4fd1c6cdd7e347a014fb23b290"
+        "sha256": "bbd656760719b67a3435419121b0b7df909a99ea9c1aba22d85ea1363cb6b08f"
       },
       {
         "path": "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
-        "sha256": "f661e8138d5194bbcbbe56eec9ec35f8766bc9938540192e7b0d92d04685721b"
+        "sha256": "5ce6612714b2b7742c46e0599617d472b4bf18a352806e5d44a44577878c9649"
       }
     ],
     "O-CFG8": [
       {
         "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
-        "sha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3"
+        "sha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94"
       }
     ],
     "O-STR": [
@@ -11218,7 +11619,7 @@
     "O-TESTKIT": [
       {
         "path": "packages/testkit/src/index.ts",
-        "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+        "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
       }
     ],
     "O-KV": []
@@ -15411,7 +15812,7 @@
       "pinnedSourceFiles": [
         {
           "path": "packages/testkit/src/index.ts",
-          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+          "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
         }
       ],
       "note": null
@@ -15479,7 +15880,7 @@
         },
         {
           "path": "packages/qlever/experiments/native-entry.ts",
-          "sha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f"
+          "sha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
         }
       ],
       "note": null
@@ -16277,7 +16678,7 @@
         },
         {
           "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
-          "sha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3"
+          "sha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94"
         }
       ],
       "note": null
@@ -16947,7 +17348,7 @@
     "CS-U44": [
       {
         "path": "packages/testkit/src/index.ts",
-        "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+        "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
       }
     ],
     "CS-PKT71": [
@@ -16971,7 +17372,7 @@
       },
       {
         "path": "packages/qlever/experiments/native-entry.ts",
-        "sha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f"
+        "sha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
       }
     ],
     "CS-STR": [
@@ -16997,7 +17398,7 @@
       },
       {
         "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
-        "sha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3"
+        "sha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94"
       }
     ]
   },
@@ -18265,11 +18666,11 @@
   ],
   "budgetsRef": {
     "path": "lab/acceptance/budgets.json",
-    "sha256": "c7f72c715b74c4630ef13b6e62b8c8a387b4ec318f205044cdfd640166ca2dc2"
+    "sha256": "5ac9f83af125c50fbf04a62669c2b18e7ac4eaba023b560bfe1fb57e833503d3"
   },
   "loadContractRef": {
     "path": "lab/acceptance/load-contract.json",
-    "sha256": "c37bb4499b0bceec0d020388ffab6f53db16433b27616e008f692860ace186c6"
+    "sha256": "f08456081846fd44f71d5a7e50e0df0f678db674fd28e175af7d2b40062ab8db"
   },
   "obligations": [
     {
@@ -26164,7 +26565,7 @@
         "NS"
       ],
       "title": "P3: an ordered, resumable change feed",
-      "statement": "Under TARGETS 1.1 P3: feed entries carry tx, entity, attribute and the valid-time range affected; lag runs from the source's own publication timestamp for each position (the broker's durable watermark update, or the engine's commit resolution when the engine is the source), recorded by the source on the shared host monotonic clock independently of ACK delivery, to the consumer's durable record, and every committed position is accounted: none is dropped for a missing ACK, and a missing one is counted and fails the run (NS-P3-EVERY-POSITION-ACCOUNTED, RULINGS Q55d); an ACK-to-consumer figure (such as EXP-P2Q's) is not this measurement until recomputed; both arms enumerate the final published source prefix from the source's own record and timestamp actual publication (the broker's watermark publication, or commit resolution when the engine is the source), ACK records being reconciled afterwards, so a late or lost ACK is never a feed defect (NS-P3-SOURCE-PREFIX-ENUMERATED, RULINGS Q67d; manifest null until built); the cursor is (epoch, position); the expected affected-subject set per transaction is the directly written subjects (O-REPLAY) plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN, NS-P3-DOMAIN-AFFECTED-SET, RULINGS Q36e); 'affected subjects known' is the consumer's single durable write of the set and its checkpoint. Over a run there are zero gaps (NS-P3-GAPS-MAX) and zero per-subject order violations (NS-P3-ORDER-VIOLATIONS-MAX); lag stays within NS-P3-LAG-P99-MS with P1's 256 readers running; delivery is at-least-once from the last checkpoint with effects keyed by (consumer, position, subject), so crashes before the effect, after the effect before the checkpoint, and after the checkpoint (NS-P3-CRASH-BEFORE-EFFECT, NS-P3-CRASH-AFTER-EFFECT, NS-P3-CRASH-AFTER-CHECKPOINT) leave zero visible duplicate effects (NS-P3-VISIBLE-DUP-EFFECTS-MAX) while replay attempts are counted separately; resume from a checkpoint replays exactly.",
+      "statement": "Under TARGETS 1.1 P3: feed entries carry tx, entity, attribute and the valid-time range affected; lag runs from the source's own publication timestamp for each position (the broker's durable watermark update, or the engine's commit resolution when the engine is the source), recorded by the source on the shared host monotonic clock independently of ACK delivery, to the consumer's durable record, and every committed position is accounted: none is dropped for a missing ACK, and a missing one is counted and fails the run (NS-P3-EVERY-POSITION-ACCOUNTED, RULINGS Q55d); an ACK-to-consumer figure (such as EXP-P2Q's) is not this measurement until recomputed; both arms enumerate the final published source prefix from the source's own record and timestamp actual publication (the broker's watermark publication, or commit resolution when the engine is the source), ACK records being reconciled afterwards, so a late or lost ACK is never a feed defect (NS-P3-SOURCE-PREFIX-ENUMERATED, RULINGS Q67d; manifest null until built); the cursor is (epoch, position); the expected affected-subject set per transaction is the directly written subjects (O-REPLAY) plus the subjects whose WORLD_W0 static read set contains a changed fact (O-DOMAIN, NS-P3-DOMAIN-AFFECTED-SET, RULINGS Q36e); 'affected subjects known' is the consumer's single durable write of the set and its checkpoint. Over a run there are zero gaps (NS-P3-GAPS-MAX) and zero per-subject order violations (NS-P3-ORDER-VIOLATIONS-MAX); lag stays within NS-P3-LAG-P99-MS with P1's 256 readers running; delivery is at-least-once from the last checkpoint with effects keyed by (consumer, position, subject), so crashes before the effect, after the effect before the checkpoint, and after the checkpoint (NS-P3-CRASH-BEFORE-EFFECT, NS-P3-CRASH-AFTER-EFFECT, NS-P3-CRASH-AFTER-CHECKPOINT) leave zero visible duplicate effects (NS-P3-VISIBLE-DUP-EFFECTS-MAX) while replay attempts are counted separately; resume from a checkpoint replays exactly. Identity-only feed, off-engine consumer, source publication, stamp separation, resolved-prefix gaps, byte-exact resume, O-DOMAIN affected set and actual reader load follow feedRules Q98a-i; all earlier P3 receipts remain DIAGNOSTIC.",
       "lanes": [
         "xtdb-xtql",
         "xtdb-sql",
@@ -26238,7 +26639,7 @@
       "notes": null,
       "layer": "source",
       "verifierMode": "re-evaluate-and-spot",
-      "definitionSha256": "abe2c82b2be7a8b6435389766becad4b3ae4acb47a7b57243ca39501ddf1b8be",
+      "definitionSha256": "598c5650dbfe08d65a0a79ee4cac5cb2fc0b4f54ffe87f07bf24298b20af76b1",
       "status": {
         "xtdb-xtql": "OPEN",
         "xtdb-sql": "OPEN",
@@ -31196,5 +31597,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "7c67653511b51fb041c3d3115e90f90d347c041ae091f142762889d0afd485e7"
+  "transitiveContractSha256": "145db3994dec0dcabc635d651b5edf1aa957e236e5f4346ab069dfca9583c220"
 }

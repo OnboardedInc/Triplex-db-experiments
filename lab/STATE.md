@@ -199,3 +199,166 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   them (after 0.3.13 lands). Queue for 0.3.14: GS12F; QNODELAY if accepted; any other accepted branch that moves pins.
 - P5 round A ACCEPT-OFFLINE (verify/P5A 85c1b13: 207 suite, 57 await-boundary and 2 late-cleanup tests). Ready for its A1 run at 1k on an
   exclusive XTDB slot (A1-RUNBOOK.md in .claude/worktrees/p5a), queued after K01's live rerun. Its g0.ts guard commit goes onto K01's branch.
+- ER01-S accepted for offline fixtures (verify/ER01-S b81e102); merges with the observer branch when ER01-C lands. Open: CPU/time bounds on
+  large base64 inputs.
+- 2026-11-09 queue update: xtdb-s1 held by CX-P5A (P5 A1 at 1k). Next: K01 live rerun per LIVE-round12.md (K01 aec5a715, offline ACCEPT
+  verify/K01 12a30d8: the G0 expected count now includes journal rows, 61,384 for the round 11 seed); then G03's slot run; then RT01 live
+  G2/G6 after round 4; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04. Contract 0.3.14 (CX-A01-0314) building with
+  INT-Q (accepted, verify/INT-Q c14cdfc9) and GS12F, compiling Q96 and Q97.
+- 2026-11-09 disk: free space fell to 4.8 GiB. Archived and removed 5 finished worktrees (p2x2, verify-p2x2, contract-0312, sql01,
+  verify-int-q; INDEX.txt in worktree-archive/), now 9.9 GiB free. Nine agent-* worktrees (about 22 GiB) are locked by this session's
+  agent tool and stay. runs/engines/datomic-build is 5.4 GiB and stays until EXP-DA04 no longer needs image rebuilds.
+- 2026-11-09 RT01 round A ACCEPT-OFFLINE (verify/RT01 7222e7e9; builder 472c2c24): F7 fixed, F1-F6 pass, explicit validAt filtering
+  intact (55 cuts), reader audit by stored data over 800 files. Open: N1 (low) journal-clock.test.ts:40 passes a nested basis that is
+  ignored; live G2/G6 (scale window, after the K01 smoke run); re-pins in contract 0.4.0 with O-REPLAY 0.5.0, Q89 (except Q89g, waiting
+  for Sam), Q90, Q92, Q95 (except S1-S4, waiting for Sam) and G03's pins. 0.4.0 starts after 0.3.14 is accepted and merged.
+- Repo-wide pack gate blocked by DuckDB TS4023 declaration errors (packages/duckdb effect-storage.ts:112, TypeDomains.ts:17), so
+  check-packages.mjs rejects the DuckDB tarball. DuckDB belongs to another team (SCOPE 4.3): do not edit it. Queued small task: give the
+  lab its own pack gate over lab-owned packages, which reports DuckDB's status separately as out of scope rather than hiding it.
+- 2026-11-09 disk rule: the triplex2 VM's disk image does not shrink when volumes are removed. `colima ssh -p triplex2 -- sudo fstrim -av`
+  returned 32.9 GiB (image 59 GiB to 26 GiB; host free 7.2 GiB to 40 GiB). Run it after any slot run that removes volumes, and whenever
+  host free space is below 15 GiB, then `docker context use colima` (memory: triplex2-docker-context). It is safe with containers running.
+- 2026-11-09 K01 round 13 (9b764517): typed catalog checks for tables the seed does not write; a diagnostic smoke run found two missing
+  imports (fixed offline); source restarts matched D/L, a fresh seed matched D'. CX-VK01 reviews; then the full live run. P5 A1 waits for
+  K01's native G0 handoff, then reruns (disk is no longer the constraint).
+- 2026-11-09 K01 round 13 ACCEPT-OFFLINE (verify/K01 88bce4f0; 511 tests; five smoke captures reproduce D/D'). Next in the scale window
+  after CX-RT01 releases xtdb-s1: the full K01 live run (LIVE runbook at 9b764517 plus the reviewer's tests), then P5 A1.
+- Queued small task (from K01 r13): lab/bin/*.mjs are not semantically type-checked, so an unbound name (sha256File) inside an unexecuted
+  branch passed 437 tests. Enable TypeScript checkJs over every lab/bin and lab/bench JavaScript file, triage the diagnostics, and fail
+  the lab check on unbound names.
+- 2026-11-09 R43 (critical path to the first PASS) adopted. First PASS candidate: NS.P3 on the broker log source (all-QLever(+log)
+  column; one closure also covers P2B's broker+XTDB column). Longest chain is the qualification machinery: R44 NS-run design, G03 rounds
+  5-7, G03 slot run, M01 A/A, A0 under PAIR-0, contract 0.4.1, calibration, prerequisite claims, three acceptance runs, verifier (about 12
+  rounds, about 16 slot hours). Orchestrator rulings Q99a-e pending; scale window reordered by Q99d: RT01 live (running), G03 slot run,
+  M01 A/A duet, OBS01, P3 screening, A0 under PAIR-0, calibration, acceptance; then K01 live, P5 A1, W02, DA04.
+- **Ask Sam first (both block every NS cell):** Q99-S1 the NS rung (largest W0 rung each composition fits on one slot; year-one reported
+  as a projection; NS.P5 scoped release stays at 100k), asked with Q94a; and the host half of Q60: may acceptance windows of 1 to 3 hours
+  pause his default colima VM (his Onboarded stack) and other heavy host jobs, since absolute bars count only in GREEN windows.
+- 2026-11-09 07:10Z goal check: all 10 agents writing (logs updated within the last minute); usage 8%; disk 29 GiB free. Gap against
+  Sam's goal ("continue all [three lanes] in parallel"): no lane D agent is running, since R43 ranked lane D off the critical path and
+  the Datomic dev slot is parked for pool memory. R43 ranks the queue, but Sam's goal keeps lane D active, so **the next free agent goes
+  to lane D**: EXP-DF01 offline (R41 E6: the gateway route GET /v1/db/{db}/log long-poll over d/tx-range, the position-to-t map per
+  Q89d, the Triplex stamp from the transaction annotation, FD01's host SQLite consumer store, resume across excision, restart resumes
+  from the log alone) built and tested against a fake report queue, with live dev-storage runs when the pool allows.
+- 2026-11-09 QNODELAY ACCEPT (verify/QNODELAY 1f59d223, scoped to R4-F1..F3; replay 120/240 vs 0/240; keep-alive default). Queued for a
+  default-off merge in the next contract after 0.3.14 (0.4.0). P5 round B (CX-P5B) starts on contract/0.3.14 with round A merged: host
+  store screening B0-B2 per R34 6, diagnostic; P5 A1 on native XTDB is demoted per R43.
+- 2026-11-09 EXP-CRNS built (2f299bfa; 145 tests incl. F1-F20 and both evaluator suites); CX-VCRNS reviewing. Queued for the next free
+  agent slot: the Opus review of CRNS's forgery list against R44 4.4, given the code and not R44's conclusions (R44 8.2 row R1).
+- 2026-11-09 CHECKJS round 2 (f72cd5ad): coverage inverted (371 checked roots, 78 justified exclusions, 116 generated outputs); one suite
+  test fails only because a comment-annotated pinned oracle helper needs re-pinning in the next contract. Queued: CX-VCHECKJS round 2
+  when a slot frees (off the critical path). Running now in its slot: the Opus forgery review of CRNS (lab/verify/CRNS-opus/).
+- 2026-11-09 M01 rebase ACCEPT (verify/M01-rebase 3a354133: 52/52, 216 paired comparisons unchanged, single-arm hard rule RED). Merges
+  default-off through contract 0.4.0. **Contract 0.4.0 queue:** RT01 round A (after live G2/G6), O-REPLAY 0.5.0, FD01, QNODELAY, M01
+  rebase, CHECKJS re-pins (three oracle helpers, comment-only), P3M when NSR lands, G03's isolation pins; compile Q89 (minus g), Q90,
+  Q92, Q95 (minus S), Q98a-i. Q99, Q100, Q101 stay pending until R43's 0.4.1. CX-G03 builds the V1-V7 VM probes now and runs them when
+  the exclusive slot frees.
+- 2026-11-09 CHECKJS ACCEPT (verify/CHECKJS d4b0caa9; coverage inverted; 78 exclusions audited). Joins the 0.4.0 queue with its
+  comment-only oracle re-pins. CX-PACK started: a lab-owned pack gate that reports the out-of-scope DuckDB package separately, and the cause
+  of the unbuilt-CLI pack failure seen by NSR and DF01.
+- 2026-11-09 contract 0.3.14 on main (1de3e640). EXP-QH1 is unblocked but waits for R45 (host store layout), because QH1 reads H1's
+  live_rows, which R45 may change; QH1 starts on the new layout. RT01 live G6 waits for host disk above 10 GiB (7.8 GiB now).
+- 2026-11-09 EXP-PACK merged (3d9dca59; verify/PACK d4a7d225): the lab pack gate lists packages from the pnpm workspace, imports every
+  public entry point in a fresh process, and reports DuckDB as out of scope. Builders and reviewers use it instead of check-packages.mjs.
+- 2026-11-09 disk rule addition: large stores in evidence that a report has already analyzed are compressed in place (tar | zstd, verified
+  with zstd -t and a hash of the main file after extraction, original hashes in ORIGINAL-SHA256SUMS.txt, a COMPRESSED.txt note), never
+  deleted. P5B's 10k store and seed (11.8 GB) became a 372 MB archive; host free went from 6.7 to 18 GiB. P2X2's node_modules copies were
+  archived the same way. Slot queue now: RT01 live G6 (running), then DF01 live on datomic-dev (DF01 ACCEPT-OFFLINE, verify/DF01
+  c98bbff8), then the M01 A/A calibration window, OBS01, P3 screening per Q99d.
+- NSR F2 moved from in-process loader guards to a filesystem boundary (round 4): the driver's runtime layout holds only the closed
+  artifact, enforced offline with Node's permission model.
+- 2026-11-09 R46 (P4 per-core from H1): today's QH1 design is 4-5x over the 909 us CPU budget per pull; one combination reaches the bar
+  with no commit cost (compact rows clustered by owner +5.2 B/fact, one worker op per pull in one read transaction, the answer built as
+  one text by SQLite and parsed once, lean decode): 1,140-1,720 pulls per CPU second, margin 1.04-1.56x. The read-side domain check
+  (assertValueInDomain, about 1 us per row) needs an exact fast path in core, shared by all lanes. A per-subject document reaches
+  3,100-4,000 but adds 0.91 ms to commit p50: fallback arm only. **EXP-QH1 starts after HS01 lands**, on the compact layout plus the owner
+  key, with R46 section 9's gates (decomposition G0, codec G4c, fixed CPU accounting). Rulings Q105a (per-core accounting), Q105b
+  (round-tripping doubles on serialized paths) pending. Note for HS01's reviewer: check the codec with Q105b's inputs.
+- 2026-11-09 NSR ACCEPT-OFFLINE (verify/NSR-r4 bd0555df; driver isolation by filesystem layout and Node's permission model; exact output
+  grant; minimal recorded environment). G03 round 5 (the NS runner, R44 B2) started on G03 + NSR 709a18f1. R43 chain now: G03 rounds 5-7,
+  then the G03 slot run, M01 A/A, OBS01 round 6, P3 screening, A0 under PAIR-0, contract 0.4.1, calibration, acceptance.
+- 2026-11-09 CR-NS ACCEPTED for offline P2 and P3 arithmetic by both reviewers (Codex verify/CRNS 3183681b at round 3; Opus round 5 at
+  exp/CRNS-recompute 40589336, which includes the reviewer's files). Joins contract 0.4.0's next round. NS PASS still waits on qualified
+  decoders, oracles and the calibration registry (0.4.1). Contract note for 0.4.1's CS-NS manifest: the per-loop reader floor must be the
+  intended closed-loop load, not the fixture's 2 per second. **Question for Sam (low priority):** P1's read bar is p99 <= 100 ms, which
+  allows reads to bunch within 100 ms; if he wants read service spread below that, it needs a p99.9 or max read bar.
+- 2026-11-09 RT01 live round 5 (7ee171ea): M01's shared noise recorder now uses non-setuid counters (21 tests; merge note
+  live5/M01-MERGE.md; OS memory pressure is unavailable in the sandbox and is recorded as such). G2 passed again. G6 stopped on its disk
+  forecast after 500 A/A control commits, because other agents' evidence grew during the run; no B samples, no judgment. **Next RT01 G6
+  window opens when CX-P2B and CX-DI01 have finished** (the two heaviest evidence writers), with host disk above the runbook's forecast.
+- 2026-11-09 G03 round 5 (14e62764): boxed P-TINY NS smoke DIAGNOSTIC; the 1k registered run was refused by pool admission (no resident
+  parked). Round 6 (offline) merges main to restore lab/acceptance and builds the fault injector. **Slot windows, in order:** (1) RT01 G6,
+  when CX-P2B and CX-DI01 are idle; (2) G03's 1k registered run with qlever-dev parked per Q100n (authorized by the orchestrator for that
+  window; restore it after) and the observer's matched-arm overhead measurement; (3) M01 A/A calibration; then P3 screening.
+- 2026-11-09 11:37Z (Sam approved, Q106b): Sam's default colima VM (Onboarded stack, 4 CPU / 6 GiB) is STOPPED for lab quiet windows.
+  Its docker context `colima` is removed by colima on stop; the global context is `default`, never colima-triplex2. Restart with
+  `colima start` when Sam asks. Heavy processes left running are all lab work (QH1, DI01 oracles and trace, a verifier); Claude, Codex
+  and the unidentified ~/.hermes node runtime (it is running QH1's tsx) are never stopped.
+- Protocol v2 (e6c8a812): new builders are Sonnet 5.5 high via the Agent tool; Codex reviewers high; Opus planners high. Sam's decisions
+  of 2026-11-09 recorded as Q106a-g (lab/research/SAM-decisions-2026-11-09.md).
+- 2026-11-09 disk guidance for Sam (asked how much to reclaim): free 11 GiB of 460 GiB. Needs for larger datasets: the broker store at the
+  measured 509 B/fact is about 23 GB at 100k (W0 447 facts/subject) plus its seed intent log (about 24 GB at 100k per R45, compressible);
+  an XTDB 100k volume 8-20 GB (R34); the triplex2 VM disk is capped at 60 GiB and would need raising for 100k residents; evidence grows
+  about 10-20 GB per busy day before compression; the 5 GiB guard and a 10 GiB working margin. **Minimum to test 100k one lane at a time:
+  about 60 GiB free. Comfortable for 100k on several lanes plus evidence: about 150 GiB free.** Known large items outside the lab's control:
+  ~/.codex 23 GB (Codex session history), Sam's stopped default colima disk 15 GB, ~/Library 62 GB.
+- HS01 review (verify/HS01 656f8a67) FIX-FIRST on one finding (a frame over 16 MiB stalls finite retention); 51,000 read comparisons,
+  4,240 codec round trips, four recovery schedules and a fresh 1k seed passed. HS01 round 2 is the first Sonnet high builder: the retention
+  fix, byte-budget frame retention, compact base-36 ids.
+- Option to raise next (no action yet): with the default VM stopped, the Mac has 12 CPUs / 36 GiB; the triplex2 VM is 6 CPU / 12 GiB.
+  Raising it (for example 10 CPU / 24 GiB, disk 120 GiB) would fit a 256-reader duet (Q100l) and 100k residents, but it restarts the VM
+  and changes the pool sizes that slots.json pins, so it needs a contract step and a quiet moment.
+- 2026-11-09 OBS01 rounds 6-8 ACCEPT-OFFLINE (verify/OBS01-r7 cd6ac047): inode-bound watcher, refused file replacement and inverted decision
+  windows, decision versus publication stamps per Q100s. F2 (a writer with sync disabled) is closed fail-closed: the observer REFUSES live
+  durable/P3 evidence until the writer's synchronization is independently witnessed. **Open on the critical path:** a design for that
+  witness (for example the trusted broker wrapper or container setting the pragmas and attesting them, or syscall-level fsync evidence in
+  the VM). It joins G03 round 7's integration brief; an Opus design check goes first when a slot frees.
+- 2026-11-09 R47 (journal format): one journal record per transaction inside the broker is 7.6 B/fact against 213.7 for HS01's journal
+  rows; with compact ids the broker store is predicted at about 281 B/fact (1.25 GB) at 10k and 154 B/fact (6.9 GB) at 100k, passing
+  G9's 300 B by about 6%. No P3 feed reads journal content. Rulings Q107a (journal record), Q107b (lossless 16/17-byte ids), Q107c (lane D
+  feed excludes journal facts) pending. **HS01 round 3** (after the running round 2) builds Q107a and must derive both the current and
+  RT01's v2 change formats. **DF01 round 4** (Sonnet, running) fixes the lane D feed emitting journal facts; contract 0.4.0's next round
+  picks it up. **Q107-S waits for Sam:** stop storing :_tx/change and :_tx/changed-entity as queryable triples on every lane (R47 option A).
+- 2026-11-09 P2B ACCEPT-OFFLINE (verify/P2B 986e11d1; exp/P2B-xtdb-behind-broker e9f0014b): duplicates gated on publication, bounded reader
+  snapshots (WAL bounded with typed refusal and recovery). Joins contract 0.4.0's next round together with HS01 (after its round 2/3) and
+  CRNS. P2 latency is measured next in the VM through G03's NS runner with the R48 sync witness (Q108b: ACK >= D).
+- 2026-11-09 contract 0.4.0 review FIX-FIRST (verify/A01-040 4d487ce5; evaluator 108/108 on head and on the Q87 merge): stale O-CONTRACT
+  runner pin after DF01; G0 does not bind W0's build. Round 2 (Sonnet) is fixes only plus a main merge. **Next contract (0.4.1) queue:**
+  P2B (verify/P2B 986e11d1), CR-NS (both reviewers ACCEPT; 40589336), DF01 round 4 (if accepted), HS01 rounds 2-3, RT01 (after G6),
+  G03 rounds 5-7, OBS01 rounds 6-9, plus R43-a's qualification pins and the Sam-approved rulings Q106a-g.
+- 2026-11-09 12:15Z disk fell to 4.2 GiB (below the 5 GiB floor) from builder evidence (QH1-R2, HS01 R2, P2B, QH1). lab/bin/compress-evidence.sh
+  (compress settled evidence over 20 MB, hash-verified, originals' hashes kept) restored 12 GiB. **Run it every hourly pass and before
+  every slot window.** Sam has the reclaim guidance (60 GiB minimum for 100k one lane at a time, 150 GiB comfortable).
+- 2026-11-09 OBS01 round 9 (3403e187, Sonnet): the R48 sync witness built offline (bpftrace program, strict sync-witness/1 parser, D rule,
+  seven refusal codes, eleven planted writers; 32 Python + 13 Node tests; 3,000 fuzz mutations refuse cleanly). The VM probe window
+  W0-W3 did NOT run: the triplex2 VM has no bpftrace, and a digest-pinned bpftrace image (or package) is a download that needs Sam's
+  explicit approval (asked 2026-11-09). In review (CX-VOBS6 round 3, offline).
+- 2026-11-09 CX-VOBS6 round 3 stopped on the Codex content filter (second time, after CX-VNSR round 4): kernel tracing plus "find a trace
+  a candidate could shape" reads as offensive security. Nothing was written (worktree clean). Relaunched fresh as CX-VOBS7 with
+  correctness-only wording (seven numbered judge properties plus edge-case fixtures). Rule for reviewer briefs on observer/witness code:
+  frame it as a durability measurement tool for our own test database and list concrete correctness properties and fixtures; avoid
+  attacker, evade, shape, spoof wording. agent.mjs launch with --worktree also needs --branch.
+- 2026-11-09 contract 0.4.0 round 2 (Sonnet, contract/0.4.0 35cb04b5; gates on committed a2b1271f): F1 fixed (runner hashes computed after
+  every assignment, checks_pin_OCONTRACT fails closed, 7 new mutations, per-hunk repin review: Datomic imageId only), F2 fixed (gate.mjs
+  buildPackages adds w0 to G0; reviewer's empty-dist case passes; W0 dist hashes match the reviewer's build). Main 1c2ee46f merged; 98
+  pending ids kept. --verify byte-identical, contract tests 16/16, mutations 41/41, evaluator 108/108, pack PASS, G0 xtdb 1289, datomic
+  1344, qlever 1513. Q45a: the re-pin landed in a853fe42, not the earlier DF01 merge f3ed6211. Orchestrator decision: do not rewrite
+  history; the reviewer confirms nothing relied on was produced in between, and the gap is recorded as a defect. In review (CX-VA01-040 r2).
+- 2026-11-09 DF01 round 4 ACCEPT-OFFLINE (verify/DF01 66033e57, CX-VDF01): the lane D feed excludes typed journal facts by their own
+  assertion tx id and keeps all facts for positions and tx ids. 11 shared fixtures pass on broker (real HostLog), P2X (real writer and
+  decoder, fake SQL client) and real Datomic 1.0.7745 mem (88 assertions); core refuses user writes of type _Transaction on every write
+  path. Open edge: facts written before :f/entity-type existed are not classified as journal facts. Orchestrator decision: lab stores are
+  always created with the full schema, so 0.4.1 states "fresh stores only" under Q107c rather than adding a legacy-journal rule. DF01
+  joins contract 0.4.1 at 302a7a63 with the verify branch.
+- 2026-11-09 R49 (bpftrace source) committed. Recommendation: local image from ubuntu:24.04 arm64 digest plus pinned bpftrace 0.20.2 and
+  LLVM 18 .debs (about 90 MB, Ubuntu-signed). Asked Sam to approve that download. OBS01 round 10 (after CX-VOBS7): nsecs -> nsecs(monotonic),
+  the four W0 checks from R49, and a W0 clock comparison against the observer's CLOCK_MONOTONIC.
+- 2026-11-09 OBS01 round 9 review FIX-FIRST (CX-VOBS7, 44217f95 on the branch): F1 split marker/frame publication skips U >= D and
+  labels the position with the wrong D; F2 an early witness detach is accepted; F3 W1 ignores global refusals; F4 W3 misses a whole
+  CPU's lost records; F5 syncfs uses syscall bounds as an exact D. Orchestrator decision on F5: syncfs uses an interval [D_lower,
+  D_upper]; durability is granted at D_upper; violations only below D_lower; in between is a new refusal DURABILITY-UNPROVEN. File
+  syncs keep R48's exact rule. OBS01 round 10 (Sonnet) fixes F1-F5, the R49 nsecs(monotonic) clock bug, R49's W0 checks, and adds the
+  image Dockerfile unbuilt (pull waits for Sam).
+- 2026-11-09 QH1 round 2 (173831eb, Sonnet, measurement only): round 1 3,122 us/pull (320/CPU-s), R46 shape with all fields 1,248 (801),
+  bar 1,100. QH1 round 3 (Sonnet) builds the five ranked changes with O-REPLAY 100k equality, RQ01, P2 ratio <= 1.10x gates per step and
+  an explicit REAL-value round-trip test (Q105b). Round 2 itself not separately reviewed (measurement only); round 3 gets the review.

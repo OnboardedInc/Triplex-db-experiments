@@ -1,0 +1,21 @@
+{
+  "classification": "descriptive pin inventory",
+  "pins": [
+    {
+      "contractFile": "lab/acceptance/obligations.json",
+      "location": "/caseSets/CS-ENTRY/pinnedSourceFiles/1",
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "pinnedSha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "oldSha256": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "newSha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+    },
+    {
+      "contractFile": "lab/acceptance/obligations.json",
+      "location": "/caseSourcesPinned/CS-ENTRY/1",
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "pinnedSha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "oldSha256": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "newSha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
+    }
+  ]
+}

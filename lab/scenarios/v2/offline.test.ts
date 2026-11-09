@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
+import { latencyReceipt } from '../../receipts/latency.mjs';
 import { W0 } from '../../bench/lib/w0-world.ts';
 import { generateScenario, generatorIdentity } from './generate.ts';
 import { specs } from './expect.ts';
@@ -74,10 +76,11 @@ test('domain claim rejects prose, wrong content, stale run and missing named cla
   const missing = ctx(); requireDomainClaims(missing); assert.equal(missing.checks[0].ok, false);
 });
 test('qualification refuses legacy world, old contract and delta-only QLever', () => {
-  assert(gsRefusals({ lane: 'xtdb', scenarios: [] }, '0.3.12').length >= 3);
-  const r = { lane: 'qlever', generator: 'W02/1', world: { admission: { status: 'MATCHING' }, countsStart: {}, countsEnd: {} },
+  const receiptPath = (value: any) => { const file = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'gs-r5-')), 'receipt.json'); fs.writeFileSync(file, JSON.stringify(latencyReceipt({ format: 'tx2-gs-run/2', elapsedMs: 0, ...value }))); return file; };
+  assert(gsRefusals(receiptPath({ lane: 'xtdb', qleverConnectionMode: null, scenarios: [] }), '0.3.12').length >= 3);
+  const r = { lane: 'qlever', qleverConnectionMode: 'keep-alive', generator: 'W02/1', world: { admission: { status: 'MATCHING' }, countsStart: {}, countsEnd: {} },
     qlever: { commitPath: 'broker', brokerDirectory: '/owned', baseTriples: 1, deltaTriples: 100 }, scenarios: [] };
-  assert(gsRefusals(r, '0.4.0').some((s: string) => s.startsWith('Q91a')));
+  assert(gsRefusals(receiptPath(r), '0.4.0').some((s: string) => s.startsWith('Q91a')));
 });
 test('QLever broker path is explicit, owned and selected', () => {
   const dir = new URL('runs/', root).pathname;

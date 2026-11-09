@@ -1,0 +1,12 @@
+{
+  "start": "2026-11-09T07:53:42.792Z",
+  "end": "2026-11-09T07:54:15.588Z",
+  "args": [
+    "--test",
+    "lab/bin/test/checkjs.test.mjs"
+  ],
+  "env": {},
+  "status": 0,
+  "signal": null,
+  "error": null
+}

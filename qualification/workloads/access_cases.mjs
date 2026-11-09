@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from 'node:assert/strict';
 
 export const accessWorkloads=['11','12'];

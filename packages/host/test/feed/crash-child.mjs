@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: FD01 crash fixture uses runtime hook messages; binding names remain checked. Rejected: excluding an executable test helper.
 import { registerHooks } from "node:module";
 import { splitTransaction } from "../../../../lab/experiments/EXP-FD01/round2/reviewer-probes/mutate.mjs";
 import { DatabaseSync } from "node:sqlite";

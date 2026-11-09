@@ -1,3 +1,5 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { makeQleverClient } from "../src/QleverClient.js";
@@ -28,6 +30,6 @@ const results = await Promise.all(
 const path = `qualification/evidence/qlever-boundary-shapes-${run}.json`;
 await writeFile(
   path,
-  JSON.stringify({ run, expected: numericOrderKey(300), results }, null, 2) + "\n",
+  JSON.stringify(qleverLatencyReceipt({ qleverConnectionMode: qleverConnectionModeOf(), run, expected: numericOrderKey(300), results }), null, 2) + "\n",
 );
-console.log(path, JSON.stringify(results, null, 2));
+console.log(path, JSON.stringify(qleverLatencyReceipt({ qleverConnectionMode: qleverConnectionModeOf(), results }), null, 2));

@@ -1,0 +1,394 @@
+[
+  {
+    "label": "ack-coverage",
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "--config",
+      "lab/verify/INT-Q/vitest.config.ts"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:34:29.453Z",
+    "end": "2026-11-09T05:34:31.013Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 6694998016,
+    "result": {
+      "code": 1,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/ack-coverage-29e13741-1bf5-4486-9d73-cc40273728e0/receipt.json",
+    "receiptSha256": "0a8c64dd50c7ebe0ae3c2ede6bb360a73becd0920747d1b1146de4384b2cdf36",
+    "logSha256": "30b73fb455ae28accbc6b1e54b3a5dacaf2975d8d9e0acc036b8dc5028305cee",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "ack-coverage-fixed",
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "--config",
+      "lab/verify/INT-Q/vitest.config.ts"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:34:50.978Z",
+    "end": "2026-11-09T05:34:53.906Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7336165376,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/ack-coverage-fixed-e2720199-7aba-44b0-8b7d-3413c7816937/receipt.json",
+    "receiptSha256": "a947780e861fcee86571b69e60d65141771ff790a9c83a17a21ee56fe04c1562",
+    "logSha256": "de7f495756c06c822c595a86235bbefc4b6faf601708ff6331e72daf7a1f9ed3",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "build",
+    "argv": [
+      "node",
+      "lab/verify/INT-Q/tools/package/bin/pnpm.cjs",
+      "--store-dir",
+      "/Users/sam/projects/triplex-db-2/.pnpm-store",
+      "--filter",
+      "@triplex-build/triplex",
+      "--filter",
+      "@triplex-build/triplex-testkit",
+      "--filter",
+      "@triplex-build/triplex-qlever",
+      "build"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:29:11.420Z",
+    "end": "2026-11-09T05:29:11.639Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7906320384,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/build-c088aba1-22ff-46a7-ad71-d1172ec0d16c/receipt.json",
+    "receiptSha256": "892f4d2916b4e6aad92404a09fb78824c810866ffc923ee4b81dd306624d6857",
+    "logSha256": "f0e31254e75964566e8121e235c7adb6d0cd4136583fc66a9f491bd5434594e1",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "build-fixed",
+    "argv": [
+      "node",
+      "lab/verify/INT-Q/tools/package/bin/pnpm.cjs",
+      "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+      "--filter",
+      "@triplex-build/triplex",
+      "--filter",
+      "@triplex-build/triplex-testkit",
+      "--filter",
+      "@triplex-build/triplex-qlever",
+      "run",
+      "build"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:29:40.118Z",
+    "end": "2026-11-09T05:29:47.456Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7882899456,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/build-fixed-c1512cbf-0de9-4da1-8895-a9df3d4eb910/receipt.json",
+    "receiptSha256": "25718fee53ba08664314e62ca9cca121b86d97e2fc20e23a5a485b079ecfc44c",
+    "logSha256": "486e86dc1318c836b5ed4546a8ca75fb998f1cdf85034245e98fbd0e5cfdf9db",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "contract",
+    "argv": [
+      "python3",
+      "lab/acceptance/build_contract.py",
+      "--verify"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:36:06.217Z",
+    "end": "2026-11-09T05:36:06.799Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7300370432,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/contract-cb2c548f-b681-4926-b83d-f6329014b35c/receipt.json",
+    "receiptSha256": "a37d743e650ef48202c5e4d817ff08a487354cf69c7bfb320b92fffcd42d62a9",
+    "logSha256": "4b1ad8b60b10ea0137f509af0494690a11fcb53c05b07d759585577b52d1e771",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "extra-routes",
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "--config",
+      "lab/verify/INT-Q/vitest.config.ts"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:31:49.150Z",
+    "end": "2026-11-09T05:32:41.554Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7458922496,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/extra-routes-6aa2374a-9fa5-445c-8760-0da9269804e0/receipt.json",
+    "receiptSha256": "769730b0dedf0a56a79b6f1447da1d1f756d20d21bb46f1d2fa37faf9638ed50",
+    "logSha256": "b1a93084ccecd08fae75c94de1351b5920a122f051da8b9cba35196a68e3c8ce",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "live",
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "--root",
+      "packages/qlever",
+      "test/broker-qlever.test.ts"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:31:03.444Z",
+    "end": "2026-11-09T05:32:38.013Z",
+    "node": "v22.23.2",
+    "endpoint": "http://127.0.0.1:7070",
+    "freeBytes": 7685877760,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/live-086337a2-798c-477e-939e-2afb4f2d8f6a/receipt.json",
+    "receiptSha256": "3083d6eca012a027f20e8a5d7a59ae165609d3794ba05b0f02d564462b1a6b66",
+    "logSha256": "64ed4479f52a49009ed1118cce50ea8deb5145009919b8e2bdb42e6cbe428313",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "p2q",
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "--config",
+      "lab/verify/P2Q/vitest.config.ts",
+      "--exclude",
+      "**/live/**",
+      "--exclude",
+      "**/check1-*",
+      "--exclude",
+      "**/check2-ack*",
+      "--exclude",
+      "**/check4-feed*",
+      "--exclude",
+      "**/round10-types*",
+      "--exclude",
+      "**/round10-public-type*",
+      "-t",
+      "^(?!.*a burned LSN)"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:31:02.840Z",
+    "end": "2026-11-09T05:34:40.279Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7686287360,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/p2q-6b6e3a00-ac5f-44cb-b68f-0801b1104ac1/receipt.json",
+    "receiptSha256": "8bcaa24ccd342e498e142d06f791682b12bd770053160ca85f21cd2ae468a5d0",
+    "logSha256": "dbb1551c8c6d8fbbb9de11694dea9eff167a45c210401faa6db716c5e2dec875",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "p2q-storage",
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "--config",
+      "lab/verify/P2Q/vitest.config.ts",
+      "check2-ack.test.ts",
+      "check4-feed.test.ts",
+      "check5-q31c.test.ts",
+      "-t",
+      "sequential resend|two transactions that read|100 crashes per variant|nested transacts|rejects|ordinal"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:35:19.536Z",
+    "end": "2026-11-09T05:35:27.326Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7326035968,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/p2q-storage-b1c55d10-4b14-4159-af07-d93048c5fb7f/receipt.json",
+    "receiptSha256": "07b9a4f88eaa212fb976c277e15b624ea51533ec327637407ec4e468c763ef2f",
+    "logSha256": "3f1480af7b3615ddc00d2245181a94d81a858ec2b9caef89ce32ead7b5d8b59f",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "package",
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "--root",
+      "packages/qlever"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:29:40.257Z",
+    "end": "2026-11-09T05:30:27.029Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7882940416,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/package-dcb8f662-ce82-4df5-8053-ed13481d1d3a/receipt.json",
+    "receiptSha256": "69ee9021a41ee4a30393310c25d22f88e39f69befc6b3d3edb3384ae190e6ecb",
+    "logSha256": "e4ec736577e21e9198feca9d798e73527fe05cbf0fdbdb36fc346eb62f0c55dc",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "process-stops",
+    "argv": [
+      "node",
+      "lab/verify/SQL01/kill.mjs"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:33:14.495Z",
+    "end": "2026-11-09T05:34:16.855Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7121096704,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/process-stops-c05cb74c-835a-4f09-8ef7-5cb7b70d993b/receipt.json",
+    "receiptSha256": "d5eee3601e1db1729fcb732cae819aced555d038101e67fe95d5874663910904",
+    "logSha256": "5ca4f6c53b556f3fce9ce910b525405ff28bf1fbfcb23eb4a9e5b09394bb1ab3",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "reviewer-final",
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "--config",
+      "lab/verify/INT-Q/vitest.config.ts"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:36:26.140Z",
+    "end": "2026-11-09T05:36:36.798Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7285874688,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/reviewer-final-044cf136-55f8-411d-9110-efd888dbd05f/receipt.json",
+    "receiptSha256": "184423922215884c7d10820c17a615f878839b4bff25003e30cdec9bd5c2ba34",
+    "logSha256": "95bc5d18fcf153bca0f75ebc681ec39d495b86aa00023a6fb3b2e0abebca1f55",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "route",
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "--root",
+      "packages/qlever",
+      "test/h1-route-equivalence.test.ts"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:30:16.754Z",
+    "end": "2026-11-09T05:30:19.904Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7802728448,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/route-e4aac50c-0296-42e9-ba84-e7117b29c2ca/receipt.json",
+    "receiptSha256": "325b4bd2b6e5fe4dd527960f0f48960c0f131d1921a257f3ca0e442605c506b7",
+    "logSha256": "9f9e0c1a63d9ea2d42bec13e26b83f7d690e8295f0de1c6865c835a05c618ef9",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "sql01",
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "--config",
+      "lab/verify/SQL01/vitest.config.ts"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:31:02.840Z",
+    "end": "2026-11-09T05:33:21.086Z",
+    "node": "v22.23.2",
+    "endpoint": "http://127.0.0.1:7070",
+    "freeBytes": 7686287360,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/sql01-99012f62-e70a-43a8-bd18-85e441f45e88/receipt.json",
+    "receiptSha256": "02bf9cf488b053cd6e8593523aa9772ac725ae47d1ebb26e4bfd577a392ab7d7",
+    "logSha256": "20ba6ea0dee7003a489cc097af6c1b213145bc12a49a12057d7f7547006da766",
+    "currentInputsMatch": true
+  },
+  {
+    "label": "testkit",
+    "argv": [
+      "node_modules/.bin/vitest",
+      "run",
+      "--root",
+      "packages/testkit"
+    ],
+    "head": "3c2e4b833f96e765ca1195810c1173982d54a4f6",
+    "start": "2026-11-09T05:35:19.689Z",
+    "end": "2026-11-09T05:36:04.065Z",
+    "node": "v22.23.2",
+    "endpoint": null,
+    "freeBytes": 7326081024,
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceUnchanged": true,
+    "receipt": "raw/lab/verify/INT-Q/output/testkit-e713f20e-7684-41a7-8539-350de5d74bb7/receipt.json",
+    "receiptSha256": "8eda99478c615e979de33e9504ebb05bb4911fbc782f5632f6aa4dddc00022e4",
+    "logSha256": "5e686ea2b95aa37848f60b5b7cfc3f29e264584c5275b24760302906e39eb872",
+    "currentInputsMatch": true
+  }
+]

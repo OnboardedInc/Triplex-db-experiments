@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-built or optional package modules absent from this standalone project. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Metadata/preimage preparation only. Does not import the oracle or tests. */
 import assert from 'node:assert/strict';
 import path from 'node:path';

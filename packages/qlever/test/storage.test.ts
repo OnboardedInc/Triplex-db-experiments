@@ -65,9 +65,9 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")(
             commandId = `values:${randomUUID()}`;
           const values = [
             number(1.0000000000000002),
-            integer("9223372036854775807"),
-            integer("-9223372036854775808"),
-            string("9223372036854775807"),
+            integer("576460752303423487"),
+            integer("-576460752303423488"),
+            string("576460752303423487"),
             json({ b: 2, a: 1 }),
             blob("sha256:fixture", "text/plain", 0, ""),
           ];

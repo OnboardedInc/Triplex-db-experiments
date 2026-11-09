@@ -1,0 +1,49 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 48236 "CX-NSR-G0-3", pid 20247 "CX-DI01-final-r5", pid 72811 "CX-DF01-G0-r3", pid 48250 "G0-qlever-20261109T073657Z-30e916 vitest-testkit"
+[lab] heavy: waiting for one of 4 slots; held by pid 48236 "CX-NSR-G0-3", pid 20247 "CX-DI01-final-r5", pid 72811 "CX-DF01-G0-r3", pid 73727 "CX-P2B-R3-build5e"
+[lab] heavy: waiting for one of 4 slots; held by pid 48236 "CX-NSR-G0-3", pid 20247 "CX-DI01-final-r5", pid 72811 "CX-DF01-G0-r3", pid 73727 "CX-P2B-R3-build5e"
+[lab] heavy: waiting for one of 4 slots; held by pid 48236 "CX-NSR-G0-3", pid 20247 "CX-DI01-final-r5", pid 72811 "CX-DF01-G0-r3", pid 73727 "CX-P2B-R3-build5e"
+Scope: all 25 workspace projects
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +605
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 605, reused 599, downloaded 0, added 124
+Progress: resolved 605, reused 599, downloaded 0, added 315
+Progress: resolved 605, reused 600, downloaded 0, added 564
+Progress: resolved 605, reused 600, downloaded 0, added 604
+Progress: resolved 605, reused 600, downloaded 0, added 605
+Progress: resolved 605, reused 600, downloaded 0, added 605, done
+
+devDependencies:
++ @changesets/cli 3.0.1
++ @effect/platform-browser 4.0.3
++ @effect/platform-node 4.0.3
++ @foldkit/ui 0.168.0
++ @fontsource-variable/ibm-plex-sans 5.3.0
++ @fontsource/ibm-plex-mono 5.3.0
++ @playwright/test 1.63.0
++ @tailwindcss/vite 4.3.3
++ @types/node 25.9.1
++ alchemy 2.0.0-beta.80
++ effect 4.0.3
++ foldkit 0.168.0
++ oxfmt 0.44.0
++ oxlint 1.59.0
++ tailwindcss 4.3.3
++ tsdown 0.21.7
++ tsx 4.19.0
++ turbo 2.8.20
++ typescript 6.0.2
++ vitepress 2.0.0-alpha.18
++ vitest 5.0.4
++ vue 3.5.40
+
+╭ Warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Ignored build scripts: cpu-features, foundationdb, protobufjs, ssh2.       │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+│   to run scripts.                                                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Done in 18.4s using pnpm v10.11.0
