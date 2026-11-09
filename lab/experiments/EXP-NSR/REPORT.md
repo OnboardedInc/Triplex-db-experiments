@@ -219,3 +219,122 @@ Changed contract-pinned paths: **none**, enumerated in `round2/pin-changes.json`
 Actual Linux tmpfs/device startup, race-free new-file reservation, hardened VM wiring and native providers remain
 unverified. P3M still has no newer head than d523f632 at the final check. These checks are builder evidence for the
 three review fixes, awaiting independent review, with no NS qualification/promotion claim.
+
+## Round 3 — closed executable artifact and complete storage-device checks
+
+Review: `verify/NSR` at `7173e1c1`, reviewing `76e6efd0`. F1 remains closed. North star: trustworthy P1–P5 driver
+execution and durability evidence, under `lab/SCOPE.md`, `lab/NORTH-STAR.md`, `lab/TARGETS.md`. Round 3 supersedes
+round 2's claim that reflective loader spellings were closed by its AST checker.
+
+### F2: implementation
+
+The loader-name blacklist is removed. `compile.mjs` invokes the already installed, lockfile-pinned **esbuild
+0.23.1** dependency of tsx. Its actual resolved `metafile.inputs` define the source graph; every input is
+realpath-checked and any `packages/` or outside-root file fails the build. Exactly one JavaScript output is
+required, with only explicitly enumerated Node builtin externals. `checkImports` is now a compatibility wrapper
+around this bundler graph, not a hand-built AST graph. Unresolved computed/reflective loading is a runtime
+refusal, rather than a static-name claim.
+
+`buildDriver` emits **one executable `driver.mjs`**, the raw bundler `metafile.json`, manifest, and two separate
+trusted enforcement/bootstrap scripts. `ns-driver-bundle/2` records the actual artifact SHA256, source hashes,
+metafile SHA256, bundler version and hashes of those support scripts. The driver artifact from the final
+review-probe attempt is `ae4dccc256283d8d3078016f5efaa80b8dcaaf8c1869fb84747c6705882761f0`.
+No source files are imported from a copied repository tree at runtime.
+
+The generated `launch-artifact.mjs` verifies the artifact, mandatory support scripts, raw metafile hash and
+external-module inventory. It starts Node 24 with **`--permission`, no child-process or worker permission**,
+exact artifact/config/key read grants and driver-output-only writes. The mandatory synchronous
+`module.registerHooks` guard permits only the hash-checked single executable file and the builtin imports
+listed by the bundler. File/data modules outside that runtime graph are refused, including imports produced
+by destructured/aliased Function constructors. The guard verifies itself and the executable again in the
+restricted process. The direct source runner refuses execution without the guard; HR `driver-runtime` records
+the actual artifact hash and permission state.
+
+On macOS the trusted launcher obtains boot identity before starting the restricted child and passes it as
+data, preserving the clock domain without granting subprocess creation to the driver. Inputs/output must use
+canonical, separate paths. The launcher refuses lexically overlapping file/directory grants, rather than
+broadening filesystem access. In the VM the artifact/bootstrap volume must remain evaluator-owned/read-only;
+this is a trusted-driver execution policy, not a claim to sandbox arbitrary hostile operator-supplied code.
+
+### F3: implementation
+
+After realpath, the guard checks the **directory, existing main database, WAL, SHM, journal and lock file**.
+Each path gets its own filesystem, most-specific mount, barrier-policy and actual `stat.dev` observation.
+All must match the directory's device, inode-device value and mount ID. Volatile filesystems, disabled barriers,
+unknown layouts and **all separate file mounts** are refused before calibration, even when both filesystems
+are ext4 or the file mount is on the same device. This conservative private-volume layout avoids calibrating
+an unrelated parent device. The newly opened probe descriptor is also checked with `fstat.dev` and its resolved
+mount before any measured fsync. Returned observations include `storagePaths` and `calibrationDevice`.
+
+The review's fixed-device DB EIO case and nobarrier WAL case now fail before any calibration fsync. The direct
+EIO and direct-WAL controls remain active. Additional controls cover SHM cross-device placement, same-device
+file mounts, volatile directories, actual durable hard links, tmpfs file mounts and original symlink cases.
+These are modeled Linux probes over real Mac files. No actual Linux mount/device qualification is inferred.
+Existing path-replacement/new-file reservation limitations remain; this round does not claim a race-free
+SQLite descriptor handoff.
+
+### Fresh round 3 checks and retained attempts
+
+Durable evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-NSR/round3/`.
+The exact reviewer sources are copied under `round3/` beside this report. Adapted executable controls live in
+`lab/verify/NSR/round3/artifact-controls.mjs`; the modeled mount regressions are
+`packages/host/test/feed/nsr-mounts.test.ts`. The runtime controls are included in `nsr.test.mjs`, so G0's existing
+NSR test entry exercises them automatically.
+
+| Check                                              | Fresh builder result                                                                                                                                     | Evidence                                                                           |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Changed host build plus declarations               | Passed                                                                                                                                                   | `attempt-2.log`                                                                    |
+| Clock / target / full mount-device source controls | **9 passed, 0 failed**                                                                                                                                   | `attempt-3.log`, `mount-controls-3/`                                               |
+| Runtime artifact controls                          | One resolved candidate input refused by bundler; eight executable loader variants refused at runtime; normal artifact loads and altered artifact refused | `final-binding.log`, `final-probes-2/`; ten controls also rerun by final NSR suite |
+| Guarded NSR/P3M regression suite                   | **14 passed, 0 failed**                                                                                                                                  | `final-regressions.log`, `final-nsr-3/`, `final-p3m-3/`                            |
+| F1 preservation                                    | Equal canonical answers across IDs; unsampled loop-1 mutation rejected by independent recomputation; separate raw-wire hashes                            | `final-binding.log`, retained normal HR/captures under `final-probes-2/`           |
+| Artifact/metafile/bootstrap and source readback    | Byte hashes match final executed artifact, raw bundler metadata, support scripts and current source                                                      | `source-hashes.json`                                                               |
+| Formatting / lint                                  | Passed for changed implementation/test files                                                                                                             | Builder invocation                                                                 |
+
+Retained first attempts are not relabeled: `host-1.log` had 8 passes and one failure because mountinfo was read
+before typed tmpfs refusal on the Mac mock; the volatile-filesystem check now runs first. `artifact-1.log` and
+`attempt-2.log` exposed output-directory read denial in Node 24 when a `<uuid>.key` file grant overlapped an
+output directory named `<uuid>`. A wildcard did not repair that overlap. The fixture key is now `key-<uuid>`;
+the launcher checks for and refuses overlapping input/output grants without granting their shared parent.
+`attempt-3.log` then passed normal execution, 12 earlier regressions and all nine source controls.
+`final-runtime.log` passed 13 tests including direct-source refusal; `final-binding.log` adds artifact/metafile
+and support-file binding checks. `final-regressions.log` passes all 14 after adding those executable controls to
+the normal NSR suite. Each attempt uses fresh directories and retains its original outcome.
+
+No full G0 or package-consumer/release run was repeated. The older 1220-test G0 remains historical. No engine
+slot, Docker operation, network service outside fixture TCP endpoints, deployment, merge or push. Actual Linux
+permission/clock startup and mount calibration, hardened VM wiring and native providers remain unverified.
+
+### Round 3 PASS / verdict / receipt audit
+
+1. **`compileDriver` / `checkImports`:** the graph comes from the bundler's actual metafile, not inferred call
+   names. Resolved input realpaths and output imports are checked; observed source/output bytes are hashed in
+   this invocation. The manifest binds actual executable bytes and compiler version. No static claim is made
+   that reflective/computed source has been enumerated: the restricted runtime handles that case.
+2. **`buildDriver`:** a fresh exclusive output directory and files prevent stale artifact adoption. Actual code,
+   raw metadata and copied bootstrap bytes determine the hashes; final readback compares executed artifacts
+   with their manifest and current source. This is artifact eligibility, not semantic NS acceptance.
+3. **`launchArtifact` / runtime guard:** actual manifest, artifact, metadata and support bytes must match before
+   a fresh child starts. The child verifies native permission state, its guard and entry bytes; each runtime
+   resolution/load is checked against the artifact/builtin graph. Kernel permission checks block workers,
+   children and outside-file reads. Exit zero means execution completed, not that NS semantics passed.
+4. **HR runtime observation:** the guard installs an immutable artifact-hash observation in the fresh process;
+   the driver records it with actual child/worker permission observations in the existing HMAC-bound run
+   events. The supplied source/input/slot tuple is still evaluator-owned; this does not invent an engine slot
+   or turn a DIAGNOSTIC result into acceptance.
+5. **Storage admission:** content checks cover each resolved existing storage path's filesystem/device/mount
+   and barriers, then the actual probe descriptor/device before fsync. Observations are made at this startup;
+   paths, roles and calibration device are returned. Modeled Linux tests explicitly keep their mocked status,
+   and do not assert physical power-loss safety or a race-free subsequent SQLite open.
+6. **Review regressions / canonical recomputation:** fresh UUID fixtures contain real candidate files and a
+   writable marker destination; the bundler or actual restricted run refuses them with the expected graph/
+   permission error and no marker. An intact artifact executes, then changed executable bytes are refused.
+   Independent expected answer bytes still reject the unsampled changed read using full retained request keys.
+   Each result binds fresh paths, artifact digest and explicit offline-no-slot inputs; no NS PASS is emitted.
+7. **Evidence retention:** `source-hashes.json` compares current source, compiler output, metafile and support
+   bytes to the completed attempts. Round 3 SHA256SUMS is generated from retained bytes and read back; this
+   asserts preservation only. Earlier failures and diagnostic P3M receipts retain their original status.
+
+Changed contract-pinned paths: **none** (`round3/pin-changes.json`). `lab/acceptance/` is unchanged; no frozen
+DRIVER_PIN is invented. Downstream runner integration must use manifest v2's generated launcher rather than
+invoke the source or copied entry directly. Independent review of these fixes remains required.

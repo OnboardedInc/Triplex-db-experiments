@@ -16,13 +16,25 @@ import {
   lineReceiver,
 } from "../ns-driver/rpc.mjs";
 import { checkImports } from "../ns-driver/check-imports.mjs";
-import { generateTrace, readerLevel, runNS } from "../ns-driver/driver.mjs";
+import { generateTrace, readerLevel } from "../ns-driver/driver.mjs";
 import { Events } from "../ns-driver/events.mjs";
 import { runP3 } from "../p3-driver.mjs";
 import { auditP3 } from "../ns-driver/p3.mjs";
 import { host } from "../lib/p3.mjs";
-const dir = process.env.NSR_EVIDENCE ?? fs.mkdtempSync(path.join(os.tmpdir(), "NSR-"));
+import { buildDriver } from "../ns-driver/build.mjs";
+import { launchArtifact } from "../ns-driver/launch-artifact.mjs";
+const dir =
+  process.env.NSR_EVIDENCE ?? fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "NSR-")));
 fs.mkdirSync(dir, { recursive: true });
+async function runNS(config) {
+  const artifact = path.join(dir, "artifact-" + randomUUID());
+  buildDriver(artifact);
+  const file = path.join(dir, "config-" + randomUUID() + ".json");
+  fs.writeFileSync(file, JSON.stringify(config));
+  const result = await launchArtifact(artifact, file);
+  assert.equal(result.code, 0, result.stderr);
+  return JSON.parse(result.stdout.trim().split("\n").at(-1));
+}
 const provider = path.resolve("lab/bench/test/fixtures/ns-provider.mjs");
 async function service(role, c) {
   const file = path.join(dir, `${role}-${randomUUID()}.json`);
@@ -68,7 +80,7 @@ async function service(role, c) {
     },
   };
 }
-test("NSR: trusted closure includes P3 audit and excludes packages; candidate and computed imports refused", () => {
+test("NSR: bundler closure includes P3 audit and excludes resolved candidate files", () => {
   const entries = ["driver.mjs", "p3.mjs"];
   const result = entries.map((x) => checkImports(path.resolve("lab/bench/ns-driver", x)));
   assert.ok(result.every((r) => Object.keys(r.files).every((x) => !x.startsWith("packages/"))));
@@ -76,7 +88,8 @@ test("NSR: trusted closure includes P3 audit and excludes packages; candidate an
   fs.writeFileSync(file, 'import "./packages/candidate.mjs";');
   assert.throws(() => checkImports(file, dir));
   fs.writeFileSync(file, "import(process.argv[2]);");
-  assert.throws(() => checkImports(file, dir), /dynamic/);
+  const computed = checkImports(file, dir);
+  assert.equal(Object.keys(computed.files).length, 1); // Runtime refusal is exercised by the executable round 3 controls.
   fs.writeFileSync(path.join(dir, "import-graph.json"), JSON.stringify(result, null, 2));
 });
 test("NSR: RPC malformed, depth, UTF8, request/response byte caps and binding fail closed", async () => {
@@ -360,4 +373,17 @@ test("NSR round2: canonical answer encoding and request keys", async () => {
     readEvidence(request, { rows: [1] }, Buffer.from("{}"), { loop: 7, sequence: 0, every: 16 })
       .sampled,
   );
+});
+
+// [EXP-NSR-R3] Why: raw source execution must not silently emit trusted driver evidence. Rejected: treating the guarded launcher as optional documentation.
+test("NSR round3: source runner refuses execution without artifact guard", async () => {
+  const { runNS: sourceRun } = await import("../ns-driver/driver.mjs");
+  await assert.rejects(sourceRun({ offline: true }), /requires guarded artifact launch/);
+});
+
+// [EXP-NSR-R3] Why: G0 must keep the review's executable runtime-loader controls, not only a static graph assertion. Rejected: leaving these regressions in a manual-only script.
+test("NSR round3: artifact enforcement rejects runtime candidate loaders", async () => {
+  const { runArtifactControls } = await import("../../verify/NSR/round3/artifact-controls.mjs");
+  const controls = await runArtifactControls(path.join(dir, "runtime-controls-" + randomUUID()));
+  assert.equal(controls.length, 10);
 });

@@ -39,8 +39,29 @@ and the canonical key for the complete driver-sent request, including configured
 basis and any additional fields. `answer-policy` declares first-plus-every-16 sampling per loop by
 default; all non-loop pulls retain bytes. No loop is excluded from sampling.
 
-The import gate admits a restricted set of Node builtins needed for data IO, hashing, clocks and TCP.
-Module, worker, VM and process-based runtime loaders are refused, including aliases. The sole child-process
-capability is the literal macOS boot-ID sysctl in `clock.mjs`; other commands or aliasing are refused.
-Runtime file reads supply config/key/clock data, never executable imports. This is a conservative closure
-check for evaluator-authored code, not a general JavaScript security sandbox.
+Round 3 supersedes the former AST/loader-name checker. `build.mjs` uses the installed, lockfile-pinned
+esbuild dependency of tsx to emit **one** `driver.mjs` artifact and retain esbuild's own `metafile.json`.
+Every resolved input is realpath-checked; `packages/` and outside-root inputs fail the build. Remaining imports
+in that artifact must be Node builtins, explicitly listed in its manifest. `bundleSha256` is now the hash of
+the actual executable artifact bytes (`ns-driver-bundle/2`), rather than a source-list hash.
+
+Build and execute through the generated trusted launcher (Node 24):
+
+```sh
+node lab/bench/ns-driver/build.mjs /owned/driver-artifact
+node /owned/driver-artifact/launch-artifact.mjs /owned/driver-artifact /in/config.json
+```
+
+The launcher verifies executable/bootstrap hashes and starts a fresh Node process with `--permission`,
+no worker/subprocess grants, exact config/key/artifact read grants, and only driver-output write access.
+The mandatory synchronous runtime hook refuses every file/data module except the hash-checked single
+artifact and allows only the Node builtin dependencies declared by the bundler. Thus unresolved reflective
+or computed imports fail at execution, irrespective of spelling. The source runner refuses to run without
+the guard. `driver-runtime` HR events record the actual artifact hash and permission state.
+
+On macOS the trusted launcher reads boot identity before starting the restricted child; it passes that
+identity as data, so the driver never needs subprocess permission. Inputs and output must have separate,
+non-overlapping paths; in particular use `key-<id>` rather than `<id>.key` beside an output named `<id>`, to
+avoid Node 24's overlapping permission-grant behavior. No broad parent-directory grant is substituted.
+The artifact directory must remain trusted/read-only in the VM layout. This loader/permission policy is
+part of trusted-driver execution, not a claim to sandbox arbitrary hostile JavaScript or replace G03 isolation.
