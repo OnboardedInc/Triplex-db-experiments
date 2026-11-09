@@ -1,0 +1,3427 @@
+{
+  "comparisons": [
+    {
+      "lane": "core",
+      "legacyCount": 341,
+      "legacyTriplesEqual": true,
+      "legacyCounts": {
+        "AGREE": 317,
+        "NOT-MODELED": 3,
+        "AGREE-RULED": 19,
+        "VECTOR-BUG": 2
+      },
+      "otherCount": 331,
+      "otherTriplesEqual": true,
+      "replacement": [
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q1",
+          "verdict": "AGREE",
+          "rawContractAgrees": true,
+          "snapshotContractAgrees": false
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q2",
+          "verdict": "AGREE",
+          "oracle": [],
+          "golden": []
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q3",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q4",
+          "verdict": "AGREE",
+          "oracle": {
+            "values": [
+              "y"
+            ],
+            "cut": {
+              "scope": "fresh",
+              "position": 2,
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          },
+          "golden": {
+            "results": [
+              {
+                "?v": "y"
+              }
+            ],
+            "basis": {
+              "scope": "<fresh scope>",
+              "recordedPosition": "$pos:D2",
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          }
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D2",
+          "verdict": "AGREE"
+        }
+      ]
+    },
+    {
+      "lane": "qlever",
+      "legacyCount": 341,
+      "legacyTriplesEqual": true,
+      "legacyCounts": {
+        "AGREE": 298,
+        "NOT-MODELED": 3,
+        "AGREE-RULED": 18,
+        "CONVERTER-ERROR": 1,
+        "DISAGREE": 19,
+        "VECTOR-BUG": 2
+      },
+      "otherCount": 331,
+      "otherTriplesEqual": true,
+      "replacement": [
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q1",
+          "verdict": "AGREE",
+          "rawContractAgrees": true,
+          "snapshotContractAgrees": false
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q2",
+          "verdict": "AGREE",
+          "oracle": [],
+          "golden": []
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q3",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "Q4",
+          "verdict": "AGREE",
+          "oracle": {
+            "values": [
+              "y"
+            ],
+            "cut": {
+              "scope": "fresh",
+              "position": 2,
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          },
+          "golden": {
+            "results": [
+              {
+                "?v": "y"
+              }
+            ],
+            "basis": {
+              "scope": "<fresh scope>",
+              "recordedPosition": "$pos:D2",
+              "recordedAt": 500.001,
+              "validAt": 10
+            }
+          }
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "N2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "F2",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D1",
+          "verdict": "AGREE"
+        },
+        {
+          "vector": "G9-CUT-02b",
+          "item": "cmd:D2",
+          "verdict": "AGREE"
+        }
+      ]
+    }
+  ],
+  "unitFailures": {
+    "unit-baseline": {
+      "identities": [
+        "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test)",
+        "test_oracle_error_table_has_no_row_the_contract_dropped (lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped)"
+      ],
+      "counts": [
+        "384"
+      ],
+      "summary": [
+        "FAILED (failures=2)"
+      ],
+      "sha256": "dcd04680ea33498598c37d91cd5287535e1cc19e93b4c5439d988a359b10b651"
+    },
+    "unit-final": {
+      "identities": [
+        "test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test)",
+        "test_oracle_error_table_has_no_row_the_contract_dropped (lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped)"
+      ],
+      "counts": [
+        "394"
+      ],
+      "summary": [
+        "FAILED (failures=2)"
+      ],
+      "sha256": "fd6ca1e9869d382429a0aebdec0c4201a66c18bead7563a7c3fb20342cf2b88d"
+    }
+  },
+  "coverageTails": {
+    "baseline": {
+      "exit": 0,
+      "result": {
+        "lanes": [
+          "datomic"
+        ],
+        "decimal": [],
+        "erasure": [
+          "ER-INFLIGHT-PREFIXES",
+          "ER-CURSOR-ERASURE-PREFIX",
+          "CONTRACT-Q70A",
+          "CONTRACT-Q70B",
+          "CONTRACT-Q70C",
+          "CONTRACT-Q70D",
+          "CONTRACT-Q70E",
+          "CONTRACT-Q70F",
+          "CONTRACT-Q70G",
+          "CONTRACT-Q70H",
+          "CONTRACT-Q70I",
+          "CONTRACT-Q70J",
+          "CONTRACT-Q70K",
+          "CONTRACT-Q70L",
+          "CONTRACT-Q70M",
+          "CONTRACT-Q70N",
+          "CONTRACT-Q70O"
+        ],
+        "positions": [],
+        "cardMany": false,
+        "producedNotInErrorTable": [],
+        "oracleErrorsNotInContract": [
+          "E-UNAVAILABLE-CUT"
+        ]
+      }
+    },
+    "final": {
+      "exit": 0,
+      "result": {
+        "lanes": [
+          "datomic"
+        ],
+        "decimal": [],
+        "erasure": [
+          "ER-INFLIGHT-PREFIXES",
+          "ER-CURSOR-ERASURE-PREFIX",
+          "CONTRACT-Q70A",
+          "CONTRACT-Q70B",
+          "CONTRACT-Q70C",
+          "CONTRACT-Q70D",
+          "CONTRACT-Q70E",
+          "CONTRACT-Q70F",
+          "CONTRACT-Q70G",
+          "CONTRACT-Q70H",
+          "CONTRACT-Q70I",
+          "CONTRACT-Q70J",
+          "CONTRACT-Q70K",
+          "CONTRACT-Q70L",
+          "CONTRACT-Q70M",
+          "CONTRACT-Q70N",
+          "CONTRACT-Q70O"
+        ],
+        "positions": [],
+        "cardMany": false,
+        "producedNotInErrorTable": [],
+        "oracleErrorsNotInContract": [
+          "E-UNAVAILABLE-CUT"
+        ]
+      }
+    }
+  },
+  "outputsChecked": 522,
+  "allCaseHashesMatch": true,
+  "allSourceHashesMatch": true,
+  "outputBindings": [
+    {
+      "output": "core-baseline-legacy/runs/C5-01.expected.json",
+      "outputSha256": "eb0b7dcdb487767cdae4918828367a69947cddbbf6c599e6557b506ecad0f232",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-01.pass1.expected.json",
+      "outputSha256": "899473b673301ef0523168ee69b1d11ed0d636923aca66320d6cd3645f074ac3",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-02.expected.json",
+      "outputSha256": "805bc06d3298dec01a9d867aef4dda40310994b041fd2ee60cc43bd1792cad42",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-02.pass1.expected.json",
+      "outputSha256": "3b00bcefcdae03619ab76a263b5fcb68db282eb38cd94111ba939fbe8f7b5cdf",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-03.expected.json",
+      "outputSha256": "77f8213f8cef41ba2e41887ea97fc6eb604a37f5062b822f9af9ba81989f57a9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-03.pass1.expected.json",
+      "outputSha256": "9d1303eded3eb44cbf6a45e3a7e322faf9ccdc43add3f91ed557943b7b300865",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-04.expected.json",
+      "outputSha256": "a0e7cbc5d0e59b5aa6bc74c0cb6620c46f871009a77d906e557435684b664bad",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-04.pass1.expected.json",
+      "outputSha256": "779ec7973ede5e18bea8bfaec555e5350697fd1dd343fff49642d4e539f632ea",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-05.expected.json",
+      "outputSha256": "cb61972b14cff1006ba03b3666d403c3de2e7108a13c89def426a93b8b06feb5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-05.pass1.expected.json",
+      "outputSha256": "aee2182f586cf1e791dd5c61061e0b759512a18b8704b29dcc84623bbb925882",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-06.expected.json",
+      "outputSha256": "275b240518eca56b03e2d66bc9e972723f24bedff8b3b6fb1d8494775448d8cd",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-06.pass1.expected.json",
+      "outputSha256": "76169a1869caa60ec200275d9b5554ff0f6d09953f3aba7a2e701a76e272757e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-07.expected.json",
+      "outputSha256": "04d53c356b039cde1b9296489cd06118ff293bd20149731aa0f8eee5e8aa0738",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-07.pass1.expected.json",
+      "outputSha256": "0499eddf0c52d9a73a6dadee320006d0042b88f102ce3effe1619f3f2f47f8a2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-08.expected.json",
+      "outputSha256": "3d2b90d71944b44cae054805c74e748e6bef2979f298f304db9924c8d00861a9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-08.pass1.expected.json",
+      "outputSha256": "86679a8f4e3ac3574116ef70be165919d80546cba6c281b5858ba0bf198bbc3d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-09.expected.json",
+      "outputSha256": "4f26c99ba406dbcb47dea8a1e60d4c7f169a2811cce54ce7ad8b768a32f31e66",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C5-09.pass1.expected.json",
+      "outputSha256": "c537cb2ae3d0a6eccda96f594f2b3b437f3367ea67918fc27292c73ceb0dbe95",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-01.expected.json",
+      "outputSha256": "fcf401ee6bc35710f2bbfcc2781d7620dd8f8eab38f36252afe0a584b1866711",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-01.pass1.expected.json",
+      "outputSha256": "f1264a27762dff1511d80dbeee9e0e4ded95d4fdd69b3fad458fd59b79aa622e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-02.expected.json",
+      "outputSha256": "faf31edd4e58ed2011a62e3d6813163dcddadee93b0cb2cb306ca7a021cd740e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-02.pass1.expected.json",
+      "outputSha256": "8e018e35fee6d98de40978b62db904df16543f7ce1948570151e8bdbe3d8684c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-03.expected.json",
+      "outputSha256": "a20fb6a02bba739d2d680198887176358d7fc6b7d5a19ff910d6bca22e0111b9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-03.pass1.expected.json",
+      "outputSha256": "0c4653c39f048deb40e78fd40b2b15d70bd5235974d07f451ff91142cb8b9a4e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-04.expected.json",
+      "outputSha256": "0ea00f597dd97b9329caac0c744336decc5095f073346d41c09a066b969feea1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-04.pass1.expected.json",
+      "outputSha256": "ff170f0856923a5a5d808cca6c7bfe62c22f9d669a6306a7197066b9b556ab4b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-05.expected.json",
+      "outputSha256": "e79fd2b43009b2df5a1705ac27360deda5e047a3c81dde50c452a3d788997198",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-05.pass1.expected.json",
+      "outputSha256": "0adb3d5f601fbcec071817c66a6a433936783be183a44c252b066cf1c0ccca1d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-06.expected.json",
+      "outputSha256": "7e82cd4f3dae9d3c03bcdcd0ddfa3b3efed0c79073607b6f1ccea1128a26b060",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/C6-06.pass1.expected.json",
+      "outputSha256": "dd5be5e23e4769f3e3d4a00ba917ef5af7aef1ac78e46738d3ee708aad86ad13",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G1-I64-01.expected.json",
+      "outputSha256": "dd60f3b7ba7a6ff0cc289706e6841ed93603454a29f5c253cfdaaa30be63b686",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "a4ad7441240759fbee26cb7e8418960b77ea7e4d0bf468aeb937c568bf8ae028",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G1-I64-02.expected.json",
+      "outputSha256": "5b83291b49670e039935036d0b39d78d4b5d022449aeecaf19bb0c0b55b17193",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "7968f9471a59b8728ce000d64b37dbe2c333fc9b922fd7a63656b0a80a7432fb",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G10-CUR-01.expected.json",
+      "outputSha256": "97961eda826e6193ad916617446a7af1b1a6d81d8f5bd688608fea2830268a32",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "5039b0d2b4327fd0878b1109c40f9b07ced47e68014deefb7a7f1edfc34306a2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-01.expected.json",
+      "outputSha256": "a4daa8283159bda84db8ee0401954d90e9615681185ced40018ba7449f8600f5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-02.expected.json",
+      "outputSha256": "5d2f13ea0e45b7de1dd8fd5796c84708d8e72bf79537f034f2ad58e58351f28e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-03.expected.json",
+      "outputSha256": "401e624833c24ca61c1b253ebb0bfb30ed13287da8eb59c705b6b92d98227477",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-04.expected.json",
+      "outputSha256": "c02ed48e73a3b57884c22567ac991dbbb146307c41786846b2e5615624f395eb",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-05.expected.json",
+      "outputSha256": "6705bb30353601ba6299d9846fc5b3e61a8d5508f116b8ccf808ea6f05822faf",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-06.expected.json",
+      "outputSha256": "ee311c89ae5666445b9b5a793d776159e3a816c5a1f52b6e7a56fb61ce2862f3",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-07.expected.json",
+      "outputSha256": "31184f81b7e4721048062d6bb44b0348971ac46325dd699354bbee6294d97dfb",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-08.expected.json",
+      "outputSha256": "7f49771f93eff659918adf760238a01604a73ef928871a50b9e6609eae32a393",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-09.expected.json",
+      "outputSha256": "ce3405733553731165092e5eee054d7e2f9f9bf43880eea22c6db05c2c423639",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-10.expected.json",
+      "outputSha256": "e90904b76c14c8ea64555651a236cdc8f519ceca31067c560075a326d408ae5a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "2d755d8326139108dd7abf1803e811012cd5bd1d459e6957db2fef5827c70885",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "256d0d1a662af64cb4dc7d786472047c8d0b17537d915b2b22e5c27c612b7c4d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "b80be242860f23978b2183ba3674f7e3f510e47847a439ff2a9baed7e2e3cd3b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-12.expected.json",
+      "outputSha256": "40bb56e95e631b808852b676a0d365f85b62801c9183be4697b6e91b30234b37",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G5-SUM-13.expected.json",
+      "outputSha256": "7b6f7531f33541963da4ada5edca9c63a40f7d4bd01ace9feb8785be05df12b4",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-CUT-01.expected.json",
+      "outputSha256": "c0fe502bcd7fad60646d419c372f10a352ac3fecec8b5372af2ce9403816a758",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "94fc55f3d42c1c92e4c5be33afe52f117ee1cda412a1f82a7114809042d662a9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-CUT-02.expected.json",
+      "outputSha256": "226e7b5e3e2658b8827a41fb9a30581cbbe3d5b5b99feecab28bb9bbc8949bff",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-CUT-02.pass1.expected.json",
+      "outputSha256": "16706f0128dbe6bf52cef25f5bcf48f638618d5a5a29d7d89a7a402e0beebbd1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-HO-01.expected.json",
+      "outputSha256": "78adeb3cb003f99be96f6ba85f32025480545207e15563cde63e604412458839",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "e2ffae756bb37279a8aab0a5c6dcfd16c25e60e1394d31f5ba53430c02e9ba13",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-HO-02.expected.json",
+      "outputSha256": "7721052adf14e23780832ba95c6d9128def7d366d729112846710d3d22368c16",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "28fe6a61d8adb0645ad3c32ed948ac6b7b58ac761812336e632325b6c594ac07",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-HO-03.expected.json",
+      "outputSha256": "7fb792607386aca56ef8b081a7759088bdb7011d1028c7f41bf2e9aba000e752",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "c49a6eddc7066f13c967727c5acb50b1d98c7396ccc598cb2992e7ae9a0ac316",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-01.expected.json",
+      "outputSha256": "3ab58eb361adb1a1d8868c15b1a792bf081cedb752894c161c78f8dc4fb29241",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "35868dcb24ab7cb60e0aee1fd1a75441651d0259614d05d833428c3d597e27ce",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-02.expected.json",
+      "outputSha256": "7a6cb749a155064323dceff3c14999db4e65f687f1d1fbfedd8981ff0b107421",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "cbf08225b4b270a30ca32bf777bf56fdeb894c940dc6d850c8a5b12d84b6d428",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-03.expected.json",
+      "outputSha256": "1fe5f101485d3beb70c9da096886be11bae3ed3288b6f7160f7f3d1782896770",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "552e7970b31f355d28edfdd229cecdabad17ea19069f3a3e44ae78e41217da84",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-04.expected.json",
+      "outputSha256": "c450e749e8d90a15964fc4f000526f22a49f9d28ec4c6c123270ce20fc403894",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "4ebe867258c9e0cf156ac14183648e3705a2f99bfb05e2ba5fbb110f7bc2ce91",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-05.expected.json",
+      "outputSha256": "200474f6f19bd1d56202b7af9309fc160dacb4b10ce2545b5275e424de2bfc58",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "964c343e304e034c84bd794088254a34f0e54603715a79c3cf8e06edf9ecf6f0",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-06.expected.json",
+      "outputSha256": "9e0dd4fdcb6b489a7e7940981c1218cb1652da307799e9be2e7b57fa9caf8cb6",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "95e0b2c3262ed4eb96598cdb20bc32955049029d1fa78f0b493731a1066856b8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-07.expected.json",
+      "outputSha256": "dbcc06531ec9aa9d684d1483dc48443f36d214e1f7ea05c01ffb98f42eb8585e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "bf5c4c1240fb249ed2884d74ea303c6f037561b4e81fdeb88bdaebb5fb5b7a95",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-08.expected.json",
+      "outputSha256": "669f0840e7f1dae4a46c6cb5203a5b89f09034894f5c8c2c298b680a5c9a2cf0",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "9aaaf3c13606cb410d9fddeb97063d4d4507665692b2a956cf8db5c96db21f7d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/Q8F-01.expected.json",
+      "outputSha256": "ffe5533f81fc67f29fe6805d7383815fbc4b9b86417577adaa300db9bf89d6cc",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "ad0dccaee58205c8aa8d1c9c054cca81d50c845cb3345862596802cfe5d5c2a8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/Q8F-02.expected.json",
+      "outputSha256": "505017c6c24b4960edadabfdfcba23c54a7c124c472c3447f61b7f51630300cb",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "3c3953a19a36c596de84c24a0ad7acfd45d78d2cf7672e3ad5b8e99f6c48626e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/Q8F-03.expected.json",
+      "outputSha256": "faa7e153c905b43cd6f2ef1d6bfecb93e29d32d9074ce4c7bba0f1f89034fa99",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "8b42ee79149db1d9d2636a4353ac3e79b20e56847e58d2aab923586882278e9d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/Q8F-04.expected.json",
+      "outputSha256": "dfb5104e35cd63c3e756cc03f31130712256ee7639d830782ff31ea8066e09bf",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "ebb74a1e64d9f23c4d9827d17140136336bd9d16872247bf4504ebb1c391832b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/Q8F-05.expected.json",
+      "outputSha256": "2aecd6319f0ef0b1c9ea921ce1d806a5b72f48229be2698b31840c6bc5f39565",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-baseline-legacy/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "50b199b79b1cc74faa26da2e7ed0ff5da28ad5cb94b5f10fe3816b15d6b51556",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-01.expected.json",
+      "outputSha256": "886f3d19822afef613bdfc8fcf313b0c398548a81cbd44ce7aa98d19dccca3ae",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-01.pass1.expected.json",
+      "outputSha256": "de6bef76b51cebb503d593a30f23caabdc605c8b5161a4109bf02807cbee09be",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-02.expected.json",
+      "outputSha256": "a328b408eabc568b22f693aba672f72db2976dc77d14ca71fa523acd2b50ee0a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-02.pass1.expected.json",
+      "outputSha256": "6160ba1b4f2825680ee06b7d948114c3b6cc612dca1e503d745d17a6c5cfa192",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-03.expected.json",
+      "outputSha256": "eb74d5851c2d2ca106e6d6907facb71edaedd55800c220851ba268111dbb1388",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-03.pass1.expected.json",
+      "outputSha256": "03a1a4cf5c5e08eb70252175d26acf0aaf9b0c45902d3c68b8ab88a5c5b5f60b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-04.expected.json",
+      "outputSha256": "b8968035d4d7ab04bc43a8ab77991368dee56e3035b4f9ff80079b48a80a0db7",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-04.pass1.expected.json",
+      "outputSha256": "d9379e1e9f490956da5d791fbd3589c9126ff344ef62ee7e2fc8b5af296f0abd",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-05.expected.json",
+      "outputSha256": "8b1830f83a8de5b641399d0d946ac5730c6fae5968b56344a380b7eae9bddc96",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-05.pass1.expected.json",
+      "outputSha256": "c9887b05026f0bf943a10a2251d8d52037ec799592d948b6da2a9532722aefc8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-06.expected.json",
+      "outputSha256": "3f9aec21c71c68d8720486220c3169b11d8cf8d44394796953998db76d7cc380",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-06.pass1.expected.json",
+      "outputSha256": "fd42ebe0a8c15adc048af7e05264b5b1e289629b586a7131a0eecf8695534969",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-07.expected.json",
+      "outputSha256": "fee036fb7ecfd08420a3a3c3f9415730baec120c8ce25b54b20c71d67c6fa10e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-07.pass1.expected.json",
+      "outputSha256": "23b0c775c6f12179e4e5f266aaa0c21053ed30cf0929cc8de43e2fd601ed4620",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-08.expected.json",
+      "outputSha256": "a88094bf5adfc357a57370e5f4623d364792730d4f67a7b1c0b2767d000fff44",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-08.pass1.expected.json",
+      "outputSha256": "b13323e7ccb1a78cba6a07a4d43127a05c50f42bf77241ae15e798c8a3ff3de6",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-09.expected.json",
+      "outputSha256": "d43f3b107e11f8542ce1d6c5e33d3b21b16ab3e167af7fa7239d9cb11dbc17de",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C5-09.pass1.expected.json",
+      "outputSha256": "b49474653c5871bc9194ac3d1a6765d326f662de48082df0d6d1667fb23f983a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-01.expected.json",
+      "outputSha256": "b45922aa922629205072083b01f51a6898d20e73b8479e605a506db09274e2dc",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-01.pass1.expected.json",
+      "outputSha256": "a0291c19ec58d6c456a67a2ac3d52b4318df419603cbb3b089ee86c39bd7cf17",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-02.expected.json",
+      "outputSha256": "8c3655847a5fc42e6fc3284882ae239a1b18001ab83bdab14d6e62fb2997c991",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-02.pass1.expected.json",
+      "outputSha256": "bcb098bb9b24e77c1a5b15ab18a2c9243fc2f7d2e955acb95964d3b91b852aba",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-03.expected.json",
+      "outputSha256": "0481b356225cd49f4a87404852e556aa13df82b5ac647a4ae0ce9991b6824522",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-03.pass1.expected.json",
+      "outputSha256": "977b933ece4199227817217f980ff83db8be98dcf746d1531684c86ec3bdce4d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-04.expected.json",
+      "outputSha256": "736cb2f0bf34b2716132ca435ec955b9c95801550a29fc8759bb2dd66e63277d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-04.pass1.expected.json",
+      "outputSha256": "a2a417e3e4c3a6991a435b9b8221e41d3b214625794b9c70e09a2fa093652ff1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-05.expected.json",
+      "outputSha256": "b91c8f8f49d9ba0cd37673c72caa2a885212e2c2c00ae08e7fedf708b16936c2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-05.pass1.expected.json",
+      "outputSha256": "7a1aac95ace392c65c4196ee3f1bbac7bdc11ccdcaba4d51702d1d8d8e07d5cd",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-06.expected.json",
+      "outputSha256": "bd1169864e452e606cf440266dc4f6a2e3a5a0fe4ea8a1ba57a4286beb21a669",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/C6-06.pass1.expected.json",
+      "outputSha256": "491d2b7a2e019f8b24058d380a5dc909682c4dab383c09dbfecdad21837ffbca",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G1-I64-01.expected.json",
+      "outputSha256": "c0e196b8820391163790d5d14c3e6ca00e1565e526f5b8b3c092dbf28e9fee56",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "b5e8ff5973498391d93bf2d7f298d5b502bb0f03b2486892e348674ae111c02d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G1-I64-02.expected.json",
+      "outputSha256": "28539b890a43f82b3896da3dcb60c85523275012dcc5ebe709ab78a3b390fce8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "5f75bf5e0668df0e45547f2d4c576822214b8e6a062bf8216dc1b9c2f294cf1f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G10-CUR-01.expected.json",
+      "outputSha256": "0263bb8d3d350c11e9dbba1933668da6baa02d5723220fac4e88576ceddd5817",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "979da9cfeb295ae203f5dff05d5e6a2bd964fb005b9ea62baada4d04912521ad",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-01.expected.json",
+      "outputSha256": "74d9f25e3a39b927e81e16c2f0ad4eb10f8f440457006682728b590294db1594",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-02.expected.json",
+      "outputSha256": "8db5c128db9e38f7e0ac0789f066a9ed0ecdcb3dff17e5b86527c76297365152",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-03.expected.json",
+      "outputSha256": "f749172d41ab62abc8b4cd18552b52b073f0148220689784d3e93ae52d130dcc",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-04.expected.json",
+      "outputSha256": "05c216309330b4659269a3f7eed9a666217cef310583276d49a6c6e2dbc23883",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-05.expected.json",
+      "outputSha256": "ff91ae0bd08ea348b168e22c0e4370a4d511d5ea34e6100aac956068deb4bcac",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-06.expected.json",
+      "outputSha256": "d61dfd137a81f5082e911b056e39e798d964e30b3fbfef8f60b0cdacb5f93cef",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-07.expected.json",
+      "outputSha256": "4afcb8d914cca3ae9bc5caa0276b8a1a5c8a7860bb83d89174dd9e458d2c512a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-08.expected.json",
+      "outputSha256": "4781c03fe3107bad4310d027cd2f63dbc142f5baaeb7cdacb25a1b3b79c9e912",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-09.expected.json",
+      "outputSha256": "c4c629887e04846b0da3062eb8a60f111fd8032fad7db1d9feea39b671ece144",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-10.expected.json",
+      "outputSha256": "a00bf44bfe88d93c1d3cf8379b9f2bc3a32e7923d92ba68f7d8d03c8cfcd08ff",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "74a9c18614f5c115228f2c01da650846de7a92a1130842d2dd7b9fa373f8c20f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "f91cd1c7965a2010ffeea1f21836db3a8f69a89c6197933027ea3e3edb5e8c7f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "6d9edeea16d72b8f53d2c05b16c0aaa6928a52884fed8e4e437824687042f08b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-12.expected.json",
+      "outputSha256": "9e7a67d96a130999b4d480eda609fcb6d336dfcc90cca66cd30a07bc503b10a8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G5-SUM-13.expected.json",
+      "outputSha256": "649ad9c67a26662d858161fb3dc52508cbf6410a952824fc0f95674424b247ac",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-CUT-01.expected.json",
+      "outputSha256": "7034a19b76b99a10551d3def86611518703dd034e0d4298d6b791f7e7a9876c1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "5d7bb9f3ed0f3e476d77d228da427b924183d9a177569810fe0d31466d188ed2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-CUT-02.expected.json",
+      "outputSha256": "15130607108b9b7de97487186294ce4c0b61cbc4cbcc4a775b1188757153efc2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-CUT-02.pass1.expected.json",
+      "outputSha256": "c64591345bd4f55ed29abfb51c7337175c1aa8dac70876aef9f57a5a1b1bd0ca",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-HO-01.expected.json",
+      "outputSha256": "daaf26d9e426f6125a50bfe8a41b22d056aa35fa8da14755f3a70896653f584f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "41555e1421ef73c5168e6603a9ba15a1c5953ffd29dbad96e1cd58df5a763f6e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-HO-02.expected.json",
+      "outputSha256": "8652a716c7f8a4976d797f6e93b91896f6199a377eb6c9009def9bb65312ec12",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "09b2772b895b566726b38d9005de850f16381df858de67848fe54474d890b60e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-HO-03.expected.json",
+      "outputSha256": "8b7ae410aa6142e8fff0d9ab6f691719f6fb3d5fcc1b80f0768a08c30b2db909",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "e06506a6070f5890b872ffb413f17823268293775219f363f3fe8bc7768975d9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-01.expected.json",
+      "outputSha256": "1f7a889c1f806a610b5fb9b18b29a5537f0fdacdc0e4851a6146410f3afdf976",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "a6fc95588bd3c60020be36ab47ddcb97d238101759f4ab45eb2dcdb59f61f384",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-02.expected.json",
+      "outputSha256": "357445705f45ab8455265497015fcc9c9483bba1520309dcc896121a62357a6a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "72e1430fe9a802ea56868e331b928f15a8fc22edaec3ea2f1404b99e622a8b18",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-03.expected.json",
+      "outputSha256": "b3e894b3cf5ee7cf87945a4c90a1ebc862bc88ad13110c98c412031e9cd153ac",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "9ad9685415cf31bf88770d975c961eb9c4ecf45f871a7296d229825d841ae3b5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-04.expected.json",
+      "outputSha256": "ed8e3eb57324334627510f7e0d96e7ba789283e326c0240cf81cf12fac1da6e1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "dd2848df318b35daa77a349adaf3770301c0ed1ebc9977a3ec6453f7b8af9778",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-05.expected.json",
+      "outputSha256": "5414a485e2ac0587541b0c8efb32399cd4283d5b0e8df4ec41ec02e9b25c285b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "93d63b8a70e4dbc37eabf301bdccb1cb02109cd09bcdfe9fd707ae6c172c3bda",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-06.expected.json",
+      "outputSha256": "2dbf7ad7020105443a6422a5481da650c889eaddefd7580ac09791848f16b36f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "d03ff22ce106020d2800d87e6417e7974bc00a569aedd17df3abefe4423e8d4f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-07.expected.json",
+      "outputSha256": "16d5f9ec16a5e603c4665157c2f3dc60405e21bd70f5068c3cd6cf856b13a950",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "456a17fca770f3c12f1257904ff2fd690f9f3fb444d3069adeb4077098877c37",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-08.expected.json",
+      "outputSha256": "f5d2001f261a217c7ebf620004e2ed40397d6bf7d56e5763fb888211a2ccfa7e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "7263ebfb6e0d8a087fbbc153e78bb6db74fd1f7fea48b733378baf4f19015147",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/Q8F-01.expected.json",
+      "outputSha256": "59ee16732d4d9d8d0fad8c1b8264500bd3110e4fb4a55784a66a8b0f35e1d724",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "b584f0a327d0b6187ebc854d95182357a75224ee00811b48e4fa3df3d14708a9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/Q8F-02.expected.json",
+      "outputSha256": "4c51a5239b1308a0687320f3596935094d2b2c8cf8ec657282081b5bef5805e2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "4687c639710cbfbc0a5db67789e56e249d99498c8564c9d0b18a53184807a420",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/Q8F-03.expected.json",
+      "outputSha256": "73e7b87f0e7b641bc8cee23395476a70b68dbf81e094f1d244989518e164df80",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "27429fbfc9c3c9240f27005e366cc888e777ee2a77aa98c82d44e36b38b4b934",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/Q8F-04.expected.json",
+      "outputSha256": "998b5c249b26623e7e1a58614b9e5c2f2ac1a5d2c7c58cbeb7a240199bcd4e36",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "d10bf7933d43baa33bec6ccea191e7fbdbc65e2ac892070a70b04dd475b61bab",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/Q8F-05.expected.json",
+      "outputSha256": "cddf71a26eea101ccc286d709dacad27c4155d57d150c5b8ba1a2c03803dfa72",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-legacy/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "f1b161f3b313f2a1a7eee4679ba3338e3d9d5d4e5d999e53011c7bdffdd6ac9f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-01.expected.json",
+      "outputSha256": "886f3d19822afef613bdfc8fcf313b0c398548a81cbd44ce7aa98d19dccca3ae",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-01.pass1.expected.json",
+      "outputSha256": "de6bef76b51cebb503d593a30f23caabdc605c8b5161a4109bf02807cbee09be",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-02.expected.json",
+      "outputSha256": "a328b408eabc568b22f693aba672f72db2976dc77d14ca71fa523acd2b50ee0a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-02.pass1.expected.json",
+      "outputSha256": "6160ba1b4f2825680ee06b7d948114c3b6cc612dca1e503d745d17a6c5cfa192",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-03.expected.json",
+      "outputSha256": "eb74d5851c2d2ca106e6d6907facb71edaedd55800c220851ba268111dbb1388",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-03.pass1.expected.json",
+      "outputSha256": "03a1a4cf5c5e08eb70252175d26acf0aaf9b0c45902d3c68b8ab88a5c5b5f60b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-04.expected.json",
+      "outputSha256": "b8968035d4d7ab04bc43a8ab77991368dee56e3035b4f9ff80079b48a80a0db7",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-04.pass1.expected.json",
+      "outputSha256": "d9379e1e9f490956da5d791fbd3589c9126ff344ef62ee7e2fc8b5af296f0abd",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-05.expected.json",
+      "outputSha256": "8b1830f83a8de5b641399d0d946ac5730c6fae5968b56344a380b7eae9bddc96",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-05.pass1.expected.json",
+      "outputSha256": "c9887b05026f0bf943a10a2251d8d52037ec799592d948b6da2a9532722aefc8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-06.expected.json",
+      "outputSha256": "3f9aec21c71c68d8720486220c3169b11d8cf8d44394796953998db76d7cc380",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-06.pass1.expected.json",
+      "outputSha256": "fd42ebe0a8c15adc048af7e05264b5b1e289629b586a7131a0eecf8695534969",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-07.expected.json",
+      "outputSha256": "fee036fb7ecfd08420a3a3c3f9415730baec120c8ce25b54b20c71d67c6fa10e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-07.pass1.expected.json",
+      "outputSha256": "23b0c775c6f12179e4e5f266aaa0c21053ed30cf0929cc8de43e2fd601ed4620",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-08.expected.json",
+      "outputSha256": "a88094bf5adfc357a57370e5f4623d364792730d4f67a7b1c0b2767d000fff44",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-08.pass1.expected.json",
+      "outputSha256": "b13323e7ccb1a78cba6a07a4d43127a05c50f42bf77241ae15e798c8a3ff3de6",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-09.expected.json",
+      "outputSha256": "d43f3b107e11f8542ce1d6c5e33d3b21b16ab3e167af7fa7239d9cb11dbc17de",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C5-09.pass1.expected.json",
+      "outputSha256": "b49474653c5871bc9194ac3d1a6765d326f662de48082df0d6d1667fb23f983a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-01.expected.json",
+      "outputSha256": "b45922aa922629205072083b01f51a6898d20e73b8479e605a506db09274e2dc",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-01.pass1.expected.json",
+      "outputSha256": "a0291c19ec58d6c456a67a2ac3d52b4318df419603cbb3b089ee86c39bd7cf17",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-02.expected.json",
+      "outputSha256": "8c3655847a5fc42e6fc3284882ae239a1b18001ab83bdab14d6e62fb2997c991",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-02.pass1.expected.json",
+      "outputSha256": "bcb098bb9b24e77c1a5b15ab18a2c9243fc2f7d2e955acb95964d3b91b852aba",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-03.expected.json",
+      "outputSha256": "0481b356225cd49f4a87404852e556aa13df82b5ac647a4ae0ce9991b6824522",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-03.pass1.expected.json",
+      "outputSha256": "977b933ece4199227817217f980ff83db8be98dcf746d1531684c86ec3bdce4d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-04.expected.json",
+      "outputSha256": "736cb2f0bf34b2716132ca435ec955b9c95801550a29fc8759bb2dd66e63277d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-04.pass1.expected.json",
+      "outputSha256": "a2a417e3e4c3a6991a435b9b8221e41d3b214625794b9c70e09a2fa093652ff1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-05.expected.json",
+      "outputSha256": "b91c8f8f49d9ba0cd37673c72caa2a885212e2c2c00ae08e7fedf708b16936c2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-05.pass1.expected.json",
+      "outputSha256": "7a1aac95ace392c65c4196ee3f1bbac7bdc11ccdcaba4d51702d1d8d8e07d5cd",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-06.expected.json",
+      "outputSha256": "bd1169864e452e606cf440266dc4f6a2e3a5a0fe4ea8a1ba57a4286beb21a669",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/C6-06.pass1.expected.json",
+      "outputSha256": "491d2b7a2e019f8b24058d380a5dc909682c4dab383c09dbfecdad21837ffbca",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G1-I64-01.expected.json",
+      "outputSha256": "c0e196b8820391163790d5d14c3e6ca00e1565e526f5b8b3c092dbf28e9fee56",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "b5e8ff5973498391d93bf2d7f298d5b502bb0f03b2486892e348674ae111c02d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G1-I64-02.expected.json",
+      "outputSha256": "28539b890a43f82b3896da3dcb60c85523275012dcc5ebe709ab78a3b390fce8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "5f75bf5e0668df0e45547f2d4c576822214b8e6a062bf8216dc1b9c2f294cf1f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G10-CUR-01.expected.json",
+      "outputSha256": "0263bb8d3d350c11e9dbba1933668da6baa02d5723220fac4e88576ceddd5817",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "979da9cfeb295ae203f5dff05d5e6a2bd964fb005b9ea62baada4d04912521ad",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-01.expected.json",
+      "outputSha256": "74d9f25e3a39b927e81e16c2f0ad4eb10f8f440457006682728b590294db1594",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-02.expected.json",
+      "outputSha256": "8db5c128db9e38f7e0ac0789f066a9ed0ecdcb3dff17e5b86527c76297365152",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-03.expected.json",
+      "outputSha256": "f749172d41ab62abc8b4cd18552b52b073f0148220689784d3e93ae52d130dcc",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-04.expected.json",
+      "outputSha256": "05c216309330b4659269a3f7eed9a666217cef310583276d49a6c6e2dbc23883",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-05.expected.json",
+      "outputSha256": "ff91ae0bd08ea348b168e22c0e4370a4d511d5ea34e6100aac956068deb4bcac",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-06.expected.json",
+      "outputSha256": "d61dfd137a81f5082e911b056e39e798d964e30b3fbfef8f60b0cdacb5f93cef",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-07.expected.json",
+      "outputSha256": "4afcb8d914cca3ae9bc5caa0276b8a1a5c8a7860bb83d89174dd9e458d2c512a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-08.expected.json",
+      "outputSha256": "4781c03fe3107bad4310d027cd2f63dbc142f5baaeb7cdacb25a1b3b79c9e912",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-09.expected.json",
+      "outputSha256": "c4c629887e04846b0da3062eb8a60f111fd8032fad7db1d9feea39b671ece144",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-10.expected.json",
+      "outputSha256": "a00bf44bfe88d93c1d3cf8379b9f2bc3a32e7923d92ba68f7d8d03c8cfcd08ff",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "74a9c18614f5c115228f2c01da650846de7a92a1130842d2dd7b9fa373f8c20f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "f91cd1c7965a2010ffeea1f21836db3a8f69a89c6197933027ea3e3edb5e8c7f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "6d9edeea16d72b8f53d2c05b16c0aaa6928a52884fed8e4e437824687042f08b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-12.expected.json",
+      "outputSha256": "9e7a67d96a130999b4d480eda609fcb6d336dfcc90cca66cd30a07bc503b10a8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G5-SUM-13.expected.json",
+      "outputSha256": "649ad9c67a26662d858161fb3dc52508cbf6410a952824fc0f95674424b247ac",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-CUT-01.expected.json",
+      "outputSha256": "7034a19b76b99a10551d3def86611518703dd034e0d4298d6b791f7e7a9876c1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "5d7bb9f3ed0f3e476d77d228da427b924183d9a177569810fe0d31466d188ed2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-CUT-02b.expected.json",
+      "outputSha256": "5a2c35d8e399299494be9b647b390bd64348996bd890d32fb10cd2853a008d11",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-CUT-02b.pass1.expected.json",
+      "outputSha256": "dff26f9c9c629565ec678631516bdde89d3a2ea2da1ce860b6649fc7fa6cdc14",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-HO-01.expected.json",
+      "outputSha256": "daaf26d9e426f6125a50bfe8a41b22d056aa35fa8da14755f3a70896653f584f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "41555e1421ef73c5168e6603a9ba15a1c5953ffd29dbad96e1cd58df5a763f6e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-HO-02.expected.json",
+      "outputSha256": "8652a716c7f8a4976d797f6e93b91896f6199a377eb6c9009def9bb65312ec12",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "09b2772b895b566726b38d9005de850f16381df858de67848fe54474d890b60e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-HO-03.expected.json",
+      "outputSha256": "8b7ae410aa6142e8fff0d9ab6f691719f6fb3d5fcc1b80f0768a08c30b2db909",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "e06506a6070f5890b872ffb413f17823268293775219f363f3fe8bc7768975d9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-01.expected.json",
+      "outputSha256": "1f7a889c1f806a610b5fb9b18b29a5537f0fdacdc0e4851a6146410f3afdf976",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "a6fc95588bd3c60020be36ab47ddcb97d238101759f4ab45eb2dcdb59f61f384",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-02.expected.json",
+      "outputSha256": "357445705f45ab8455265497015fcc9c9483bba1520309dcc896121a62357a6a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "72e1430fe9a802ea56868e331b928f15a8fc22edaec3ea2f1404b99e622a8b18",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-03.expected.json",
+      "outputSha256": "b3e894b3cf5ee7cf87945a4c90a1ebc862bc88ad13110c98c412031e9cd153ac",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "9ad9685415cf31bf88770d975c961eb9c4ecf45f871a7296d229825d841ae3b5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-04.expected.json",
+      "outputSha256": "ed8e3eb57324334627510f7e0d96e7ba789283e326c0240cf81cf12fac1da6e1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "dd2848df318b35daa77a349adaf3770301c0ed1ebc9977a3ec6453f7b8af9778",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-05.expected.json",
+      "outputSha256": "5414a485e2ac0587541b0c8efb32399cd4283d5b0e8df4ec41ec02e9b25c285b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "93d63b8a70e4dbc37eabf301bdccb1cb02109cd09bcdfe9fd707ae6c172c3bda",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-06.expected.json",
+      "outputSha256": "2dbf7ad7020105443a6422a5481da650c889eaddefd7580ac09791848f16b36f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "d03ff22ce106020d2800d87e6417e7974bc00a569aedd17df3abefe4423e8d4f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-07.expected.json",
+      "outputSha256": "16d5f9ec16a5e603c4665157c2f3dc60405e21bd70f5068c3cd6cf856b13a950",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "456a17fca770f3c12f1257904ff2fd690f9f3fb444d3069adeb4077098877c37",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-08.expected.json",
+      "outputSha256": "f5d2001f261a217c7ebf620004e2ed40397d6bf7d56e5763fb888211a2ccfa7e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "7263ebfb6e0d8a087fbbc153e78bb6db74fd1f7fea48b733378baf4f19015147",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/Q8F-01.expected.json",
+      "outputSha256": "59ee16732d4d9d8d0fad8c1b8264500bd3110e4fb4a55784a66a8b0f35e1d724",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "b584f0a327d0b6187ebc854d95182357a75224ee00811b48e4fa3df3d14708a9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/Q8F-02.expected.json",
+      "outputSha256": "4c51a5239b1308a0687320f3596935094d2b2c8cf8ec657282081b5bef5805e2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "4687c639710cbfbc0a5db67789e56e249d99498c8564c9d0b18a53184807a420",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/Q8F-03.expected.json",
+      "outputSha256": "73e7b87f0e7b641bc8cee23395476a70b68dbf81e094f1d244989518e164df80",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "27429fbfc9c3c9240f27005e366cc888e777ee2a77aa98c82d44e36b38b4b934",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/Q8F-04.expected.json",
+      "outputSha256": "998b5c249b26623e7e1a58614b9e5c2f2ac1a5d2c7c58cbeb7a240199bcd4e36",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "d10bf7933d43baa33bec6ccea191e7fbdbc65e2ac892070a70b04dd475b61bab",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/Q8F-05.expected.json",
+      "outputSha256": "cddf71a26eea101ccc286d709dacad27c4155d57d150c5b8ba1a2c03803dfa72",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "core-final-updated/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "f1b161f3b313f2a1a7eee4679ba3338e3d9d5d4e5d999e53011c7bdffdd6ac9f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-01.expected.json",
+      "outputSha256": "da72e00d74d79161a8e08edcfe12ec8a8c2f289e70d582f871949c3c14c75d41",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-01.pass1.expected.json",
+      "outputSha256": "d3257eaac2c7d39e6b4c09d0b7d4d86f075ea617b9794a72a3f52420bd91ecf9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-02.expected.json",
+      "outputSha256": "22fb378cae016e652df28c4546ea796ea7e9bfcd6a62b5fff8bddbabf9b6cc28",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-02.pass1.expected.json",
+      "outputSha256": "1ac759101f84572319d200b543ad0eaa9d531ae82a5322729acc6ec5be75f82d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-03.expected.json",
+      "outputSha256": "161afdfdf84cd837e43991f4dfab942b1b6f48c32af012f383329f861ea42c2b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-03.pass1.expected.json",
+      "outputSha256": "fecdfa283dd97c15ac8ba50af9255255435d9c878bc4f0616fad655312f83b56",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-04.expected.json",
+      "outputSha256": "a3340c4ed7d3506e2f6cf3ad5e78b236138a86503f0dc9e05933dd37efdf75a0",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-04.pass1.expected.json",
+      "outputSha256": "6849c0659789fe5d07e37bac1c47fbbcfb0563377668678be5f500827ca6a430",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-05.expected.json",
+      "outputSha256": "66747368069562685b759cac7cfb6a59cd8f2525785c121cfedcd33b396da9bb",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-05.pass1.expected.json",
+      "outputSha256": "f947d86e6866af41187fff90a7da78ef312c406966a087a9aeddabcd6040df8e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-06.expected.json",
+      "outputSha256": "c39c6a337153d47eb717819d5a69dc612455d7e73b71eb537d41641e3ca3ef4c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-06.pass1.expected.json",
+      "outputSha256": "fe57af5f985130732daaf205438f4cedc0c93833bff230908ca193ec84b7c63e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-07.expected.json",
+      "outputSha256": "3983861bf855b5fa9cdfd34efa297a08ab4fab7d6df0fb3a096d91c34a9d0a28",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-07.pass1.expected.json",
+      "outputSha256": "ce90e6284754e34ab68e4b3ffc48932a0940b11036509f41115dff5735203356",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-08.expected.json",
+      "outputSha256": "a58923c2c1ab88806c52d9a408a861086f934b7f732a6eada6a8178e97ff35c7",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-08.pass1.expected.json",
+      "outputSha256": "fac087818be5e0fb6100b20096e6c9c37415b93f6ff6d9d9404e495d39c310fe",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-09.expected.json",
+      "outputSha256": "71ad4af6db981a91bb82470431bbcebeefa06e1c728794cf236b0a19020fda32",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C5-09.pass1.expected.json",
+      "outputSha256": "c62f2c43f2183318a604692c6527942d9d33807bdb5e1bf62e7f78bc31357e38",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-01.expected.json",
+      "outputSha256": "03efdfa3d80c18e43b3cfc3b194fbb9740f778f2da34e225c23825b2cd51376e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-01.pass1.expected.json",
+      "outputSha256": "9e5fd3f75b13e6bf94efea2b8a7a96f4d0e50698f574eb5659ed57777a573fba",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-02.expected.json",
+      "outputSha256": "d8f6dd3343cc2331f5a6c53b38de92fb0b179af8339ce81f8fb7e7aa1400728e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-02.pass1.expected.json",
+      "outputSha256": "625e018a2dda9cfeb516e9c27524c4549022a78ecc470446bd45dfe202c5dd63",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-03.expected.json",
+      "outputSha256": "a2e86d4a96477123fcf381600362113f93a86c14798dc17045b809b2b419569b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-03.pass1.expected.json",
+      "outputSha256": "e4a926a16f3273a0b38df745c60cd8294f699d8be2f15e53cec579aa44fc592a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-04.expected.json",
+      "outputSha256": "16d0b05d9a6451a4b58931531c487fc97bbba615f772bc24aa46b3dbecaa6b0b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-04.pass1.expected.json",
+      "outputSha256": "407e258c9ab4e4e76c9a5ee71c9f1ee4d073d56a006cce4918e61fb37d16735f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-05.expected.json",
+      "outputSha256": "16a65a0354a2d04c1ea34e807cb503cdf6d1f6868bb5657c613ef8908bd965c4",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-05.pass1.expected.json",
+      "outputSha256": "b7c63f00883315393e6787e91169d3fd1b3f8e327d88223e7e6afcdb01277132",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-06.expected.json",
+      "outputSha256": "142fd87d454512a641a21718e05958c5130c42a908670a03236f7381d97ec129",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/C6-06.pass1.expected.json",
+      "outputSha256": "94da4049616c3f7275000eb4dfc677b03e83e6566fdf452a9dcf4975530ee7dc",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G1-I64-01.expected.json",
+      "outputSha256": "dfe53f7cf36324c5364e53a4cd04e2f0096910729deef072c98defd9e1610f23",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "e790d22c1918febcf6e27511b4cafb5d8f3bac187f690fc36a041ba3fe8984c7",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G1-I64-02.expected.json",
+      "outputSha256": "ea20dc89ab568b95f0198c47cbe4d5be5634aa71681bd000781d5f9374a84ced",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "be18ef1a00ff12443ce105e226b7ebdbbc9d98a98ed534ac9aea3080c42cf337",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G10-CUR-01.expected.json",
+      "outputSha256": "c802622be79af50ad0c8254cf81012438ba97c4cf7fc74f777879ab8b2159d8e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "f2de78597af043286372aaea2bbfc4e6bdaa005b7a1f06ec48b99c52a859855d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-01.expected.json",
+      "outputSha256": "40929f403adfca58ca39fecbe176abd43fb18eeaad02c817ee7701c6c97e974f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-02.expected.json",
+      "outputSha256": "37a94e2372fe7b64052ff2dbf704c3ebc427dc938233b459d802e2b0f6afddd9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-03.expected.json",
+      "outputSha256": "23b72150795d4f0956726bf69794519f32f95d7899edb6f61321fc31a0af81f8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-04.expected.json",
+      "outputSha256": "a6799cbdbb97c9aff4affe4c252d9a0c0d2229c7de92575cf01ad2597ed0fc40",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-05.expected.json",
+      "outputSha256": "d2516a81bbb2cf35aa0e64fa1a729e4d79b0838a11242cc4f1718c64e2bf865d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-06.expected.json",
+      "outputSha256": "c92948a5e9abe316ad85c8ba7f0b7ce5517350bf161138d5125d9f361acf6a1a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-07.expected.json",
+      "outputSha256": "b466e94157d7722541d9ca2fb1e1dbd10123496ebfe6ef66016cb2d505c71c1e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-08.expected.json",
+      "outputSha256": "cc378963f6d4a93aa7ae0006ea9571005ffd9827490a1df39ac0aff33014b411",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-09.expected.json",
+      "outputSha256": "b5c6c071a42496b7b6e5be68443dc0654e383cd65077d94933b39a8591359b62",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-10.expected.json",
+      "outputSha256": "81cf4740151bf9eb7a792a5f72b33d83a62322434a0b5818938bdb8e94349045",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "94f6ca0be10d1e64b79c9af3011e1053216110c92dec30659bf02b59410326ba",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "288912ae1bdf49f9bc7dc56be9cda3fb2a31b6e788c99fa6525c5a20fa5cd30c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "bb41a436c8278cbc4398c458ea25bb17ef04a71996afc12f2afba1a00566437e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-12.expected.json",
+      "outputSha256": "73d2e604b8c37c253d329bf1f5e2d315dd08d954b57e3b76c170980ebaa4fa54",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G5-SUM-13.expected.json",
+      "outputSha256": "4e4e8edc0c502d0be6fef7ed9af7d2597b3f143734c4a3a57eed7273f8c6a36f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-CUT-01.expected.json",
+      "outputSha256": "ed79b4e90337064d1c2ded2d5cffcf34fb8b18f73745b6ac59bbadd56cbc9d62",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "09612ab7f4b4ec18714ad51f3709758c98bda4599d8d0a724ae145750d1c51ad",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-CUT-02.expected.json",
+      "outputSha256": "726489efb65c322166da7ba3f1a1d733a0815a095610e98ea2b4ce007e30a8c6",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-CUT-02.pass1.expected.json",
+      "outputSha256": "287ed8efc07e1b6ec60420dc5385c7ed4cc4902062848165bd5979d94f3f621f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-HO-01.expected.json",
+      "outputSha256": "429716240cde9ef846a787ee5f69172b2044ea327837e60786b49de079825055",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "8fdcac61626815d09c3da8a60b6fb25db0b4a8baf8198520e291854e7e8728e3",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-HO-02.expected.json",
+      "outputSha256": "ee4ff89c7f6cb55b2092381d931d14e08254e8fd8d11f1c73e12e34d2078cbb5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "941b90ec998e92fcad588704753387eadfd0788abf729b471193133eae178209",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-HO-03.expected.json",
+      "outputSha256": "bf317f07118ec792b12a373ffb0bbc9abf4c5763dacf65cf014a7b1a85548ffe",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "c51f747253be15d9db800187aaa294aea7ddf2a84886d01d1b175bf68625d919",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-01.expected.json",
+      "outputSha256": "d4cd01e93e5a3a08b4dd292490a209a9bca9abf82101a58e9c7118afec8894d5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "df67190ca80d315e072896e2019e06bd607b616952752476095509b42a93145c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-02.expected.json",
+      "outputSha256": "035b2aea2515a5aa7eb5c9764c65cf45b447857ff339109fdd64914ecbd5b168",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "fd94d5eeda1734dd3a6fdcdc57d5601f21445fc90ecbc506eb44c42df1d37cdd",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-03.expected.json",
+      "outputSha256": "111eb56714c233494d1532dbb54dfd413e1938c8711195f3329a0b71a83cff7f",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "c158fd8abd6a9935b0b8cd594ff188d2d9a093200fbcd2ea2b841ae96c8ba0ba",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-04.expected.json",
+      "outputSha256": "6b8537873252696915b68708726986aa06c31df61f970052b2966384f8a03b8a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "ced6f7e0f214c9cade66a6db734c961d67c4f992fd367ca4baa710d772878536",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-05.expected.json",
+      "outputSha256": "ca7497741624fdf50a66120721519285bb006f2b43d84c86d19b63df241bd10c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "8cb75c769a0bc8771c2bedd4bce997175fe3d7bf9de9139e3a8a85e3c3805d20",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-06.expected.json",
+      "outputSha256": "23c56d525b9b92ad8c1601c6edcd143e69f02423f8f871fb66bf9f83c2d0a224",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "e2a75a1060ffce98184ef0972d8f389cc750465c22afa2a2ba8a199762e14cd0",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-07.expected.json",
+      "outputSha256": "71d91196ea3c381d08ee8bffd2ae47cbf969a7eedea20fc9c2f7fa5044bba0c2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "c7405718582221caac10e034d671eaf31db9bcdf0449c072213d81e7d05d3b03",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-08.expected.json",
+      "outputSha256": "8501890161f6858647d8023f732f3ddfc3104d7a42a58ebb21bcfa1e9d0a4c7e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "2fefd0a2a220ee0abe6c3812d09f4fa38e29e46f6b2cac9682512a0d5403d8e4",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/Q8F-01.expected.json",
+      "outputSha256": "d56ad2aa9ce543fb5cc21019e201e51c52e6211b54e45a05605925d893c6eb01",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "fd93aa51243518b47b7e16db26242bd0e06329017a184c200788ce9ec6202bb7",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/Q8F-02.expected.json",
+      "outputSha256": "afa08a1cf0e4dc9a8ea732646254fad7ba860daa65fac79d6d9288edf2f56422",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "b5772d8bb8215049217fd3efdd8c9e05aa2eb6fa11dad868fd554619452bf046",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/Q8F-03.expected.json",
+      "outputSha256": "afabf9dd9e3c8871632d29d61db71364b0e364f4cea56c53d2ddf2fe370ca623",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "445446853a4ebcef40d4790ced8282b73b4b6e4767ba3a11ffbe375601dde356",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/Q8F-04.expected.json",
+      "outputSha256": "9a6913d48cd8a35446b7e0ddc46dc62c1ea8220cce974f52bb083eaa1f3b5842",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "961146810a16f2b35bcdc08ccef75012550e1f9d8a65096828cc12995b44d719",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/Q8F-05.expected.json",
+      "outputSha256": "3e3c0960c664b48b246a0d77a734c6ab4db32fdbbbc0be8fcdf95ae6f6a4abad",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-baseline-legacy/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "e5c275a3a74b657c5bb1fdf6ca14c538cd09a37fc882de524cf7de4a79cef037",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-01.expected.json",
+      "outputSha256": "5e4b20005709a169d23cf19c1ebbb0a0b6efca5a095f9fff99a8e90c698f8a3e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-01.pass1.expected.json",
+      "outputSha256": "79b31ace2558251a9f96d0cb23f17676ffa2a310de3366228d60f95a0db3c320",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-02.expected.json",
+      "outputSha256": "7d59e0b67c11c3e9fbebd3ab2cb4bfd9d8b44e728df6feb3234c8622faf75af9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-02.pass1.expected.json",
+      "outputSha256": "1a5ed2f569213d9e842b1c0abe236407339af6aa4447e8678a1b30e445dc8046",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-03.expected.json",
+      "outputSha256": "3d977db58c72f589239a9ecd20884a9b27ec4b2b43e5d75a9ead37aedaa09595",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-03.pass1.expected.json",
+      "outputSha256": "8cf2ae030c1d7761a1dcd445875292f49dc013a75281537228a171709e202f6b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-04.expected.json",
+      "outputSha256": "7e317fa1ba1a40ba41f63e4f6b441acf59409ab50aa48e444cfd5bdc7b5ee8d1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-04.pass1.expected.json",
+      "outputSha256": "4609c2ba39a184029fd34d91e9186ae938d9eb91aecff9e5fc0729478cc0daac",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-05.expected.json",
+      "outputSha256": "56ae877b715baf135d74a9a04b67468f3a00f0b228901e60b6a8b0fc7b4983c6",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-05.pass1.expected.json",
+      "outputSha256": "dea992bd76bc331ba1f3b4cd4e5cd3eb2a8c6cfca2f34e6a2a6d420986d110a9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-06.expected.json",
+      "outputSha256": "398a635115727e6a0fb71ae28385dbba1fd1af6b8fc30aa810c28de1e49ff532",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-06.pass1.expected.json",
+      "outputSha256": "9ea06334e88f6a5bdd2f6d45662e4dd5262f61d3889fe954a87ea0f1fb815bde",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-07.expected.json",
+      "outputSha256": "ec0c5dc4635932a406139ff44c8d8cea4cb3e562122ff7341742f6ffe483e134",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-07.pass1.expected.json",
+      "outputSha256": "a3e09808b3d11d39b8ef0fb285e1d6ffcb918604f06153ccc2d3d2807567a177",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-08.expected.json",
+      "outputSha256": "5389194a27e68cd13da21300f5b148036900249c6595ebe2e55e03bbe1453f17",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-08.pass1.expected.json",
+      "outputSha256": "c82b8f447386a8e6b4f58a607c2badf56dec9f49611ee66d227a32e9334ecb30",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-09.expected.json",
+      "outputSha256": "3f5c3105992cef9ff180c17f85ad3dd5497ec11a0f7addd99fd3a1d42a8302b9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C5-09.pass1.expected.json",
+      "outputSha256": "5cf27e3deed8971d723f14a5ebac53f6e715f3c7e333093d3dfa9691ebbdeb54",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-01.expected.json",
+      "outputSha256": "f1805a7937c85e40a060c36e7122511715d7aa7e00e34623d9f1cff296e0b21b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-01.pass1.expected.json",
+      "outputSha256": "6f735e8bf180dc997463a39541e14389c0092d74f5c3f4bb5cd28ad76e00abf9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-02.expected.json",
+      "outputSha256": "0ca34626371fb71eaaa21a93c3f0a19c79ff464a68fd340879ed2b8067e80a08",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-02.pass1.expected.json",
+      "outputSha256": "1fcddbe2dc3a7276d2c5778fe7e93fb858645946817b00076b01eed6c66625fe",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-03.expected.json",
+      "outputSha256": "470c51d8d338b3a74f176cd12dd4674561754f2cb7814d84011155ab94425f43",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-03.pass1.expected.json",
+      "outputSha256": "a88759fd1357fd1b5aaaf7cb72a00e9108c878502278c65588d45b2b5cf80f5b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-04.expected.json",
+      "outputSha256": "d8600c91b443de785cd5ccda0f25133796ec6ade2b35ba802798995024a51bf1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-04.pass1.expected.json",
+      "outputSha256": "806900cf2223c2fd040e357362643d6d9bfb5e91b70a61fe4576ec89e9367f08",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-05.expected.json",
+      "outputSha256": "aa94aff4099642021529c6de2ae93f25c9704fb2e9d709a21a6b070f366838c5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-05.pass1.expected.json",
+      "outputSha256": "b9ae877e37964ca0f028b0f2062fe8f1c101d36cb2d1d600cb3bf022106e780c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-06.expected.json",
+      "outputSha256": "05eb8c99964be7951a67dcc113a4d2e49bd61c919d7b08c5923ce5079ac6fde7",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/C6-06.pass1.expected.json",
+      "outputSha256": "fa5815b06ed843493e2d9944ef6d5229ca3e9502e7017340dcc9422b3897017e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G1-I64-01.expected.json",
+      "outputSha256": "b6690bcc9ee87faf250d808bacb25c8f09309bc03ff62d3f2bfa0c1e5b0f2a5c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "82565dfe3161e2867c982fa530fc61b960063edb7061eb191f021134685e0be3",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G1-I64-02.expected.json",
+      "outputSha256": "6c5ac13ab472326849499653a7de9f6e18dd8cff33e9dcef20a25eac88daba13",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "384fa99777da1c01eebb4d35cfb1151f24b34d40c1508a5aba55bca10ea6f553",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G10-CUR-01.expected.json",
+      "outputSha256": "ce74b2f6e2796cc1cf1ac26da8777df4bd69fa5d1bce9ea5f0c4aa00581b30a2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "fdbbc19e6db1a2e6fbbd6de16986a842f1d790485b7317c5c427fdad238fe2d8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-01.expected.json",
+      "outputSha256": "c7131932c04185f5d562d04c12a194ff4d876587830e5ffbe7838ff93993d3d1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-02.expected.json",
+      "outputSha256": "259d25be38c31b06dd38ade7abac7b3dc8afe324c43ef08e9cb0f1fbb389aab0",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-03.expected.json",
+      "outputSha256": "2473339b7c06dc5935c1473819c0dba6751d927d801a7543f32842e7b561bac5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-04.expected.json",
+      "outputSha256": "26642a3b5adfee0fc63a2f6689708e8a9c66e46dfb13a26030c9e3dacf206d8a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-05.expected.json",
+      "outputSha256": "8886b41a64e9cd7b64112860354014d8652d2fb8bf084f3e0815845c4c592918",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-06.expected.json",
+      "outputSha256": "be15a1fb8639b4e40efb7c1d8a82f4bb55d660a71d0c8718ab06316924e0277a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-07.expected.json",
+      "outputSha256": "c84c27d62d6f60734478a73e6ca4ca7f41f78628f3e48f89dc30efe97807b872",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-08.expected.json",
+      "outputSha256": "bb91779fa9970b29f11291d11350c71c2682f4b4e7c0ed05ec41d612526feed9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-09.expected.json",
+      "outputSha256": "cc37d91e0ee0d3b3ae7d99e73099a737ee7ef0bd2f10c2e865ab3a1773f3feb1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-10.expected.json",
+      "outputSha256": "9507f9a2e94c197afb873b05d77db54050760e7e5416f69d42924d274711f579",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "045d34f0af3f726a670ca4cb937242cb02e7aeb7b0b813e3c008fce055be3738",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "ef3a6d46b5e7888e1f640571010104fc4c406e5ec06b92706a389317c116c7a0",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "90f1b7baec67f9d97abfbe6974f5a19743b3e58246538ae4b9fe45d1b6b06ac6",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-12.expected.json",
+      "outputSha256": "0579945e76786dede0616daac2fed152c94f0d3a00940d3129d7190d1f2dcd35",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G5-SUM-13.expected.json",
+      "outputSha256": "1d2ed7535b29a75e594ad50fca3d92500d5972f575cacc4800edbfe118dafa96",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-CUT-01.expected.json",
+      "outputSha256": "d284bcde60388814e2ee6b5b7fe5afce98ddf5758cebd295133d6ed1fafd10e2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "ae58217f5df993d50d3429824e4bffe06d05ab0c2fe042ec681555623e5e8f88",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-CUT-02.expected.json",
+      "outputSha256": "319bf76b5cc499e5782194bdc2c478c5b12d5ed260117c725f92aa3ce1576da8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-CUT-02.pass1.expected.json",
+      "outputSha256": "2c59300dfc3e44f4ef01ccc80534841ca2b4e78c41ae6428ceb3ad5dceb1f2f3",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-HO-01.expected.json",
+      "outputSha256": "d9a4c7fb6edaffc6449a96a96b9aa7032b0c2e0e8aec1f30e6033b6a2032efa3",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "d262857ac887745564e1cb6c5c952f4aa7f7d5516207d28e87c4568c6185b769",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-HO-02.expected.json",
+      "outputSha256": "54f54959dda3a76956a211fc0ac0c59f31190150e5c94c7daf6772c736497527",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "526d6a931454cd668de5515f0af251b0acd2e2dde345a4347809046b630645ca",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-HO-03.expected.json",
+      "outputSha256": "e085ddc4abe8af4d990a228c4cdc57157efd8f6ad0d76652fa0a2eaa456e17f7",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "325a488ff5d8f5f11c62abab68853afd84f8f6b2784271d6adfb2815d5ea6f07",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-01.expected.json",
+      "outputSha256": "ae6e629eff9d917c6f27e4c147a6b7e1ce86e4edea6dfd88128f5ea782999ad2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "7604615f2ef3b11a13ecba0c210ada6f475ad405fc9672829b4280a793d43574",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-02.expected.json",
+      "outputSha256": "9b5eda0ed67ad34a093b2fd2ba91e961f85e63b0d78c4b13c2a10cc12279aeeb",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "03d4f2b2ac49a26ff9ee730837f353826b8ebd715b6eeab0ec25f86a9b4ada5e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-03.expected.json",
+      "outputSha256": "eb3a28c9da919b0a6894726e415f6db30a4021b2db5e837cce1f48f39174676c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "03c4316373a80d70c71ba97a0b99e6f231db79201abaa599d353b59418a2674d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-04.expected.json",
+      "outputSha256": "ab2a37167873a1f8191ebfa71ce96301473cd5aa3162cab71aceb41cf92d6e46",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "0b199ecbe63224faf80ce797d0d54916fce2f444c1baac1d07a68575def491e2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-05.expected.json",
+      "outputSha256": "92026808d4f9be3992062353e3f9b5af22f0a21c6782e154859612cbe6f8ab44",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "c1629572bf081a5d4e8c8a301e8136f18c8064e0431cba2c6f90785aa32e418c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-06.expected.json",
+      "outputSha256": "d0a09ab6ac5cd8156a1e4f98ba677d790d29f75098a34785977fab2476834571",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "4446556c9cf150aebc96dfe2eb7f7a9d43513785fce623d5e3a4dfb6d33875af",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-07.expected.json",
+      "outputSha256": "e7043682e9d7ede38751a4df8d2ae841ffc7ba5df40638348123113f73b9dd71",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "ab85ec013b376d404d2f818ab9cb5b33f35775abf40402153cba5f671417af09",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-08.expected.json",
+      "outputSha256": "0f50b791287a7141bfa5b876a636f18253c87a5464531da066b17e9794623ca5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "82057e99d77e011f035e10d215921ea92cb72ca11c829e4bf0c5ffc73d947d65",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/Q8F-01.expected.json",
+      "outputSha256": "f159ac5d1962a3800e8ee4b4c32e7b148013ccc7677255fff1c0f6132acffc51",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "8a1317c31d70388e5b2afda61c89a928438563ef0a43001475327109f105dd24",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/Q8F-02.expected.json",
+      "outputSha256": "4735408ba464c7882bb01df9b7efa97e94ba9bd43013323a96743f5935a0d99e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "6351e0825e2eb8c5c91728175d1e5cf7773b651050ed1cceecc6d338f1dcae74",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/Q8F-03.expected.json",
+      "outputSha256": "07c7dc501ce6931e3b111945809dad0a0836ac934acc8f4ac233487c6a50fcbe",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "943c3911cb6129aaab4fd331209c22a4a39f10ed117d8c5374430a6e0ca777ad",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/Q8F-04.expected.json",
+      "outputSha256": "6446da2da92b4cb946d2644282cef75632add679a85c3bb28306ccd75b0bb61c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "baf35293729d0c30ff1d8230b869f6f3f13e4932351914b181bebafc092fb12d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/Q8F-05.expected.json",
+      "outputSha256": "e209aae88c0797ad3bf01a917b11e5211a600dbfda77035bf8edf123131b9754",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-legacy/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "d68bc55875cb8c4d19e4ed78f30824345a86f38995ba6e46096f9e7f7196bd6e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-01.expected.json",
+      "outputSha256": "5e4b20005709a169d23cf19c1ebbb0a0b6efca5a095f9fff99a8e90c698f8a3e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-01.pass1.expected.json",
+      "outputSha256": "79b31ace2558251a9f96d0cb23f17676ffa2a310de3366228d60f95a0db3c320",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-02.expected.json",
+      "outputSha256": "7d59e0b67c11c3e9fbebd3ab2cb4bfd9d8b44e728df6feb3234c8622faf75af9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-02.pass1.expected.json",
+      "outputSha256": "1a5ed2f569213d9e842b1c0abe236407339af6aa4447e8678a1b30e445dc8046",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-03.expected.json",
+      "outputSha256": "3d977db58c72f589239a9ecd20884a9b27ec4b2b43e5d75a9ead37aedaa09595",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-03.pass1.expected.json",
+      "outputSha256": "8cf2ae030c1d7761a1dcd445875292f49dc013a75281537228a171709e202f6b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-04.expected.json",
+      "outputSha256": "7e317fa1ba1a40ba41f63e4f6b441acf59409ab50aa48e444cfd5bdc7b5ee8d1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-04.pass1.expected.json",
+      "outputSha256": "4609c2ba39a184029fd34d91e9186ae938d9eb91aecff9e5fc0729478cc0daac",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-05.expected.json",
+      "outputSha256": "56ae877b715baf135d74a9a04b67468f3a00f0b228901e60b6a8b0fc7b4983c6",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-05.pass1.expected.json",
+      "outputSha256": "dea992bd76bc331ba1f3b4cd4e5cd3eb2a8c6cfca2f34e6a2a6d420986d110a9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-06.expected.json",
+      "outputSha256": "398a635115727e6a0fb71ae28385dbba1fd1af6b8fc30aa810c28de1e49ff532",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-06.pass1.expected.json",
+      "outputSha256": "9ea06334e88f6a5bdd2f6d45662e4dd5262f61d3889fe954a87ea0f1fb815bde",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-07.expected.json",
+      "outputSha256": "ec0c5dc4635932a406139ff44c8d8cea4cb3e562122ff7341742f6ffe483e134",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-07.pass1.expected.json",
+      "outputSha256": "a3e09808b3d11d39b8ef0fb285e1d6ffcb918604f06153ccc2d3d2807567a177",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-08.expected.json",
+      "outputSha256": "5389194a27e68cd13da21300f5b148036900249c6595ebe2e55e03bbe1453f17",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-08.pass1.expected.json",
+      "outputSha256": "c82b8f447386a8e6b4f58a607c2badf56dec9f49611ee66d227a32e9334ecb30",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-09.expected.json",
+      "outputSha256": "3f5c3105992cef9ff180c17f85ad3dd5497ec11a0f7addd99fd3a1d42a8302b9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C5-09.pass1.expected.json",
+      "outputSha256": "5cf27e3deed8971d723f14a5ebac53f6e715f3c7e333093d3dfa9691ebbdeb54",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-01.expected.json",
+      "outputSha256": "f1805a7937c85e40a060c36e7122511715d7aa7e00e34623d9f1cff296e0b21b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-01.pass1.expected.json",
+      "outputSha256": "6f735e8bf180dc997463a39541e14389c0092d74f5c3f4bb5cd28ad76e00abf9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-02.expected.json",
+      "outputSha256": "0ca34626371fb71eaaa21a93c3f0a19c79ff464a68fd340879ed2b8067e80a08",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-02.pass1.expected.json",
+      "outputSha256": "1fcddbe2dc3a7276d2c5778fe7e93fb858645946817b00076b01eed6c66625fe",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-03.expected.json",
+      "outputSha256": "470c51d8d338b3a74f176cd12dd4674561754f2cb7814d84011155ab94425f43",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-03.pass1.expected.json",
+      "outputSha256": "a88759fd1357fd1b5aaaf7cb72a00e9108c878502278c65588d45b2b5cf80f5b",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-04.expected.json",
+      "outputSha256": "d8600c91b443de785cd5ccda0f25133796ec6ade2b35ba802798995024a51bf1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-04.pass1.expected.json",
+      "outputSha256": "806900cf2223c2fd040e357362643d6d9bfb5e91b70a61fe4576ec89e9367f08",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-05.expected.json",
+      "outputSha256": "aa94aff4099642021529c6de2ae93f25c9704fb2e9d709a21a6b070f366838c5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-05.pass1.expected.json",
+      "outputSha256": "b9ae877e37964ca0f028b0f2062fe8f1c101d36cb2d1d600cb3bf022106e780c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-06.expected.json",
+      "outputSha256": "05eb8c99964be7951a67dcc113a4d2e49bd61c919d7b08c5923ce5079ac6fde7",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/C6-06.pass1.expected.json",
+      "outputSha256": "fa5815b06ed843493e2d9944ef6d5229ca3e9502e7017340dcc9422b3897017e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G1-I64-01.expected.json",
+      "outputSha256": "b6690bcc9ee87faf250d808bacb25c8f09309bc03ff62d3f2bfa0c1e5b0f2a5c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G1-I64-01.pass1.expected.json",
+      "outputSha256": "82565dfe3161e2867c982fa530fc61b960063edb7061eb191f021134685e0be3",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G1-I64-02.expected.json",
+      "outputSha256": "6c5ac13ab472326849499653a7de9f6e18dd8cff33e9dcef20a25eac88daba13",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G1-I64-02.pass1.expected.json",
+      "outputSha256": "384fa99777da1c01eebb4d35cfb1151f24b34d40c1508a5aba55bca10ea6f553",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G10-CUR-01.expected.json",
+      "outputSha256": "ce74b2f6e2796cc1cf1ac26da8777df4bd69fa5d1bce9ea5f0c4aa00581b30a2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G10-CUR-01.pass1.expected.json",
+      "outputSha256": "fdbbc19e6db1a2e6fbbd6de16986a842f1d790485b7317c5c427fdad238fe2d8",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-01.expected.json",
+      "outputSha256": "c7131932c04185f5d562d04c12a194ff4d876587830e5ffbe7838ff93993d3d1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-02.expected.json",
+      "outputSha256": "259d25be38c31b06dd38ade7abac7b3dc8afe324c43ef08e9cb0f1fbb389aab0",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-03.expected.json",
+      "outputSha256": "2473339b7c06dc5935c1473819c0dba6751d927d801a7543f32842e7b561bac5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-04.expected.json",
+      "outputSha256": "26642a3b5adfee0fc63a2f6689708e8a9c66e46dfb13a26030c9e3dacf206d8a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-05.expected.json",
+      "outputSha256": "8886b41a64e9cd7b64112860354014d8652d2fb8bf084f3e0815845c4c592918",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-06.expected.json",
+      "outputSha256": "be15a1fb8639b4e40efb7c1d8a82f4bb55d660a71d0c8718ab06316924e0277a",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-07.expected.json",
+      "outputSha256": "c84c27d62d6f60734478a73e6ca4ca7f41f78628f3e48f89dc30efe97807b872",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-08.expected.json",
+      "outputSha256": "bb91779fa9970b29f11291d11350c71c2682f4b4e7c0ed05ec41d612526feed9",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-09.expected.json",
+      "outputSha256": "cc37d91e0ee0d3b3ae7d99e73099a737ee7ef0bd2f10c2e865ab3a1773f3feb1",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-10.expected.json",
+      "outputSha256": "9507f9a2e94c197afb873b05d77db54050760e7e5416f69d42924d274711f579",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-11-case1.expected.json",
+      "outputSha256": "045d34f0af3f726a670ca4cb937242cb02e7aeb7b0b813e3c008fce055be3738",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-11-case2.expected.json",
+      "outputSha256": "ef3a6d46b5e7888e1f640571010104fc4c406e5ec06b92706a389317c116c7a0",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-11-case3.expected.json",
+      "outputSha256": "90f1b7baec67f9d97abfbe6974f5a19743b3e58246538ae4b9fe45d1b6b06ac6",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-12.expected.json",
+      "outputSha256": "0579945e76786dede0616daac2fed152c94f0d3a00940d3129d7190d1f2dcd35",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G5-SUM-13.expected.json",
+      "outputSha256": "1d2ed7535b29a75e594ad50fca3d92500d5972f575cacc4800edbfe118dafa96",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-CUT-01.expected.json",
+      "outputSha256": "d284bcde60388814e2ee6b5b7fe5afce98ddf5758cebd295133d6ed1fafd10e2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-CUT-01.pass1.expected.json",
+      "outputSha256": "ae58217f5df993d50d3429824e4bffe06d05ab0c2fe042ec681555623e5e8f88",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-CUT-02b.expected.json",
+      "outputSha256": "7337a4297b966e0c69520c9605c4e45d1a78075d1cc1f78c897105b81e0c0398",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-CUT-02b.pass1.expected.json",
+      "outputSha256": "84e2d994a7d477bf89c9b1f538971284043f43a62238eaf368ab7ecb26f234af",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-HO-01.expected.json",
+      "outputSha256": "d9a4c7fb6edaffc6449a96a96b9aa7032b0c2e0e8aec1f30e6033b6a2032efa3",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-HO-01.pass1.expected.json",
+      "outputSha256": "d262857ac887745564e1cb6c5c952f4aa7f7d5516207d28e87c4568c6185b769",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-HO-02.expected.json",
+      "outputSha256": "54f54959dda3a76956a211fc0ac0c59f31190150e5c94c7daf6772c736497527",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-HO-02.pass1.expected.json",
+      "outputSha256": "526d6a931454cd668de5515f0af251b0acd2e2dde345a4347809046b630645ca",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-HO-03.expected.json",
+      "outputSha256": "e085ddc4abe8af4d990a228c4cdc57157efd8f6ad0d76652fa0a2eaa456e17f7",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-HO-03.pass1.expected.json",
+      "outputSha256": "325a488ff5d8f5f11c62abab68853afd84f8f6b2784271d6adfb2815d5ea6f07",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-01.expected.json",
+      "outputSha256": "ae6e629eff9d917c6f27e4c147a6b7e1ce86e4edea6dfd88128f5ea782999ad2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-01.pass1.expected.json",
+      "outputSha256": "7604615f2ef3b11a13ecba0c210ada6f475ad405fc9672829b4280a793d43574",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-02.expected.json",
+      "outputSha256": "9b5eda0ed67ad34a093b2fd2ba91e961f85e63b0d78c4b13c2a10cc12279aeeb",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-02.pass1.expected.json",
+      "outputSha256": "03d4f2b2ac49a26ff9ee730837f353826b8ebd715b6eeab0ec25f86a9b4ada5e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-03.expected.json",
+      "outputSha256": "eb3a28c9da919b0a6894726e415f6db30a4021b2db5e837cce1f48f39174676c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-03.pass1.expected.json",
+      "outputSha256": "03c4316373a80d70c71ba97a0b99e6f231db79201abaa599d353b59418a2674d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-04.expected.json",
+      "outputSha256": "ab2a37167873a1f8191ebfa71ce96301473cd5aa3162cab71aceb41cf92d6e46",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-04.pass1.expected.json",
+      "outputSha256": "0b199ecbe63224faf80ce797d0d54916fce2f444c1baac1d07a68575def491e2",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-05.expected.json",
+      "outputSha256": "92026808d4f9be3992062353e3f9b5af22f0a21c6782e154859612cbe6f8ab44",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-05.pass1.expected.json",
+      "outputSha256": "c1629572bf081a5d4e8c8a301e8136f18c8064e0431cba2c6f90785aa32e418c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-06.expected.json",
+      "outputSha256": "d0a09ab6ac5cd8156a1e4f98ba677d790d29f75098a34785977fab2476834571",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-06.pass1.expected.json",
+      "outputSha256": "4446556c9cf150aebc96dfe2eb7f7a9d43513785fce623d5e3a4dfb6d33875af",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-07.expected.json",
+      "outputSha256": "e7043682e9d7ede38751a4df8d2ae841ffc7ba5df40638348123113f73b9dd71",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-07.pass1.expected.json",
+      "outputSha256": "ab85ec013b376d404d2f818ab9cb5b33f35775abf40402153cba5f671417af09",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-08.expected.json",
+      "outputSha256": "0f50b791287a7141bfa5b876a636f18253c87a5464531da066b17e9794623ca5",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/G9-V4-08.pass1.expected.json",
+      "outputSha256": "82057e99d77e011f035e10d215921ea92cb72ca11c829e4bf0c5ffc73d947d65",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/Q8F-01.expected.json",
+      "outputSha256": "f159ac5d1962a3800e8ee4b4c32e7b148013ccc7677255fff1c0f6132acffc51",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/Q8F-01.pass1.expected.json",
+      "outputSha256": "8a1317c31d70388e5b2afda61c89a928438563ef0a43001475327109f105dd24",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/Q8F-02.expected.json",
+      "outputSha256": "4735408ba464c7882bb01df9b7efa97e94ba9bd43013323a96743f5935a0d99e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/Q8F-02.pass1.expected.json",
+      "outputSha256": "6351e0825e2eb8c5c91728175d1e5cf7773b651050ed1cceecc6d338f1dcae74",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/Q8F-03.expected.json",
+      "outputSha256": "07c7dc501ce6931e3b111945809dad0a0836ac934acc8f4ac233487c6a50fcbe",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/Q8F-03.pass1.expected.json",
+      "outputSha256": "943c3911cb6129aaab4fd331209c22a4a39f10ed117d8c5374430a6e0ca777ad",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/Q8F-04.expected.json",
+      "outputSha256": "6446da2da92b4cb946d2644282cef75632add679a85c3bb28306ccd75b0bb61c",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/Q8F-04.pass1.expected.json",
+      "outputSha256": "baf35293729d0c30ff1d8230b869f6f3f13e4932351914b181bebafc092fb12d",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/Q8F-05.expected.json",
+      "outputSha256": "e209aae88c0797ad3bf01a917b11e5211a600dbfda77035bf8edf123131b9754",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    },
+    {
+      "output": "qlever-final-updated/runs/Q8F-05.pass1.expected.json",
+      "outputSha256": "d68bc55875cb8c4d19e4ed78f30824345a86f38995ba6e46096f9e7f7196bd6e",
+      "caseSha256Matches": true,
+      "sourceSha256Matches": true
+    }
+  ]
+}

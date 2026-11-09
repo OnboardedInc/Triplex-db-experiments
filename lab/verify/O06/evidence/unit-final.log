@@ -1,0 +1,25 @@
+.............................FF...........................................................................................................................................................................................................................................................................................................................................................................
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/oracles/replay/tests/test_contract_section4.py", line 221, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(LaneRanges, "test_lane_" + engine), engine)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : datomic
+
+======================================================================
+FAIL: test_oracle_error_table_has_no_row_the_contract_dropped (lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped)
+0.3.5 removed E-DECIMAL-UNREPRESENTABLE (Q35e, RULINGS Q43a): the oracle may emit
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-o06/lab/oracles/replay/tests/test_contract_section4.py", line 235, in test_oracle_error_table_has_no_row_the_contract_dropped
+    self.assertEqual(set(ERR.ERROR_TABLE) - {r["id"] for r in CONTRACT["errorTable"]}, set())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the first set but not the second:
+'E-UNAVAILABLE-CUT'
+
+----------------------------------------------------------------------
+Ran 394 tests in 18.780s
+
+FAILED (failures=2)

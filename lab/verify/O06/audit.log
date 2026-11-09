@@ -1,0 +1,4 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 84142 "CX-A01-0312-R3-G0", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 84142 "CX-A01-0312-R3-G0", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 84142 "CX-A01-0312-R3-G0", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+Prior audit retained; select a new attempt directory
