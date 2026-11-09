@@ -461,3 +461,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   image-id, SHA256SUMS). Finding for the probe round: bpftrace 0.20.2's `-d` / `-dd` are argument-less dry-run debug flags, so the
   clock-proof's `-d all` is wrong for this version (W0 would refuse); the probe round uses `-d` (or `-dd`) with the program file and
   stores the real output as the golden. Next: OBS01 W0-W3 live probe window after the round 14 review.
+- 2026-11-09 QH1 round 3 (7965540b): 677/661 pulls/CPU-s vs 1,100, latency passes; Triples.reach public API moves a pinned hash (re-pin in
+  0.4.1). QH1 micro-steps stop (R50). Opus planner writes EXP-P4N; CX-VQH1 (verify/QH1) reviews rounds 2-3 for correctness.

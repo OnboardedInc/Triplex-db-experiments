@@ -2328,3 +2328,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   cannot be proven safe. Lesson: the failure path is where evidence gets deleted; it needs the same export guarantees as success.
 - **Suites under load:** the evaluator-inclusive G03 suite takes over 20 minutes while six agents share the Mac, because claim tests
   spawn fixture drivers serially. Not a hang; heavy.mjs admission is working.
+
+## 2026-11-09: QH1 round 3: 677 pulls per CPU second; the R46 list is exhausted
+
+- **7965540b (Sonnet):** steps 1-3 kept (worker op 0.794x, whole-pull surface 0.736x, cheaper decode 0.888x), dictionary ids reverted
+  (about 160 unseen names and 49 unseen transactions per pull, so the cache never warms), unguarded name statement kept (0.927x),
+  columnar and memoized options reverted. Final 677 (c=1) and 661 (c=4) pulls/CPU-s on a loaded host against 1,100; p50 0.87 ms, p99
+  4.2 ms (latency passes). 100,000-pull answer equality zero mismatches per step; REAL round-trip bit-exact.
+- **Where the CPU is:** 83 KB of tuple text per pull; the reader's row statement is about 78% of reader busy time and JSON.parse about
+  37% of main busy time. The next gain has to come from not producing or parsing that text, not from tuning around it.
+- **Next:** an Opus planner writes EXP-P4N (budget 909 us per pull; compare shrinking the text, a materialized answer cache, R46's
+  per-subject document, a binary encoding), including how to measure absolute pulls per CPU-second credibly. CX-VQH1 reviews rounds 2-3.
+- **Lesson:** a cache only pays when the working set repeats; measure the miss rate of the real access pattern before building one.
