@@ -1,0 +1,16 @@
+xtdb-a0 completed
+xtdb-compact completed
+qlever-a0 WriteError: Cannot read command claim
+qlever-compact WriteError: Cannot read command claim
+xtdb storage {"tag":"BasisNotAvailable","axis":"recordedAt","required":1000.001}
+xtdb dependency-empty {"tag":"BasisNotAvailable","axis":"recordedAt","required":1000.001}
+xtdb datalog {"tag":"BasisNotAvailable","axis":"recordedAt","required":1000.001}
+xtdb interval {"tag":"BasisNotAvailable","axis":"recordedAt","required":1000.001}
+xtdb native {"tag":"ReadError","causeTag":"BasisNotAvailable","causeAxis":"recordedAt"}
+xtdb native-sql {"tag":"ReadError","causeTag":"BasisNotAvailable","causeAxis":"recordedAt"}
+xtdb maintained {"tag":"BasisNotAvailable","axis":"recordedAt","required":1000.001}
+qlever storage {"tag":"BasisNotAvailable","axis":"recordedAt","required":1000.001}
+qlever dependency-empty {"tag":"BasisNotAvailable","axis":"recordedAt","required":1000.001}
+qlever datalog {"tag":"BasisNotAvailable","axis":"recordedAt","required":1000.001}
+qlever interval {"tag":"BasisNotAvailable","axis":"recordedAt","required":1000.001}
+qlever native {"tag":"ReadError","causeTag":"BasisNotAvailable","causeAxis":"recordedAt"}

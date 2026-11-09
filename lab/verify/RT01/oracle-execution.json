@@ -1,0 +1,30 @@
+[
+  {
+    "name": "selfcheck",
+    "command": [
+      "python3",
+      "-m",
+      "lab.oracles.replay",
+      "--self-check"
+    ],
+    "exit": 1
+  },
+  {
+    "name": "tests",
+    "command": [
+      "python3",
+      "-m",
+      "lab.oracles.replay",
+      "--test"
+    ],
+    "exit": 1
+  },
+  {
+    "name": "fixtures",
+    "command": [
+      "python3",
+      "lab/experiments/EXP-O06/fixture_runner.py"
+    ],
+    "exit": 0
+  }
+]

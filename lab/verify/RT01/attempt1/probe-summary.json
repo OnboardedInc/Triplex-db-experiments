@@ -1,0 +1,110 @@
+[
+  {
+    "id": "xtdb-a0",
+    "stamps": [
+      1000,
+      1000.001,
+      1000.002
+    ],
+    "nestedOwnInstant": [
+      {
+        "v": 2,
+        "op": "retract",
+        "tripleId": "00V9ABAN00000000000000000C",
+        "entityId": "nested:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+          "type": "string",
+          "value": "first"
+        },
+        "validFrom": 800,
+        "recordedAt": 1000.003,
+        "assertionTxId": "_tx/00GRTCFP000000000000000004",
+        "retractionTxId": "_tx/00GRTCFP000000000000000005"
+      }
+    ],
+    "suite": "completed"
+  },
+  {
+    "id": "xtdb-compact",
+    "stamps": [
+      1000,
+      1000.001,
+      1000.002
+    ],
+    "nestedOwnInstant": [
+      {
+        "v": 2,
+        "op": "retract",
+        "tripleId": "00V9ABAN00000000000000000C",
+        "entityId": "nested:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+          "type": "string",
+          "value": "first"
+        },
+        "validFrom": 800,
+        "recordedAt": 1000.003,
+        "assertionTxId": "_tx/00GRTCFP000000000000000004",
+        "retractionTxId": "_tx/00GRTCFP000000000000000005"
+      }
+    ],
+    "suite": "completed"
+  },
+  {
+    "id": "qlever-a0",
+    "stamps": [
+      1000,
+      1000.001,
+      1000.002
+    ],
+    "nestedOwnInstant": [
+      {
+        "v": 2,
+        "op": "retract",
+        "tripleId": "00V9ABAN00000000000000000C",
+        "entityId": "nested:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+          "type": "string",
+          "value": "first"
+        },
+        "validFrom": 800,
+        "recordedAt": 1000.003,
+        "assertionTxId": "_tx/00GRTCFP000000000000000004",
+        "retractionTxId": "_tx/00GRTCFP000000000000000005"
+      }
+    ],
+    "suite": "WriteError: Cannot read command claim"
+  },
+  {
+    "id": "qlever-compact",
+    "stamps": [
+      1000,
+      1000.001,
+      1000.002
+    ],
+    "nestedOwnInstant": [
+      {
+        "v": 2,
+        "op": "retract",
+        "tripleId": "00V9ABAN00000000000000000C",
+        "entityId": "nested:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+          "type": "string",
+          "value": "first"
+        },
+        "validFrom": 800,
+        "recordedAt": 1000.003,
+        "assertionTxId": "_tx/00GRTCFP000000000000000004",
+        "retractionTxId": "_tx/00GRTCFP000000000000000005"
+      }
+    ],
+    "suite": "WriteError: Cannot read command claim"
+  }
+]

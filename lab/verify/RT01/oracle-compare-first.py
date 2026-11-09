@@ -1,0 +1,37 @@
+# [CX-VRT01] Why: compare observed RT01 bytes with the accepted black-box judge, including output comparisons that receipt consistency alone cannot check. Rejected: an oracle exit zero as semantic acceptance.
+import pathlib,json,subprocess,os,hashlib,datetime
+base=pathlib.Path('lab/verify/RT01').resolve(); attempt=base/'attempt2'
+def load(p):return json.loads(p.read_text())
+def stable(v):return json.dumps(v,sort_keys=True,separators=(',',':'))
+executions=[]
+for p in sorted(attempt.glob('*.case.json')):
+ r=subprocess.run(['python3','-m','lab.oracles.replay',str(p)],cwd=base/'oracle-050',env=dict(os.environ,PYTHONDONTWRITEBYTECODE='1'),capture_output=True)
+ (attempt/(p.stem+'.oracle.json')).write_bytes(r.stdout);(attempt/(p.stem+'.oracle.stderr')).write_bytes(r.stderr)
+ executions.append(dict(case=p.name,caseSha256=hashlib.sha256(p.read_bytes()).hexdigest(),exit=r.returncode))
+results=[]
+for p in sorted(attempt.glob('*-observed.json')):
+ lane=p.name.replace('-observed.json','');actual=load(p); oracle=load(attempt/(lane+'.case.oracle.json')); nested=load(attempt/(lane+'-nested.case.oracle.json'))
+ q={v['id']:v for v in oracle['queries']}
+ # The oracle intentionally synthesizes raw journal ids and emits the logical change body without the wire-format v field. Compare exact logical values plus record/valid times, rather than those two representation fields.
+ def observed_journal(rows):
+  output=[]
+  for r in rows:
+   if r['attribute'] not in [':_tx/change',':_tx/changed-entity']:continue
+   value=json.loads(r['value_json']) if r['value_type']=='json' else r['value_string']
+   if isinstance(value,dict):value={k:v for k,v in value.items() if k!='v'}
+   output.append(dict(entityId=r['entity_id'],attribute=r['attribute'],value=value,validFrom=r['valid_from'],recordedAt=r['recorded_at']))
+  return sorted(output,key=stable)
+ def expected_journal(facts):
+  return sorted([dict(entityId=r['entityId'],attribute=r['attribute'],value=r['value']['value'],validFrom=r['validFrom'],recordedAt=r['recordedAt']) for r in facts],key=stable)
+ normal_observed=observed_journal(actual['journals']);normal_expected=expected_journal(q['journal']['result']['facts'])
+ nested_tx=actual['nested']['r']['txId']
+ nested_observed=observed_journal(actual['nestedJournal']); nested_expected=expected_journal([r for r in nested['queries'][0]['result']['facts'] if r['entityId']==nested_tx])
+ tx_expected=[{k:v for k,v in r.items() if k!='changedEntities'} for r in q['transactions']['result']['transactions']]
+ app_expected=q['valid-default']['result']['triples']; app_actual=actual['validRows']
+ defaults=[dict(id=r['id'],validFrom=r['validFrom'],recordedAt=r['recordedAt']) for r in app_actual]
+ expected_defaults=[dict(id=r['id'],validFrom=r['validFrom'],recordedAt=r['recordedAt']) for r in app_expected]
+ results.append(dict(lane=lane,receiptConsistency=oracle['receiptConsistency'],nestedReceiptConsistency=nested['receiptConsistency'],validDefaultMatches=defaults==expected_defaults,journalMatches=normal_observed==normal_expected,hydratedTransactionsMatch=actual['transactions']==tx_expected,nestedJournalMatches=nested_observed==nested_expected,nestedObserved=nested_observed,nestedExpected=nested_expected))
+ # Fresh comparison controls: overwrite an observed default or journal stamp; receipt PASS must not hide a wrong answer.
+ results[-1]['negativeControls']={'validDefaultChangedRejected':[{**v,'validFrom':v['validFrom']+1} for v in defaults]!=expected_defaults,'journalDefaultChangedRejected':[{**v,'validFrom':v['validFrom']+1} for v in normal_observed]!=normal_expected}
+(base/'oracle-comparisons.json').write_text(json.dumps(dict(at=datetime.datetime.now(datetime.UTC).isoformat(),oracleCommit='fed510e',executions=executions,results=results),indent=2)+'\n')
+for r in results:print(r['lane'],{k:v for k,v in r.items() if k.endswith('Match') or k.endswith('Matches')})

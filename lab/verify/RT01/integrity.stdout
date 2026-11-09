@@ -1,0 +1,30 @@
+{
+  "at": "2026-11-09T03:54:15.838305+00:00",
+  "builderManifestHash": "2d3cdec87a66b05580b9967ea6b753184632c975bd98ca5b41b14e2395db1bcb",
+  "manifestFiles": 322,
+  "manifestMismatches": [],
+  "pinEntries": 41,
+  "pinDrift": [
+    {
+      "location": "/oracleFilesPinned/O-TESTKIT/0",
+      "path": "packages/testkit/src/index.ts",
+      "expected": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "actual": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7"
+    },
+    {
+      "location": "/caseSets/CS-U44/pinnedSourceFiles/0",
+      "path": "packages/testkit/src/index.ts",
+      "expected": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "actual": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7"
+    },
+    {
+      "location": "/caseSourcesPinned/CS-U44/0",
+      "path": "packages/testkit/src/index.ts",
+      "expected": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "actual": "995bc1ace5ebb9654a74e238b8860cb7e8f012a979c7c4cf86d03388efd935c7"
+    }
+  ],
+  "sourceFiles": 52,
+  "sourceMismatches": {},
+  "acceptanceDiff": ""
+}

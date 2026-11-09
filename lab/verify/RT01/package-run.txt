@@ -1,0 +1,9 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 30778 "CX-XRUN-J01-G1", pid 83201 "CX-P5A-R3-final2", pid 3546 "CX-VP2Q-4-R10-matrices", pid 31296 "CX-VP2Q-4-R10-consumer"
+core build 0
+core tests 0
+testkit build 0
+testkit tests 0
+xtdb build 0
+xtdb tests 0
+qlever build 0
+qlever tests 0

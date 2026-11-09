@@ -1,0 +1,713 @@
+{
+  "binding": {
+    "attempt": "c4f8ff3f-b421-4b8a-aa70-aa3780327bb4",
+    "sourceHead": "1283f9fb3fe3a90448785f28d420c92a622a1991",
+    "sourceStable": true,
+    "oracleCommit": "fed510ecf5137873d5dab1ad192f0e54f8ed0955",
+    "oracleSha256": {
+      "lab/oracles/replay/RULES.md": "7fd97f3382d9f0a74c799b219cf77c8d87d4e467e9f05d5699f82a7724442232",
+      "lab/oracles/replay/SCHEMA.md": "8b4f6de1b1edc2403d9112bb315750793abf5e279d5f52d0b1bfdd0a33479dc6",
+      "lab/oracles/replay/__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+      "lab/oracles/replay/__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+      "lab/oracles/replay/cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+      "lab/oracles/replay/constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+      "lab/oracles/replay/entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+      "lab/oracles/replay/errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+      "lab/oracles/replay/exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+      "lab/oracles/replay/examples/entity-mini.case.json": "7549f07299668500a311e9a5fc3eb80904731d0b5a7d626090a7657f53a8d667",
+      "lab/oracles/replay/examples/entity-mini.expected.json": "d4e7aff8188ffaa902f1014d9527e63c92d6e0dd6925fef446cceb820c6d8b0f",
+      "lab/oracles/replay/replay.py": "e80ecf94423c6985090fd5af2f7be1d768f22c2a30dbbee2a15a75b32a71c85c",
+      "lab/oracles/replay/run.py": "5a533a3f1944f2c483e2cf0e5bfa26f4334c5fd8a04aa03828c8c053d4a2b02f",
+      "lab/oracles/replay/scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+      "lab/oracles/replay/selfcheck.py": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+      "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+      "lab/oracles/replay/selfcheck_fixtures/ham-v2-reference.json": "d69c14f1abb236c3e1532ff95f1aba81b088fc5937ba82f9647e2e6a4e0407f2",
+      "lab/oracles/replay/stamps.py": "3a5c37aae37b44f5c41b0e0fccba3eee658985ca3a18dc55d147e8b6ece8526d",
+      "lab/oracles/replay/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "lab/oracles/replay/tests/helpers.py": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
+      "lab/oracles/replay/tests/test_contract_section4.py": "6c2c0de9a4568f8f9b6c79f502dab042acf7246e1bb33041f3b86e60910220b2",
+      "lab/oracles/replay/tests/test_entities.py": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+      "lab/oracles/replay/tests/test_exact.py": "35aaf8384af0178e1fc929b94fe0e11a43aa64dbbe567bf50067658821b619b1",
+      "lab/oracles/replay/tests/test_q70_coverage.py": "07e8afab10424e3ab97da2b15420b57e1ab7c08c6526444b118861efb4e790ef",
+      "lab/oracles/replay/tests/test_record_time.py": "ce4bf46f6fb08b9d57e580c071879f405e8f77795d0155978dbebeeb7014ab35",
+      "lab/oracles/replay/tests/test_replay.py": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+      "lab/oracles/replay/tests/test_rulings.py": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+      "lab/oracles/replay/tests/test_scale_and_selfcheck.py": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4",
+      "lab/oracles/replay/tests/test_values.py": "1070395875907bca8a46ab9b88fee0758a1b73aafe94b5b610b2117e2740d375",
+      "lab/oracles/replay/tests/test_views.py": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584",
+      "lab/oracles/replay/values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+      "lab/oracles/replay/views.py": "2ab52f5aaf2742b9e6832ff1b80fc94f5e9dad54bebb0e2d6393f1c2fc483a8e"
+    }
+  },
+  "at": "2026-11-09T03:51:33.813023+00:00",
+  "results": [
+    {
+      "lane": "xtdb",
+      "route": "storage",
+      "caseSha256": "a99434b4565ae1cd795b24b9a72f41ceba10b86619f3c89e9a42081c2ecdc7d1",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "required": 1000.001
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "dependency-empty",
+      "caseSha256": "be756ea9d01ae3c19280e2a32b2030186b4ac38ce35567293f707e8879be8aab",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "required": 1000.001
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "datalog",
+      "caseSha256": "f9e66246d98357c525b6f0fc861d7d92556773b43b88231f9799bb5ac9d8458a",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "required": 1000.001
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "interval",
+      "caseSha256": "706e5944304366e6f8425a6f977232b1e6a852af1c9bc1139c4824229b6f5038",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "required": 1000.001
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "native",
+      "caseSha256": "e13ed4651f41cd692fa19f6151f72a59c9dccca2cd1bfa12d42309772e02193f",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "ReadError",
+        "causeTag": "BasisNotAvailable",
+        "causeAxis": "recordedAt"
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "native-sql",
+      "caseSha256": "61835c38ea3dd2ca29979aca1a808ac9c4c7aaac15187bd4f33b0f3aace6794c",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "ReadError",
+        "causeTag": "BasisNotAvailable",
+        "causeAxis": "recordedAt"
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "maintained",
+      "caseSha256": "ab3175be11ebf8fcb3dc59d2e5fcca5a440fe9f4ad41b70a611de111d5f36f14",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "required": 1000.001
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "storage",
+      "caseSha256": "5122b644817ca5982948a1d075ae9626bd29b5a1e9004e010e5856a2f3dd9918",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "required": 1000.001
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "dependency-empty",
+      "caseSha256": "1db5b04bcf172224b9e4a025faa22b094db300ccfea6ce43bd736b29c1375d10",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "required": 1000.001
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "datalog",
+      "caseSha256": "3ffc9b5515d0933cd670e80188218f7ee5c14ddd9b476c77b6f7819cf3c28874",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "required": 1000.001
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "interval",
+      "caseSha256": "6b919d3319cd92633b95b5047cc4d5ef5c671db2223f047a1053b8b9d62122cd",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "required": 1000.001
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "native",
+      "caseSha256": "cf343ccc585cab110e410b39cf91693890d3d4adf7afece0c18709cf9e245406",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "ReadError",
+        "causeTag": "BasisNotAvailable",
+        "causeAxis": "recordedAt"
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "empty-entities",
+      "caseSha256": "01bdfe04e4553f9abe8dfc1d7e782805ba7e2ab21bf2670197742d4dc72d84ba",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "success": []
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "entities",
+      "caseSha256": "6e790cd3ef1fa33745fc28b92898cf3ad08161ec5a032a0cdf8f4c2776090e39",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "entity",
+      "caseSha256": "1ff3e9663bbca709c94b6b557753311b0254fc658ab7de2bdf350d5a091a8c13",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "entity-page",
+      "caseSha256": "385d42ef83494877db13c6e848fabfea35e4bf91316f459914593e3f1865b5be",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "match",
+      "caseSha256": "2d21c9431b20fa4a1a1c82f70dc7988031b0916baeb3dbb7e072daf195e31936",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "dependency-empty",
+      "caseSha256": "6db0f7b08bdc25be2c9a1866337631775b251efd6ac75469c5679b999e54170f",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "query-all",
+      "caseSha256": "08ffd6f154b11346cb6e5e0bf91738d122e0d4a5fd133b8d57d51ae70650355e",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "query-all-echo",
+      "caseSha256": "846fceb633556e1de96fb57ec20b895c3d172a39c1def2e1b4af02fff16c3adf",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "query",
+      "caseSha256": "df197461225ef345684061da635a8095784016bb695c79d8485962ceb5ee3457",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "xtdb",
+      "route": "query-page",
+      "caseSha256": "f38bf4a664f62d8e09128c2d98aff831920fd6be8162470eb2e5e9d6e59c8111",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "empty-entities",
+      "caseSha256": "92f8d5f8750090a6e05d4373fad96a0d72cad4aa2d84cca78df798b35c7bcdd6",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "success": []
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "entities",
+      "caseSha256": "289cd6bd99a15855c90a0a79db8bd8d8d49f36d707fd46e34a36d8901ae447df",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "entity",
+      "caseSha256": "082516c6970a98a1bea503381947271e93892af30ac8bee1ee0fe0fe551e1fa3",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "entity-page",
+      "caseSha256": "dee7f85a11bfd3083fde307f3b4db45d8c69c8a9d6a3b3891371d8ba44751a86",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "match",
+      "caseSha256": "0edd4eb641cac2afba25d42b22c393c66308c6c1adc28bb50b60da7711561745",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "dependency-empty",
+      "caseSha256": "1c7d29679408ee0be5f8f421ee7a6b8b06f9b76b469352cd037e4325fcc2d36e",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "query-all",
+      "caseSha256": "cec4d1878db68c156fb0bc160d1707647062f2f56cdaf6bc2d7956434b244e5a",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "query-all-echo",
+      "caseSha256": "ccf136a0ab45d52bd7500eae3b174370bcaa1912a955df72b768b032acae977a",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "query",
+      "caseSha256": "2854238f2cb89c043446fa4a1e2c5314c31c18a639be7fbf13fe54f43aad6298",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    },
+    {
+      "lane": "qlever",
+      "route": "query-page",
+      "caseSha256": "4f21521451d57fb834feff30d76aff7a87a593b09c65eae54b920b4875f9d24b",
+      "oracleExit": 0,
+      "expected": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observed": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt",
+        "message": "Record-time watermark has not reached the requested cut"
+      },
+      "matches": true
+    }
+  ]
+}

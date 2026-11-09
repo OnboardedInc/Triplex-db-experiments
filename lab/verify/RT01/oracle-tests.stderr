@@ -1,0 +1,202 @@
+E......................EEEEEE...............................E..E..E........................................
+======================================================================
+ERROR: lab.oracles.replay.tests.test_contract_section4 (unittest.loader._FailedTest.lab.oracles.replay.tests.test_contract_section4)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: lab.oracles.replay.tests.test_contract_section4
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_contract_section4.py", line 24, in <module>
+    from lab.oracles.replay.tests import test_rulings as T
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_rulings.py", line 14, in <module>
+    RULINGS = (ROOT / "lab/acceptance/RULINGS.md").read_text()
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/acceptance/RULINGS.md'
+
+
+======================================================================
+ERROR: test_Q70E_only_issuing_prefixes (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70E_only_issuing_prefixes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_q70_coverage.py", line 37, in test_Q70E_only_issuing_prefixes
+    f=fixture('Q70E'); obj=object.__new__(R.Run)
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_q70_coverage.py", line 14, in fixture
+    return json.loads((FIXTURES/(name+'.json')).read_text())
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/experiments/EXP-O06/round3/fixtures/Q70E.json'
+
+======================================================================
+ERROR: test_Q70H_equal_view_different_bodies (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70H_equal_view_different_bodies)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_q70_coverage.py", line 48, in test_Q70H_equal_view_different_bodies
+    report=evaluate(fixture('Q70H'))
+                    ~~~~~~~^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_q70_coverage.py", line 14, in fixture
+    return json.loads((FIXTURES/(name+'.json')).read_text())
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/experiments/EXP-O06/round3/fixtures/Q70H.json'
+
+======================================================================
+ERROR: test_Q70I_journal_ambiguity_and_scope (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70I_journal_ambiguity_and_scope)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_q70_coverage.py", line 58, in test_Q70I_journal_ambiguity_and_scope
+    c=fixture('Q70I')
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_q70_coverage.py", line 14, in fixture
+    return json.loads((FIXTURES/(name+'.json')).read_text())
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/experiments/EXP-O06/round3/fixtures/Q70I.json'
+
+======================================================================
+ERROR: test_Q70K_scope_on_every_scope_surface (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_q70_coverage.py", line 71, in test_Q70K_scope_on_every_scope_surface
+    c=fixture('Q70K')
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_q70_coverage.py", line 14, in fixture
+    return json.loads((FIXTURES/(name+'.json')).read_text())
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/experiments/EXP-O06/round3/fixtures/Q70K.json'
+
+======================================================================
+ERROR: test_Q70L_entity_and_scope_key (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70L_entity_and_scope_key)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_q70_coverage.py", line 101, in test_Q70L_entity_and_scope_key
+    c=result(evaluate(fixture('Q70L-entity')),'c')
+                      ~~~~~~~^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_q70_coverage.py", line 14, in fixture
+    return json.loads((FIXTURES/(name+'.json')).read_text())
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/experiments/EXP-O06/round3/fixtures/Q70L-entity.json'
+
+======================================================================
+ERROR: lab.oracles.replay.tests.test_record_time (unittest.loader._FailedTest.lab.oracles.replay.tests.test_record_time)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: lab.oracles.replay.tests.test_record_time
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_record_time.py", line 13, in <module>
+    BASE = json.loads((ROOT / 'fixtures/G9-CUT-02b.json').read_text())['case']
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/experiments/EXP-O06/fixtures/G9-CUT-02b.json'
+
+
+======================================================================
+ERROR: lab.oracles.replay.tests.test_rulings (unittest.loader._FailedTest.lab.oracles.replay.tests.test_rulings)
+----------------------------------------------------------------------
+ImportError: Failed to import test module: lab.oracles.replay.tests.test_rulings
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/loader.py", line 426, in _find_test_path
+    module = self._get_module_from_name(name)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/unittest/loader.py", line 367, in _get_module_from_name
+    __import__(name)
+    ~~~~~~~~~~^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_rulings.py", line 14, in <module>
+    RULINGS = (ROOT / "lab/acceptance/RULINGS.md").read_text()
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/acceptance/RULINGS.md'
+
+
+======================================================================
+ERROR: test_all_sections_pass (lab.oracles.replay.tests.test_scale_and_selfcheck.SelfChecks.test_all_sections_pass)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_scale_and_selfcheck.py", line 55, in test_all_sections_pass
+    report = json.loads(C.V.dumps(C.run_all()))
+                                  ~~~~~~~~~^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/selfcheck.py", line 434, in run_all
+    rows = fn()
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/selfcheck.py", line 84, in check_ham
+    status_source = ref["sourceSha256"] == sha(SOURCES["ham-v2-oracle"])
+                                           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/selfcheck.py", line 43, in sha
+    return hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
+                          ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 777, in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/qualification/capacity/historical-assertion-metadata-v2/oracle.mjs'
+
+======================================================================
+ERROR: test_ham_check_detects_a_leaked_future_retirement (lab.oracles.replay.tests.test_scale_and_selfcheck.SelfChecks.test_ham_check_detects_a_leaked_future_retirement)
+M-FUTURE-RETIREMENT-style sanity: corrupt the frozen reference, the check fails.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/tests/test_scale_and_selfcheck.py", line 74, in test_ham_check_detects_a_leaked_future_retirement
+    rows = C.check_ham()
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/selfcheck.py", line 84, in check_ham
+    status_source = ref["sourceSha256"] == sha(SOURCES["ham-v2-oracle"])
+                                           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/selfcheck.py", line 43, in sha
+    return hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
+                          ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 777, in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/qualification/capacity/historical-assertion-metadata-v2/oracle.mjs'
+
+----------------------------------------------------------------------
+Ran 107 tests in 21.748s
+
+FAILED (errors=10)

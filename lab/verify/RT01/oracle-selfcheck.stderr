@@ -1,0 +1,23 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/__main__.py", line 7, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/cli.py", line 39, in main
+    report = selfcheck.run_all()
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/selfcheck.py", line 434, in run_all
+    rows = fn()
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/selfcheck.py", line 84, in check_ham
+    status_source = ref["sourceSha256"] == sha(SOURCES["ham-v2-oracle"])
+                                           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/lab/oracles/replay/selfcheck.py", line 43, in sha
+    return hashlib.sha256((ROOT / path).read_bytes()).hexdigest()
+                          ~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 777, in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/oracle-050/qualification/capacity/historical-assertion-metadata-v2/oracle.mjs'

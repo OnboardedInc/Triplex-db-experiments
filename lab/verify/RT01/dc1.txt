@@ -1,0 +1,28 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/packages/testkit
+
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > generates deterministically and covers every basis family and history operation
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > xtdb semantic models seed 1: HE-1 through HE-7
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > xtdb semantic models seed 42: HE-1 through HE-7
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > xtdb semantic models seed 890: HE-1 through HE-7
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > qlever semantic models seed 1: HE-1 through HE-7
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > qlever semantic models seed 42: HE-1 through HE-7
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > qlever semantic models seed 890: HE-1 through HE-7
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > reproduces SQL01 F1: 30 before purge, 40 after, identical TP request
+ ✓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > D-C1 decision order decided: immutable T cut with a negative control 4ms
+ ✓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > D-C1 decision order staged-stamps: immutable T cut with a negative control 1ms
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > canonicalizes all columns without losing exact strings, -0, duplicates or key order
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > rejects unanimous wrong answers (HE-1), flags (HE-6), bad forcing and basis echoes
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > rejects untyped refusal, eligible refusal and total unavailability
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > rejects future-position answers even if every route agrees
+ ↓ test/route-equivalence.test.ts > EXP-RQ01 route-equivalence gate (offline only) > keeps the unmerged SQL01 H1 and lane D adapters explicitly unimplemented
+ ↓ test/route-equivalence.test.ts > future T refusals carry and bind the recordedAt axis
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 14 skipped (16)
+   Start at  22:49:12
+   Duration  315ms (import 76%, transform 21%, tests 3%, worker 1%)
+

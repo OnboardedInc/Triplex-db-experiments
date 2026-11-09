@@ -1,0 +1,134 @@
+[
+  {
+    "lane": "xtdb",
+    "route": "storage",
+    "T": 1000.001,
+    "elapsed": 2000.913125,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "dependency-empty",
+    "T": 1000.001,
+    "elapsed": 2001.2250829999994,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "datalog",
+    "T": 1000.001,
+    "elapsed": 2002.8895839999986,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "interval",
+    "T": 1000.001,
+    "elapsed": 2000.7495,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "native",
+    "T": 1000.001,
+    "elapsed": 2000.895457999999,
+    "observed": {
+      "tag": "ReadError",
+      "causeTag": "BasisNotAvailable",
+      "causeAxis": "recordedAt"
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "native-sql",
+    "T": 1000.001,
+    "elapsed": 2001.6489999999994,
+    "observed": {
+      "tag": "ReadError",
+      "causeTag": "BasisNotAvailable",
+      "causeAxis": "recordedAt"
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "maintained",
+    "T": 1000.001,
+    "elapsed": 2002.2775000000001,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "storage",
+    "T": 1000.001,
+    "elapsed": 2001.0745830000014,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "dependency-empty",
+    "T": 1000.001,
+    "elapsed": 2001.6284579999992,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "datalog",
+    "T": 1000.001,
+    "elapsed": 2001.3474170000009,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "interval",
+    "T": 1000.001,
+    "elapsed": 2002.3907500000023,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "native",
+    "T": 1000.001,
+    "elapsed": 2001.6883750000015,
+    "observed": {
+      "tag": "ReadError",
+      "causeTag": "BasisNotAvailable",
+      "causeAxis": "recordedAt"
+    }
+  }
+]

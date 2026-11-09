@@ -1,0 +1,30 @@
+[
+  {
+    "v": 2,
+    "op": "assert",
+    "tripleId": "00V9ABAN000000000000000001",
+    "entityId": "single",
+    "attribute": ":value",
+    "value": {
+      "type": "string",
+      "value": "one"
+    },
+    "validFrom": 1000,
+    "assertionTxId": "_tx/00GRTCFP000000000000000001"
+  },
+  {
+    "v": 2,
+    "op": "retract",
+    "tripleId": "00V9ABAN000000000000000001",
+    "entityId": "single",
+    "attribute": ":value",
+    "value": {
+      "type": "string",
+      "value": "one"
+    },
+    "validFrom": 1000,
+    "recordedAt": 1000,
+    "assertionTxId": "_tx/00GRTCFP000000000000000001",
+    "retractionTxId": "_tx/00GRTCFP000000000000000001"
+  }
+]

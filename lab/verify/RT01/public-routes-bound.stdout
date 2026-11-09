@@ -1,0 +1,298 @@
+[
+  {
+    "lane": "xtdb",
+    "route": "empty-entities",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308130
+    },
+    "queries": 0,
+    "elapsed": 0.10383299999995188,
+    "observed": {
+      "success": []
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "entities",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308130
+    },
+    "queries": 1,
+    "elapsed": 0.6875840000000153,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "entity",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308130
+    },
+    "queries": 1,
+    "elapsed": 0.09037499999999454,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "entity-page",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308130
+    },
+    "queries": 1,
+    "elapsed": 0.35883400000000165,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "match",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308130
+    },
+    "queries": 1,
+    "elapsed": 0.06766699999997172,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "dependency-empty",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308130
+    },
+    "queries": 1,
+    "elapsed": 0.09141700000003539,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "query-all",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308130
+    },
+    "queries": 1,
+    "elapsed": 2.719959000000017,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "query-all-echo",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308130
+    },
+    "queries": 1,
+    "elapsed": 0.2636669999999981,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "query",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308130
+    },
+    "queries": 1,
+    "elapsed": 0.6598749999999995,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "xtdb",
+    "route": "query-page",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308130
+    },
+    "queries": 1,
+    "elapsed": 0.28658400000000483,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "empty-entities",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308137
+    },
+    "queries": 0,
+    "elapsed": 0.022625000000005002,
+    "observed": {
+      "success": []
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "entities",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308137
+    },
+    "queries": 1,
+    "elapsed": 0.2616249999999809,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "entity",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308137
+    },
+    "queries": 1,
+    "elapsed": 0.05566599999997379,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "entity-page",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308137
+    },
+    "queries": 1,
+    "elapsed": 0.049708999999950265,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "match",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308137
+    },
+    "queries": 1,
+    "elapsed": 0.03391599999997652,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "dependency-empty",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308137
+    },
+    "queries": 1,
+    "elapsed": 0.05445899999995163,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "query-all",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308137
+    },
+    "queries": 1,
+    "elapsed": 0.5637079999999628,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "query-all-echo",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308137
+    },
+    "queries": 1,
+    "elapsed": 0.12912499999998772,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "query",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308137
+    },
+    "queries": 1,
+    "elapsed": 0.5688749999999914,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  },
+  {
+    "lane": "qlever",
+    "route": "query-page",
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1794196308137
+    },
+    "queries": 1,
+    "elapsed": 0.23020800000000463,
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "message": "Record-time watermark has not reached the requested cut"
+    }
+  }
+]
