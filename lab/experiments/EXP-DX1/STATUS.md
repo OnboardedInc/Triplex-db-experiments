@@ -59,3 +59,34 @@ The VM was shared with three other agents during these runs, so tails (p99) are 
 Decisions from S1: (1) no entity cache in the gateway; (2) stage 2 read work is about the wire and the client (per-entity revision
 and references so an entity version travels once per client session, `reach-many`); (3) a quiet-window spike DX-S2 re-measures the
 260-datom burst and the isolation question with the transactor on 2 CPUs.
+
+### DX-B1 (gateway and adapter fast paths; `exp/DX-B1-fast-paths` b9ce5abf, merged; report `lab/experiments/EXP-DX1/b1/REPORT.md`)
+
+- Exactness: 6,600 fast-versus-fallback comparisons over 200 random scenarios: 5,960 deep-equal, 640 declined (380 interior position,
+  260 irregular scope), 0 faults; three mutants each fail the test. Reads answer with the transactor process stopped.
+- A commit is 2 HTTP calls (was about 9); a pull is 1 (was about 6).
+- Diagnostic speed (dev storage, 500 warm-ups only, one container for both JVMs): pull p50 6.0 ms and 521 pulls per CPU-second; commit
+  p50 12.9 ms at 276 datoms. Not representative: cold JIT, per-request `d/q`, double decode and `localeCompare` sort on the client,
+  `d/sync` on begin and transact. DX-B2 fixes these.
+
+### DX-H1 (NS driver on lane datomic; `exp/DX-H1-ns-harness` 23b97ac6, merged; report `lab/experiments/EXP-DX1/h1/REPORT.md`)
+
+- `lab/bench/driver.ts --lane datomic --composition public|reach` reaches DONE through all 17 phases on a Postgres-backed stack
+  (`lab/experiments/EXP-DX1/stack/up.sh`, separate write and read gateways); 0 read violations. Numbers were on the old gateway.
+- Seeding through `Triples.transact`: about 2,400 facts/s, so 10k subjects in about 3 minutes and 100k in about 27 to 35 minutes.
+- Open: P5 in the NS driver is fetch-only (the real activation path is `--world w0`); indexing-job hook; engine bytes read; O-REPLAY root.
+
+### XN-S1 (XTDB floors) partial, still running
+
+- 95 documents by id in one query on a settled node, 16 clients: about 62 operations per engine CPU-second, p50 166 ms. Bar 1,100.
+
+## Agents running now
+
+| Id | Task | Branch / worktree | Prompt |
+| --- | --- | --- | --- |
+| DX-B2 | Gateway loop at engine cost; entity revisions, references and a client cache; `reach-many`; no `d/sync` on writes; index-job hook; warm numbers on Postgres with split gateways | `exp/DX-B2-speed`, `.claude/worktrees/dx-b2` | `.../prompts/DX-B2.md` |
+| DX-H2 | P5 measurable on lane D: W0 activation with evaluation, publication, oracle gates, live traffic, time breakdown | `exp/DX-H2-p5-harness`, `.claude/worktrees/dx-h2` | `.../prompts/DX-H2.md` |
+| XN-S1 | as above | | |
+
+After B2 and H2: merge both; if H2 needs rows with recorded position from the reach path, add it; first full NS run on lane D at the
+10k rung in a quiet VM (stop every other agent first); then P5 at 100k.
