@@ -1,3 +1,4 @@
+import { latencyReceipt, connectionModeForBackend } from "../../../receipts/latency.mjs";
 // EXP-J01 harness library: Triplex runtimes per lane and journal encoding over measuring clients,
 // source-log record sizing (XTDB) and delta accounting (QLever), statistics and receipts.
 // Imports the built dist (the bytes a gate hashes), never package sources.
@@ -181,12 +182,13 @@ export const writeReceipt = (kind, body) => {
   fs.mkdirSync(RAW_DIR, { recursive: true });
   const id = `${kind}-${new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z')}-${randomUUID().slice(0, 6)}`;
   const { raw, ...rest } = body;
+  const qleverConnectionMode = body.lane ? connectionModeForBackend(body.lane) : qlever.qleverConnectionModeOf();
   let rawPath = null;
   if (raw !== undefined) {
     rawPath = path.join(RAW_DIR, `${id}.raw.json`);
-    fs.writeFileSync(rawPath, JSON.stringify(raw));
+    fs.writeFileSync(rawPath, JSON.stringify(latencyReceipt({ qleverConnectionMode, format: "j01-raw/2", raw })));
   }
-  const receipt = { format: 'j01-receipt/1', id, kind, writtenAt: new Date().toISOString(), identity: identity(), ...rest, rawPath, rawSha256: rawPath ? createHash('sha256').update(fs.readFileSync(rawPath)).digest('hex') : null };
+  const receipt = latencyReceipt({ qleverConnectionMode, format: 'j01-receipt/1', id, kind, writtenAt: new Date().toISOString(), identity: identity(), ...rest, rawPath, rawSha256: rawPath ? createHash('sha256').update(fs.readFileSync(rawPath)).digest('hex') : null });
   const file = path.join(RECEIPT_DIR, `${id}.json`);
   fs.writeFileSync(file, JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' });
   return { id, file };

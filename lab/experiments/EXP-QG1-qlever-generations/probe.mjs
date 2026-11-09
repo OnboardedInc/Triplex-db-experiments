@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt } from "../../receipts/latency.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
@@ -31,15 +32,17 @@ async function request(params) {
   } catch {
     data = null;
   }
-  const meta = {
+  const meta = qleverLatencyReceipt({
+    qleverConnectionMode: "keep-alive",
     id,
+    connectionMode: "keep-alive",
     at,
     finished: new Date().toISOString(),
     ms: performance.now() - start,
     status: res.status,
     params,
     sha256: hash(raw),
-  };
+  });
   save(`${id}.request.json`, meta);
   return { ...meta, data };
 }
@@ -83,14 +86,15 @@ for (const phase of ["before", "after"]) {
   for (const [name, query] of Object.entries(queries)) {
     await request({ cmd: "clear-cache" });
     const r = await request({ query });
-    measurements[phase][name] = {
+    measurements[phase][name] = qleverLatencyReceipt({
+      qleverConnectionMode: r.qleverConnectionMode,
       id: r.id,
       ms: r.ms,
       status: r.status,
       answer: canonical(r),
       rows: r.data?.res?.length,
       scans: scans(r.data),
-    };
+    });
   }
   save(`${phase}-stats.json`, await request({ cmd: "stats" }));
   save("measurements.json", measurements);
@@ -104,7 +108,8 @@ const equal = Object.keys(queries).every(
     measurements.before[k].rows > 0 &&
     measurements.before[k].answer === measurements.after[k].answer,
 );
-save("receipt.json", {
+save("receipt.json", qleverLatencyReceipt({
+  qleverConnectionMode: "keep-alive",
   started,
   finished: new Date().toISOString(),
   owner,
@@ -118,5 +123,5 @@ save("receipt.json", {
   touchedBlockDelta: { status: "estimate-only; runtime trees retained; not exact block counters" },
   sampledAnswerIdentity: equal,
   verdict: "DIAGNOSTIC: sampled identity is not the 200-read Q89i gate",
-});
+}));
 console.log(JSON.stringify({ out, sampledAnswerIdentity: equal }));

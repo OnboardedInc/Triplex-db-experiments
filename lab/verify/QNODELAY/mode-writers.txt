@@ -1,0 +1,50 @@
+packages/qlever/experiments/native-query-shapes.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/native-query-shapes.ts:38:  qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/native-entry.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/native-entry.ts:100:  qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/native-entry.ts:411:        qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/aggregate-entry.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/aggregate-entry.ts:19:  qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/cancel-restart.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/cancel-restart.ts:138:  qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/native-capabilities.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/native-capabilities.ts:10:  qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/persisted-source-entry.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/persisted-source-entry.ts:29:  qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/scalar-order-entry.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/scalar-order-entry.ts:25:  qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/oom-recovery.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/oom-recovery.ts:116:  qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/update-shapes.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/update-shapes.ts:39:await writeFile(path, JSON.stringify({ qleverConnectionMode: qleverConnectionModeOf(), run, results }, null, 2) + "\n");
+packages/qlever/experiments/retirement-pair-entry.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/retirement-pair-entry.ts:30:  qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/transaction-admission.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/transaction-admission.ts:138:  qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/upstream44.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/upstream44.ts:27:  qleverConnectionMode: qleverConnectionModeOf(),
+packages/qlever/experiments/boundary-shapes.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/boundary-shapes.ts:32:  JSON.stringify({ qleverConnectionMode: qleverConnectionModeOf(), run, expected: numericOrderKey(300), results }, null, 2) + "\n",
+packages/qlever/experiments/join-shapes.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/join-shapes.ts:85:      { qleverConnectionMode: qleverConnectionModeOf(), kind: "parallel-query-shape-correctness", scope, expected, observations },
+packages/qlever/experiments/lab-counterexamples.ts:1:import { qleverConnectionModeOf } from "../src/QleverClient.js";
+packages/qlever/experiments/lab-counterexamples.ts:90:  qleverConnectionMode: qleverConnectionModeOf(),
+lab/scenarios/v2/run.ts:122:    qlever: lane === 'qlever' ? { connectionMode: process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? 'keep-alive', commitPath: 'broker', brokerDirectory: process.env.QLEVER_BROKER_DIR, baseTriples: null, deltaTriples: null, touchedBlockDelta: null, rebuildThreshold: null } : null,
+lab/experiments/EXP-QG1-qlever-generations/p4-sample.ts:64:      qleverConnectionMode: process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive",
+lab/bin/gate.mjs:739:    qleverConnectionMode: options.lane === 'qlever' ? (process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? 'keep-alive') : null,
+lab/verify/QNODELAY/audit.mjs:42:    for (const size of [s.size, 'all']) (groups[`${s.connectionMode}/${size}`] ??= []).push(s.ms);
+lab/experiments/EXP-QG1-qlever-generations/probe.mjs:36:    connectionMode: "keep-alive",
+lab/verify/QNODELAY/live.mjs:39:    const client=makeQleverClient(slot.endpoint,{connectionMode:mode});
+lab/verify/QNODELAY/transport.mjs:9:import { makeQleverClient, QleverHttpError, qleverConnectionModeOf } from '../../../packages/qlever/src/QleverClient.ts';
+lab/verify/QNODELAY/transport.mjs:41:  const client = makeQleverClient(url,{connectionMode:mode});
+lab/verify/QNODELAY/transport.mjs:58:check('absent-default',qleverConnectionModeOf()==='keep-alive');
+lab/verify/QNODELAY/transport.mjs:60:check('explicit-selection-over-env',qleverConnectionModeOf('keep-alive')==='keep-alive');
+lab/verify/QNODELAY/transport.mjs:81:    const client=makeQleverClient(url,{connectionMode:mode});
+lab/verify/QNODELAY/transport.mjs:99:  const client=makeQleverClient(url,{connectionMode:mode});
+lab/experiments/EXP-QNODELAY/probe.ts:76:    const client = makeQleverClient(info.endpoint, { connectionMode: mode });
+lab/experiments/EXP-QNODELAY/probe.ts:106:            connectionMode: mode,
+lab/experiments/EXP-QNODELAY/probe.ts:124:          connectionMode: mode,
+lab/bench/w0-driver.ts:42:    qleverConnectionMode: lane === "qlever" ? (process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
+lab/bench/driver.ts:119:  qleverConnectionMode: lane === "qlever" ? (process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
+lab/experiments/EXP-J01-bytes-per-commit/bench/lib.mjs:189:  const receipt = { qleverConnectionMode: qlever.qleverConnectionModeOf(), format: 'j01-receipt/1', id, kind, writtenAt: new Date().toISOString(), identity: identity(), ...rest, rawPath, rawSha256: rawPath ? createHash('sha256').update(fs.readFileSync(rawPath)).digest('hex') : null };
+lab/experiments/EXP-C8-read-only-frontier/round-timing.mjs:74:const result = { qleverConnectionMode: lane === 'qlever' ? engine.qleverConnectionModeOf() : null, format: 'c8-round-timing/1', label, lane, url, root, scope, startedAt: new Date().toISOString(), repeat, graphs: {} };

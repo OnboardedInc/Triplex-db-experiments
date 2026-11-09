@@ -1,21 +1,19 @@
+import { readLatencyRun } from "../../../lab/receipts/parse.ts";
 /** Enforce the parent-reviewed fixed diagnostic, not a calibrated acceptance.
  * The shared load runner records late writer reconciliation separately from
  * in-window liveness. This wrapper must not turn that distinction into a PASS.
  * Source/rationale: qlever-qualified-profile-point-rate16-v2/plan.json.
  */
 import { createHash } from "node:crypto";
-import { createReadStream, readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import path from "node:path";
-import { createInterface } from "node:readline";
 
 export async function verifyRate16Feasibility(directory: string): Promise<boolean> {
-  const report = JSON.parse(readFileSync(path.join(directory, "report.json"), "utf8"));
+  const reportRun = readLatencyRun(path.join(directory, "report.json"), { lane: "qlever", expectedWriter: "triplex-public-load-run/1" }).unwrap();
+  const eventRun = readLatencyRun(path.join(directory, "events.jsonl"), { lane: "qlever", encoding: "ndjson", expectedWriter: "triplex-public-load-event/1", expectedMode: reportRun.transportMode }).unwrap();
+  const report = reportRun.data;
   const reads: any[] = [], writes: any[] = [];
-  for await (const line of createInterface({
-    input: createReadStream(path.join(directory, "events.jsonl")), crlfDelay: Infinity,
-  })) {
-    if (!line.trim()) continue;
-    const event = JSON.parse(line);
+  for (const event of eventRun.records) {
     if (event.type === "read") reads.push(event);
     else if (event.type === "write") writes.push(event);
   }

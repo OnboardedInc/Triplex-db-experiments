@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 // node lab/scenarios/run.mjs --lane xtdb|qlever --rung 10k|smoke --scenarios 2,3|all --output runs/.../gs-report.json
 //   [--raw-dir DIR] [--readers 16] [--run-tag TAG] [--fresh-world] [--sweep-cap N] [--drain-timeout-ms N]
 //
@@ -33,13 +34,14 @@ const log = line => process.stderr.write(`[gs ${lane} ${new Date().toISOString()
 
 const ownerFile = process.env.TRIPLEX_LAB_SLOT_OWNER;
 const owner = ownerFile ? JSON.parse(fs.readFileSync(ownerFile, 'utf8')) : null;
-const report = {
+const report = latencyReceipt({
+  qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   format: 'tx2-gs-run/1', generator: 'W01-RETIRED', classification: 'DIAGNOSTIC', lane, rung, worldSize: size, runTag, readers, startedAt: new Date().toISOString(),
   slotOwner: owner ? { lane: owner.lane, slot: owner.slot, mode: owner.mode, endpoint: owner.endpoint, holder: owner.holder } : null,
   profile: { readers, readersTarget: 256, slotMode: owner?.mode ?? null, reduced: readers < 256 || owner?.mode !== 'exclusive' },
   qlever: lane === 'qlever' ? { commitPath: process.env.QLEVER_COMMIT_PATH, brokerDirectory: process.env.QLEVER_BROKER_DIR, baseTriples: null, deltaTriples: null, touchedBlockDelta: null, rebuildThreshold: null } : null,
   world: null, scenarios: [], status: 'RUNNING',
-};
+});
 fs.mkdirSync(path.dirname(output), { recursive: true });
 const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 1) + '\n');
 save();

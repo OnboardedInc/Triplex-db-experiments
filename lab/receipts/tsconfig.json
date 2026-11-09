@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.node.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true,
+    "checkJs": true,
+    "allowImportingTsExtensions": true
+  },
+  "include": ["latency.mjs", "latency.d.mts", "typecheck.ts", "parse.ts"]
+}

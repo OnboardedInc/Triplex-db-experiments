@@ -1,6 +1,7 @@
+import { readLatencyRun } from "../../../lab/receipts/parse.ts";
 /** Reopen a retained fixture through the same public API for either backend. */
 import assert from "node:assert/strict";
-import { readFileSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import path from "node:path";
 import { Effect } from "effect";
 import { Triples } from "@triplex-build/triplex";
@@ -10,7 +11,7 @@ import { loadQualificationBackend } from "@triplex-build/triplex-qualification";
 const root = path.resolve(import.meta.dirname, "../../..");
 const file = path.resolve(process.argv[2]!);
 assert.ok(file.startsWith(path.join(root, "qualification") + path.sep));
-const original = JSON.parse(readFileSync(file, "utf8"));
+const original = readLatencyRun(file).unwrap().data;
 const count = Number(original.acknowledgedEntities);
 assert.ok(Number.isSafeInteger(count) && count > 0);
 const backend = await loadQualificationBackend();

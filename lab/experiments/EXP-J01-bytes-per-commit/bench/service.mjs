@@ -1,3 +1,4 @@
+import { latencyReceipt, connectionModeForBackend } from "../../../receipts/latency.mjs";
 // EXP-J01 commit service time, A0 against compact, interleaved in one window on one shared resident.
 // One writer per arm, closed loop, 10-fact commands with a commandId, each arm on its own fresh scope.
 // Blocks alternate the arm that goes first (A0 C, C A0, ...) so host-load drift falls on both arms.
@@ -42,14 +43,15 @@ for (const rt of Object.values(arms)) await rt.close();
 const firstBlock = (encoding) => samples[encoding].filter((s) => s.block === 0).map((s) => s.ms);
 const lastHalf = (encoding) => samples[encoding].filter((s) => s.block >= Math.floor(blocks / 2)).map((s) => s.ms);
 const all = (encoding) => samples[encoding].map((s) => s.ms);
-const out = {
+const out = latencyReceipt({
+  qleverConnectionMode: connectionModeForBackend(lane),
   lane, label, blocks, perBlock, commandFacts: 10,
   hostLoad1m: { min: round(Math.min(...loads), 2), max: round(Math.max(...loads), 2) },
   serviceMs: Object.fromEntries(['a0', 'compact'].map((e) => [e, { all: summary(all(e)), firstBlock: summary(firstBlock(e)), secondHalf: summary(lastHalf(e)) }])),
   ...(lane === 'qlever' ? { updateMs: Object.fromEntries(['a0', 'compact'].map((e) => [e, summary(updateMs[e])])) } : {}),
   ratioP50: round(summary(all('a0')).p50 / summary(all('compact')).p50, 2),
   perBlockP50: Array.from({ length: blocks }, (_v, b) => Object.fromEntries(['a0', 'compact'].map((e) => [e, summary(samples[e].filter((s) => s.block === b).map((s) => s.ms)).p50]))),
-};
+});
 const receipt = writeReceipt(`service-${lane}-${label}`, { ...out, raw: samples });
 console.log(JSON.stringify({ receipt: receipt.id, ...out }, null, 1));
 process.exit(0);

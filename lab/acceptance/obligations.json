@@ -40,7 +40,9 @@
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/pending-authority.md": "42f0ba89780694d876c7cb41d912a31ede858d8ef11a0ef5a916e58872c7339e",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/packages__testkit__src__index.ts.diff": "41929c2d3f25f64c0d8980f9b4fd74316c93553de357d1dc1ebc7c8cdf07a2db",
     "lab/verify/P2X2/VERIFY.md": "462456077e50a4a6a4027deb2f1e55f36361b69751323ff0f37dddee2943a159",
-    "lab/acceptance/build_contract.py": "0f1a4225b5efa22c08ff1afee061ae8309b28faf64df88d06359e72c150bf3b9"
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-repin-review.json": "0a414b2d80fe57c991751d6e2d60a70a752c26f7eba3d0430f61ae1d6be511fa",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-packages__qlever__experiments__native-entry.ts.diff": "7b656f2155a25e2380497824889fd2d3f50f1afb55b282bc38c80a3e271df97c",
+    "lab/acceptance/build_contract.py": "00249bec6afeba143f97ab0f7e97f8611bc91c92079b22f33d3198b5920c268a"
   },
   "artifacts": {
     "oracle-contract.json": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266",
@@ -3970,7 +3972,7 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "0f1a4225b5efa22c08ff1afee061ae8309b28faf64df88d06359e72c150bf3b9",
+        "lab/acceptance/build_contract.py": "00249bec6afeba143f97ab0f7e97f8611bc91c92079b22f33d3198b5920c268a",
         "lab/acceptance/oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9"
       }
     },
@@ -15640,7 +15642,7 @@
         },
         {
           "path": "packages/qlever/experiments/native-entry.ts",
-          "sha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f"
+          "sha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
         }
       ],
       "note": null
@@ -17132,7 +17134,7 @@
       },
       {
         "path": "packages/qlever/experiments/native-entry.ts",
-        "sha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f"
+        "sha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d"
       }
     ],
     "CS-STR": [
@@ -31357,5 +31359,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "f864cf0df46b0cad16aa7678220a5f73595e2bdd17d186f8da16d6b54b8e70bd"
+  "transitiveContractSha256": "730873803a65eed64488f91f265094785440c9ec606985651acf01a38f7a118e"
 }

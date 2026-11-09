@@ -1,3 +1,5 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Actual typed/public liveness gate. Only complete final query answers reach
  * the coordinator; all joins/anti-joins and equality remain inside QLever.
  * D is a small tractable control, not a repeat of the known family12 OOM.
@@ -20,7 +22,8 @@ const runId = randomUUID(),
   scope = DatabaseScope.test(`scalar-order-liveness-${runId}`),
   url = labQleverUrl(),
   accessToken = labQleverAccessToken();
-const report: Record<string, any> = {
+const report: Record<string, any> = qleverLatencyReceipt({
+  qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-scalar-order-liveness-entry/1",
   scope,
   status: "RUNNING",
@@ -32,7 +35,7 @@ const report: Record<string, any> = {
     "Canonical-channel and retirement-pair admissions, including retained history, are charged for both profiles.",
     "No scale, throughput, write-crash or general SPARQL claim.",
   ],
-};
+});
 const save = () => writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 save();
 const originalFetch = globalThis.fetch;

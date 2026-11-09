@@ -1,0 +1,10 @@
+{
+  "classification": "NOTE FOR LATER; not a new blocking finding",
+  "source": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt1/fixtures/qg1/positive-keep-alive/output.json",
+  "sourceSha256": "2914dc52dfdae8b22bd512ff4e24a3655d0b00d7ef8fb4e601b548a96ac1f096",
+  "refusal": {
+    "code": "WRITER",
+    "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt1/fixtures/qg1/positive-keep-alive/output.json: WRITER: unregistered or unexpected writer"
+  },
+  "detail": "The final QG1 aggregate output has no registered latencyWriter. Its accepted inputs and numeric output do not become an ingestible run through readLatencyRun."
+}

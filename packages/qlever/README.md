@@ -216,3 +216,18 @@ solution. The default native strategy retains its explicit unsupported errors.
 See [Native SPARQL reads](./NATIVE-QUERIES.md) for compiled public API examples,
 literal entity carriers, shared basis/result guarantees and the optional owned
 relation-maintenance path with explicit receipt and cleanup costs.
+
+## HTTP connection mode (EXP-QNODELAY)
+
+`makeQleverClient(url, { connectionMode: "per-request" })` and
+`makeQleverRuntime({ url, connectionMode: "per-request" })` opt into a new HTTP/1.1
+socket for every query, update and command. The default is `"keep-alive"`.
+The lab can explicitly select either mode with `TRIPLEX_QLEVER_CONNECTION_MODE`;
+an explicit factory option takes precedence, and invalid selections throw.
+
+Both modes use the same fetch response path for decoding, redirects, aborts and
+HTTP errors. Per-request mode supplies a private Undici dispatcher and destroys
+it after the response or failure; it never changes the global dispatcher. Response
+byte limits apply to decoded bytes, including gzip responses. Cancellation still
+uses QLever's separate WebSocket protocol. This option addresses the stock server's keep-alive
+stall; it is not a server TCP_NODELAY patch or a P1/P4 acceptance claim.

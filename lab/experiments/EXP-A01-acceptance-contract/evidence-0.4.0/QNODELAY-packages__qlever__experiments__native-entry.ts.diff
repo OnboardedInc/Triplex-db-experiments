@@ -1,0 +1,48 @@
+diff --git a/packages/qlever/experiments/native-entry.ts b/packages/qlever/experiments/native-entry.ts
+index 29fbd4c0..a87a10eb 100644
+--- a/packages/qlever/experiments/native-entry.ts
++++ b/packages/qlever/experiments/native-entry.ts
+@@ -1,3 +1,5 @@
++import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
++import { qleverConnectionModeOf } from "../src/QleverClient.js";
+ /** Fresh public native-SPARQL gate. Requires an admitted server; starts none. */
+ import assert from "node:assert/strict";
+ import { createHash, randomUUID } from "node:crypto";
+@@ -95,7 +97,8 @@ const counterContract = {
+   parameters: fields({ entity: TypeExpr.text }),
+   row: fields({ counter: TypeExpr.int64 }),
+ };
+-const report: Record<string, any> = {
++const report: Record<string, any> = qleverLatencyReceipt({
++  qleverConnectionMode: qleverConnectionModeOf(),
+   format: "triplex-public-native-entry/1",
+   runId,
+   backend: "qlever",
+@@ -116,7 +119,7 @@ const report: Record<string, any> = {
+     "Mac adapter is monitored separately from Linux engine memory cap.",
+     "Pre-aborted query and healthy reuse do not establish cancellation of a running native query.",
+   ],
+-};
++});
+ mkdirSync(path.dirname(output), { recursive: true });
+ writeFileSync(output, JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
+ const save = () => writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
+@@ -405,7 +408,8 @@ try {
+   writeFileSync(
+     path.join(path.dirname(output), "checks.json"),
+     JSON.stringify(
+-      {
++      qleverLatencyReceipt({
++        qleverConnectionMode: qleverConnectionModeOf(),
+         format: "triplex-public-native-entry-checks/1",
+         backend: "qlever",
+         status: report.status,
+@@ -413,7 +417,7 @@ try {
+           id,
+           status,
+         })),
+-      },
++      }),
+       null,
+       2,
+     ) + "\n",

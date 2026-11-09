@@ -6336,8 +6336,20 @@ DATOMIC_IMAGE_040 = {"image": "tx2-datomic:1.0.7745-da00", "imageId": "sha256:ae
 IMAGE_PINS["datomic"] = DATOMIC_IMAGE_040
 
 
+# [CX-A01-040] Why: pin accepted QNODELAY source and reviewed hunks in the merge commit (Q45a). Rejected: a later pin repair.
+PIN_STAGE_QNODELAY = [{'path': 'packages/qlever/experiments/native-entry.ts', 'previousSha256': 'c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f', 'sha256': '0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d', 'baseCommit': 'f3ed62112028440389710a86fbf5c82c2f91afda', 'diff': 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-packages__qlever__experiments__native-entry.ts.diff', 'diffSha256': '7b656f2155a25e2380497824889fd2d3f50f1afb55b282bc38c80a3e271df97c', 'hunks': [{'header': '@@ -1,3 +1,5 @@', 'changesMeasuredWorkload': False, 'reason': 'Transport receipt metadata only; no query, data, schedule, or default transport change.'}, {'header': '@@ -95,7 +97,8 @@ const counterContract = {', 'changesMeasuredWorkload': False, 'reason': 'Transport receipt metadata only; no query, data, schedule, or default transport change.'}, {'header': '@@ -116,7 +119,7 @@ const report: Record<string, any> = {', 'changesMeasuredWorkload': False, 'reason': 'Transport receipt metadata only; no query, data, schedule, or default transport change.'}, {'header': '@@ -405,7 +408,8 @@ try {', 'changesMeasuredWorkload': False, 'reason': 'Transport receipt metadata only; no query, data, schedule, or default transport change.'}, {'header': '@@ -413,7 +417,7 @@ try {', 'changesMeasuredWorkload': False, 'reason': 'Transport receipt metadata only; no query, data, schedule, or default transport change.'}]}]
+SCOPE_SOURCES += ['lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-repin-review.json', 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-packages__qlever__experiments__native-entry.ts.diff']
+def checks_pin_QNODELAY():
+    errors = []
+    for pin in PIN_STAGE_QNODELAY:
+        if sha_file(pin["path"]) != pin["sha256"] or sha_file(pin["diff"]) != pin["diffSha256"]:
+            errors.append("Q45a: QNODELAY accepted source/diff pin drift: " + pin["path"])
+    return errors
+
+
 def main():
     errs = validate()
+    errs += checks_pin_QNODELAY()
     errs += checks_0311()
     errs += checks_0312()
     errs += checks_0312_round3()

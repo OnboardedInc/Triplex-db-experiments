@@ -1,0 +1,28 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 82343 "CX-RT01-live2-testkit-budget", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 82343 "CX-RT01-live2-testkit-budget", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 82343 "CX-RT01-live2-testkit-budget", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 96066 "CX-P2B-R3-build4", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 96066 "CX-P2B-R3-build4", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 63449 "CX-P2B-R3-step1b", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 96066 "CX-P2B-R3-build4", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 83328 "CX-VCHECKJS-r2", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 1645 "CX-P2B-R3-step2-source-40", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-testkit", pid 98894 "CX-RT01-live2-diagnostic", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 1645 "CX-P2B-R3-step2-source-40", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-xtdb", pid 98894 "CX-RT01-live2-diagnostic", pid 78423 "CX-VP3M-G0"
+(node:8162) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+1 !== 0
+
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-qnodelay/lab/verify/QNODELAY/round5/review.mjs:143:8 {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2

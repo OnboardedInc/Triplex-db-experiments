@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { readLatencyRun } from "../receipts/parse.ts";
+import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 /**
  * NS north-star benchmark driver (EXP-N01, measurement semantics v2 = TARGETS 1.1, 2.1, 4.1).
  * Measures P1 to P5 on the frozen writer trace against one composition and writes one report JSON.
@@ -115,8 +117,9 @@ const log = (line: string) => {
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
 const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 
-const report: Record<string, any> = {
+const report: Record<string, any> = latencyReceipt({
   format: "tx2-ns-report/2",
+  qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v2 sections 1.1, 2.1, 4.1",
   status: "RUNNING",
   startedAt: new Date().toISOString(),
@@ -126,7 +129,7 @@ const report: Record<string, any> = {
   generator: { traceSha256: sha256File("lab/bench/lib/trace.ts"), worldSha256: sha256File("lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
-};
+});
 const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 
 // ---------------------------------------------------------------- engine sampling (async; never blocks the writer)
@@ -552,7 +555,7 @@ async function run() {
   await aux.close().catch(() => {});
   await growthComp.close().catch(() => {});
   log(`wind down: writer pending ${scheduler.pending}, feed checkpoint ${feed.checkpoint}/${lastAcked}, final position ${finalPosition}`);
-  fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify({ stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome })).join("\n") + "\n");
+  fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify(latencyReceipt({ writer: "ns-write-event/1", qleverConnectionMode: report.qleverConnectionMode, stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome }))).join("\n") + "\n");
 
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };
@@ -1005,7 +1008,7 @@ function p2Progress(background: any[], traceStart: number) {
 }
 function loadBaselineWrites(): any[] | null {
   if (!config.baselineWrites) return null;
-  return fs.readFileSync(config.baselineWrites, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l)).filter((w) => w.stream === "background" && !w.resend);
+  return readLatencyRun(config.baselineWrites, { lane, encoding: "ndjson", expectedMode: report.qleverConnectionMode }).unwrap().records.filter((w) => w.stream === "background" && !w.resend);
 }
 function matchedBaseline(rows: any[], fromOffset: number, toOffset: number) {
   const h = new Histogram();

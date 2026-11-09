@@ -1,0 +1,11 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 39332 "CX-VRT01-R3-oracle", pid 34771 "G0-qlever-20261109T051022Z-8d85d5 vitest-core", pid 13724 "CX-INT-Q-evaluator", pid 13722 "CX-INT-Q-p2q"
+[lab] heavy: waiting for one of 4 slots; held by pid 13721 "CX-INT-Q-package", pid 34771 "G0-qlever-20261109T051022Z-8d85d5 vitest-testkit", pid 13724 "CX-INT-Q-evaluator", pid 13722 "CX-INT-Q-p2q"
+[lab] heavy: waiting for one of 4 slots; held by pid 13721 "CX-INT-Q-package", pid 34771 "G0-qlever-20261109T051022Z-8d85d5 vitest-qlever", pid 13724 "CX-INT-Q-evaluator", pid 13722 "CX-INT-Q-p2q"
+{
+  "manifestEntries": 543,
+  "reviewedSources": 521,
+  "changedFiles": 26,
+  "pins": [],
+  "acceptanceChanged": false,
+  "transportChanged": false
+}

@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { readLatencyRun } from "../receipts/parse.ts";
+import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 // lab/bin/gate.mjs <G0|G1|G2|G4|GS> --lane xtdb|qlever [--slot dev] [--exp EXP-NNN] [--note TEXT]
 //   [--previous RUN-ID] [--holder NAME] [--cases N (G1 subset)] [--workloads 01,02 (G2 subset)]
 //   [--profile default|bounded|f1 (QLever query-plan profile)] [--planner-budget N (QLever, set+restore)]
@@ -412,7 +414,9 @@ async function gateG1(run, config) {
   const { result, step, bound } = await engineGate(run, config, { name: 'lab-conformance', queryPath: `${run.lane}-datalog`, args, timeoutMs: 45 * 60_000 });
   if (!bound) return result;
   result.fixtures = fileHashes(run, ['packages/testkit/src/index.ts', 'packages/qualification/workloads/lab-conformance.ts', ...(run.lane === 'datomic' ? ['packages/testkit/src/routeEquivalence.ts', 'packages/testkit/src/routeHistory.ts', 'packages/datomic/test/route-equivalence.test.ts', 'packages/datomic/test/query-route-matrix.ts', 'packages/datomic/test/canonical-query-properties.ts', ...fs.readdirSync(path.join(REPO, 'lab/oracles/replay')).filter(name => name.endsWith('.py')).map(name => `lab/oracles/replay/${name}`)] : [])], 'oracle-fixture');
-  const report = readJson(output, null);
+  // [CX-A01-040] Why: retain Datomic fixtures and validate QLever timing bytes together. Rejected: dropping either accepted gate boundary.
+  const timingRun = readLatencyRun(output, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap();
+  const report = timingRun.data;
   if (!report) { run.reason('no G1 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
   run.store(output, 'raw-outcome');
   // [EXP-DA01] Why: each G1 scope owns a separate database and peer resources. Rejected: leaving 89 live databases per run.
@@ -485,7 +489,8 @@ async function gateG2(run, config) {
   const caseFiles = fs.readdirSync(path.join(REPO, 'qualification/workloads')).filter(f => f.endsWith('_cases.mjs')).map(f => `qualification/workloads/${f}`);
   result.fixtures = fileHashes(run, [PACKET, ...caseFiles.sort(), 'packages/qualification/workloads/runner.ts'], 'oracle-fixture');
   result.packet = packetIdentity();
-  const report = readJson(output, null);
+  const timingRun = readLatencyRun(output, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap();
+  const report = timingRun.data;
   if (!report) { run.reason('no G2 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
   run.store(output, 'raw-outcome');
   if (fs.existsSync(results)) run.store(results, 'raw-outcome');
@@ -563,7 +568,7 @@ async function gateNS(run, config) {
   let baseline = null;
   if (run.options.baseline) {
     const receiptFile = path.join(REPO, 'lab/runs/NS', `${run.options.baseline}.json`);
-    const base = readJson(receiptFile, null);
+    const base = readLatencyRun(receiptFile, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap().data;
     if (!base) fail('USAGE', `--baseline ${run.options.baseline}: no receipt at ${path.relative(REPO, receiptFile)}`);
     const writesFile = path.join(REPO, base.rawDir, 'ns-writes.jsonl');
     if (!fs.existsSync(writesFile)) fail('USAGE', `--baseline ${run.options.baseline}: raw writes ${path.relative(REPO, writesFile)} are gone`);
@@ -580,7 +585,8 @@ async function gateNS(run, config) {
   if (!bound) return result;
   result.fixtures = fileHashes(run, nsBenchFiles(), 'bench-source');
   result.oracle = { id: 'O-REPLAY', ref: oracleRef, commit: oracleCommit, tarSha256: sha256(tar) };
-  const report = readJson(output, null);
+  const timingRun = readLatencyRun(output, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap();
+  const report = timingRun.data;
   if (!report) { run.reason('no NS report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
   run.store(output, 'raw-outcome');
   for (const extra of ['ns-writes.jsonl', 'ns-log.txt', 'feed-checkpoints.jsonl', 'feed-effects.jsonl', 'oracle-case.json', 'oracle-expected.json'])
@@ -659,9 +665,10 @@ async function gateGS(run, config) {
   fixtureFiles.push('lab/acceptance/cases/CS-GS.json');
   for (const f of fs.readdirSync(path.join(REPO, 'lab/bench/lib')).filter(f => /\.(ts|py)$/.test(f))) fixtureFiles.push(`lab/bench/lib/${f}`);
   result.fixtures = fileHashes(run, fixtureFiles.sort(), 'oracle-fixture');
-  const report = readJson(output, null);
+  const timingRun = readLatencyRun(output, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap();
+  const report = timingRun.data;
   if (!report) { run.reason('no GS report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
-  for (const reason of gsRefusals(report, readJson(path.join(REPO, 'lab/acceptance/obligations.json'), {}).version)) run.reason(reason);
+  for (const reason of gsRefusals(output, readJson(path.join(REPO, 'lab/acceptance/obligations.json'), {}).version)) run.reason(reason);
   run.store(output, 'raw-outcome');
   for (const f of fs.readdirSync(run.rawDir).filter(f => f.endsWith('-checkpoint.json'))) run.store(path.join(run.rawDir, f), 'raw-outcome');
   result.contactedEndpoint = report.endpoint ?? null;
@@ -707,7 +714,8 @@ async function gateG4(run, config) {
   if (!bound) return result;
   result.fixtures = fileHashes(run, [entryFile, 'packages/qlever/experiments/lab-endpoint.ts', 'qualification/native-controls/qlever-collation-tiny-v1/oracle.json',
     'qualification/native-controls/qlever-collation-tiny-v1/fixture.nt', 'packages/qlever/experiments/native-query-shapes.ts', 'lab/research/R5-probe/probe1.py', 'lab/research/R5-probe/probe3.py'], 'oracle-fixture');
-  const report = readJson(output, null);
+  const timingRun = readLatencyRun(output, { lane: run.lane, expectedMode: run.lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null }).unwrap();
+  const report = timingRun.data;
   if (!report) { run.reason('no G4 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
   run.store(output, 'raw-outcome');
   result.contactedEndpoint = report.endpoint;
@@ -770,7 +778,7 @@ main(async () => {
     git = identity(run);
     tools = await toolchain(run);
     lockfileSha256 = run.store(path.join(REPO, 'pnpm-lock.yaml'), 'lockfile').sha256;
-    gateScripts = Object.fromEntries(['lab/bin/gate.mjs', 'lab/bin/lib.mjs', 'lab/bin/receipt.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/config/slots.json']
+    gateScripts = Object.fromEntries(['lab/bin/gate.mjs', 'lab/bin/lib.mjs', 'lab/bin/receipt.mjs', 'lab/bin/engine.mjs', 'lab/bin/heavy-lock.mjs', 'lab/config/slots.json', 'lab/receipts/latency.mjs', 'lab/receipts/latency.d.mts', 'lab/receipts/parse.ts']
       .map(file => [file, run.store(path.join(REPO, file), 'gate-script').sha256]));
     result = gate === 'G0' ? await gateG0(run) : gate === 'G1' ? await gateG1(run, config) : gate === 'G2' ? await gateG2(run, config) : gate === 'NS' ? await gateNS(run, config) : gate === 'GS' ? await gateGS(run, config) : await gateG4(run, config);
   } catch (error) {
@@ -780,16 +788,17 @@ main(async () => {
   const claims = contractClaims({ gate, lane: options.lane, scope: result.scope, contractFile: path.join(REPO, 'lab/acceptance/obligations.json') });
   if (claims.contract) run.store(path.join(REPO, 'lab/acceptance/obligations.json'), 'acceptance-contract');
   for (const reason of claims.reasons) run.reason(reason);
-  const receipt = {
+  const receipt = latencyReceipt({
     format: 'tx2-gate-receipt/1', gate, lane: options.lane, slot: gate === 'G0' ? null : (options.slot ?? (gate === 'NS' ? 's1' : 'dev')), runId: run.runId,
     experiment: options.exp ?? null, note: options.note ?? null, previous: options.previous ?? null,
     startedAt: run.startedAt, endedAt: now(), durationMs: Date.now() - run.t0, scope: result.scope ?? 'unknown',
     runKind, mutation, contractVersion: claims.contract?.version ?? null, contract: claims.contract, obligations: claims.obligations,
     engineName: options.lane,
+    qleverConnectionMode: options.lane === 'qlever' ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
     git, lockfileSha256, toolchain: tools, gateScripts, ...result,
     steps: run.steps.map(({ tail, ...step }) => step), firstFailures: run.firstFailures,
     rawDir: run.rel(run.rawDir), reasons: run.reasons,
-  };
+  });
   if (receipt.git) { receipt.git.modifiedFiles = receipt.git.modifiedFiles.map(({ secretLike, ...f }) => f); receipt.git.untrackedFiles = receipt.git.untrackedFiles.map(({ secretLike, ...f }) => f); }
   const { verdict, reasons } = verdictOf(receipt);
   receipt.verdict = verdict; receipt.reasons = reasons;
