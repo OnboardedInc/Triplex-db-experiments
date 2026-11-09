@@ -1251,3 +1251,107 @@ instrumentation, NS measurement, power-loss qualification, root pnpm suite, merg
 into main or push. Live durable publication remains REFUSED pending the exact
 independent sync witness above; driver/clock/overhead integration still belongs
 to G03. Offline gates do not settle those open qualifications.
+
+## Round 9: kernel sync witness (R48; rulings Q108a-d pending)
+
+Builder: Claude Sonnet 5.5 (high). Branch `exp/OBS01-observer`, base `bcbf21c4` plus main merged (`8bcdec08`); `lab/acceptance` is main's byte for byte
+and `python3 lab/acceptance/build_contract.py --verify` regenerates identically. No `lab/acceptance` edit, no contract version change, no re-pin.
+
+### Outcome
+
+| Item | Result |
+| --- | --- |
+| Probe window W0..W3 | **NOT RUN.** The preconditions held only briefly (host free disk crossed 10 GiB, no exclusive slot, G03 idle), but the triplex2 VM has **no bpftrace** (not installed in the VM, not in any local image), and a digest-pinned bpftrace image needs a pull, a download this task did not authorize. `witness-vm-probe` records `NOT-RUN` (`evidence/OBS01-R9/vm-w0w3-attempt01/RESULT.json`). No container, volume or VM setting was touched, so no fstrim was needed; the docker context is `default`. |
+| Witness program | `lab/observer/vm_syncwitness.bt` (bpftrace, ext4 write/mkwrite/fsync/syncfs/truncate events with per-CPU sequence numbers). **Never attached anywhere**; its printf formats are checked against the parser layout offline. Attach syntax, BTF symbols (`ext4_sync_fs`, `ext4_page_mkwrite` via fentry/fexit) and tracefs access are first tested by W0. |
+| Parser and per-commit join | `vm_normalizer.py`: `parse_witness`, `judge_witness`, `witness_context`, `witness_store`; the seven R48 8.3 codes; Q108b `D` rule; positions gain `D` and `durableEndNs = max(U, D)`. |
+| Round 8 refusal | replaced by "refuse unless the witness is complete and every commit passes". VM mode without a witness still refuses `F2 TRACE-INCOMPLETE`. |
+| Controller pieces | `lab/bin/sync-witness.mjs` (profile check, create arguments, observer hooks, W0-W3 harness) and `engine.mjs witness-vm-status|witness-vm-probe`. The harness is **unrun against Docker**. |
+| Measured per-commit kernel cost | **none** (W2 not run). The gate is p99 <= 100 us from BPF `run_time_ns`/`run_cnt` deltas; R48's 5 to 60 us estimate is unverified. |
+
+### Gates
+
+Offline suite `offline02` (through `heavy.mjs`, disk guard above 5 GiB, frozen-source pins checked at the end): **32 Python + 13 Node**, all pass.
+The 14 earlier Python tests and 9 earlier Node tests are unchanged and pass; new: 18 Python (`test_syncwitness.py`) and 4 Node.
+`offline01` also passed an earlier state of the source and is retained; `offline02` is the final pinned run.
+
+New Python gates: the eleven W1 planted modes through the same `judge_run` path the VM receipts use (1,000 commits each; per-commit expectation from
+`vm_planted_writer.expected`); neighbor `sync` never credited even beside an honest FULL writer; failed, no-wait and before-write syncs not credited;
+UNWITNESSED-WRITE rows (uncovered bytes, foreign cgroup, mmap, hole punch, foreign database write); CHECKPOINT-UNSYNCED with and without the covering
+database sync plus restart-by-header; parser rows (missing start/detach, sequence gap, duplicate, count mismatch, garbage, field count, negative number,
+record after detach, stderr `Lost N events`/`ERROR`); out-of-order file accepted, regressed per-CPU time refused; a 3,000-case seeded parser fuzz (never
+anything but a `WitnessError`, accepted mutations never change the event count); 18 normalizer fixtures (one per code and sub-case) in both
+`offline-synthetic` and `vm` clock modes; FULL accepted at the four planted delays (100, 249, 251, 400 ms) with `D <= U` and the lag bracket unchanged;
+consumer lag end `max(U, D)` with lag start unchanged; trace chunk gap, non-UTF-8 and missing-stream refusals; observer-side shipping of the finished
+trace, cgroup-id binding and detach timeout; trace program layout. Mutation spot checks (neighbor credit, ignoring `W(c)`, dropping the visible, ACK and
+directory checks) each made the suite fail, then were reverted.
+
+Probe receipt `probes01` (`probe_round9.py`): matrix **11/11** modes, code fixtures **36/36** (18 fixtures x 2 clock modes), 4/4 accepted FULL delays, and
+the nine round 8 probe outcomes unchanged (`round8-replay`).
+
+Durable evidence root: `/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01-R9/` (225 files, manifest SHA256 `2ff2929d3175b90e7e8af7136ea863e9efdfc6da344a33717efcf9b4f9f5af0a`;
+[round9/SHA256SUMS](round9/SHA256SUMS), [round9/INDEX.json](round9/INDEX.json)). Raw fixtures stay outside git.
+
+### Round 8 F2 negatives
+
+The nine round 8 outcomes are unchanged. Offline-synthetic mode without a witness keeps the pinned FULL fixture rule. The OFF and NORMAL writers are also
+replayed **with kernel traces** in both clock modes: OFF refuses `SYNC-MISSING`, NORMAL refuses `ACK-BEFORE-DURABLE`, and the case's declared
+`synchronous=2` is ignored. The traces are synthetic; "real trace" replay is W1's job in the VM.
+
+### PASS audit (every site that turns observations into a verdict or receipt)
+
+| Site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `parse_witness` | strict grammar per record; unsigned fields reject `-`; per-CPU sequence contiguous from 1 and equal to the `@n[cpu]` dump; no duplicate `(cpu, seq)`; per-CPU time monotone; enter <= exit; bpftrace `Lost N events`/`ERROR` refuse | start record before every event, detach after; events outside the interval refuse | `SW1` version tag; dump counts tie the tail of the stream |
+| `witness_context` | trace chunks contiguous from offset 0 and UTF-8; program hash, kernel release and container id equal the case pins; boot id equals the witness clock-domain record | `firstCandidateStartNs` (VM CLOCK_MONOTONIC read before the first candidate starts) must be >= attach time | traced (dev, directory inode) set equals the case's store directories; witness clock joins the Q100q same-boot check; case hash covers the witness config |
+| `witness_store` | writer cgroup id from the observer's own stat of the container cgroup directory equals the controller's; bound main/WAL device equals the witnessed device; a driver ACK binds to a committed (stream, operation, attempt) | ACK clock domain re-checked against the run's | F1 identities supply the (dev, inode) of the WAL and database, the only inodes judged |
+| `judge_witness` `D(c)` | covering sync is a successful `ext4_sync_file` on the WAL inode or wait=1 `syncfs`/`sync` on its device, from the writer cgroup, whose **enter** is >= the latest exit of any write below `e_c`; WAL bytes `[0, len)` fully covered; mmap, foreign-cgroup, hole-punch refuse | only the live generation (writes after the last truncate or header rewrite) | inode, device, cgroup id and byte range; neighbor sync, other-inode sync, `sync_file_range`, failed sync, before-write sync are never credited (each has a fixture) |
+| `commit_views`, `raise_problems` | `U(c)` from the unique publication bracket (already-visible commits use the first poll end as an upper bound); codes combine, primary is the first in table order | positions from this run's polls and WAL tail | member identity from the decoded frame |
+| `normalize` annotation | `D`, `durableEndNs` only when a sync was witnessed | per commit of this run | `(epoch, lsn)` or frontier `(epoch, offset+1)` |
+| `vm_syncwitness.judge_run`, `compare` (W1 receipt logic) | per-commit primary code against `expected` | WAL bytes, trace and ops from one session | session writer cgroup id and store directory (dev, inode) |
+| `perCommitCost` (W2 gate) | per-interval counter deltas over commits inside the interval; backwards counters or no commit refuse | samples from the same session | witness PID from `docker inspect` |
+| `stream_check` (W3 loss gate) | parser grammar and sequence rules, line by line | whole trace after detach | per-CPU dump |
+| `verifyWitnessProfile` | exactly CAP_BPF + CAP_PERFMON, private namespaces, only the run volume and three read-only binds, pinned image, 256 MiB | read from `docker inspect` at `witnessUp` and each session | the exact container id and volume |
+| `witness_finish` (observer) | whole-file shipping, size re-checked; missing detach, symlink or file refuse | read after the controller's `witness-done` | cgroup id per source emitted before `ready` |
+| `probe_round9.py`, `run_vm_offline.py`, `retain.py` | 11 modes, 36 fixture outcomes, 4 delays and the 9 round 8 outcomes must match exactly | fresh attempt directories; frozen-source pins; drift fails | exact source pins, durable manifests read back |
+
+### Divergences and findings
+
+1. **`sync-before-write` expectation differs from R48 4.3.** A writer that syncs before each commit's writes still has a real covering sync for commit `i`
+   (the next commit's pre-write sync), so the rule gives `ACK-BEFORE-DURABLE` for commits 1..n-1 and `SYNC-MISSING` only for the last. Refused either way;
+   `vm_planted_writer.expected` encodes the rule-derived answer and W1 confirms or refutes it with a real kernel.
+2. **`syncfs`.** R48 4.1 lists the entry-only `ext4:ext4_sync_fs` tracepoint, which has no exit time and so cannot give `D`. The program uses the syscall
+   entry as the conservative enter time plus a wait=1 `ext4_sync_fs` fexit with `ret=0` on the witnessed device inside the syscall.
+3. **Latent bug fixed: `vm_verify.py` under `python3 -I`.** `observer-vm-stop` ran `python3 -I -B vm_verify.py`; from Python 3.11 `-I` implies `-P` (no script
+   directory on `sys.path`), so its sibling imports fail on this host's Python 3.14. It now runs `-B -E -s` (verified only by the same flag test on a toy module).
+4. Limits: write and restart ordering use write exit times (no entry time is recorded); one WAL generation per run; the normalizer reads the whole trace.
+
+### Not done or not verified
+
+- W0, W1, W2, W3 not run: no real `bpf()` call, tracepoint, cgroup id, `docker cp` into a stopped container's volume, planted writer inside a container, or
+  per-commit cost. W4 not built (needs orchestrator approval).
+- `vm_syncwitness.bt` syntax and symbol availability untested; `sync-witness.mjs`, the in-container planted writers, `vm_w3_load.py`, `witnessUp`/`witnessStop`
+  and `witness_finish` over a real volume are unrun in Docker (the observer ingest and the pure controller functions are covered offline).
+- Not in this round: B9 (G03 box policy, attach-before-candidate ordering, E12 stream with HMAC chain, after-ACK kill point) and CR-NS `claim.mjs`. No trusted
+  driver yet emits `driver-ack` events. `firstCandidateStartNs` must be supplied by that controller.
+- Fixtures use the pinned SQL01/FD01 schemas with host SQLite WAL bytes and synthetic kernel records, not a real broker or consumer.
+- Host power loss and the guest-to-host half of the durability class remain the Q100r premise.
+
+### Moved source hashes
+
+No pinned `lab/acceptance` path moved. Changed observer/controller sources (old at `bcbf21c4`, new at round 9):
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/bin/engine.mjs` | `5cbbfc7e54786a2c1b51b1594146dfb08f98d66f5fa68c849cf8030ea8c1e105` | `4bf86d961564f8d73e1b2b7b50e7b57ed4144bac1d965aa07cca096e4c010929` |
+| `lab/bin/vm-observer.mjs` | `5e179a7142f56fb72e464d1a111a23cb41ab350f71598243a66c6f6b7d16ec1d` | `43689e647bac6410960b750ecb23e81edfa9619dd734959d5f9941e979c6bb58` |
+| `lab/observer/vm_normalizer.py` | `2b564d42d860ed983b4c8cbcf33b1ff103228fc597f764791ab32496df9b0118` | `524eee87e9f5a4d1274265e0894da8374c0da6f37d39e3dcc95e0938098aeba8` |
+| `lab/observer/vm_watch.py` | `e545745e2667a8bf1787d1951b053e65c27f951e37cce78e38a5167c6da827b2` | `c9aa9ec317940d73223bad80528905ad151f1780028be54faf3733e8b9e97bac` |
+| `lab/observer/run_vm_offline.py` | `10f92940f9823d4d46589abea1a10e12737757326ad10b058640769273f2b6dd` | `a6872dad66115a386b70b4f613682f4e839ca493b17d9ae7ebe3abdfba081475` |
+| `lab/observer/test_engine.mjs` | `ed377820ddeea01d3eb5abe93b9092fd8dd781e6b667b41d0def9fd175054d0a` | `91ae20ed7a8b966428b1ac6d1bd449f732e2db1c43b946694e4f7910a8fe4b80` |
+| `lab/observer/vm_syncwitness.bt` | new | `5c9444e91297b200e815f22b3d84426cc9e7a493053f5e46bf33ddd40bd1b4d3` |
+| `lab/observer/vm_syncwitness.py` | new | `6c6aff0f154a88cf4b68440a36a5da90b13f8da6d0547566989bb0ca69c2ce3e` |
+| `lab/observer/vm_planted_writer.py` | new | `18cf0f766e2b72a38576a7c65038adf6d1bfc3129842d16811f28723a29e784d` |
+| `lab/observer/vm_w3_load.py` | new | `27e8dbf7b5f4bf3c0e535c8770c685c6244d0dee5d566158ce686c0e4ca913a9` |
+| `lab/observer/test_syncwitness.py` | new | `515abbe5bbcd5a88c6c0e14e7dfcd5ddd82e90ae9ea08200b4991c99a0b5be8d` |
+| `lab/bin/sync-witness.mjs` | new | `2e3fc0418783d63e88e92ba4d364c924753fb74de1a2c58d076b7711f706fb98` |
+| `lab/experiments/EXP-OBS01/round9/probe_round9.py` | new | `dbaaebf667eb6b716403c4357f9473b9d0d309f82fbccca44dad7d4ad7464151` |

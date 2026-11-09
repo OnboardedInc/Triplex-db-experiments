@@ -185,3 +185,77 @@ this requirement as well as supply trusted driver-send records.
 
 Decision sends after the matched first-positive U now refuse, even within U+5 ms.
 Inverted stamp/window intervals also refuse before interval-overlap testing.
+
+## Round 9: kernel sync witness (supersedes the round 8 unconditional refusal)
+
+Authority: R48 (`lab/research/R48-writer-sync-witness.md`), rulings Q108a-d (pending in `lab/acceptance/RULINGS-PENDING.md`).
+A VM durable, P2 or P3 claim is believed only when the kernel witnessed the writer's own sync. The candidate's `PRAGMA`, SQLite build,
+config and the observer's read-only connection are never evidence. Round 8's "refuse every VM durable use" is replaced by
+**refuse unless the witness is complete and every judged commit passes**. Live use with no witness still refuses (`F2 TRACE-INCOMPLETE`).
+
+### Files
+
+| File | Role |
+| --- | --- |
+| `vm_syncwitness.bt` | the pinned bpftrace program (trusted `sync-witness` container only); records W/M/F/S/T events with per-CPU sequence numbers |
+| `vm_normalizer.py` | strict parser (`parse_witness`), per-commit join (`judge_witness`), the seven codes, the case/event contract below. One file because O-OBS reruns it alone |
+| `vm_watch.py` | ships the finished trace, stderr and meta into the sealed bundle; binds each source's writer cgroup id; emits the witness clock domain |
+| `vm_planted_writer.py`, `vm_syncwitness.py` | the eleven W1 planted writers and the offline judge/compare used for W1 receipts (and `stream-check` for W3) |
+| `vm_w3_load.py` | W3 broker-shaped writer plus read-only pollers |
+| `lab/bin/sync-witness.mjs` | witness container profile check and create arguments, observer hooks, probe windows; reached through `engine.mjs witness-vm-*` |
+
+### What the normalizer requires (`case.witness`, set by the controller, pinned by the case hash)
+
+`containerId`, `programSha256`, optional `kernelRelease`, `firstCandidateStartNs` (VM CLOCK_MONOTONIC read before the first candidate
+starts), `stores{sourceId:{dir:[kernel dev, directory inode], cgroupId}}`, plus the observer's `metaPath/tracePath/stderrPath`, `pid`.
+Raw events added to the stream: `witness-meta`, `witness-trace` chunks (contiguous offsets), one `witness-stderr`, one `witness-bind` per
+source (observer stats the writer's cgroup directory: its inode is `bpf_get_current_cgroup_id()`), `domain` role `witness`, and optional
+trusted `driver-ack` events (`source, stream, operationId, attemptId, atNs, domain`) for the P2 ACK check.
+
+### Per-commit rule (Q108b)
+
+For commit `c` at WAL bytes `[o_c, e_c)` of the live generation: `W(c)` = latest exit of a traced write to the WAL inode that starts below
+`e_c`; `D(c)` = earliest exit of a successful `ext4_sync_file` on the WAL inode, or `syncfs`/`sync` with wait on its device, from the writer's
+cgroup, that **entered** at or after `W(c)`. Positions gain `D` and `durableEndNs = max(U, D)` (consumer lag end; lag start stays `L`).
+
+| Code | Raised when |
+| --- | --- |
+| `TRACE-INCOMPLETE` | missing/duplicate/late start or detach record, lost events (per-CPU sequence gap or count mismatch, or bpftrace "Lost N events"), unparseable line, attach after `firstCandidateStartNs`, program hash / kernel release / boot id mismatch |
+| `WITNESS-UNBOUND` | traced (dev, directory inode) set differs from the case, writer cgroup id differs from the observer's stat, container id differs, bound files not on the witnessed device, WAL inode never written while other files in the directory were, a driver ACK that binds to no committed member |
+| `UNWITNESSED-WRITE` | WAL bytes no traced write covers, `ext4_page_mkwrite` on the WAL/database inode, a write to either from a foreign cgroup, hole punch or zero range on them |
+| `CHECKPOINT-UNSYNCED` | WAL restart (second header write at offset 0) or truncate while checkpointed database writes lack a database sync that entered after them and exited before the restart |
+| `SYNC-MISSING` | a commit with no covering sync from the writer's cgroup |
+| `ACK-BEFORE-DURABLE` | a driver ACK instant earlier than `D(c)` (strict; no tolerance) |
+| `VISIBLE-BEFORE-DURABLE` | an SQL01 commit with `U(c) < D(c)` |
+
+Several codes can hold at once: the message lists all, the exception's `code` is the first in the table order.
+
+### Not covered / limits
+
+- `W(c)`/restart ordering uses write **exit** times (the program records no write entry time): a restart write that overlaps its covering
+  sync by microseconds is not distinguished. `sync_file_range` is deliberately not durability.
+- One WAL generation per run (F11 still refuses resets). A truncate before rewriting is judged as a new generation.
+- The trace is read whole by the normalizer (256 MiB observer budget); a long NS run needs a streaming reader first (W3 uses `stream-check`).
+- `vm_syncwitness.bt` has **not attached anywhere**. Probe W0 is its first test; a failed attach stops the window.
+
+### Probe window W0..W3 runbook (orchestrator-approved window only; not run in round 9)
+
+Preconditions, all checked by `witness-vm-status` / `witness-vm-probe` and recorded as `NOT-RUN` if any fails: host free disk above
+10 GiB, `node lab/bin/engine.mjs status` shows no exclusive slot reservation, no G03/NSR/P-TINY container running. Two images must
+already exist in the triplex2 VM (no mutable pull): the pinned Python image (`python@sha256:e48f59cd...`) and a digest-pinned
+bpftrace image; none exists there at the time of writing, so an approved pull of a pinned digest comes first.
+
+```sh
+export DOCKER_HOST=unix:///Users/sam/.colima/triplex2/docker.sock
+node lab/bin/engine.mjs witness-vm-status
+node lab/bin/heavy.mjs --label CX-OBS01-R9-w0w3 -- node lab/bin/engine.mjs witness-vm-probe \
+  --out /Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01-R9/vm-w0w3 \
+  --image python@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 \
+  --bpftrace-image REGISTRY/bpftrace@sha256:<pinned> --windows W0,W1,W2,W3 --minutes 20 --readers 256
+```
+
+The command removes its containers and volumes, then runs `colima ssh -p triplex2 -- sudo fstrim -av` and `docker context use default`
+(outputs in `fstrim.json`, `context.json`). W2 sets `kernel.bpf_stats_enabled=1` in the VM for its duration and restores the prior value.
+Per window: W0 facts and attach under default seccomp (`W0.json`); W1 eleven planted writers judged through `vm_syncwitness.py` (`w1-*`);
+W2 per-commit added kernel time from `run_time_ns`/`run_cnt` deltas (gate p99 <= 100 us); W3 zero lost events (sequence check) and mean
+witness CPU below 0.1 core. W4 (guest crash) is not implemented and needs orchestrator approval.

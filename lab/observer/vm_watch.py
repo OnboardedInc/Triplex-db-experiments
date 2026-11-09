@@ -132,6 +132,40 @@ def gone_probe(root,container_id,self_path,seen):
     return {'event':'cgroup-gone','containerId':container_id,'path':seen['path'],'atNs':time.monotonic_ns(),'selfVisible':True}
 
 
+def cgroup_id(root,container_id):
+    """Inode of the container's cgroup directory: bpf_get_current_cgroup_id() for a cgroup v2 task in that cgroup."""
+    matches=[]
+    for current,dirs,_ in os.walk(root,onerror=lambda error:(_ for _ in ()).throw(error)):
+        for name in dirs:
+            if name in (container_id,'docker-'+container_id+'.scope'):matches.append(Path(current)/name)
+    if len(matches)!=1:raise ValueError('witness writer cgroup missing/ambiguous')
+    return matches[0].stat().st_ino,str(matches[0])
+
+
+def witness_finish(witness,control,emit,drain,wait_seconds=120,chunk=1024*1024,limit=256*1024*1024):
+    """After the final readbacks, wait for the controller to stop the witness (END probe, per-CPU dump), then ship its files.
+    [EXP-OBS01-R9] Why: the detach record and loss counters exist only once bpftrace exits, so the stream is read whole afterwards.
+    Rejected: tailing a live trace (a partial file cannot prove zero lost events)."""
+    control=Path(control);(control/'finals-done').write_text('finals-done')
+    until=time.monotonic()+wait_seconds
+    while not (control/'witness-done').exists():
+        if time.monotonic()>until:raise ValueError('TRACE-INCOMPLETE witness did not detach before the deadline')
+        time.sleep(.05)
+    meta=Path(witness['metaPath']);trace=Path(witness['tracePath']);errors=Path(witness['stderrPath'])
+    for path in (meta,trace,errors):
+        if path.is_symlink() or not path.is_file():raise ValueError('witness file missing/symlink: '+path.name)
+    if trace.stat().st_size>limit:raise ValueError('witness byte budget exhausted')
+    emit({'event':'witness-meta','meta':json.loads(meta.read_bytes())})
+    emit({'event':'witness-stderr','bytes':n.blob(errors.read_bytes()[:16*1024*1024])})
+    offset=0
+    with trace.open('rb') as source:
+        while True:
+            data=source.read(chunk)
+            if not data:break
+            emit({'event':'witness-trace','offset':offset,'bytes':n.blob(data)});offset+=len(data);drain()
+    if offset!=trace.stat().st_size:raise ValueError('witness trace changed while shipping')
+
+
 def run(config,root,key,control,offline=False):
     self_cgroup='/sys/fs/cgroup'+Path('/proc/self/cgroup').read_text().strip().split('::',1)[1] if not offline else ''
     case=config['case'];case['clockMode']='vm';case['startedNs']=time.monotonic_ns();sid=config['streams'][0]['streamId']
@@ -160,6 +194,12 @@ def run(config,root,key,control,offline=False):
     wall_clock()
     emit({'event':'domain','role':'observer','domain':clock()})
     for role,pid in case.get('clockPids',{}).items():emit({'event':'domain','role':role,'domain':clock(pid)})
+    witness=case.get('witness')
+    if witness is not None:
+        emit({'event':'domain','role':'witness','domain':clock(witness['pid'])})
+        for source in case['sources']:
+            identifier,where=cgroup_id(witness.get('cgroupRoot','/sys/fs/cgroup'),source['engineContainerId'])
+            emit({'event':'witness-bind','source':source['id'],'cgroupId':identifier,'path':where})
     def poller(source):
         connection=None
         try:
@@ -254,6 +294,9 @@ def run(config,root,key,control,offline=False):
             files=bindings[source['id']].verify()
             emit({'event':'final','source':source['id'],'files':files,'main':n.blob(main),'wal':n.blob(wal),'atNs':time.monotonic_ns(),'cr':source.get('cr',[])})
         except BaseException as error:fail(error,source['id'])
+    if witness is not None and not errors:
+        try:witness_finish(witness,control,emit,drain,witness.get('waitSeconds',120))
+        except BaseException as error:fail(error)
     wall_clock()
     emit({'event':'end','atNs':time.monotonic_ns()});drain()
     for binding in bindings.values():binding.close()

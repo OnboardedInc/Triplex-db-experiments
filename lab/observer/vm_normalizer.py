@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """OBS01-R6: standalone evaluator parser, no candidate imports or candidate timestamps as evidence."""
 import base64
+import bisect
 import hashlib
 import json
 import os
@@ -218,6 +219,223 @@ def durability_state(source,mode):
     if not isinstance(state.get('sqliteVersion'),str) or not state['sqliteVersion']:raise ValueError('F2 writer implementation missing')
     return state
 
+# ---- OBS01-R9: kernel sync witness (sync-witness/1) -------------------------------------------------------------------
+# [EXP-OBS01-R9] Why: P2/P3 durability is believed only when the kernel witnessed the writer's own sync (R48, Q108a/b). The
+# candidate's PRAGMA, SQLite build and config are never evidence. This block lives in the single pinned normalizer file because
+# O-OBS reruns it alone (python -I); a sibling module would not be covered by the stream's sha256 pin.
+# Rejected: a separate parser module (unpinned), trusting bpftrace stderr for loss (per-CPU sequence gaps are machine-checkable).
+WITNESS_CODES=('TRACE-INCOMPLETE','WITNESS-UNBOUND','UNWITNESSED-WRITE','CHECKPOINT-UNSYNCED','SYNC-MISSING','ACK-BEFORE-DURABLE','VISIBLE-BEFORE-DURABLE')
+
+class WitnessError(ValueError):
+    """Refusal with one of the seven R48 8.3 codes; the message keeps the round-8 'F2' prefix so older gates still match."""
+    def __init__(self,code,detail,also=()):
+        if code not in WITNESS_CODES:raise ValueError('unknown witness code')
+        self.code=code;self.also=tuple(c for c in WITNESS_CODES if c in also and c!=code)
+        super().__init__('F2 '+code+': '+detail+(' (also '+', '.join(self.also)+')' if self.also else ''))
+
+def kernel_dev(st_dev):
+    # glibc st_dev -> kernel dev_t (MKDEV: major<<20|minor), the encoding of tracepoint dev fields and super_block.s_dev
+    major=((st_dev>>8)&0xfff)|((st_dev>>32)&~0xfff);minor=(st_dev&0xff)|((st_dev>>12)&~0xff)
+    return (major<<20)|minor
+
+SW_LAYOUT={'B':'ts d1 i1 d2 i2','Z':'ts','W':'cpu seq ts cg dev ino parent off ret','M':'cpu seq ts cg dev ino parent',
+    'F':'cpu seq enter ts cg dev ino parent datasync ret','S':'cpu seq enter ts cg dev wait ret','T':'cpu seq ts cg dev ino op off len'}
+SW_SIGNED={'ret'}
+_UNSIGNED=re.compile(r'[0-9]{1,19}');_SIGNED=re.compile(r'-?[0-9]{1,19}')
+
+def _bad(detail):raise WitnessError('TRACE-INCOMPLETE',detail)
+
+def parse_witness(text,stderr=''):
+    """Strict parser for the bpftrace output of vm_syncwitness.bt. Anything unparseable, duplicated, regressed or lost refuses."""
+    if not isinstance(text,str) or not isinstance(stderr,str):_bad('trace is not text')
+    begin=end=None;events=[];counts={};per_cpu={}
+    for number,line in enumerate(text.split('\n'),1):
+        if not line.strip():continue
+        if len(line)>300 or line!=line.strip() or not line.isascii() or not line.isprintable():_bad('line '+str(number)+' malformed')
+        if line.startswith('@n['):
+            match=re.fullmatch(r'@n\[([0-9]{1,5})\]: ([0-9]{1,19})',line)
+            if not match or end is None or int(match[1]) in counts:_bad('line '+str(number)+' bad/duplicate per-CPU count')
+            counts[int(match[1])]=int(match[2]);continue
+        parts=line.split('|')
+        if parts[0]!='SW1' or len(parts)<3 or parts[1] not in SW_LAYOUT:_bad('line '+str(number)+' unknown record')
+        kind=parts[1];names=SW_LAYOUT[kind].split()
+        if len(parts)-2!=len(names):_bad('line '+str(number)+' field count')
+        record={'k':kind}
+        for name,value in zip(names,parts[2:]):
+            if name=='op':
+                if value not in ('t','p','z'):_bad('line '+str(number)+' bad op')
+                record[name]=value;continue
+            if not (_SIGNED if name in SW_SIGNED else _UNSIGNED).fullmatch(value):_bad('line '+str(number)+' bad number '+name)
+            record[name]=int(value)
+        if end is not None:_bad('record after detach')
+        if kind=='B':
+            if begin is not None or events:_bad('missing/duplicate/late start record')
+            begin=record;continue
+        if begin is None:_bad('record before start record')
+        if kind=='Z':end=record;continue
+        if record['cpu']>4095 or record['seq']<1:_bad('line '+str(number)+' cpu/seq range')
+        if kind in ('F','S') and record['enter']>record['ts']:_bad('line '+str(number)+' enter after exit')
+        if record['k']=='F' and record['datasync'] not in (0,1):_bad('line '+str(number)+' datasync')
+        if record['k']=='S' and record['wait'] not in (0,1):_bad('line '+str(number)+' wait')
+        key=(record['cpu'],record['seq'])
+        if key in per_cpu:_bad('duplicate record cpu '+str(key[0])+' seq '+str(key[1]))
+        per_cpu[key]=record;events.append(record)
+    if begin is None:_bad('missing start record')
+    if end is None:_bad('missing detach record')
+    by_cpu={}
+    for (cpu,seq),record in per_cpu.items():by_cpu.setdefault(cpu,[]).append((seq,record))
+    for cpu,rows in by_cpu.items():
+        rows.sort(key=lambda row:row[0])
+        if [seq for seq,_ in rows]!=list(range(1,len(rows)+1)):_bad('lost events: CPU '+str(cpu)+' sequence gap')
+        if counts.get(cpu)!=len(rows):_bad('lost events: CPU '+str(cpu)+' count '+str(counts.get(cpu))+' != '+str(len(rows)))
+        if any(a[1]['ts']>b[1]['ts'] for a,b in zip(rows,rows[1:])):_bad('CPU '+str(cpu)+' time regressed within sequence')
+    if any(counts[cpu]!=0 and cpu not in by_cpu for cpu in counts):_bad('lost events: counted CPU has no records')
+    low=min([e.get('enter',e['ts']) for e in events],default=begin['ts']);high=max([e['ts'] for e in events],default=begin['ts'])
+    if low<begin['ts']:_bad('event before attach')
+    if high>end['ts']:_bad('event after detach')
+    lost=0
+    for line in stderr.splitlines():
+        found=re.search(r'\blost\s+([0-9]+)\s+events?\b',line,re.I)
+        if found:lost+=int(found[1])
+        elif re.match(r'\s*(error|fatal)\b',line,re.I):_bad('bpftrace error output: '+line[:80])
+    if lost:_bad('lost events: bpftrace reported '+str(lost))
+    events.sort(key=lambda e:(e['ts'],e.get('cpu',0),e.get('seq',0)))
+    return {'begin':begin,'end':end,'events':events,'dirs':{(begin['d1'],begin['i1']),(begin['d2'],begin['i2'])},'counts':counts}
+
+def judge_witness(trace,store,commits):
+    """Per-commit rule of R48 4.2 for one store. store={'wal':(dev,ino),'main':(dev,ino),'cgroup':int,'walLen':int};
+    commits=[{'end','U','acks':[atNs...],'visible':bool}]. Returns perCommit rows and (code,detail) problems."""
+    wal=tuple(store['wal']);main=tuple(store['main']);cg=store['cgroup'];events=trace['events'];problems=[]
+    ident=lambda e:(e['dev'],e['ino'])
+    writes=[e for e in events if e['k']=='W' and e['ret']>0 and ident(e)==wal]
+    dbwrites=[e for e in events if e['k']=='W' and e['ret']>0 and ident(e)==main]
+    dir_inodes={i for _,i in trace['dirs']}
+    others=[e for e in events if e['k']=='W' and e['ret']>0 and e['parent'] in dir_inodes and ident(e) not in (wal,main)]
+    if not writes and others and store['walLen']:problems.append(('WITNESS-UNBOUND','bound WAL inode never written but other inodes were written in the store directory'))
+    if sum(1 for e in writes if e['cg']!=cg) or sum(1 for e in dbwrites if e['cg']!=cg):problems.append(('UNWITNESSED-WRITE','write to a bound inode from a cgroup other than the writer\'s'))
+    if any(e['k']=='M' and ident(e) in (wal,main) for e in events):problems.append(('UNWITNESSED-WRITE','ext4_page_mkwrite on a bound inode (mmap write)'))
+    restarts=[]
+    for e in events:
+        if e['k']!='T' or ident(e) not in (wal,main):continue
+        if e['cg']!=cg:problems.append(('UNWITNESSED-WRITE','truncate/punch/zero of a bound inode from a foreign cgroup'))
+        elif e['op'] in ('p','z'):problems.append(('UNWITNESSED-WRITE','hole punch/zero range removes bytes of a bound inode'))
+        elif ident(e)==wal:restarts.append(e['ts'])
+    seen=False
+    for e in writes:
+        if e['off']==0 and seen:restarts.append(e['ts'])
+        seen=True
+    restarts.sort();generation=restarts[-1] if restarts else 0
+    live=[e for e in writes if e['ts']>=generation]
+    covered=0
+    for e in sorted(live,key=lambda e:(e['off'],-e['ret'])):
+        if e['off']>covered:break
+        covered=max(covered,e['off']+e['ret'])
+    if covered<store['walLen']:problems.append(('UNWITNESSED-WRITE','WAL bytes from '+str(covered)+' to '+str(store['walLen'])+' reached the file without a traced write'))
+    for r in restarts:
+        written=[w['ts'] for w in dbwrites if w['ts']<=r]
+        if not written:continue
+        floor=max(written)
+        if not any(((e['k']=='F' and ident(e)==main) or (e['k']=='S' and e['dev']==main[0] and e['wait']==1)) and e['cg']==cg and e['ret']==0 and e['enter']>=floor and e['ts']<=r for e in events):
+            problems.append(('CHECKPOINT-UNSYNCED','WAL restart/truncate at '+str(r)+' without a covering database sync after the last checkpoint write'))
+    syncs=sorted((e['enter'],e['ts'],'file' if e['k']=='F' else 'fs') for e in events if
+        ((e['k']=='F' and ident(e)==wal) or (e['k']=='S' and e['dev']==wal[0] and e['wait']==1)) and e['cg']==cg and e['ret']==0)
+    best=[None]*(len(syncs)+1)
+    for index in range(len(syncs)-1,-1,-1):
+        mine=(syncs[index][1],syncs[index][2]);best[index]=mine if best[index+1] is None or mine<best[index+1] else best[index+1]
+    enters=[s[0] for s in syncs]
+    offsets=sorted((e['off'],e['ts']) for e in live);starts=[o for o,_ in offsets];peak=[];top=0
+    for _,ts in offsets:top=max(top,ts);peak.append(top)
+    rows=[];counts={}
+    for commit in commits:
+        index=bisect.bisect_left(starts,commit['end']);written=peak[index-1] if index else None
+        found=best[bisect.bisect_left(enters,written)] if written is not None else None
+        row={'walEnd':commit['end'],'W':written,'D':found[0] if found else None,'via':found[1] if found else None,'codes':[]}
+        if found is None:row['codes'].append('SYNC-MISSING')
+        else:
+            if commit.get('visible') and commit.get('U') is not None and commit['U']<found[0]:row['codes'].append('VISIBLE-BEFORE-DURABLE')
+            if any(at<found[0] for at in commit.get('acks',[])):row['codes'].append('ACK-BEFORE-DURABLE')
+        for code in row['codes']:counts[code]=counts.get(code,0)+1
+        rows.append(row)
+    for code,count in counts.items():problems.append((code,str(count)+' of '+str(len(rows))+' commits'))
+    return {'perCommit':rows,'problems':problems,'syncsCredited':len(syncs),'writes':len(live)}
+
+def raise_problems(problems):
+    if not problems:return
+    codes=[code for code,_ in problems];primary=min(codes,key=WITNESS_CODES.index)
+    raise WitnessError(primary,'; '.join(sorted({code+' '+detail for code,detail in problems},key=lambda s:WITNESS_CODES.index(s.split(' ',1)[0]))),codes)
+
+def witness_context(case,events,clocks,mode):
+    """None only for the offline synthetic fixture mode without a witness; every VM use needs a complete sync-witness/1."""
+    config=case.get('witness')
+    if config is None:
+        if mode=='vm':raise WitnessError('TRACE-INCOMPLETE','VM durable/P3 use requires a complete sync-witness/1 stream (Q108a); none supplied')
+        return None
+    if mode=='vm' and not isinstance(config,dict):_bad('witness configuration missing')
+    metas=[e for e in events if e['event']=='witness-meta'];errs=[e for e in events if e['event']=='witness-stderr']
+    chunks=[e for e in events if e['event']=='witness-trace']
+    if len(metas)!=1 or len(errs)!=1 or not chunks:_bad('witness meta/stderr/trace events missing or duplicated')
+    captured=b''
+    for chunk in chunks:
+        if chunk['offset']!=len(captured):_bad('witness trace chunk gap/overlap')
+        captured+=unblob(chunk['bytes'])
+    try:text=captured.decode('utf-8');stderr=unblob(errs[0]['bytes']).decode('utf-8')
+    except UnicodeDecodeError:_bad('witness output is not UTF-8')
+    trace=parse_witness(text,stderr);meta=metas[0]['meta']
+    for field in ('programSha256','bootId','kernelRelease','containerId'):
+        if not isinstance(meta.get(field),str) or not meta[field]:_bad('start record lacks '+field)
+    if meta['programSha256']!=config.get('programSha256'):_bad('program hash mismatch')
+    if config.get('kernelRelease') is not None and meta['kernelRelease']!=config['kernelRelease']:_bad('kernel release mismatch')
+    if meta['containerId']!=config.get('containerId'):raise WitnessError('WITNESS-UNBOUND','trace container differs from the inspected witness container')
+    domains=[e for e in clocks if e['role']=='witness']
+    if len(domains)!=1 or domains[0]['domain']['bootId']!=meta['bootId']:_bad('witness clock-domain/boot mismatch')
+    started=config.get('firstCandidateStartNs')
+    if type(started) is not int or trace['begin']['ts']>started:_bad('attach later than the first candidate start (or start time missing)')
+    stores=config.get('stores')
+    if not isinstance(stores,dict) or not stores:_bad('witness store binding missing')
+    wanted={tuple(v['dir']) for v in stores.values()}
+    if trace['dirs']!=wanted:raise WitnessError('WITNESS-UNBOUND','traced (dev, directory inode) set differs from the configured store directories')
+    return {'trace':trace,'meta':meta,'config':config}
+
+def commit_views(source,transactions,summary,polls,acks):
+    """Map each WAL commit to its published position, upper bracket U and driver ACKs (for sql01 members)."""
+    views=[];first=polls[0];by_member={}
+    for t in transactions:
+        position=None
+        if source['profile']=='sql01':
+            rows=t['added']['marker'];position=[rows[0]['epoch'],rows[0]['lsn']] if len(rows)==1 else None
+        else:
+            rows=[r for r in t['added']['frontier'] if r['consumer']==source['consumer']]
+            position=[int(rows[0]['epoch']),int(rows[0]['offset'])+1] if len(rows)==1 else None
+        U=None
+        if position:U=bracket_for(summary,position)['U'] if tuple(position)>tuple(first['visible']) else first['endNs']
+        view={'end':t['walEnd'],'position':position,'U':U,'acks':[],'visible':source['profile']=='sql01'}
+        if source['profile']=='sql01':
+            for frame in t['added']['frames']:
+                for member in frame.get('decoded',{}).get('members',[]):by_member[(frame['decoded']['stream'],member['operationId'],member['attemptId'])]=view
+        views.append(view)
+    for ack in acks:
+        view=by_member.get((ack.get('stream'),ack.get('operationId'),ack.get('attemptId')))
+        if view is None:raise WitnessError('WITNESS-UNBOUND','driver ACK binds to no committed member')
+        view['acks'].append(ack['atNs'])
+    return views
+
+def witness_store(context,source,events,clocks,identity,wal_raw,transactions,summary,polls):
+    sid=source['id'];config=context['config'];bind=config['stores'].get(sid)
+    if not bind:raise WitnessError('WITNESS-UNBOUND','source has no configured witness store binding')
+    binds=[e for e in events if e['event']=='witness-bind' and e['source']==sid]
+    if len(binds)!=1 or binds[0]['cgroupId']!=bind['cgroupId'] or type(bind['cgroupId']) is not int:raise WitnessError('WITNESS-UNBOUND','writer cgroup differs from the inspected container cgroup')
+    if '-wal' not in identity:raise WitnessError('WITNESS-UNBOUND','no bound WAL file identity')
+    ids={name:(kernel_dev(identity[name][0]),identity[name][1]) for name in ('main','-wal')}
+    if ids['main'][0]!=bind['dir'][0] or ids['-wal'][0]!=bind['dir'][0]:raise WitnessError('WITNESS-UNBOUND','bound files are not on the witnessed device')
+    acks=[]
+    for e in events:
+        if e['event']=='driver-ack' and e.get('source')==sid:
+            if type(e.get('atNs')) is not int or e['atNs']<0:raise WitnessError('WITNESS-UNBOUND','malformed driver ACK')
+            same_domain([clocks[0]['domain'],e['domain']]);acks.append(e)
+    views=commit_views(source,transactions,summary,polls,acks)
+    verdict=judge_witness(context['trace'],{'wal':ids['-wal'],'main':ids['main'],'cgroup':bind['cgroupId'],'walLen':len(wal_raw)},views)
+    return verdict,views
+
 def normalize(raw):
     frames=[json.loads(line) for line in raw.splitlines()];events=[];binding=None;last=-1
     for frame in frames:
@@ -247,17 +465,20 @@ def normalize(raw):
     for event in events:
         if event['event']=='poll' and not lower<=event['startNs']<=event['endNs']<=upper:raise ValueError('stale/future poll observation')
     clocks=[e for e in events if e['event']=='domain']
-    if {e['role'] for e in clocks} != {'observer',*case['case'].get('clockPids',{})} or len(clocks)!=1+len(case['case'].get('clockPids',{})):
+    roles={'observer',*case['case'].get('clockPids',{}),*(['witness'] if case['case'].get('witness') is not None else [])}
+    if {e['role'] for e in clocks} != roles or len(clocks)!=len(roles):
         raise ValueError('missing/duplicate process clock record')
     same_domain([e['domain'] for e in clocks])
     if any(e['event']=='error' for e in events):raise ValueError('collector error; NOT_ESTIMABLE')
+    witness=witness_context(case['case'],events,clocks,mode)
     ids=[s['id'] for s in case['case']['sources']]
     if len(ids)!=len(set(ids)) or any(e.get('source') is not None and e['source'] not in ids for e in events):raise ValueError('source inventory binding')
+    problems=[]
     result={'format':'obs-vm-publication/1','runId':binding[0],'sourceId':binding[1],'clockMode':mode,'stores':{},'noise':[], 'gone':[],
             'claim':'observer readbacks and intervals only; no NS semantic PASS'}
     for source in case['case']['sources']:
         sid=source['id'];selected=[e for e in events if e.get('source')==sid]
-        identity=file_identity(selected);durable=durability_state(source,mode)
+        identity=file_identity(selected);durable=durability_state(source,mode) if witness is None else None
         polls=[e for e in selected if e['event']=='poll'];summary=brackets(polls)
         captured=b''
         for event in selected:
@@ -314,7 +535,20 @@ def normalize(raw):
                 if frontiers:
                     frontier=frontiers[0];interval=bracket_for(summary,[int(frontier['epoch']),int(frontier['offset'])+1])
                     positions.extend({**row,'L':interval['L'],'U':interval['U'],'frontier':frontier} for row in affected)
-        result['stores'][sid]={'fileIdentity':identity,'writerState':durable,'stampChecks':stamp_checks,'publication':summary,'positions':positions,'state':state,'transactions':transactions,
+        durability={'basis':'offline-fixture-declared','claim':'fixture visibility only; no kernel witness'}
+        if witness is not None:
+            # [EXP-OBS01-R9] Why: replaces round 8's unconditional VM refusal; durable only if the kernel witnessed the writer's sync.
+            # Rejected: any writerState/PRAGMA declaration as durability evidence (round 7 F2, round 8 reviewer).
+            verdict,views=witness_store(witness,source,events,clocks,identity,wal,transactions,summary,polls)
+            problems.extend(verdict['problems']);durable_at={tuple(v['position']):row['D'] for v,row in zip(views,verdict['perCommit']) if v['position']}
+            for p in positions:
+                key=(p['epoch'],p['lsn']) if source['profile']=='sql01' else (int(p['frontier']['epoch']),int(p['frontier']['offset'])+1)
+                if durable_at.get(key) is not None:p['D']=durable_at[key];p['durableEndNs']=max(p['U'],p['D'])
+            durability={'basis':'kernel-witness','program':witness['meta']['programSha256'],'writerCgroup':witness['config']['stores'][sid]['cgroupId'],
+                'syncsCredited':verdict['syncsCredited'],'tracedWalWrites':verdict['writes'],'ackCount':sum(len(v['acks']) for v in views),
+                'commits':[{k:row[k] for k in ('walEnd','W','D','via')} for row in verdict['perCommit']],
+                'claim':'guest-side sync witnessed in the kernel (Q108b); host power loss not claimed (Q100r)'}
+        result['stores'][sid]={'fileIdentity':identity,'writerState':durable,'durability':durability,'stampChecks':stamp_checks,'publication':summary,'positions':positions,'state':state,'transactions':transactions,
             'mainSha256':sha(main),'walSha256':sha(wal)}
     seen={}
     for event in events:
@@ -325,6 +559,8 @@ def normalize(raw):
             if not prior or not event['selfVisible'] or prior['path']!=event['path'] or prior['atNs']>=event['atNs']:raise ValueError('cgroup-gone without initial bound visibility')
             result['gone'].append(event)
     if set(case['case'].get('cgroups',[])) != {e['containerId'] for e in result['gone']}:raise ValueError('long-lived cgroup-gone proofs incomplete')
+    raise_problems(problems)
+    if witness is not None:result['witness']={'meta':witness['meta'],'attachNs':witness['trace']['begin']['ts'],'detachNs':witness['trace']['end']['ts'],'events':len(witness['trace']['events']),'lostEvents':0}
     return result
 
 if __name__=='__main__':

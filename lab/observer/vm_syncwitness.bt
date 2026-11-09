@@ -1,0 +1,137 @@
+#!/usr/bin/env bpftrace
+// sync-witness/1 trace program (OBS01 round 9, R48 4.1). Run only by the trusted sync-witness container (CAP_BPF + CAP_PERFMON).
+//   bpftrace -q -o /witness/trace.txt vm_syncwitness.bt <dev1> <dir-ino1> <dev2> <dir-ino2>
+// dev is the kernel dev_t (major<<20|minor) of the store directory's filesystem; dir-ino is the store directory's inode.
+// Pass the same pair twice when only one directory is witnessed. The program is byte-blind: it records inode numbers,
+// offsets, lengths, cgroup ids and CLOCK_MONOTONIC times, never file contents, and never opens a candidate file.
+// Every recorded event carries a per-CPU sequence number. The parser (vm_normalizer.py parse_witness) treats any gap, duplicate
+// or count mismatch against the final "@n[cpu]" dump as lost events, so loss detection does not depend on bpftrace's stderr.
+// [EXP-OBS01-R9] Why: sync is witnessed at the ext4 entry points every path reaches (fsync, fdatasync, msync, O_SYNC, io_uring).
+// Rejected: syscall-name tracing (misses msync/io_uring/O_DSYNC); sync_file_range (not a device flush, so deliberately absent).
+// UNVERIFIED until probe W0 attaches it in the triplex2 VM: fexit/fentry on static ext4 functions and the syscalls tracepoints
+// depend on the VM kernel's BTF. W0 records what attaches; a failed attach stops the window, it is not patched around.
+
+BEGIN
+{
+  @dir[(uint64)$1, (uint64)$2] = 1;
+  @dir[(uint64)$3, (uint64)$4] = 1;
+  @dev[(uint64)$1] = 1;
+  @dev[(uint64)$3] = 1;
+  printf("SW1|B|%llu|%llu|%llu|%llu|%llu\n", nsecs, (uint64)$1, (uint64)$2, (uint64)$3, (uint64)$4);
+}
+
+// W: every buffered, direct, splice and io_uring write to ext4 (offset = ki_pos after the write minus the bytes written)
+fexit:vmlinux:ext4_file_write_iter
+{
+  $file = args->iocb->ki_filp;
+  $inode = $file->f_inode;
+  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;
+  $dev = (uint64)$inode->i_sb->s_dev;
+  if (retval > 0 && @dir[$dev, (uint64)$parent]) {
+    @ino[$dev, (uint64)$inode->i_ino] = 1;
+    @n[cpu]++;
+    printf("SW1|W|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%lld\n", cpu, @n[cpu], nsecs, cgroup, $dev, $inode->i_ino, $parent,
+      args->iocb->ki_pos - retval, retval);
+  }
+}
+
+// M: a store through a writable shared mapping of a file in a witnessed directory (never sync-covered by a write record)
+fentry:vmlinux:ext4_page_mkwrite
+{
+  $file = args->vmf->vma->vm_file;
+  $inode = $file->f_inode;
+  $parent = $file->f_path.dentry->d_parent->d_inode->i_ino;
+  $dev = (uint64)$inode->i_sb->s_dev;
+  if (@dir[$dev, (uint64)$parent]) {
+    @ino[$dev, (uint64)$inode->i_ino] = 1;
+    @n[cpu]++;
+    printf("SW1|M|%d|%llu|%llu|%llu|%llu|%llu|%llu\n", cpu, @n[cpu], nsecs, cgroup, $dev, $inode->i_ino, $parent);
+  }
+}
+
+// F: ext4 fsync/fdatasync (also reached by msync(MS_SYNC), O_SYNC writes and io_uring fsync); one line per completed call
+tracepoint:ext4:ext4_sync_file_enter
+{
+  if (@dir[(uint64)args->dev, (uint64)args->parent]) {
+    @fe[tid] = nsecs;
+    @fi[tid] = args->ino;
+    @fp[tid] = args->parent;
+    @fd[tid] = args->datasync;
+    @fv[tid] = args->dev;
+  }
+}
+
+tracepoint:ext4:ext4_sync_file_exit
+{
+  if (@fe[tid]) {
+    @ino[(uint64)@fv[tid], (uint64)@fi[tid]] = 1;
+    @n[cpu]++;
+    printf("SW1|F|%d|%llu|%llu|%llu|%llu|%llu|%llu|%llu|%d|%d\n", cpu, @n[cpu], @fe[tid], nsecs, cgroup, @fv[tid], @fi[tid], @fp[tid],
+      @fd[tid], args->ret);
+    delete(@fe[tid]); delete(@fi[tid]); delete(@fp[tid]); delete(@fd[tid]); delete(@fv[tid]);
+  }
+}
+
+// S: syncfs(2) and sync(2) that reached a successful wait=1 ext4_sync_fs on a witnessed device; enter is the syscall entry
+tracepoint:syscalls:sys_enter_syncfs { @se[tid] = nsecs; }
+tracepoint:syscalls:sys_enter_sync { @se[tid] = nsecs; }
+
+fexit:vmlinux:ext4_sync_fs
+{
+  if (args->wait == 1 && retval == 0 && @se[tid]) {
+    $dev = (uint64)args->sb->s_dev;
+    if (@dev[$dev]) { @sd[tid] = $dev; }
+  }
+}
+
+tracepoint:syscalls:sys_exit_syncfs
+{
+  if (@sd[tid]) {
+    @n[cpu]++;
+    printf("SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|%d\n", cpu, @n[cpu], @se[tid], nsecs, cgroup, @sd[tid], args->ret);
+  }
+  delete(@se[tid]); delete(@sd[tid]);
+}
+
+tracepoint:syscalls:sys_exit_sync
+{
+  if (@sd[tid]) {
+    @n[cpu]++;
+    printf("SW1|S|%d|%llu|%llu|%llu|%llu|%llu|1|0\n", cpu, @n[cpu], @se[tid], nsecs, cgroup, @sd[tid]);
+  }
+  delete(@se[tid]); delete(@sd[tid]);
+}
+
+// T: truncate, hole punch and zero range, only for inodes already seen in a witnessed directory (generation tracking)
+tracepoint:ext4:ext4_truncate_enter
+{
+  if (@ino[(uint64)args->dev, (uint64)args->ino]) {
+    @n[cpu]++;
+    printf("SW1|T|%d|%llu|%llu|%llu|%llu|%llu|t|0|%llu\n", cpu, @n[cpu], nsecs, cgroup, (uint64)args->dev, (uint64)args->ino, (uint64)args->blocks);
+  }
+}
+
+tracepoint:ext4:ext4_punch_hole
+{
+  if (@ino[(uint64)args->dev, (uint64)args->ino]) {
+    @n[cpu]++;
+    printf("SW1|T|%d|%llu|%llu|%llu|%llu|%llu|p|%llu|%llu\n", cpu, @n[cpu], nsecs, cgroup, (uint64)args->dev, (uint64)args->ino,
+      (uint64)args->offset, (uint64)args->len);
+  }
+}
+
+tracepoint:ext4:ext4_zero_range
+{
+  if (@ino[(uint64)args->dev, (uint64)args->ino]) {
+    @n[cpu]++;
+    printf("SW1|T|%d|%llu|%llu|%llu|%llu|%llu|z|%llu|%llu\n", cpu, @n[cpu], nsecs, cgroup, (uint64)args->dev, (uint64)args->ino,
+      (uint64)args->offset, (uint64)args->len);
+  }
+}
+
+// Z: detach record, then bpftrace dumps @n[cpu] (the only map left populated) for the loss check
+END
+{
+  printf("SW1|Z|%llu\n", nsecs);
+  clear(@dir); clear(@dev); clear(@ino); clear(@fe); clear(@fi); clear(@fp); clear(@fd); clear(@fv); clear(@se); clear(@sd);
+}

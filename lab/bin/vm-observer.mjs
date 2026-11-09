@@ -4,18 +4,19 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
+import {witnessUp,witnessStop} from './sync-witness.mjs';
 import {REPO,ENGINE_DIR,admission,atomicJson,defaultHolder,docker,inspect,listTx2Containers,reconcile,sha256,vmDisk,withPool,fail,sleep} from './lib.mjs';
 const SRC=path.join(REPO,'lab/observer');
-const files=['collector.py','capture.py','vm_normalizer.py','vm_watch.py','vm_fixture.py'];
+const files=['collector.py','capture.py','vm_normalizer.py','vm_watch.py','vm_fixture.py','vm_syncwitness.bt'];
 const safe=value=>typeof value==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(value);
 export function vmAvailable(config,{minimumGiB=10}={}){
  const disk=fs.statfsSync(REPO),running=listTx2Containers().filter(c=>c.running);
  const busy=running.filter(c=>/g03|nsr|p-tiny/i.test(c.name)||/CX-G03/i.test(inspect(c.name)?.Config.Labels?.['tx2.holder']??''));
  return {available:disk.bavail*disk.bsize>minimumGiB*1024**3&&!busy.length,freeBytes:disk.bavail*disk.bsize,busy:busy.map(c=>c.name)};
 }
-function pinImage(image){if(!/^sha256:[a-f0-9]{64}$/.test(image??'')&&!/@sha256:[a-f0-9]{64}$/.test(image??''))fail('REFUSED','immutable observer image required');const doc=JSON.parse(docker(['image','inspect',image]))[0];return doc.Id;}
-function harden(name,holder,image,cpu,extra=[],argv=[]){return ['create','--name',name,'--label','tx2.managed-by=lab/bin/engine.mjs','--label',`tx2.holder=${holder}`,'--read-only','--network','none','--cap-drop','ALL','--security-opt','no-new-privileges','--pids-limit','64','--memory','268435456','--memory-swap','268435456','--cpus','1','--cpuset-cpus',String(cpu),'--tmpfs','/tmp:rw,nosuid,nodev,size=128m',...extra,image,...argv];}
-async function reserve(config,name,holder,cpu,keyFingerprint=null){await withPool(async ledger=>{
+export function pinImage(image){if(!/^sha256:[a-f0-9]{64}$/.test(image??'')&&!/@sha256:[a-f0-9]{64}$/.test(image??''))fail('REFUSED','immutable observer image required');const doc=JSON.parse(docker(['image','inspect',image]))[0];return doc.Id;}
+export function harden(name,holder,image,cpu,extra=[],argv=[]){return ['create','--name',name,'--label','tx2.managed-by=lab/bin/engine.mjs','--label',`tx2.holder=${holder}`,'--read-only','--network','none','--cap-drop','ALL','--security-opt','no-new-privileges','--pids-limit','64','--memory','268435456','--memory-swap','268435456','--cpus','1','--cpuset-cpus',String(cpu),'--tmpfs','/tmp:rw,nosuid,nodev,size=128m',...extra,image,...argv];}
+export async function reserve(config,name,holder,cpu,keyFingerprint=null){await withPool(async ledger=>{
  const running=listTx2Containers({all:true});reconcile(ledger,running);
  if(ledger.reservations.some(r=>r.container===name)||inspect(name))fail('REFUSED','name already owned');
  const verdict=admission({config,reservations:ledger.reservations,running,request:{container:name,memBytes:268435456,diskForecastBytes:128*1024**2},diskUsedBytes:vmDisk(config).usedBytes});
@@ -23,9 +24,9 @@ async function reserve(config,name,holder,cpu,keyFingerprint=null){await withPoo
  if(keyFingerprint){ledger.vmObserverKeys??={};if(ledger.vmObserverKeys[keyFingerprint])fail('REFUSED','VM observer requires a fresh evaluator key per run');ledger.vmObserverKeys[keyFingerprint]=name;}
  ledger.reservations.push({container:name,holder,memBytes:268435456,cpus:1,cpusetCpus:String(cpu),diskForecastBytes:128*1024**2,state:'starting',pid:process.pid});
  });}
-async function remove(name,holder){const c=inspect(name);if(c){if(c.Config.Labels?.['tx2.holder']!==holder)fail('REFUSED','foreign container');if(c.State.Running)docker(['kill','--signal','KILL',name]);docker(['rm',name]);}
+export async function remove(name,holder){const c=inspect(name);if(c){if(c.Config.Labels?.['tx2.holder']!==holder)fail('REFUSED','foreign container');if(c.State.Running)docker(['kill','--signal','KILL',name]);docker(['rm',name]);}
  await withPool(async ledger=>{if(inspect(name))fail('REFUSED','container survived cleanup');ledger.reservations=ledger.reservations.filter(r=>r.container!==name);});}
-async function waitFile(file,container,ms=30000){const until=Date.now()+ms;while(!fs.existsSync(file)){if(Date.now()>until||!inspect(container)?.State.Running)throw Error('timeout/exit waiting for '+file);await sleep(20);}}
+export async function waitFile(file,container,ms=30000){const until=Date.now()+ms;while(!fs.existsSync(file)){if(Date.now()>until||!inspect(container)?.State.Running)throw Error('timeout/exit waiting for '+file);await sleep(20);}}
 function prepareCode(dir){fs.mkdirSync(dir,{recursive:true});const pins={};for(const file of files){const raw=fs.readFileSync(path.join(SRC,file));fs.writeFileSync(path.join(dir,file),raw,{flag:'wx'});pins[file]=sha256(raw);}return pins;}
 function configFor(spec,sutDoc,image,code,cpu){const parser=sha256(fs.readFileSync(path.join(code,'vm_normalizer.py')));return {runId:spec.runId,receiptId:spec.runId,keyId:spec.runId,case:spec,maxUncertaintyMs:1,maxBundleBytes:512*1024**2,
  collector:{containerId:'evaluator-provisioned-'+spec.runId,sourceSha256:sha256(JSON.stringify(files.map(f=>sha256(fs.readFileSync(path.join(code,f)))))),imageDigest:image,cgroupPath:'host-cgroup-tree',cpuset:String(cpu)},
@@ -48,10 +49,11 @@ export async function vmObserverCommand(config,command,options){
  if(command==='observer-vm-stop'){
   const saved=JSON.parse(fs.readFileSync(path.join(dir,'controller.json')));if(saved.holder!==holder)fail('REFUSED','foreign observer');
   fs.writeFileSync(path.join(dir,'control/stop'),'stop',{flag:'wx'});
+  if(saved.witness)await witnessStop(config,holder,saved,dir,options);
   for(let i=0;i<600&&inspect(name)?.State.Running;i++)await sleep(100);
   const end=inspect(name);atomicJson(path.join(dir,'exit.json'),end);
   if(!end||end.State.Running||end.State.ExitCode!==0)fail('REFUSED','observer did not seal; retain failed evidence before cleanup');
-  const replay=spawnSync('python3',['-I','-B',path.join(SRC,'vm_verify.py'),dir,path.join(REPO,'lab/acceptance/oracle/observe.py'),end.Id],{encoding:'utf8',timeout:120000,maxBuffer:8*1024**2});
+  const replay=spawnSync('python3',['-B','-E','-s',path.join(SRC,'vm_verify.py'),dir,path.join(REPO,'lab/acceptance/oracle/observe.py'),end.Id],{encoding:'utf8',timeout:120000,maxBuffer:8*1024**2});
   atomicJson(path.join(dir,'verified.json'),{status:replay.status,stdout:replay.stdout,stderr:replay.stderr});
   if(replay.status!==0)fail('REFUSED','O-OBS normalizer re-execution failed; retain observer evidence');
   await remove(name,holder);console.log(JSON.stringify({dir,sealed:fs.existsSync(path.join(dir,'output/bundle/seal.json'))}));return;
@@ -66,11 +68,14 @@ export async function vmObserverCommand(config,command,options){
   source.path='/sources/'+source.id+'/'+source.file;mounts.push('-v',source.volume+':/sources/'+source.id+':ro');ids.push(c.Id);spec.clockPids[source.id]=c.State.Pid;
  }
  spec.cgroups=ids;
+ // [EXP-OBS01-R9] Why: a witnessed run binds the trusted sync-witness container, its volume and the writers' cgroup ids into the case.
+ // Rejected: letting the observer discover the witness itself (the controller inspects and profile-checks it, Q108a).
+ const witnessSpec=spec.witness?await witnessUp(config,holder,spec,mounts):null;
  const key=fs.readFileSync(options['key-file']);if(key.length!==32)fail('REFUSED','evaluator key must be 32 bytes');
  await reserve(config,name,holder,cpu,sha256(key));
  try{fs.mkdirSync(dir,{recursive:true});const code=path.join(dir,'code'),pins=prepareCode(code);fs.mkdirSync(path.join(dir,'control'));fs.mkdirSync(path.join(dir,'output'));
   fs.writeFileSync(path.join(dir,'external.key'),key,{flag:'wx',mode:0o600});
-  const plan=configFor(spec,inspect(spec.sources[0].container),image,code,cpu);atomicJson(path.join(dir,'config.json'),plan);atomicJson(path.join(dir,'controller.json'),{holder,name,pins,image,ids});
+  const plan=configFor(spec,inspect(spec.sources[0].container),image,code,cpu);atomicJson(path.join(dir,'config.json'),plan);atomicJson(path.join(dir,'controller.json'),{holder,name,pins,image,ids,witness:witnessSpec?{container:witnessSpec.container,volume:witnessSpec.volume}:null});
   docker(harden(name,holder,image,cpu,['--pid','host','--cgroupns','host','-v','/sys/fs/cgroup:/sys/fs/cgroup:ro',...mounts,'-v',code+':/code:ro','-v',path.join(dir,'config.json')+':/config.json:ro','-v',path.join(dir,'external.key')+':/key:ro','-v',path.join(dir,'control')+':/control','-v',path.join(dir,'output')+':/out'],['python3','-B','/code/vm_watch.py','--config','/config.json','--key','/key','--output','/out/bundle','--control','/control']));
   docker(['start',name]);await waitFile(path.join(dir,'control/ready'),name);console.log(JSON.stringify({dir,name,pins,config:plan}));
  }catch(error){await remove(name,holder);throw error;}

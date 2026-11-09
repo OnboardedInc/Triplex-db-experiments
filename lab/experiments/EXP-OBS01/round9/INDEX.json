@@ -1,0 +1,31 @@
+{
+  "claim": "offline gates PASS with synthetic kernel traces; W0-W3 NOT RUN (no bpftrace image in the VM, pull needs approval); live durable/P3 still needs a real W0-W3 and B9",
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01-R9",
+  "files": 225,
+  "manifestSha256": "2ff2929d3175b90e7e8af7136ea863e9efdfc6da344a33717efcf9b4f9f5af0a",
+  "offlineAttempt": "offline02",
+  "probesAttempt": "probes01",
+  "sourceSha256": {
+    "lab/bin/engine.mjs": "4bf86d961564f8d73e1b2b7b50e7b57ed4144bac1d965aa07cca096e4c010929",
+    "lab/bin/sync-witness.mjs": "2e3fc0418783d63e88e92ba4d364c924753fb74de1a2c58d076b7711f706fb98",
+    "lab/bin/vm-observer.mjs": "43689e647bac6410960b750ecb23e81edfa9619dd734959d5f9941e979c6bb58",
+    "lab/experiments/EXP-OBS01/round8/probe_round8.py": "7429714cd5ff699a2e918ecff8ea93c194cd34e9e35c218acd231a752a6fbde0",
+    "lab/experiments/EXP-OBS01/round9/probe_round9.py": "dbaaebf667eb6b716403c4357f9473b9d0d309f82fbccca44dad7d4ad7464151",
+    "lab/observer/capture.py": "ab01e9906b46784567ae4a76e3a66bf8a612aa1dcba1e431b8075944b60a8a7f",
+    "lab/observer/collector.py": "44d667409ed707a18f07e72c308372fa01264c06cb163820429a27c73a49ec1f",
+    "lab/observer/run_vm_offline.py": "a6872dad66115a386b70b4f613682f4e839ca493b17d9ae7ebe3abdfba081475",
+    "lab/observer/test_engine.mjs": "91ae20ed7a8b966428b1ac6d1bd449f732e2db1c43b946694e4f7910a8fe4b80",
+    "lab/observer/test_syncwitness.py": "515abbe5bbcd5a88c6c0e14e7dfcd5ddd82e90ae9ea08200b4991c99a0b5be8d",
+    "lab/observer/test_vm.py": "9c128c47999fcb00e46088a5cf22771f332be01711f4d8817956a4a5c603b531",
+    "lab/observer/verify_seal.py": "edde8ce810ddb426679c5ffebea4478b109c51f7e19117d87faad8970a825f7e",
+    "lab/observer/vm_fixture.py": "785bf49d536290505c1a204caeb7f0d36b9d374874a1253943ef120318691578",
+    "lab/observer/vm_normalizer.py": "524eee87e9f5a4d1274265e0894da8374c0da6f37d39e3dcc95e0938098aeba8",
+    "lab/observer/vm_planted_writer.py": "18cf0f766e2b72a38576a7c65038adf6d1bfc3129842d16811f28723a29e784d",
+    "lab/observer/vm_syncwitness.bt": "5c9444e91297b200e815f22b3d84426cc9e7a493053f5e46bf33ddd40bd1b4d3",
+    "lab/observer/vm_syncwitness.py": "6c6aff0f154a88cf4b68440a36a5da90b13f8da6d0547566989bb0ca69c2ce3e",
+    "lab/observer/vm_verify.py": "aab763018e860ab5e54b808d5af24f7a5b3c47172bc7ae120361a95f80e994c6",
+    "lab/observer/vm_w3_load.py": "27e8dbf7b5f4bf3c0e535c8770c685c6244d0dee5d566158ce686c0e4ca913a9",
+    "lab/observer/vm_watch.py": "c9aa9ec317940d73223bad80528905ad151f1780028be54faf3733e8b9e97bac"
+  },
+  "vmProbe": "NOT-RUN"
+}
