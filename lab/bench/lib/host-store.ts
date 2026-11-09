@@ -10,7 +10,15 @@ import * as core from "../../../packages/core/dist/index.js";
 import * as rt from "../../../packages/core/dist/runtime/index.js";
 import * as q from "../../../packages/qlever/dist/index.js";
 import { PositionMap } from "./position-map.ts";
-import { canonical, many, W0, V_W0, requirePosition, type WorldRow } from "./w0-world.ts";
+import {
+  canonical,
+  many,
+  W0,
+  V_W0,
+  requirePosition,
+  type PositionBasis,
+  type WorldRow,
+} from "./w0-world.ts";
 import { seedCommands, seedOperations, type W0Command } from "./w0-seed.ts";
 import type { CompositionHandle } from "./composition.ts";
 import { publishRecords } from "./w0-outbox.ts";
@@ -88,8 +96,26 @@ export function commandWitness(operations: readonly any[], r: any, native: numbe
   });
   return { rows, claim: { command: meta.commandId, txId: r.txId, position: native } };
 }
-export async function openMappedHost(dir: string, scope: string) {
-  const broker = await q.HostBroker.open({ dir, scopeKey: scope, minFreeBytes: 5 * 1024 ** 3 });
+/** [EXP-P5B-R3] Why: R3 seeds on the HS01 layout, so the store keeps a byte-bounded frame tail (HS01 G9 budget, 64 MiB) instead of 1,024 frames (140 B/fact).
+ * Rejected: the product default (every frame is retained, 5,656 B/fact in round 2) and a frame-count tail (its bytes depend on frame size).
+ * `reopen` attaches a clone of a sealed seed store: the frozen map is loaded against its externally bound hash and the runtime draws ids from `idSeed`,
+ * because core's deterministic generator restarts its counter at 1 and would otherwise reuse the seed's ids.
+ */
+export const HOST_FRAME_TAIL_BYTES = 64 * 1024 * 1024;
+export interface MappedHostOptions {
+  readonly frameRetention?: { tailBytes?: number; tailFrames?: number };
+  readonly reopen?: { mapFile: string; mapSha256: string; N: number };
+  readonly idSeed?: string;
+  readonly clockStart?: number;
+}
+export async function openMappedHost(dir: string, scope: string, options: MappedHostOptions = {}) {
+  if (options.reopen && !options.idSeed) throw Error("reopen requires a distinct id seed");
+  const broker = await q.HostBroker.open({
+    dir,
+    scopeKey: scope,
+    minFreeBytes: 5 * 1024 ** 3,
+    frameRetention: options.frameRetention ?? { tailBytes: HOST_FRAME_TAIL_BYTES },
+  });
   const detached: any = {
     query: async () => [],
     update: async () => {
@@ -112,16 +138,35 @@ export async function openMappedHost(dir: string, scope: string) {
   }).layer({
     scope: rt.DatabaseScope.test(scope),
     capabilities: rt.Capabilities.none,
-    deterministic: { startTime: V_W0 - 10000000, seed: scope },
+    deterministic: {
+      startTime: options.clockStart ?? V_W0 - 10000000,
+      seed: options.idSeed ?? scope,
+    },
   });
   const managed = ManagedRuntime.make(layer),
     T: any = await managed.runPromise(Effect.service(core.Triples));
-  const map = new PositionMap(),
-    commands: any[] = [];
+  let map = new PositionMap();
+  const commands: any[] = [];
   let seedN = 0;
   let seeded = false,
     seedFile: string | undefined,
     seedStat: string | undefined;
+  if (options.reopen) {
+    map = PositionMap.load(options.reopen.mapFile, options.reopen.mapSha256);
+    seedN = options.reopen.N;
+    seedFile = options.reopen.mapFile;
+    const stat = fs.statSync(seedFile, { bigint: true });
+    seedStat = canonical([
+      String(stat.ino),
+      String(stat.size),
+      String(stat.mtimeNs),
+      String(stat.ctimeNs),
+    ]);
+    seeded = true;
+    // [EXP-P5B-R3] Why: a clone whose head differs from the sealed map's last receipt is a different store; refuse before any read.
+    if (broker.head() !== map.native(map.size))
+      throw Error("reopened store head does not equal the sealed map's last native position");
+  }
   const assertBound = () => {
     if (seedFile) {
       const s = fs.statSync(seedFile, { bigint: true });
@@ -196,6 +241,85 @@ export async function openMappedHost(dir: string, scope: string) {
       frames: actual.claims!,
     };
   };
+  const shape = (
+    hostRows: any[],
+    snapshot: any,
+    roundTrips: number,
+    basis: PositionBasis,
+    nativeBasis: number,
+    metrics: { transactionMs: number; cpuMicros: number; cpuScope: string },
+  ) => {
+    const rows = hostRows.map((r) => ({
+      ...decodeHostRow(r),
+      ...(r.attribute === ":_tx/position" && r.value_type === "number"
+        ? { value: { type: "number", value: map.reference(r.value_number!) } }
+        : {}),
+      position: map.reference(r.recorded_position),
+    }));
+    return {
+      rows,
+      roundTrips,
+      basis: basis.position,
+      nativeSnapshot: snapshot,
+      position: map.referenceCut(Math.min(snapshot.position, map.native(map.size))),
+      epoch: String(snapshot.epoch),
+      reportedBasis: { ...basis },
+      positionBinding: comp.positionBinding!(basis.position),
+      nativeBasis,
+      store: { snapshot, positionEncoding: "native", nativeBasis, ...metrics },
+    };
+  };
+    // [EXP-P5B-R3] Why: the live read route (four pooled readers, one H1 pull per hop) must not share connections with the sweep's dedicated workers, or a live read queues behind a sweep page.
+    // Rejected: reusing sweepPage for live reads (a read-isolation ratio would then measure one shared connection).
+  const livePage = async (
+    subjects: readonly string[],
+    basis: PositionBasis,
+  ) => {
+      assertBound();
+      requirePosition(basis, map.size);
+      const nativeBasis = map.native(basis.position),
+        seen = new Set(subjects),
+        out: any[] = [];
+      let frontier = [...seen],
+        trips = 0,
+        snapshot: any;
+      const started = performance.now();
+      while (frontier.length) {
+        trips++;
+        const next: string[] = [];
+        for (let o = 0; o < frontier.length; o += 500) {
+          const page: any = await broker.pullAt(nativeBasis, {
+            entities: frontier.slice(o, o + 500),
+          });
+          if (!page.eligible) throw Error("live read basis not eligible");
+          snapshot = page.snapshot;
+          for (const row of page.rows) {
+            if (row.entity_type === "_Transaction" && row.entity_id === row.tx_id) continue;
+            if (
+              basis.validAt !== undefined &&
+              !(row.valid_from <= basis.validAt && (row.valid_to === null || row.valid_to > basis.validAt))
+            )
+              continue;
+            if (row.retracted_position !== null && row.retracted_position <= nativeBasis) continue;
+            const r =
+              row.retracted_position !== null
+                ? { ...row, retracted_position: null, retracted_at: null, retract_tx_id: null }
+                : row;
+            out.push(r);
+            if (r.value_type === "ref" && !seen.has(r.value_string)) {
+              seen.add(r.value_string);
+              next.push(r.value_string);
+            }
+          }
+        }
+        frontier = next;
+      }
+      return shape(out, snapshot, trips, basis, nativeBasis, {
+        transactionMs: performance.now() - started,
+        cpuMicros: 0,
+        cpuScope: "not-measured",
+      });
+    };
   const one = { lane: "qlever" as const, role: "Q101a mapped broker H1, detached replica" };
   let sweepIndex = 0;
   let writeTail: Promise<unknown> = Promise.resolve();
@@ -271,32 +395,11 @@ export async function openMappedHost(dir: string, scope: string) {
           worker: sweepIndex++ % 4,
           validAt: basis.validAt,
         });
-      const rows = page.rows.map((r) => ({
-        ...decodeHostRow(r),
-        ...(r.attribute === ":_tx/position" && r.value_type === "number"
-          ? { value: { type: "number", value: map.reference(r.value_number!) } }
-          : {}),
-        position: map.reference(r.recorded_position),
-      }));
-      return {
-        rows,
-        roundTrips: page.roundTrips,
-        basis: basis.position,
-        nativeSnapshot: page.snapshot,
-        position: map.referenceCut(Math.min(page.snapshot.position, map.native(map.size))),
-        epoch: String(page.snapshot.epoch),
-        reportedBasis: { ...basis },
-        positionBinding: comp.positionBinding!(basis.position),
-        nativeBasis,
-        store: {
-          snapshot: page.snapshot,
-          positionEncoding: "native",
-          nativeBasis,
-          transactionMs: page.transactionMs,
-          cpuMicros: page.cpuMicros,
-          cpuScope: page.cpuScope,
-        },
-      };
+      return shape(page.rows, page.snapshot, page.roundTrips, basis, nativeBasis, {
+        transactionMs: page.transactionMs,
+        cpuMicros: page.cpuMicros,
+        cpuScope: page.cpuScope,
+      });
     },
     pinBasis: async (position, owner) => {
       assertBound();
@@ -512,6 +615,7 @@ export async function openMappedHost(dir: string, scope: string) {
     comp,
     broker,
     map,
+    livePage,
     seed,
     get seeded() {
       return seeded;

@@ -5,19 +5,22 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { randomUUID, createHash } from "node:crypto";
-import { openMappedHost } from "./lib/host-store.ts";
+import { openMappedHost, HOST_FRAME_TAIL_BYTES } from "./lib/host-store.ts";
+import { storeBytes } from "./lib/store-bytes.ts";
 import { readW0Fingerprint } from "./lib/w0-fingerprint.ts";
 import { requireFingerprint } from "./lib/w0-gates.ts";
 import { loadW0Pins } from "./lib/evaluate.ts";
 import { canonical, sha256, V_W0, W0 } from "./lib/w0-world.ts";
 const [out, Narg = "10000"] = process.argv.slice(2),
-  N = Number(Narg);
+  N = Number(Narg),
+  PREDICTIONS = "lab/experiments/EXP-P5/roundB/round3/PREDICTIONS.json";
 if (!out || fs.existsSync(path.join(out, "receipt.json")))
   throw Error("new attempt output required");
 fs.mkdirSync(out, { recursive: true });
 const files = [
   "lab/bench/p5-host-round2.ts",
   "lab/bench/lib/host-store.ts",
+  "lab/bench/lib/store-bytes.ts",
   "lab/bench/lib/position-map.ts",
   "lab/bench/lib/w0-seed.ts",
   "lab/bench/lib/w0-world.ts",
@@ -40,7 +43,7 @@ for (const f of files) {
   fs.copyFileSync(f, target);
 }
 const receipt: any = {
-  format: "EXP-P5B-round2/1",
+  format: "EXP-P5B-round3-B0/1",
   attempt: randomUUID(),
   N,
   startedAt: new Date().toISOString(),
@@ -50,18 +53,11 @@ const receipt: any = {
   sources: before,
   runtime: { node: process.version, platform: process.platform, arch: process.arch },
   replica: "detached",
-  predictions: {
-    B0: { seedS: 120, fileBytes: 450000000 },
-    B1: {
-      W4S: [1.5, 5],
-      W1Rate: [600, 2100],
-      pageMs: 50,
-      walBytes: 67108864,
-      readRatio: 1.2,
-      commitRatio: 1.25,
-    },
-    B2: { W4S: [15, 45], rssGrowthBytes: 300000000 },
-  },
+  // [EXP-P5B-R3] Why: predictions are committed before any measurement and bound by hash. Rejected: embedding numbers here that could be edited after the run.
+  predictionsFile: PREDICTIONS,
+  predictionsSha256: sha256(fs.readFileSync(PREDICTIONS)),
+  frameRetention: { tailBytes: HOST_FRAME_TAIL_BYTES },
+  layout: "EXP-HS01 round 2 (a9ebe759): split facts/history/journal, compact ids, byte-bounded frame tail",
 };
 const save = () =>
   fs.writeFileSync(path.join(out, "receipt.json"), JSON.stringify(receipt, null, 2) + "\n");
@@ -89,7 +85,8 @@ try {
   if (oracle.status !== 0) throw Error("fresh population oracle failed");
   receipt.oracleSha256 = sha256(fs.readFileSync(path.join(out, "oracle.json")));
   const expected = JSON.parse(fs.readFileSync(path.join(out, "oracle.json"), "utf8"));
-  h = await openMappedHost(path.join(out, "store"), "p5b-r2:" + receipt.attempt);
+  receipt.scope = "p5b-r3:" + receipt.attempt;
+  h = await openMappedHost(path.join(out, "store"), receipt.scope);
   receipt.seed = await h.seed(N, out);
   receipt.positionBinding = h.map.binding;
   save();
@@ -166,6 +163,14 @@ try {
   try {
     await h?.comp.close();
     receipt.closed = true;
+    if (h && receipt.seed) {
+      // Closed store: the WAL is checkpointed on close, so page_count x page_size is the stored layout (HS01 G9 definition).
+      receipt.bytes = {
+        ...storeBytes(path.join(out, "store"), receipt.seed.assertions),
+        seedIntentBytes: fs.statSync(path.join(out, "seed.ndjson")).size,
+        positionMapBytes: fs.statSync(path.join(out, "position-map.json")).size,
+      };
+    }
   } catch (error) {
     receipt.cleanupError = String(error);
     process.exitCode = 1;
@@ -174,6 +179,7 @@ try {
   receipt.finishedAt = new Date().toISOString();
   const f = fs.statfsSync(out);
   receipt.freeEnd = f.bavail * f.bsize;
+  receipt.seedWallS = receipt.seed?.wallS;
   save();
   console.log(JSON.stringify({ status: receipt.status, error: receipt.error, out }));
 }

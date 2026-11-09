@@ -1,0 +1,49 @@
+{
+  "format": "EXP-P5B-round3-predictions/1",
+  "writtenAt": "2026-11-09 before any round 3 seed or screening run",
+  "northStar": "P5: 100k subjects activated in <= 100 s while live read and commit p99 stay <= 1.5x baseline",
+  "basis": {
+    "hs01": "EXP-HS01 round 2 (a9ebe759): 217.06 B/fact and 969,883,648 bytes at 10k, 352.91 B/fact at 1k, same W0 seed commands, 64 MiB frame tail",
+    "r34": "R34 section 6 B0 to B2 numbers, written before the mapped host path existed",
+    "r2": "P5B round 2 measurements: 666 references/s seeding on the v1 layout, N=50 G0 at 52.7k world facts/s"
+  },
+  "assertionsAt": { "1000": 442410, "10000": 4468284, "100000": "about 44.5M (R34 2.5)" },
+  "B0": {
+    "frameRetention": "tailBytes = 64 MiB (HS01 G9 budget), no frame-count tail",
+    "bytesPerFact": { "1000": [345, 353, 362], "10000": [212, 217, 224] },
+    "logicalBytes": { "1000": [152000000, 156000000, 160000000], "10000": [950000000, 970000000, 1000000000] },
+    "seedWallS": { "1000": [80, 130, 250], "10000": [700, 1150, 1800] },
+    "g0WallS10000": [45, 90, 200],
+    "g0": "worlds and R2 digests equal fresh O-DOMAIN at 1k and 10k, block digests equal",
+    "seedIntentBytes10000": "about 2.4 GB uncompressed (1.03 GB per 187,520 references in round 2)",
+    "disk": "free space stays above 5 GiB for the whole 10k seed (about 4 GB total written)"
+  },
+  "B1_activation": {
+    "r34": { "W4WallS10000": [1.5, 5], "W1SubjectsPerS": [600, 2100], "longestPageMs": 50, "walBytes": 67108864 },
+    "r3": {
+      "reasoning": "per page decode in the SQLite worker (about 4 us per row, 28.5k rows) plus main-thread row mapping and serial outbox publication (64 pulls and one commit per page) dominate; kernel is about 0.16 ms per subject",
+      "W1WallS10000": [25, 40, 70],
+      "W4WallS10000": [14, 24, 40],
+      "W1OverW4": [1.4, 1.7, 2.6],
+      "longestPageTransactionMs": [80, 150, 300],
+      "walMaxBytes": "<= 64 MiB (publication writes about 20 MB at 10k)",
+      "correctness": "coverage 10,000 once each; G2 reconcile equal on 1-in-50 sample; G5 deliveries equal O-DOMAIN for every page; seed-basis fingerprint equal O-DOMAIN after later commits"
+    }
+  },
+  "B1_live": {
+    "r34": { "readP99Ratio": 1.2, "commitP99Ratio": 1.25 },
+    "r3": {
+      "commitP99Ratio": [1.1, 1.8, 6],
+      "readP99Ratio": [1.2, 2.5, 8],
+      "reasoning": "sweep decode, row mapping and publication run on the same Node main thread as the live commit path and readers, so main-thread contention, not SQLite locking, sets the ratios; the sweep yields publication to queued live commits",
+      "caveat": "sweep arms run activations back to back (about 100% duty); the burst offers about 55 commands/s against a serialized mapped writer that may saturate in both arms"
+    }
+  },
+  "extrapolation100k": {
+    "bytes": [9200000000, 9650000000, 10300000000],
+    "bytesReasoning": "217 B/fact x 44.5M facts; +13 B/fact for ids above 2^25 offset by the fixed 64 MiB frame tail falling from 15 to 1.5 B/fact",
+    "W4WallS": [140, 240, 400],
+    "verdict": "100k at W4 misses the 100 s bar (70% confidence): the sweep path scales linearly in subjects and the serial publication and main-thread mapping do not parallelize",
+    "freeDiskNeeded": "5 GiB floor + about 10 GB store + 24 GB raw seed intent (about 2.4 GB if gzipped) + 0.2 GB map + under 1 GB arm growth: about 40 GiB free raw, about 19 GiB with a gzipped intent"
+  }
+}
