@@ -29,7 +29,7 @@ export const transactionChangeFromTriple = (
 export const metadataInputs = (
   txId: TransactionId,
   position: number,
-  instant: number,
+  stagedAt: number,
   meta: TransactionMeta | undefined,
   changes: readonly TransactionChange[],
 ): readonly TripleInput[] => {
@@ -38,10 +38,10 @@ export const metadataInputs = (
     attribute,
     value,
     entityType: "_Transaction",
+    validFrom: stagedAt,
   });
   return [
     input(TxAttributes.POSITION, { type: "number", value: position }),
-    input(TxAttributes.INSTANT, { type: "datetime", value: instant }),
     ...(meta?.actor ? [input(TxAttributes.ACTOR, text(meta.actor))] : []),
     ...(meta?.commandId ? [input(TxAttributes.COMMAND_ID, text(meta.commandId))] : []),
     ...(meta?.correlationId ? [input(TxAttributes.CORRELATION_ID, text(meta.correlationId))] : []),
@@ -52,7 +52,14 @@ export const metadataInputs = (
     ...[...new Set(changes.map((change) => change.entityId))].map((entityId) =>
       input(TxAttributes.CHANGED_ENTITY, { type: "ref", value: entityId }),
     ),
-    ...changes.map((change) => input(TxAttributes.CHANGE, { type: "json", value: change })),
+    ...changes.map((change) => {
+      // [EXP-RT01] Why: deferred stamps cannot live in fact values. Rejected: JSON rewriting at decision (backend-specific number spelling).
+      const { recordedAt, retractedAt: _retractedAt, ...rest } = change;
+      return input(TxAttributes.CHANGE, {
+        type: "json",
+        value: { v: 2, ...rest, ...(change.op === "retract" ? { recordedAt } : {}) },
+      });
+    }),
   ];
 };
 
@@ -63,7 +70,7 @@ const scalar = (triple: Triple | undefined): string | undefined => {
     : undefined;
 };
 
-const decodeChange = (value: unknown): TransactionChange | undefined => {
+const decodeChange = (value: unknown, instant: number): TransactionChange | undefined => {
   if (
     typeof value !== "object" ||
     value === null ||
@@ -88,6 +95,13 @@ const decodeChange = (value: unknown): TransactionChange | undefined => {
   try {
     return {
       ...(candidate as unknown as TransactionChange),
+      ...(candidate["v"] === 2
+        ? {
+            recordedAt:
+              candidate["op"] === "assert" ? instant : (candidate["recordedAt"] as number),
+            ...(candidate["op"] === "retract" ? { retractedAt: instant } : {}),
+          }
+        : {}),
       tripleId: TripleId.make(candidate["tripleId"]),
       entityId: EntityId.make(candidate["entityId"]),
       ...(typeof candidate["assertionTxId"] === "string"
@@ -110,8 +124,6 @@ export const transactionRecordFromTriples = (
   const instantTriple = at(TxAttributes.INSTANT);
   const positionTriple = at(TxAttributes.POSITION);
   if (
-    !instantTriple ||
-    instantTriple.value.type !== "datetime" ||
     !positionTriple ||
     positionTriple.value.type !== "number" ||
     !Number.isSafeInteger(positionTriple.value.value) ||
@@ -119,16 +131,20 @@ export const transactionRecordFromTriples = (
   ) {
     return null;
   }
+  const instant =
+    instantTriple?.value.type === "datetime"
+      ? instantTriple.value.value
+      : positionTriple.recordedAt;
   const changes = triples
     .filter((triple) => triple.attribute === TxAttributes.CHANGE && triple.value.type === "json")
     .flatMap((triple) => {
-      const change = decodeChange(triple.value.value);
+      const change = decodeChange(triple.value.value, instant);
       return change === undefined ? [] : [change];
     });
   return {
     txId,
     position: positionTriple.value.value,
-    instant: instantTriple.value.value,
+    instant,
     ...(scalar(at(TxAttributes.ACTOR)) ? { actor: scalar(at(TxAttributes.ACTOR))! } : {}),
     ...(scalar(at(TxAttributes.COMMAND_ID))
       ? { commandId: scalar(at(TxAttributes.COMMAND_ID))! }

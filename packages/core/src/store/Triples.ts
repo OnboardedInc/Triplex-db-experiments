@@ -57,7 +57,9 @@ import type {
 export interface TransactionResult {
   readonly txId: TransactionId;
   readonly position: number;
+  /** Decided epoch-millisecond record instant on decided adapters. */
   readonly instant: number;
+  readonly stagedAt: number;
   readonly triples: readonly Triple[];
   readonly retracted: number;
 }

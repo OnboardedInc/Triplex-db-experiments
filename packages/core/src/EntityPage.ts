@@ -89,6 +89,7 @@ export const prepareEntityPage = (input: {
   readonly request: EntityPageRequest;
   readonly now: number;
   readonly recordedPosition: number;
+  readonly headRecordedAt?: number;
   readonly scope: string;
 }): PreparedEntityPage => {
   const limit = input.request.limit ?? 50;
@@ -141,7 +142,7 @@ export const prepareEntityPage = (input: {
     entityType: input.request.entityType,
     limit,
     basis: {
-      recordedAt: requested.recordedAt ?? input.now,
+      recordedAt: requested.recordedAt ?? input.headRecordedAt ?? input.now,
       recordedPosition: input.recordedPosition,
       validAt: requested.validAt,
     },

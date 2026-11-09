@@ -13,34 +13,9 @@ import type { StoreCapability } from "../store/StoreCapability.js";
 import type { TriplesService } from "../store/Triples.js";
 import type { SnapshotWriterShape } from "./SnapshotService.js";
 import type { Triple, EntityId } from "../Triple.js";
-import { generateTransactionId, SystemPrefixes, TxAttributes } from "../utils/id.js";
+import { generateTransactionId, SystemPrefixes } from "../utils/id.js";
 import { WriteError } from "../errors/index.js";
 import { unsafe } from "../Branded.js";
-
-const resolveTxTime = (
-  store: TriplesService,
-  txId: string,
-  assertedTriples: readonly Triple[],
-): Effect.Effect<number, WriteError> =>
-  Effect.gen(function* () {
-    if (assertedTriples.length > 0) {
-      return assertedTriples[0]!.recordedAt;
-    }
-
-    const txMetaTriples = yield* store
-      .match({ entityId: unsafe.entityId(txId), attribute: TxAttributes.INSTANT })
-      .pipe(Effect.catch(() => Effect.succeed([] as readonly Triple[])));
-    const txInstant = txMetaTriples.find((triple) => triple.value.type === "datetime");
-    if (txInstant && txInstant.value.type === "datetime") {
-      return txInstant.value.value;
-    }
-
-    return yield* Effect.fail(
-      new WriteError({
-        message: `Unable to resolve tx time for ${txId}`,
-      }),
-    );
-  });
 
 const resolveRetractionMeta = (
   store: TriplesService,
@@ -248,8 +223,7 @@ export const makeEntitySnapshotsCapability = (writer: SnapshotWriterShape): Stor
         );
 
         if (filteredIds.length > 0) {
-          const txTime =
-            record?.instant ?? (yield* resolveTxTime(store, result.txId, result.triples));
+          const txTime = record?.instant ?? result.instant;
           yield* writer
             .materialize(result.txId, txTime, filteredIds)
             .pipe(Effect.mapError(mapMaterializeError));

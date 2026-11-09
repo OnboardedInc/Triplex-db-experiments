@@ -1,3 +1,4 @@
+import type { CommitStamp, RecordCut } from "./RecordStamp.js";
 /**
  * StorageAdapter - Backend-agnostic storage interface
  *
@@ -19,6 +20,10 @@ import type { Rule as ConstraintRule, ViolationAt } from "../Constraint.js";
  * StorageAdapterService - Backend-agnostic storage primitives
  */
 export interface StorageAdapterService {
+  readonly recordTime?: "decided";
+  readonly commitStamp?: (stagedAt: number) => Effect.Effect<CommitStamp, WriteError>;
+  readonly currentCut?: () => Effect.Effect<RecordCut, ReadError>;
+
   /** Omitted adapters retain the original seven-family contract. */
   readonly supportedValueTypes?: readonly ValueType[];
   /** Optional server-side equivalent of Constraint.newlyViolated. Undefined requests the portable fallback. */

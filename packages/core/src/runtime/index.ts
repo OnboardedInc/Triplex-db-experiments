@@ -80,3 +80,5 @@ export {
   type RuleTail,
   countSimplePaths,
 } from "../native/FrontierClosure.js";
+
+export * from "../storage/RecordStamp.js";

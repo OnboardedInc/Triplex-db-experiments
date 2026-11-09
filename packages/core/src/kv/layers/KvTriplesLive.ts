@@ -628,6 +628,7 @@ const makeKvTriplesService = Effect.gen(function* () {
               txId,
               position,
               instant: now,
+              stagedAt: now,
               triples: asserted,
               retracted: retractedCount,
             } satisfies TransactionResult;

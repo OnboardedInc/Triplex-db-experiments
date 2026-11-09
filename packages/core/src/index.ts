@@ -114,3 +114,5 @@ export {
   type SnapshotAttributeMap,
 } from "./snapshots/canonical.js";
 export { KvTriples } from "./kv/layers/KvTriplesLive.js";
+
+export * from "./storage/RecordStamp.js";

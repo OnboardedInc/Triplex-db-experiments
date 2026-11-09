@@ -210,6 +210,7 @@ export const TriplesLive = Layer.effect(
       assertOps: readonly TransactOp[],
       txId: string,
       timestamp: number,
+      stagedAt: number,
       position: number,
       actor?: string,
     ): Effect.Effect<Triple[], WriteError> =>
@@ -224,7 +225,7 @@ export const TriplesLive = Layer.effect(
             value: op.value,
             entityType: op.entityType,
             createdBy: op.createdBy ?? actor,
-            validFrom: op.validFrom,
+            validFrom: op.validFrom ?? stagedAt,
             validTo: op.validTo,
           };
         });
@@ -306,7 +307,11 @@ export const TriplesLive = Layer.effect(
                 );
               }
               const txId = yield* nextTxId;
-              const timestamp = yield* now;
+              const stagedAt = yield* now;
+              const stamp = adapter.commitStamp
+                ? yield* adapter.commitStamp(stagedAt)
+                : { instant: stagedAt, decided: true };
+              const timestamp = stamp.instant;
               if (meta?.commandId !== undefined) {
                 const originalTransactionId = yield* adapter.claimCommand(
                   meta.commandId,
@@ -353,7 +358,7 @@ export const TriplesLive = Layer.effect(
                     : yield* adapter.validateConstraints({
                         operations,
                         constraints,
-                        instant: timestamp,
+                        instant: stagedAt,
                       });
                 const violations =
                   pushed ??
@@ -378,7 +383,7 @@ export const TriplesLive = Layer.effect(
                       current,
                       operations,
                       constraints,
-                      timestamp,
+                      stagedAt,
                     ).pipe(
                       Effect.mapError(
                         (cause) =>
@@ -416,6 +421,7 @@ export const TriplesLive = Layer.effect(
                     pendingAsserts,
                     txId,
                     timestamp,
+                    stagedAt,
                     position,
                     actor,
                   );
@@ -499,6 +505,7 @@ export const TriplesLive = Layer.effect(
                   pendingAsserts,
                   txId,
                   timestamp,
+                  stagedAt,
                   position,
                   actor,
                 );
@@ -511,12 +518,19 @@ export const TriplesLive = Layer.effect(
               }
 
               if (!isJournalSuppressed(meta)) {
-                for (const input of metadataInputs(txId, position, timestamp, meta, changes)) {
+                for (const input of metadataInputs(txId, position, stagedAt, meta, changes)) {
                   yield* adapter.insert(input, txId, timestamp, yield* nextTripleId, position);
                 }
               }
 
-              return { txId, position, instant: timestamp, triples, retracted: retractedCount };
+              return {
+                txId,
+                position,
+                instant: timestamp,
+                stagedAt,
+                triples,
+                retracted: retractedCount,
+              };
             }),
             { replaySafe: true },
           ),
@@ -585,12 +599,14 @@ export const TriplesLive = Layer.effect(
     const entityPage: TriplesService["entityPage"] = (request) =>
       Effect.gen(function* () {
         const currentTime = yield* now;
-        const recordedPosition = yield* adapter.currentCommitPosition();
+        const cut = adapter.currentCut ? yield* adapter.currentCut() : undefined;
+        const recordedPosition = cut?.position ?? (yield* adapter.currentCommitPosition());
         const prepared = yield* Effect.try({
           try: () =>
             prepareEntityPage({
               request,
               now: currentTime,
+              headRecordedAt: cut?.recordedAt,
               recordedPosition,
               scope: runtime.scope,
             }),
@@ -705,13 +721,15 @@ export const TriplesLive = Layer.effect(
       Effect.gen(function* () {
         const query = yield* validateWrappedQuery(q);
         const currentTime = yield* now;
-        const recordedPosition = yield* adapter.currentCommitPosition();
+        const cut = adapter.currentCut ? yield* adapter.currentCut() : undefined;
+        const recordedPosition = cut?.position ?? (yield* adapter.currentCommitPosition());
         const prepared = yield* Effect.try({
           try: () =>
             preparePagination({
               query,
               ...(options?.basis === undefined ? {} : { basis: options.basis }),
               now: currentTime,
+              headRecordedAt: cut?.recordedAt,
               recordedPosition,
               scope: runtime.scope,
             }),

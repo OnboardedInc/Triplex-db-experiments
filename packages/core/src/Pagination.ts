@@ -198,6 +198,7 @@ export const preparePagination = (input: {
   readonly basis?: TemporalBasis;
   readonly now: number;
   readonly recordedPosition: number;
+  readonly headRecordedAt?: number;
   readonly scope: string;
 }): PreparedPagination => {
   if (!Number.isSafeInteger(input.recordedPosition) || input.recordedPosition < 0) {
@@ -255,7 +256,7 @@ export const preparePagination = (input: {
   } else {
     const resolved = resolveTemporalBasis(input.basis, input.now);
     basis = {
-      recordedAt: resolved.recordedAt ?? input.now,
+      recordedAt: resolved.recordedAt ?? input.headRecordedAt ?? input.now,
       recordedPosition: input.recordedPosition,
       validAt: resolved.validAt,
     };
