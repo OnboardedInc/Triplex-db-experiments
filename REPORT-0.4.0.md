@@ -126,3 +126,56 @@ This is the additional PASS-adoption location for rule 9a: the artifact auditor 
 Bulky raw evidence stays outside Git; only the small receipts, authority/diff reviews, source proofs, manifest, index and this report are committed. Dependency installations and package-manager caches are retained outside Git and excluded from the evidence manifest; lockfiles, source/command hashes and tarball hashes are included. No raw evidence was deleted.
 
 All requested candidate and ACCEPT-review commits are ancestors, including the explicit final M01 and CHECKJS candidates. No push, publication or main merge occurred. Independent review of this contract remains outstanding. No live engine gate, P3 qualification, production observer/driver qualification, VM durability claim, acceptance calibration or performance promotion was attempted. Q98j still waits for Sam, and every requested deferred ruling remains pending for its later contract round, including qualification work in 0.4.1.
+
+
+## Round 2 (fixes for VERIFY-0.4.0, FIX-FIRST at 4d487ce5)
+
+Round 2 changes only what the two findings and the main merge require. Contract version, bars, workload, rulings and oracle implementations are unchanged. Gated tree: `a2b1271f7c302368c5a9b0eb12f597f04f17184d` (clean before and after every command). Durable evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/A01-040-R2/`; small copies and the manifest are in `lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/r2/`.
+
+### F1 (P1): O-CONTRACT runner pin
+
+- **Cause confirmed.** `build_contract.py` computed `oracleRunners.O-CONTRACT.sha256` at module line 5846, before `IMAGE_PINS["datomic"] = DATOMIC_IMAGE_040` (line 6336) changed the rendered projection. `artifacts["oracle-contract.json"]` used the later render, so it was correct while the runner map stayed at `82b3b4e0...`.
+- **Fix.** `o_contract_runner_hashes()` is computed once, after every module-level assignment (just before `main`). `checks_pin_OCONTRACT` recomputes it at generation and fails closed if the stored map differs. `main` also fails if `artifacts["oracle-contract.json"]` and the runner map disagree.
+- **Per-hunk review (workload).** Recorded in `OCONTRACT-repin-review.json`, pinned in the contract with its diff (`OCONTRACT-oracle-contract.json.diff`, sha256 `d97a0c4d91bfc0119e6094a68934b9ca8a622aff66c0552f52668f5ac3e98441`):
+  - `oracle-contract.json` `@@ -58,7 +58,7 @@`: Datomic `imageId` `34fb9db1...` to `aecbac4c...`. Measured workload unchanged (no query, data, schedule or threshold). It changes the expected O-CONTRACT answer for cases that compare the Datomic image digest, and measurements on the new image are still needed (same position as DF01-image-review.json).
+  - `build_contract.py` (also a runner file, so its pin is computed, not a literal): 4 hunks, each generator pin or check wiring; none touches `contract_oracle_answer` or `contract_oracle_projection`. Workload unchanged.
+- **Staleness guards.** 7 new mutations, each required to fail with the runner-pin message (not an unrelated check): image assigned after the pin (the F1 order), projection field added after the pin, tampered projection hash, tampered source hash, dropped runner map, wrong recorded stage hash, flipped workload note. Contract tests grew from 13 to 16: every `oracleRunners` file hash equals the actual file bytes; the production runner command is executed on a bound composition and answers `imagesPinned` true for the new image and false for the old; the stage review, diffs and hunk headers equal Git.
+- **Reviewer's failing case.** `f1-runner-pin-check.log`: at 4fa6192c the runner pin for `oracle-contract.json` is `82b3b4e0...` against actual `6fae9baa...` (exit 1); at a853fe42 and at HEAD both runner hashes match (exit 0).
+- **History limit, stated plainly.** The stale pin was committed in the DF01 merge f3ed6211 and survived to 4fa6192c. I did not rewrite those reviewed commits (they are the hashes the reviews and the Q87 merge name). The re-pin lands in a853fe42, so Q45a's same-commit requirement is not met for that historical merge; it is met from here on by the generation check. If Sam wants the DF01 merge itself rebuilt, that is a separate history rewrite and needs a new review of every later commit.
+
+### F2 (P2): W0 in G0
+
+- **Fix.** `lab/bin/gate.mjs` adds `buildPackages(lane, gate)`: `lanePackages` plus `w0` for G0. `build()` and `hashDist()` use it, so G0 builds W0 and hashes its dist into the build manifest before CHECKJS runs. `lanePackages` (typecheck and vitest scope) is unchanged, so G0's test counts and expected skips do not change. The G0 dry-run plan prints `buildPackages`. Rejected: running W0's tests inside G0 (changes the expected-skip scope).
+- **Reviewer's failing case, now.** `packages/w0/dist` was empty at the start (checked with `ls` before the first gate, and only the W0-excluding pack gate ran before G0). G0 xtdb `G0-xtdb-20261109T122531Z-536e98`: PASS with no manual W0 step. Its build manifest has `w0` with 52 files and sha256 `35a7ca1e...`, and those 52 dist file hashes equal the reviewer's retained explicit-build files exactly. Failure case before: `G0-xtdb-20261109T114103Z-69a341` FAIL (TS2307). If the W0 build fails, `build()` records `build failed` and the receipt is FAIL.
+- **Not done.** I did not add a unit test for `buildPackages` (gate.mjs runs `main()` on import and a new lab/bin module would need CHECKJS root coverage changes). The dry-run output and the real G0 receipt are the checks.
+
+### Main merge
+
+- Merge commit `a2b1271f` merges main `1c2ee46f53cf3b8bb9498c8dc38c0c2526569bb5`. Conflicts were only in generated `ACCEPTANCE.md` and `obligations.json`; both were taken from the branch and regenerated. `RULINGS-PENDING.md` merged without conflict.
+- All 100 main pending rows not compiled by this contract are present byte-for-byte, and `pendingRulings.ids` is 98 ids: it drops exactly Q98a-i, Q101a and Q104a (compiled) and nothing else, so Q100q, Q100r, Q100s, Q102a-e, Q103a-e, Q105a-b, Q106a-g, Q107a-c, Q107-S, Q108a-d and the earlier ones stay pending. Nothing pending was compiled. No experiment branch was merged.
+- `--verify` ran as its own step after regeneration (`verify-after-merge.log`) and again on the committed tree: byte-identical.
+- Pinned-file hashes, 4fa6192c to a2b1271f (rule 9b): `build_contract.py` `653cec71...` to `05a8bffe...`; `obligations.json` `da52b44b...` to `dff8ab60...`; `ACCEPTANCE.md` `d85c3733...` to `33d03e09...`; `RULINGS-PENDING.md` `fce16f28...` to `35a487c4...`; `oracle-contract.json`, `load-contract.json`, `budgets.json`, `capability-matrix.md` unchanged. Transitive contract hash `145db3994dec0dcabc635d651b5edf1aa957e236e5f4346ab069dfca9583c220`.
+
+### Gates on committed tree a2b1271f
+
+| Gate | Result |
+| --- | --- |
+| `--verify` (own step, after merge; again on committed tree) | PASS, six outputs byte-identical |
+| Contract tests | 16/16 (13 existing, 3 new) |
+| Mutations | 41/41 caught (34 existing, 7 new), canonical outputs unchanged |
+| Evaluator `claim.test.mjs` + `claim-round2.test.mjs` | 108/108, zero fail/skip/cancel/todo, no EVALUATOR-TAMPERED |
+| Lab pack gate | PASS: 12 package tarballs, clean consumer install (`pack-receipt.json`, head a2b1271f) |
+| G0 xtdb offline, W0 not prebuilt | PASS 1289/1289, 140 expected skips, `G0-xtdb-20261109T122531Z-536e98` |
+| G0 datomic offline | PASS 1344/1344, 66 expected skips, `G0-datomic-20261109T122954Z-cc5a7b` |
+| G0 qlever offline | PASS 1513/1513, 79 expected skips, `G0-qlever-20261109T123404Z-c62ee0` |
+
+### PASS audit (rule 9a)
+
+1. **`checks_pin_OCONTRACT` and the main cross-check.** Content: runner hashes recomputed from the actual file bytes and the rendered projection. Freshness: recomputed in this generation process. Binding: tied to the exact projection text this run writes and to the recorded diff and hunks.
+2. **New contract tests.** Content: actual disk bytes against every declared runner hash, and the real production runner executed. Freshness: run on the committed tree. Binding: stage review equals Git diff between the named commits.
+3. **New mutations.** Each must exit nonzero with `CONTRACT INVALID:` and contain the runner-pin message; the known-good generator and canonical output bytes are checked before and after.
+4. **G0 receipts.** Content: counts, expected skips and the W0 dist file hashes (compared to the reviewer's independent build). Freshness: new run ids after the pack gate, `packages/w0/dist` empty before. Binding: each receipt records git head a2b1271f with no modified or untracked files, and the contract hash `dff8ab60...` (the committed obligations.json bytes). Receipts were moved to the durable root after a byte comparison so the next gate saw a clean tree.
+
+### Limits
+
+Offline gates only. No live engine, PAIR, G1/G2, acceptance or performance claim. Independent re-review of this round is outstanding. The report and r2 evidence commit that follows adds no implementation or test changes.

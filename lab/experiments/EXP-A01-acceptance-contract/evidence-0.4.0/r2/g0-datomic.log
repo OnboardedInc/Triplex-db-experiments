@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 99804 "CX-DI01-trace-r12", pid 65515 "G03-R7a-full", pid 75650 "QH1-R2-stages", pid 47774 "CX-HS01-seed-10000"
+[lab] G0-datomic-20261109T122954Z-cc5a7b: raw output runs/G0/G0-datomic-20261109T122954Z-cc5a7b
+PASS G0 datomic scope=full executed=1344 pass=1344 fail=0 skip=66
+receipt: lab/runs/G0/G0-datomic-20261109T122954Z-cc5a7b.json
+exit 0

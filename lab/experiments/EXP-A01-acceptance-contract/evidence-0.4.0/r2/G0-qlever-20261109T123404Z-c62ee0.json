@@ -1,0 +1,772 @@
+{
+  "receiptVersion": "qlever-latency/1",
+  "latencyWriter": "tx2-gate-receipt/1",
+  "units": "ms",
+  "format": "tx2-gate-receipt/1",
+  "gate": "G0",
+  "lane": "qlever",
+  "slot": null,
+  "runId": "G0-qlever-20261109T123404Z-c62ee0",
+  "experiment": null,
+  "note": null,
+  "previous": null,
+  "startedAt": "2026-11-09T12:34:04.360Z",
+  "endedAt": "2026-11-09T12:38:55.298Z",
+  "durationMs": 290938,
+  "scope": "full",
+  "runKind": "diagnostic",
+  "mutation": null,
+  "contractVersion": "0.4.0",
+  "contract": {
+    "format": "triplex-db-2/acceptance-obligations/3",
+    "version": "0.4.0",
+    "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
+    "sha256": "dff8ab607624fdd8ccba7af2ee2034b4a2ae6080fc493aacd8d6e119a940d7f5"
+  },
+  "obligations": [],
+  "engineName": "qlever",
+  "qleverConnectionMode": "keep-alive",
+  "git": {
+    "head": "a2b1271f7c302368c5a9b0eb12f597f04f17184d",
+    "headTree": "0d72951a77f4df35b1b9c42e21fcd3b5435b6928",
+    "branch": "contract/0.4.0",
+    "dirty": false,
+    "stashCommit": null,
+    "stashTree": null,
+    "diffScope": [
+      "packages",
+      "qualification",
+      "lab/bin",
+      "lab/config",
+      "lab/receipts",
+      "vitest.workspace-aliases.ts",
+      "tsconfig.base.json",
+      "tsconfig.node.json",
+      "package.json",
+      "pnpm-workspace.yaml",
+      "pnpm-lock.yaml",
+      "turbo.json"
+    ],
+    "diffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diffBytes": 0,
+    "modifiedFiles": [],
+    "untrackedFiles": [],
+    "otherDirtyPaths": [],
+    "sourceTreeId": "374ff4a672e4aa142f51cb9e541c388b4ccd835b5cdc01f4f2349ab8209e417c"
+  },
+  "lockfileSha256": "90e959b3263f7c6eb50a55dadc7c4625925779f1f88af1c0384385369fb98635",
+  "toolchain": {
+    "node": "v22.23.2",
+    "pnpm": "10.11.0",
+    "platform": "darwin-arm64"
+  },
+  "gateScripts": {
+    "lab/bin/gate.mjs": "1d3368558035b424e014f296371964e0301d4d2cb52a659559aa7fcaf954032a",
+    "lab/bin/lib.mjs": "fc254fc5e74f9b7720f0b9066202ffc095da95dbf3dff9a6477154148aaefe50",
+    "lab/bin/receipt.mjs": "46473183f2480fbf0bf7e81b1e6eb91a0f1351bda60815ee9822a27bbc4bc300",
+    "lab/bin/engine.mjs": "4a955667e930fa5e906527059525bbeed7a1ca053a36bb9882ec315a838bd8a8",
+    "lab/bin/heavy-lock.mjs": "ccfd89ee26970e98afb38c90d9c7e83a6beac16876bd737b3c4b081678babade",
+    "lab/config/slots.json": "56e3b2ed1578d11e18b35b9108b20bcdfa828752b24600beb9a04f13b2b7b60e",
+    "lab/receipts/latency.mjs": "ec40d741b82aa20b67784fe52c9785992511f20361d55bf8260e149b42f02fba",
+    "lab/receipts/latency.d.mts": "dd15bda7aa36de438780ad3e8076dca45146f1ba49980f2b2a43f3dee2f40762",
+    "lab/receipts/parse.ts": "3fd729972e66482b2acd3a7341e0967c0f99d8a78cb66b7c195315e0fedbfa1e"
+  },
+  "build": {
+    "manifestSha256": "0a713ec7666d3591968c4fdbf7b420432736063689e2803b055d40211f6a5990",
+    "manifest": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/build-manifest.json",
+    "packages": {
+      "core": {
+        "files": 436,
+        "bytes": 2921154,
+        "sha256": "1f9129c3d39cb650df4ad807ec6fb8d63abaf94e4d08881e31c4f16b216d95da"
+      },
+      "host": {
+        "files": 50,
+        "bytes": 350235,
+        "sha256": "b3300be5b9b542eec342db0a192408bb085d464fd990d18f0f724fa68a76a7bd"
+      },
+      "testkit": {
+        "files": 38,
+        "bytes": 458416,
+        "sha256": "eaa29f39a9adb4a431aebaddd1b4dd458808638c4048aa9661dc0c1382980970"
+      },
+      "qlever": {
+        "files": 130,
+        "bytes": 975072,
+        "sha256": "4197e7e19fefa7c565d7be11fcba4a4b57007b8f75b2b6c61d6d34860ead44e9"
+      },
+      "qualification": {
+        "files": 32,
+        "bytes": 356499,
+        "sha256": "b03ffb9ab9cb846d5b2ae93fb047043e32e45942580851ee59ce4fb9909b4be4"
+      },
+      "w0": {
+        "files": 52,
+        "bytes": 314097,
+        "sha256": "35a7ca1e2ec21e19b8e8d7e2bc9925b864d830d3afb5481443559af40fb4d983"
+      }
+    }
+  },
+  "counts": {
+    "executed": 1513,
+    "pass": 1513,
+    "fail": 0,
+    "skip": 79,
+    "expectedSkip": 79,
+    "unexpectedSkip": 0
+  },
+  "unexpectedSkips": [],
+  "fixtures": {
+    "qualification/workloads/temporal-workloads.json": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "qualification/workloads/event_oracles.py": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02",
+    "qualification/workloads/validate_workloads.py": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+    "qualification/workloads/test_event_oracles.py": "0151831a2a2b0ce60bcbb08cf2234764458cf114057a3e30b1623d5c8dbb26a7",
+    "qualification/workloads/engine_cases.mjs": "1727a26e563e754aec2db85f3a7700e0eaeedfdd1721750be7e96cf03a4d35dd",
+    "qualification/workloads/test_engine_cases.mjs": "310d646614811875084bff065d07eac6b6b6f7b00af77b310d1a3b6a331dad80",
+    "qualification/adapter/scale-fixture.mjs": "f131644c169b56d328a39fcdd5c49e0372d08444638886ed34a880854a041388",
+    "lab/config/g0-expected-skips.json": "6603b3baa01831b6e1e14d1d39df2039e648f23a73e048e9269a5ae2bd1558d4"
+  },
+  "packet": {
+    "id": "temporal-workloads/1@sha256:322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "format": "temporal-workloads/1",
+    "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+    "workloads": 20,
+    "cases": 71
+  },
+  "steps": [
+    {
+      "name": "pnpm-version",
+      "command": "pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store --version",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 501,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/pnpm-version.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/pnpm-version.stderr.txt"
+    },
+    {
+      "name": "build",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 7935,
+          "label": "A01-040-R2-g0-qlever",
+          "at": "2026-11-09T12:34:04.252Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 89,
+          "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+        }
+      },
+      "command": "pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store --filter @triplex-build/triplex --filter @triplex-build/triplex-host --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-qlever --filter @triplex-build/triplex-qualification --filter @triplex-build/w0 build",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 9797,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/build.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/build.stderr.txt"
+    },
+    {
+      "name": "lab-checkjs",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 7935,
+          "label": "A01-040-R2-g0-qlever",
+          "at": "2026-11-09T12:34:04.252Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 89,
+          "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+        }
+      },
+      "command": "node lab/bin/checkjs.mjs",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 8171,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/lab-checkjs.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/lab-checkjs.stderr.txt"
+    },
+    {
+      "name": "typecheck",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 7935,
+          "label": "A01-040-R2-g0-qlever",
+          "at": "2026-11-09T12:34:04.252Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 89,
+          "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex --filter @triplex-build/triplex-host --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-qlever --filter @triplex-build/triplex-qualification typecheck",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 13411,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/typecheck.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/typecheck.stderr.txt"
+    },
+    {
+      "name": "vitest-core",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 7935,
+          "label": "A01-040-R2-g0-qlever",
+          "at": "2026-11-09T12:34:04.252Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 89,
+          "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-040/runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-core.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 5167,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-core.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-core.stderr.txt"
+    },
+    {
+      "name": "vitest-host",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 7935,
+          "label": "A01-040-R2-g0-qlever",
+          "at": "2026-11-09T12:34:04.252Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 89,
+          "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex-host exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-040/runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-host.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 128970,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-host.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-host.stderr.txt"
+    },
+    {
+      "name": "vitest-testkit",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 7935,
+          "label": "A01-040-R2-g0-qlever",
+          "at": "2026-11-09T12:34:04.252Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 89,
+          "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex-testkit exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-040/runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-testkit.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 52180,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-testkit.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-testkit.stderr.txt"
+    },
+    {
+      "name": "vitest-qlever",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 7935,
+          "label": "A01-040-R2-g0-qlever",
+          "at": "2026-11-09T12:34:04.252Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 89,
+          "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex-qlever exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-040/runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qlever.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 64910,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qlever.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qlever.stderr.txt"
+    },
+    {
+      "name": "vitest-qualification",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 7935,
+          "label": "A01-040-R2-g0-qlever",
+          "at": "2026-11-09T12:34:04.252Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 89,
+          "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+        }
+      },
+      "command": "pnpm --filter @triplex-build/triplex-qualification exec vitest run --reporter=json --outputFile=/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-040/runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qualification.json",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 3412,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qualification.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qualification.stderr.txt"
+    },
+    {
+      "name": "node-test-qualification",
+      "parentGrant": {
+        "slot": 3,
+        "owner": {
+          "pid": 7935,
+          "label": "A01-040-R2-g0-qlever",
+          "at": "2026-11-09T12:34:04.252Z"
+        },
+        "proof": {
+          "path": "../../../lab/locks/heavy/3/owner.json",
+          "role": "heavy-parent-grant",
+          "bytes": 89,
+          "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+        }
+      },
+      "command": "node --test --test-reporter=tap ../../qualification/compare.test.mjs load/dispatch.test.ts load/model.test.ts",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 206,
+      "cwd": "packages/qualification",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-qualification.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-qualification.stderr.txt"
+    },
+    {
+      "name": "node-test-engine-cases",
+      "command": "node --test --test-reporter=tap qualification/workloads/test_engine_cases.mjs",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 110,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-engine-cases.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-engine-cases.stderr.txt"
+    },
+    {
+      "name": "node-test-ns-bench",
+      "command": "node --test --test-reporter=tap lab/bench/test/bench.test.ts lab/bench/test/p3.test.mjs lab/bench/test/nsr.test.mjs lab/bench/test/paired.test.ts lab/bench/test/noise.test.ts lab/bench/test/single.test.ts",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 3588,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-ns-bench.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-ns-bench.stderr.txt"
+    },
+    {
+      "name": "oracle-validate-workloads",
+      "command": "python3 -B qualification/workloads/validate_workloads.py",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 46,
+      "cwd": ".",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/oracle-validate-workloads.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/oracle-validate-workloads.stderr.txt"
+    },
+    {
+      "name": "oracle-unittest",
+      "command": "python3 -B -m unittest -v test_event_oracles",
+      "code": 0,
+      "signal": null,
+      "timedOut": false,
+      "elapsedMs": 135,
+      "cwd": "qualification/workloads",
+      "stdout": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/oracle-unittest.stdout.txt",
+      "stderr": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/oracle-unittest.stderr.txt"
+    }
+  ],
+  "firstFailures": [],
+  "rawDir": "runs/G0/G0-qlever-20261109T123404Z-c62ee0",
+  "reasons": [],
+  "verdict": "PASS",
+  "objects": [
+    {
+      "path": "pnpm-lock.yaml",
+      "role": "lockfile",
+      "bytes": 291000,
+      "sha256": "90e959b3263f7c6eb50a55dadc7c4625925779f1f88af1c0384385369fb98635"
+    },
+    {
+      "path": "lab/bin/gate.mjs",
+      "role": "gate-script",
+      "bytes": 84294,
+      "sha256": "1d3368558035b424e014f296371964e0301d4d2cb52a659559aa7fcaf954032a"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "role": "gate-script",
+      "bytes": 26970,
+      "sha256": "fc254fc5e74f9b7720f0b9066202ffc095da95dbf3dff9a6477154148aaefe50"
+    },
+    {
+      "path": "lab/bin/receipt.mjs",
+      "role": "gate-script",
+      "bytes": 10316,
+      "sha256": "46473183f2480fbf0bf7e81b1e6eb91a0f1351bda60815ee9822a27bbc4bc300"
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "role": "gate-script",
+      "bytes": 51860,
+      "sha256": "4a955667e930fa5e906527059525bbeed7a1ca053a36bb9882ec315a838bd8a8"
+    },
+    {
+      "path": "lab/bin/heavy-lock.mjs",
+      "role": "gate-script",
+      "bytes": 6447,
+      "sha256": "ccfd89ee26970e98afb38c90d9c7e83a6beac16876bd737b3c4b081678babade"
+    },
+    {
+      "path": "lab/config/slots.json",
+      "role": "gate-script",
+      "bytes": 7442,
+      "sha256": "56e3b2ed1578d11e18b35b9108b20bcdfa828752b24600beb9a04f13b2b7b60e"
+    },
+    {
+      "path": "lab/receipts/latency.mjs",
+      "role": "gate-script",
+      "bytes": 2956,
+      "sha256": "ec40d741b82aa20b67784fe52c9785992511f20361d55bf8260e149b42f02fba"
+    },
+    {
+      "path": "lab/receipts/latency.d.mts",
+      "role": "gate-script",
+      "bytes": 805,
+      "sha256": "dd15bda7aa36de438780ad3e8076dca45146f1ba49980f2b2a43f3dee2f40762"
+    },
+    {
+      "path": "lab/receipts/parse.ts",
+      "role": "gate-script",
+      "bytes": 16004,
+      "sha256": "3fd729972e66482b2acd3a7341e0967c0f99d8a78cb66b7c195315e0fedbfa1e"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 89,
+      "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/build-manifest.json",
+      "role": "build-manifest",
+      "bytes": 146189,
+      "sha256": "0a713ec7666d3591968c4fdbf7b420432736063689e2803b055d40211f6a5990"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 89,
+      "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 89,
+      "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 89,
+      "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-core.json",
+      "role": "raw-outcome",
+      "bytes": 274358,
+      "sha256": "69c4483e5486521efaad1bf70b107d5b1392cb18075306a088a179c632df13c2"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 89,
+      "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-host.json",
+      "role": "raw-outcome",
+      "bytes": 12652,
+      "sha256": "c2822d9fcd266af709a03ffa523c9c37d9ec34a71d482ea60cc2d3dd0e038005"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 89,
+      "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-testkit.json",
+      "role": "raw-outcome",
+      "bytes": 33507,
+      "sha256": "8df07dcb44d8bf7040de607d6042edd1ecde4a52e1969cb51c2e63d1bd019462"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 89,
+      "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qlever.json",
+      "role": "raw-outcome",
+      "bytes": 109401,
+      "sha256": "25db454f4d82663f727f5a392afc40d88826aba6a5eddcbd22658be485f9e417"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 89,
+      "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qualification.json",
+      "role": "raw-outcome",
+      "bytes": 46013,
+      "sha256": "8b5270278cb7ef479d798c0ba35e17375a15b2ecf75f3bab0ccb92f6be345105"
+    },
+    {
+      "path": "../../../lab/locks/heavy/3/owner.json",
+      "role": "heavy-parent-grant",
+      "bytes": 89,
+      "sha256": "ba3f5453e8e71ec18971833e16de663a17864f860de1162911b2ef42fdd83d41"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/lab-checkjs.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 83,
+      "sha256": "a130dffef63f32c8d6fbf9e610a99bc59e8621b6177e0d570f39a5578dc22b5f"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/lab-checkjs.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/typecheck.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 493,
+      "sha256": "188011ad608a57309252c2ce8eab412d08beb8b7cf3d629ad8037e300bbbe447"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/typecheck.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-core.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 146,
+      "sha256": "4dc23c19a518e572c0940102fd67a8a45f31758ead422fc733cc773d79ebe388"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-core.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 347,
+      "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-host.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 146,
+      "sha256": "ce7ba467a31a3d7701dc57e70edcfe24043b57a0f8157de2525637378051c008"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-host.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 1192,
+      "sha256": "e6db5bc8244a0015a5c93011751b14bb67826c39370fa4634ad4d172a3313c79"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-testkit.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 149,
+      "sha256": "34f0355d946a2fdad58173cb83e241456792eb58d6d546e5017172af2592c6c1"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-testkit.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 347,
+      "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qlever.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 148,
+      "sha256": "adc11129934a1457eec149a268a23acabeb3c5ef43aea87c1c9592f5e0cb9b0b"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qlever.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 347,
+      "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qualification.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 155,
+      "sha256": "3e086a90f33b9b9700eba64c7092cec25c8d09e77b134256597bb9f5fab6b22d"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/vitest-qualification.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-qualification.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 3974,
+      "sha256": "0264f4cc710d6d12f6845a7545df6aa2c50e6c87698927c43b005fddac22dda9"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-qualification.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-engine-cases.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 3140,
+      "sha256": "cf21e751cc2408fc9ab7fe86e1af735a5cfa00aecfffd3abd25d772bf40cc3b8"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-engine-cases.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-ns-bench.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 12745,
+      "sha256": "d568b0ec055088023c943fbad1f9a198857f128e069e14c671ec9a6bc14bfab8"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/node-test-ns-bench.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/oracle-validate-workloads.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 1218,
+      "sha256": "f2a7cd0a3133b70369859ba9a8636acd61a8b951837618be9dd0bbdd70e79ff0"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/oracle-validate-workloads.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/oracle-unittest.stdout.txt",
+      "role": "raw-outcome",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "runs/G0/G0-qlever-20261109T123404Z-c62ee0/oracle-unittest.stderr.txt",
+      "role": "raw-outcome",
+      "bytes": 1314,
+      "sha256": "29fd06525d687c48f6edd403f9b6302c7701bbd3a496ce5a11c961128c6fbf81"
+    },
+    {
+      "path": "qualification/workloads/temporal-workloads.json",
+      "role": "oracle-fixture",
+      "bytes": 124581,
+      "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271"
+    },
+    {
+      "path": "qualification/workloads/event_oracles.py",
+      "role": "oracle-fixture",
+      "bytes": 21459,
+      "sha256": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02"
+    },
+    {
+      "path": "qualification/workloads/validate_workloads.py",
+      "role": "oracle-fixture",
+      "bytes": 11913,
+      "sha256": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61"
+    },
+    {
+      "path": "qualification/workloads/test_event_oracles.py",
+      "role": "oracle-fixture",
+      "bytes": 5168,
+      "sha256": "0151831a2a2b0ce60bcbb08cf2234764458cf114057a3e30b1623d5c8dbb26a7"
+    },
+    {
+      "path": "qualification/workloads/engine_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 17823,
+      "sha256": "1727a26e563e754aec2db85f3a7700e0eaeedfdd1721750be7e96cf03a4d35dd"
+    },
+    {
+      "path": "qualification/workloads/test_engine_cases.mjs",
+      "role": "oracle-fixture",
+      "bytes": 16977,
+      "sha256": "310d646614811875084bff065d07eac6b6b6f7b00af77b310d1a3b6a331dad80"
+    },
+    {
+      "path": "qualification/adapter/scale-fixture.mjs",
+      "role": "oracle-fixture",
+      "bytes": 16708,
+      "sha256": "f131644c169b56d328a39fcdd5c49e0372d08444638886ed34a880854a041388"
+    },
+    {
+      "path": "lab/config/g0-expected-skips.json",
+      "role": "oracle-fixture",
+      "bytes": 30155,
+      "sha256": "6603b3baa01831b6e1e14d1d39df2039e648f23a73e048e9269a5ae2bd1558d4"
+    },
+    {
+      "path": "lab/acceptance/obligations.json",
+      "role": "acceptance-contract",
+      "bytes": 1104528,
+      "sha256": "dff8ab607624fdd8ccba7af2ee2034b4a2ae6080fc493aacd8d6e119a940d7f5"
+    }
+  ]
+}

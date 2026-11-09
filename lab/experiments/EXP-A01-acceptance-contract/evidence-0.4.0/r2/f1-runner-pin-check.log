@@ -1,0 +1,9 @@
+{"rev": "4fa6192c", "path": "lab/acceptance/build_contract.py", "declared": "653cec719e6f7f8964b00aca1f8ba1b40325e7b645153743059b0df3674a87db", "actual": "653cec719e6f7f8964b00aca1f8ba1b40325e7b645153743059b0df3674a87db", "matches": true}
+{"rev": "4fa6192c", "path": "lab/acceptance/oracle-contract.json", "declared": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9", "actual": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266", "matches": false}
+rev 4fa6192c exit 1
+{"rev": "a853fe42", "path": "lab/acceptance/build_contract.py", "declared": "05a8bffe27edf6a669fa405120a2ebad401ea241ef88f1f4b935befb2d6d19f5", "actual": "05a8bffe27edf6a669fa405120a2ebad401ea241ef88f1f4b935befb2d6d19f5", "matches": true}
+{"rev": "a853fe42", "path": "lab/acceptance/oracle-contract.json", "declared": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266", "actual": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266", "matches": true}
+rev a853fe42 exit 0
+{"rev": "HEAD", "path": "lab/acceptance/build_contract.py", "declared": "05a8bffe27edf6a669fa405120a2ebad401ea241ef88f1f4b935befb2d6d19f5", "actual": "05a8bffe27edf6a669fa405120a2ebad401ea241ef88f1f4b935befb2d6d19f5", "matches": true}
+{"rev": "HEAD", "path": "lab/acceptance/oracle-contract.json", "declared": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266", "actual": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266", "matches": true}
+rev HEAD exit 0
