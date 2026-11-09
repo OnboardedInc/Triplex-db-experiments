@@ -1,4 +1,8 @@
-# Parked-peer gates (NOT RUN by CX-DF01)
+# Live-peer runbook
+
+Attempt 001 stopped at its first fixture write. Attempt 002 ran the corrected fixture, excision, Peer restart, real-queue
+polling diagnostics, package regressions and G1; see `REPORT.md` and `live/attempt-002/`. The commands below are the original
+parked-peer plan, not fresh execution receipts. Future runs require a newly authorized window and new evidence names.
 
 Only the orchestrator may unpark the retained `tx2-datomic-dev-data` volume. These commands are for that later authorized window.
 Use a fresh evidence name for every attempt; preserve failures and scratch databases if a stage fails.

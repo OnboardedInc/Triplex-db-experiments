@@ -1,0 +1,8 @@
+    PID     ELAPSED COMMAND
+      1       02:16 /bin/bash /config/entrypoint.sh
+      9       02:16 java -server -cp resources:datomic-transactor-pro-1.0.7745.jar:lib/*:samples/clj:bin:/opt/gateway/src -Xmx640m -Xms640m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError clojure.main --main datomic.launcher /data/effective-transactor.properties
+     76       02:11 /bin/bash bin/run -m triplex.gateway.main
+     81       02:11 java -server -Xmx1g -Xms1g -Xms1g -Xmx1g -Ddatomic.objectCacheMax=320m -XX:MaxMetaspaceSize=160m -XX:MaxDirectMemorySize=128m -XX:+ExitOnOutOfMemoryError -cp resources:datomic-transactor-pro-1.0.7745.jar:lib/*:samples/clj:bin:/opt/gateway/src clojure.main -i bin/bridge.clj -m triplex.gateway.main
+    447       00:35 /bin/bash bin/run -i /dev/stdin
+    456       00:35 java -server -Xmx1g -Xms1g -Xms64m -Xmx256m -cp resources:datomic-transactor-pro-1.0.7745.jar:lib/*:samples/clj:bin:/opt/gateway/src clojure.main -i bin/bridge.clj -i /dev/stdin
+    577       00:00 ps -eo pid,etime,args

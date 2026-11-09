@@ -3,6 +3,7 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { assertionRow } from './fixture.mjs';
 
 // [EXP-DF01] Why: load each package's declared public entry from this checkout. Rejected: sibling source imports (bypass built boundaries).
 async function publicEntry(name, subpath = '.') {
@@ -24,13 +25,11 @@ try {
   const created = await client.create(scope);
   state.database = created.db;
   save();
-  const row = { id: 'fact-1', entity_id: 'subject', attribute: 'status', value_type: 'string',
-    value_string: 'synthetic-value', value_number: null, value_boolean: null, value_datetime: null,
-    value_json: null, recorded_at: 7000, recorded_position: 1, valid_from: 0, valid_to: 20,
-    created_by: null, retracted_at: null, retracted_position: null, retract_tx_id: null,
-    entity_type: null, schema_version: null, tx_id: 'tx1' };
+  const row = assertionRow;
   const a = await client.transact(created.db, { sourceK: 0, position: 1, operationId: 'op1', attemptId: 'a1',
     rows: [row], newIds: ['fact-1'], claims: [{ commandId: 'cmd1', txId: 'tx1', timestamp: 7000 }] });
+  state.writeReports = [a];
+  save();
   const b = await client.transact(created.db, { sourceK: 1, position: 2, operationId: 'op2', attemptId: 'a2',
     rows: [{ ...row, retracted_at: 9000, retracted_position: 2, retract_tx_id: 'tx2' }],
     newIds: [], claims: [{ commandId: 'cmd2', txId: 'tx2', timestamp: 9000 }] });

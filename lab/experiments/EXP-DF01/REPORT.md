@@ -310,3 +310,124 @@ No generated build artifact is committed. The original verified build context re
 Historical G0 and offline conformance receipts above remain historical. They were not rerun after this first-failure live stop.
 The open work is a new authorized live attempt with a corrected fixture, followed by every unrun gate. No merge, push,
 acceptance promotion, subagent launch or deletion of failed scratch state occurred.
+
+
+## Live attempt 002 — 2026-11-09 (DIAGNOSTIC)
+
+**DIAGNOSTIC-PASS for the asserted live cases; no semantic gate failed and no test was retried.** Attempt 001 remains retained
+at `1b110023` with its original failed scratch database on the retained volume. This section does not replace that receipt.
+North star: P3 ordered, resumable feed correctness, under `lab/SCOPE.md`, `lab/NORTH-STAR.md` and `lab/TARGETS.md`.
+Datomic dev storage remains development-only (Q88a); none of these observations grants production or contract acceptance.
+
+### Fixture correction and offline regression
+
+`live/fixture.mjs` now owns the raw assertion fixture shared by the live driver and offline test. It supplies
+`schema_version: 1`, matching `DatomicStorageAdapter.ts:297`. `live/conformance.mjs` imports this row and now saves the first
+write receipt before issuing the second write, so a subsequent failure cannot conceal which write succeeded.
+
+`live/check-fixture.mjs` serializes that exact shared row through the public built `DatomicClient.transact` implementation,
+capturing its wire request without opening a socket. A fresh local JVM loads the actual gateway `storage/decode-row` and
+`storage/fact-map`, including the same `(long (:schema_version row))` conversion used by the live Peer. The positive case
+checks the exact Long schema version, assertion identity and value. Negative mutations supply null and omit the field;
+both must throw at that actual conversion. **1 test / 6 assertions, zero failures/errors**, exit 0, no engine used.
+Inputs (gateway, client build, fixture, test, codec, jars and JVM) are hashed and rechecked by the runner.
+
+The earlier offline feed suite missed this because it consumed recorded/projected transaction pages and replaced database
+APIs; it did not submit the new live driver's raw row through the gateway write path. The general TripleRow permits a null
+schema version and the client encodes null; the Datomic adapter supplies a numeric version, but my hand-written attempt-001
+fixture did not. The earlier native Clojure live helper also bypassed `storage/fact-map`. This regression closes that fixture
+coverage hole without changing any production schema, API, gateway or adapter behavior.
+
+Command (already retained output; use a new directory for a future execution):
+
+```sh
+node lab/bin/heavy.mjs --label CX-DF01-fixture-offline -- node lab/experiments/EXP-DF01/live/check-fixture.mjs lab/experiments/EXP-DF01/live/attempt-002/offline
+```
+
+### Live execution and observed results — all DIAGNOSTIC
+
+The base was `1b110023f1a647381e0a288bd3652a263b54b407`. Before up, only XTDB/QLever dev reservations existed (6.50 GiB of
+11 GiB); the host had **10,333,782,016 bytes free**. No rebuild was needed: all deployed gateway bytes and the image/source
+pins were unchanged from attempt 001. An additional 1 GiB was budgeted for this attempt's own writes; host free was monitored
+while other agents also ran. Lowest observed host free was about **7.5 GiB**, above the 5 GiB floor throughout our admissions.
+
+Started through `TX2_CONFIG_DIR="$PWD" node lab/bin/engine.mjs up --lane datomic --slot dev --holder CX-DF01-live-002 --exp EXP-DF01`.
+Container `820da568d13a2c5ba44a25bb0f2bc9d14ea59070e503177af69d977093ff061f` used retained `tx2-datomic-dev-data`, the existing
+2.75 GiB / 2 CPU cap and image `sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf`. HTTP health and
+container environment agreed on gateway source `60f7138040043a1cffb2ee79764775560a71bf4f49fccdb82469d1df99f9ca16`.
+Before the extra Peer, observed resident use was **667.7 MiB**; each extra Peer used `-Xms64m -Xmx256m`, sequentially, inside the
+existing admitted cap. No transactor/gateway heap or CPU limit was increased.
+
+| Stage | Observation and result |
+| --- | --- |
+| FD01 conformance, actual HTTP client and Peer | Correct assertion t=1004 / position 1 and retraction t=1009 / position 2; exact identities, stamps, commands and valid-time interval; paging checkpoints 1005 and 1010. Unchanged `auditFeed` reports 2 positions / 2 resolutions; unchanged gap mutation, resume, empty tail and SQLite close/reopen/idempotent effects checks all pass. Scratch scope deleted. |
+| Value excision | Existing `feed-live prepare /data/df01-attempt-002.edn` succeeds: request indexing, await sync-excise, verify value absent from history, preserve the independently authored identity row, list the excision transaction as skipped. Raw pre-excision expectation is in the unchanged helper; post-excision page is retained. |
+| Actual queued report before Peer restart | `live/queue_restart_prepare.clj` opens a real `d/tx-report-queue`, submits an unannotated transaction t=1010, receives and puts back a genuine report, records queue size 1, verifies t=1010 is skipped and the excised identity remains unchanged. Saves the complete page/checkpoint. |
+| Peer restart and log-only resume | Deliberately terminate only the identified diagnostic 256 MiB Peer JVM (container PID 456, exact argv checked), leaving gateway/transactor up. Its command exits **143**, the intentional fault action. A new OS/JVM invocation of `feed-live resume` has no old queue, syncs, matches the complete saved page exactly, saves resumed EDN and deletes only that scratch database. Exit 0. |
+| Stale report with visible newer log entry | Real queue opened before two native transactions; polling from t=1005 returns the newer skipped t=1005 / nextT=1006, despite older t=1004 report traffic. |
+| Older report with no new entry | Empty page / unchanged nextT after **104.782493 ms** for waitMs=100; no early empty caused by report traffic. |
+| Report precedes readable cut | Actual immutable Peer cuts deliberately held at bases **[1006,1006,1007]** while the real transaction/report publishes; route returns t=1007 / nextT=1008. Neither tx-range nor report maps are faked. |
+| New transaction without a report | Detach the actual queue after the initial cut, then publish. Route rereads the real log after **257.152034 ms**, waitMs=250, returning t=1008 / nextT=1009. |
+| Boundary cut, publication deadline−1 ns | Controlled clock with real Peer transaction, actual tx-range and a report checked against the write's exact t. Old capture at logical 0 / basis 1008; final capture at logical 5,000,000 / basis 1009; returns t=1009. |
+| Publication exactly at deadline | Same explicit logical-clock seam: publication at 5,000,000 ns; old capture basis 1009 and final capture at 5,000,000 / basis 1010; returns t=1010. Exactly two reads. |
+| Existing live package regressions | `DATOMIC_INTEGRATION=1`, private gateway, `pnpm ... --filter @triplex-build/triplex-datomic test --bail=1`: **117 tests / 6 files passed**, actual exit 0. |
+| G1 | `G1-datomic-20261109T095731Z-d254a0`: terminal gate reports **88/88 executions**, 44 current + 44 reopen, zero failures/skips; one live route-equivalence fixture also passes with its oracle bytes retained. Actual exit 0. Diagnostic only. |
+
+The queue-preparation script prints and persists its checked observations, but does not force JVM exit; Datomic threads kept
+that Peer alive. The explicit verified SIGTERM is the actual Peer-loss injection, not a hidden failed test or retry. The
+process snapshot, queued page, kill-command output and exit 143 are retained separately from the successful new-JVM resume.
+
+The regression wrapper waited several minutes for a heavy slot. I attempted to cancel the still-unadmitted wrapper to switch
+from 1,000 ms to supported 100 ms admission polling. Admission raced with that signal: Vitest had just started. I did **not**
+requeue or retry it; its process tree continued and all 117 tests completed with exit 0. This operator signal event is retained
+in `attempt-002/outcomes.json`, with the full queue wait/test log. It is disclosed rather than described as an uninterrupted
+execution. The subsequent G1 used 100 ms admission polling and ran once.
+
+The six polling cases are in `live/deadlines.clj`, executed once via `docker exec -i ... bin/run -i /dev/stdin` under heavy.mjs.
+They use actual Peer databases, tx-range, projections and report queues. Holding old immutable database values and detaching
+one queue are explicit test interventions. The first stale/early-report cases do not timestamp the drainer's receipt; their
+exact report-arrival interleaving is not independently proven. The logical deadline cases verify queue report t against the
+write t. **Exact nanoseconds are synthetic clock boundaries**, not physical publication-time measurements. A wall-clock
+publication precisely 1 ms before expiry, production load/lag and a gateway/transactor container restart were not tested.
+The restarted process was the separately bounded Datomic Peer JVM specified by the runbook.
+
+### Cleanup, retention and pins
+
+`engine.mjs down --lane datomic --slot dev --holder CX-DF01-live-002` exited 0; the slot lock/reservation was released and the
+volume retained (about 1.52 GiB). `colima ssh -p triplex2 -- sudo fstrim -av` exited 0, trimming 1,103,949,824 bytes on the data
+disk. `docker context use colima` exited 0. Final status confirms Datomic absent, XTDB/QLever dev healthy, pool back to 6.50 GiB;
+final host free **9,257,607,168 bytes**. Docker operations used only the private triplex2 endpoint. No default VM was started,
+stopped or otherwise operated. The environment's private DOCKER_HOST still overrides the selected Docker context.
+
+Small evidence: `live/attempt-002/`, including input hashes, offline test log, actual wire fixture, raw pages/EDN, container
+inspections, command logs, outcomes and summary. The standalone canonical G1 receipt is
+`lab/runs/G1/G1-datomic-20261109T095731Z-d254a0.json`.
+
+Durable bulky evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-DF01/live-attempt-002/`:
+public package builds, exact executed driver/probe preimages, G1 raw/oracle output and verified content-addressed receipt
+objects, plus this regression run's generated `seed-29-c22567a4-3ea1-4dad-b7e1-320d0c86e2a2` oracle directory. That untracked
+raw directory exceeded 5 MB; it was copied and hash-verified before removing only its generated worktree copy. No bulky raw
+file/directory is committed. `attempt-002/DURABLE-SHA256SUMS` indexes durable bytes. `attempt-002/SHA256SUMS` covers this report
+and the new small artifacts. Older manifests remain historical at their original commits.
+
+No `lab/acceptance/` file, production source, package export, dependency, lockfile, image or slot configuration was changed in
+attempt 002. No pinned path's hash moved. The candidate image's mismatch with the unchanged contract image pin, already
+listed under attempt 001, remains for the contract builder; a diagnostic G1 PASS does not re-pin it. G0 was not rerun because
+this changes only the lab fixture/driver/test/evidence; the earlier G0 remains historical. No production acceptance is claimed.
+
+### Attempt-002 PASS / verdict / receipt audit (rule 9a)
+
+| Place interpreting observations | Content check | Freshness check | Binding and limits |
+| --- | --- | --- | --- |
+| `fixture_test.clj` and `check-fixture.mjs` | Actual client serialization and gateway decode/fact-map; exact schema Long/value/id; null and missing mutations throw at the real schema conversion; nonzero test failures propagate | Exclusive offline output directory, new JVM and wire file; source/runtime hashes compared before/after | Shared fixture imported by both live and offline driver, actual gateway/client/codec/JAR/JVM hashes, slot explicitly null |
+| `conformance.mjs`, FD01 auditors and SQLite assertions | Independent expected content from fixed semantic fixture plus physical write receipts; gap mutation and resume checks; exact consumer checkpoint/effects readback after reopen/replay; delete response true | Unique scope and refused existing state artifact; fresh writes, database and SQLite consumer; first receipt persisted immediately | Actual database/source cursor/private HTTP endpoint; preflight image/env/health/holder/volume checks and before/after gateway/client/fixture hashes; DIAGNOSTIC-PASS only |
+| Unchanged `feed-live prepare` / `resume` helper | Independent complete identity expectation; actual sync-excise/value-history absence; exact page equality after excision and in new Peer; actual successful deletion | New scratch scope, fresh helper JVMs and exclusive EDN name 002; attempt 001 untouched | Image-bound helper/source env, exact db/fromT/page/excisionT and saved source hash; queue-loss injection is a separately recorded process |
+| `queue_restart_prepare.clj` assertions/record | Genuine report observed and retained, size positive; exact skipped write t and original identity checked, complete resume page persisted | New Peer/queue and new transaction on the attempt-002 scratch database | Saved db/checkpoint/source hash from prepare, identified JVM termination and fresh-JVM resume; raw stdin source retained post-execution, not falsely claimed in the initial preflight |
+| `deadlines.clj` check!/record! and exit | Exact row/nextT checks, elapsed budgets, cut counts/bases and final logical capture; queue report t checked in boundary cases; no subscription leak, delete true; catch exits 1 before later cases | New scratch DB, fresh tx/queue/cut state per case; results persisted after each passed case | Actual gateway functions/real Peer and log; source-bound image, explicit controlled clock/readability/detachment interventions; post-execution probe preimage retention and interleaving limits disclosed above |
+| Existing package regressions / G1 (unchanged) | Full test assertions and 117-pass terminal count; G1 88 cases with semantic/oracle comparisons and complete route-equivalence witness checks | New execution and G1 run ID; bail on first regression failure, no test retries; signal race disclosed | Private endpoint/own slot, before/after build hashes and actual container/image/owner identity in G1 receipt; diagnostics only on dev storage |
+| `index-attempt-002.py`, summary and checksum manifests | Rechecks actual failed/passed branch content, 2/2 conformance counts, 1/6 offline count, complete stage records, G1 88/88 + route fixture, exact receipt object digests and copied bytes | Refuses existing durable destination; exclusively named attempt; verifies attempt-001 raw evidence unchanged | Initial input hashes must still match; exact container/image/env/holder/volume and G1 endpoint/identity; later stdin probe preimages explicitly distinguished from the initial manifest; no acceptance promotion |
+| Cleanup/report result | Actual down/release/retention output, final healthy resident status, trim/context exits and disk values; no semantic failure hidden | Fresh terminal cleanup/status after all gates | Own Datomic dev holder/private VM/retained volume; no other resident lifecycle action; this report scopes every successful result to DIAGNOSTIC |
+
+No merge, push, deployment, package publication, acceptance edit, subagent or test retry occurred. Remaining work is independent
+review of these diagnostic receipts, any specifically measured physical deadline interleaving needed beyond the disclosed
+logical-clock cases, and qualification on a production-capable storage profile before making production claims.
