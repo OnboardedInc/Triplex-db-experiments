@@ -158,8 +158,8 @@ Builder: Claude Sonnet 5.5, offline. Code commit `16216de6` on `c4aeb4cb`. Durab
 | --- | --- |
 | `python3 -I lab/acceptance/build_contract.py --verify` (own step) | exit 0, second regeneration byte-identical; `lab/acceptance` not edited |
 | `node --import tsx --test lab/bench/di01*.test.ts` | 18/18 passed |
-| Lab PACK gate | see final line below |
-| Evaluator 108 | see final line below |
+| Lab PACK gate (offline npm shim, cache from `CX-VA01-040`) | PASS: 12 tarballs, clean consumer install, entry-point and CLI checks. First attempt retained as `pack-attempt1*`: my wrapper resolved `npm` to the offline shim, which recursed into itself, and I killed it; it is not a code failure. |
+| Evaluator `claim.test.mjs` + `claim-round2.test.mjs` | 108 passed, 0 failed, 0 skipped; run on `cb22f6be` (report commit; code identical to `16216de6`); log `evidence/CX-DI01-R3/evaluator.log` |
 
 **Pins.** `ConsumerStore.ts` and `feed/index.ts` hashes are unchanged from round 2 (`22ef8081…`, `944a7073…`). `DependencyIndex.ts` is the only host source changed; it is not a pinned acceptance path (`--verify` passes unchanged).
 
