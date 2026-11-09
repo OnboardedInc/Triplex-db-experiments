@@ -384,3 +384,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   (CX-VHS01 round 2). P5B round 3 (Sonnet) merges main and HS01, seeds 10k, screens B0-B2; no 100k. HS01 round 3 (R47 journal record,
   entity dictionary, integer binds) waits for the review. Removed 15 finished worktrees (receipts from int-q and verify-a01-0314 copied to
   evidence/worktree-leftovers/); free 15 GiB.
+- 2026-11-09 DI01 built (CX-DI01, the last Codex builder; 7ae302bc, code 96b9a259): eight offline gates and the readback audit pass,
+  438,140 trace positions, 900 crash trials. pack:check incomplete (offline consumer install ERESOLVE effect@undefined; branch predates
+  the PACK fix on main). In review (CX-VDI01, verify/DI01), including a main merge to settle the pack gate. All builders are Sonnet now.
