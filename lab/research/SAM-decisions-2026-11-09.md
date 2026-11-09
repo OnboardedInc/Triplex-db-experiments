@@ -47,3 +47,15 @@ Sam, verbatim, answering "May I download the pinned Ubuntu bpftrace image (about
 Scope of the approval: one local image built inside the triplex2 VM from ubuntu:24.04 (arm64 digest
 19cad59657037cffa0ac9a48107019b768900ff1071140965827513ac866bd5e) plus the R49-pinned Ubuntu archive packages (bpftrace
 0.20.2-1ubuntu4.3, LLVM 18 1:18.1.3-1ubuntu1, libbpfcc 0.29.1+ds-1ubuntu7 and their dependencies), about 90 MB. Nothing on the Mac host.
+
+## 2026-11-09, evening: Q107-S and the triplex2 VM size
+
+Sam, verbatim:
+
+> I want to stay with C for everything. If C is not working, then it doesn't work, and we'll figure out a TODO, but we need to keep way 2 to be doable today. For the VM size, let's go with your recommended one, and I can go find some disk space for you. I got to go find it.
+
+| Item | Decision | What the lab does |
+|---|---|---|
+| Q107-S | **Option C on every lane.** `:_tx/change` and `:_tx/changed-entity` stay stored and queryable as ordinary triples; raw queries (Datalog, match, native XTQL/SPARQL/Datomic) over them keep working as documented today ("way 2"). | No lane stops storing them. The broker-internal one-record journal (HS01 round 3, R47 option B-store) stays OFF by default and is never used for an acceptance claim; its measurements are informational. Where a priority misses because of the journal's cost, the miss is reported as a miss with a TODO, not worked around by dropping way 2. |
+| VM size | **8 CPU, 20 GiB RAM, 100 GiB disk ceiling** (the orchestrator's recommendation). | Resize triplex2 after the OBS01 live witness window (round 15) finishes and before calibration. |
+| Host disk | Sam is finding disk space. | Keep archiving settled evidence; P5 at 100k waits for the reclaimed space. |
