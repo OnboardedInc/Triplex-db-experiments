@@ -30,7 +30,8 @@ function normal(x: any): any {
 it("G4: 100000 sampled H1w pulls have zero differences against fresh O-REPLAY", async () => {
   const mutant = process.env.QH1_MUTANT;
   let source = sqliteWorker;
-  if (mutant === "real") source = source.replace(`ELSE printf('%!.17g',"+x+") END`, `ELSE "+x+" END`);
+  if (mutant === "real")
+    source = source.replace(`ELSE printf('%!.17g',"+x+") END`, `ELSE "+x+" END`);
   if (mutant === "owner")
     source = source.replace("frontier=next.filter(e=>!seen.has(e));", "frontier=[];");
   if (mutant === "retraction")

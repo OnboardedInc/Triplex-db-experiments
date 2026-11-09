@@ -11,10 +11,8 @@ import path from "node:path";
 import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { Effect, Layer, ManagedRuntime } from "effect";
-const [armName, out, countArg = "100000", concArg = "8"] =
-  process.argv.slice(2);
-if (!armName || !out)
-  throw Error("usage: replay.ts <arm> <out.txt> [count] [concurrency]");
+const [armName, out, countArg = "100000", concArg = "8"] = process.argv.slice(2);
+if (!armName || !out) throw Error("usage: replay.ts <arm> <out.txt> [count] [concurrency]");
 const E = "/Users/sam/Claude/Projects/triplex-db-2/evidence";
 const root =
   armName === "baseline"
@@ -22,23 +20,15 @@ const root =
     : armName === "h1"
       ? path.join(E, "QH1-R2/arms/candidate")
       : path.join(E, "QH1-R3/arms", armName);
-const store = path.join(
-  E,
-  "QH1-R3",
-  armName === "baseline" ? "store-baseline" : "store-candidate",
-);
+const store = path.join(E, "QH1-R3", armName === "baseline" ? "store-baseline" : "store-candidate");
 const imp = (p: string) => import(path.join(root, p));
 const core = await imp("packages/core/dist/index.js");
 const rt = await imp("packages/core/dist/runtime/index.js");
 const q = await imp("packages/qlever/dist/index.js");
-const D = createRequire(path.join(root, "packages/qlever/package.json"))(
-  "better-sqlite3",
-);
+const D = createRequire(path.join(root, "packages/qlever/package.json"))("better-sqlite3");
 const db = new D(path.join(store, "broker.db"), { readonly: true });
 const roots: string[] = db
-  .prepare(
-    "SELECT name FROM ents WHERE name LIKE 'pl:%' AND instr(name,'/')=0 ORDER BY name",
-  )
+  .prepare("SELECT name FROM ents WHERE name LIKE 'pl:%' AND instr(name,'/')=0 ORDER BY name")
   .pluck()
   .all();
 db.close();
@@ -88,16 +78,7 @@ const VALID_AT = Date.parse("2026-11-04T12:00:00Z"),
   DAY = 86400000;
 // Every W0 transaction has recorded_at 1793783600000 (verified: one distinct value in txs), so record-time cuts are the boundary and one millisecond before it.
 const RECORDED_AT = 1793783600000;
-const offsets = [
-  0,
-  3 * DAY,
-  -3 * DAY,
-  40 * DAY,
-  -40 * DAY,
-  400 * DAY,
-  -400 * DAY,
-  0,
-];
+const offsets = [0, 3 * DAY, -3 * DAY, 40 * DAY, -40 * DAY, 400 * DAY, -400 * DAY, 0];
 const request = (i: number) => {
   let s = (Math.imul(i + 1, 2654435761) ^ 0x9e3779b9) >>> 0;
   s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
@@ -127,25 +108,16 @@ const digest = (triples: any[]) =>
       JSON.stringify(
         canon(
           JSON.parse(
-            JSON.stringify(
-              [...triples].sort((a, b) =>
-                a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
-              ),
-            ),
+            JSON.stringify([...triples].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))),
           ),
         ),
       ),
     )
     .digest("hex")
     .slice(0, 32);
-const pull = async (
-  rootName: string,
-  basis: any,
-): Promise<{ triples: any[]; hops: number }> => {
+const pull = async (rootName: string, basis: any): Promise<{ triples: any[]; hops: number }> => {
   if (typeof T.reach === "function") {
-    const r = await runtime.runPromise(
-      T.reach(core.EntityId.make(rootName), basis),
-    );
+    const r = await runtime.runPromise(T.reach(core.EntityId.make(rootName), basis));
     return { triples: r.triples as any[], hops: r.hops };
   }
   const body = async () => {
@@ -154,9 +126,7 @@ const pull = async (
     const triples: any[] = [];
     let hops = 0;
     while (todo.length) {
-      const bodies = await runtime.runPromise(
-        T.entities(todo.map(core.EntityId.make), basis),
-      );
+      const bodies = await runtime.runPromise(T.entities(todo.map(core.EntityId.make), basis));
       hops++;
       const next: string[] = [];
       for (const b of bodies)
@@ -171,9 +141,7 @@ const pull = async (
     }
     return { triples, hops };
   };
-  return armName === "baseline"
-    ? body()
-    : adapter.withCurrentPull(rootName, body);
+  return armName === "baseline" ? body() : adapter.withCurrentPull(rootName, body);
 };
 const COUNT = Number(countArg),
   CONC = Number(concArg);
@@ -191,8 +159,7 @@ await Promise.all(
       const a = await pull(rootName, basis);
       rows += a.triples.length;
       hopsTotal += a.hops;
-      lines[i] =
-        `${i} ${rootName} ${digest(a.triples)} ${a.triples.length} ${a.hops}`;
+      lines[i] = `${i} ${rootName} ${digest(a.triples)} ${a.triples.length} ${a.hops}`;
     }
   }),
 );

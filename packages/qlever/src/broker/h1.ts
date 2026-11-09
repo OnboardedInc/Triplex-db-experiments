@@ -62,37 +62,74 @@ const idBuffer = Buffer.allocUnsafe(26);
 const idFromHex = (hex: string) => {
   if (hex.length !== 32) return idFromHexSlow(hex);
   const h = (i: number) => hexValue[hex.charCodeAt(i)]!;
-  const w0 = ((h(0) << 28) | (h(1) << 24) | (h(2) << 20) | (h(3) << 16) | (h(4) << 12) | (h(5) << 8) | (h(6) << 4) | h(7)) >>> 0;
-  const w1 = ((h(8) << 28) | (h(9) << 24) | (h(10) << 20) | (h(11) << 16) | (h(12) << 12) | (h(13) << 8) | (h(14) << 4) | h(15)) >>> 0;
-  const w2 = ((h(16) << 28) | (h(17) << 24) | (h(18) << 20) | (h(19) << 16) | (h(20) << 12) | (h(21) << 8) | (h(22) << 4) | h(23)) >>> 0;
-  const w3 = ((h(24) << 28) | (h(25) << 24) | (h(26) << 20) | (h(27) << 16) | (h(28) << 12) | (h(29) << 8) | (h(30) << 4) | h(31)) >>> 0;
-  const b = idBuffer, AC = alphabetCodes;
-  b[0]=AC[w0>>>29]!;
-  b[1]=AC[(w0>>>24)&31]!;
-  b[2]=AC[(w0>>>19)&31]!;
-  b[3]=AC[(w0>>>14)&31]!;
-  b[4]=AC[(w0>>>9)&31]!;
-  b[5]=AC[(w0>>>4)&31]!;
-  b[6]=AC[((w0<<1)|(w1>>>31))&31]!;
-  b[7]=AC[(w1>>>26)&31]!;
-  b[8]=AC[(w1>>>21)&31]!;
-  b[9]=AC[(w1>>>16)&31]!;
-  b[10]=AC[(w1>>>11)&31]!;
-  b[11]=AC[(w1>>>6)&31]!;
-  b[12]=AC[(w1>>>1)&31]!;
-  b[13]=AC[((w1<<4)|(w2>>>28))&31]!;
-  b[14]=AC[(w2>>>23)&31]!;
-  b[15]=AC[(w2>>>18)&31]!;
-  b[16]=AC[(w2>>>13)&31]!;
-  b[17]=AC[(w2>>>8)&31]!;
-  b[18]=AC[(w2>>>3)&31]!;
-  b[19]=AC[((w2<<2)|(w3>>>30))&31]!;
-  b[20]=AC[(w3>>>25)&31]!;
-  b[21]=AC[(w3>>>20)&31]!;
-  b[22]=AC[(w3>>>15)&31]!;
-  b[23]=AC[(w3>>>10)&31]!;
-  b[24]=AC[(w3>>>5)&31]!;
-  b[25]=AC[(w3>>>0)&31]!;
+  const w0 =
+    ((h(0) << 28) |
+      (h(1) << 24) |
+      (h(2) << 20) |
+      (h(3) << 16) |
+      (h(4) << 12) |
+      (h(5) << 8) |
+      (h(6) << 4) |
+      h(7)) >>>
+    0;
+  const w1 =
+    ((h(8) << 28) |
+      (h(9) << 24) |
+      (h(10) << 20) |
+      (h(11) << 16) |
+      (h(12) << 12) |
+      (h(13) << 8) |
+      (h(14) << 4) |
+      h(15)) >>>
+    0;
+  const w2 =
+    ((h(16) << 28) |
+      (h(17) << 24) |
+      (h(18) << 20) |
+      (h(19) << 16) |
+      (h(20) << 12) |
+      (h(21) << 8) |
+      (h(22) << 4) |
+      h(23)) >>>
+    0;
+  const w3 =
+    ((h(24) << 28) |
+      (h(25) << 24) |
+      (h(26) << 20) |
+      (h(27) << 16) |
+      (h(28) << 12) |
+      (h(29) << 8) |
+      (h(30) << 4) |
+      h(31)) >>>
+    0;
+  const b = idBuffer,
+    AC = alphabetCodes;
+  b[0] = AC[w0 >>> 29]!;
+  b[1] = AC[(w0 >>> 24) & 31]!;
+  b[2] = AC[(w0 >>> 19) & 31]!;
+  b[3] = AC[(w0 >>> 14) & 31]!;
+  b[4] = AC[(w0 >>> 9) & 31]!;
+  b[5] = AC[(w0 >>> 4) & 31]!;
+  b[6] = AC[((w0 << 1) | (w1 >>> 31)) & 31]!;
+  b[7] = AC[(w1 >>> 26) & 31]!;
+  b[8] = AC[(w1 >>> 21) & 31]!;
+  b[9] = AC[(w1 >>> 16) & 31]!;
+  b[10] = AC[(w1 >>> 11) & 31]!;
+  b[11] = AC[(w1 >>> 6) & 31]!;
+  b[12] = AC[(w1 >>> 1) & 31]!;
+  b[13] = AC[((w1 << 4) | (w2 >>> 28)) & 31]!;
+  b[14] = AC[(w2 >>> 23) & 31]!;
+  b[15] = AC[(w2 >>> 18) & 31]!;
+  b[16] = AC[(w2 >>> 13) & 31]!;
+  b[17] = AC[(w2 >>> 8) & 31]!;
+  b[18] = AC[(w2 >>> 3) & 31]!;
+  b[19] = AC[((w2 << 2) | (w3 >>> 30)) & 31]!;
+  b[20] = AC[(w3 >>> 25) & 31]!;
+  b[21] = AC[(w3 >>> 20) & 31]!;
+  b[22] = AC[(w3 >>> 15) & 31]!;
+  b[23] = AC[(w3 >>> 10) & 31]!;
+  b[24] = AC[(w3 >>> 5) & 31]!;
+  b[25] = AC[(w3 >>> 0) & 31]!;
   return (b as unknown as { latin1Slice(start: number, end: number): string }).latin1Slice(0, 26);
 };
 export const h1IdFromHex = idFromHex;
@@ -130,7 +167,8 @@ export const h1Decode = (t: H1Tuple, basis: ResolvedTemporalBasis): Triple | und
   }
   const validFrom = num(t[8]);
   const rawTo = t[9];
-  if (validFrom > basis.validAt || (rawTo !== null && num(rawTo) <= basis.validAt)) return undefined;
+  if (validFrom > basis.validAt || (rawTo !== null && num(rawTo) <= basis.validAt))
+    return undefined;
   const kind = t[4];
   const type = types[kind] ?? (kind === 8 ? "number" : "datetime");
   const payload =

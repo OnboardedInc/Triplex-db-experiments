@@ -8,9 +8,7 @@ const a = read(refFile),
 let mismatches = 0,
   first = [];
 if (a.length !== b.length) {
-  console.log(
-    JSON.stringify({ error: "length", ref: a.length, cand: b.length }),
-  );
+  console.log(JSON.stringify({ error: "length", ref: a.length, cand: b.length }));
   process.exit(1);
 }
 for (let i = 0; i < a.length; i++)
@@ -18,7 +16,5 @@ for (let i = 0; i < a.length; i++)
     mismatches++;
     if (first.length < 5) first.push({ ref: a[i], cand: b[i] });
   }
-console.log(
-  JSON.stringify({ refFile, candFile, compared: a.length, mismatches, first }),
-);
+console.log(JSON.stringify({ refFile, candFile, compared: a.length, mismatches, first }));
 process.exit(mismatches ? 1 : 0);

@@ -4,12 +4,9 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { spawnSync } from "node:child_process";
-const [outdir, rounds, armsCsv, segments, pulls, warm, clients = "1"] =
-  process.argv.slice(2);
+const [outdir, rounds, armsCsv, segments, pulls, warm, clients = "1"] = process.argv.slice(2);
 if (!outdir || !rounds || !armsCsv)
-  throw Error(
-    "usage: abab3.mjs outdir rounds arms segments pulls warm [clients]",
-  );
+  throw Error("usage: abab3.mjs outdir rounds arms segments pulls warm [clients]");
 const arms = armsCsv.split(",");
 const wt = path.resolve(import.meta.dirname, "../../../..");
 fs.mkdirSync(outdir, { recursive: true });
@@ -17,8 +14,7 @@ const free = () => {
   const s = fs.statfsSync("/Users");
   return s.bavail * s.bsize;
 };
-if (free() < 5 * 1024 ** 3)
-  throw Error("host free space below 5 GiB: no heavy run");
+if (free() < 5 * 1024 ** 3) throw Error("host free space below 5 GiB: no heavy run");
 const log = [];
 for (let r = 0; r < Number(rounds); r++) {
   const order = r % 2 ? [...arms].reverse() : arms;
@@ -55,15 +51,9 @@ for (let r = 0; r < Number(rounds); r++) {
     });
     console.log(JSON.stringify(log.at(-1)));
     if (res.status !== 0) {
-      fs.writeFileSync(
-        path.join(outdir, "schedule.json"),
-        JSON.stringify(log, null, 2),
-      );
+      fs.writeFileSync(path.join(outdir, "schedule.json"), JSON.stringify(log, null, 2));
       throw Error(`${arm} failed in round ${r}`);
     }
   }
 }
-fs.writeFileSync(
-  path.join(outdir, "schedule.json"),
-  JSON.stringify(log, null, 2),
-);
+fs.writeFileSync(path.join(outdir, "schedule.json"), JSON.stringify(log, null, 2));

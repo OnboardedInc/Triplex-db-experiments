@@ -255,10 +255,7 @@ export interface TriplesService {
    * Subject pull: the live triples of `root` and of every entity reachable from it through `ref` values, all at one temporal
    * basis. Equal to reading level by level with `entities`, but a store may answer the whole closure in one operation.
    */
-  readonly reach: (
-    root: EntityId,
-    basis?: TemporalBasis,
-  ) => Effect.Effect<ReachResult, ReadError>;
+  readonly reach: (root: EntityId, basis?: TemporalBasis) => Effect.Effect<ReachResult, ReadError>;
   readonly entityPage: (
     request: EntityPageRequest,
   ) => Effect.Effect<EntityPage, ReadError | PaginationCursorError>;

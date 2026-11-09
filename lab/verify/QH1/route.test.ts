@@ -26,7 +26,13 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
   // [EXP-QH1-R3] Why: the whole-pull adapter operation is a separate H1 route and is registered beside the raw worker route.
   // Rejected: assuming the worker route's verdict covers the adapter's own decode, cut and cache handling.
   const adapter = makeQleverBrokerStorageAdapter(
-    { query: async () => { throw new TypeError("offline", { cause: Object.assign(new Error("offline"), { code: "ECONNREFUSED" }) }); } } as any,
+    {
+      query: async () => {
+        throw new TypeError("offline", {
+          cause: Object.assign(new Error("offline"), { code: "ECONNREFUSED" }),
+        });
+      },
+    } as any,
     "qh1-rq01",
     broker,
     { currentRoute: "h1", basisWaitMs: 10 },
@@ -150,7 +156,9 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
               value_json: null,
             };
             columns[
-              t.value.type === "ref" || t.value.type === "integer" ? "value_string" : "value_" + t.value.type
+              t.value.type === "ref" || t.value.type === "integer"
+                ? "value_string"
+                : "value_" + t.value.type
             ] =
               t.value.type === "boolean"
                 ? Number(t.value.value)

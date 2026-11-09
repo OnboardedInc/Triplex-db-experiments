@@ -11,9 +11,7 @@ import type { ReachResult } from "./Triples.js";
  * the order `read` returned them within an entity.
  */
 export const reachBy = (
-  read: (
-    ids: readonly string[],
-  ) => Effect.Effect<readonly (readonly Triple[])[], ReadError>,
+  read: (ids: readonly string[]) => Effect.Effect<readonly (readonly Triple[])[], ReadError>,
   root: string,
 ): Effect.Effect<ReachResult, ReadError> =>
   Effect.gen(function* () {

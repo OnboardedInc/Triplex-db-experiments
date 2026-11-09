@@ -204,14 +204,27 @@ const sn=x=>"CASE WHEN typeof("+x+")='integer' AND "+x+" BETWEEN -90071992547409
 const safeText=x=>"CASE WHEN typeof("+x+")='blob' THEN NULL ELSE "+x+" END";
 const h1Cols='o,e,id,a,pos,t,v,vf,vto,c,y,sv,x';
 const h1Union=sel=>['facts','journal','history'].map(t=>'SELECT '+h1Cols+' FROM '+t+' WHERE '+sel+(t==='history'?' AND rpos>@b':'')+' AND pos<=@b').join(' UNION ALL ');
-const h1Row="json_array(typeof(f.id)='blob',CASE WHEN typeof(f.id)='blob' THEN hex(f.id) ELSE f.id END,"+safeText('e.name')+","+safeText('a.name')+",f.t,CASE WHEN f.t IN (1,3) THEN "+sn('f.v')+" WHEN f.t=5 THEN "+safeText('ref.name')+" WHEN f.t=7 THEN NULL ELSE f.v END,"+sn('tx.at')+",f.pos,"+sn('(tx.at+f.vf)')+",CASE WHEN f.vto IS NULL THEN NULL ELSE "+sn('f.vto')+" END,"+safeText('c.s')+","+safeText('y.s')+","+sn('coalesce(f.sv,1)')+","+safeText('te.name')+",json(CASE WHEN f.x IS NOT NULL THEN CAST(f.x AS TEXT) WHEN f.t=7 OR (f.t IN (1,3) AND typeof(f.v) NOT IN ('real','integer')) THEN qh_fallback(f.id) ELSE NULL END))";
+// [EXP-QH1-R3] Why (step 4b): the per-name blob guard (CASE typeof(name)='blob', 7 per row) cost about 175 us of the 660 us row statement
+// (standalone, W0 10k). Names are blobs only when they hold lone surrogates, and json_array refuses a blob with an error, so the statement
+// runs unguarded and a failed fetch is rerun once with the guarded statement (blob names cross as NULL and only occur in rows that carry
+// their own verbatim envelope). Exactness is unchanged; only the common case is cheaper. Rejected: guarding every name on every row.
+const h1RowWith=T=>"json_array(typeof(f.id)='blob',CASE WHEN typeof(f.id)='blob' THEN hex(f.id) ELSE f.id END,"+T('e.name')+","+T('a.name')+",f.t,CASE WHEN f.t IN (1,3) THEN "+sn('f.v')+" WHEN f.t=5 THEN "+T('ref.name')+" WHEN f.t=7 THEN NULL ELSE f.v END,"+sn('tx.at')+",f.pos,"+sn('(tx.at+f.vf)')+",CASE WHEN f.vto IS NULL THEN NULL ELSE "+sn('f.vto')+" END,"+T('c.s')+","+T('y.s')+","+sn('coalesce(f.sv,1)')+","+T('te.name')+",json(CASE WHEN f.x IS NOT NULL THEN CAST(f.x AS TEXT) WHEN f.t=7 OR (f.t IN (1,3) AND typeof(f.v) NOT IN ('real','integer')) THEN qh_fallback(f.id) ELSE NULL END))";
 const h1Joins=' f JOIN ents e ON e.eid=f.e JOIN attrs a ON a.aid=f.a JOIN txs tx ON tx.pos=f.pos JOIN ents te ON te.eid=tx.tx LEFT JOIN strs c ON c.sid=f.c LEFT JOIN strs y ON y.sid=f.y LEFT JOIN ents ref ON f.t=5 AND ref.eid=f.v';
-const h1Rows=sel=>q('SELECT json_group_array('+h1Row+') FROM ('+h1Union(sel)+')'+h1Joins).pluck();
+const h1Rows=(sel,T)=>q('SELECT json_group_array('+h1RowWith(T)+') FROM ('+h1Union(sel)+')'+h1Joins).pluck();
+const h1Fetch=sel=>{
+ const fast=h1Rows(sel,x=>x),safe=h1Rows(sel,safeText);
+ return args=>{try{return fast.get(args);}catch(e){if(!String(e).includes('JSON cannot hold BLOB'))throw e;return safe.get(args);}};
+};
 // All refs are followed as a superset, even expired refs: valid-time filtering stays in the adapter. Refs from verbatim rows (x) are found by JS.
 const h1Refs=(sel,skip)=>q('SELECT DISTINCT f.v,f.x FROM ('+h1Union(sel)+') f WHERE (f.t=5 AND f.x IS NULL'+skip+') OR f.x IS NOT NULL').raw();
 // Dictionary rows are immutable once committed and a reader sees only committed rows, so positive name lookups never go stale.
 // Misses are never cached (a later commit may add the name). The maps are bounded by clearing.
 const entIds=new Map(),entNames=new Map();
+// [EXP-QH1-R3] Why: committed dictionary rows never change while one writer epoch and one schema stay in place, but a rebuilt dictionary can
+// reuse ids for other names. Every whole pull therefore compares (writer epoch, SQLite schema_version) with the key its caches were filled
+// under and drops all of them (including HS01's id-to-name map) when it differs. Rejected: caches that outlive a key change.
+let cacheKey='';
+const syncCaches=m=>{const key=m.epoch+':'+q('PRAGMA schema_version').pluck().get();if(key!==cacheKey){cacheKey=key;entIds.clear();entNames.clear();names.clear();}};
 const entId=s=>{let x=entIds.get(s);if(x===undefined){x=q('SELECT eid FROM ents WHERE name=?').pluck().get(textKey(s));if(x===undefined)return undefined;if(entIds.size>=200000)entIds.clear();entIds.set(s,x);}return x;};
 const entName=id=>{let x=entNames.get(id);if(x===undefined){x=name('ents',id);if(entNames.size>=200000)entNames.clear();entNames.set(id,x);}return x;};
 const wholePull = a => {
@@ -220,8 +233,9 @@ const wholePull = a => {
  if(!Number.isSafeInteger(b)||b<0)throw Error('Invalid basis');
  if(b<m.h)throw Error('H1_SNAPSHOT_EXPIRED');
  if(b>m.position)throw Error('H1_BASIS_NOT_AVAILABLE');
+ syncCaches(m);
  const parts=[],seen=new Set(),owners=new Set(),ownerNames=[];let frontier=a.roots,hops=0,statements=0;
- const ownerRows=h1Rows('o=@o'),entityRows=h1Rows('o=@o AND e=@e');
+ const ownerRows=h1Fetch('o=@o'),entityRows=h1Fetch('o=@o AND e=@e');
  const ownerRefs=h1Refs('o=@o'," AND f.v NOT IN (SELECT e FROM facts WHERE o=@o)"),entityRefs=h1Refs('o=@o AND e=@e','');
  const collect=(rows,refs)=>{
   const text=rows;if(text.length>2)parts.push(text);
@@ -240,11 +254,11 @@ const wholePull = a => {
    if(o===undefined||owners.has(o))continue;
    if(roots){
     owners.add(o);ownerNames.push(on);
-    const rows=ownerRows.get({o,b});statements+=2;
+    const rows=ownerRows({o,b});statements+=2;
     next.push(...collect(rows,ownerRefs.all({o,b})));
    }else{
     const e=entId(entity);if(e===undefined)continue;
-    const rows=entityRows.get({o,b,e});statements+=2;
+    const rows=entityRows({o,b,e});statements+=2;
     next.push(...collect(rows,entityRefs.all({o,b,e})));
    }
   }

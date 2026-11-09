@@ -34,10 +34,7 @@ export interface StorageAdapterService {
   readonly getReachTriples?: (
     root: string,
     basis: ResolvedTemporalBasis,
-  ) => Effect.Effect<
-    import("../store/Triples.js").ReachResult | undefined,
-    ReadError
-  >;
+  ) => Effect.Effect<import("../store/Triples.js").ReachResult | undefined, ReadError>;
   /** Optional exact-snapshot policy, propagated to public repository reads. */
   readonly snapshotReadPolicy?: import("./ReadSurface.js").SnapshotReadPolicy;
   // [CX-A01-0314-R2] Why: missing composition domains must fail compilation. Rejected: optional domains (silently admitted broker values against memory limits).

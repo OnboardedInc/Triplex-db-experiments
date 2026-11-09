@@ -13,7 +13,11 @@ it("G7 matched 10-fact commits report owner-key P2 delta", async () => {
   const old = await openWorker(baseline),
     twin = await openWorker(baseline),
     now = await openWorker(candidate);
-  const lat: { baseline: number[]; candidate: number[]; twin: number[] } = { baseline: [], candidate: [], twin: [] };
+  const lat: { baseline: number[]; candidate: number[]; twin: number[] } = {
+    baseline: [],
+    candidate: [],
+    twin: [],
+  };
   const q = (a: number[], p: number) =>
     [...a].sort((a, b) => a - b)[Math.floor((a.length - 1) * p)]!;
   try {

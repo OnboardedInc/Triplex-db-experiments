@@ -10,15 +10,8 @@ import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { Effect, Layer, ManagedRuntime } from "effect";
 
-const [
-  armName,
-  out,
-  segs = "3",
-  per = "500",
-  warm = "300",
-  seedArg = "1",
-  clientsArg = "1",
-] = process.argv.slice(2);
+const [armName, out, segs = "3", per = "500", warm = "300", seedArg = "1", clientsArg = "1"] =
+  process.argv.slice(2);
 if (!armName || !out)
   throw Error(
     "usage: arm3.ts <arm> <out.json> [segments] [pullsPerSegment] [warmup] [seed] [clients]",
@@ -30,11 +23,7 @@ const root =
     : armName === "h1"
       ? path.join(E, "QH1-R2/arms/candidate")
       : path.join(E, "QH1-R3/arms", armName);
-const store = path.join(
-  E,
-  "QH1-R3",
-  armName === "baseline" ? "store-baseline" : "store-candidate",
-);
+const store = path.join(E, "QH1-R3", armName === "baseline" ? "store-baseline" : "store-candidate");
 const wt = path.resolve(import.meta.dirname, "../../../..");
 const SEGMENTS = Number(segs),
   PER = Number(per),
@@ -47,12 +36,9 @@ const core = await imp("packages/core/dist/index.js");
 const rt = await imp("packages/core/dist/runtime/index.js");
 const q = await imp("packages/qlever/dist/index.js");
 const W0 = await import(path.join(wt, "packages/w0/dist/index.js"));
-const D = createRequire(path.join(root, "packages/qlever/package.json"))(
-  "better-sqlite3",
-);
+const D = createRequire(path.join(root, "packages/qlever/package.json"))("better-sqlite3");
 
-const sha = (s: string | Buffer) =>
-  createHash("sha256").update(s).digest("hex");
+const sha = (s: string | Buffer) => createHash("sha256").update(s).digest("hex");
 const dirHash = (dir: string) => {
   const h = createHash("sha256");
   for (const f of fs.readdirSync(dir, { recursive: true }).map(String).sort()) {
@@ -68,27 +54,20 @@ const builds = {
 
 const db = new D(path.join(store, "broker.db"), { readonly: true });
 const roots: string[] = db
-  .prepare(
-    "SELECT name FROM ents WHERE name LIKE 'pl:%' AND instr(name,'/')=0 ORDER BY name",
-  )
+  .prepare("SELECT name FROM ents WHERE name LIKE 'pl:%' AND instr(name,'/')=0 ORDER BY name")
   .pluck()
   .all();
 db.close();
 if (roots.length !== 10000) throw Error("expected 10000 W0 placements");
 const bucketOf = new Map(
-  roots.map((r) => [
-    r,
-    W0.plan(W0.rung(10000), Number(r.slice(4))).bucket as number,
-  ]),
+  roots.map((r) => [r, W0.plan(W0.rung(10000), Number(r.slice(4))).bucket as number]),
 );
 const VALID_AT = Date.parse("2026-11-04T12:00:00Z");
 
 type Pulled = { triples: any[]; hops: number; fullDigestable: boolean };
 interface Arm {
   pull(root: string): Promise<Pulled>;
-  threadCpu(): Promise<
-    Record<string, { user: number; system: number }> | undefined
-  >;
+  threadCpu(): Promise<Record<string, { user: number; system: number }> | undefined>;
   close(): Promise<void>;
   extra?: () => unknown;
 }
@@ -168,16 +147,9 @@ const brokerArm = async (h1: boolean, countPulls: boolean): Promise<Arm> => {
     return { triples, hops, fullDigestable: true };
   };
   return {
-    pull: (r) =>
-      whole
-        ? wholeBody(r)
-        : h1
-          ? adapter.withCurrentPull(r, body(r))
-          : body(r)(),
+    pull: (r) => (whole ? wholeBody(r) : h1 ? adapter.withCurrentPull(r, body(r)) : body(r)()),
     threadCpu: async () =>
-      (broker as any).log.threadCpu
-        ? (broker as any).log.threadCpu()
-        : undefined,
+      (broker as any).log.threadCpu ? (broker as any).log.threadCpu() : undefined,
     close: async () => {
       await runtime.dispose();
       await broker.close();
@@ -201,8 +173,7 @@ const lcg = (s0: number) => {
 const calibrate = () => {
   let x = 1;
   const t = performance.now();
-  for (let i = 0; i < 1_000_000; i++)
-    x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
+  for (let i = 0; i < 1_000_000; i++) x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
   return { ms: performance.now() - t, x };
 };
 const canon = (x: any): any =>
@@ -218,8 +189,7 @@ const canon = (x: any): any =>
 const digests = (triples: any[]) => {
   const core = triples
     .map(
-      (t) =>
-        `${t.entityId}\u0000${t.attribute}\u0000${t.value.type}\u0000${String(t.value.value)}`,
+      (t) => `${t.entityId}\u0000${t.attribute}\u0000${t.value.type}\u0000${String(t.value.value)}`,
     )
     .sort()
     .join("\n");
@@ -230,11 +200,7 @@ const fullDigest = (triples: any[]) =>
     JSON.stringify(
       canon(
         JSON.parse(
-          JSON.stringify(
-            [...triples].sort((a, b) =>
-              a.id < b.id ? -1 : a.id > b.id ? 1 : 0,
-            ),
-          ),
+          JSON.stringify([...triples].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))),
         ),
       ),
     ),
@@ -285,8 +251,7 @@ try {
             const ans = await arm.pull(r);
             const ms = performance.now() - a;
             lat.push(ms);
-            (buckets[["50-200", "201-800", "801-2000"][bucketOf.get(r)!]!] ??=
-              []).push(ms);
+            (buckets[["50-200", "201-800", "801-2000"][bucketOf.get(r)!]!] ??= []).push(ms);
             rows += ans.triples.length;
             hopsTotal += ans.hops;
           }
@@ -302,11 +267,7 @@ try {
         const t1 = (await arm.threadCpu())!;
         for (const k of Object.keys(t0))
           threadCpuUs[k] =
-            (threadCpuUs[k] ?? 0) +
-            t1[k]!.user +
-            t1[k]!.system -
-            t0[k]!.user -
-            t0[k]!.system;
+            (threadCpuUs[k] ?? 0) + t1[k]!.user + t1[k]!.system - t0[k]!.user - t0[k]!.system;
       }
     }
     const named = Object.values(threadCpuUs).reduce((a, b) => a + b, 0);
@@ -320,9 +281,7 @@ try {
       systemUsPerPull: (totalUs - userUs) / PER,
       mainUsPerPull: mainUs / PER,
       workersUsPerPull: t0Present(threadCpuUs) ? named / PER : null,
-      otherUsPerPull: t0Present(threadCpuUs)
-        ? (totalUs - mainUs - named) / PER
-        : null,
+      otherUsPerPull: t0Present(threadCpuUs) ? (totalUs - mainUs - named) / PER : null,
       workerDetailUsPerPull: Object.fromEntries(
         Object.entries(threadCpuUs).map(([k, v]) => [k, v / PER]),
       ),
@@ -352,11 +311,9 @@ try {
   if (process.env.QH1_PS === "1") {
     const { spawnSync } = await import("node:child_process");
     const sample = () => {
-      const o = spawnSync(
-        "ps",
-        ["-M", "-p", String(process.pid), "-o", "utime,stime"],
-        { encoding: "utf8" },
-      )
+      const o = spawnSync("ps", ["-M", "-p", String(process.pid), "-o", "utime,stime"], {
+        encoding: "utf8",
+      })
         .stdout.trim()
         .split("\n")
         .slice(1);
@@ -374,8 +331,7 @@ try {
     const a0 = sample(),
       c0 = process.cpuUsage(),
       m0 = process.threadCpuUsage();
-    for (let i = 0; i < PER * SEGMENTS; i++)
-      await arm.pull(roots[rr() % roots.length]!);
+    for (let i = 0; i < PER * SEGMENTS; i++) await arm.pull(roots[rr() % roots.length]!);
     const c1 = process.cpuUsage(c0),
       m1 = process.threadCpuUsage(m0),
       a1 = sample();

@@ -118,24 +118,19 @@ it("REAL values and extreme doubles round trip bit-exactly through the whole-pul
     const check = (triples: readonly core.Triple[]) => {
       const reals = new Map<string, number>();
       for (const t of triples)
-        if (t.attribute === ":x/real")
-          reals.set(t.entityId, t.value.value as number);
+        if (t.attribute === ":x/real") reals.set(t.entityId, t.value.value as number);
       expect(reals.size).toBe(values.length);
       let mismatches = 0;
       for (let j = 0; j < values.length; j++)
         if (bits(reals.get("c:" + j)!) !== bits(values[j]!)) mismatches++;
       expect(mismatches).toBe(0);
     };
-    const reach = await runtime.runPromise(
-      T.reach(E("root"), { validAt: 1000 }),
-    );
+    const reach = await runtime.runPromise(T.reach(E("root"), { validAt: 1000 }));
     check(reach.triples);
     expect(reach.hops).toBe(2);
     // The per-level route (the public BFS over T.entities) must agree.
     const children = values.map((_, j) => E("c:" + j));
-    const level = await runtime.runPromise(
-      T.entities(children, { validAt: 1000 }),
-    );
+    const level = await runtime.runPromise(T.entities(children, { validAt: 1000 }));
     check(level.flat());
     expect(adapter.routes.h1).toBeGreaterThan(0);
   } finally {
@@ -158,12 +153,10 @@ it("REAL record times and valid-from offsets round trip bit-exactly through the 
       });
     },
   };
-  const adapter = makeQleverBrokerStorageAdapter(
-    client,
-    "QH1-realtime",
-    broker,
-    { currentRoute: "h1", basisWaitMs: 10 },
-  );
+  const adapter = makeQleverBrokerStorageAdapter(client, "QH1-realtime", broker, {
+    currentRoute: "h1",
+    basisWaitMs: 10,
+  });
   try {
     const instants = [
       1000.0000000000001,
