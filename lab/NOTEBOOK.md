@@ -2048,3 +2048,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
 
 - **verify/P3M 9df9aaf9 ACCEPT-OFFLINE:** independent G0 1,246 passed, 0 failed; fresh probes passed. Native timing waits for R44's trusted publication instants (the observer bracket) and native prefix enumeration needs its own qualification. CX-NSR builds on P3M.
 - **Lane D:** no Datomic agent had run since DA01 merged, against Sam's goal of three lanes in parallel. CX-DF01 builds lane D's feed route offline (brief lab/experiments/EXP-DF01/BRIEF.md), with FD01's conformance suite on a Datomic adapter.
+
+## 2026-11-09 07:35Z: hourly pass (NORTH-STAR reread first): usage 8%; R42-R44 changed the plan; VM durability class found
+
+- **Learnings since 06:28Z:**
+  - **R43:** no cell can PASS yet because qualification machinery is missing, not because engines are slow. First PASS candidate: NS.P3 on the broker log; second: P5 on the host store. Q99a-e pending; queue reordered.
+  - **R44:** every measured role runs in its own VM container (Q100a-p pending). Mac-measured P2 and P3 numbers become a separate series.
+  - **R42 and P2B round 2:** moving readers off the broker's thread took commit p50 from 226 to 7.32 ms at 256 readers; the remaining tail is main-thread work (round 3 in progress).
+  - **Accepted offline:** K01 r13 (smoke run found two bugs in one pass), RT01 r5, FD01, P3M, QNODELAY (scoped). RT01 live hit the same lazy-table class as K01.
+  - **Coverage by enumeration failed twice more:** checkJs listed three directories and missed the GS launcher; 0.3.14's optional field let an adapter skip it. Both fixes invert the rule (everything is covered unless excluded with a reason; the field is required).
+  - **Codex service errors:** CX-CRNS stopped on "Selected model is at capacity" with its tests passing; resumed in the same session. Treat capacity errors as resumable, not as failures.
+- **New fact for Q100b (VM durability):** Lima's vz driver hardcodes `DiskImageSynchronizationModeFsync` and `DiskImageCachingModeCached` for the root and data disks, with no lima.yaml option (lima master, pkg/driver/vz/vm_darwin.go). A guest flush therefore becomes a host fsync of the disk image, and on macOS plain fsync does not flush the drive's write cache (R42). So the VM's durability class is weaker than the Mac's F_FULLFSYNC: data survives a guest or VM crash and a host process crash, but not necessarily host power loss. Apple's per-mode text was not readable by fetch; probe V1 should confirm. Receipts must bind this class (Q100b).
+- **Research this hour:** one web check (above). All 10 agent slots are busy with builders and reviewers on the critical path, so no Opus researcher was started.
