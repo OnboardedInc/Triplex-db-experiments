@@ -1665,3 +1665,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
   a current-only store reached by a historical basis. R31 predicted it (D-D2). Conformance passed 88/88 and the full suite, so G1 does
   not catch this class. **Learning:** route choice belongs in one place per lane, and RQ01 must become the gate for every lane's
   read routes (Q89f) as soon as it merges; DA01 round 4 adds an RQ01-style all-shapes-all-paths test meanwhile.
+
+## 2026-11-09 00:56Z: K01's review loop is not converging; R36 asks whether a content fingerprint can replace process evidence
+- **V-K01 round 5 FIX-FIRST,** four more findings (inherited stderr blocks valid checks; failed owner reads become fallback provenance;
+  missing plan fields accepted; a timer overwrites failure with exit zero). Six rounds, each three or four findings, all one class:
+  process evidence accepted when failed, partial or stale. The structural fix in round 6 narrowed it but did not end it.
+- **Hypothesis:** the trust base is too large. If a clone is accepted only when a content fingerprint read through the engine matches the
+  golden's pinned digest (R34's G0 pattern), process evidence can only diagnose, never grant PASS, and needs far less validation.
+  **R36 (Opus high)** tests that: what process evidence protects that a fingerprint does not, the minimal check set, and keep, simplify or
+  drop K01 (re-seed per run, costed from R34's population sizes). K01 waits for R36 instead of another fix round.
+- **Learning:** when a review loop's findings stay the same size across rounds, change the design, not the code.
