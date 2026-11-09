@@ -119,6 +119,24 @@ function failureOf(exit: any): StoreFailure {
   return { ok: false, tag: String(tag ?? "Unknown"), error };
 }
 
+/** [DX-H1] One public closure call at the requested cut; split reads verify the root across the intervening ACK. */
+export async function reachPull(h: Pick<TriplesHandle, "triples" | "run">, root: string, basis: Basis, between: (() => Promise<void>) | undefined, language: string): Promise<PullResult> {
+  const T = h.triples;
+  const E = (id: string) => core.EntityId.make(id);
+  // [DX-H1] Why: one public reach at the same cut, including split-root verification.
+  // Rejected: latest-root comparison (would confuse valid commits with snapshot violations).
+  const before: any[][] | undefined = between ? await h.run(T.entities([E(root)], basis)) : undefined;
+  if (between) await between();
+  const result: any = await h.run(T.reach(E(root), basis));
+  const stable = (value: any): any => Array.isArray(value) ? value.map(stable) :
+    value !== null && typeof value === "object" ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stable(value[key])])) : value;
+  const canonical = (rows: readonly any[]) => JSON.stringify(rows.map(t => JSON.stringify(stable(t))).sort());
+  if (before && canonical(before[0] ?? []) !== canonical(result.triples.filter((t: any) => t.entityId === root)))
+    throw new Error("reach split-root snapshot violation");
+  return { triples: result.triples, entities: new Set([root, ...result.triples.map((t: any) => t.entityId)]).size,
+    roundTrips: between ? 2 : 1, depth: result.hops - 1, route: "source", language, waitedMs: 0 };
+}
+
 async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" | "broker-h1" | "reach" = "public"): Promise<CompositionHandle> {
   const h: TriplesHandle = variant === "broker-h1" ? await (await import("./broker-h1.ts")).openBrokerH1(scope) : await openTriples(lane, scope, (variant === "public-queued" || variant === "reach") ? { admissionQueue: true } : undefined);
   const T = h.triples;
@@ -128,18 +146,7 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     return exit._tag === "Success" ? { ok: true, value: exit.value as A } : failureOf(exit);
   };
   const pullBody = async (root: string, basis: Basis, between?: () => Promise<void>): Promise<PullResult> => {
-    if (variant === "reach") {
-      // [DX-H1] Why: one public reach at the same cut, including split-root verification.
-      // Rejected: latest-root comparison (would confuse valid commits with snapshot violations).
-      const before: any[][] | undefined = between ? await h.run(T.entities([E(root)], basis)) : undefined;
-      if (between) await between();
-      const result: any = await h.run(T.reach(E(root), basis));
-      const canonical = (rows: readonly any[]) => JSON.stringify(rows.map(t => JSON.stringify(t)).sort());
-      if (before && canonical(before[0] ?? []) !== canonical(result.triples.filter((t: any) => t.entityId === root)))
-        throw new Error("reach split-root snapshot violation");
-      return { triples: result.triples, entities: new Set([root, ...result.triples.map((t: any) => t.entityId)]).size,
-        roundTrips: between ? 2 : 1, depth: result.hops - 1, route: "source", language, waitedMs: 0 };
-    }
+    if (variant === "reach") return reachPull(h, root, basis, between, language);
     const seen = new Set<string>([root]);
     let frontier = [root];
     const triples: PulledTriple[] = [];

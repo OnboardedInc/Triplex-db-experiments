@@ -10,7 +10,7 @@ import path from "node:path";
 import fs from "node:fs";
 import { isMainThread, workerData } from "node:worker_threads";
 import { pathToFileURL } from "node:url";
-import { Effect, ManagedRuntime } from "effect";
+import { Context, Effect, ManagedRuntime } from "effect";
 
 export const REPO = path.resolve(import.meta.dirname, "../../..");
 const dist = (pkg: string, file: string) =>
@@ -69,7 +69,11 @@ export async function openTriples(
   const clock = process.env["TX2_P5_CLOCK_START"];
   const layer = definition.layer({
     scope,
-    capabilities: runtimeApi.Capabilities.none,
+    // [DX-H1] Why: Runtime.layer exports only installed capability services; portable W0 helpers need its adapter.
+    // Rejected: asking the finished runtime for a private service (Service not found before seed).
+    capabilities: { build: Effect.map(Effect.service(runtimeApi.StorageAdapter), (adapter: any) => ({
+      capabilities: [], services: Context.make(runtimeApi.StorageAdapter, adapter),
+    })) },
     ...(clock === undefined ? {} : { deterministic: { startTime: Number(clock), seed: scope } }),
   });
   const managed: any = (ManagedRuntime as any).make(layer);
