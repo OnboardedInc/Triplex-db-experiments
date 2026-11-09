@@ -1,0 +1,8 @@
+{
+  "provenance": "CONSTRUCTED lexical fixtures only; no real compilation; neutral dump and W0 facts are stand-ins under Q109a",
+  "count": 8100,
+  "inputStreamSha256": "9bda6364c24f16b85dc2077315a3415bf45bf2e229a53df5651eb73be70a1471",
+  "observationStreamSha256": "0660ac638854fd06848cce22a05c7d561fbba7aa5e6b13a6a9af33da3386d19f",
+  "failures": [],
+  "recipe": "all 30 pieces before x all 30 pieces after x nine active time statements, using program() in the pinned reviewer script"
+}

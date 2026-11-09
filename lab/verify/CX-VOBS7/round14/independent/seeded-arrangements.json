@@ -1,0 +1,9 @@
+{
+  "provenance": "CONSTRUCTED lexical fixtures only; no real compilation; neutral dump and W0 facts are stand-ins under Q109a",
+  "seed": 348192750,
+  "finalState": 1694691201,
+  "count": 10000,
+  "inputStreamSha256": "fa19b26d709998efa08c9ebde8dc6d6c9afcfd6f56a080e9269e6d254d5e9b2d",
+  "observationStreamSha256": "e405ae055c8402a016760281ffff09c2f8c8d5a6f72f417a92a97d6e883afbb2",
+  "failures": []
+}

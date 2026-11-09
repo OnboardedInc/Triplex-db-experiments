@@ -1,0 +1,196 @@
+{
+  "claim": "offline R13-F1 lexical review under Q109a; no VM, real compiler dump, or semantic durability acceptance",
+  "commands": [
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "lab/observer/test_vm.py"
+      ],
+      "exit": 0,
+      "name": "python-vm",
+      "stderrSha256": "ed1027d13e3a7d69177bd514b69c2952ff84b8146602c0db01178a5307c4243c",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "lab/observer/test_syncwitness.py"
+      ],
+      "exit": 0,
+      "name": "python-syncwitness",
+      "stderrSha256": "60131dc123b087d86621be0909c3f494b26bded809568c122f5b0960975aad9a",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "lab/observer/test_round10.py"
+      ],
+      "exit": 0,
+      "name": "python-round10",
+      "stderrSha256": "68de57a5c36b3019e263b595fa0606ddd3038c66b967d4ce917a2e7277e84758",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "lab/observer/test_round11.py"
+      ],
+      "exit": 0,
+      "name": "python-round11",
+      "stderrSha256": "6712227b7f460cdab0d8f6eab111cfb9dd3ac66e3c2dff8d9ffce24b80c4c99d",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "--test",
+        "lab/observer/test_engine.mjs"
+      ],
+      "exit": 0,
+      "name": "node-engine",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "9eddfc147f5adc1ad5167ec5d10277202360622ecd6dd11517415820d4eabdc0"
+    },
+    {
+      "argv": [
+        "node",
+        "--test",
+        "lab/observer/test_round12.mjs"
+      ],
+      "exit": 0,
+      "name": "node-round12",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "5ab5b1ee1cf98eb09a08c8e43b9776b3d94e1c2f26045b2f63eb2f91e22c2eb1"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "-c",
+        "import sys,unittest;from pathlib import Path;sys.path.insert(0,\"lab/verify/CX-VOBS7\");import review_round9 as r;r.OUT=Path(\"lab/verify/CX-VOBS7/round14/prior-round9\");unittest.main(module=r,verbosity=2)"
+      ],
+      "exit": 0,
+      "name": "review-round9",
+      "stderrSha256": "14fb0310fe79c890f65f913edfb35ff6895f157386330f43d5879dc5d40b37b1",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "-c",
+        "import sys,unittest;from pathlib import Path;sys.path.insert(0,\"lab/verify/CX-VOBS7\");import review_round10 as r;r.OUT=Path(\"lab/verify/CX-VOBS7/round14/prior-round10\");unittest.main(module=r,verbosity=2)"
+      ],
+      "exit": 0,
+      "name": "review-round10",
+      "stderrSha256": "5638679247fc3142f75c8ddb9c433fef1a44862a26727e14a1a525800bc3cd6a",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "node",
+        "--test",
+        "lab/verify/CX-VOBS7/replay_round11_for_round14.mjs"
+      ],
+      "exit": 0,
+      "name": "review-round11",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "49104c8564e9437b28f14ba7f9d540d340225c38877755b4b20b3a8b8ceb27b3"
+    },
+    {
+      "argv": [
+        "node",
+        "--test",
+        "lab/verify/CX-VOBS7/replay_round12_for_round14.mjs"
+      ],
+      "exit": 0,
+      "name": "review-round12",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "17f098f6b25564b00a857ab57d8edea1ecd45a6b156343e6c5d3b7654114c737"
+    },
+    {
+      "argv": [
+        "node",
+        "--test",
+        "lab/verify/CX-VOBS7/replay_round13_for_round14.mjs"
+      ],
+      "exit": 0,
+      "name": "review-round13",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "a3ff7b4af172f683ac3817b371ce77b8f112884dada1982a233ef5815d2e5353"
+    },
+    {
+      "argv": [
+        "node",
+        "--test",
+        "lab/verify/CX-VOBS7/review_round14.mjs"
+      ],
+      "exit": 0,
+      "name": "review-round14",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutSha256": "a61f4efc7f371266f4e283ba6626d8f9c05ce6e48fe2d25aec84c8a19985b662"
+    }
+  ],
+  "finishedNs": 1794235847541364000,
+  "head": "c121780e7e00ae795690f4d37d91d13807171160",
+  "hostFreeBytes": 23831080960,
+  "replays": [
+    {
+      "onlyReplacement": {
+        "from": "path.join(import.meta.dirname,'round11','independent')",
+        "to": "path.join(import.meta.dirname,'round14','prior-round11')"
+      },
+      "path": "lab/verify/CX-VOBS7/replay_round11_for_round14.mjs",
+      "sha256": "341340d5eaaa10a70b412e0947c91aed07aa8ebbc029af44fe90f72bc2e3c107"
+    },
+    {
+      "onlyReplacement": {
+        "from": "path.join(import.meta.dirname,'round12','independent')",
+        "to": "path.join(import.meta.dirname,'round14','prior-round12')"
+      },
+      "path": "lab/verify/CX-VOBS7/replay_round12_for_round14.mjs",
+      "sha256": "f4d64d5fa147c6f11d6d5a74fd6083dbd412368280afcbf2bcb9030ac94572f8"
+    },
+    {
+      "onlyReplacement": {
+        "from": "path.join(import.meta.dirname,'round13','independent')",
+        "to": "path.join(import.meta.dirname,'round14','prior-round13')"
+      },
+      "path": "lab/verify/CX-VOBS7/replay_round13_for_round14.mjs",
+      "sha256": "eef2e9000a678455e1d4749fd2b9e11402352ddcde62745ff14018e84c3073e1"
+    }
+  ],
+  "sourceSha256": {
+    "lab/bin/btf-helpers.mjs": "3ea7ed9cf1dd8a056dbd3be3a3d37e79df9018707eeef20188a1a3ba9af2ba63",
+    "lab/bin/clock-proof.mjs": "2d91d6fdb354527a6ea386dc4a4977bb5ae4f3220510baa6f817629e989f7a39",
+    "lab/bin/sync-witness.mjs": "4f75e3244f4f6123391abcfd7df29309492a8689bb6c2081c53f1d9a81396a59",
+    "lab/observer/btf_fixture.mjs": "2d0ded83020f1866cfef544acca3719c9b74fc612a9d9a436ad6221d40798a23",
+    "lab/observer/dump_fixture.mjs": "2e09d261cf25e78557926f6aaccbed76813eea617ddfa08511f7d87016935cfe",
+    "lab/observer/test_engine.mjs": "662452af9c8218e70c4b48056ae534fe221a791840f874ca9feded9f03628301",
+    "lab/observer/test_round10.py": "235f56eae2ea100c9af950143a8da5a0f04c4f05238e6936ef299142fdb78d72",
+    "lab/observer/test_round11.py": "791c44b66e696142cb28e3980ded60f210f2327ad45ae917a1e6eaa34770de2e",
+    "lab/observer/test_round12.mjs": "8a487c5edf8ae6ef99dcdcdb2f1b60943778c0ed999d191cccf79313f88f65f9",
+    "lab/observer/test_syncwitness.py": "ad8a8b882c478af003081e54382848cd541b65d59b94c259bddb322e326132a1",
+    "lab/observer/test_vm.py": "9c128c47999fcb00e46088a5cf22771f332be01711f4d8817956a4a5c603b531",
+    "lab/observer/vm_clockcheck.py": "fe576d8d013a6f16774d86b9c06fe5c1e881c916129f45fea575e3f0174caa19",
+    "lab/observer/vm_fixture.py": "785bf49d536290505c1a204caeb7f0d36b9d374874a1253943ef120318691578",
+    "lab/observer/vm_normalizer.py": "222dbe1455b2da1ca1346c3152b9411ff97452a9658a7da5aa68586d7eef3b46",
+    "lab/observer/vm_planted_writer.py": "81bad0e1a9e52b989f446ca0f813226942edc23ecdd8a837e5ae2097bf8c2205",
+    "lab/observer/vm_syncwitness.bt": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+    "lab/observer/vm_syncwitness.py": "937d65054c18c82feb7cf7793754661d113542b6cca4ec6edc0b5b8cb6dd7451",
+    "lab/verify/CX-VOBS7/review_round10.py": "65c7026bc6465f432c6c53159905f90f73e07685775c26b7e459a48e6abdb6c9",
+    "lab/verify/CX-VOBS7/review_round11.mjs": "fccb599b25878c090b3817ffb57940a8eac754e666578b089955548cd0b426fc",
+    "lab/verify/CX-VOBS7/review_round12.mjs": "b867f5a53f59f5e554bb075390e4c3238c7cffdce39482243281d7680bb75945",
+    "lab/verify/CX-VOBS7/review_round13.mjs": "46f3f117bbc996c0281ac47b268a6d25bcef0492610b9755d29cf6fd90a89859",
+    "lab/verify/CX-VOBS7/review_round14.mjs": "4aeaf614a709222117f253dd093629080edb525ccb4c551e598e6dd39dfd9295",
+    "lab/verify/CX-VOBS7/review_round9.py": "43d35c27b3f897564d91f6aa0c56c74798c3970dd7c981530787f318917d0191",
+    "lab/verify/CX-VOBS7/run_round14.py": "123e83aebd1962e03aa8cf5bfbc9e35d23c9b7712b15eeb056c82059e854847d"
+  },
+  "sourceUnchanged": true,
+  "startedNs": 1794235824278287000
+}

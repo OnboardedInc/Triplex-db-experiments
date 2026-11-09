@@ -1,0 +1,225 @@
+{
+  "provenance": "CONSTRUCTED lexical fixtures only; no real compilation; neutral dump and W0 facts are stand-ins under Q109a",
+  "count": 270,
+  "inputStreamSha256": "734829b3efa8ebdef078f5c7e7d3e210bd948233f29e161e233f4f453f12129d",
+  "observationStreamSha256": "098892c7544e1803e4afc56489a502a827fb3c341955fc89ee1d28ca0f1c77be",
+  "samples": [
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n\"body",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n\"\"",
+        "errors": [
+          "unterminated string literal starting at line 2"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated string literal starting at line 2"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    },
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n\n\"body",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n\n\"\"",
+        "errors": [
+          "unterminated string literal starting at line 3"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated string literal starting at line 3"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    },
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n\n\n\"body",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n\n\n\"\"",
+        "errors": [
+          "unterminated string literal starting at line 4"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated string literal starting at line 4"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    },
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n\"body\n",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n\"\"\n",
+        "errors": [
+          "unterminated string literal starting at line 2"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated string literal starting at line 2"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    },
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n\n\"body\n",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n\n\"\"\n",
+        "errors": [
+          "unterminated string literal starting at line 3"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated string literal starting at line 3"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    },
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n\n\n\"body\n",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n\n\n\"\"\n",
+        "errors": [
+          "unterminated string literal starting at line 4"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated string literal starting at line 4"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    },
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n\"bad\n\"",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n\"\"\n\"\"",
+        "errors": [
+          "unterminated string literal starting at line 2",
+          "unterminated string literal starting at line 3"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated string literal starting at line 2",
+          "unterminated string literal starting at line 3"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    },
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n\n\"bad\n\"",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n\n\"\"\n\"\"",
+        "errors": [
+          "unterminated string literal starting at line 3",
+          "unterminated string literal starting at line 4"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated string literal starting at line 3",
+          "unterminated string literal starting at line 4"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    },
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n\n\n\"bad\n\"",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n\n\n\"\"\n\"\"",
+        "errors": [
+          "unterminated string literal starting at line 4",
+          "unterminated string literal starting at line 5"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated string literal starting at line 4",
+          "unterminated string literal starting at line 5"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    },
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n'bad\n'",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n''\n''",
+        "errors": [
+          "unterminated character literal starting at line 2",
+          "unterminated character literal starting at line 3"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated character literal starting at line 2",
+          "unterminated character literal starting at line 3"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    },
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n\n'bad\n'",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n\n''\n''",
+        "errors": [
+          "unterminated character literal starting at line 3",
+          "unterminated character literal starting at line 4"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated character literal starting at line 3",
+          "unterminated character literal starting at line 4"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    },
+    {
+      "source": "BEGIN { @mono = nsecs(monotonic); }\n\n\n'bad\n'",
+      "lexed": {
+        "code": "BEGIN { @mono = nsecs(monotonic); }\n\n\n''\n''",
+        "errors": [
+          "unterminated character literal starting at line 4",
+          "unterminated character literal starting at line 5"
+        ]
+      },
+      "sites": {
+        "monotonic": 1,
+        "other": [
+          "unterminated character literal starting at line 4",
+          "unterminated character literal starting at line 5"
+        ]
+      },
+      "pass": false,
+      "w0Pass": false
+    }
+  ],
+  "failures": []
+}

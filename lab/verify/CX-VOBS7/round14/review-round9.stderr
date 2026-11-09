@@ -1,0 +1,16 @@
+test_checkpoint_and_mmap_codes (review_round9.Controls.test_checkpoint_and_mmap_codes) ... ok
+test_every_direct_commit_gets_ack_and_visibility_checks (review_round9.Controls.test_every_direct_commit_gets_ack_and_visibility_checks) ... ok
+test_first_qualifying_exit_with_extra_and_overlapping_syncs (review_round9.Controls.test_first_qualifying_exit_with_extra_and_overlapping_syncs) ... ok
+test_sequence_gap_and_whole_cpu_loss_fail_in_main_parser (review_round9.Controls.test_sequence_gap_and_whole_cpu_loss_fail_in_main_parser) ... ok
+test_sibling_foreign_failed_and_nonwaiting_syncs_never_cover (review_round9.Controls.test_sibling_foreign_failed_and_nonwaiting_syncs_never_cover) ... ok
+test_sync_before_write_next_commit_sync_really_covers_previous (review_round9.Controls.test_sync_before_write_next_commit_sync_really_covers_previous) ... ok
+test_detach_before_final_readback_must_refuse (review_round9.Regressions.test_detach_before_final_readback_must_refuse) ... ok
+test_split_marker_then_frame_must_not_skip_visible_check (review_round9.Regressions.test_split_marker_then_frame_must_not_skip_visible_check) ... ok
+test_syncfs_syscall_boundary_must_not_change_r48_D (review_round9.Regressions.test_syncfs_syscall_boundary_must_not_change_r48_D) ... ok
+test_w1_compare_must_reject_global_unwitnessed_write (review_round9.Regressions.test_w1_compare_must_reject_global_unwitnessed_write) ... ok
+test_w3_must_reject_loss_of_every_event_on_one_cpu (review_round9.Regressions.test_w3_must_reject_loss_of_every_event_on_one_cpu) ... ok
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.037s
+
+OK

@@ -1,0 +1,58 @@
+TAP version 13
+# Subtest: control: complete source-bound constructed proof passes and every failed command refuses W0
+ok 1 - control: complete source-bound constructed proof passes and every failed command refuses W0
+  ---
+  duration_ms: 31.512875
+  type: 'test'
+  ...
+# Subtest: A2: an unparsed call to a forbidden clock in another stage must refuse
+ok 2 - A2: an unparsed call to a forbidden clock in another stage must refuse
+  ---
+  duration_ms: 1.800792
+  type: 'test'
+  ...
+# Subtest: A2: an unknown call line after a blank within a section must refuse
+ok 3 - A2: an unknown call line after a blank within a section must refuse
+  ---
+  duration_ms: 1.919875
+  type: 'test'
+  ...
+# Subtest: A2: an early exit does not prove that the last probe was dumped completely
+ok 4 - A2: an early exit does not prove that the last probe was dumped completely
+  ---
+  duration_ms: 3.017
+  type: 'test'
+  ...
+# Subtest: BTF: all helper ids must be unambiguous, including a clock name outside the required set
+ok 5 - BTF: all helper ids must be unambiguous, including a clock name outside the required set
+  ---
+  duration_ms: 1.38575
+  type: 'test'
+  ...
+# Subtest: BTF: a second empty bpf_func_id enum still makes the enum ambiguous
+ok 6 - BTF: a second empty bpf_func_id enum still makes the enum ambiguous
+  ---
+  duration_ms: 1.274333
+  type: 'test'
+  ...
+# Subtest: BTF: invalid reserved header flags and type-info bits must refuse
+ok 7 - BTF: invalid reserved header flags and type-info bits must refuse
+  ---
+  duration_ms: 1.977458
+  type: 'test'
+  ...
+# Subtest: A2: raw helper bytes cannot masquerade as the final exit
+ok 8 - A2: raw helper bytes cannot masquerade as the final exit
+  ---
+  duration_ms: 1.807958
+  type: 'test'
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 8
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 111.431958

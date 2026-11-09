@@ -1,0 +1,40 @@
+TAP version 13
+# Subtest: pinned source and complete literal/comment controls pass the actual gate
+ok 1 - pinned source and complete literal/comment controls pass the actual gate
+  ---
+  duration_ms: 35.613583
+  type: 'test'
+  ...
+# Subtest: active forbidden reads remain visible before, between and after literal/comment pieces
+ok 2 - active forbidden reads remain visible before, between and after literal/comment pieces
+  ---
+  duration_ms: 81.488042
+  type: 'test'
+  ...
+# Subtest: comments between builtin tokens cannot hide a clock or manufacture an allowed mode
+ok 3 - comments between builtin tokens cannot hide a clock or manufacture an allowed mode
+  ---
+  duration_ms: 14.419208
+  type: 'test'
+  ...
+# Subtest: unterminated strings, chars and block comments refuse at every tested boundary and escape parity
+ok 4 - unterminated strings, chars and block comments refuse at every tested boundary and escape parity
+  ---
+  duration_ms: 142.491333
+  type: 'test'
+  ...
+# Subtest: deterministic mixed arrangements preserve the executable clock boundary
+ok 5 - deterministic mixed arrangements preserve the executable clock boundary
+  ---
+  duration_ms: 65.108375
+  type: 'test'
+  ...
+1..5
+# tests 5
+# suites 0
+# pass 5
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 407.344375

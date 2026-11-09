@@ -1,0 +1,4470 @@
+{
+  "provenance": "CONSTRUCTED source/BTF and neutral dump controls, offline only; W0 engine facts are stand-ins; crafted dump defects are outside this verdict",
+  "inputSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+  "rows": [
+    {
+      "label": "enum alias first",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "enum bpf_func_id gives id 5 more than one name: bpf_ktime_get_realtime_ns, bpf_ktime_get_ns"
+        ],
+        "btfSha256": "3389c1e634055ed18c9429e11a01493732fca461b0142353597e95b5753ee651",
+        "btfBytes": 1043,
+        "typeCount": 9,
+        "enumKind": "ENUM",
+        "ids": {
+          "bpf_unspec": 0,
+          "bpf_ktime_get_realtime_ns": 5,
+          "bpf_map_lookup_elem": 1,
+          "bpf_map_update_elem": 2,
+          "bpf_map_delete_elem": 3,
+          "bpf_probe_read": 4,
+          "bpf_ktime_get_ns": 5,
+          "bpf_get_smp_processor_id": 8,
+          "bpf_get_current_pid_tgid": 14,
+          "bpf_perf_event_output": 25,
+          "bpf_get_current_cgroup_id": 80,
+          "bpf_probe_read_kernel": 113,
+          "bpf_jiffies64": 118,
+          "bpf_ktime_get_boot_ns": 125,
+          "bpf_ringbuf_output": 130,
+          "bpf_ringbuf_reserve": 131,
+          "bpf_ringbuf_submit": 132,
+          "bpf_ringbuf_discard": 133,
+          "bpf_ktime_get_coarse_ns": 160,
+          "bpf_ktime_get_tai_ns": 208,
+          "bpf_get_current_comm": 16,
+          "bpf_timer_start": 170,
+          "bpf_get_prandom_u32": 7
+        },
+        "missing": []
+      },
+      "btfSha256": "3389c1e634055ed18c9429e11a01493732fca461b0142353597e95b5753ee651"
+    },
+    {
+      "label": "enum alias last",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "enum bpf_func_id gives id 5 more than one name: bpf_ktime_get_ns, bpf_ktime_get_realtime_ns"
+        ],
+        "btfSha256": "fe09104fd3279bdce752741c6d793eb899d29a2bd1af1268e8ae9c89b70437c5",
+        "btfBytes": 1043,
+        "typeCount": 9,
+        "enumKind": "ENUM",
+        "ids": {
+          "bpf_unspec": 0,
+          "bpf_map_lookup_elem": 1,
+          "bpf_map_update_elem": 2,
+          "bpf_map_delete_elem": 3,
+          "bpf_probe_read": 4,
+          "bpf_ktime_get_ns": 5,
+          "bpf_get_smp_processor_id": 8,
+          "bpf_get_current_pid_tgid": 14,
+          "bpf_perf_event_output": 25,
+          "bpf_get_current_cgroup_id": 80,
+          "bpf_probe_read_kernel": 113,
+          "bpf_jiffies64": 118,
+          "bpf_ktime_get_boot_ns": 125,
+          "bpf_ringbuf_output": 130,
+          "bpf_ringbuf_reserve": 131,
+          "bpf_ringbuf_submit": 132,
+          "bpf_ringbuf_discard": 133,
+          "bpf_ktime_get_coarse_ns": 160,
+          "bpf_ktime_get_tai_ns": 208,
+          "bpf_get_current_comm": 16,
+          "bpf_timer_start": 170,
+          "bpf_get_prandom_u32": 7,
+          "bpf_ktime_get_realtime_ns": 5
+        },
+        "missing": []
+      },
+      "btfSha256": "fe09104fd3279bdce752741c6d793eb899d29a2bd1af1268e8ae9c89b70437c5"
+    },
+    {
+      "label": "enum duplicate empty",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF has 2 enum bpf_func_id (need exactly one)"
+        ],
+        "btfSha256": "b871c1237a31232a632af53df2bcafda0c9307222a119a17d920a19af8053872",
+        "btfBytes": 1028,
+        "typeCount": 10,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "b871c1237a31232a632af53df2bcafda0c9307222a119a17d920a19af8053872"
+    },
+    {
+      "label": "enum only empty",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF enum bpf_func_id is empty"
+        ],
+        "btfSha256": "0b677d0ef4159a6ef033d17896fe7d7e37473300746a716e42207ceb9086246a",
+        "btfBytes": 49,
+        "typeCount": 1,
+        "enumKind": "ENUM",
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "0b677d0ef4159a6ef033d17896fe7d7e37473300746a716e42207ceb9086246a"
+    },
+    {
+      "label": "enum64 alias first",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "enum bpf_func_id gives id 5 more than one name: bpf_ktime_get_realtime_ns, bpf_ktime_get_ns"
+        ],
+        "btfSha256": "a4971d589d45f85f96acfa7886ea73ab9ce73b19e6c807039d32e43deb578062",
+        "btfBytes": 1139,
+        "typeCount": 9,
+        "enumKind": "ENUM64",
+        "ids": {
+          "bpf_unspec": 0,
+          "bpf_ktime_get_realtime_ns": 5,
+          "bpf_map_lookup_elem": 1,
+          "bpf_map_update_elem": 2,
+          "bpf_map_delete_elem": 3,
+          "bpf_probe_read": 4,
+          "bpf_ktime_get_ns": 5,
+          "bpf_get_smp_processor_id": 8,
+          "bpf_get_current_pid_tgid": 14,
+          "bpf_perf_event_output": 25,
+          "bpf_get_current_cgroup_id": 80,
+          "bpf_probe_read_kernel": 113,
+          "bpf_jiffies64": 118,
+          "bpf_ktime_get_boot_ns": 125,
+          "bpf_ringbuf_output": 130,
+          "bpf_ringbuf_reserve": 131,
+          "bpf_ringbuf_submit": 132,
+          "bpf_ringbuf_discard": 133,
+          "bpf_ktime_get_coarse_ns": 160,
+          "bpf_ktime_get_tai_ns": 208,
+          "bpf_get_current_comm": 16,
+          "bpf_timer_start": 170,
+          "bpf_get_prandom_u32": 7
+        },
+        "missing": []
+      },
+      "btfSha256": "a4971d589d45f85f96acfa7886ea73ab9ce73b19e6c807039d32e43deb578062"
+    },
+    {
+      "label": "enum64 alias last",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "enum bpf_func_id gives id 5 more than one name: bpf_ktime_get_ns, bpf_ktime_get_realtime_ns"
+        ],
+        "btfSha256": "903b17de25c85a2768f72dfdd01c16409e634e0105687857b861cd0c420ada70",
+        "btfBytes": 1139,
+        "typeCount": 9,
+        "enumKind": "ENUM64",
+        "ids": {
+          "bpf_unspec": 0,
+          "bpf_map_lookup_elem": 1,
+          "bpf_map_update_elem": 2,
+          "bpf_map_delete_elem": 3,
+          "bpf_probe_read": 4,
+          "bpf_ktime_get_ns": 5,
+          "bpf_get_smp_processor_id": 8,
+          "bpf_get_current_pid_tgid": 14,
+          "bpf_perf_event_output": 25,
+          "bpf_get_current_cgroup_id": 80,
+          "bpf_probe_read_kernel": 113,
+          "bpf_jiffies64": 118,
+          "bpf_ktime_get_boot_ns": 125,
+          "bpf_ringbuf_output": 130,
+          "bpf_ringbuf_reserve": 131,
+          "bpf_ringbuf_submit": 132,
+          "bpf_ringbuf_discard": 133,
+          "bpf_ktime_get_coarse_ns": 160,
+          "bpf_ktime_get_tai_ns": 208,
+          "bpf_get_current_comm": 16,
+          "bpf_timer_start": 170,
+          "bpf_get_prandom_u32": 7,
+          "bpf_ktime_get_realtime_ns": 5
+        },
+        "missing": []
+      },
+      "btfSha256": "903b17de25c85a2768f72dfdd01c16409e634e0105687857b861cd0c420ada70"
+    },
+    {
+      "label": "enum64 duplicate empty",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF has 2 enum bpf_func_id (need exactly one)"
+        ],
+        "btfSha256": "80b57bbf4829b37c74b6894283cd30982c924c4ad9c7b2078335d18b63c85e22",
+        "btfBytes": 1120,
+        "typeCount": 10,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "80b57bbf4829b37c74b6894283cd30982c924c4ad9c7b2078335d18b63c85e22"
+    },
+    {
+      "label": "enum64 only empty",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF enum bpf_func_id is empty"
+        ],
+        "btfSha256": "8d1c5a49ca22badfd21c1ba05d78ad1ad1c2c109c8c783fcb1642494a8067099",
+        "btfBytes": 49,
+        "typeCount": 1,
+        "enumKind": "ENUM64",
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8d1c5a49ca22badfd21c1ba05d78ad1ad1c2c109c8c783fcb1642494a8067099"
+    },
+    {
+      "label": "flags 1",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x1, expected 0 (reserved)"
+        ],
+        "btfSha256": "5d80aea79da47e0ad705e39cb52d2d7c376c6670b26349f0633a702365efdb23",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "5d80aea79da47e0ad705e39cb52d2d7c376c6670b26349f0633a702365efdb23"
+    },
+    {
+      "label": "flags 2",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x2, expected 0 (reserved)"
+        ],
+        "btfSha256": "8146d939a4e27970b3a31a67f8d31149e459b7645d7fe8910f0501e68f83317d",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8146d939a4e27970b3a31a67f8d31149e459b7645d7fe8910f0501e68f83317d"
+    },
+    {
+      "label": "flags 3",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x3, expected 0 (reserved)"
+        ],
+        "btfSha256": "a04d62ea633494b0723ac863bc939473ee84466d2ab828f063b09e2c6d80ec88",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a04d62ea633494b0723ac863bc939473ee84466d2ab828f063b09e2c6d80ec88"
+    },
+    {
+      "label": "flags 4",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x4, expected 0 (reserved)"
+        ],
+        "btfSha256": "be48496a0bd05c60371c64f0544bbb1fc0af21a035b57b5493bf1f48d079c405",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "be48496a0bd05c60371c64f0544bbb1fc0af21a035b57b5493bf1f48d079c405"
+    },
+    {
+      "label": "flags 5",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x5, expected 0 (reserved)"
+        ],
+        "btfSha256": "a6486161a112cf933dd70fff407493928acf954e909d7d978971d035cf8cd880",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a6486161a112cf933dd70fff407493928acf954e909d7d978971d035cf8cd880"
+    },
+    {
+      "label": "flags 6",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x6, expected 0 (reserved)"
+        ],
+        "btfSha256": "fc8f860105a2fe70276c5ea518d86e2b2042d93d87f292acae90b35cda8f650a",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "fc8f860105a2fe70276c5ea518d86e2b2042d93d87f292acae90b35cda8f650a"
+    },
+    {
+      "label": "flags 7",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x7, expected 0 (reserved)"
+        ],
+        "btfSha256": "22f8f61e67973d5e36689f6fb793a84c5a88a63f450fd04ce3ed80bf3e420d98",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "22f8f61e67973d5e36689f6fb793a84c5a88a63f450fd04ce3ed80bf3e420d98"
+    },
+    {
+      "label": "flags 8",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x8, expected 0 (reserved)"
+        ],
+        "btfSha256": "97f708472743a4a74e4903b892436af7f1cbebfb45d099106df4bb2e5a60d71d",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "97f708472743a4a74e4903b892436af7f1cbebfb45d099106df4bb2e5a60d71d"
+    },
+    {
+      "label": "flags 9",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x9, expected 0 (reserved)"
+        ],
+        "btfSha256": "96946d4b26cc08a56e938edbb297d88a798b7ff00688742a22dd41064a0947d5",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "96946d4b26cc08a56e938edbb297d88a798b7ff00688742a22dd41064a0947d5"
+    },
+    {
+      "label": "flags 10",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xa, expected 0 (reserved)"
+        ],
+        "btfSha256": "7e7607d52f877e6b2d1014fbb617a60ac4a7fbdda7fcf9d5277ee54151a48ac8",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "7e7607d52f877e6b2d1014fbb617a60ac4a7fbdda7fcf9d5277ee54151a48ac8"
+    },
+    {
+      "label": "flags 11",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xb, expected 0 (reserved)"
+        ],
+        "btfSha256": "98142abe3bf049f111e74c1da8802c01ea0799a246e9b2f59ea3b77cbcf42074",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "98142abe3bf049f111e74c1da8802c01ea0799a246e9b2f59ea3b77cbcf42074"
+    },
+    {
+      "label": "flags 12",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xc, expected 0 (reserved)"
+        ],
+        "btfSha256": "0d5ea07b162074b596143e6093dc304e28f743ac333458ed8d9d35aecbd30f75",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "0d5ea07b162074b596143e6093dc304e28f743ac333458ed8d9d35aecbd30f75"
+    },
+    {
+      "label": "flags 13",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xd, expected 0 (reserved)"
+        ],
+        "btfSha256": "1f4d2c6664db224968060653d495506e2b6c4023bbb89c14a31ca8771f69b655",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "1f4d2c6664db224968060653d495506e2b6c4023bbb89c14a31ca8771f69b655"
+    },
+    {
+      "label": "flags 14",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xe, expected 0 (reserved)"
+        ],
+        "btfSha256": "d0f572824905dc47f29ad42fa55e337d100fdb6c3145b4022c22966c081a9e7b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "d0f572824905dc47f29ad42fa55e337d100fdb6c3145b4022c22966c081a9e7b"
+    },
+    {
+      "label": "flags 15",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xf, expected 0 (reserved)"
+        ],
+        "btfSha256": "3bc6c8cdc2b7a2d3a8ac4c9e3af3c4aa5618bf01f3bfc7f1effa2885c39c6f7c",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "3bc6c8cdc2b7a2d3a8ac4c9e3af3c4aa5618bf01f3bfc7f1effa2885c39c6f7c"
+    },
+    {
+      "label": "flags 16",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x10, expected 0 (reserved)"
+        ],
+        "btfSha256": "0d7943ce41e7ae7ca9397888aaa37688cfb5676ffa382be2bd645410ce6b0902",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "0d7943ce41e7ae7ca9397888aaa37688cfb5676ffa382be2bd645410ce6b0902"
+    },
+    {
+      "label": "flags 17",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x11, expected 0 (reserved)"
+        ],
+        "btfSha256": "ecc133a56468676ff3250c0917bf2bded9638a4127a2f8c4d666c948e732b734",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "ecc133a56468676ff3250c0917bf2bded9638a4127a2f8c4d666c948e732b734"
+    },
+    {
+      "label": "flags 18",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x12, expected 0 (reserved)"
+        ],
+        "btfSha256": "af0bd21e9d94087d41692efe5ad8a2e29879365575f6721d88dc2718339853ad",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "af0bd21e9d94087d41692efe5ad8a2e29879365575f6721d88dc2718339853ad"
+    },
+    {
+      "label": "flags 19",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x13, expected 0 (reserved)"
+        ],
+        "btfSha256": "75b52e60cb00838fb1eb35ee89d710f9f89bba658da51238ce67a3a298259c86",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "75b52e60cb00838fb1eb35ee89d710f9f89bba658da51238ce67a3a298259c86"
+    },
+    {
+      "label": "flags 20",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x14, expected 0 (reserved)"
+        ],
+        "btfSha256": "f746bf1f28eb617ef30b330ff888aef63268712bfb87dac049c103b8a62ba75d",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "f746bf1f28eb617ef30b330ff888aef63268712bfb87dac049c103b8a62ba75d"
+    },
+    {
+      "label": "flags 21",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x15, expected 0 (reserved)"
+        ],
+        "btfSha256": "53834f6fac5b3a3b64033c8c6b1547cdb187736d9b4d7ec56498a507d3c353e5",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "53834f6fac5b3a3b64033c8c6b1547cdb187736d9b4d7ec56498a507d3c353e5"
+    },
+    {
+      "label": "flags 22",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x16, expected 0 (reserved)"
+        ],
+        "btfSha256": "9963c107e7d4502dd7af678ce0f499932324a6e87721163e7805914ea4374c1c",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "9963c107e7d4502dd7af678ce0f499932324a6e87721163e7805914ea4374c1c"
+    },
+    {
+      "label": "flags 23",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x17, expected 0 (reserved)"
+        ],
+        "btfSha256": "1e6b14d95f348396ce41a73272640403333a8c023e8c0a001249d155e944c405",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "1e6b14d95f348396ce41a73272640403333a8c023e8c0a001249d155e944c405"
+    },
+    {
+      "label": "flags 24",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x18, expected 0 (reserved)"
+        ],
+        "btfSha256": "9246417d31c2014ac344c2a4490b066fe9ec09439f04083c85e3fa37724559f1",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "9246417d31c2014ac344c2a4490b066fe9ec09439f04083c85e3fa37724559f1"
+    },
+    {
+      "label": "flags 25",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x19, expected 0 (reserved)"
+        ],
+        "btfSha256": "e8647c1f23cc1fd2e444464033cc8fbea30ea7268866b45b167fb0c7731ad7d6",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "e8647c1f23cc1fd2e444464033cc8fbea30ea7268866b45b167fb0c7731ad7d6"
+    },
+    {
+      "label": "flags 26",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x1a, expected 0 (reserved)"
+        ],
+        "btfSha256": "91dd9db221b90cc8a8dc079c0e1678ecdcb31cfdb5607307d70e0023bd3af4ba",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "91dd9db221b90cc8a8dc079c0e1678ecdcb31cfdb5607307d70e0023bd3af4ba"
+    },
+    {
+      "label": "flags 27",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x1b, expected 0 (reserved)"
+        ],
+        "btfSha256": "db16a3acf027dd698426d71265644525a757d6eb14df492b435046c60308fb76",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "db16a3acf027dd698426d71265644525a757d6eb14df492b435046c60308fb76"
+    },
+    {
+      "label": "flags 28",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x1c, expected 0 (reserved)"
+        ],
+        "btfSha256": "34211fcef5bcfa23fa5c2948287639f0eb11343b13e14864021e1f5a1a8acc5f",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "34211fcef5bcfa23fa5c2948287639f0eb11343b13e14864021e1f5a1a8acc5f"
+    },
+    {
+      "label": "flags 29",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x1d, expected 0 (reserved)"
+        ],
+        "btfSha256": "c4cd1daafcdd6895ed4744d2cba692ab7c48a6eb3e7fdd06d9de6357d0cb4cb8",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "c4cd1daafcdd6895ed4744d2cba692ab7c48a6eb3e7fdd06d9de6357d0cb4cb8"
+    },
+    {
+      "label": "flags 30",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x1e, expected 0 (reserved)"
+        ],
+        "btfSha256": "7dd60a935b6a2df61f56fcb307fd8cff79dee1ed7600266d604f089b9553c31b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "7dd60a935b6a2df61f56fcb307fd8cff79dee1ed7600266d604f089b9553c31b"
+    },
+    {
+      "label": "flags 31",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x1f, expected 0 (reserved)"
+        ],
+        "btfSha256": "2b302e55b78b5e67b172fa9cbcadb16e1c103919993b75e475f7248e634ae04a",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "2b302e55b78b5e67b172fa9cbcadb16e1c103919993b75e475f7248e634ae04a"
+    },
+    {
+      "label": "flags 32",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x20, expected 0 (reserved)"
+        ],
+        "btfSha256": "b8bfb62558e979eec51c6200f6cc1ae4ad72e69661bc606d890c88beb2e914a4",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "b8bfb62558e979eec51c6200f6cc1ae4ad72e69661bc606d890c88beb2e914a4"
+    },
+    {
+      "label": "flags 33",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x21, expected 0 (reserved)"
+        ],
+        "btfSha256": "7e312f3c6fa907a1840a2a498ce220791a4982e21f3d011e6504f7b88c8cf679",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "7e312f3c6fa907a1840a2a498ce220791a4982e21f3d011e6504f7b88c8cf679"
+    },
+    {
+      "label": "flags 34",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x22, expected 0 (reserved)"
+        ],
+        "btfSha256": "ec8c646c942cb937b5c735ee46a269628c12bb21ab0240386ff9b2e442b4d218",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "ec8c646c942cb937b5c735ee46a269628c12bb21ab0240386ff9b2e442b4d218"
+    },
+    {
+      "label": "flags 35",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x23, expected 0 (reserved)"
+        ],
+        "btfSha256": "7973e0cb220cc507fb974bd14b6bd44514409a9713a159407c835a24d6890327",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "7973e0cb220cc507fb974bd14b6bd44514409a9713a159407c835a24d6890327"
+    },
+    {
+      "label": "flags 36",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x24, expected 0 (reserved)"
+        ],
+        "btfSha256": "446f5ec581662ec042b50181145359607c258e8dd24573f5e991b3c9e81a7c76",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "446f5ec581662ec042b50181145359607c258e8dd24573f5e991b3c9e81a7c76"
+    },
+    {
+      "label": "flags 37",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x25, expected 0 (reserved)"
+        ],
+        "btfSha256": "2dd204f3a181e791c72ee4338c99a6d075a1e8d787b0bf1459ce3d0ee6c2631b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "2dd204f3a181e791c72ee4338c99a6d075a1e8d787b0bf1459ce3d0ee6c2631b"
+    },
+    {
+      "label": "flags 38",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x26, expected 0 (reserved)"
+        ],
+        "btfSha256": "7421180bc6aad8e468ab3ddb4ba4c4aaf87d662e204eafbeeac5b1b46d7c80e1",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "7421180bc6aad8e468ab3ddb4ba4c4aaf87d662e204eafbeeac5b1b46d7c80e1"
+    },
+    {
+      "label": "flags 39",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x27, expected 0 (reserved)"
+        ],
+        "btfSha256": "b3167eca6891e28bc6f3291227a5613332f8cf57806c130969dfca45ac267b4c",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "b3167eca6891e28bc6f3291227a5613332f8cf57806c130969dfca45ac267b4c"
+    },
+    {
+      "label": "flags 40",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x28, expected 0 (reserved)"
+        ],
+        "btfSha256": "42ac27c332bf7650361809f3eca8fb70119b031f7d5fdf61cfc136bf578c6d7e",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "42ac27c332bf7650361809f3eca8fb70119b031f7d5fdf61cfc136bf578c6d7e"
+    },
+    {
+      "label": "flags 41",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x29, expected 0 (reserved)"
+        ],
+        "btfSha256": "bfebc65a88260c323c9fa903d6708639be2bc2595fd214ec8d68fe092ad6ce8e",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "bfebc65a88260c323c9fa903d6708639be2bc2595fd214ec8d68fe092ad6ce8e"
+    },
+    {
+      "label": "flags 42",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x2a, expected 0 (reserved)"
+        ],
+        "btfSha256": "cf6f2e4d33a924cf6e45ee1c9ca1dfcb65ff7b68b488fd9e1e10a052188e4f5f",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "cf6f2e4d33a924cf6e45ee1c9ca1dfcb65ff7b68b488fd9e1e10a052188e4f5f"
+    },
+    {
+      "label": "flags 43",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x2b, expected 0 (reserved)"
+        ],
+        "btfSha256": "22a13ca841850f565aec637c59dbbccbd493af15f6ec47a462b0ae800dfc68d3",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "22a13ca841850f565aec637c59dbbccbd493af15f6ec47a462b0ae800dfc68d3"
+    },
+    {
+      "label": "flags 44",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x2c, expected 0 (reserved)"
+        ],
+        "btfSha256": "0ad4d4d5856a686ed2b83649cd5ffe67ce0a80325aace10efef50785b2a16e90",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "0ad4d4d5856a686ed2b83649cd5ffe67ce0a80325aace10efef50785b2a16e90"
+    },
+    {
+      "label": "flags 45",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x2d, expected 0 (reserved)"
+        ],
+        "btfSha256": "c526cc4869d192ed607a0ee91e365c75eaa7d18ead0de1a6dab57138e9e37604",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "c526cc4869d192ed607a0ee91e365c75eaa7d18ead0de1a6dab57138e9e37604"
+    },
+    {
+      "label": "flags 46",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x2e, expected 0 (reserved)"
+        ],
+        "btfSha256": "46571901d557c48d99f42c2771183f2f0f77463fe635ad805b838bb6689b29e5",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "46571901d557c48d99f42c2771183f2f0f77463fe635ad805b838bb6689b29e5"
+    },
+    {
+      "label": "flags 47",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x2f, expected 0 (reserved)"
+        ],
+        "btfSha256": "a128c90b75a1edee5fabc5f929935be371554895b895294959c1ea1d484f1724",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a128c90b75a1edee5fabc5f929935be371554895b895294959c1ea1d484f1724"
+    },
+    {
+      "label": "flags 48",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x30, expected 0 (reserved)"
+        ],
+        "btfSha256": "da7e128d2df8331c281d833644ef50a604fd4178db8640f7653e21f64daec8fd",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "da7e128d2df8331c281d833644ef50a604fd4178db8640f7653e21f64daec8fd"
+    },
+    {
+      "label": "flags 49",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x31, expected 0 (reserved)"
+        ],
+        "btfSha256": "649e5f00e6c16128274f96cf67af13eb69ccabb3eb833485b7ced3e0db85de4d",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "649e5f00e6c16128274f96cf67af13eb69ccabb3eb833485b7ced3e0db85de4d"
+    },
+    {
+      "label": "flags 50",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x32, expected 0 (reserved)"
+        ],
+        "btfSha256": "603b08bbf0a04512e306cf013a4991882350508ff13b330f6a09b133378c239f",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "603b08bbf0a04512e306cf013a4991882350508ff13b330f6a09b133378c239f"
+    },
+    {
+      "label": "flags 51",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x33, expected 0 (reserved)"
+        ],
+        "btfSha256": "8ad27c5e64dd90d5a728a78bf2c7294b18c18b45f159c48d36773e29253371c3",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8ad27c5e64dd90d5a728a78bf2c7294b18c18b45f159c48d36773e29253371c3"
+    },
+    {
+      "label": "flags 52",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x34, expected 0 (reserved)"
+        ],
+        "btfSha256": "0b2ba406e2455a876bd8ac3affa8b7baae4885007b7bd0b3db4ae0d8593c18a5",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "0b2ba406e2455a876bd8ac3affa8b7baae4885007b7bd0b3db4ae0d8593c18a5"
+    },
+    {
+      "label": "flags 53",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x35, expected 0 (reserved)"
+        ],
+        "btfSha256": "06bc31b724433f57605cc2513672eeaadb9312baa65c6418c1f2d9a11afbf86c",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "06bc31b724433f57605cc2513672eeaadb9312baa65c6418c1f2d9a11afbf86c"
+    },
+    {
+      "label": "flags 54",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x36, expected 0 (reserved)"
+        ],
+        "btfSha256": "ba630522a153881bd0b54748885dbc5a884908d7f45915c5310fa7fee62b2307",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "ba630522a153881bd0b54748885dbc5a884908d7f45915c5310fa7fee62b2307"
+    },
+    {
+      "label": "flags 55",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x37, expected 0 (reserved)"
+        ],
+        "btfSha256": "0d9d177067ddf4e8cf6bf74a7d6e4d1a4b63287e5c0adda5ff13189d5c2e35a8",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "0d9d177067ddf4e8cf6bf74a7d6e4d1a4b63287e5c0adda5ff13189d5c2e35a8"
+    },
+    {
+      "label": "flags 56",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x38, expected 0 (reserved)"
+        ],
+        "btfSha256": "347a227309e8550f764edcb2776d0cec51af128f7ecfd0e0540fc6119e8724ce",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "347a227309e8550f764edcb2776d0cec51af128f7ecfd0e0540fc6119e8724ce"
+    },
+    {
+      "label": "flags 57",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x39, expected 0 (reserved)"
+        ],
+        "btfSha256": "07adf4545a06761a932db79a49582d358f54d222d4f37cd30e8b77fa1f4c1837",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "07adf4545a06761a932db79a49582d358f54d222d4f37cd30e8b77fa1f4c1837"
+    },
+    {
+      "label": "flags 58",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x3a, expected 0 (reserved)"
+        ],
+        "btfSha256": "303495b5ca09d404538a2151511c9558c3b8cfd42b70ed1289b533d89c581c64",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "303495b5ca09d404538a2151511c9558c3b8cfd42b70ed1289b533d89c581c64"
+    },
+    {
+      "label": "flags 59",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x3b, expected 0 (reserved)"
+        ],
+        "btfSha256": "6f75dc33379d37edb01316685d609722c91d54f9798e154955ccf6562175489e",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "6f75dc33379d37edb01316685d609722c91d54f9798e154955ccf6562175489e"
+    },
+    {
+      "label": "flags 60",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x3c, expected 0 (reserved)"
+        ],
+        "btfSha256": "65099fdbde0a7a8d2b3138a7b8ab943eea227b04505e0ac36e9524e0b99d7d1c",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "65099fdbde0a7a8d2b3138a7b8ab943eea227b04505e0ac36e9524e0b99d7d1c"
+    },
+    {
+      "label": "flags 61",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x3d, expected 0 (reserved)"
+        ],
+        "btfSha256": "a37d21bedca2df45cb7a18ff076131a30c96a6c71891fd5877de15fdb52cfcce",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a37d21bedca2df45cb7a18ff076131a30c96a6c71891fd5877de15fdb52cfcce"
+    },
+    {
+      "label": "flags 62",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x3e, expected 0 (reserved)"
+        ],
+        "btfSha256": "a27d2aa965dbecae1bae328a855151f22b0c38371b93bea757e5b191ddbb3cca",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a27d2aa965dbecae1bae328a855151f22b0c38371b93bea757e5b191ddbb3cca"
+    },
+    {
+      "label": "flags 63",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x3f, expected 0 (reserved)"
+        ],
+        "btfSha256": "45799220bf24649e15d224d8d346cee262c1bf8d9bf573e29b501ca53ed5f2bb",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "45799220bf24649e15d224d8d346cee262c1bf8d9bf573e29b501ca53ed5f2bb"
+    },
+    {
+      "label": "flags 64",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x40, expected 0 (reserved)"
+        ],
+        "btfSha256": "e56f9a57e0216a780b5a5f0c8334104e748e5e230e8f3fb5ac661b13d893f897",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "e56f9a57e0216a780b5a5f0c8334104e748e5e230e8f3fb5ac661b13d893f897"
+    },
+    {
+      "label": "flags 65",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x41, expected 0 (reserved)"
+        ],
+        "btfSha256": "a391ae59dd241e9c4ef19f601a2cc6ee87a5b362f90dbdadeaf440aa23c3236a",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a391ae59dd241e9c4ef19f601a2cc6ee87a5b362f90dbdadeaf440aa23c3236a"
+    },
+    {
+      "label": "flags 66",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x42, expected 0 (reserved)"
+        ],
+        "btfSha256": "e27833781a9ce778ae5c90b93f2624827e65e0f9e208779fe145d7f36df10219",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "e27833781a9ce778ae5c90b93f2624827e65e0f9e208779fe145d7f36df10219"
+    },
+    {
+      "label": "flags 67",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x43, expected 0 (reserved)"
+        ],
+        "btfSha256": "16858319392043291f4cb07e1dfb1b6caa48184464b76b3522786ea645d48fba",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "16858319392043291f4cb07e1dfb1b6caa48184464b76b3522786ea645d48fba"
+    },
+    {
+      "label": "flags 68",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x44, expected 0 (reserved)"
+        ],
+        "btfSha256": "1a3bdd26ba25de67fb2f02fd8a55eed2d60850d988216ea07fc9f287ca899c2c",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "1a3bdd26ba25de67fb2f02fd8a55eed2d60850d988216ea07fc9f287ca899c2c"
+    },
+    {
+      "label": "flags 69",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x45, expected 0 (reserved)"
+        ],
+        "btfSha256": "c50635502ea51e8a502ab0f02507ef4bb4938fe4e52fe1b6725461250b6b4dac",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "c50635502ea51e8a502ab0f02507ef4bb4938fe4e52fe1b6725461250b6b4dac"
+    },
+    {
+      "label": "flags 70",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x46, expected 0 (reserved)"
+        ],
+        "btfSha256": "56882a9fb06914bb0f9ad33d5638b2407138dec65ab6815d5493268f3382c160",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "56882a9fb06914bb0f9ad33d5638b2407138dec65ab6815d5493268f3382c160"
+    },
+    {
+      "label": "flags 71",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x47, expected 0 (reserved)"
+        ],
+        "btfSha256": "0c74bd206f96ef7ded1086b002f5ffacf3196f2591946d2747dd4f4ec6f21619",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "0c74bd206f96ef7ded1086b002f5ffacf3196f2591946d2747dd4f4ec6f21619"
+    },
+    {
+      "label": "flags 72",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x48, expected 0 (reserved)"
+        ],
+        "btfSha256": "cf97b8e48ce4fd3a7fe40b49f634fe16855f68c96f14b71e4d0ba79535513930",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "cf97b8e48ce4fd3a7fe40b49f634fe16855f68c96f14b71e4d0ba79535513930"
+    },
+    {
+      "label": "flags 73",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x49, expected 0 (reserved)"
+        ],
+        "btfSha256": "c52b0c9d412bc9304514de121fcce755ab2a30a332761df308d2852f703f9c5f",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "c52b0c9d412bc9304514de121fcce755ab2a30a332761df308d2852f703f9c5f"
+    },
+    {
+      "label": "flags 74",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x4a, expected 0 (reserved)"
+        ],
+        "btfSha256": "87bc19c79ee6aefdc310598ec6aacdff7fecef9ddd703bb7c94bf22b0debdd1e",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "87bc19c79ee6aefdc310598ec6aacdff7fecef9ddd703bb7c94bf22b0debdd1e"
+    },
+    {
+      "label": "flags 75",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x4b, expected 0 (reserved)"
+        ],
+        "btfSha256": "826c65a4dffc4ababa0a700229fdc00b4bb54d16818a5694d82e9fa7a03977a5",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "826c65a4dffc4ababa0a700229fdc00b4bb54d16818a5694d82e9fa7a03977a5"
+    },
+    {
+      "label": "flags 76",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x4c, expected 0 (reserved)"
+        ],
+        "btfSha256": "a5fd802975d50a7573e5ee1bf9c1ed648f8159001b059308b628f2a4dc97fe05",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a5fd802975d50a7573e5ee1bf9c1ed648f8159001b059308b628f2a4dc97fe05"
+    },
+    {
+      "label": "flags 77",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x4d, expected 0 (reserved)"
+        ],
+        "btfSha256": "830bee95f997b747db2b62cf308a6dd67f73ff0d66ac2099a738de1fcf84c469",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "830bee95f997b747db2b62cf308a6dd67f73ff0d66ac2099a738de1fcf84c469"
+    },
+    {
+      "label": "flags 78",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x4e, expected 0 (reserved)"
+        ],
+        "btfSha256": "a558ec12a9fc2ac0027f94642ed056baaabb0a65189f98ae2cc6c21c4310689e",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a558ec12a9fc2ac0027f94642ed056baaabb0a65189f98ae2cc6c21c4310689e"
+    },
+    {
+      "label": "flags 79",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x4f, expected 0 (reserved)"
+        ],
+        "btfSha256": "149402e0b232db70b24ae48813d15c6904dd29ce4d15e4b19c951b3866621f19",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "149402e0b232db70b24ae48813d15c6904dd29ce4d15e4b19c951b3866621f19"
+    },
+    {
+      "label": "flags 80",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x50, expected 0 (reserved)"
+        ],
+        "btfSha256": "8c32f5610f2c7ff41419cb0978104dcd1f92f357724d84d45bbc4220ec408378",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8c32f5610f2c7ff41419cb0978104dcd1f92f357724d84d45bbc4220ec408378"
+    },
+    {
+      "label": "flags 81",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x51, expected 0 (reserved)"
+        ],
+        "btfSha256": "7d41b4b189b0ac0e681fc45ed3004f5c240ccbb4b863e9837b311fe965427e4e",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "7d41b4b189b0ac0e681fc45ed3004f5c240ccbb4b863e9837b311fe965427e4e"
+    },
+    {
+      "label": "flags 82",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x52, expected 0 (reserved)"
+        ],
+        "btfSha256": "08009e8efc5ce96072f5c0a7287acb5f71c6d0983533afb91478a76fefcee91e",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "08009e8efc5ce96072f5c0a7287acb5f71c6d0983533afb91478a76fefcee91e"
+    },
+    {
+      "label": "flags 83",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x53, expected 0 (reserved)"
+        ],
+        "btfSha256": "d86eb943112ca283a6d65492b9ab8cb26abbab82bb0ec4e95c18f912cff43427",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "d86eb943112ca283a6d65492b9ab8cb26abbab82bb0ec4e95c18f912cff43427"
+    },
+    {
+      "label": "flags 84",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x54, expected 0 (reserved)"
+        ],
+        "btfSha256": "f0d5b1aa2938726c9d29b7c8aabc63b27ef45d5f1a82a108e6d470edcbd040b4",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "f0d5b1aa2938726c9d29b7c8aabc63b27ef45d5f1a82a108e6d470edcbd040b4"
+    },
+    {
+      "label": "flags 85",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x55, expected 0 (reserved)"
+        ],
+        "btfSha256": "e70ad338f341c97859a7d05cbeae18e5fcdcdf7482789bb2f1c75fa44fe67abe",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "e70ad338f341c97859a7d05cbeae18e5fcdcdf7482789bb2f1c75fa44fe67abe"
+    },
+    {
+      "label": "flags 86",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x56, expected 0 (reserved)"
+        ],
+        "btfSha256": "08400604c9dabe5598d25ffdefc2b0486f7442e325ecd0f269c0376723973f27",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "08400604c9dabe5598d25ffdefc2b0486f7442e325ecd0f269c0376723973f27"
+    },
+    {
+      "label": "flags 87",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x57, expected 0 (reserved)"
+        ],
+        "btfSha256": "c16da985153b92a860ed17b06d49eb4a0f64e3e8f48b6fdbe4514743986fdefb",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "c16da985153b92a860ed17b06d49eb4a0f64e3e8f48b6fdbe4514743986fdefb"
+    },
+    {
+      "label": "flags 88",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x58, expected 0 (reserved)"
+        ],
+        "btfSha256": "e9301b8df291c9e074375d0e2bc9960deed865db4b37c285db0df1c47c93d532",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "e9301b8df291c9e074375d0e2bc9960deed865db4b37c285db0df1c47c93d532"
+    },
+    {
+      "label": "flags 89",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x59, expected 0 (reserved)"
+        ],
+        "btfSha256": "935c6239ab6e12e5b9ff1a40cbb84e21334d15fbf59894bc72a2b01366926d40",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "935c6239ab6e12e5b9ff1a40cbb84e21334d15fbf59894bc72a2b01366926d40"
+    },
+    {
+      "label": "flags 90",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x5a, expected 0 (reserved)"
+        ],
+        "btfSha256": "4e8ac2ebef7538d30b6fcbbb4aa193e4c40c64e66421462594472bd9df814eff",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "4e8ac2ebef7538d30b6fcbbb4aa193e4c40c64e66421462594472bd9df814eff"
+    },
+    {
+      "label": "flags 91",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x5b, expected 0 (reserved)"
+        ],
+        "btfSha256": "ec0798f4cc7e097ea0b19db95deb0e955a7e64a9d0f4ec14d4cd51b6ed0a3d16",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "ec0798f4cc7e097ea0b19db95deb0e955a7e64a9d0f4ec14d4cd51b6ed0a3d16"
+    },
+    {
+      "label": "flags 92",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x5c, expected 0 (reserved)"
+        ],
+        "btfSha256": "d42de125154589584326e9e387fb2f0d59d7a50e92613087f7ace66feddea259",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "d42de125154589584326e9e387fb2f0d59d7a50e92613087f7ace66feddea259"
+    },
+    {
+      "label": "flags 93",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x5d, expected 0 (reserved)"
+        ],
+        "btfSha256": "a3251633869c517446822b38d53a6c05c07a8af1cd4366966d9d6131125c48d4",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a3251633869c517446822b38d53a6c05c07a8af1cd4366966d9d6131125c48d4"
+    },
+    {
+      "label": "flags 94",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x5e, expected 0 (reserved)"
+        ],
+        "btfSha256": "a076764b35530ed4db683cd2f21cc406e3a9254beafb694b444e59f0f5674f61",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a076764b35530ed4db683cd2f21cc406e3a9254beafb694b444e59f0f5674f61"
+    },
+    {
+      "label": "flags 95",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x5f, expected 0 (reserved)"
+        ],
+        "btfSha256": "e0c6359edd02de8c9d46f92e8ecfff402f4bc36c71115d6d87895afe019a49cf",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "e0c6359edd02de8c9d46f92e8ecfff402f4bc36c71115d6d87895afe019a49cf"
+    },
+    {
+      "label": "flags 96",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x60, expected 0 (reserved)"
+        ],
+        "btfSha256": "8c5819868b8c45dd8df72c33ed157ebb5a126c88f2f4f44dc04b9c70b821980b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8c5819868b8c45dd8df72c33ed157ebb5a126c88f2f4f44dc04b9c70b821980b"
+    },
+    {
+      "label": "flags 97",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x61, expected 0 (reserved)"
+        ],
+        "btfSha256": "1a15c14e476cfac1e44c1a77da47a516be9bf1eb07295f6b375aa115331ae34e",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "1a15c14e476cfac1e44c1a77da47a516be9bf1eb07295f6b375aa115331ae34e"
+    },
+    {
+      "label": "flags 98",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x62, expected 0 (reserved)"
+        ],
+        "btfSha256": "91a149c368fd40b701e570221dbdd19399b3f6237431c59cd79fa6c10afec5e1",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "91a149c368fd40b701e570221dbdd19399b3f6237431c59cd79fa6c10afec5e1"
+    },
+    {
+      "label": "flags 99",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x63, expected 0 (reserved)"
+        ],
+        "btfSha256": "ddea68e81ce7223daec048584dba637ea98e88d908da96dab0bef5b961c69363",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "ddea68e81ce7223daec048584dba637ea98e88d908da96dab0bef5b961c69363"
+    },
+    {
+      "label": "flags 100",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x64, expected 0 (reserved)"
+        ],
+        "btfSha256": "30f9f20f20ab50997f589a0e2152ec70c4ae670d6731019b0a449ec0eb618cd0",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "30f9f20f20ab50997f589a0e2152ec70c4ae670d6731019b0a449ec0eb618cd0"
+    },
+    {
+      "label": "flags 101",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x65, expected 0 (reserved)"
+        ],
+        "btfSha256": "de8e00c557f25fff23d24330fdd7b816d579f41b555b76723ba660bfd4873d34",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "de8e00c557f25fff23d24330fdd7b816d579f41b555b76723ba660bfd4873d34"
+    },
+    {
+      "label": "flags 102",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x66, expected 0 (reserved)"
+        ],
+        "btfSha256": "5fd0ec9504050d354d3de4f9b572d551bae01cbc2f409a9e25def13d3c3828c5",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "5fd0ec9504050d354d3de4f9b572d551bae01cbc2f409a9e25def13d3c3828c5"
+    },
+    {
+      "label": "flags 103",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x67, expected 0 (reserved)"
+        ],
+        "btfSha256": "6271f4e2b650ae0a06f8d79d1fd01b9c28fa9ef933ee8b863fbba2ebfb61b480",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "6271f4e2b650ae0a06f8d79d1fd01b9c28fa9ef933ee8b863fbba2ebfb61b480"
+    },
+    {
+      "label": "flags 104",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x68, expected 0 (reserved)"
+        ],
+        "btfSha256": "a82f546bb05ca95be0f98e7103490050d5545b08097303cd90b0dd6a104bd519",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a82f546bb05ca95be0f98e7103490050d5545b08097303cd90b0dd6a104bd519"
+    },
+    {
+      "label": "flags 105",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x69, expected 0 (reserved)"
+        ],
+        "btfSha256": "80741520e28c1469ffe0c2d517cf1291ec65a6891eec3bbdfddf1533e6e8310a",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "80741520e28c1469ffe0c2d517cf1291ec65a6891eec3bbdfddf1533e6e8310a"
+    },
+    {
+      "label": "flags 106",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x6a, expected 0 (reserved)"
+        ],
+        "btfSha256": "c2716942a6b77dbc6ca1766fe7eec80659ecff8fb5db9938d7d380350300038b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "c2716942a6b77dbc6ca1766fe7eec80659ecff8fb5db9938d7d380350300038b"
+    },
+    {
+      "label": "flags 107",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x6b, expected 0 (reserved)"
+        ],
+        "btfSha256": "19957341a9d141d4dada0834b9a7ed9495e933cee005a0204c81717a4439e90a",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "19957341a9d141d4dada0834b9a7ed9495e933cee005a0204c81717a4439e90a"
+    },
+    {
+      "label": "flags 108",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x6c, expected 0 (reserved)"
+        ],
+        "btfSha256": "dd19460bd1ecdef0c464a51b6a47de5bf2cb6ef85850169b4a35588e69f76b40",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "dd19460bd1ecdef0c464a51b6a47de5bf2cb6ef85850169b4a35588e69f76b40"
+    },
+    {
+      "label": "flags 109",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x6d, expected 0 (reserved)"
+        ],
+        "btfSha256": "08ac4d572a0c314ba7c563917b144f066d9eda606b4ef3b31f420939cd79925c",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "08ac4d572a0c314ba7c563917b144f066d9eda606b4ef3b31f420939cd79925c"
+    },
+    {
+      "label": "flags 110",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x6e, expected 0 (reserved)"
+        ],
+        "btfSha256": "d08b1c201627f4034ee3402247b31239dac71bdcfabfe99cc85b4183199b7cf1",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "d08b1c201627f4034ee3402247b31239dac71bdcfabfe99cc85b4183199b7cf1"
+    },
+    {
+      "label": "flags 111",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x6f, expected 0 (reserved)"
+        ],
+        "btfSha256": "654a1ce5669c09f3b9b69ef267d3618ae7ebeee360228f5cec43a56fb36270a9",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "654a1ce5669c09f3b9b69ef267d3618ae7ebeee360228f5cec43a56fb36270a9"
+    },
+    {
+      "label": "flags 112",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x70, expected 0 (reserved)"
+        ],
+        "btfSha256": "61c4e16853111552b0c7c134273c226e88c517e9dff79255d45d80963b56baf3",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "61c4e16853111552b0c7c134273c226e88c517e9dff79255d45d80963b56baf3"
+    },
+    {
+      "label": "flags 113",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x71, expected 0 (reserved)"
+        ],
+        "btfSha256": "6cce3493010567c8fdb67d679c6d2875337005816a9456b2943ce46dd57ee2c0",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "6cce3493010567c8fdb67d679c6d2875337005816a9456b2943ce46dd57ee2c0"
+    },
+    {
+      "label": "flags 114",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x72, expected 0 (reserved)"
+        ],
+        "btfSha256": "425b3b27a2ff718bdf0a8db721308378ce39128b1f78ea2a42025f79e8fb7ad7",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "425b3b27a2ff718bdf0a8db721308378ce39128b1f78ea2a42025f79e8fb7ad7"
+    },
+    {
+      "label": "flags 115",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x73, expected 0 (reserved)"
+        ],
+        "btfSha256": "2b8f36f381f3632ddc001ca0a76bab90ad2bb54a43cca7e1249941e1929a3655",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "2b8f36f381f3632ddc001ca0a76bab90ad2bb54a43cca7e1249941e1929a3655"
+    },
+    {
+      "label": "flags 116",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x74, expected 0 (reserved)"
+        ],
+        "btfSha256": "5adc6e98c70b78d028ee9f6493b360da4b30acbbd21a5b4c3011a4e7d9f416bc",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "5adc6e98c70b78d028ee9f6493b360da4b30acbbd21a5b4c3011a4e7d9f416bc"
+    },
+    {
+      "label": "flags 117",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x75, expected 0 (reserved)"
+        ],
+        "btfSha256": "cedff78e41d2abe11366d27acf4f19e96ccd6d6f04e375ed35619d490ed55ff1",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "cedff78e41d2abe11366d27acf4f19e96ccd6d6f04e375ed35619d490ed55ff1"
+    },
+    {
+      "label": "flags 118",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x76, expected 0 (reserved)"
+        ],
+        "btfSha256": "b3c41fdccb54a09d93f466fd16a3f251a0b5f188abfd6dd7602fed8e5265db19",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "b3c41fdccb54a09d93f466fd16a3f251a0b5f188abfd6dd7602fed8e5265db19"
+    },
+    {
+      "label": "flags 119",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x77, expected 0 (reserved)"
+        ],
+        "btfSha256": "65162006d107feffe5f4dba1e8170c41036563ff3d57ae15bc62a171188a05e9",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "65162006d107feffe5f4dba1e8170c41036563ff3d57ae15bc62a171188a05e9"
+    },
+    {
+      "label": "flags 120",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x78, expected 0 (reserved)"
+        ],
+        "btfSha256": "26011a5e7c800dd8a6d3eddb7205e1607028d2d62a8720b2089314f67a23c6e2",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "26011a5e7c800dd8a6d3eddb7205e1607028d2d62a8720b2089314f67a23c6e2"
+    },
+    {
+      "label": "flags 121",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x79, expected 0 (reserved)"
+        ],
+        "btfSha256": "8b617435a728998133dbd1872f22a4c426d6476237059eb7ccfc991d2a813f1c",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8b617435a728998133dbd1872f22a4c426d6476237059eb7ccfc991d2a813f1c"
+    },
+    {
+      "label": "flags 122",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x7a, expected 0 (reserved)"
+        ],
+        "btfSha256": "326ff69fb9c66795f1b2b93a2697f51d7fa95788944c6e8b08efbb9722e7d748",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "326ff69fb9c66795f1b2b93a2697f51d7fa95788944c6e8b08efbb9722e7d748"
+    },
+    {
+      "label": "flags 123",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x7b, expected 0 (reserved)"
+        ],
+        "btfSha256": "8592bbb5d9f47a4d6c8a00fb8f65f986c1c450518220bccbe89c2b2c27d65e52",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8592bbb5d9f47a4d6c8a00fb8f65f986c1c450518220bccbe89c2b2c27d65e52"
+    },
+    {
+      "label": "flags 124",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x7c, expected 0 (reserved)"
+        ],
+        "btfSha256": "0d8827783a494a6c63536da7aac76a5089aa059aa18c2062e96e0561f594f386",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "0d8827783a494a6c63536da7aac76a5089aa059aa18c2062e96e0561f594f386"
+    },
+    {
+      "label": "flags 125",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x7d, expected 0 (reserved)"
+        ],
+        "btfSha256": "f030e0ebe3b723e126dc16d693f12851048e95bda1e26d098dde35a96c22646b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "f030e0ebe3b723e126dc16d693f12851048e95bda1e26d098dde35a96c22646b"
+    },
+    {
+      "label": "flags 126",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x7e, expected 0 (reserved)"
+        ],
+        "btfSha256": "e58124657f5804aafbf938bfdbf8c0ba52efd87bee438748f30627865ed5b5ef",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "e58124657f5804aafbf938bfdbf8c0ba52efd87bee438748f30627865ed5b5ef"
+    },
+    {
+      "label": "flags 127",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x7f, expected 0 (reserved)"
+        ],
+        "btfSha256": "cd580abd2ae72f802e5f58814e6249110d0f676d74a69bf4e418354472b56c9a",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "cd580abd2ae72f802e5f58814e6249110d0f676d74a69bf4e418354472b56c9a"
+    },
+    {
+      "label": "flags 128",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x80, expected 0 (reserved)"
+        ],
+        "btfSha256": "e5cf43842da7f9e439f612b82ca6f13d27d6f8414d6a870f2f89a6d9de8ec3d6",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "e5cf43842da7f9e439f612b82ca6f13d27d6f8414d6a870f2f89a6d9de8ec3d6"
+    },
+    {
+      "label": "flags 129",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x81, expected 0 (reserved)"
+        ],
+        "btfSha256": "52f3dc1c2360a5457b1e9fbffb7129fc216ba44bcdb2c6016be90ea13c83c93f",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "52f3dc1c2360a5457b1e9fbffb7129fc216ba44bcdb2c6016be90ea13c83c93f"
+    },
+    {
+      "label": "flags 130",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x82, expected 0 (reserved)"
+        ],
+        "btfSha256": "5211aefe1f1d590c829266984ac853f71f5045bce7a1c055b4db06ac0ae3360c",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "5211aefe1f1d590c829266984ac853f71f5045bce7a1c055b4db06ac0ae3360c"
+    },
+    {
+      "label": "flags 131",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x83, expected 0 (reserved)"
+        ],
+        "btfSha256": "94d4ee313b1807c731db222006a0b9144f2cc53b6cdb7a670241791b4d99b1e2",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "94d4ee313b1807c731db222006a0b9144f2cc53b6cdb7a670241791b4d99b1e2"
+    },
+    {
+      "label": "flags 132",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x84, expected 0 (reserved)"
+        ],
+        "btfSha256": "df2ba42291f111267b473aec8c4b4fc2ff5a70feb68e22bedc3e5a930e5b56c9",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "df2ba42291f111267b473aec8c4b4fc2ff5a70feb68e22bedc3e5a930e5b56c9"
+    },
+    {
+      "label": "flags 133",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x85, expected 0 (reserved)"
+        ],
+        "btfSha256": "60a6a0cb7bdef973fd31977adf63bb2892d3425a4eb20e16efce4fa1b16e167b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "60a6a0cb7bdef973fd31977adf63bb2892d3425a4eb20e16efce4fa1b16e167b"
+    },
+    {
+      "label": "flags 134",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x86, expected 0 (reserved)"
+        ],
+        "btfSha256": "87d3fef92af39f1271e370177bc132e46339a173a321979e6408e6b65afc28df",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "87d3fef92af39f1271e370177bc132e46339a173a321979e6408e6b65afc28df"
+    },
+    {
+      "label": "flags 135",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x87, expected 0 (reserved)"
+        ],
+        "btfSha256": "3af16f298edffcfa910d96c3e926b97fb93f1af245293e4c264a918b272eead6",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "3af16f298edffcfa910d96c3e926b97fb93f1af245293e4c264a918b272eead6"
+    },
+    {
+      "label": "flags 136",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x88, expected 0 (reserved)"
+        ],
+        "btfSha256": "f52b00e61c8f99e431853b3fa7aef80ae7fab1134d0dcd1e0bd968f2ef6395e0",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "f52b00e61c8f99e431853b3fa7aef80ae7fab1134d0dcd1e0bd968f2ef6395e0"
+    },
+    {
+      "label": "flags 137",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x89, expected 0 (reserved)"
+        ],
+        "btfSha256": "ff5dd4debe2d64d68a99e096ffcdc3fd1d8c499cf64ed837302f89422c0b91a3",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "ff5dd4debe2d64d68a99e096ffcdc3fd1d8c499cf64ed837302f89422c0b91a3"
+    },
+    {
+      "label": "flags 138",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x8a, expected 0 (reserved)"
+        ],
+        "btfSha256": "4e3c3bce5c35bb4109db49568916a4c412ceafab70c42ef4327fbee68a01d951",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "4e3c3bce5c35bb4109db49568916a4c412ceafab70c42ef4327fbee68a01d951"
+    },
+    {
+      "label": "flags 139",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x8b, expected 0 (reserved)"
+        ],
+        "btfSha256": "559d78e133df4f09398da0e69c2d611ac02f239f4aa4b90d9c0c8c665f2812bc",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "559d78e133df4f09398da0e69c2d611ac02f239f4aa4b90d9c0c8c665f2812bc"
+    },
+    {
+      "label": "flags 140",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x8c, expected 0 (reserved)"
+        ],
+        "btfSha256": "456a191f1095121f601c6b42829b3223b69b9b7e6e2fc9e0d9363b5691764fb4",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "456a191f1095121f601c6b42829b3223b69b9b7e6e2fc9e0d9363b5691764fb4"
+    },
+    {
+      "label": "flags 141",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x8d, expected 0 (reserved)"
+        ],
+        "btfSha256": "9a4b175e806f04a5b761a439e711f044ad2f27163708aeea1c592127315dd2ec",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "9a4b175e806f04a5b761a439e711f044ad2f27163708aeea1c592127315dd2ec"
+    },
+    {
+      "label": "flags 142",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x8e, expected 0 (reserved)"
+        ],
+        "btfSha256": "044249af2736ebd512376f70b27b19ee64e726785c4068411388a827f06c17de",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "044249af2736ebd512376f70b27b19ee64e726785c4068411388a827f06c17de"
+    },
+    {
+      "label": "flags 143",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x8f, expected 0 (reserved)"
+        ],
+        "btfSha256": "8e19717f7ef2c57bc5435c41c69d6fddc939f9ea28db74967af2036268037f36",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8e19717f7ef2c57bc5435c41c69d6fddc939f9ea28db74967af2036268037f36"
+    },
+    {
+      "label": "flags 144",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x90, expected 0 (reserved)"
+        ],
+        "btfSha256": "8a39307a12dd09cdde7e1bde4dca7a380c839f1e9da2d5acfe29c8aae84759a6",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8a39307a12dd09cdde7e1bde4dca7a380c839f1e9da2d5acfe29c8aae84759a6"
+    },
+    {
+      "label": "flags 145",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x91, expected 0 (reserved)"
+        ],
+        "btfSha256": "921fd4e194478f35a259c228adb254a724fa8e569c959090895aadc220f26476",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "921fd4e194478f35a259c228adb254a724fa8e569c959090895aadc220f26476"
+    },
+    {
+      "label": "flags 146",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x92, expected 0 (reserved)"
+        ],
+        "btfSha256": "44e99cc129fe91d613e8fbe3e2633099a738613f12bdbd8a0d80c5255f00f7fd",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "44e99cc129fe91d613e8fbe3e2633099a738613f12bdbd8a0d80c5255f00f7fd"
+    },
+    {
+      "label": "flags 147",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x93, expected 0 (reserved)"
+        ],
+        "btfSha256": "6c79107a0e825974dff92b837999cd12f8f62a41b51e7d5a17d96035645e3e64",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "6c79107a0e825974dff92b837999cd12f8f62a41b51e7d5a17d96035645e3e64"
+    },
+    {
+      "label": "flags 148",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x94, expected 0 (reserved)"
+        ],
+        "btfSha256": "440037ec42effb2e59010734f9f1a430bd95ef6f06522b2702024090fd2e1422",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "440037ec42effb2e59010734f9f1a430bd95ef6f06522b2702024090fd2e1422"
+    },
+    {
+      "label": "flags 149",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x95, expected 0 (reserved)"
+        ],
+        "btfSha256": "938b556f6e28168bea965de556e0df4d7f7fc66b4a43bbf166d2de320735b4a9",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "938b556f6e28168bea965de556e0df4d7f7fc66b4a43bbf166d2de320735b4a9"
+    },
+    {
+      "label": "flags 150",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x96, expected 0 (reserved)"
+        ],
+        "btfSha256": "c42fd9119d5d2802bd98519c0ef23b5ff2d1d56c5e97b27c2a173d4873251607",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "c42fd9119d5d2802bd98519c0ef23b5ff2d1d56c5e97b27c2a173d4873251607"
+    },
+    {
+      "label": "flags 151",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x97, expected 0 (reserved)"
+        ],
+        "btfSha256": "890ae45899ad2803df5f4b538da4c01a4e058beb9331abdfb95906cd10a69141",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "890ae45899ad2803df5f4b538da4c01a4e058beb9331abdfb95906cd10a69141"
+    },
+    {
+      "label": "flags 152",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x98, expected 0 (reserved)"
+        ],
+        "btfSha256": "248563e82036fded11bc370186ac643a5ddd25bd070d1f75d256231089c6661b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "248563e82036fded11bc370186ac643a5ddd25bd070d1f75d256231089c6661b"
+    },
+    {
+      "label": "flags 153",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x99, expected 0 (reserved)"
+        ],
+        "btfSha256": "abb84569c87fe93958a1d3a992adcc4260be8157cf4af7c5057fadf34a161ffe",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "abb84569c87fe93958a1d3a992adcc4260be8157cf4af7c5057fadf34a161ffe"
+    },
+    {
+      "label": "flags 154",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x9a, expected 0 (reserved)"
+        ],
+        "btfSha256": "e9836c84a3d0dad1dd59b7f8d8a727cce96e1f2179a7b06754d30ebb0a23449b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "e9836c84a3d0dad1dd59b7f8d8a727cce96e1f2179a7b06754d30ebb0a23449b"
+    },
+    {
+      "label": "flags 155",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x9b, expected 0 (reserved)"
+        ],
+        "btfSha256": "aae9cf4487bcd1cbcb8eadd8d269eb9f08f288542baec8a328ddc9d0fb91c06a",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "aae9cf4487bcd1cbcb8eadd8d269eb9f08f288542baec8a328ddc9d0fb91c06a"
+    },
+    {
+      "label": "flags 156",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x9c, expected 0 (reserved)"
+        ],
+        "btfSha256": "8d375436e3ae3d8081345beca1087345268685916c412c8a44e2d3c09a61fbb7",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8d375436e3ae3d8081345beca1087345268685916c412c8a44e2d3c09a61fbb7"
+    },
+    {
+      "label": "flags 157",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x9d, expected 0 (reserved)"
+        ],
+        "btfSha256": "b343c076b51580e4cd326db2e9d1ed3c24ca08b55dbf75ab576855bada01d0e0",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "b343c076b51580e4cd326db2e9d1ed3c24ca08b55dbf75ab576855bada01d0e0"
+    },
+    {
+      "label": "flags 158",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x9e, expected 0 (reserved)"
+        ],
+        "btfSha256": "6f188075a9f88f5d341e88d393d95c921ce4f3084cded8d704db0ebdaac8b479",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "6f188075a9f88f5d341e88d393d95c921ce4f3084cded8d704db0ebdaac8b479"
+    },
+    {
+      "label": "flags 159",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0x9f, expected 0 (reserved)"
+        ],
+        "btfSha256": "4405b17363b3f4c5a36011baca6db2925e04f28af30b9ee50bf2478ba9ac0637",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "4405b17363b3f4c5a36011baca6db2925e04f28af30b9ee50bf2478ba9ac0637"
+    },
+    {
+      "label": "flags 160",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xa0, expected 0 (reserved)"
+        ],
+        "btfSha256": "88dbc101580af95f6c0b94b3e98cee1f5f99d512d2b1ec16fb6bd85bd569d40c",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "88dbc101580af95f6c0b94b3e98cee1f5f99d512d2b1ec16fb6bd85bd569d40c"
+    },
+    {
+      "label": "flags 161",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xa1, expected 0 (reserved)"
+        ],
+        "btfSha256": "5ba8eae5c09dc7c686aad459db1fa638f9a854f578cc7fa9d16c0e7e61832b66",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "5ba8eae5c09dc7c686aad459db1fa638f9a854f578cc7fa9d16c0e7e61832b66"
+    },
+    {
+      "label": "flags 162",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xa2, expected 0 (reserved)"
+        ],
+        "btfSha256": "469c4df8bbda2fb4374a0095e00cf7cd6a79c5e09cbe3f9e41ed47e6acca0c39",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "469c4df8bbda2fb4374a0095e00cf7cd6a79c5e09cbe3f9e41ed47e6acca0c39"
+    },
+    {
+      "label": "flags 163",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xa3, expected 0 (reserved)"
+        ],
+        "btfSha256": "8564ea977cb100ed9984f1e779f59a18f0681f28697be25103f87bb12892e4d0",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8564ea977cb100ed9984f1e779f59a18f0681f28697be25103f87bb12892e4d0"
+    },
+    {
+      "label": "flags 164",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xa4, expected 0 (reserved)"
+        ],
+        "btfSha256": "c6e911c74b60dd1dd582487d0d0bc4292e656636e25cbc43e8120c2717c1d122",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "c6e911c74b60dd1dd582487d0d0bc4292e656636e25cbc43e8120c2717c1d122"
+    },
+    {
+      "label": "flags 165",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xa5, expected 0 (reserved)"
+        ],
+        "btfSha256": "21d107240a163b2be63c606999ad6b4dfa6628eca540311a8edaf6fe62c39556",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "21d107240a163b2be63c606999ad6b4dfa6628eca540311a8edaf6fe62c39556"
+    },
+    {
+      "label": "flags 166",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xa6, expected 0 (reserved)"
+        ],
+        "btfSha256": "1df77248df0c2c8e6d8fe023d1cddfa2fcea5fc40525bf3a42810f98f63ef30d",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "1df77248df0c2c8e6d8fe023d1cddfa2fcea5fc40525bf3a42810f98f63ef30d"
+    },
+    {
+      "label": "flags 167",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xa7, expected 0 (reserved)"
+        ],
+        "btfSha256": "505eeec3c989969d843d005b867669cf8c4ca46bdbbdd365cb172aeb7dfd60dd",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "505eeec3c989969d843d005b867669cf8c4ca46bdbbdd365cb172aeb7dfd60dd"
+    },
+    {
+      "label": "flags 168",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xa8, expected 0 (reserved)"
+        ],
+        "btfSha256": "4a1ffbff470ad4c1974d4e9e3cd52f70bdd1859563251a1422a74149707e7b55",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "4a1ffbff470ad4c1974d4e9e3cd52f70bdd1859563251a1422a74149707e7b55"
+    },
+    {
+      "label": "flags 169",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xa9, expected 0 (reserved)"
+        ],
+        "btfSha256": "1bcefc93f77398ef31fa66837a15e8bcbf78187e115de3ef4131895004c264e1",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "1bcefc93f77398ef31fa66837a15e8bcbf78187e115de3ef4131895004c264e1"
+    },
+    {
+      "label": "flags 170",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xaa, expected 0 (reserved)"
+        ],
+        "btfSha256": "56f65724a897bee19a15ab23e32070ed6c98a469b09e1f14da8b3de6586d19f7",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "56f65724a897bee19a15ab23e32070ed6c98a469b09e1f14da8b3de6586d19f7"
+    },
+    {
+      "label": "flags 171",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xab, expected 0 (reserved)"
+        ],
+        "btfSha256": "07fa8d608373bf995fdd511e7d6498c106d2349e4d3f3af05db624db16c1c7d2",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "07fa8d608373bf995fdd511e7d6498c106d2349e4d3f3af05db624db16c1c7d2"
+    },
+    {
+      "label": "flags 172",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xac, expected 0 (reserved)"
+        ],
+        "btfSha256": "a8dfa56ee5c0d8fead8f7e7b68b60f263be874c6fb0644d3a6088ed96f3f26b5",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a8dfa56ee5c0d8fead8f7e7b68b60f263be874c6fb0644d3a6088ed96f3f26b5"
+    },
+    {
+      "label": "flags 173",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xad, expected 0 (reserved)"
+        ],
+        "btfSha256": "25bccfc1ff842b58c5fbca018a182290b2fbdac311db50aac0e672f8d52640a5",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "25bccfc1ff842b58c5fbca018a182290b2fbdac311db50aac0e672f8d52640a5"
+    },
+    {
+      "label": "flags 174",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xae, expected 0 (reserved)"
+        ],
+        "btfSha256": "dc5ff0aa77bd1009ff22ad0ba6cda40458c3f32a82dcac762a702796320ce499",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "dc5ff0aa77bd1009ff22ad0ba6cda40458c3f32a82dcac762a702796320ce499"
+    },
+    {
+      "label": "flags 175",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xaf, expected 0 (reserved)"
+        ],
+        "btfSha256": "f10d9625e22a49416c68e95915d69b5bf8d4751d627b76b3d729949a6522e91a",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "f10d9625e22a49416c68e95915d69b5bf8d4751d627b76b3d729949a6522e91a"
+    },
+    {
+      "label": "flags 176",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xb0, expected 0 (reserved)"
+        ],
+        "btfSha256": "1850e20d2ecc60dd5da74cd8134b456e022d555acae4a6804caecb8b40d83bbf",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "1850e20d2ecc60dd5da74cd8134b456e022d555acae4a6804caecb8b40d83bbf"
+    },
+    {
+      "label": "flags 177",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xb1, expected 0 (reserved)"
+        ],
+        "btfSha256": "778105ab765379ffd01a559042d6b73f3f8bbe1b6e6354c74063ff786ef68100",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "778105ab765379ffd01a559042d6b73f3f8bbe1b6e6354c74063ff786ef68100"
+    },
+    {
+      "label": "flags 178",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xb2, expected 0 (reserved)"
+        ],
+        "btfSha256": "c3cd37b0aa62220514cc17fb3058c0f3b0527eb9a78ba7f72b410895db912196",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "c3cd37b0aa62220514cc17fb3058c0f3b0527eb9a78ba7f72b410895db912196"
+    },
+    {
+      "label": "flags 179",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xb3, expected 0 (reserved)"
+        ],
+        "btfSha256": "867b6f8bc56f7f1e2197a3199d98bc9c08c7be8ff05b2c90492838623129ce3b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "867b6f8bc56f7f1e2197a3199d98bc9c08c7be8ff05b2c90492838623129ce3b"
+    },
+    {
+      "label": "flags 180",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xb4, expected 0 (reserved)"
+        ],
+        "btfSha256": "4c7d439f2ec85041e65d24da9e8f434b589ecfdb81a12c37e3a9a106badee357",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "4c7d439f2ec85041e65d24da9e8f434b589ecfdb81a12c37e3a9a106badee357"
+    },
+    {
+      "label": "flags 181",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xb5, expected 0 (reserved)"
+        ],
+        "btfSha256": "c01161555ed1e2e80ed7719066e65986b28affb35145b48ecdda2fbcf540886e",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "c01161555ed1e2e80ed7719066e65986b28affb35145b48ecdda2fbcf540886e"
+    },
+    {
+      "label": "flags 182",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xb6, expected 0 (reserved)"
+        ],
+        "btfSha256": "646c063704dea45b03927220c7f83d66d835eb8b34d6194134450721e0acedfc",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "646c063704dea45b03927220c7f83d66d835eb8b34d6194134450721e0acedfc"
+    },
+    {
+      "label": "flags 183",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xb7, expected 0 (reserved)"
+        ],
+        "btfSha256": "b21c0e6b1b6c2ca5e9eda6dabe8f30b60b30e03cb844f6523e4c1acd44297179",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "b21c0e6b1b6c2ca5e9eda6dabe8f30b60b30e03cb844f6523e4c1acd44297179"
+    },
+    {
+      "label": "flags 184",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xb8, expected 0 (reserved)"
+        ],
+        "btfSha256": "7bf583e52dbd0a2d30e1ffda897f26f87125e5f3c0e2b978fdf124ebb371cdd1",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "7bf583e52dbd0a2d30e1ffda897f26f87125e5f3c0e2b978fdf124ebb371cdd1"
+    },
+    {
+      "label": "flags 185",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xb9, expected 0 (reserved)"
+        ],
+        "btfSha256": "17be726b6a3d72bbcc6e8c2078ea9f52e891aecaa87fbda2f055aba9d2f987f7",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "17be726b6a3d72bbcc6e8c2078ea9f52e891aecaa87fbda2f055aba9d2f987f7"
+    },
+    {
+      "label": "flags 186",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xba, expected 0 (reserved)"
+        ],
+        "btfSha256": "d076b2f3b7cdf613ba71e7aca3984e26c54f62933343d77d3e699db62e90637f",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "d076b2f3b7cdf613ba71e7aca3984e26c54f62933343d77d3e699db62e90637f"
+    },
+    {
+      "label": "flags 187",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xbb, expected 0 (reserved)"
+        ],
+        "btfSha256": "04db4254c6ec07925e364f108b7320c3619add752b688053aa1c52eef2a6b728",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "04db4254c6ec07925e364f108b7320c3619add752b688053aa1c52eef2a6b728"
+    },
+    {
+      "label": "flags 188",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xbc, expected 0 (reserved)"
+        ],
+        "btfSha256": "02e349d6be5ccc2253d03944f7da3a1d9ba55f2119100bc99524239ba3e5972e",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "02e349d6be5ccc2253d03944f7da3a1d9ba55f2119100bc99524239ba3e5972e"
+    },
+    {
+      "label": "flags 189",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xbd, expected 0 (reserved)"
+        ],
+        "btfSha256": "3b446952aa2a0bb5c0151cd7810e415b218be8babd0a35e2bed7bb3d8f8f1d52",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "3b446952aa2a0bb5c0151cd7810e415b218be8babd0a35e2bed7bb3d8f8f1d52"
+    },
+    {
+      "label": "flags 190",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xbe, expected 0 (reserved)"
+        ],
+        "btfSha256": "87fb5952476d74c259e0496bed70851b1a830d139c0cac6fdd30e83c2ec34cbe",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "87fb5952476d74c259e0496bed70851b1a830d139c0cac6fdd30e83c2ec34cbe"
+    },
+    {
+      "label": "flags 191",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xbf, expected 0 (reserved)"
+        ],
+        "btfSha256": "203614e6c7f949909835740f1347d3343c436eec78c77aebd791b7a12f2541d5",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "203614e6c7f949909835740f1347d3343c436eec78c77aebd791b7a12f2541d5"
+    },
+    {
+      "label": "flags 192",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xc0, expected 0 (reserved)"
+        ],
+        "btfSha256": "237e191a20a8451b8a32be72ea7e59d99512ba34412a85b92434630fa407bfae",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "237e191a20a8451b8a32be72ea7e59d99512ba34412a85b92434630fa407bfae"
+    },
+    {
+      "label": "flags 193",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xc1, expected 0 (reserved)"
+        ],
+        "btfSha256": "aaae4bd56e7c47276991396f8c2ed7795aaab74cb16af4442de238310d1aeba3",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "aaae4bd56e7c47276991396f8c2ed7795aaab74cb16af4442de238310d1aeba3"
+    },
+    {
+      "label": "flags 194",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xc2, expected 0 (reserved)"
+        ],
+        "btfSha256": "e2809f03f8af14ea4a0cfba0d84778a3391fd23c92ff33bfc5fe6f1ac2a5b289",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "e2809f03f8af14ea4a0cfba0d84778a3391fd23c92ff33bfc5fe6f1ac2a5b289"
+    },
+    {
+      "label": "flags 195",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xc3, expected 0 (reserved)"
+        ],
+        "btfSha256": "48bda6869e36f2fec9915b69bf5232d25de0a92dd965fea5ae596931c27c4bac",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "48bda6869e36f2fec9915b69bf5232d25de0a92dd965fea5ae596931c27c4bac"
+    },
+    {
+      "label": "flags 196",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xc4, expected 0 (reserved)"
+        ],
+        "btfSha256": "6056f3e17535235605f18e7f34178b2717fe2287eee30d99cb7e8105f0a0871a",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "6056f3e17535235605f18e7f34178b2717fe2287eee30d99cb7e8105f0a0871a"
+    },
+    {
+      "label": "flags 197",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xc5, expected 0 (reserved)"
+        ],
+        "btfSha256": "9b228818628c6a553a46f56ede9401025391fb1f1f7497f0a7f973ee418c2193",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "9b228818628c6a553a46f56ede9401025391fb1f1f7497f0a7f973ee418c2193"
+    },
+    {
+      "label": "flags 198",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xc6, expected 0 (reserved)"
+        ],
+        "btfSha256": "dd95ffb523d91e7b31be7c72dcaea78029ae80c00540cee9f32bc4b511d18ce6",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "dd95ffb523d91e7b31be7c72dcaea78029ae80c00540cee9f32bc4b511d18ce6"
+    },
+    {
+      "label": "flags 199",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xc7, expected 0 (reserved)"
+        ],
+        "btfSha256": "2cd6b013c132e7dbbd5b483ef1dcce763cd7b17d494bba97c43e1a7c3def4db3",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "2cd6b013c132e7dbbd5b483ef1dcce763cd7b17d494bba97c43e1a7c3def4db3"
+    },
+    {
+      "label": "flags 200",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xc8, expected 0 (reserved)"
+        ],
+        "btfSha256": "eec3947019960c19ca5b10f4b1a23b19dc879ce228630b072e989bca7ffddfb9",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "eec3947019960c19ca5b10f4b1a23b19dc879ce228630b072e989bca7ffddfb9"
+    },
+    {
+      "label": "flags 201",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xc9, expected 0 (reserved)"
+        ],
+        "btfSha256": "254cc9eb74700dfc6fe28e670a9b7d5e626bc734e5c5c88b845b372fb1e49648",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "254cc9eb74700dfc6fe28e670a9b7d5e626bc734e5c5c88b845b372fb1e49648"
+    },
+    {
+      "label": "flags 202",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xca, expected 0 (reserved)"
+        ],
+        "btfSha256": "1e5665b8d596113be020bdcc6b49083b62b7b0467cca828123f3f867b3403b6a",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "1e5665b8d596113be020bdcc6b49083b62b7b0467cca828123f3f867b3403b6a"
+    },
+    {
+      "label": "flags 203",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xcb, expected 0 (reserved)"
+        ],
+        "btfSha256": "6f5002c9f35f6e1c40a203b7859a2e1e08f40313cb8f5782d258888b5f339420",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "6f5002c9f35f6e1c40a203b7859a2e1e08f40313cb8f5782d258888b5f339420"
+    },
+    {
+      "label": "flags 204",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xcc, expected 0 (reserved)"
+        ],
+        "btfSha256": "f1d94449f1cb171aea769bfad0ce839840e4d061654d9761fbb9d66927d06955",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "f1d94449f1cb171aea769bfad0ce839840e4d061654d9761fbb9d66927d06955"
+    },
+    {
+      "label": "flags 205",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xcd, expected 0 (reserved)"
+        ],
+        "btfSha256": "d03d916f6f2b064daf9fdf0285ed92ee564525819807b560f6c033e8ef3a7700",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "d03d916f6f2b064daf9fdf0285ed92ee564525819807b560f6c033e8ef3a7700"
+    },
+    {
+      "label": "flags 206",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xce, expected 0 (reserved)"
+        ],
+        "btfSha256": "ae5e6527a6adc27995ece1a1a65222c0d65e2308d43b05e9785cb1e13314cbba",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "ae5e6527a6adc27995ece1a1a65222c0d65e2308d43b05e9785cb1e13314cbba"
+    },
+    {
+      "label": "flags 207",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xcf, expected 0 (reserved)"
+        ],
+        "btfSha256": "9c3fb44f76613d6815f125de9b7a4efaca190e15253456552385811d796f102b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "9c3fb44f76613d6815f125de9b7a4efaca190e15253456552385811d796f102b"
+    },
+    {
+      "label": "flags 208",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xd0, expected 0 (reserved)"
+        ],
+        "btfSha256": "ba4b04d0b6f271dba08526b5207c6ac05f370655100e5e8296896a27a0b6dee9",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "ba4b04d0b6f271dba08526b5207c6ac05f370655100e5e8296896a27a0b6dee9"
+    },
+    {
+      "label": "flags 209",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xd1, expected 0 (reserved)"
+        ],
+        "btfSha256": "a239bfdc95d1038d6016351069241878575fad7a120fadf7c84afcc47fe95242",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a239bfdc95d1038d6016351069241878575fad7a120fadf7c84afcc47fe95242"
+    },
+    {
+      "label": "flags 210",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xd2, expected 0 (reserved)"
+        ],
+        "btfSha256": "5c196ad6bdc0904a25462fa88b3c6892e83feda0e897e7857e6ec027807500a9",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "5c196ad6bdc0904a25462fa88b3c6892e83feda0e897e7857e6ec027807500a9"
+    },
+    {
+      "label": "flags 211",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xd3, expected 0 (reserved)"
+        ],
+        "btfSha256": "3cfd0283b3b08e6e90e4c8d5a26a4862be8d4701a171bb1625c85e9f5b745038",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "3cfd0283b3b08e6e90e4c8d5a26a4862be8d4701a171bb1625c85e9f5b745038"
+    },
+    {
+      "label": "flags 212",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xd4, expected 0 (reserved)"
+        ],
+        "btfSha256": "ea90bde457d7fec905c21b15e2096e44a7cc0ab5380d5b0e2c21704e7ede2738",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "ea90bde457d7fec905c21b15e2096e44a7cc0ab5380d5b0e2c21704e7ede2738"
+    },
+    {
+      "label": "flags 213",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xd5, expected 0 (reserved)"
+        ],
+        "btfSha256": "f232de1e0c56d429ba932a3c1df36672ee286b04d390bba5fdc7d4299b846c45",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "f232de1e0c56d429ba932a3c1df36672ee286b04d390bba5fdc7d4299b846c45"
+    },
+    {
+      "label": "flags 214",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xd6, expected 0 (reserved)"
+        ],
+        "btfSha256": "7af12c1fb2ea9dcbb0bd6ee4d6378ce78bfaca5a13c9f5d908437f8302492037",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "7af12c1fb2ea9dcbb0bd6ee4d6378ce78bfaca5a13c9f5d908437f8302492037"
+    },
+    {
+      "label": "flags 215",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xd7, expected 0 (reserved)"
+        ],
+        "btfSha256": "bca102ec496510b6c74939d8479a8c2896c8005936aee448a1e0db154275c777",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "bca102ec496510b6c74939d8479a8c2896c8005936aee448a1e0db154275c777"
+    },
+    {
+      "label": "flags 216",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xd8, expected 0 (reserved)"
+        ],
+        "btfSha256": "f594956368bf40dd80423dde791f63abb65e8163ad6de710e8fdc52fa86099ec",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "f594956368bf40dd80423dde791f63abb65e8163ad6de710e8fdc52fa86099ec"
+    },
+    {
+      "label": "flags 217",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xd9, expected 0 (reserved)"
+        ],
+        "btfSha256": "2d33ed994e31426c33aa46838e0ea545a42c2d489d69b8b82ea72c70a03f2770",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "2d33ed994e31426c33aa46838e0ea545a42c2d489d69b8b82ea72c70a03f2770"
+    },
+    {
+      "label": "flags 218",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xda, expected 0 (reserved)"
+        ],
+        "btfSha256": "07eb459b0c8d045040220406b0f2275720b140174f5327845e9971d6bbaddb64",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "07eb459b0c8d045040220406b0f2275720b140174f5327845e9971d6bbaddb64"
+    },
+    {
+      "label": "flags 219",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xdb, expected 0 (reserved)"
+        ],
+        "btfSha256": "b73cb41f7ba12b55c7c2d6111d3cddfac3a89c884a5c501eca94093c426c6dfb",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "b73cb41f7ba12b55c7c2d6111d3cddfac3a89c884a5c501eca94093c426c6dfb"
+    },
+    {
+      "label": "flags 220",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xdc, expected 0 (reserved)"
+        ],
+        "btfSha256": "a3cf54d9c68a4ba89d76bac98997b8f46aa472d9fdf3caa1f9f19ee6417168a4",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a3cf54d9c68a4ba89d76bac98997b8f46aa472d9fdf3caa1f9f19ee6417168a4"
+    },
+    {
+      "label": "flags 221",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xdd, expected 0 (reserved)"
+        ],
+        "btfSha256": "ceb3966eac33a64d4462b4d0a39b83a302d4c8a8c37390dff05f3d0271239118",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "ceb3966eac33a64d4462b4d0a39b83a302d4c8a8c37390dff05f3d0271239118"
+    },
+    {
+      "label": "flags 222",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xde, expected 0 (reserved)"
+        ],
+        "btfSha256": "4496ce6ba52749d90b7aa4c01c2907f8ab9c0e5051e16105db05b698b8692c33",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "4496ce6ba52749d90b7aa4c01c2907f8ab9c0e5051e16105db05b698b8692c33"
+    },
+    {
+      "label": "flags 223",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xdf, expected 0 (reserved)"
+        ],
+        "btfSha256": "fa32e73c7be7097ccfd2af1a711dc767b7c21e79418c5dc74a7728de33ed237c",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "fa32e73c7be7097ccfd2af1a711dc767b7c21e79418c5dc74a7728de33ed237c"
+    },
+    {
+      "label": "flags 224",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xe0, expected 0 (reserved)"
+        ],
+        "btfSha256": "cc2679f5a02854899877ef1cf043ba7fba3ed2ae3b3bbbc048810ed7f9e37f7e",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "cc2679f5a02854899877ef1cf043ba7fba3ed2ae3b3bbbc048810ed7f9e37f7e"
+    },
+    {
+      "label": "flags 225",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xe1, expected 0 (reserved)"
+        ],
+        "btfSha256": "576eaaf2fb5b92b6cb4e7109a73b6e96729a7fb08a520d5e1f9e8673d839f043",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "576eaaf2fb5b92b6cb4e7109a73b6e96729a7fb08a520d5e1f9e8673d839f043"
+    },
+    {
+      "label": "flags 226",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xe2, expected 0 (reserved)"
+        ],
+        "btfSha256": "210fa5d180046b506a4228daae50a1da6b9e6d736d1aad72f504a9443ae8129f",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "210fa5d180046b506a4228daae50a1da6b9e6d736d1aad72f504a9443ae8129f"
+    },
+    {
+      "label": "flags 227",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xe3, expected 0 (reserved)"
+        ],
+        "btfSha256": "07b11986b242f16c9c737c3952afa1c8f56cd9ac8f30a29a79dfc8a1e6fa0580",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "07b11986b242f16c9c737c3952afa1c8f56cd9ac8f30a29a79dfc8a1e6fa0580"
+    },
+    {
+      "label": "flags 228",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xe4, expected 0 (reserved)"
+        ],
+        "btfSha256": "4498d348e58751da594dee7e32fc0e79c7f72e09fe5c02353e85d3c5e80bed01",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "4498d348e58751da594dee7e32fc0e79c7f72e09fe5c02353e85d3c5e80bed01"
+    },
+    {
+      "label": "flags 229",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xe5, expected 0 (reserved)"
+        ],
+        "btfSha256": "82195c22eeb2d23125cc360b110ff532f403af50e28ae807804ea27bfba8b7c7",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "82195c22eeb2d23125cc360b110ff532f403af50e28ae807804ea27bfba8b7c7"
+    },
+    {
+      "label": "flags 230",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xe6, expected 0 (reserved)"
+        ],
+        "btfSha256": "941560982bb4f3c0c0592e3e23fa5f9253c39de61e93fbc7eaef1fe15d2be3ff",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "941560982bb4f3c0c0592e3e23fa5f9253c39de61e93fbc7eaef1fe15d2be3ff"
+    },
+    {
+      "label": "flags 231",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xe7, expected 0 (reserved)"
+        ],
+        "btfSha256": "a1e97277001ef55cdf71cae085d6923a42103e3dfcd65a8f406006c755b85e79",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "a1e97277001ef55cdf71cae085d6923a42103e3dfcd65a8f406006c755b85e79"
+    },
+    {
+      "label": "flags 232",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xe8, expected 0 (reserved)"
+        ],
+        "btfSha256": "640963421954043164a65f037ebbafe91d409d7a87c6039b7941dff2fcbac75a",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "640963421954043164a65f037ebbafe91d409d7a87c6039b7941dff2fcbac75a"
+    },
+    {
+      "label": "flags 233",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xe9, expected 0 (reserved)"
+        ],
+        "btfSha256": "d90b6b024fa98a62af8c9205ad1d7a620cfb5524c19c40627f50828463e7dab0",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "d90b6b024fa98a62af8c9205ad1d7a620cfb5524c19c40627f50828463e7dab0"
+    },
+    {
+      "label": "flags 234",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xea, expected 0 (reserved)"
+        ],
+        "btfSha256": "6da32b4ce290e016e6ef06e4dce8883a33bb8587cac045ab9de50c509ece4b28",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "6da32b4ce290e016e6ef06e4dce8883a33bb8587cac045ab9de50c509ece4b28"
+    },
+    {
+      "label": "flags 235",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xeb, expected 0 (reserved)"
+        ],
+        "btfSha256": "8935bb7fd92be5cb4cd84a376a664825f98407603bdb6c68cf195298594229a1",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "8935bb7fd92be5cb4cd84a376a664825f98407603bdb6c68cf195298594229a1"
+    },
+    {
+      "label": "flags 236",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xec, expected 0 (reserved)"
+        ],
+        "btfSha256": "27ee903e2df3adc4aaef1d04436b62a13ba4980f11da700b1f9119d7fe4eba75",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "27ee903e2df3adc4aaef1d04436b62a13ba4980f11da700b1f9119d7fe4eba75"
+    },
+    {
+      "label": "flags 237",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xed, expected 0 (reserved)"
+        ],
+        "btfSha256": "2ef5b344f87cde7619bac4388e97b6ca71c16861587459c9540d853e647d823f",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "2ef5b344f87cde7619bac4388e97b6ca71c16861587459c9540d853e647d823f"
+    },
+    {
+      "label": "flags 238",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xee, expected 0 (reserved)"
+        ],
+        "btfSha256": "7f140e606554dfff791e5bf346b09df6a232ac8584ed88ff25bb46b8f64f735d",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "7f140e606554dfff791e5bf346b09df6a232ac8584ed88ff25bb46b8f64f735d"
+    },
+    {
+      "label": "flags 239",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xef, expected 0 (reserved)"
+        ],
+        "btfSha256": "4e7805b4422063b2d155efcb7847aebaf62d8f6f8db0034d24c68279355c6dbd",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "4e7805b4422063b2d155efcb7847aebaf62d8f6f8db0034d24c68279355c6dbd"
+    },
+    {
+      "label": "flags 240",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xf0, expected 0 (reserved)"
+        ],
+        "btfSha256": "15ce7c3f990fccf1a4e4c135fd7ef5a5e9b64a7b423b53c8aa2e1e027c08fc43",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "15ce7c3f990fccf1a4e4c135fd7ef5a5e9b64a7b423b53c8aa2e1e027c08fc43"
+    },
+    {
+      "label": "flags 241",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xf1, expected 0 (reserved)"
+        ],
+        "btfSha256": "d87079f63295479c226b9eb0c26e35a9ed100a67ce69f6501f4a9ee1749dd54b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "d87079f63295479c226b9eb0c26e35a9ed100a67ce69f6501f4a9ee1749dd54b"
+    },
+    {
+      "label": "flags 242",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xf2, expected 0 (reserved)"
+        ],
+        "btfSha256": "dbe457e73772dae8dc84d43fa7010bb5983dabd80b7ff97f242c68e233c21fba",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "dbe457e73772dae8dc84d43fa7010bb5983dabd80b7ff97f242c68e233c21fba"
+    },
+    {
+      "label": "flags 243",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xf3, expected 0 (reserved)"
+        ],
+        "btfSha256": "0f2f5a55c9a639b94da43e04f8d801033057306a7208c266e0cdedaa2fd8d5af",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "0f2f5a55c9a639b94da43e04f8d801033057306a7208c266e0cdedaa2fd8d5af"
+    },
+    {
+      "label": "flags 244",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xf4, expected 0 (reserved)"
+        ],
+        "btfSha256": "584b399023c69cfe7ae9e16a10f453ab83e76b1599d1f51aca1b0d448bd33053",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "584b399023c69cfe7ae9e16a10f453ab83e76b1599d1f51aca1b0d448bd33053"
+    },
+    {
+      "label": "flags 245",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xf5, expected 0 (reserved)"
+        ],
+        "btfSha256": "9d9598ff99e4b402721a92be64f59725d272a932c846472d265d871400d5a785",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "9d9598ff99e4b402721a92be64f59725d272a932c846472d265d871400d5a785"
+    },
+    {
+      "label": "flags 246",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xf6, expected 0 (reserved)"
+        ],
+        "btfSha256": "fb6b4a9fa6771dde7783b81f632bcaf5a874c3741b33c661f13e29275782fdbe",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "fb6b4a9fa6771dde7783b81f632bcaf5a874c3741b33c661f13e29275782fdbe"
+    },
+    {
+      "label": "flags 247",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xf7, expected 0 (reserved)"
+        ],
+        "btfSha256": "216a1972a34cffe4e5749ce4f25540b909b7156c950a87d9aded0eabc66ebd55",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "216a1972a34cffe4e5749ce4f25540b909b7156c950a87d9aded0eabc66ebd55"
+    },
+    {
+      "label": "flags 248",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xf8, expected 0 (reserved)"
+        ],
+        "btfSha256": "9084fb45edcaa2689446dba25fc28aba94c9c1525669b7bab6f2952cba30ed6f",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "9084fb45edcaa2689446dba25fc28aba94c9c1525669b7bab6f2952cba30ed6f"
+    },
+    {
+      "label": "flags 249",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xf9, expected 0 (reserved)"
+        ],
+        "btfSha256": "b1b45fd818ba40964ad19aa13d424c0fef1d27c2d57c4e757326145daeb1b0a2",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "b1b45fd818ba40964ad19aa13d424c0fef1d27c2d57c4e757326145daeb1b0a2"
+    },
+    {
+      "label": "flags 250",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xfa, expected 0 (reserved)"
+        ],
+        "btfSha256": "0899d1ff0207f3be50b480852c67eb6881fb875388602dbc404ab8e2795b3588",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "0899d1ff0207f3be50b480852c67eb6881fb875388602dbc404ab8e2795b3588"
+    },
+    {
+      "label": "flags 251",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xfb, expected 0 (reserved)"
+        ],
+        "btfSha256": "46b58d2e08b5da05611d6251f8ce13aab46c23dd7d730b6cebd36625a3c08f63",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "46b58d2e08b5da05611d6251f8ce13aab46c23dd7d730b6cebd36625a3c08f63"
+    },
+    {
+      "label": "flags 252",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xfc, expected 0 (reserved)"
+        ],
+        "btfSha256": "059fc55903b46b82097cf6f0744987026833f341ab5151ce0380ac77abfd704b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "059fc55903b46b82097cf6f0744987026833f341ab5151ce0380ac77abfd704b"
+    },
+    {
+      "label": "flags 253",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xfd, expected 0 (reserved)"
+        ],
+        "btfSha256": "3177cfdc1ddebb11b85bfd31d3cdd400613f10f04536ef554af7077b986289ee",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "3177cfdc1ddebb11b85bfd31d3cdd400613f10f04536ef554af7077b986289ee"
+    },
+    {
+      "label": "flags 254",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xfe, expected 0 (reserved)"
+        ],
+        "btfSha256": "fabaabb3bb9a4342cae0572c3d1544bb640968bad718820ae8ff9bce811ac99d",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "fabaabb3bb9a4342cae0572c3d1544bb640968bad718820ae8ff9bce811ac99d"
+    },
+    {
+      "label": "flags 255",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF header flags are 0xff, expected 0 (reserved)"
+        ],
+        "btfSha256": "6bb9d23eada13348c5627bd294967fccfad2be1c0de424295e7d5e6e39cafe88",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "6bb9d23eada13348c5627bd294967fccfad2be1c0de424295e7d5e6e39cafe88"
+    },
+    {
+      "label": "info bit 16",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF type 1 has reserved type-info bits set (info 0x1010000)"
+        ],
+        "btfSha256": "363d11a17b2c8650bb447424d5fc2e83d8006b1735e513d68401792f451cebd8",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "363d11a17b2c8650bb447424d5fc2e83d8006b1735e513d68401792f451cebd8"
+    },
+    {
+      "label": "info bit 17",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF type 1 has reserved type-info bits set (info 0x1020000)"
+        ],
+        "btfSha256": "3582d3f97d62fcef08f89d0ad5f49572a030bef66d63cbaab67009825bb5dace",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "3582d3f97d62fcef08f89d0ad5f49572a030bef66d63cbaab67009825bb5dace"
+    },
+    {
+      "label": "info bit 18",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF type 1 has reserved type-info bits set (info 0x1040000)"
+        ],
+        "btfSha256": "07fa073fd66b139d2113530d42cfbabf591d79aab06a9a8aad36ef0940a6cce7",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "07fa073fd66b139d2113530d42cfbabf591d79aab06a9a8aad36ef0940a6cce7"
+    },
+    {
+      "label": "info bit 19",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF type 1 has reserved type-info bits set (info 0x1080000)"
+        ],
+        "btfSha256": "88de07f9f3ea681c3a8b70dc79e2ea1d370e98e00a08e144db33a24204d69d31",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "88de07f9f3ea681c3a8b70dc79e2ea1d370e98e00a08e144db33a24204d69d31"
+    },
+    {
+      "label": "info bit 20",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF type 1 has reserved type-info bits set (info 0x1100000)"
+        ],
+        "btfSha256": "d6a917d1e2640ab866e6a546b4bac4c0978d1f0bdd9605e79d909d6940a7296b",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "d6a917d1e2640ab866e6a546b4bac4c0978d1f0bdd9605e79d909d6940a7296b"
+    },
+    {
+      "label": "info bit 21",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF type 1 has reserved type-info bits set (info 0x1200000)"
+        ],
+        "btfSha256": "3be6ab921d48e716a674162e423679b3e7c5004851a7aee9df5f9b5584853022",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "3be6ab921d48e716a674162e423679b3e7c5004851a7aee9df5f9b5584853022"
+    },
+    {
+      "label": "info bit 22",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF type 1 has reserved type-info bits set (info 0x1400000)"
+        ],
+        "btfSha256": "06d2ed221a6825fd04d3df15c02831906863c4b11d701cb5b7eeccf32b62eeef",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "06d2ed221a6825fd04d3df15c02831906863c4b11d701cb5b7eeccf32b62eeef"
+    },
+    {
+      "label": "info bit 23",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF type 1 has reserved type-info bits set (info 0x1800000)"
+        ],
+        "btfSha256": "053978600e8fdb78b46cf764ba945078482d88493d7f13e93e779401bebc13da",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "053978600e8fdb78b46cf764ba945078482d88493d7f13e93e779401bebc13da"
+    },
+    {
+      "label": "info bit 29",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF type 1 has reserved type-info bits set (info 0x21000000)"
+        ],
+        "btfSha256": "bc9ed92c33ee22b30719280a79402bda48c48c6f95604bd26b5538cf52d6873f",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "bc9ed92c33ee22b30719280a79402bda48c48c6f95604bd26b5538cf52d6873f"
+    },
+    {
+      "label": "info bit 30",
+      "result": {
+        "ok": false,
+        "reasons": [
+          "kernel BTF unreadable: BTF type 1 has reserved type-info bits set (info 0x41000000)"
+        ],
+        "btfSha256": "d427d124a7f26f92b709a554d4ca365f1945634f43dd0887bbee2834642990b6",
+        "btfBytes": 1004,
+        "typeCount": 0,
+        "enumKind": null,
+        "ids": {},
+        "missing": []
+      },
+      "btfSha256": "d427d124a7f26f92b709a554d4ca365f1945634f43dd0887bbee2834642990b6"
+    }
+  ]
+}
