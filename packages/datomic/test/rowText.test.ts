@@ -56,7 +56,8 @@ it("round trips 10,000 random live rows exactly like the tagged row codec", () =
             : { type: "number", value: i % 2 ? 0 : Number.MIN_VALUE },
       ),
     );
-    expect(decodeRowText(encodeRowText(row))).toEqual(decodeRow(encodeRow(row)));
+    for (const version of ["1", "2"] as const)
+      expect(decodeRowText(encodeRowText(row, version))).toEqual(decodeRow(encodeRow(row)));
   }
 });
 it("uses every accepted row-compatible codec vector and rejects invalid domains", () => {
@@ -92,7 +93,8 @@ it("uses every accepted row-compatible codec vector and rejects invalid domains"
               : { type: "string", value: tag.v as string },
         ),
       };
-      expect(decodeRowText(encodeRowText(row))).toEqual(decodeRow(encodeRow(row)));
+      for (const version of ["1", "2"] as const)
+      expect(decodeRowText(encodeRowText(row, version))).toEqual(decodeRow(encodeRow(row)));
     }
   }
   for (const value of [Infinity, NaN])
@@ -131,7 +133,8 @@ it("round trips every value family and preserves decoder rejection", () => {
   ] as const;
   for (const value of values) {
     const row = { ...base(), ...packValue(value as Parameters<typeof packValue>[0]) };
-    expect(decodeRowText(encodeRowText(row))).toEqual(decodeRow(encodeRow(row)));
+    for (const version of ["1", "2"] as const)
+      expect(decodeRowText(encodeRowText(row, version))).toEqual(decodeRow(encodeRow(row)));
   }
   for (const patch of [
     { value_type: "number", value_number: -0 },
@@ -151,5 +154,19 @@ it("round trips every value family and preserves decoder rejection", () => {
     const row = { ...base(), ...patch } as TripleRow;
     expect(() => decodeRow(encodeRow(row))).toThrow();
     expect(() => encodeRowText(row)).toThrow();
+  }
+});
+
+// [DX-B3-M1] Why: the transactor patches only the fixed-width position, including journal values.
+// Rejected: parsing and serializing row JSON inside the transactor.
+it("patches the position digits without changing the row body", () => {
+  for (const attribute of [":a", ":_tx/position"]) {
+    const row = { ...base(), attribute, value_number: 1 };
+    const text = encodeRowText(row);
+    const offset = text.indexOf('["') + 2;
+    expect(text.slice(offset, offset + 16)).toBe("0000000000000001");
+    const decoded = decodeRowText(text.slice(0, offset) + "0000000000000123" + text.slice(offset + 16));
+    expect(decoded.recorded_position).toBe(123);
+    expect(decoded.value_number).toBe(attribute === ":_tx/position" ? 123 : 1);
   }
 });
