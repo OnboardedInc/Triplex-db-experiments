@@ -19,6 +19,9 @@ import type { Rule as ConstraintRule, ViolationAt } from "../Constraint.js";
  * StorageAdapterService - Backend-agnostic storage primitives
  */
 export interface StorageAdapterService {
+  /** Optional exact-snapshot policy, propagated to public repository reads. */
+  readonly snapshotReadPolicy?: import("./ReadSurface.js").SnapshotReadPolicy;
+  readonly valueDomain?: import("../ValueDomain.js").ValueDomain;
   /** Omitted adapters retain the original seven-family contract. */
   readonly supportedValueTypes?: readonly ValueType[];
   /** Optional server-side equivalent of Constraint.newlyViolated. Undefined requests the portable fallback. */

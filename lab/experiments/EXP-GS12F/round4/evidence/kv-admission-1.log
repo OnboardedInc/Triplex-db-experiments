@@ -1,0 +1,62 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/packages/core
+
+ ❯ test/kv/layers/value-admission.test.ts (0 test)
+
+⎯⎯⎯⎯⎯⎯ Failed Suites 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/kv/layers/value-admission.test.ts [ test/kv/layers/value-admission.test.ts ]
+Error: Schema validation failed
+ ❯ runSync ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/SchemaParser.ts:1136:9
+ ❯ Function.make ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/SchemaParser.ts:1161:12
+ ❯ Object.transactionId src/Branded.ts:64:47
+     62|   attribute: (s: string) => Schema.decodeSync(Attribute)(s),
+     63|   databaseId: (s: string) => DatabaseId.make(s),
+     64|   transactionId: (s: string) => TransactionId.make(s),
+       |                                               ^
+     65| };
+     66|
+ ❯ test/kv/layers/value-admission.test.ts:11:82
+
+{
+  '~effect/SchemaIssue/Issue': '~effect/SchemaIssue/Issue',
+  _tag: 'Composite',
+  ast: {
+    '~effect/Schema': '~effect/Schema',
+    annotations: undefined,
+    checks: [ [Object], [Object] ],
+    encoding: undefined,
+    context: undefined,
+    _tag: 'String',
+    constructor: 'Function<String>',
+    getParser: 'Function<getParser>',
+    matchPart: 'Function<matchPart>',
+    getExpected: 'Function<getExpected>',
+    toString: 'Function<toString>'
+  },
+  issues: [
+    {
+      '~effect/SchemaIssue/Issue': '~effect/SchemaIssue/Issue',
+      _tag: 'Filter',
+      filter: [Object],
+      issue: [Object],
+      constructor: 'Function<Filter>'
+    }
+  ],
+  constructor: 'Function<Composite>',
+  name: 'Caused by',
+  stacks: []
+}
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { '~effect/SchemaIssue/Issue': '~effect/SchemaIssue/Issue', _tag: 'Composite', ast: { '~effect/Schema': '~effect/Schema', annotations: undefined, checks: [ { _tag: 'Filter', run: 'Function<anonymous>', annotations: { expected: 'a value with a length of at least 1', representation: { id: 'effect/schema/isMinLength', payload: { minLength: 1 } }, toJsonSchema: 'Function<toJsonSchema>', toCode: 'Function<toCode>', '~structural': true, arbitraryConstraint: { minLength: 1 } }, aborted: false, constructor: 'Function<Filter>', annotate: 'Function<annotate>', abort: 'Function<abort>', and: 'Function<and>', pipe: 'Function<pipe>' }, { _tag: 'Filter', run: 'Function<anonymous>', annotations: { expected: 'a string matching the RegExp ^_tx\/[0-9A-Z]{26}$', representation: { id: 'effect/schema/isPattern', payload: { source: '^_tx\/[0-9A-Z]{26}$', flags: '' } }, toJsonSchema: 'Function<toJsonSchema>', arbitraryConstraint: { patterns: [ { source: '^_tx\/[0-9A-Z]{26}$', flags: '' } ] }, toCode: 'Function<toCode>' }, aborted: false, constructor: 'Function<Filter>', annotate: 'Function<annotate>', abort: 'Function<abort>', and: 'Function<and>', pipe: 'Function<pipe>' } ], encoding: undefined, context: undefined, _tag: 'String', constructor: 'Function<String>', getParser: 'Function<getParser>', matchPart: 'Function<matchPart>', getExpected: 'Function<getExpected>', toString: 'Function<toString>' }, issues: [ { '~effect/SchemaIssue/Issue': '~effect/SchemaIssue/Issue', _tag: 'Filter', filter: { _tag: 'Filter', run: 'Function<anonymous>', annotations: { expected: 'a string matching the RegExp ^_tx\/[0-9A-Z]{26}$', representation: { id: 'effect/schema/isPattern', payload: { source: '^_tx\/[0-9A-Z]{26}$', flags: '' } }, toJsonSchema: 'Function<toJsonSchema>', arbitraryConstraint: { patterns: [ { source: '^_tx\/[0-9A-Z]{26}$', flags: '' } ] }, toCode: 'Function<toCode>' }, aborted: false, constructor: 'Function<Filter>', annotate: 'Function<annotate>', abort: 'Function<abort>', and: 'Function<and>', pipe: 'Function<pipe>' }, issue: { '~effect/SchemaIssue/Issue': '~effect/SchemaIssue/Issue', _tag: 'InvalidValue', annotations: undefined, constructor: 'Function<InvalidValue>' }, constructor: 'Function<Filter>' } ] }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  no tests
+   Start at  22:45:21
+   Duration  234ms (worker 98%, environment 2%)
+

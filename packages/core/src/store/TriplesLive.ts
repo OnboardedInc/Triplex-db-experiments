@@ -10,6 +10,13 @@
  * The same service owns storage mutations and query execution.
  */
 
+import {
+  decodeValueColumns,
+  storedValueDomain,
+  ValueDomains,
+  type ValueDomain,
+} from "../ValueDomain.js";
+import { withValidAssertValues } from "./validateValues.js";
 import { Effect, Layer, Option } from "effect";
 import {
   Triples,
@@ -19,6 +26,7 @@ import {
   type QueryOptions,
   type PagedQueryOptions,
 } from "./Triples.js";
+import { createReadConstructor, exactReadService } from "../storage/ReadSurface.js";
 import { StorageAdapter } from "../storage/StorageAdapter.js";
 import { QueryExecutor } from "../storage/QueryExecutor.js";
 import type {
@@ -31,13 +39,12 @@ import type {
   TransactOp,
 } from "../Triple.js";
 import { queryToPattern } from "../Triple.js";
-import { integer } from "../Value.js";
 import type { Pattern } from "../types/Pattern.js";
 import type { DatalogQuery, WrappedQuery } from "../datalog/types.js";
 import { validateDatalogQuery, validateWrappedQuery } from "../datalog/validation.js";
 import {
+  InvalidTripleError,
   WriteError,
-  UnsupportedValueTypeError,
   ReadError,
   DatalogError,
   DatalogValidationError,
@@ -47,7 +54,7 @@ import {
   ConstraintViolationError,
   PaginationCursorError,
 } from "../errors/index.js";
-import { unsafe } from "../Branded.js";
+import { unsafe, type TransactionId } from "../Branded.js";
 import * as Constraint from "../Constraint.js";
 import { TripleStoreRuntime } from "./TripleStoreRuntime.js";
 import {
@@ -66,7 +73,7 @@ import {
   reservedAssertError,
   reservedWriteError,
 } from "./systemNamespace.js";
-import { resolveTemporalBasis } from "../Temporal.js";
+import { resolveTemporalBasis, type ResolvedTemporalBasis } from "../Temporal.js";
 import { TxAttributes } from "../utils/id.js";
 import { finishPagination, preparePagination, wrapDatalogQuery } from "../Pagination.js";
 import { transactionsForEntity } from "./entityTransactionHistory.js";
@@ -76,72 +83,48 @@ import { encodeEntityPageCursor, prepareEntityPage } from "../EntityPage.js";
 // Row to Triple Conversion
 // =============================================================================
 
-const rowToTriple = (row: TripleRow): Triple => {
-  let value: Triple["value"];
-  switch (row.value_type) {
-    case "string":
-      value = { type: "string", value: row.value_string ?? "" };
-      break;
-    case "number":
-      value = { type: "number", value: Number(row.value_number ?? 0) };
-      break;
-    case "integer":
-      value = integer(row.value_string!);
-      break;
-    case "boolean":
-      value = { type: "boolean", value: row.value_boolean === 1 };
-      break;
-    case "datetime":
-      value = { type: "datetime", value: Number(row.value_datetime ?? 0) };
-      break;
-    case "ref":
-      value = { type: "ref", value: unsafe.entityId(row.value_string ?? "") };
-      break;
-    case "json":
-      value = { type: "json", value: row.value_json ? JSON.parse(row.value_json) : null };
-      break;
-    case "blob": {
-      const meta = row.value_json ? JSON.parse(row.value_json) : {};
-      value = {
-        type: "blob",
-        value: row.value_string ?? "",
-        mimeType: meta.mimeType ?? "application/octet-stream",
-        size: meta.size ?? 0,
-        ...(meta.filename !== undefined && { filename: meta.filename }),
-      };
-      break;
-    }
-    default:
-      value = { type: "string", value: "" };
-  }
+const rowDecoder =
+  (domain: ValueDomain) =>
+  (row: TripleRow): Triple => {
+    const value = decodeValueColumns(row, storedValueDomain(domain, row.attribute));
 
-  return {
-    id: row.id as TripleId,
-    entityId: row.entity_id as EntityId,
-    attribute: row.attribute as Attribute,
-    value,
-    recordedAt: Number(row.recorded_at),
-    validFrom: Number(row.valid_from),
-    validTo: row.valid_to !== null ? Option.some(Number(row.valid_to)) : Option.none(),
-    createdBy: row.created_by ? Option.some(row.created_by) : Option.none(),
-    retractedAt: row.retracted_at !== null ? Option.some(Number(row.retracted_at)) : Option.none(),
-    entityType: row.entity_type ? Option.some(row.entity_type) : Option.none(),
-    schemaVersion: row.schema_version ? Option.some(row.schema_version) : Option.none(),
-    txId: row.tx_id ? Option.some(unsafe.transactionId(row.tx_id)) : Option.none(),
-    retractTxId: row.retract_tx_id
-      ? Option.some(unsafe.transactionId(row.retract_tx_id))
-      : Option.none(),
+    return {
+      id: row.id as TripleId,
+      entityId: row.entity_id as EntityId,
+      attribute: row.attribute as Attribute,
+      value,
+      recordedAt: Number(row.recorded_at),
+      validFrom: Number(row.valid_from),
+      validTo: row.valid_to !== null ? Option.some(Number(row.valid_to)) : Option.none(),
+      createdBy: row.created_by ? Option.some(row.created_by) : Option.none(),
+      retractedAt:
+        row.retracted_at !== null ? Option.some(Number(row.retracted_at)) : Option.none(),
+      entityType: row.entity_type ? Option.some(row.entity_type) : Option.none(),
+      schemaVersion: row.schema_version ? Option.some(row.schema_version) : Option.none(),
+      txId: row.tx_id ? Option.some(unsafe.transactionId(row.tx_id)) : Option.none(),
+      retractTxId: row.retract_tx_id
+        ? Option.some(unsafe.transactionId(row.retract_tx_id))
+        : Option.none(),
+    };
   };
-};
 
 // =============================================================================
 // Triples Layer using StorageAdapter + QueryExecutor
 // =============================================================================
 
-export const TriplesLive = Layer.effect(
-  Triples,
-  Effect.gen(function* () {
+const readConstructor = createReadConstructor();
+export const isTriplesRead = readConstructor.isRead;
+
+const makeTriplesServices = Effect.gen(function* () {
     const adapter = yield* StorageAdapter;
+    const fallbackDomain = adapter.supportedValueTypes?.includes("integer")
+      ? ValueDomains.memory
+      : ValueDomains.sqlite;
+    const valueDomain = adapter.valueDomain ?? {
+      ...fallbackDomain,
+      kinds: adapter.supportedValueTypes ?? fallbackDomain.kinds,
+    };
+    const rowToTriple = rowDecoder(valueDomain);
     const executor = yield* QueryExecutor;
     const runtime = yield* TripleStoreRuntime;
     const now = runtime.now;
@@ -155,7 +138,7 @@ export const TriplesLive = Layer.effect(
     // Write Operations
     // =========================================================================
 
-    const assert_ = (input: TripleInput): Effect.Effect<Triple, WriteError> =>
+    const assert_ = (input: TripleInput): Effect.Effect<Triple, WriteError | InvalidTripleError> =>
       transact([
         {
           op: "assert",
@@ -170,7 +153,7 @@ export const TriplesLive = Layer.effect(
       ]).pipe(
         Effect.map((result) => result.triples[0]!),
         Effect.mapError((cause) =>
-          cause instanceof WriteError
+          cause instanceof WriteError || cause instanceof InvalidTripleError
             ? cause
             : new WriteError({ message: "Failed to assert triple", cause }),
         ),
@@ -178,7 +161,7 @@ export const TriplesLive = Layer.effect(
 
     const assertBatch = (
       inputs: readonly TripleInput[],
-    ): Effect.Effect<readonly Triple[], WriteError> => {
+    ): Effect.Effect<readonly Triple[], WriteError | InvalidTripleError> => {
       if (inputs.length === 0) return Effect.succeed([]);
 
       return transact(
@@ -195,7 +178,7 @@ export const TriplesLive = Layer.effect(
       ).pipe(
         Effect.map((result) => result.triples),
         Effect.mapError((cause) =>
-          cause instanceof WriteError
+          cause instanceof WriteError || cause instanceof InvalidTripleError
             ? cause
             : new WriteError({ message: "Failed to assert triple batch", cause }),
         ),
@@ -260,6 +243,7 @@ export const TriplesLive = Layer.effect(
       | TransactionConflictError
       | CommandAlreadyCommittedError
       | ConstraintViolationError
+      | InvalidTripleError
     > =>
       Effect.flatMap(
         Effect.try({
@@ -268,24 +252,11 @@ export const TriplesLive = Layer.effect(
             // Internal authorization symbols are capabilities, not serialized data.
             meta: meta === undefined ? undefined : { ...meta, ...structuredClone(meta) },
           }),
-          catch: (cause) =>
-            new WriteError({ message: "Cannot snapshot transaction command", cause }),
+        catch: (cause) => new WriteError({ message: "Cannot snapshot transaction command", cause }),
         }),
         ({ operations, meta }) =>
           adapter.withTransaction(
             Effect.gen(function* () {
-              const unsupportedValue = operations.find(
-                (operation) =>
-                  operation.op === "assert" &&
-                  !(
-                    adapter.supportedValueTypes?.includes(operation.value.type) ??
-                    operation.value.type !== "integer"
-                  ),
-              );
-              if (unsupportedValue?.op === "assert")
-                return yield* Effect.fail(
-                  new UnsupportedValueTypeError("storage adapter", unsupportedValue.value.type),
-                );
               if (!isSystemWriteAuthorized(meta)) {
                 const reserved = reservedAssertError(operations);
                 if (reserved) return yield* Effect.fail(reserved);
@@ -520,7 +491,7 @@ export const TriplesLive = Layer.effect(
             }),
             { replaySafe: true },
           ),
-      );
+      ).pipe((effect) => withValidAssertValues(operations, effect, valueDomain));
 
     const retract = (id: TripleId): Effect.Effect<void, WriteError> =>
       transact([{ op: "retract", id }]).pipe(
@@ -631,10 +602,14 @@ export const TriplesLive = Layer.effect(
         return rows.map(rowToTriple);
       });
 
-    const transaction: TriplesService["transaction"] = (txId) =>
+    // [EXP-P2Q] Why: both the journal index and envelope must use the named snapshot cut.
+    // Rejected: loading indexed envelopes at latest (a later metadata retirement changes an old page).
+    const transactionAtBasis = (txId: TransactionId, basis?: ResolvedTemporalBasis) =>
       adapter
-        .query({ entityId: unsafe.entityId(txId), entityType: "_Transaction" })
+        .query({ entityId: unsafe.entityId(txId), entityType: "_Transaction" }, basis)
         .pipe(Effect.map((rows) => transactionRecordFromTriples(txId, rows.map(rowToTriple))));
+
+    const transaction: TriplesService["transaction"] = (txId) => transactionAtBasis(txId);
 
     const transactionByCommand: TriplesService["transactionByCommand"] = (commandId) =>
       adapter
@@ -676,7 +651,18 @@ export const TriplesLive = Layer.effect(
 
     const entityTransactions: TriplesService["transactionsForEntity"] = (entityId, request) =>
       transactionsForEntity(
-        { currentPosition: adapter.currentCommitPosition, query: queryAll, transaction },
+        {
+          currentPosition: adapter.currentCommitPosition,
+          query: queryAll,
+          queryAtPosition: (query, recordedPosition) =>
+            Effect.gen(function* () {
+              const validAt = yield* now;
+              return yield* executor.execute(query, false, { validAt, recordedPosition });
+            }),
+          transaction,
+          transactionAtPosition: (txId, recordedPosition) =>
+          Effect.flatMap(now, (validAt) => transactionAtBasis(txId, { validAt, recordedPosition })),
+        },
         entityId,
         request,
       );
@@ -761,33 +747,54 @@ export const TriplesLive = Layer.effect(
         Effect.withSpan("triples.explainPage"),
       );
 
-    return {
-      assert: assert_,
-      assertBatch,
-      retract,
-      retractByPattern,
-      transact,
-      get,
-      entity,
-      entities,
-      entityPage,
-      match,
-      history,
-      transaction,
-      transactionByCommand,
-      transactions,
-      transactionsForEntity: entityTransactions,
-      currentPosition: adapter.currentCommitPosition,
-      dependencyState: (attributes, basis) =>
+  const implicit = () => undefined;
+  const reads = readConstructor.snapshot({
+    get: { run: get, basis: implicit, rawHistory: false },
+    entity: { run: entity, basis: implicit, rawHistory: false },
+    entities: { run: entities, basis: implicit, rawHistory: false },
+    entityPage: { run: entityPage, basis: implicit, rawHistory: false },
+    match: { run: match, basis: implicit, rawHistory: false },
+    history: { run: history, basis: implicit, rawHistory: true },
+    transaction: { run: transaction, basis: implicit, rawHistory: false },
+    transactionByCommand: { run: transactionByCommand, basis: implicit, rawHistory: false },
+    transactions: { run: transactions, basis: implicit, rawHistory: false },
+    query: { run: query, basis: implicit, rawHistory: false },
+    queryPage: { run: queryPage, basis: implicit, rawHistory: false },
+    queryAll: { run: queryAll, basis: implicit, rawHistory: false },
+    transactionsForEntity: {
+      run: entityTransactions,
+      basis: (_entityId: unknown, request?: { snapshotPosition?: number }) =>
+        request?.snapshotPosition === undefined ? undefined : { validAt: 0, recordedPosition: request.snapshotPosition },
+      rawHistory: false,
+    },
+    dependencyState: {
+      run: (attributes: Parameters<TriplesService["dependencyState"]>[0], basis?: Parameters<TriplesService["dependencyState"]>[1]) =>
         Effect.gen(function* () {
           const resolved = resolveTemporalBasis(basis, yield* now);
           return yield* adapter.dependencyState(attributes, resolved);
         }),
-      query,
-      queryPage,
-      queryAll,
+      basis: implicit, rawHistory: false,
+    },
+  }, adapter.snapshotReadPolicy ?? { wrap: (effect) => effect });
+  reads satisfies Omit<TriplesService,
+    "assert" | "assertBatch" | "retract" | "retractByPattern" | "transact" |
+    "currentPosition" | "explain" | "explainPage">;
+  const service = exactReadService<TriplesService>()({
+    ...reads,
+    assert: assert_,
+    assertBatch,
+    retract,
+    retractByPattern,
+    transact,
+    currentPosition: adapter.currentCommitPosition,
       explain,
       explainPage,
-    } satisfies TriplesService;
-  }),
+  });
+  return { reads, service };
+});
+
+export type TriplesConstructedReads = Effect.Success<typeof makeTriplesServices>["reads"];
+export const TriplesLive = Layer.effect(
+  Triples,
+  Effect.map(makeTriplesServices, ({ service }) => service),
 );

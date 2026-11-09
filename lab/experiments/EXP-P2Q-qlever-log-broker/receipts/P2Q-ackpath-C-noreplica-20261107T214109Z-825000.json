@@ -1,0 +1,49 @@
+{
+  "format": "p2q-receipt/1",
+  "id": "P2Q-ackpath-C-noreplica-20261107T214109Z-825000",
+  "kind": "ackpath-C-noreplica",
+  "writtenAt": "2026-11-07T21:41:09.932Z",
+  "mode": "ackpath",
+  "slot": "dev",
+  "startedAt": "2026-11-07T21:41:09.254Z",
+  "identity": {
+    "gitHead": "4d0430ac638f00e297402f19a2f3a8518307547e",
+    "dirty": true,
+    "diffSha256": "7098fd2e34a43ea89d6185d8d7eef31dabc56f47e84bf2c481b0022e54938849",
+    "distSha256": "65e2e7c122c77f050e41793545e8cdb88c201439dd06c54eef696eeace0f73ff",
+    "engineImage": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "endpoint": null,
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        10.82,
+        9.91,
+        11.12
+      ],
+      "freeBytes": 14575243264
+    }
+  },
+  "hostLoadAfter": [
+    10.82,
+    9.91,
+    11.12
+  ],
+  "arm": "C-noreplica",
+  "scope": "p2q-ackpath-f32b7b67-b61c-4d9a-aa9d-00fab415f103",
+  "n": 120,
+  "facts": 10,
+  "ackMs": {
+    "n": 100,
+    "p50": 3.8,
+    "p90": 4.2,
+    "p99": 4.8,
+    "max": 4.8,
+    "mean": 3.5
+  },
+  "ryowHits": 120,
+  "fsyncCalibrationMs": 2.84212500000001,
+  "frames": 120,
+  "rawPath": null,
+  "rawSha256": null
+}

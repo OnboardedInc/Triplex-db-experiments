@@ -4,7 +4,6 @@ import { integer, IntegerValue, MIN_INTEGER, MAX_INTEGER, TripleValue } from "..
 import { EntityId } from "../src/Branded.js";
 import { Triples } from "../src/store/Triples.js";
 import { KvTriples } from "../src/kv/layers/KvTriplesLive.js";
-import { UnsupportedValueTypeError } from "../src/errors/index.js";
 import * as TypeExpr from "../src/config/TypeExpr.js";
 import * as TypeSchema from "../src/config/TypeSchema.js";
 import * as Attribute from "../src/config/Attribute.js";
@@ -106,26 +105,20 @@ describe("Exact signed 64-bit values", () => {
       ),
     ).toThrow(RangeError);
   });
-  it("legacy KV rejects exact integer writes atomically through the typed error channel", async () => {
-    const result = await Effect.runPromise(
+  it("KV commits canonical int64 through its backend callback and reads exact payloads", async () => {
+    await Effect.runPromise(
       Effect.gen(function* () {
         const triples = yield* Triples;
-        const error = yield* triples
-          .assert({
-            entityId: EntityId.make("legacy:no-integer"),
+        for (const raw of [MIN_INTEGER, 0n, 9007199254740993n, MAX_INTEGER]) {
+          const value = integer(raw);
+          const fact = yield* triples.assert({
+            entityId: EntityId.make("kv:integer"),
             attribute: ":ledger/amount",
-            value: integer(MAX_INTEGER),
-          })
-          .pipe(Effect.flip);
-        return {
-          error,
-          rows: yield* triples.entity(EntityId.make("legacy:no-integer")),
-          position: yield* triples.currentPosition(),
-        };
+            value,
+          });
+          expect((yield* triples.get(fact.id))?.value).toStrictEqual(value);
+        }
       }).pipe(Effect.provide(KvTriples.layer)),
     );
-    expect(result.error).toBeInstanceOf(UnsupportedValueTypeError);
-    expect(result.rows).toEqual([]);
-    expect(result.position).toBe(0);
   });
 });

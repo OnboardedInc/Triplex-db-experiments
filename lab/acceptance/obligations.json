@@ -1,6 +1,6 @@
 {
   "format": "triplex-db-2/acceptance-obligations/3",
-  "version": "0.3.13",
+  "version": "0.3.14",
   "status": "CANDIDATE-1.0.0: retargeted to Sam's re-scope (SCOPE.md, NORTH-STAR.md, TARGETS.md); freezes as 1.0.0 after orchestrator acceptance and adversarial review",
   "date": "2026-11-09",
   "authority": "This file is the only authority an evaluator reads. Goals and targets come from lab/SCOPE.md, lab/NORTH-STAR.md and lab/TARGETS.md; RULINGS.md is compiled into this file by build_contract.py; the other artifacts are generated from the same source.",
@@ -18,8 +18,8 @@
     "lab/NORTH-STAR.md": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",
     "lab/TARGETS.md": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
     "lab/research/SAM-pasted-numbers-2026-11-07.md": "f35a223edd83994a0ac2ebcb94f9ec7e7ea8f1a279ef23bbb69390b8c03d89f8",
-    "lab/acceptance/RULINGS.md": "c2535ca27faefba04e85cb9e1456f6481a341a0433a205a204cf5ae1d41e1d59",
-    "lab/acceptance/RULINGS-PENDING.md": "42f0ba89780694d876c7cb41d912a31ede858d8ef11a0ef5a916e58872c7339e",
+    "lab/acceptance/RULINGS.md": "35e26650b2467850234e0679aaea50335e1e662df3e25c8347462e2b4174d698",
+    "lab/acceptance/RULINGS-PENDING.md": "a68a15db304eebadd1a05d34b363fc957d95e805d68a627326fd59edb8a3a237",
     "lab/verify/O02/v-o03/pin_scope.json": "f8897d518cb380ff64de25b02ae82f4846af313e5f2c41bbf147509fe6025a32",
     "lab/verify/O02/v-o03/hashes.8cc2c26.json": "4b221aa280eb6f2aeb1f5252d29dcef99aefc629e0388ac7468c6f1f1353b962",
     "lab/verify/D01/W0-1.1.1-ada2e90-SHA256SUMS": "bad527e280e1769a18fd2d65016e4d6bbfb4969c872dd73069cfb83637bfba4d",
@@ -36,13 +36,17 @@
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.12-round3/qlever-workloads.ts.diff": "1a40dcce1fb973666abe0385fb2af3f24bf499676b9b595fea4a5aa7c49fb85a",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13/authority-and-pin-review.json": "b1f7dd9f18527b5f374b80ef2afe161d104781e273fe2d881c376f8ed890a26b",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.13/testkit-index.diff": "ff037fd9eb720d2e167d8a6e8452c52d97a73e91f554f43719cce613fddf3d3f",
-    "lab/acceptance/build_contract.py": "07c98812ec83fe8a7e32dd09418d40522b48b3dc53e2d5f3df6f7007288d98e5"
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/authority-and-pin-review.json": "cebe85003b3d0cff5bde495b622cef909772bb35ee55367e654946d144a2869e",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/pending-authority.md": "42f0ba89780694d876c7cb41d912a31ede858d8ef11a0ef5a916e58872c7339e",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/packages__testkit__src__index.ts.diff": "41929c2d3f25f64c0d8980f9b4fd74316c93553de357d1dc1ebc7c8cdf07a2db",
+    "lab/verify/P2X2/VERIFY.md": "462456077e50a4a6a4027deb2f1e55f36361b69751323ff0f37dddee2943a159",
+    "lab/acceptance/build_contract.py": "54046f4d1562973b24904c28044ba91f6da2718071c87651af627befd7a8f6e7"
   },
   "artifacts": {
     "oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9",
-    "load-contract.json": "c37bb4499b0bceec0d020388ffab6f53db16433b27616e008f692860ace186c6",
-    "budgets.json": "c7f72c715b74c4630ef13b6e62b8c8a387b4ec318f205044cdfd640166ca2dc2",
-    "capability-matrix.md": "33cc8f7dcae26fdd5f280234f870bb2a10a9d9f0c5afdebbcd234b26ac0b47ec"
+    "load-contract.json": "377ef278e6452c30607612de1c5a7920a9d396e8ffbe07d58a66311b8d0e5a34",
+    "budgets.json": "a8de4809bf8ff42a3ad06f5a1dab961c4e6dae74df12fc464edf0d50027abd2a",
+    "capability-matrix.md": "2ead5f52687fd8d749ec5940f65a0af76e1ac235e5ebee16ea60e6928c18ee02"
   },
   "lanes": [
     "xtdb-xtql",
@@ -2051,6 +2055,62 @@
       "compiledInto": [
         "seedRules"
       ]
+    },
+    {
+      "id": "Q96a",
+      "topic": "composition",
+      "ruling": "P2 is measured per subject serially and in parallel across subjects, with the queue inside the candidate (Q51a); A0's single-flight composition stays only as a control arm. Golden scenario commit bars measured on single-flight A0 are DIAGNOSTIC (they measure queueing).",
+      "compiledInto": [
+        "laneXP2Rules"
+      ]
+    },
+    {
+      "id": "Q96b",
+      "topic": "stamps under concurrency",
+      "ruling": "RT01 round A's client stamp is monotone only because A0 serializes every commit; any per-subject concurrent arm uses a decider-side stamp (the engine stamp after probe p9, or the broker's), per Q90c. RT01 round A's added scope-wide scan on A0 is measured on an engine before RT01 merges (G6).",
+      "compiledInto": [
+        "laneXP2Rules"
+      ]
+    },
+    {
+      "id": "Q96c",
+      "topic": "the shortest path and the native check",
+      "ruling": "Lane X's shortest path to P2 is XTDB behind the broker (EXP-P2B, Q51b, Q58b). EXP-P2X2 (lab/experiments/EXP-P2X2/BRIEF.md) runs once on an exclusive xtdb-s1 slot after K01's live run and before P5 A1, to settle whether the native path is closed, with the decision rule written in R39 4.5 before the run (native is closed if F3 p50 > 6 ms, or F5 p50 > 20 ms, or engine resolve > 7 ms per commit). If closed, the lab says so plainly (SCOPE 3.2) and keeps the native arm as a comparison.",
+      "compiledInto": [
+        "laneXP2Rules"
+      ]
+    },
+    {
+      "id": "Q97a",
+      "topic": "current pulls from H1",
+      "ruling": "Lane Q serves current-value pulls from the broker's SQLite H1 store, behind a default-off currentRoute: \"h1\" option; QLever keeps history, native SPARQL and analytics. This is the ruled design (Q68a, Q50a, Q68d), which SQL01 used only as an outage fallback. A route that cannot answer a basis exactly refuses (Q89b, Q89c, Q92h). EXP-QH1 (lab/experiments/EXP-QH1/BRIEF.md) builds it after P2Q and SQL01 merge; its G1 to G7 need no slot, G8 takes one exclusive qlever-s1 run.",
+      "compiledInto": [
+        "laneQP4Rules"
+      ]
+    },
+    {
+      "id": "Q97b",
+      "topic": "the keep-alive stall",
+      "ruling": "Every QLever latency measured from the host through QleverClient so far carries a 41 to 45 ms keep-alive stall on about a third of requests, because QLever never sets TCP_NODELAY and QleverClient keeps connections alive. QLever latency receipts record the connection mode; earlier QLever latency numbers are DIAGNOSTIC on this ground too. The fix is measured first as a connection per request from the host (no custom image), with the engine patch as the fallback.",
+      "compiledInto": [
+        "laneQP4Rules"
+      ]
+    },
+    {
+      "id": "Q97c",
+      "topic": "multi-request pulls",
+      "ruling": "A pull form that needs one request per BFS level cannot meet P4 from the host on QLever (transport alone is 18 to 32 ms per depth-6 pull), so no multi-request QLever pull form is a P4 candidate.",
+      "compiledInto": [
+        "laneQP4Rules"
+      ]
+    },
+    {
+      "id": "Q96d",
+      "topic": "native lane X P2 is closed",
+      "ruling": "EXP-P2X2 (exp/P2X2-commit-floor b9a76c0, one exclusive xtdb-s1 run) met Q96c's preregistered rule: F3 p50 7.68 ms (bar 6) and F5 fresh 33.00 ms (bar 20). The XTDB-native commit path cannot meet P2 in this VM, which the lab states plainly (SCOPE 3.2); lane X's P2 candidate is XTDB behind the broker (EXP-P2B), and the native per-subject arm stays as a comparison. Aged F6, F7 to F9 and strict no-wait checks remain open as diagnostics, and the run awaits an independent review of its receipts.",
+      "compiledInto": [
+        "laneXP2Rules"
+      ]
     }
   ],
   "languageRules": {
@@ -3910,7 +3970,7 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "07c98812ec83fe8a7e32dd09418d40522b48b3dc53e2d5f3df6f7007288d98e5",
+        "lab/acceptance/build_contract.py": "54046f4d1562973b24904c28044ba91f6da2718071c87651af627befd7a8f6e7",
         "lab/acceptance/oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9"
       }
     },
@@ -4767,6 +4827,57 @@
       }
     }
   },
+  "pinChanges0314": {
+    "packages/testkit/src/index.ts": {
+      "previousSha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28",
+      "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
+    }
+  },
+  "laneXP2Rules": {
+    "Q96a": {
+      "topic": "composition",
+      "rule": "P2 is measured per subject serially and in parallel across subjects, with the queue inside the candidate (Q51a); A0's single-flight composition stays only as a control arm. Golden scenario commit bars measured on single-flight A0 are DIAGNOSTIC (they measure queueing).",
+      "basis": "R39 3.2; R37 1.2"
+    },
+    "Q96b": {
+      "topic": "stamps under concurrency",
+      "rule": "RT01 round A's client stamp is monotone only because A0 serializes every commit; any per-subject concurrent arm uses a decider-side stamp (the engine stamp after probe p9, or the broker's), per Q90c. RT01 round A's added scope-wide scan on A0 is measured on an engine before RT01 merges (G6).",
+      "basis": "R39 3.3"
+    },
+    "Q96c": {
+      "topic": "the shortest path and the native check",
+      "rule": "Lane X's shortest path to P2 is XTDB behind the broker (EXP-P2B, Q51b, Q58b). EXP-P2X2 (lab/experiments/EXP-P2X2/BRIEF.md) runs once on an exclusive xtdb-s1 slot after K01's live run and before P5 A1, to settle whether the native path is closed, with the decision rule written in R39 4.5 before the run (native is closed if F3 p50 > 6 ms, or F5 p50 > 20 ms, or engine resolve > 7 ms per commit). If closed, the lab says so plainly (SCOPE 3.2) and keeps the native arm as a comparison.",
+      "basis": "R39 2, 4"
+    },
+    "Q96d": {
+      "topic": "native lane X P2 is closed",
+      "rule": "EXP-P2X2 (exp/P2X2-commit-floor b9a76c0, one exclusive xtdb-s1 run) met Q96c's preregistered rule: F3 p50 7.68 ms (bar 6) and F5 fresh 33.00 ms (bar 20). The XTDB-native commit path cannot meet P2 in this VM, which the lab states plainly (SCOPE 3.2); lane X's P2 candidate is XTDB behind the broker (EXP-P2B), and the native per-subject arm stays as a comparison. Aged F6, F7 to F9 and strict no-wait checks remain open as diagnostics, and the run awaits an independent review of its receipts.",
+      "basis": "EXP-P2X2 report"
+    }
+  },
+  "laneQP4Rules": {
+    "Q97a": {
+      "topic": "current pulls from H1",
+      "rule": "Lane Q serves current-value pulls from the broker's SQLite H1 store, behind a default-off currentRoute: \"h1\" option; QLever keeps history, native SPARQL and analytics. This is the ruled design (Q68a, Q50a, Q68d), which SQL01 used only as an outage fallback. A route that cannot answer a basis exactly refuses (Q89b, Q89c, Q92h). EXP-QH1 (lab/experiments/EXP-QH1/BRIEF.md) builds it after P2Q and SQL01 merge; its G1 to G7 need no slot, G8 takes one exclusive qlever-s1 run.",
+      "basis": "R40 2-3"
+    },
+    "Q97b": {
+      "topic": "the keep-alive stall",
+      "rule": "Every QLever latency measured from the host through QleverClient so far carries a 41 to 45 ms keep-alive stall on about a third of requests, because QLever never sets TCP_NODELAY and QleverClient keeps connections alive. QLever latency receipts record the connection mode; earlier QLever latency numbers are DIAGNOSTIC on this ground too. The fix is measured first as a connection per request from the host (no custom image), with the engine patch as the fallback.",
+      "basis": "R40 1, 4.3; R17 0.2"
+    },
+    "Q97c": {
+      "topic": "multi-request pulls",
+      "rule": "A pull form that needs one request per BFS level cannot meet P4 from the host on QLever (transport alone is 18 to 32 ms per depth-6 pull), so no multi-request QLever pull form is a P4 candidate.",
+      "basis": "R40 1"
+    }
+  },
+  "rulingReview0314": {
+    "commit": "4155fda7",
+    "record": "lab/verify/P2X2/VERIFY.md",
+    "sha256": "462456077e50a4a6a4027deb2f1e55f36361b69751323ff0f37dddee2943a159",
+    "verdict": "ACCEPT for D1 under preregistered R39 4.5; native P2 closed on this host/profile only"
+  },
   "mergeGates": {
     "Q87": {
       "topic": "contract merges need the evaluator suite",
@@ -4784,7 +4895,7 @@
   },
   "pendingRulings": {
     "file": "lab/acceptance/RULINGS-PENDING.md",
-    "sha256": "42f0ba89780694d876c7cb41d912a31ede858d8ef11a0ef5a916e58872c7339e",
+    "sha256": "a68a15db304eebadd1a05d34b363fc957d95e805d68a627326fd59edb8a3a237",
     "ids": [
       "Q51b",
       "Q73a",
@@ -4830,12 +4941,6 @@
       "Q95g",
       "Q95h",
       "Q95",
-      "Q96a",
-      "Q96b",
-      "Q96c",
-      "Q97a",
-      "Q97b",
-      "Q97c",
       "Q98a",
       "Q98b",
       "Q98c",
@@ -4845,8 +4950,7 @@
       "Q98g",
       "Q98h",
       "Q98i",
-      "Q98j",
-      "Q96d"
+      "Q98j"
     ],
     "authority": "none",
     "rule": "RULINGS-PENDING.md may hold ruling rows; they carry no authority, are never compiled into this contract and never count as compiled RULINGS.md entries; the generator records the file's hash under inputs and lists the pending ids, and their presence never invalidates generation or --verify (RULINGS Q47d)"
@@ -8659,7 +8763,14 @@
       "Q94f",
       "Q94g",
       "Q94h",
-      "Q94i"
+      "Q94i",
+      "Q96a",
+      "Q96b",
+      "Q96c",
+      "Q97a",
+      "Q97b",
+      "Q97c",
+      "Q96d"
     ],
     "recordedNotCompiled": []
   },
@@ -11229,7 +11340,7 @@
     "O-TESTKIT": [
       {
         "path": "packages/testkit/src/index.ts",
-        "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+        "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
       }
     ],
     "O-KV": []
@@ -15422,7 +15533,7 @@
       "pinnedSourceFiles": [
         {
           "path": "packages/testkit/src/index.ts",
-          "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+          "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
         }
       ],
       "note": null
@@ -16958,7 +17069,7 @@
     "CS-U44": [
       {
         "path": "packages/testkit/src/index.ts",
-        "sha256": "cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28"
+        "sha256": "2c26c678577f98a71003588c7c62b9a81ff6d109a033c72c521f295f4cb2ffdd"
       }
     ],
     "CS-PKT71": [
@@ -18276,11 +18387,11 @@
   ],
   "budgetsRef": {
     "path": "lab/acceptance/budgets.json",
-    "sha256": "c7f72c715b74c4630ef13b6e62b8c8a387b4ec318f205044cdfd640166ca2dc2"
+    "sha256": "a8de4809bf8ff42a3ad06f5a1dab961c4e6dae74df12fc464edf0d50027abd2a"
   },
   "loadContractRef": {
     "path": "lab/acceptance/load-contract.json",
-    "sha256": "c37bb4499b0bceec0d020388ffab6f53db16433b27616e008f692860ace186c6"
+    "sha256": "377ef278e6452c30607612de1c5a7920a9d396e8ffbe07d58a66311b8d0e5a34"
   },
   "obligations": [
     {
@@ -31207,5 +31318,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "d39742175ca79e2c3c5ca954324586aa27975c7f12dba861973f990f1bf06a95"
+  "transitiveContractSha256": "eb1d0d4968020621c30e9d058a7f260ad6828068e159bf231b18e662b8f5f0f2"
 }

@@ -1,0 +1,9 @@
+probes 0
+core 1
+xtdb 0
+qlever 0
+integration 0
+sqlite 0
+cloudflare 0
+build 0
+typecheck 2

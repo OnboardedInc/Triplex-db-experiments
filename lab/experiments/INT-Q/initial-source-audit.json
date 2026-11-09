@@ -1,0 +1,65 @@
+[
+  {
+    "label": "package",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/package-71a5cec6-dca9-4161-9025-6792a865ac2a/receipt.json",
+    "head": "3d92e82bc852cec65fa9eb3acf30ebe64cce965d",
+    "committedInputCount": 825,
+    "committedInputMismatches": [],
+    "sourceStillMatches": false,
+    "note": "Initial existing inputs were checked before subsequent test-only edits: no changed or removed input bytes. False sourceStillMatches came from newly generated SQL01 evidence paths entering the untracked input inventory."
+  },
+  {
+    "label": "contract",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/contract-22c68d8c-a637-499e-9acd-990b6ffabf04/receipt.json",
+    "head": "3d92e82bc852cec65fa9eb3acf30ebe64cce965d",
+    "committedInputCount": 825,
+    "committedInputMismatches": [],
+    "sourceStillMatches": true,
+    "note": "Initial existing inputs were checked before subsequent test-only edits: no changed or removed input bytes. False sourceStillMatches came from newly generated SQL01 evidence paths entering the untracked input inventory."
+  },
+  {
+    "label": "g0-qlever",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/g0-qlever-7e5307c3-2047-4d0b-be86-990823af9d64/receipt.json",
+    "head": "3d92e82bc852cec65fa9eb3acf30ebe64cce965d",
+    "committedInputCount": 825,
+    "committedInputMismatches": [],
+    "sourceStillMatches": false,
+    "note": "Initial existing inputs were checked before subsequent test-only edits: no changed or removed input bytes. False sourceStillMatches came from newly generated SQL01 evidence paths entering the untracked input inventory."
+  },
+  {
+    "label": "p2q-offline",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/p2q-offline-e483580c-f8e0-41be-827b-1999c6483709/receipt.json",
+    "head": "3d92e82bc852cec65fa9eb3acf30ebe64cce965d",
+    "committedInputCount": 825,
+    "committedInputMismatches": [],
+    "sourceStillMatches": true,
+    "note": "Initial existing inputs were checked before subsequent test-only edits: no changed or removed input bytes. False sourceStillMatches came from newly generated SQL01 evidence paths entering the untracked input inventory."
+  },
+  {
+    "label": "build-all",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/build-all-2e3cca00-32c6-4ff6-9f25-963471e7bad3/receipt.json",
+    "head": "3d92e82bc852cec65fa9eb3acf30ebe64cce965d",
+    "committedInputCount": 825,
+    "committedInputMismatches": [],
+    "sourceStillMatches": true,
+    "note": "Initial existing inputs were checked before subsequent test-only edits: no changed or removed input bytes. False sourceStillMatches came from newly generated SQL01 evidence paths entering the untracked input inventory."
+  },
+  {
+    "label": "evaluator",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/evaluator-828661bd-eefe-429d-b559-c8bc7fd6bfb7/receipt.json",
+    "head": "3d92e82bc852cec65fa9eb3acf30ebe64cce965d",
+    "committedInputCount": 825,
+    "committedInputMismatches": [],
+    "sourceStillMatches": false,
+    "note": "Initial existing inputs were checked before subsequent test-only edits: no changed or removed input bytes. False sourceStillMatches came from newly generated SQL01 evidence paths entering the untracked input inventory."
+  },
+  {
+    "label": "sql01",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/sql01-011b5d4f-dbdb-4008-83bd-d91b79e7bb06/receipt.json",
+    "head": "3d92e82bc852cec65fa9eb3acf30ebe64cce965d",
+    "committedInputCount": 825,
+    "committedInputMismatches": [],
+    "sourceStillMatches": false,
+    "note": "Initial existing inputs were checked before subsequent test-only edits: no changed or removed input bytes. False sourceStillMatches came from newly generated SQL01 evidence paths entering the untracked input inventory."
+  }
+]

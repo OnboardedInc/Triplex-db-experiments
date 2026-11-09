@@ -1,0 +1,13 @@
+
+  ! eslint(no-sparse-arrays): Unexpected comma in middle of array
+     ,-[test/integration/test/value-domains.test.ts:135:8]
+ 134 |       cycle,
+ 135 |       [,],
+     :        ^
+     :        `-- unexpected comma
+ 136 |       { x: undefined },
+     `----
+  help: remove the comma or insert `undefined`
+
+Found 1 warning and 0 errors.
+Finished in 21ms on 11 files with 93 rules using 12 threads.

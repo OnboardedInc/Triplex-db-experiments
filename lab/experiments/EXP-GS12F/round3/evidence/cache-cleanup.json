@@ -1,0 +1,16 @@
+{
+  "atUnix": 1794193111.040164,
+  "paths": [
+    ".cache/gs12f-pack/triplex-pack-0X0T9t/consumer",
+    ".cache/gs12f-pack/triplex-pack-m7zWSS/consumer",
+    ".cache/npm/_cacache"
+  ],
+  "reason": "generated package-consumer trees and npm download cache; historical pack commands terminal, no active pack job; retain tarballs and raw pack logs; recreate via pack check",
+  "retained": [
+    ".cache/gs12f-pack/triplex-pack-0X0T9t/tarballs",
+    ".cache/gs12f-pack/triplex-pack-m7zWSS/tarballs",
+    "lab/experiments/EXP-GS12F/evidence/pack.log"
+  ],
+  "beforeAvailableBytes": 4916256768,
+  "afterAvailableBytes": 5385211904
+}

@@ -1,0 +1,88 @@
+{
+  "format": "p2q-receipt/1",
+  "id": "P2Q-service-A0-20261107T221639Z-39e32f",
+  "kind": "service-A0",
+  "writtenAt": "2026-11-07T22:16:39.351Z",
+  "mode": "service",
+  "slot": "dev",
+  "startedAt": "2026-11-07T22:15:08.528Z",
+  "identity": {
+    "gitHead": "650b18f1215b522ab22957c4c01d0b7e17a5587b",
+    "dirty": true,
+    "diffSha256": "151cd48770e74fd4b87aa289c3e60909cdcb03520bbf3ad9243684711df4a1a8",
+    "engineConfig": {
+      "dir": "/Users/sam/projects/triplex-db-2",
+      "arm": "default (repo qlever-start.sh)",
+      "startScriptSha256": "16c50037e97004e1345b5060b65c5cb3c26d3b4a153cc377a65ccc5e7f304930",
+      "persistUpdates": true
+    },
+    "distSha256": "d4e001abf1c928262f0a50fe7048bb50b66ff966fee380f94d2587d4c0dbf15b",
+    "engineImage": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "endpoint": "http://127.0.0.1:7070",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        13.48,
+        11.35,
+        11.61
+      ],
+      "freeBytes": 14155423744
+    }
+  },
+  "hostLoadAfter": [
+    12.94,
+    11.73,
+    11.73
+  ],
+  "arm": "A0",
+  "armLabel": "A0: default adapter, marker guard, ACK after QLever publication, fetch (keep-alive) client",
+  "scope": "p2q-service-A0-fe956896-6462-49eb-a5ba-be7066ec28cb",
+  "label": "dev-fresh",
+  "n": 60,
+  "facts": 10,
+  "band": "5-10",
+  "warmupDropped": 6,
+  "ackMs": {
+    "n": 54,
+    "p50": 961.4,
+    "p90": 1630.7,
+    "p99": 1796.8,
+    "max": 1796.8,
+    "mean": 1027.3
+  },
+  "ryowReadMs": {
+    "n": 54,
+    "p50": 503.8,
+    "p90": 762.5,
+    "p99": 913.6,
+    "max": 913.6,
+    "mean": 516.3
+  },
+  "ryow": {
+    "trials": 60,
+    "hits": 60,
+    "routes": {
+      "": 60
+    }
+  },
+  "delta": {
+    "before": null,
+    "first": 231773,
+    "last": 270890
+  },
+  "publication": {
+    "updates": 60,
+    "updateMs": {
+      "n": 60,
+      "p50": 740,
+      "p90": 1293.7,
+      "p99": 1520.8,
+      "max": 1520.8,
+      "mean": 800.5
+    },
+    "updateErrors": 0
+  },
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-P2Q-qlever-log-broker/P2Q-service-A0-20261107T221639Z-39e32f.raw.json",
+  "rawSha256": "b3291464e89a381ef1f56db0beaeda02d1fdf7169b0b0a2ac14aea693d27cb6c"
+}

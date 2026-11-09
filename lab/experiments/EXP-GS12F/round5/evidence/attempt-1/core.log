@@ -1,0 +1,15 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/packages/core
+
+
+ Test Files  59 passed (59)
+      Tests  854 passed (854)
+   Start at  23:21:15
+   Duration  4.20s (import 62%, tests 27%, transform 10%, worker 1%)
+
+    Isolate  59 workers spawned · ~118ms startup each (spawn + environment, per file)
+             at least ~516ms faster with isolate: false — reuses workers across files instead of one per file
+

@@ -6,10 +6,10 @@
  */
 
 import type { TripleValue } from "../../Value.js";
-import { UnsupportedValueTypeError } from "../../errors/index.js";
 import type { TuplePart } from "./tuple.js";
 import {
   tString,
+  tInteger,
   tNumber,
   tBoolean,
   tDatetime,
@@ -42,7 +42,7 @@ export interface ScanPattern {
 export const valueToTuplePart = (value: TripleValue): TuplePart => {
   switch (value.type) {
     case "integer":
-      throw new UnsupportedValueTypeError("KV indexes", "integer");
+      return tInteger(value.value);
     case "string":
       return tString(value.value);
     case "number":
@@ -67,7 +67,7 @@ export const valueToTuplePart = (value: TripleValue): TuplePart => {
 export const valueToPartStr = (value: TripleValue): string => {
   switch (value.type) {
     case "integer":
-      throw new UnsupportedValueTypeError("KV indexes", "integer");
+      return encodePartStr(tInteger(value.value));
     case "string":
       return encodeStringStr(value.value);
     case "number":

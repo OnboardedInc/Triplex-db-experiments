@@ -1,0 +1,231 @@
+{
+  "format": "p2q-receipt/1",
+  "id": "P2Q-trace-A0-20261107T222616Z-5a02c5",
+  "kind": "trace-A0",
+  "writtenAt": "2026-11-07T22:26:16.581Z",
+  "mode": "trace",
+  "slot": "dev",
+  "startedAt": "2026-11-07T22:23:48.312Z",
+  "identity": {
+    "gitHead": "650b18f1215b522ab22957c4c01d0b7e17a5587b",
+    "dirty": true,
+    "diffSha256": "6681ee1fa6ffbb9e92ace548daf56148143080c9a31e87099c5d099b467ec61f",
+    "engineConfig": {
+      "dir": "/Users/sam/projects/triplex-db-2",
+      "arm": "default (repo qlever-start.sh)",
+      "startScriptSha256": "16c50037e97004e1345b5060b65c5cb3c26d3b4a153cc377a65ccc5e7f304930",
+      "persistUpdates": true
+    },
+    "distSha256": "d4e001abf1c928262f0a50fe7048bb50b66ff966fee380f94d2587d4c0dbf15b",
+    "engineImage": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "endpoint": "http://127.0.0.1:7070",
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        13.96,
+        15.4,
+        13.67
+      ],
+      "freeBytes": 12705382400
+    }
+  },
+  "hostLoadAfter": [
+    15.17,
+    15.33,
+    13.91
+  ],
+  "arm": "A0",
+  "armLabel": "A0: default adapter, marker guard, ACK after QLever publication, fetch (keep-alive) client",
+  "scope": "p2q-trace-A0-aafe6c88-2bbc-4aff-8b83-bcb3e60c837b",
+  "seed": "p2q-a",
+  "subjects": 10000,
+  "windowS": 100,
+  "generatorSha256": "c93f3064c7715bac90c6a40e05cd55e53565202b949269bb1410417c25291a4e",
+  "traceSha256": "2978d31f41e8ed4d9c82d51e727f0e4aeeb6e8374e75f1b651c60be968d09ca8",
+  "offered": {
+    "events": 117,
+    "originals": 114,
+    "resends": 3,
+    "burstOriginals": 0
+  },
+  "accounting": {
+    "committed": 2,
+    "unknown": 112,
+    "resend:unknown": 3,
+    "unaccounted": 0
+  },
+  "errorsSample": [
+    "Transaction outcome is unknown; resolve operation dcd4cec8-2047-4c67-aaa3-500b6defd03c before retrying",
+    "Transaction outcome is unknown; resolve operation 2dd4064e-cdc9-4088-9353-fce5ba4b9465 before retrying",
+    "Transaction outcome is unknown; resolve operation cef53078-e9e9-4570-92c3-0211df088174 before retrying"
+  ],
+  "ackLoss": {},
+  "resendReceipts": {},
+  "byBand": {
+    "5-10": {
+      "offerToAckMs": {
+        "n": 0,
+        "p50": null,
+        "p90": null,
+        "p99": null,
+        "max": null,
+        "mean": null
+      },
+      "steady": {
+        "n": 0,
+        "p50": null,
+        "p90": null,
+        "p99": null,
+        "max": null,
+        "mean": null
+      },
+      "burst": {
+        "n": 0,
+        "p50": null,
+        "p90": null,
+        "p99": null,
+        "max": null,
+        "mean": null
+      }
+    },
+    "11-25": {
+      "offerToAckMs": {
+        "n": 0,
+        "p50": null,
+        "p90": null,
+        "p99": null,
+        "max": null,
+        "mean": null
+      },
+      "steady": {
+        "n": 0,
+        "p50": null,
+        "p90": null,
+        "p99": null,
+        "max": null,
+        "mean": null
+      },
+      "burst": {
+        "n": 0,
+        "p50": null,
+        "p90": null,
+        "p99": null,
+        "max": null,
+        "mean": null
+      }
+    },
+    "26-50": {
+      "offerToAckMs": {
+        "n": 2,
+        "p50": 12367.5,
+        "p90": 51001.7,
+        "p99": 51001.7,
+        "max": 51001.7,
+        "mean": 31684.6
+      },
+      "steady": {
+        "n": 2,
+        "p50": 12367.5,
+        "p90": 51001.7,
+        "p99": 51001.7,
+        "max": 51001.7,
+        "mean": 31684.6
+      },
+      "burst": {
+        "n": 0,
+        "p50": null,
+        "p90": null,
+        "p99": null,
+        "max": null,
+        "mean": null
+      }
+    }
+  },
+  "all": {
+    "offerToAckMs": {
+      "n": 2,
+      "p50": 12367.5,
+      "p90": 51001.7,
+      "p99": 51001.7,
+      "max": 51001.7,
+      "mean": 31684.6
+    }
+  },
+  "steady": {
+    "offerToAckMs": {
+      "n": 2,
+      "p50": 12367.5,
+      "p90": 51001.7,
+      "p99": 51001.7,
+      "max": 51001.7,
+      "mean": 31684.6
+    }
+  },
+  "burst": {
+    "offerToAckMs": {
+      "n": 0,
+      "p50": null,
+      "p90": null,
+      "p99": null,
+      "max": null,
+      "mean": null
+    }
+  },
+  "throughput": {
+    "committedPerS": 0.02,
+    "drainAfterWindowS": 45.7
+  },
+  "ryow": {
+    "trials": 1,
+    "hits": 1,
+    "routes": {
+      "error": 1
+    },
+    "readMs": {
+      "n": 1,
+      "p50": 3127.8,
+      "p90": 3127.8,
+      "p99": 3127.8,
+      "max": 3127.8,
+      "mean": 3127.8
+    }
+  },
+  "feed": {
+    "lagMs": {
+      "n": 2,
+      "p50": 870.3,
+      "p90": 1402.8,
+      "p99": 1402.8,
+      "max": 1402.8,
+      "mean": 1136.5
+    },
+    "committedEffects": 2,
+    "durableEffects": 5,
+    "gaps": 0,
+    "extras": 3,
+    "visibleDuplicates": 0,
+    "replayedEffects": 0,
+    "orderViolations": 0,
+    "gapSample": [],
+    "polls": 1517,
+    "writes": 5,
+    "aborted": 0,
+    "missingAck": 3
+  },
+  "publication": {
+    "updates": 131,
+    "updateMs": {
+      "n": 131,
+      "p50": 30001.8,
+      "p90": 30003.8,
+      "p99": 30009.5,
+      "max": 30009.9,
+      "mean": 28898.1
+    },
+    "lastDelta": 488345,
+    "updateErrors": 115
+  },
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-P2Q-qlever-log-broker/P2Q-trace-A0-20261107T222616Z-5a02c5.raw.json",
+  "rawSha256": "f953b69d00c4652ab9b4262b97f5f33d1a58f8a6532435c521c60367bf0df3b4"
+}
