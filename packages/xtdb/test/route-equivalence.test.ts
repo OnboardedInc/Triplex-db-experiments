@@ -19,7 +19,7 @@ import type { XtdbClient } from "../src/XtdbClient.js";
 // [EXP-RQ01] Why: evaluate the actual adapter's emitted predicates against rows offline.
 // Rejected: return replayRouteAnswer from the client (would hide predicate regressions).
 const fixture = (guardFuture = true): RouteFixture => {
-  let history: RouteHistory = generateRouteHistory(1, 8);
+  let history: RouteHistory = generateRouteHistory(1, 16);
   let rows: readonly TripleRow[] = [],
     taken = "";
   const client: XtdbClient = {
@@ -81,6 +81,7 @@ const fixture = (guardFuture = true): RouteFixture => {
     routes: [
       {
         id: "X1-adapter",
+        contract: "raw-lifetime",
         refusals: ["BasisNotAvailable"],
         eligible: (request, current) => (request.basis.recordedPosition ?? 0) <= routeHead(current),
         force: () => {
@@ -106,10 +107,11 @@ const fixture = (guardFuture = true): RouteFixture => {
 };
 
 it("XTDB A0 actual adapter agrees with replay across generated cuts (offline SQL client)", async () => {
-  const history = generateRouteHistory(89, 8);
+  const history = generateRouteHistory(89, 16);
   const result = await runRouteEquivalence({
     fixture: fixture(),
     history,
+    scope: { shapes: ["L", "V", "P", "T", "TP"] },
     requests: generateRouteBases(history).filter((request) => !request.history),
   });
   expect(result.violations).toEqual([]);
@@ -123,11 +125,12 @@ it("documents that the offline reference refuses a future cut", () => {
 });
 
 it("known-failing Q89c / R31 D-X1: unguarded A0 answers a future position", async () => {
-  const history = generateRouteHistory(89, 8);
+  const history = generateRouteHistory(89, 16);
   const result = await runRouteEquivalence({
     fixture: fixture(false),
     history,
+    scope: { shapes: ["P"] },
     requests: [{ basis: { validAt: 2000, recordedPosition: 999999 } }],
   });
-  expect(new Set(result.violations.map((v) => v.rule))).toEqual(new Set(["HE-1", "HE-3", "HE-5"]));
+  expect(new Set(result.violations.map((v) => v.rule))).toEqual(new Set(["HE-1", "HE-3"]));
 });

@@ -11,7 +11,7 @@ import {
 it("QLever broker route models: replica, overlay, source eviction, outage and H1 disabled", async () => {
   const result = await runRouteEquivalence({
     fixture: makeOfflineRouteFixture("qlever"),
-    history: generateRouteHistory(89, 8),
+    history: generateRouteHistory(89, 16),
   });
   expect(result.violations).toEqual([]);
   expect(result.reference).toBe("offline-fold-not-independent");

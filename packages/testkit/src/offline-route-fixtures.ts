@@ -1,6 +1,7 @@
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import {
   foldRouteHistory,
+  snapshotRouteRows,
   routeHead,
   RouteRefusal,
   type RouteFixture,
@@ -65,13 +66,22 @@ export const makeOfflineRouteFixture = (
       source = foldRouteHistory(history);
       cache.clear();
     },
-    event: (event) => {
-      if (event === "purge") horizon = routeHead(history);
+    event: (event, context) => {
+      if (["index-job", "flush", "compaction"].includes(event))
+        return { status: "pending", reason: "Requires live engine qualification" };
+      if (event === "purge" || event === "purge-pinned")
+        horizon = context?.horizon ?? routeHead(history);
       if (event === "catch-up") replica = source;
       if (event === "cold-cache") cache.clear();
+      if (event === "evict-overlay") replica = [];
+      return {
+        status: "model-applied",
+        reason: "Offline semantic event only; not engine qualification",
+      };
     },
     routes: ids.map((id) => ({
       id,
+      contract: "snapshot",
       eligible: (request, current) => (request.basis.recordedPosition ?? 0) <= routeHead(current),
       refusals: ["BasisNotAvailable"],
       force: () => {
@@ -103,7 +113,11 @@ export const makeOfflineRouteFixture = (
           rows = [...(cache.get(key) ?? rows)];
           cache.set(key, rows);
         }
-        return { rows, taken: forced, basis: request.basis };
+        return {
+          rows: snapshotRouteRows(rows, request, routeHead(history)),
+          taken: forced,
+          basis: request.basis,
+        };
       },
     })),
   };
