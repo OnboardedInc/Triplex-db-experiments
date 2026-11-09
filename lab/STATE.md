@@ -563,3 +563,4 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 SAM DECIDED (lanes and slots): lane Q = QLever behind the broker (QLever native dropped); lane X = XTDB native, iterate on
   the built-in commit path (33 ms vs 10 ms; report honestly if slightly over); lane D = Datomic on Postgres storage. Six agents, two per
   lane. Verbatim in lab/research/SAM-decisions-2026-11-09.md.
+- 2026-11-09 PAUSE for Sam's CLI upgrade: P4N r2 and P5N r2 told to commit WIP and write ROUND2-STATUS.md; XTDB and Datomic planners told to save DRAFT briefs; Datomic Postgres builder not started; handoff section 8 written.
