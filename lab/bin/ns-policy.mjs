@@ -25,9 +25,9 @@ export function layoutProblems(roles,privateVolumes){
   if(mounts.some(m=>m.RW&&m.Name!==own))problems.push(r.role+': unexpected writable mount');
  }
  const memberships=roles.filter(r=>r.role!=='observer').map(r=>Object.keys(r.inspect.NetworkSettings.Networks));
- if(memberships.some(ns=>!ns.includes(privateVolumes.network)))problems.push('arm membership');
+ if(memberships.some(ns=>ns.length!==1||ns[0]!==privateVolumes.network))problems.push('arm membership');
  const drv=roles.find(x=>x.role==='driver'),obs=roles.find(x=>x.role==='observer');
- if(!drv||!obs||Object.keys(obs.inspect.NetworkSettings.Networks).some(n=>n!=='none'))problems.push('trusted placement');
+ if(!drv||!obs||Object.keys(obs.inspect.NetworkSettings.Networks).length!==1||Object.keys(obs.inspect.NetworkSettings.Networks)[0]!=='none'||(obs.inspect.Mounts??[]).some(m=>[privateVolumes.broker,privateVolumes.consumer].includes(m.Name)&&m.RW))problems.push('trusted placement');
  if(drv&&(drv.inspect.Mounts??[]).some(m=>m.RW&&m.Name!==privateVolumes.output))problems.push('driver writable mount');
  return problems;
 }

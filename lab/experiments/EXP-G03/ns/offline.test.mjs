@@ -39,3 +39,6 @@ test('seed RPC script sends a bounded newline-delimited request with exact run/p
 const frozen=[{command:{id:'one',value:1}},{command:{id:'two',value:2}}],ack=frozen.map((x,i)=>({command:x.command,response:{commandId:x.command.id,status:'committed',receipt:{position:String(i+1)}}}));
 test('open-loop ACK completion permutation retains exact offer/receipt correspondence',()=>assert.deepEqual(matchOffers([...ack].reverse(),frozen),ack));
 for(const [label,change]of [['duplicate',a=>a[1]=a[0]],['bytes',a=>a[1].command.value=999],['receipt',a=>a[1].response.receipt.position='1'],['wrong echoed id',a=>a[1].response.commandId='one'],['missing',a=>a.pop()]])test('offer matching refuses '+label,()=>{const a=structuredClone(ack);change(a);assert.throws(()=>matchOffers(a,frozen))});
+
+test('candidate second network is refused',()=>{const r=layout();r[0].inspect.NetworkSettings.Networks.bridge={};assert.ok(layoutProblems(r,volumes).length)});
+test('observer writable source mount is refused',()=>{const r=layout();r[4].inspect.Mounts=[{Name:'source',RW:true}];assert.ok(layoutProblems(r,volumes).length)});

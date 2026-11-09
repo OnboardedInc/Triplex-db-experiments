@@ -37,7 +37,7 @@ export function checkSmoke(events,observer,trace,population,binding){
  return {status:'DIAGNOSTIC',qualification:false,runId:binding.runId,offers:offers.length,observedSource:actual.source.marker,observedConsumer:actual.consumer.marker,durabilityClass:VM_DURABILITY};
 }
 const filesOf=walk=>new Map(walk.modules.map(m=>[m.path,Buffer.from(m.base64,'base64')]));
-export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceCommit,generatorSeed,observe=true,population=16,trace,readers=4,placement,observerImage,blocked=[],canary,isolations=true}){
+export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceCommit,generatorSeed,slotIdentity='in-memory-smoke',observe=true,population=16,trace,readers=4,placement,observerImage,blocked=[],canary,isolations=true}){
  if(!/^[a-f0-9]{64}$/.test(generatorSeed??'')||!/^[a-f0-9]{40}$/.test(sourceCommit)||!Array.isArray(trace)||!trace.length)throw Error('NS source/trace identity missing');
  const runId=randomBytes(16).toString('hex'),key=randomBytes(32),stages=[],volumes={},roles=[],names=[];
  const stage=(step,detail)=>{const row={step,detail,at:new Date().toISOString()};stages.push(row);fs.appendFileSync(path.join(box.workDir,'ns-'+runId+'-stages.ndjson'),JSON.stringify(row)+'\n',{flag:'a',mode:0o600})};stage(1,{sourceCommit,runId,diagnostic:true});
@@ -48,8 +48,9 @@ export async function runBoxedNS(box,{instance,bundleFiles,observerFiles,sourceC
  for(const k of ['broker','consumer','output','observer','trace','key','bundle','observerCode','control'])alloc(k);
  box.seed(volumes.bundle,bundleFiles);seed(volumes.key,{'key':key});
  // Q103a: neither trace nor seed is ever copied into candidate input files or the candidate instance volume.
+ const inputPreimage={trace,population,readers,generatorSeed};fs.writeFileSync(path.join(box.workDir,'ns-'+runId+'-inputs.json'),JSON.stringify(inputPreimage),{flag:'wx',mode:0o600});
  const driverManifest=JSON.parse(bundleFiles.get('manifest.json').bytes);
- const binding={runId,sourceCommit,evaluatorCommit:sourceCommit,sourceSha256:sha256(Buffer.from(JSON.stringify(instance.walk.entries))),driverBundleSha256:driverManifest.bundleSha256,inputsSha256:sha256(Buffer.from(JSON.stringify({trace,population,readers,generatorSeed}))),slot:'in-memory-smoke',durabilityClass:VM_DURABILITY};
+ const binding={runId,sourceCommit,evaluatorCommit:sourceCommit,sourceSha256:sha256(Buffer.from(JSON.stringify(instance.walk.entries))),driverBundleSha256:driverManifest.bundleSha256,inputsSha256:sha256(Buffer.from(JSON.stringify(inputPreimage))),slot:slotIdentity,durabilityClass:VM_DURABILITY};
  stage(2,{instance:instance.volume,listing:instance.walk.entries});stage(3,{network,observerImage});stage(4,{volumes});
  const ports={broker:9101,readers:9102,consumer:9103};
  for(const role of ['broker','readers','consumer']){
