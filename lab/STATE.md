@@ -362,3 +362,11 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 QH1 round 2 (173831eb, Sonnet, measurement only): round 1 3,122 us/pull (320/CPU-s), R46 shape with all fields 1,248 (801),
   bar 1,100. QH1 round 3 (Sonnet) builds the five ranked changes with O-REPLAY 100k equality, RQ01, P2 ratio <= 1.10x gates per step and
   an explicit REAL-value round-trip test (Q105b). Round 2 itself not separately reviewed (measurement only); round 3 gets the review.
+- 2026-11-09 contract 0.4.0 ACCEPT (verify/A01-040 ca4870a5; F1/F2 closed; historical Q45a breach at f3ed6211 documented, nothing relied on
+  it). Merged to main e09c2ff4: --verify byte-identical as its own step, evaluator 108/108 on the committed merge. Next contract: 0.4.1
+  (P2B, CR-NS, DF01 r4, HS01, RT01, G03 r5-7 incl. driver bundle re-pin, OBS01 r6-10, R43-a pins, Q106a-g).
+- 2026-11-09 G03 round 7a (Sonnet, 9c4b68aa, code ef1a9216): F1 final readbacks and periods are the last record of the observer HMAC
+  chain, seal.json rebuilt from authenticated values; F2 runBoxedNS builds its own terminal record from docker exec status and the fault
+  injector, and refuses before replay. Suite 268/268, NS 160/160, evaluator 108/108, --verify passes. Driver bundle hash moved (re-pin in
+  0.4.1). In review (CX-VG03-56). Round 7b (R48 witness integration) waits for OBS01 round 10 to be accepted, so it builds on the fixed
+  witness.
