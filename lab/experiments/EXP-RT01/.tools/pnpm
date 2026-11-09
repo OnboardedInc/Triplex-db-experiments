@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /opt/homebrew/bin/pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store "$@"

@@ -1,0 +1,5 @@
+# Retain install receipts and tarballs; dependency caches are local disposable artifacts.
+evidence/**/node_modules/
+evidence/**/npm-cache/
+.baseline-declarations*/
+.microbench.lock

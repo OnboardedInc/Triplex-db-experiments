@@ -117,7 +117,20 @@ try {
       include: ["types.ts"],
     }),
   );
-  run("npm", ["install", "--ignore-scripts", "--no-audit", "--no-fund"], consumer);
+  run(
+    "npm",
+    [
+      "--userconfig",
+      path.join(consumer, ".npmrc"),
+      "--registry",
+      "https://registry.npmjs.org",
+      "install",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund",
+    ],
+    consumer,
+  );
   run(path.join(root, "node_modules/.bin/tsc"), ["-p", "tsconfig.json"], consumer);
   run(process.execPath, ["smoke.mjs"], consumer);
   await fs.writeFile(path.join(work, "artifacts.json"), JSON.stringify(artifacts, null, 2) + "\n");
