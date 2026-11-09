@@ -2126,3 +2126,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **NSR round 2:** F1 closed; F2 (a destructured Worker import still loads candidate code) and F3 (file-level mounts) remain. Round 3 stops pattern-matching and enforces the closed module graph at runtime.
 - **DF01 round 2:** the early-empty bug is fixed; one deadline race remains (round 3).
 - **Disk:** 7.8 GiB free. P2B round 3 creates and deletes broker databases per run; archiving freed space but it was consumed at about the same rate. RT01 live G6 waits for more than 10 GiB.
+
+## 2026-11-09: R45: the host store is 5,656 B per fact; a four-change layout targets about 259 B; EXP-HS01 started
+
+- **Correction to the 08:40Z entry:** recent_rows is not a replica overlay; every append upserts every row version into it and nothing deletes from it, so it is the broker's history of record for source-fallback reads. It is a full second copy with or without a replica.
+- **Why 28.9 rows per command:** the Triplex journal. 10.27 facts plus 18.63 _tx rows per command (4 header, 4.35 changed-entity, 10.28 change rows, each embedding the whole fact again at about 786 B). Journal rows are 64% of rows and 71% of row bytes. The counts match W0 (447 facts per subject).
+- **Today:** 5,656 B per asserted fact (25.3 GB at 10k, 252 GB at 100k), and HostLog.open loads every frame into memory (about 41 GB at 100k), which is a recovery defect.
+- **Layout round 1 (EXP-HS01, rulings Q102a-e pending):** drop recent_rows and read history by position from live and retired rows (3,304 B); purge frames below a retention floor with a CRC anchor (2,380 B); compact typed rows with interned ids (about 555 B); journal values stored as references with write-time byte equality (about 259 B, prototype 241.5 + 17.5). About 1.2 GB at 10k and 11.5 GB at 100k. R34 assumed 100 B; reaching it needs a journal format change (one record per transaction), a later round.
+- **P4 warning for EXP-QH1:** a 447-fact pull costs about 1.1 ms of SQLite CPU in either layout, so 1,100 pulls/s per core is at risk regardless of layout.
+- **DF01 round 3 (4c72ed27):** one bounded post-deadline read; 19 tests, conformance 4/4, G0 1,279; in review.
+- **Lesson:** my first explanation of the store size (from table sizes alone) was wrong on its main cause; reading the code that writes the table found it. Diagnose from the writer, not from the shape of the data.
