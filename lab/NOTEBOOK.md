@@ -1976,3 +1976,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **verify/RT01 7222e7e9:** F7 fixed through Temporal.journalBasis(P), an explicit all-valid-time mode bound to a position and used by every journal, command and feed read, including KV. Five fresh cases with 40 clock samples match O-REPLAY 0.5.0; 55 explicit-valid-time cuts still filter correctly; public inputs cannot set the internal all-valid-time flag.
 - **Pack gate:** fails on the out-of-scope DuckDB package's declarations, not on RT01. Pack qualification for lab packages needs its own gate.
 - **Next:** live G2 and G6 on a slot; contract 0.4.0 after 0.3.14.
+
+## 2026-11-09: FD01 accepted offline; P3M and DI01 started; contract 0.3.14 FIX-FIRST
+
+- **FD01 ACCEPT-OFFLINE (verify/FD01 c20526eb):** 14 host tests, 11 bench tests, 900 crash observations; forged origins, reboot identity, worker threads, ACK substitution and wrong-position records are all refused. FD01 moves lab/bench/driver.ts and lab/bin/gate.mjs, so it merges through a contract (0.4.0, with Q98a-i; Q98j waits for Sam). Open: native publication-event integration, live P3.
+- **Started from R41:** EXP-P3M (CX-P3M, brief lab/experiments/EXP-P3M/BRIEF.md) on FD01; EXP-DI01 design check by an Opus planner before its builder.
+- **Contract 0.3.14 review (verify/A01-0314 7c8f1f99) FIX-FIRST:** every gate passed, but two broker regressions came from the merge: GS12F's optional valueDomain field was left out by INT-Q's broker adapter, so it silently used the fallback domain (integer range error mistyped; valid depth-128 JSON refused). **Lesson:** an optional field on a shared adapter interface turns a missing implementation into silent fallback behavior that no gate sees; required fields make the compiler find the gap. Round 2 makes it required.
