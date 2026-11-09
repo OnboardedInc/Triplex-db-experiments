@@ -223,7 +223,9 @@ class Coverage(unittest.TestCase):
             if key != "source":
                 self.assertTrue(hasattr(DecimalRules, "test_decimal_" + key), key)
         for case_id in CONTRACT["caseSets"]["CS-ERASURE"]["requiredCases"] + CONTRACT["erasure"]["tests"]:
-            self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+            # [EXP-O06] Why: expose every missing mapping. Rejected: first-failure short circuit (hides 16 further gaps).
+            with self.subTest(erasureCase=case_id):
+                self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
         for key in ("positionDenseCases", "positionRequiredCases"):
             for case_id in CONTRACT[key]:
                 self.assertTrue(hasattr(Positions, "test_" + case_id.replace("-", "_")), f"{key} {case_id}")
@@ -603,6 +605,13 @@ class LaneRanges(unittest.TestCase):
     def test_lane_xtdb(self):
         for v in (2 ** 63 - 1, -2 ** 63):
             self.assertEqual(self.outcome_for(v, "xtdb")["outcome"], "committed")
+
+    def test_lane_datomic(self):
+        # [EXP-O06] Why: test the declared long range without engine evidence. Rejected: a named empty test (false coverage).
+        for v in (-2 ** 63, -(2 ** 53), 2 ** 53, 2 ** 63 - 1):
+            self.assertEqual(self.outcome_for(v, "datomic")["outcome"], "committed")
+        for v in (-2 ** 63 - 1, 2 ** 63):
+            self.assertEqual(self.outcome_for(v, "datomic")["error"], "E-INVALID-VALUE")
 
     def test_lane_qlever(self):
         for v in (2 ** 59 - 1, -2 ** 59, 2 ** 53 - 1, -(2 ** 53 - 1)):

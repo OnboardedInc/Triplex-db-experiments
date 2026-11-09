@@ -1,0 +1,9 @@
+unit 1
+selfcheck 0
+fixtures 0
+review-probes 0
+core-legacy 0
+core-updated 0
+qlever-legacy 0
+qlever-updated 0
+audit PASS: 22 probes, 348 bound golden outputs, 17 exposed mapping gaps

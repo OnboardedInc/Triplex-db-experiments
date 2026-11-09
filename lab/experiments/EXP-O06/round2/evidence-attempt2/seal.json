@@ -1,0 +1,143 @@
+{
+  "status": "PASS",
+  "scope": "sealed builder attempt; 18 unit failures remain",
+  "auditSha256": "6f6ecaef70eef5839f75fea91f18a0d7368d4c0e24d4009df84dca3fcb50ae10",
+  "commandReceiptSha256": "1e2b2c92e78d742ae977396f7519e4dd069e4050e8fa717058b594d735b69a01",
+  "probeBindings": [
+    {
+      "id": "correct-clock-driven",
+      "caseSha256": "4cbb93f038a8378f6b6f202dfb689f674bcd356b649c795dfd7df8eb1e756c16",
+      "actualSha256": "d255bb468b0135280bf734fd33420c1e2e950a013680478735b13c3816fbb134",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "staging-clock-tie",
+      "caseSha256": "9efe929d56a82b1dbfe3bf35a13eba9b846934a3c627e33922f82cb3ff349efb",
+      "actualSha256": "65c075ed9e3f7cb193077a34e3e9b97cfae55efdcf15b0638e4ed24fdacfd0f6",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "decreasing-stamp",
+      "caseSha256": "b4bc7edf4c242654b6cf3f1d9122d6315e44d1e7a8637451219772c0dc1d6bda",
+      "actualSha256": "fdfeff2eafb9bfbfd04b211a16a06087d059df566580bdc13897a5099e777160",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "wrong-reference-increasing",
+      "caseSha256": "d8e3bb1a72d164b2cb81f8adf6d0ddebe17fba9b4565de30290e7a56a7a9e66f",
+      "actualSha256": "d4bc2dc7f9d699492bd39d8fdf4c377f4f7f8a436cd296ef75e11377163543c7",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "staged-clock-mismatch",
+      "caseSha256": "06a724822423f156f76226d5e5194b796f93d5e18d03fffe5b43841d44152c7b",
+      "actualSha256": "6e087cf7cabdb05b06c1dd8342fdb61c508f6e9977c5cc33e471c3baa6707982",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "non-microsecond-stamp",
+      "caseSha256": "870aa64ff7817e26d4dcd3bdd18533d393b476ae48207ffca5e7a76c7d600e48",
+      "actualSha256": "326b699a4cbf89ca42765130949871d7d500710d9f75b3fc6aa902d30b00f195",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "engine-clock-valid",
+      "caseSha256": "d9a6686a558dbb396398104ecc4baa9d5f4786158bd3335e7f997359fa425586",
+      "actualSha256": "1dadce361049773101a6c16e3d6e425ba6a0bae359f1a0fd322cfed03353f9d6",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "engine-clock-tie",
+      "caseSha256": "7a6e99ed95c3c1242f8ddc4b6b16101ad23b3aa30213eac65c5ed788af3afcd8",
+      "actualSha256": "6fe0d2b0ca33212502c42690f41dd256460878fee203ea0da041a53d96e5cb11",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "engine-clock-backward",
+      "caseSha256": "3ad18fad65cdbb52215130099ad0289b3d717443e1f4061dab4cf5cef37ff543",
+      "actualSha256": "0452a072d2b2c62634793c1e7ea2c32f1bd2ad367cf1cc200a9c8491b02ad60d",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "replay-true",
+      "caseSha256": "1d3ed4a3d7670ce7f012865a767aaaae28f798e3f0a0621f6f0ee85ea9571f0a",
+      "actualSha256": "6b609deee7ec101a7412cb11e3a05dd8b11895ff2ce32c67dec81037e819172d",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "replay-false",
+      "caseSha256": "04780bfc8586bfaec8a198d199ec16f480242e197d76f13f3000706eeff8056f",
+      "actualSha256": "4d3837384aa847bb6c63d5333ac7e450295b67028fb2e7f5edf70637abc5a108",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "interior-true",
+      "caseSha256": "0af70ed29c425ef2bb1588f735653dc73679d85ffba4a6dcda23080a093f1b66",
+      "actualSha256": "27f3c791d5c359c4bef14f372c581e4a069176d64289d2bf8862623b4ecac7f9",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "interior-false",
+      "caseSha256": "d03ba54dba7e850bf893c15a37e5ba08962f2b56231767592a12ebbf3a59d22b",
+      "actualSha256": "61f8400034afe4aa74b8b51b6500622e39caaea1014f2a15abbd1899f0b6d0f4",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "published-watermark",
+      "caseSha256": "f878d72e6c698c4d2cb14d02c85a9f2a12b612f9f38b315d569a465e794db0fd",
+      "actualSha256": "062472cafab444220d352c977156a8e5a65642d1853f52e0f9dfec948e65a806",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "pending-refusal",
+      "caseSha256": "1655da2f99831d492f8ff3637a55249e1839280d559185e64650d4878c5e55bc",
+      "actualSha256": "f39e9d29657c9f7a42c97a5b4098592e325d63b326446dc2de2f204aca322f9d",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "pending-with-explicit-p",
+      "caseSha256": "c8cc65b81b224f682a651af06e2492f652c6bfb9baab11c7604043b62773ec11",
+      "actualSha256": "9e51845def59bacad90a0b7b03fa9b2f9a162ceceb77afdb510964695a414396",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "idle-future-refusal",
+      "caseSha256": "ef191172eab1854ea0a55fbf06778f3d5ae7fad5fe921f02a6b9d8c00800ce49",
+      "actualSha256": "55529c7a0aa4af38ba99a5456aecc4303de8a7186363446e6780d1a705d7a6ae",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "large-future-refusal",
+      "caseSha256": "dd9677c0fcca72edac0ec8a12672d09b8c84654f70546f4869ade63784e206fa",
+      "actualSha256": "1b50a9c1b61ed9141a237b39d00de76a06787838f3778d1260bc16a29df909ef",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "staged-valid-time-and-journal",
+      "caseSha256": "e287040f9d468a067b89d08f211f3e83fc2b297ffc90816dcbe7d560fa05201f",
+      "actualSha256": "695513109c624057c431d29c460a30e54dcb13985eba4b14cae05e34e63999e7",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "cross-ordinal-journal-own-instant",
+      "caseSha256": "e28e7bd58aafe3f82662ec3d2df05c2f2f6214533f0f65cde46dce801532b642",
+      "actualSha256": "7f35f425bbd98fea2df50311a15eb0ff64c1dfd610ba81a01348c48ae8f5ba81",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "resolved-receipt-false",
+      "caseSha256": "c6a89ce53a6400ae650dc5a265567caa8db6e467ee9d6f660196118804e05ca5",
+      "actualSha256": "532cd6e8406701cfe4d567130f6fad6b3286d6f816f29ee81ed7dafa3105d051",
+      "reviewerCopyIdentical": true
+    },
+    {
+      "id": "resolved-receipt-true",
+      "caseSha256": "94a77fca42e534b3648809f9bb22d8ef8ea98ad4511aa05f9ffdd9dcf35afb36",
+      "actualSha256": "f42490ac4993082d0de61c1a7d17587172712d1464681a55a65e98648f8ee456",
+      "reviewerCopyIdentical": true
+    }
+  ],
+  "runnerFiles": 34,
+  "runnerManifestSha256": "644de718bbc2459a45cfc478285158db0e7e05013e811437b8e4856ffccf9a5a",
+  "inventorySha256": "53636a2a651c6ad306d0f6abdd5805fe64eacca95358c6f9b8138c2392380a0d"
+}

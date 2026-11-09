@@ -1,0 +1,16 @@
+{
+ "vectors": 49,
+ "itemCounts": {
+  "AGREE": 317,
+  "NOT-MODELED": 3,
+  "AGREE-RULED": 19,
+  "VECTOR-BUG": 2
+ },
+ "vectorCounts": {
+  "AGREE": 46,
+  "AGREE+NOT-MODELED": 2,
+  "AGREE+VECTOR-BUG": 1
+ }
+}
+-- G10-CUR-01 E1 VECTOR-BUG {"oracle": {"error": "E-CURSOR", "_tag": "PaginationCursorError", "reason": "other-query", "phase": "preflight", "message": "the request's validAt differs from the cursor's pinned basis (CE-OTHER-QUERY)"}, "golden": {"_tag": "PaginationCursorError", "reason": "basis_mismatch"}, "note": "ACC 4.7 E-CURSOR reasons are malformed|other-scope|other-query (CURSOR_TRANSITIONS); the golden reason is not one of them, so the contract wins (EXP-O02 brief)"}
+-- G10-CUR-01 E2 VECTOR-BUG {"oracle": {"error": "E-CURSOR", "_tag": "PaginationCursorError", "reason": "other-query", "phase": "preflight", "message": "the cursor belongs to another query (CE-OTHER-QUERY)"}, "golden": {"_tag": "PaginationCursorError", "reason": "query_mismatch"}, "note": "ACC 4.7 E-CURSOR reasons are malformed|other-scope|other-query (CURSOR_TRANSITIONS); the golden reason is not one of them, so the contract wins (EXP-O02 brief)"}

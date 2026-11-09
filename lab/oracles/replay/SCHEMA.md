@@ -313,3 +313,9 @@ public recordedAt/retractedAt fields. `:_tx/instant` queries remain X-NOT-MODELE
 the oracle. Fixtures marked wanted FAIL are negative controls, including stale
 valid-time, journal, and early-read answers that receipts alone cannot observe.
 A successful fixture suite requires every negative control to fail comparison.
+
+Round 2 clarifications: raw journal own-instant omission applies across all
+physicalGroup ordinals, while hydrated changes keep their public timestamps.
+Unknown receipts resolved as committed use stagedAt exactly as committed receipts
+do, including when the command has no clock. Finite record query instants at or
+above 2^43 receive a typed basis refusal; actual receipt stamps remain range checked.

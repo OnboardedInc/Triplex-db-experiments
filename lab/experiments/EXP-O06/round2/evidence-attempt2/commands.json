@@ -1,0 +1,131 @@
+[
+  {
+    "label": "unit",
+    "command": [
+      "python3",
+      "-I",
+      "lab/oracles/replay/cli.py",
+      "--test"
+    ],
+    "env": {},
+    "expectedExit": 1,
+    "exit": 1,
+    "start": "2026-11-09T00:45:41.575365+00:00",
+    "end": "2026-11-09T00:45:58.995877+00:00",
+    "logSha256": "c80d36f3049c14ef09a99d3c816edf2153468ca2ca30a6577b13da78db25a220"
+  },
+  {
+    "label": "selfcheck",
+    "command": [
+      "python3",
+      "-I",
+      "lab/oracles/replay/cli.py",
+      "--self-check"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T00:45:58.996182+00:00",
+    "end": "2026-11-09T00:45:59.158408+00:00",
+    "logSha256": "9242389c0cc611decc5c7aae28bd835531cdc9e30af9ed0e47e0862e5d8de1d0"
+  },
+  {
+    "label": "fixtures",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/fixture_runner.py"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T00:45:59.158574+00:00",
+    "end": "2026-11-09T00:45:59.224247+00:00",
+    "logSha256": "41a370ed9a6dfd55ed775778f083e911923ef21295a7d2555e441df582e71ffa"
+  },
+  {
+    "label": "review-probes",
+    "command": [
+      "python3",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round2/probes.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round2/evidence-attempt2"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T00:45:59.224396+00:00",
+    "end": "2026-11-09T00:45:59.293456+00:00",
+    "logSha256": "cde8b73d152309c201d41f3ceb731fd1282df3454092de0d42b68495eb559706"
+  },
+  {
+    "label": "core-legacy",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round2/evidence-attempt2/core-legacy"
+    ],
+    "env": {
+      "O02_LANE": "core"
+    },
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T00:45:59.293617+00:00",
+    "end": "2026-11-09T00:46:04.978641+00:00",
+    "logSha256": "cdae91c510237def25978c58ac1750828217526ec02bf2746097905b843b6bf2"
+  },
+  {
+    "label": "core-updated",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round2/evidence-attempt2/core-updated"
+    ],
+    "env": {
+      "O02_LANE": "core",
+      "O06_GOLD": "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/acceptance/golden"
+    },
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T00:46:04.978836+00:00",
+    "end": "2026-11-09T00:46:10.711825+00:00",
+    "logSha256": "cdae91c510237def25978c58ac1750828217526ec02bf2746097905b843b6bf2"
+  },
+  {
+    "label": "qlever-legacy",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round2/evidence-attempt2/qlever-legacy"
+    ],
+    "env": {
+      "O02_LANE": "qlever"
+    },
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T00:46:10.712042+00:00",
+    "end": "2026-11-09T00:46:16.919725+00:00",
+    "logSha256": "af492bda3f2879baa6635989762bf5fb9dcc452fc73d77f623569aef83f5b332"
+  },
+  {
+    "label": "qlever-updated",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round2/evidence-attempt2/qlever-updated"
+    ],
+    "env": {
+      "O02_LANE": "qlever",
+      "O06_GOLD": "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/acceptance/golden"
+    },
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T00:46:16.919962+00:00",
+    "end": "2026-11-09T00:46:22.698712+00:00",
+    "logSha256": "af492bda3f2879baa6635989762bf5fb9dcc452fc73d77f623569aef83f5b332"
+  }
+]

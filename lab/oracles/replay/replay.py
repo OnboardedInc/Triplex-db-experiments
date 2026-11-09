@@ -62,6 +62,8 @@ INT53 = 2 ** 53 - 1
 LANE_INTEGER_RANGE = {
     "core": (V.INT64_MIN, V.INT64_MAX),
     "xtdb": (V.INT64_MIN, V.INT64_MAX),
+    # [EXP-O06] Why: machine-contract laneIntegerRange declares long. Rejected: ignoring the Datomic coverage failure.
+    "datomic": (V.INT64_MIN, V.INT64_MAX),
     "qlever": (-(2 ** 59), 2 ** 59 - 1),
 }
 LANE_ENGINE = {"xtdb-xtql": "xtdb", "xtdb-sql": "xtdb", "qlever-sparql": "qlever"}
@@ -753,7 +755,8 @@ def change_output(kind, a: Assertion, record, *, raw=False):
     out.append(("validFrom", _num(a.validFrom)))
     if a.validTo is not None:
         out.append(("validTo", _num(a.validTo)))
-    if not (raw and getattr(record, "decided", False) and a.txId == record.txId):
+    # [EXP-O06] Why: S3 shares one stamp across physical ordinals. Rejected: logical txId equality (leaks own instant).
+    if not (raw and getattr(record, "decided", False) and a.recordedAt == record.instant):
         out.append(("recordedAt", _num(a.recordedAt)))
     out.append(("assertionTxId", a.txId))
     if kind == "retract":

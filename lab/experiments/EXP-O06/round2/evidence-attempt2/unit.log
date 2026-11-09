@@ -1,0 +1,169 @@
+.............................FFFFFFFFFFFFFFFFFF...............................................................................................................................................................................................................................................................................................................................................................................
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='ER-INFLIGHT-PREFIXES')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE ER-INFLIGHT-PREFIXES
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='ER-CURSOR-ERASURE-PREFIX')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE ER-CURSOR-ERASURE-PREFIX
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70A')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70A
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70B')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70B
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70C')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70C
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70D')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70D
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70E')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70E
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70F')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70F
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70G')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70G
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70H')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70H
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70I')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70I
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70J')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70J
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70K')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70K
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70L')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70L
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70M')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70M
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70N')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70N
+
+======================================================================
+FAIL: test_every_section4_row_has_a_named_test (lab.oracles.replay.tests.test_contract_section4.Coverage.test_every_section4_row_has_a_named_test) (erasureCase='CONTRACT-Q70O')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 228, in test_every_section4_row_has_a_named_test
+    self.assertTrue(hasattr(Erasure, "test_" + case_id.replace("-", "_")), f"CS-ERASURE {case_id}")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : CS-ERASURE CONTRACT-Q70O
+
+======================================================================
+FAIL: test_oracle_error_table_has_no_row_the_contract_dropped (lab.oracles.replay.tests.test_contract_section4.Coverage.test_oracle_error_table_has_no_row_the_contract_dropped)
+0.3.5 removed E-DECIMAL-UNREPRESENTABLE (Q35e, RULINGS Q43a): the oracle may emit
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_contract_section4.py", line 237, in test_oracle_error_table_has_no_row_the_contract_dropped
+    self.assertEqual(set(ERR.ERROR_TABLE) - {r["id"] for r in CONTRACT["errorTable"]}, set())
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the first set but not the second:
+'E-UNAVAILABLE-CUT'
+
+----------------------------------------------------------------------
+Ran 398 tests in 17.315s
+
+FAILED (failures=18)

@@ -1,0 +1,4 @@
+{
+  "type": "OracleInputError",
+  "message": "decided command 0 needs stagedAt or clock"
+}
