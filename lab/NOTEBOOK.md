@@ -1933,3 +1933,8 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **What is still unknown:** the deleted volume's actual count was never captured, so an engine-side difference on top of this is not ruled out; the live rerun settles it.
 - **Lesson:** an expected count must come from the same rows the writer stores, journal included. A business-level count is a different quantity, even when the two share a table name. The live G0 refusal did its job: it stopped the run instead of admitting it.
 - **Next:** CX-VK01 reviews the fix offline; then the K01 live rerun (LIVE-round12) re-enters the scale window queue. P5 A1, which is running now, also admits through G0 and may stop on the same symptom.
+
+## 2026-11-09: lane Q integration accepted; contract 0.3.14 started
+
+- **INT-Q ACCEPT (verify/INT-Q c14cdfc9).** Broker default off. Fresh checks include all five live broker cases and 50 process stops with zero acknowledged commits lost. Open: physical power loss, performance qualification, and WAL growth under a pinned reader held indefinitely.
+- **Contract 0.3.14 (CX-A01-0314):** merges INT-Q and GS12F with their re-pins in one commit (Q45a), compiles Q96a-d and Q97a-c. QNODELAY goes into a later contract when its round 4 is accepted. Unblocks EXP-QH1 (lane Q P4 from H1) once merged.
