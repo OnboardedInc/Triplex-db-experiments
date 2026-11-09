@@ -2176,3 +2176,9 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **CR-NS:** the Opus reviewer ACCEPTS the evaluator for offline P2 and P3 arithmetic (round 4: 53 of 53 earlier forgeries refused with the right code; the validity fix held). Remaining before NS PASS: readers that park reads (ruling Q103d: activity in every 100 ms bin, no read over 1 s), the crash target pinned to the consumer, and race pairs (ruling Q103e). CRNS round 5 closes them.
 - **RT01 round 7 (2332e98b):** G6 now grades with Q104a (PAIR-0, three A/A rounds); the live rerun has the slot now, with the window grade recorded per point.
 - **NSR round 5 (709a18f1):** exact output grant and a minimal recorded environment; in review.
+
+## 2026-11-09: RT01's G6 stops on a sandbox denial of `top`; more evidence compressed; CRNS round 5
+
+- **RT01 live round 4 (54e59314):** G2 passed again; G6 stopped before any sample because M01's noise recorder spawns `top`, which is setuid and the Codex sandbox refuses it. Timing unjudged, not failed. Round 5 moves the recorder to non-setuid counters (os.loadavg, vm_stat, sysctl) at its source in M01, then reruns G6 under Q104a. **Lesson:** a measurement tool must be exercised offline in the same sandbox it will run in; M01's report had noted the permission need and the runbook did not carry it.
+- **Disk:** compressed the large databases in INT-Q, VINTQ and DI01's superseded attempts (final-r2 to r8, two lag dirs), each verified by hash, originals' hashes kept; host free went from 11 to 19 GiB.
+- **CRNS round 5 (676b0a45):** Q103d, Q103e and the pinned crash target implemented; 292 tests and 59 reviewer assertions pass; the Opus reviewer does a final scoped check. After that CR-NS joins the contract 0.4.0 queue.
