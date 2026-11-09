@@ -1,0 +1,15 @@
+{
+  "retainedAttempt": "development-1",
+  "implementationChanged": false,
+  "reasons": [
+    "The queued command acquired its heavy token while the sign-of-zero control was being added. Initial source hashes preceded that edit, whereas the column suite executed the edited 96 tests. Retained both source states; final receipt will be a full stable-source rerun.",
+    "The scratch harness ran all four builder tests after pre-editing a side column. The independent coverage audit passed, but the unrelated synthetic-edit test could no longer find its pristine literal replacement. Restrict the scratch child to the actual independent declaration audit and retain the first failure.",
+    "Add symmetric zero-sign and dynamic side-column variations to the confirmed numeric-encoding finding."
+  ],
+  "initialObservedResults": {
+    "implementation": "167/167",
+    "earlierControls": "30/30",
+    "columns": "95/96, sign-of-zero clone wrongly admitted",
+    "scratch": "harness failure on covered side column; target declaration audit itself passed"
+  }
+}

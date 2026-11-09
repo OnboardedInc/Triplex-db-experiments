@@ -1,0 +1,32 @@
+// [EXP-K01-VK01-R7] Why: bind every fresh offline result to its executed inputs and retain nonzero children. Rejected: adopting builder receipts or replacing a failed attempt with a successful rerun.
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+const root = path.resolve(import.meta.dirname, '../../..');
+const out = path.join(import.meta.dirname, 'evidence/review-round7');
+fs.mkdirSync(out, { recursive: true });
+if (fs.existsSync(path.join(out, 'run.json'))) throw Error('preserve the prior attempt');
+const disk = fs.statfsSync(root);
+if (disk.bavail * disk.bsize < 5 * 1024 ** 3) throw Error('disk floor');
+const files = ['lab/verify/K01/run-review-round7.mjs', 'lab/verify/K01/g0-review.test.mjs', 'lab/verify/K01/columns-review.test.mjs', 'lab/verify/K01/schema-guard-review.mjs', 'lab/bench/lib/g0.ts', 'lab/bench/lib/g0-schema.ts', 'lab/bench/lib/g0-xtdb.ts', 'lab/bench/xtdb-seed.ts', 'lab/bench/driver.ts', 'lab/bench/clone-check.ts', 'lab/bench/lib/bulk.ts', 'lab/bin/engine.mjs', 'lab/bin/lib.mjs', 'lab/bin/test/lab.test.mjs', 'lab/bench/test/bench.test.ts', 'lab/bench/test/g0.test.ts', 'lab/bench/test/g0-schema.test.ts', 'pnpm-lock.yaml', 'node_modules/typescript/package.json', ...fs.readdirSync(path.join(root, 'packages/xtdb/src'), { recursive: true }).filter(f => f.endsWith('.ts')).map(f => 'packages/xtdb/src/' + f)];
+const sha = b => createHash('sha256').update(b).digest('hex');
+const receipt = { at: new Date().toISOString(), head: spawnSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).stdout.trim(), node: process.version, freeBytes: disk.bavail * disk.bsize, sources: Object.fromEntries(files.map(f => [f, sha(fs.readFileSync(path.join(root, f)))])), runs: [] };
+for (const [label, args, tests] of [
+  ['tests', ['--test', 'lab/bin/test/lab.test.mjs', 'lab/bench/test/bench.test.ts', 'lab/bench/test/g0.test.ts', 'lab/bench/test/g0-schema.test.ts'], 167],
+  ['reviewer', ['--test', 'lab/verify/K01/g0-review.test.mjs'], 30],
+  ['columns', ['--test', 'lab/verify/K01/columns-review.test.mjs'], 98],
+  ['schema-guard', ['lab/verify/K01/schema-guard-review.mjs']],
+  ['types', ['node_modules/typescript/bin/tsc', '--noEmit', '-p', 'lab/bench/tsconfig.json']],
+  ...['lab/bin/engine.mjs', 'lab/bin/lib.mjs', 'lab/bench/clone-check.ts', 'lab/bench/lib/g0.ts', 'lab/bench/lib/g0-schema.ts', 'lab/bench/lib/g0-xtdb.ts'].map((f, i) => ['syntax-' + i, ['--check', f]]),
+]) {
+  const r = spawnSync(process.execPath, args, { cwd: root, encoding: 'utf8', timeout: 120000, maxBuffer: 16 << 20 });
+  const log = (r.stdout ?? '') + (r.stderr ?? '');
+  fs.writeFileSync(path.join(out, label + '.log'), log);
+  const counts = Object.fromEntries([...log.matchAll(/^# (tests|pass|fail|cancelled|skipped|todo) (\d+)$/gm)].map(m => [m[1], Number(m[2])]));
+  const summaryOkay = tests === undefined || ['tests', 'pass'].every(k => counts[k] === tests) && ['fail', 'cancelled', 'skipped', 'todo'].every(k => counts[k] === 0);
+  receipt.runs.push({ label, args, status: r.status, signal: r.signal, error: r.error?.message, sha256: sha(log), ...(tests === undefined ? {} : { counts, summaryOkay }) });
+  fs.writeFileSync(path.join(out, 'run.json'), JSON.stringify(receipt, null, 2) + '\n');
+  process.stdout.write(label + ': exit=' + r.status + (tests === undefined ? '' : ', ' + counts.pass + '/' + tests) + '\n');
+}
+process.exitCode = receipt.runs.some(r => r.status !== 0 || r.signal || r.error || r.summaryOkay === false) ? 1 : 0;

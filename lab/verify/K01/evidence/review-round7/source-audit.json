@@ -1,0 +1,863 @@
+{
+  "at": "2026-11-09T02:00:09.078051+00:00",
+  "builder": "6f7e11f7379ccff881002639db9b6b43d80bb566",
+  "merge": "952bb4fafbb4e86a07891ec4cefe45a0e4950b72",
+  "files": [
+    {
+      "path": "lab/bench/lib/g0.ts",
+      "sha256": "66acc9151fecab9f4d4ca0ba9c9afe8b15b1519083262c97b44fc5406b4620d5",
+      "builderSha256": "66acc9151fecab9f4d4ca0ba9c9afe8b15b1519083262c97b44fc5406b4620d5",
+      "matchesBuilder": true,
+      "observations": [
+        {
+          "line": 87,
+          "text": "export async function readG0("
+        },
+        {
+          "line": 131,
+          "text": "        // [EXP-K01-R8] Why: hash column names and all returned values as well as requiring the declared schema. Rejected: missing schemaless/dynamic side-table bindings that SELECT * returns."
+        },
+        {
+          "line": 155,
+          "text": "export async function admitG0("
+        },
+        {
+          "line": 169,
+          "text": "  const current = await readG0(reader, expected, w0, ms);"
+        },
+        {
+          "line": 173,
+          "text": "    status: \"PASS\" as const,"
+        }
+      ]
+    },
+    {
+      "path": "lab/bench/lib/g0-schema.ts",
+      "sha256": "72499249d961a60e604bd1913e3ec8ecb6b41b07576be925725f51e6b1e2b40e",
+      "builderSha256": "72499249d961a60e604bd1913e3ec8ecb6b41b07576be925725f51e6b1e2b40e",
+      "matchesBuilder": true,
+      "observations": [
+        {
+          "line": 36,
+          "text": "      else if (ts.isTemplateExpression(node) && /^\\s*CREATE TABLE\\b/i.test(node.head.text)) {"
+        },
+        {
+          "line": 45,
+          "text": "      if (!/^CREATE TABLE\\b/i.test(sql)) return;"
+        },
+        {
+          "line": 46,
+          "text": "      const m = /^CREATE TABLE (tx_[a-z_]+) \\(([^)]+)\\)$/.exec(sql);"
+        }
+      ]
+    },
+    {
+      "path": "lab/bench/lib/g0-xtdb.ts",
+      "sha256": "3f8f3e3afaca46cb480102a25dfb527b20931e596f948c5cdd30da329ce189f2",
+      "builderSha256": "3f8f3e3afaca46cb480102a25dfb527b20931e596f948c5cdd30da329ce189f2",
+      "matchesBuilder": true,
+      "observations": [
+        {
+          "line": 5,
+          "text": "  admitG0,"
+        },
+        {
+          "line": 6,
+          "text": "  readG0,"
+        },
+        {
+          "line": 59,
+          "text": "        `SELECT COUNT(*) AS n FROM ${table} FOR ALL VALID_TIME WHERE scope_key = ?`,"
+        },
+        {
+          "line": 69,
+          "text": "          \"SELECT scope_key, position FROM tx_meta FOR ALL VALID_TIME ORDER BY scope_key\","
+        },
+        {
+          "line": 79,
+          "text": "          `SELECT * FROM ${table} FOR ALL VALID_TIME WHERE scope_key = ? ORDER BY ${cols.join(\", \")} LIMIT ${pageSize} OFFSET ${offset}`,"
+        },
+        {
+          "line": 83,
+          "text": "        // [EXP-K01-R8] Why: XTDB sparse SELECT * omits never-stored NULL columns; fill only declared NULLs and retain every returned column. Rejected: a fixed projection that drops dynamic bindings."
+        },
+        {
+          "line": 91,
+          "text": "export async function pinXtdb(endpoint: string, m: any) {"
+        },
+        {
+          "line": 94,
+          "text": "    return await readG0(logicalReader(h.reader, h.scopeKey, m.scope), expectedN01(m));"
+        },
+        {
+          "line": 112,
+          "text": "    return await admitG0(logicalReader(h.reader, h.scopeKey, m.scope), pin, expectedN01(m));"
+        },
+        {
+          "line": 160,
+          "text": "      const ready = [\"started\", \"alive\"].every("
+        }
+      ]
+    },
+    {
+      "path": "lab/bin/engine.mjs",
+      "sha256": "1447cbd2db4a51af353d96e234d17e39c4c0510f6ca7995f569e38780fd697cf",
+      "builderSha256": "1447cbd2db4a51af353d96e234d17e39c4c0510f6ca7995f569e38780fd697cf",
+      "matchesBuilder": true,
+      "observations": [
+        {
+          "line": 150,
+          "text": "    const response = await fetch(`${info.endpoint}/?query=${encodeURIComponent('SELECT * WHERE { ?s ?p ?o } LIMIT 1')}`,"
+        },
+        {
+          "line": 217,
+          "text": "      const ready = await waitReady(info, 60_000);"
+        },
+        {
+          "line": 263,
+          "text": "      const ready = await waitReady(info);"
+        },
+        {
+          "line": 332,
+          "text": "  const ready = writer?.State.Running ? await probe(info) : null;"
+        },
+        {
+          "line": 411,
+          "text": "    const ready = c?.running ? await probe(info) : null;"
+        },
+        {
+          "line": 414,
+          "text": "      state: c ? `${c.status}${c.health ? '/' + c.health : ''}` : '-', ready: ready ? (ready.ok ? 'READY' : 'NOT-READY ' + ready.why) : '-',"
+        },
+        {
+          "line": 425,
+          "text": "        ready: fready ? (fready.ok ? 'READY' : 'NOT-READY ' + fready.why) : '-', mem: stats[fol.container] ? fmtBytes(stats[fol.container].memBytes) : '-',"
+        },
+        {
+          "line": 741,
+          "text": "  // [EXP-K01-R7] Why: publication follows two actual clone starts reproducing D and L. Rejected: checking only the source/reference or publishing a persisted readiness PASS."
+        },
+        {
+          "line": 744,
+          "text": "    JSON.stringify({ ...record, ...layout, qualifiedAt: now() }, null, 2) + \"\\n\","
+        },
+        {
+          "line": 748,
+          "text": "    `[K01] published ${file}; kept golden ${volume} (${volumeBytes(config, volume)} bytes); qualification clone remains in ${info.volume}\\n`,"
+        }
+      ]
+    },
+    {
+      "path": "lab/bench/lib/bulk.ts",
+      "sha256": "30fb15038aa0c945e631db948308a230034d85f90f188556c5a5f59b1e4cb920",
+      "builderSha256": "30fb15038aa0c945e631db948308a230034d85f90f188556c5a5f59b1e4cb920",
+      "matchesBuilder": true,
+      "observations": []
+    },
+    {
+      "path": "lab/bench/driver.ts",
+      "sha256": "2c5ee868e2c1f77e902aed8e8ca471991014f6deea3a1b2333f8662973c60490",
+      "builderSha256": "2c5ee868e2c1f77e902aed8e8ca471991014f6deea3a1b2333f8662973c60490",
+      "matchesBuilder": true,
+      "observations": [
+        {
+          "line": 280,
+          "text": "    report.seedPath={...seedPath,seededBy:record?\"clone\":\"seed-writer\",G0,golden:record?.key??null};"
+        },
+        {
+          "line": 288,
+          "text": "  } else report.seedPath = seedPath;"
+        },
+        {
+          "line": 293,
+          "text": "    seededBy: report.seedPath.seededBy, plannedSubjects: rungSubjects, seededSubjects: N, complete: seed.complete, commands: seed.commands, assertions: seed.assertions,"
+        },
+        {
+          "line": 908,
+          "text": "      bar(\"NS-P2 every oracle-valid trace command published\", `${progress.validPublished}/${progress.validOffered}`, \"all\", progress.validOffered > 0 && progress.validPublished === progress.validOffered),"
+        }
+      ]
+    },
+    {
+      "path": "lab/bench/xtdb-seed.ts",
+      "sha256": "e03d9f3f4017677c200f7ebcc5983cb1cfe9dc75f6302327babe83cc3a2bc6a2",
+      "builderSha256": "e03d9f3f4017677c200f7ebcc5983cb1cfe9dc75f6302327babe83cc3a2bc6a2",
+      "matchesBuilder": true,
+      "observations": [
+        {
+          "line": 27,
+          "text": "import { pinXtdb } from \"./lib/g0-xtdb.ts\";"
+        },
+        {
+          "line": 120,
+          "text": "const g0 = await pinXtdb(comp.backend.url, manifest);"
+        }
+      ]
+    },
+    {
+      "path": "packages/xtdb/src/codecs.ts",
+      "sha256": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+      "builderSha256": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+      "matchesBuilder": true,
+      "observations": []
+    },
+    {
+      "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+      "sha256": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560",
+      "builderSha256": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560",
+      "matchesBuilder": true,
+      "observations": [
+        {
+          "line": 38,
+          "text": "  sql: `INSERT INTO ${table} (_valid_from, ${columns.join(\", \")}) VALUES ${values.map(() => `(TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', ${columns.map(() => \"?\").join(\", \")})`).join(\", \")}`,"
+        },
+        {
+          "line": 95,
+          "text": "        \"SELECT position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?\","
+        },
+        {
+          "line": 163,
+          "text": "            `SELECT ${assertionColumns.join(\", \")} FROM tx_assertions FOR ALL VALID_TIME WHERE ${conditions.join(\" AND \")}`,"
+        },
+        {
+          "line": 195,
+          "text": "        sql: \"ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'\","
+        },
+        {
+          "line": 199,
+          "text": "        sql: \"ASSERT NOT EXISTS (SELECT 1 FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?), 'triplex-operation-duplicate'\","
+        },
+        {
+          "line": 205,
+          "text": "        sql: \"ASSERT NOT EXISTS (SELECT 1 FROM tx_claims FOR ALL VALID_TIME WHERE scope_key = ? AND command_id = ?), 'triplex-command-conflict'\","
+        },
+        {
+          "line": 211,
+          "text": "        sql: `ASSERT NOT EXISTS (SELECT 1 FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND id IN (${[...state.newIds].map(() => \"?\").join(\", \")})), 'triplex-assertion-identity-conflict'`,"
+        },
+        {
+          "line": 306,
+          "text": "                \"SELECT operation_id FROM tx_attempts FOR ALL VALID_TIME WHERE scope_key = ? AND operation_id = ?\","
+        },
+        {
+          "line": 508,
+          "text": "            \"SELECT tx_id FROM tx_claims FOR ALL VALID_TIME WHERE scope_key = ? AND command_id = ? AND position <= ?\","
+        },
+        {
+          "line": 598,
+          "text": "              `SELECT MAX(${expression}) AS source_position FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND attribute IN (${unique.map(() => \"?\").join(\",\")})`,"
+        },
+        {
+          "line": 606,
+          "text": "              `SELECT MIN(CASE WHEN valid_from > ? THEN valid_from WHEN valid_to > ? THEN valid_to END) AS next_temporal_boundary FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND attribute IN (${unique.map(() => \"?\").join(\",\")}) AND ${visibility.join(\" AND \")}`,"
+        },
+        {
+          "line": 627,
+          "text": "              sql: `CREATE TABLE tx_assertions (_id, scope_key, ${assertionColumns.join(\", \")}, value_identity)`,"
+        },
+        {
+          "line": 629,
+          "text": "            { sql: \"CREATE TABLE tx_meta (_id, scope_key, position)\" },"
+        },
+        {
+          "line": 631,
+          "text": "              sql: \"CREATE TABLE tx_claims (_id, scope_key, command_id, tx_id, recorded_at, position)\","
+        },
+        {
+          "line": 634,
+          "text": "              sql: \"CREATE TABLE tx_attempts (_id, scope_key, operation_id, attempt_id, position)\","
+        },
+        {
+          "line": 637,
+          "text": "              sql: \"CREATE TABLE tx_query_relations (_id, scope_key, run_id, rule_name, arg1, arg2, depth)\","
+        },
+        {
+          "line": 640,
+          "text": "              sql: \"CREATE TABLE tx_constraint_graphs (_id, scope_key, run_id, phase, id, entity_id, attribute, entity_type, valid_from, valid_to, value_type, value_string, value_number, value_boolean, value_datetime, value_json, value_identity)\","
+        },
+        {
+          "line": 642,
+          "text": "            { sql: \"CREATE TABLE tx_constraint_generations (_id, scope_key, run_id, source_k)\" },"
+        }
+      ]
+    },
+    {
+      "path": "packages/xtdb/src/MaintainedQueries.ts",
+      "sha256": "a0ec651af8aa68d1c6e63b64109af48996d4c7576930909a50f90306869d8dbd",
+      "builderSha256": "a0ec651af8aa68d1c6e63b64109af48996d4c7576930909a50f90306869d8dbd",
+      "matchesBuilder": true,
+      "observations": [
+        {
+          "line": 51,
+          "text": "          sql: \"CREATE TABLE tx_query_generations (_id, scope_key, generation, source_position, row_count, valid_at, recorded_at, strategy)\","
+        },
+        {
+          "line": 53,
+          "text": "        { sql: \"CREATE TABLE tx_query_members (_id, scope_key, generation, ordinal)\" },"
+        },
+        {
+          "line": 82,
+          "text": "            \"SELECT MAX(position) AS position FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?\","
+        },
+        {
+          "line": 111,
+          "text": "            \"SELECT row_count FROM tx_query_generations FOR ALL VALID_TIME WHERE scope_key = ? AND generation = ?\","
+        },
+        {
+          "line": 195,
+          "text": "                      sql: `INSERT INTO tx_query_members (_id, scope_key, generation, ordinal, ${columns.map((_column, index) => `binding_${index}`).join(\", \")}, _valid_from)"
+        },
+        {
+          "line": 202,
+          "text": "              sql: `INSERT INTO tx_query_generations (_id, scope_key, generation, source_position, row_count, valid_at, recorded_at, strategy, _valid_from)"
+        },
+        {
+          "line": 228,
+          "text": "            `SELECT ${projection} FROM tx_query_members FOR ALL VALID_TIME WHERE scope_key = ? AND generation = ? ORDER BY ordinal LIMIT ${maxRows + 1}`,"
+        }
+      ]
+    },
+    {
+      "path": "packages/xtdb/src/ConstraintValidation.ts",
+      "sha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+      "builderSha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+      "matchesBuilder": true,
+      "observations": [
+        {
+          "line": 43,
+          "text": "  const raw = `SELECT ${columns.join(\", \")} FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ${bind(scopeKey)} AND recorded_position <= ${bind(state.sourceK)} AND (retracted_position IS NULL OR retracted_position > ${bind(state.sourceK)})${overwritten.length ? ` AND id NOT IN (${overwritten.map(bind).join(\", \")})` : \"\"}`;"
+        },
+        {
+          "line": 124,
+          "text": "    `after_graph AS (${[`SELECT * FROM before_graph${retained.length ? ` WHERE ${retained.join(\" AND \")}` : \"\"}`, ...pending].join(\" UNION ALL \")})`,"
+        },
+        {
+          "line": 199,
+          "text": "    \"SELECT id FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ? AND recorded_position <= ? AND (retracted_position IS NULL OR retracted_position > ?) AND value_identity IS NULL LIMIT 1\","
+        },
+        {
+          "line": 225,
+          "text": "      \"SELECT run_id FROM tx_constraint_generations FOR ALL VALID_TIME WHERE scope_key = ? AND run_id = ?\","
+        },
+        {
+          "line": 231,
+          "text": "      sql: `INSERT INTO tx_constraint_graphs (_id, _valid_from, scope_key, run_id, phase, ${columns.join(\", \")}) SELECT ${literal(`${runId}:${side}:`)} || g.id, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', ${literal(scopeKey)}, ${literal(runId)}, '${side}', ${columns.map((column) => `g.${column}`).join(\", \")} FROM (WITH ${graphDefinitions.join(\", \")} SELECT * FROM ${side}_graph) g`,"
+        },
+        {
+          "line": 238,
+          "text": "          sql: \"INSERT INTO tx_constraint_generations (_id, _valid_from, scope_key, run_id, source_k) VALUES (?, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', ?, ?, ?)\","
+        },
+        {
+          "line": 245,
+          "text": "          `${side}_graph AS (SELECT ${columns.join(\", \")} FROM tx_constraint_graphs FOR ALL VALID_TIME WHERE scope_key = ${literal(scopeKey)} AND run_id = ${literal(runId)} AND phase = '${side}')`,"
+        }
+      ]
+    },
+    {
+      "path": "packages/xtdb/src/native/Reachability.ts",
+      "sha256": "3929e03f7ba1b8e20a47d8fa94b71c68f64f0ad021beaf866deb210fa3fba932",
+      "builderSha256": "3929e03f7ba1b8e20a47d8fa94b71c68f64f0ad021beaf866deb210fa3fba932",
+      "matchesBuilder": true,
+      "observations": [
+        {
+          "line": 64,
+          "text": "            sql: \"ASSERT NOT EXISTS (SELECT 1 FROM tx_native_relation_attempts FOR ALL VALID_TIME WHERE _id = $1), 'triplex-native-attempt-duplicate'\","
+        },
+        {
+          "line": 70,
+          "text": "            sql: \"INSERT INTO tx_native_relation_attempts (_id, _valid_from, scope_key, run_id, attempt_id, phase) VALUES ($1, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', $2, $3, $4, $5)\","
+        },
+        {
+          "line": 88,
+          "text": "            \"SELECT attempt_id FROM tx_native_relation_attempts FOR ALL VALID_TIME WHERE _id = $1\","
+        },
+        {
+          "line": 120,
+          "text": "      \"SELECT COUNT(*) AS count FROM tx_native_relations FOR ALL VALID_TIME WHERE scope_key = $1 AND run_id = $2 AND relation_name = $3\";"
+        },
+        {
+          "line": 161,
+          "text": "        sql: \"CREATE TABLE tx_native_relations (_id, scope_key, run_id, relation_name, source, target, depth)\","
+        },
+        {
+          "line": 164,
+          "text": "        sql: \"CREATE TABLE tx_native_relation_attempts (_id, scope_key, run_id, attempt_id, phase)\","
+        },
+        {
+          "line": 177,
+          "text": "        sql: \"ASSERT (SELECT COUNT(*) FROM tx_native_relations FOR ALL VALID_TIME WHERE scope_key = $1 AND run_id = $2 AND relation_name = $3) <= $4, 'triplex-native-reachability-limit'\","
+        },
+        {
+          "line": 183,
+          "text": "          sql: `INSERT INTO tx_native_relations (_id, _valid_from, scope_key, run_id, relation_name, source, target, depth) SELECT ${prefix} || CAST(CHARACTER_LENGTH(e.source) AS TEXT) || ':' || e.source || e.target, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', ${scope}, ${run}, ${name}, e.source, e.target, 0 FROM (SELECT DISTINCT source, target FROM (${edges}\\n) native_edges) e LIMIT ${maxRows + 1}`,"
+        },
+        {
+          "line": 196,
+          "text": "            sql: `INSERT INTO tx_native_relations (_id, _valid_from, scope_key, run_id, relation_name, source, target, depth) SELECT $4 || CAST(CHARACTER_LENGTH(c.source) AS TEXT) || ':' || c.source || c.target, TIMESTAMP WITH TIME ZONE '1970-01-01T00:00:00Z', $1, $2, $3, c.source, c.target, $5 FROM (SELECT DISTINCT prior.source AS source, edge.target AS target FROM tx_native_relations FOR ALL VALID_TIME prior JOIN tx_native_relations FOR ALL VALID_TIME edge ON prior.target = edge.source WHERE prior.scope_key = $1 AND prior.run_id = $2 AND prior.relation_name = $3 AND prior.depth < $5 AND edge.scope_key = $1 AND edge.run_id = $2 AND edge.relation_name = $3 AND edge.depth = 0) c WHERE NOT EXISTS (SELECT 1 FROM tx_native_relations FOR ALL VALID_TIME seen WHERE seen.scope_key = $1 AND seen.run_id = $2 AND seen.relation_name = $3 AND seen.source = c.source AND seen.target = c.target) LIMIT ${maxRows + 1}`,"
+        },
+        {
+          "line": 201,
+          "text": "            sql: \"ASSERT (SELECT COUNT(*) FROM tx_native_relations FOR ALL VALID_TIME WHERE scope_key = $1 AND run_id = $2 AND relation_name = $3) <= $4, 'triplex-native-reachability-limit'\","
+        },
+        {
+          "line": 222,
+          "text": "        return `(SELECT source, target FROM tx_native_relations FOR ALL VALID_TIME WHERE scope_key = ${context.bind(basis.scope)} AND run_id = ${context.bind(runId)} AND relation_name = ${context.bind(name)})`;"
+        }
+      ]
+    }
+  ],
+  "numericWitness": [
+    {
+      "path": "packages/xtdb/src/XtdbClient.ts",
+      "sha256": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c",
+      "matchesBuilder": true,
+      "excerpts": [
+        {
+          "line": 140,
+          "text": "        );"
+        },
+        {
+          "line": 141,
+          "text": "      // The native-f64-parameters-v1 public probe observed -0 returning as the"
+        },
+        {
+          "line": 142,
+          "text": "      // integer text \"0\" in SQL and XTQL, while native double literals retained"
+        },
+        {
+          "line": 143,
+          "text": "      // their sign. Number.isSafeInteger(-0) is true, and ordinary numeric text"
+        },
+        {
+          "line": 144,
+          "text": "      // serialization also prints \"0\": preserve both float8 type and spelling."
+        },
+        {
+          "line": 145,
+          "text": "      // See experiments/native-f64-parameters.ts and ECMAScript SameValue:"
+        },
+        {
+          "line": 146,
+          "text": "      // https://tc39.es/ecma262/#sec-samevalue"
+        },
+        {
+          "line": 147,
+          "text": "      const negativeZero = typeof value === \"number\" && Object.is(value, -0);"
+        },
+        {
+          "line": 148,
+          "text": "      const oid ="
+        },
+        {
+          "line": 149,
+          "text": "        value === null"
+        },
+        {
+          "line": 150,
+          "text": "          ? 0"
+        },
+        {
+          "line": 151,
+          "text": "          : typeof value === \"string\""
+        },
+        {
+          "line": 152,
+          "text": "            ? 25"
+        },
+        {
+          "line": 153,
+          "text": "            : typeof value === \"boolean\""
+        },
+        {
+          "line": 154,
+          "text": "              ? 16"
+        },
+        {
+          "line": 155,
+          "text": "              : typeof value === \"bigint\""
+        },
+        {
+          "line": 156,
+          "text": "                ? 20"
+        },
+        {
+          "line": 157,
+          "text": "                : typeof value === \"number\""
+        },
+        {
+          "line": 158,
+          "text": "                  ? Number.isSafeInteger(value) && !negativeZero"
+        },
+        {
+          "line": 159,
+          "text": "                    ? 20"
+        },
+        {
+          "line": 160,
+          "text": "                    : 701"
+        },
+        {
+          "line": 161,
+          "text": "                  : 114;"
+        },
+        {
+          "line": 162,
+          "text": "      return pool.typed("
+        },
+        {
+          "line": 163,
+          "text": "        negativeZero ? \"-0.0\" : typeof value === \"bigint\" ? value.toString() : value,"
+        },
+        {
+          "line": 164,
+          "text": "        oid,"
+        }
+      ]
+    },
+    {
+      "path": "packages/xtdb/src/XtdbQueryExecutor.ts",
+      "sha256": "71fc5d949a8a9f51449cfeb97afb9cd10b6e869647962a2c6ad006a4ccf69c0c",
+      "matchesBuilder": true,
+      "excerpts": [
+        {
+          "line": 28,
+          "text": ""
+        },
+        {
+          "line": 29,
+          "text": "const numeric = (value: unknown): number | null => {"
+        },
+        {
+          "line": 30,
+          "text": "  if (value === null || value === undefined) return null;"
+        },
+        {
+          "line": 31,
+          "text": "  const result = typeof value === \"number\" ? value : Number(value);"
+        },
+        {
+          "line": 32,
+          "text": "  const exactInteger ="
+        },
+        {
+          "line": 33,
+          "text": "    typeof value === \"bigint\" || (typeof value === \"string\" && /^[+-]?\\d+$/.test(value));"
+        },
+        {
+          "line": 34,
+          "text": "  if (!Number.isFinite(result) || (exactInteger && !Number.isSafeInteger(result)))"
+        },
+        {
+          "line": 35,
+          "text": "    throw new Error(`XTDB returned an unrepresentable Triplex number: ${String(value)}`);"
+        },
+        {
+          "line": 36,
+          "text": "  return result;"
+        },
+        {
+          "line": 37,
+          "text": "};"
+        },
+        {
+          "line": 38,
+          "text": "const exactInteger = (value: unknown) => {"
+        },
+        {
+          "line": 60,
+          "text": "      switch (row[columns.type]) {"
+        },
+        {
+          "line": 61,
+          "text": "        case \"string\":"
+        },
+        {
+          "line": 62,
+          "text": "          result[variable] = row[columns.string] == null ? null : String(row[columns.string]);"
+        },
+        {
+          "line": 63,
+          "text": "          break;"
+        },
+        {
+          "line": 64,
+          "text": "        case \"number\":"
+        },
+        {
+          "line": 65,
+          "text": "          result[variable] = numeric(row[columns.number]);"
+        },
+        {
+          "line": 66,
+          "text": "          break;"
+        },
+        {
+          "line": 67,
+          "text": "        case \"integer\":"
+        }
+      ]
+    },
+    {
+      "path": "packages/xtdb/src/codecs.ts",
+      "sha256": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+      "matchesBuilder": true,
+      "excerpts": [
+        {
+          "line": 86,
+          "text": "      packed.value_string = value.value;"
+        },
+        {
+          "line": 87,
+          "text": "      break;"
+        },
+        {
+          "line": 88,
+          "text": "    case \"number\":"
+        },
+        {
+          "line": 89,
+          "text": "    case \"datetime\": {"
+        },
+        {
+          "line": 90,
+          "text": "      if (!Number.isFinite(value.value)) throw new TypeError(`${value.type} must be finite`);"
+        },
+        {
+          "line": 91,
+          "text": "      if (value.type === \"number\") packed.value_number = value.value;"
+        },
+        {
+          "line": 92,
+          "text": "      else packed.value_datetime = value.value;"
+        },
+        {
+          "line": 93,
+          "text": "      break;"
+        },
+        {
+          "line": 94,
+          "text": "    }"
+        },
+        {
+          "line": 95,
+          "text": "    case \"boolean\":"
+        },
+        {
+          "line": 115,
+          "text": ""
+        },
+        {
+          "line": 116,
+          "text": "const nullableNumber = (input: unknown): number | null => {"
+        },
+        {
+          "line": 117,
+          "text": "  if (input === null || input === undefined) return null;"
+        },
+        {
+          "line": 118,
+          "text": "  const value = typeof input === \"number\" ? input : Number(input);"
+        },
+        {
+          "line": 119,
+          "text": "  if (!Number.isFinite(value))"
+        },
+        {
+          "line": 120,
+          "text": "    throw new TypeError(`Invalid numeric database value: ${String(input)}`);"
+        },
+        {
+          "line": 121,
+          "text": "  return value;"
+        },
+        {
+          "line": 122,
+          "text": "};"
+        },
+        {
+          "line": 123,
+          "text": ""
+        },
+        {
+          "line": 124,
+          "text": "export const decodeAssertionRow = (input: Record<string, unknown>): TripleRow => {"
+        },
+        {
+          "line": 125,
+          "text": "  const row: Record<string, unknown> = {};"
+        },
+        {
+          "line": 126,
+          "text": "  for (const column of assertionColumns) row[column] = input[column] ?? null;"
+        },
+        {
+          "line": 127,
+          "text": "  for (const column of ["
+        },
+        {
+          "line": 128,
+          "text": "    \"value_number\","
+        },
+        {
+          "line": 129,
+          "text": "    \"value_boolean\","
+        },
+        {
+          "line": 130,
+          "text": "    \"value_datetime\","
+        },
+        {
+          "line": 131,
+          "text": "    \"recorded_at\","
+        },
+        {
+          "line": 132,
+          "text": "    \"recorded_position\","
+        },
+        {
+          "line": 133,
+          "text": "    \"valid_from\","
+        },
+        {
+          "line": 134,
+          "text": "    \"valid_to\","
+        },
+        {
+          "line": 135,
+          "text": "    \"retracted_at\","
+        },
+        {
+          "line": 136,
+          "text": "    \"retracted_position\","
+        },
+        {
+          "line": 137,
+          "text": "    \"schema_version\","
+        },
+        {
+          "line": 138,
+          "text": "  ]) {"
+        },
+        {
+          "line": 139,
+          "text": "    row[column] = nullableNumber(row[column]);"
+        },
+        {
+          "line": 140,
+          "text": "  }"
+        },
+        {
+          "line": 232,
+          "text": "  switch (row.value_type) {"
+        },
+        {
+          "line": 233,
+          "text": "    case \"string\":"
+        },
+        {
+          "line": 234,
+          "text": "      return { type: \"string\", value: row.value_string! };"
+        },
+        {
+          "line": 235,
+          "text": "    case \"ref\":"
+        },
+        {
+          "line": 236,
+          "text": "      return { type: \"ref\", value: row.value_string! as never };"
+        },
+        {
+          "line": 237,
+          "text": "    case \"integer\":"
+        },
+        {
+          "line": 238,
+          "text": "      return integer(row.value_string!);"
+        },
+        {
+          "line": 239,
+          "text": "    case \"number\":"
+        },
+        {
+          "line": 240,
+          "text": "      return { type: \"number\", value: row.value_number! };"
+        },
+        {
+          "line": 241,
+          "text": "    case \"datetime\":"
+        },
+        {
+          "line": 242,
+          "text": "      return { type: \"datetime\", value: row.value_datetime! };"
+        }
+      ]
+    },
+    {
+      "path": "packages/xtdb/test/client-parameters.test.ts",
+      "sha256": "4803e89defd6cf311059b8ea9b5de5f4236c9148617f959ce5c8cbe7c6f1976f",
+      "matchesBuilder": true,
+      "excerpts": [
+        {
+          "line": 20,
+          "text": "  it(\"encodes negative zero as float8 text while keeping integer and exact int64 channels\", async () => {"
+        },
+        {
+          "line": 21,
+          "text": "    const client = makeXtdbClient(\"postgresql://unused-unit-test\");"
+        },
+        {
+          "line": 22,
+          "text": "    await client.query("
+        },
+        {
+          "line": 23,
+          "text": "      \"SELECT $1 AS value\","
+        },
+        {
+          "line": 24,
+          "text": "      [-0, 0, 1, 0.25, Number.MAX_SAFE_INTEGER, -Number.MAX_SAFE_INTEGER, 9223372036854775807n],"
+        },
+        {
+          "line": 25,
+          "text": "      undefined,"
+        },
+        {
+          "line": 26,
+          "text": "      { parameterSyntax: \"postgresql\" },"
+        },
+        {
+          "line": 27,
+          "text": "    );"
+        },
+        {
+          "line": 28,
+          "text": "    expect(driver.typed.mock.calls).toEqual(["
+        },
+        {
+          "line": 29,
+          "text": "      [\"-0.0\", 701],"
+        },
+        {
+          "line": 30,
+          "text": "      [0, 20],"
+        },
+        {
+          "line": 31,
+          "text": "      [1, 20],"
+        },
+        {
+          "line": 32,
+          "text": "      [0.25, 701],"
+        },
+        {
+          "line": 33,
+          "text": "      [Number.MAX_SAFE_INTEGER, 20],"
+        },
+        {
+          "line": 34,
+          "text": "      [-Number.MAX_SAFE_INTEGER, 20],"
+        }
+      ]
+    }
+  ]
+}

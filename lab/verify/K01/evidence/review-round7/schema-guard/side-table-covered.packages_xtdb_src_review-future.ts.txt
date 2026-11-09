@@ -1,0 +1,1 @@
+const sql = "CREATE TABLE tx_review_future (_id, scope_key, review_future_column)";

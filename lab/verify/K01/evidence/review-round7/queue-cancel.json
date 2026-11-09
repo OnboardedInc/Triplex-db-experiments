@@ -1,0 +1,10 @@
+{
+  "label": "CX-VK01-round7-offline",
+  "processId": 67040,
+  "outcome": "cancelled queued heavy wrapper by SIGTERM; exit 143",
+  "testsStarted": false,
+  "observedDfAvailableKiB": 5045992,
+  "requiredBytes": 5368709120,
+  "reason": "Host free disk fell below the floor; all four heavy slots were held by other agents. Later retry checked floor before heavy wrapper and again inside runner.",
+  "privacy": "process inspection restricted to own exact queued command; no other process signalled"
+}

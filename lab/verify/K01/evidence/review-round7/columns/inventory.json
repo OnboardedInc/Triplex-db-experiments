@@ -1,0 +1,162 @@
+{
+  "declarations": {
+    "tx_query_generations": [
+      "_id",
+      "scope_key",
+      "generation",
+      "source_position",
+      "row_count",
+      "valid_at",
+      "recorded_at",
+      "strategy"
+    ],
+    "tx_query_members": [
+      "_id",
+      "scope_key",
+      "generation",
+      "ordinal"
+    ],
+    "tx_assertions": [
+      "_id",
+      "scope_key",
+      "id",
+      "entity_id",
+      "attribute",
+      "value_type",
+      "value_string",
+      "value_number",
+      "value_boolean",
+      "value_datetime",
+      "value_json",
+      "recorded_at",
+      "recorded_position",
+      "valid_from",
+      "valid_to",
+      "created_by",
+      "retracted_at",
+      "retracted_position",
+      "retract_tx_id",
+      "entity_type",
+      "schema_version",
+      "tx_id",
+      "value_identity"
+    ],
+    "tx_meta": [
+      "_id",
+      "scope_key",
+      "position"
+    ],
+    "tx_claims": [
+      "_id",
+      "scope_key",
+      "command_id",
+      "tx_id",
+      "recorded_at",
+      "position"
+    ],
+    "tx_attempts": [
+      "_id",
+      "scope_key",
+      "operation_id",
+      "attempt_id",
+      "position"
+    ],
+    "tx_query_relations": [
+      "_id",
+      "scope_key",
+      "run_id",
+      "rule_name",
+      "arg1",
+      "arg2",
+      "depth"
+    ],
+    "tx_constraint_graphs": [
+      "_id",
+      "scope_key",
+      "run_id",
+      "phase",
+      "id",
+      "entity_id",
+      "attribute",
+      "entity_type",
+      "valid_from",
+      "valid_to",
+      "value_type",
+      "value_string",
+      "value_number",
+      "value_boolean",
+      "value_datetime",
+      "value_json",
+      "value_identity"
+    ],
+    "tx_constraint_generations": [
+      "_id",
+      "scope_key",
+      "run_id",
+      "source_k"
+    ],
+    "tx_native_relations": [
+      "_id",
+      "scope_key",
+      "run_id",
+      "relation_name",
+      "source",
+      "target",
+      "depth"
+    ],
+    "tx_native_relation_attempts": [
+      "_id",
+      "scope_key",
+      "run_id",
+      "attempt_id",
+      "phase"
+    ]
+  },
+  "locations": {
+    "tx_query_generations": {
+      "file": "MaintainedQueries.ts",
+      "line": 51
+    },
+    "tx_query_members": {
+      "file": "MaintainedQueries.ts",
+      "line": 53
+    },
+    "tx_assertions": {
+      "file": "XtdbStorageAdapter.ts",
+      "line": 627
+    },
+    "tx_meta": {
+      "file": "XtdbStorageAdapter.ts",
+      "line": 629
+    },
+    "tx_claims": {
+      "file": "XtdbStorageAdapter.ts",
+      "line": 631
+    },
+    "tx_attempts": {
+      "file": "XtdbStorageAdapter.ts",
+      "line": 634
+    },
+    "tx_query_relations": {
+      "file": "XtdbStorageAdapter.ts",
+      "line": 637
+    },
+    "tx_constraint_graphs": {
+      "file": "XtdbStorageAdapter.ts",
+      "line": 640
+    },
+    "tx_constraint_generations": {
+      "file": "XtdbStorageAdapter.ts",
+      "line": 642
+    },
+    "tx_native_relations": {
+      "file": "native/Reachability.ts",
+      "line": 161
+    },
+    "tx_native_relation_attempts": {
+      "file": "native/Reachability.ts",
+      "line": 164
+    }
+  },
+  "exclusions": []
+}

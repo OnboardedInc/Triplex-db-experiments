@@ -1,0 +1,105 @@
+{
+  "at": "2026-11-09T02:15:49.518110+00:00",
+  "files": [
+    {
+      "path": "lab/SCOPE.md",
+      "sha256": "94527879db763dd6f3e7d233470250cd53b86f4fb594c8ade2aedc730cb14f96",
+      "rulings": []
+    },
+    {
+      "path": "lab/NORTH-STAR.md",
+      "sha256": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9",
+      "rulings": []
+    },
+    {
+      "path": "lab/TARGETS.md",
+      "sha256": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95",
+      "rulings": []
+    },
+    {
+      "path": "lab/PROTOCOL.md",
+      "sha256": "cc314b62e43f9f8bce1de6cdb720e70fd5b272c7cc390d0d775c507c98b33734",
+      "rulings": []
+    },
+    {
+      "path": "lab/research/R36-k01-simplification.md",
+      "sha256": "59780fea0f29b28d3fbf1f62551d19ad26e96897ea58372d2ba59b3d1191b42b",
+      "rulings": [
+        {
+          "line": 375,
+          "text": "| **New Q93a: process evidence refuses, never grants** | n/a | For seed reuse on every lane, the only evidence that grants admission is a content fingerprint (G0) read through the engine by the process that will measure, on the endpoint it measures, before its warm-up, compared with a digest pinned before the freeze began (and with O-DOMAIN where one exists). Every other observation (stop, settle, log tails, frontiers, inspect, stderr, timers, owner state, copy hashes, plan hashes, disk) is refusal-only or a diagnostic, and no decision reads a diagnostic. |"
+        },
+        {
+          "line": 376,
+          "text": "| **New Q93b: G0 for K01** | n/a | Fields, pinning point and counts as in sections 2.1 and 3.2; every read has a deadline; the golden is published only after two starts of a clone each reproduce `D` and the layout digest `L`. |"
+        },
+        {
+          "line": 380,
+          "text": "| Q74d readiness | `/healthz/started` plus C1-C8 PASS stored in `owner.json` | **replaced** by Q93a/b: health precondition plus G0 in the driver; `owner.json` holds slot ownership only |"
+        },
+        {
+          "line": 383,
+          "text": "| Q83b settle and clean-stop evidence | gating evidence | **superseded by Q93a**: the steps stay in the recipe, their readings become diagnostics; `xt.live_tables` is read only on a freshly started node (K3) |"
+        },
+        {
+          "line": 387,
+          "text": "| Q92c, Q92g (P5 fingerprint) | \"freshly seeded or fingerprint-verified clone\"; G0 after every seed or clone | unchanged; Q93a makes K01 conform to them |"
+        },
+        {
+          "line": 388,
+          "text": "| `load-contract.json` lines 174-234 | binds Q83b, Q83d, Q83e precedence and the F/M/T schema | replace with the Q93a/b binding in the next contract version |"
+        }
+      ]
+    },
+    {
+      "path": "lab/acceptance/RULINGS-PENDING.md",
+      "sha256": "ced5c9496bcd596cce85973f91ec8f32426adc4f0d049e2ecac288a3a224ab37",
+      "rulings": [
+        {
+          "line": 85,
+          "text": "## Q93: seed reuse is admitted by content, not by process evidence (R36, lab/research/R36-k01-simplification.md section 6)"
+        },
+        {
+          "line": 86,
+          "text": "The table below is R36 section 6 verbatim (old rule, its status, new text). Q83d and Q83e are retired by Q93a; Q83a stays as a diagnostic aid."
+        },
+        {
+          "line": 90,
+          "text": "| Q93a process evidence refuses, never grants | n/a | For seed reuse on every lane, the only evidence that grants admission is a content fingerprint (G0) read through the engine by the process that will measure, on the endpoint it measures, before its warm-up, compared with a digest pinned before the freeze began (and with O-DOMAIN where one exists). Every other observation (stop, settle, log tails, frontiers, inspect, stderr, timers, owner state, copy hashes, plan hashes, disk) is refusal-only or a diagnostic, and no decision reads a diagnostic. |"
+        },
+        {
+          "line": 91,
+          "text": "| Q93b G0 for K01 | n/a | Fields, pinning point and counts as in sections 2.1 and 3.2; every read has a deadline; the golden is published only after two starts of a clone each reproduce `D` and the layout digest `L`. |"
+        },
+        {
+          "line": 95,
+          "text": "| change to Q74d readiness | `/healthz/started` plus C1-C8 PASS stored in `owner.json` | **replaced** by Q93a/b: health precondition plus G0 in the driver; `owner.json` holds slot ownership only |"
+        },
+        {
+          "line": 98,
+          "text": "| change to Q83b settle and clean-stop evidence | gating evidence | **superseded by Q93a**: the steps stay in the recipe, their readings become diagnostics; `xt.live_tables` is read only on a freshly started node (K3) |"
+        },
+        {
+          "line": 102,
+          "text": "| change to Q92c, Q92g (P5 fingerprint) | \"freshly seeded or fingerprint-verified clone\"; G0 after every seed or clone | unchanged; Q93a makes K01 conform to them |"
+        },
+        {
+          "line": 103,
+          "text": "| `load-contract.json` lines 174-234 | binds Q83b, Q83d, Q83e precedence and the F/M/T schema | replace with the Q93a/b binding in the next contract version |"
+        },
+        {
+          "line": 111,
+          "text": "| Q94d | GS world admission follows Q93a: a G0 content fingerprint per run; a fresh scope or verified clone per run; store counts at start and end; on lane Q the Q91a counts | R37 d; Q93a, Q92c, Q91a |"
+        },
+        {
+          "line": 112,
+          "text": "| Q94e | Every GS receipt before contract 0.4.0 is DIAGNOSTIC: none closes an obligation or enters a comparison. The GS.12 defect and the W01b harness findings stay as defect reports | R37 e; Q90f, Q91a, Q93a |"
+        },
+        {
+          "line": 117,
+          "text": "| Q93c two digests | G0 admits a clone by the full digest D over every stored column (byte-level identity with its golden). E1, which compares a clone with a fresh seed of the same inputs, uses a second digest D' over the same columns with engine-assigned values normalized: engine-generated ids and system timestamps are replaced by their rank in commit order, and every other column is kept as is. A fresh seed must match the golden's D', never its D. The normalization list is part of the G0 module, each entry with a comment naming the engine source that assigns it, and a test fails if a column is normalized without one. | CX-K01-R2 round 8 |"
+        }
+      ]
+    }
+  ]
+}

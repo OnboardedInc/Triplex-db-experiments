@@ -1,0 +1,67 @@
+TAP version 13
+# Subtest: independent declaration audit fails if any stored column lacks coverage
+not ok 1 - independent declaration audit fails if any stored column lacks coverage
+  ---
+  duration_ms: 2.79775
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/tmp/schema-side-table-stale/lab/bench/test/g0-schema.test.ts:46:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly deep-equal:
+    + actual - expected
+    ... Skipped lines
+    
+      [
+        'tx_assertions',
+        'tx_attempts',
+        'tx_claims',
+        'tx_constraint_generations',
+    ...
+        'tx_query_relations',
+    -   'tx_review_future'
+      ]
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: 'tx_assertions'
+    1: 'tx_attempts'
+    2: 'tx_claims'
+    3: 'tx_constraint_generations'
+    4: 'tx_constraint_graphs'
+    5: 'tx_meta'
+    6: 'tx_native_relation_attempts'
+    7: 'tx_native_relations'
+    8: 'tx_query_generations'
+    9: 'tx_query_members'
+    10: 'tx_query_relations'
+    11: 'tx_review_future'
+  actual:
+    0: 'tx_assertions'
+    1: 'tx_attempts'
+    2: 'tx_claims'
+    3: 'tx_constraint_generations'
+    4: 'tx_constraint_graphs'
+    5: 'tx_meta'
+    6: 'tx_native_relation_attempts'
+    7: 'tx_native_relations'
+    8: 'tx_query_generations'
+    9: 'tx_query_members'
+    10: 'tx_query_relations'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/tmp/schema-side-table-stale/lab/bench/test/g0-schema.test.ts:59:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 367.469667

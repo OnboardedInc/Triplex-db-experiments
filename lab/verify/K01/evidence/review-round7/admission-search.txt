@@ -1,0 +1,57 @@
+lab/bench/lib/g0.ts:38:      throw Error("G0 unsupported/missing value");
+lab/bench/lib/g0.ts:41:      if (!Number.isSafeInteger(n)) throw Error("G0 unsafe integer");
+lab/bench/lib/g0.ts:57:  if (!Number.isFinite(ms) || ms <= 0) throw Error("G0 invalid deadline");
+lab/bench/lib/g0.ts:66:          reject(Error("G0 read deadline exceeded"));
+lab/bench/lib/g0.ts:82:    throw Error("G0 oracle binding invalid");
+lab/bench/lib/g0.ts:85:      throw Error("G0 O-DOMAIN mismatch: " + key);
+lab/bench/lib/g0.ts:87:export async function readG0(
+lab/bench/lib/g0.ts:99:    throw Error("G0 expected binding missing");
+lab/bench/lib/g0.ts:108:        throw Error("G0 foreign scope or wrong position");
+lab/bench/lib/g0.ts:114:      if (!Number.isSafeInteger(count) || count < 0) throw Error("G0 invalid independent count");
+lab/bench/lib/g0.ts:121:        throw Error("G0 count mismatch: " + table);
+lab/bench/lib/g0.ts:126:        if (signal.aborted || hashes.length >= count) throw Error("G0 extra rows or expired read");
+lab/bench/lib/g0.ts:129:            throw Error("G0 missing field: " + field);
+lab/bench/lib/g0.ts:137:      if (hashes.length !== count) throw Error("G0 partial/empty scan: " + table);
+lab/bench/lib/g0.ts:143:      if (!w0) throw Error("G0 W0 requires O-DOMAIN");
+lab/bench/lib/g0.ts:155:export async function admitG0(
+lab/bench/lib/g0.ts:168:    throw Error("G0 pin binding differs from manifest");
+lab/bench/lib/g0.ts:169:  const current = await readG0(reader, expected, w0, ms);
+lab/bench/lib/g0.ts:170:  if (current.D !== pin.D) throw Error("G0 content mismatch");
+lab/bench/lib/g0.ts:172:    gate: "G0" as const,
+lab/bench/lib/g0.ts:173:    status: "PASS" as const,
+lab/bench/clone-check.ts:3:import { openG0, quietXtdb } from "./lib/g0-xtdb.ts";
+lab/bench/clone-check.ts:8:const h = await openG0(endpoint);
+lab/bench/lib/g0-schema.ts:26:        throw Error("G0 unsupported assertion schema");
+lab/bench/lib/g0-schema.ts:27:      if (assertionColumns) throw Error("G0 duplicate assertion schema");
+lab/bench/lib/g0-schema.ts:30:  if (!assertionColumns?.length) throw Error("G0 missing assertion schema");
+lab/bench/lib/g0-schema.ts:40:            throw Error("G0 unsupported dynamic table schema");
+lab/bench/lib/g0-schema.ts:47:      if (!m) throw Error("G0 unsupported table declaration: " + sql);
+lab/bench/lib/g0-schema.ts:55:        throw Error("G0 ambiguous schema");
+lab/bench/lib/g0-schema.ts:59:    if (!tables[t]) throw Error("G0 missing core table " + t);
+lab/bench/lib/g0-xtdb.ts:5:  admitG0,
+lab/bench/lib/g0-xtdb.ts:6:  readG0,
+lab/bench/lib/g0-xtdb.ts:25:    throw Error("G0 manifest/closed form differs");
+lab/bench/lib/g0-xtdb.ts:38:export async function openG0(endpoint: string) {
+lab/bench/lib/g0-xtdb.ts:63:      if (r.length !== 1 || !Number.isSafeInteger(Number(r[0].n))) throw Error("G0 invalid count");
+lab/bench/lib/g0-xtdb.ts:92:  const h = await openG0(endpoint);
+lab/bench/lib/g0-xtdb.ts:94:    return await readG0(logicalReader(h.reader, h.scopeKey, m.scope), expectedN01(m));
+lab/bench/lib/g0-xtdb.ts:110:  const h = await openG0(endpoint);
+lab/bench/lib/g0-xtdb.ts:112:    return await admitG0(logicalReader(h.reader, h.scopeKey, m.scope), pin, expectedN01(m));
+lab/bench/lib/g0-xtdb.ts:118:  const h = await openG0(endpoint);
+lab/bench/lib/g0-xtdb.ts:182:  const h = await openG0(endpoint);
+lab/bench/lib/bulk.ts:28:// [EXP-K01-R7] Why: provenance is descriptive; only this driver's G0 can admit reuse. Rejected: owner-file readiness and certificate reads.
+lab/bin/engine.mjs:266:        if (entry) Object.assign(entry, { state: 'running', pid: null, configSha256: eff.sha256, readyAt: now() });
+lab/bin/engine.mjs:373:      if (entry) Object.assign(entry, { state: 'running', pid: null, configSha256: eff.sha256, readyAt: now() });
+lab/bin/engine.mjs:502:// [EXP-K01-R7] Why: owner files describe slot ownership only; G0 in the driver grants reuse. Rejected: readiness certificates, lifecycle tokens, stopped-tail proofs and transported C3-C8 results.
+lab/bin/engine.mjs:667:    fail("REFUSED", "pre-freeze G0 pin required in seed manifest");
+lab/bin/engine.mjs:741:  // [EXP-K01-R7] Why: publication follows two actual clone starts reproducing D and L. Rejected: checking only the source/reference or publishing a persisted readiness PASS.
+lab/bin/engine.mjs:744:    JSON.stringify({ ...record, ...layout, qualifiedAt: now() }, null, 2) + "\n",
+lab/bin/engine.mjs:748:    `[K01] published ${file}; kept golden ${volume} (${volumeBytes(config, volume)} bytes); qualification clone remains in ${info.volume}\n`,
+lab/bench/driver.ts:17:import { checkXtdb, expectedN01, healthXtdb, openG0, quietXtdb } from "./lib/g0-xtdb.ts";
+lab/bench/driver.ts:103:// [EXP-K01-R7] Why: every XTDB measurement needs a pin before freeze and a freshly started arm. Rejected: silently measuring the legacy in-driver seed without G0.
+lab/bench/driver.ts:106:// [EXP-K01-R7] Why: provenance never grants reuse; G0 runs below in the measuring process. Rejected: reading owner-file readiness.
+lab/bench/driver.ts:258:  // [EXP-K01-R7] Why: G0 reads this writer's endpoint in this measuring process before workers/warm-up exist. Rejected: accepting any prior process verdict or diagnostic.
+lab/bench/driver.ts:279:    const G0=await checkXtdb(writer.backend.url,bulkManifest,bulkManifest.g0);
+lab/bench/driver.ts:280:    report.seedPath={...seedPath,seededBy:record?"clone":"seed-writer",G0,golden:record?.key??null};
+lab/bench/driver.ts:579:    const expected=expectedN01(bulkManifest),h=await openG0(writer.backend.url);
+lab/bench/driver.ts:908:      bar("NS-P2 every oracle-valid trace command published", `${progress.validPublished}/${progress.validOffered}`, "all", progress.validOffered > 0 && progress.validPublished === progress.validOffered),

@@ -1,0 +1,95 @@
+TAP version 13
+# Subtest: independent declaration audit fails if any stored column lacks coverage
+not ok 1 - independent declaration audit fails if any stored column lacks coverage
+  ---
+  duration_ms: 2.806125
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/tmp/schema-assertion-column-stale/lab/bench/test/g0-schema.test.ts:46:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    tx_assertions
+    + actual - expected
+    ... Skipped lines
+    
+      [
+        '_id',
+        'attribute',
+        'created_by',
+        'entity_id',
+    ...
+        'retracted_position',
+    -   'review_future_column',
+        'schema_version',
+        'scope_key',
+        'tx_id',
+        'valid_from',
+        'valid_to',
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+    0: '_id'
+    1: 'attribute'
+    2: 'created_by'
+    3: 'entity_id'
+    4: 'entity_type'
+    5: 'id'
+    6: 'recorded_at'
+    7: 'recorded_position'
+    8: 'retract_tx_id'
+    9: 'retracted_at'
+    10: 'retracted_position'
+    11: 'review_future_column'
+    12: 'schema_version'
+    13: 'scope_key'
+    14: 'tx_id'
+    15: 'valid_from'
+    16: 'valid_to'
+    17: 'value_boolean'
+    18: 'value_datetime'
+    19: 'value_identity'
+    20: 'value_json'
+    21: 'value_number'
+    22: 'value_string'
+    23: 'value_type'
+  actual:
+    0: '_id'
+    1: 'attribute'
+    2: 'created_by'
+    3: 'entity_id'
+    4: 'entity_type'
+    5: 'id'
+    6: 'recorded_at'
+    7: 'recorded_position'
+    8: 'retract_tx_id'
+    9: 'retracted_at'
+    10: 'retracted_position'
+    11: 'schema_version'
+    12: 'scope_key'
+    13: 'tx_id'
+    14: 'valid_from'
+    15: 'valid_to'
+    16: 'value_boolean'
+    17: 'value_datetime'
+    18: 'value_identity'
+    19: 'value_json'
+    20: 'value_number'
+    21: 'value_string'
+    22: 'value_type'
+  operator: 'deepStrictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/tmp/schema-assertion-column-stale/lab/bench/test/g0-schema.test.ts:61:12)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 356.338083
