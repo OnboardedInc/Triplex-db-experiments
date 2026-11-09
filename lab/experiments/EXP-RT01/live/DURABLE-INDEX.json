@@ -1,0 +1,8 @@
+{
+  "root": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live-window",
+  "files": 35,
+  "bytes": 243517,
+  "attempt": "g2-attempt1",
+  "status": "BLOCKED_FRESH_DATABASE_INITIALIZATION",
+  "retention": "First initialization failure, engine logs/identity and original failed cleanup checker retained; no G6 or successful live qualification"
+}

@@ -1,0 +1,28 @@
+{
+  "observedAt": "2026-11-09T06:55:29.585Z",
+  "sourceHead": "554bf7d256ba7951beaf11184d0aaa4c4fac02a5",
+  "sourceAndBuildBytesMatch": true,
+  "slot": "xtdb-s1",
+  "holder": "CX-RT01",
+  "engineId": "9661ccea4299931154ff5de97330bc6443e8711ab1c783d0d0ae83de4628d2be",
+  "image": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+  "configSha256": "13f5a70b36655b51fdf6daca77cc8bc215c4ef8bc044569867500fb286458927",
+  "buildPhases": 6,
+  "G2": "BLOCKED_FRESH_DATABASE_INITIALIZATION",
+  "G6": "NOT_RUN_FIRST_NON_TIMEOUT_STOP_POLICY",
+  "completedConformanceCases": 0,
+  "queryCalls": 2,
+  "compatibilityFallbackMs": 5.570291999999881,
+  "applicationSubmits": 0,
+  "firstQueryMs": 688.0497919999999,
+  "failure": {
+    "phase": "timeout-diagnosis",
+    "error": "xtdb-baseline: Cannot initialize XTDB tables",
+    "stack": "xtdb-baseline: Cannot initialize XTDB tables\n    at catch (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/packages/xtdb/src/XtdbStorageAdapter.ts:799:15)\n    at <anonymous> (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42)\n    at ~effect/Utils/internal (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14)\n    at PrimitiveImpl.~effect/Effect/args (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23)\n    at PrimitiveImpl.~effect/Effect/evaluate (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22)\n    at FiberImpl.runLoop (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41)\n    at FiberImpl.evaluate (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23)\n    at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n    at FiberImpl.evaluate (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27)\n    at <anonymous> (/Users/sam/projects/triplex-db-2/.claude/worktrees/rt01/node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17)"
+  },
+  "priorTimeoutCauseUnresolved": true,
+  "liveQualified": false,
+  "performanceQualified": false,
+  "cleanupVerified": true,
+  "originalCleanupFalseNegativeRetained": true
+}
