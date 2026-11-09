@@ -46,12 +46,16 @@ export const gateRecordedAt = async (input: {
   readonly surface: string;
 }): Promise<RecordCut> => {
   const start = performance.now();
-  const required = stampCut(input.recordedAt);
+  // [EXP-RT01] Why: a finite cut beyond the stamp horizon is unavailable, not a conversion failure. Rejected: converting it first (loses the typed future-basis refusal).
+  const required =
+    Number.isFinite(input.recordedAt) && input.recordedAt >= 2 ** 43
+      ? undefined
+      : stampCut(input.recordedAt);
   let cut = await input.readCut();
-  if (stampOf(cut.recordedAt) >= required) return cut;
-  if (input.recordedAt <= Date.now() + input.deadlineMs)
+  if (required !== undefined && stampOf(cut.recordedAt) >= required) return cut;
+  if (required !== undefined && input.recordedAt <= Date.now() + input.deadlineMs)
     cut = await input.awaitCut(required, input.deadlineMs);
-  if (stampOf(cut.recordedAt) >= required) return cut;
+  if (required !== undefined && stampOf(cut.recordedAt) >= required) return cut;
   throw new BasisNotAvailable({
     axis: "recordedAt",
     required: input.recordedAt,

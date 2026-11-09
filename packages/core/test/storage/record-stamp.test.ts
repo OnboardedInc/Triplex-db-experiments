@@ -73,17 +73,18 @@ describe("record stamps", () => {
 
 it("refuses far-future record time without invoking the publication waiter", async () => {
   let waited = false;
-  await expect(
-    gateRecordedAt({
-      recordedAt: Date.now() + 60000,
-      readCut: async () => ({ position: 1, recordedAt: 1000 }),
-      awaitCut: async () => {
-        waited = true;
-        throw new Error("should not wait");
-      },
-      deadlineMs: 2000,
-      surface: "far-future",
-    }),
-  ).rejects.toMatchObject({ _tag: "BasisNotAvailable", axis: "recordedAt" });
+  for (const recordedAt of [Date.now() + 60000, 2 ** 44])
+    await expect(
+      gateRecordedAt({
+        recordedAt,
+        readCut: async () => ({ position: 1, recordedAt: 1000 }),
+        awaitCut: async () => {
+          waited = true;
+          throw new Error("should not wait");
+        },
+        deadlineMs: 2000,
+        surface: "far-future",
+      }),
+    ).rejects.toMatchObject({ _tag: "BasisNotAvailable", axis: "recordedAt" });
   expect(waited).toBe(false);
 });
