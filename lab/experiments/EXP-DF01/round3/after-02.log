@@ -1,0 +1,98 @@
+03:55:11.623 [main] DEBUG org.eclipse.jetty.util.log -- Logging to Logger[org.eclipse.jetty.util.log] via org.eclipse.jetty.util.log.Slf4jLog
+03:55:11.628 [main] INFO org.eclipse.jetty.util.log -- Logging initialized @2265ms to org.eclipse.jetty.util.log.Slf4jLog
+
+Testing triplex.gateway.feed-test
+
+Testing offline-verify
+{"probe":"restart-empty-queue","observed":{"equal":true,"created":2,"removed":2}}
+{"probe":"inside-skipped-range","observed":{"fromT":"102","nextT":"104","rows":[{"t":"103","kind":"skipped","reason":"non-triplex"}]}}
+{"probe":"notification-lost","observed":{"elapsedMs":154.0575,"nextT":"106"}}
+{"probe":"delayed-old-report","observed":{"page":{"fromT":"105","nextT":"106","rows":[{"t":"105","kind":"commit","transaction":{"positions":["9"],"txIds":["tx9"],"operationId":"op9","commandIds":[],"changes":[{"op":"retract","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"9"}],"stamp":"9000","stampStatus":"decided"}}]},"elapsedMs":4.909541,"visibleT":105,"events":[{"event":"capture-db","cut":100,"read":1},{"event":"old-report-enqueued","t":100},{"event":"capture-db","cut":100,"read":2},{"event":"new-db-published","t":105},{"event":"capture-db","cut":105,"read":3}]}}
+{"probe":"different-txInstant","observed":{"t":"100","kind":"commit","transaction":{"positions":["3","7"],"txIds":["tx3","tx7"],"operationId":"op7","commandIds":["cmd7"],"changes":[{"op":"assert","entity":"subject","attribute":"status","assertionId":"fact-1","validFrom":0.0,"validTo":20.0,"position":"3"}],"stamp":"7000","stampStatus":"decided"}}}
+{"probe":"excision-wire-equality","observed":{"equal":true,"bytes":687}}
+
+Testing deadline-cut-verify
+
+FAIL in (empty-cut-straddles-deadline-after-predeadline-publication) (deadline_cut_verify.clj:40)
+expected: (= true (deref ready 2000 false))
+  actual: (not (= true false))
+
+ERROR in (empty-cut-straddles-deadline-after-predeadline-publication) (:-1)
+Uncaught exception, not in assertion.
+expected: nil
+  actual: java.util.concurrent.ExecutionException: clojure.lang.ArityException: Wrong number of args (6) passed to: deadline-cut-verify/fn--1556/fn--1567/fn--1572
+ at java.util.concurrent.FutureTask.report (:-1)
+    java.util.concurrent.FutureTask.get (:-1)
+    clojure.core$deref_future.invokeStatic (core.clj:2323)
+    clojure.core$future_call$reify__8578.deref (core.clj:7125)
+    clojure.core$deref.invokeStatic (core.clj:2345)
+    clojure.core$deref.invoke (core.clj:2327)
+    deadline_cut_verify$fn__1556$fn__1567$fn__1576.invoke (deadline_cut_verify.clj:42)
+    clojure.core$with_redefs_fn.invokeStatic (core.clj:7710)
+    clojure.core$with_redefs_fn.invoke (core.clj:7694)
+    deadline_cut_verify$fn__1556$fn__1567.invoke (deadline_cut_verify.clj:20)
+    clojure.core$with_redefs_fn.invokeStatic (core.clj:7710)
+    clojure.core$with_redefs_fn.invoke (core.clj:7694)
+    deadline_cut_verify$fn__1556.invokeStatic (deadline_cut_verify.clj:16)
+    deadline_cut_verify/fn (deadline_cut_verify.clj:15)
+    clojure.test$test_var$fn__9898.invoke (test.clj:717)
+    clojure.test$test_var.invokeStatic (test.clj:717)
+    clojure.test$test_var.invoke (test.clj:708)
+    clojure.test$test_vars$fn__9924$fn__9929.invoke (test.clj:735)
+    clojure.test$default_fixture.invokeStatic (test.clj:687)
+    clojure.test$default_fixture.invoke (test.clj:683)
+    clojure.test$test_vars$fn__9924.invoke (test.clj:735)
+    clojure.test$default_fixture.invokeStatic (test.clj:687)
+    clojure.test$default_fixture.invoke (test.clj:683)
+    clojure.test$test_vars.invokeStatic (test.clj:731)
+    clojure.test$test_all_vars.invokeStatic (test.clj:737)
+    clojure.test$test_ns.invokeStatic (test.clj:758)
+    clojure.test$test_ns.invoke (test.clj:743)
+    clojure.core$map$fn__5956.invoke (core.clj:2776)
+    clojure.lang.LazySeq.force (LazySeq.java:50)
+    clojure.lang.LazySeq.realize (LazySeq.java:87)
+    clojure.lang.LazySeq.seq (LazySeq.java:104)
+    clojure.lang.Cons.next (Cons.java:41)
+    clojure.lang.RT.next (RT.java:733)
+    clojure.core$next__5472.invokeStatic (core.clj:64)
+    clojure.core$reduce1.invokeStatic (core.clj:946)
+    clojure.core$reduce1.invokeStatic (core.clj:936)
+    clojure.core$merge_with.invokeStatic (core.clj:3087)
+    clojure.core$merge_with.doInvoke (core.clj:3079)
+    clojure.lang.RestFn.applyTo (RestFn.java:142)
+    clojure.core$apply.invokeStatic (core.clj:669)
+    clojure.test$run_tests.invokeStatic (test.clj:768)
+    clojure.test$run_tests.doInvoke (test.clj:768)
+    clojure.lang.RestFn.invoke (RestFn.java:439)
+    round3_verify$_main.invokeStatic (round3_verify.clj:6)
+    round3_verify$_main.doInvoke (round3_verify.clj:5)
+    clojure.lang.RestFn.invoke (RestFn.java:400)
+    clojure.lang.AFn.applyToHelper (AFn.java:152)
+    clojure.lang.RestFn.applyTo (RestFn.java:135)
+    clojure.lang.Var.applyTo (Var.java:707)
+    clojure.core$apply.invokeStatic (core.clj:667)
+    clojure.main$main_opt.invokeStatic (main.clj:515)
+    clojure.main$main_opt.invoke (main.clj:511)
+    clojure.main$main.invokeStatic (main.clj:665)
+    clojure.main$main.doInvoke (main.clj:617)
+    clojure.lang.RestFn.applyTo (RestFn.java:140)
+    clojure.lang.Var.applyTo (Var.java:707)
+    clojure.main.main (main.java:40)
+Caused by: clojure.lang.ArityException: Wrong number of args (6) passed to: deadline-cut-verify/fn--1556/fn--1567/fn--1572
+ at clojure.lang.AFn.throwArity (AFn.java:429)
+    clojure.lang.AFn.invoke (AFn.java:52)
+    triplex.gateway.feed$poll_log.invokeStatic (feed.clj:74)
+    triplex.gateway.feed$poll_log.invoke (feed.clj:72)
+    deadline_cut_verify$fn__1556$fn__1567$fn__1572.invoke (deadline_cut_verify.clj:34)
+    triplex.gateway.feed$log_page.invokeStatic (feed.clj:98)
+    triplex.gateway.feed$log_page.invoke (feed.clj:88)
+    deadline_cut_verify$fn__1556$fn__1567$fn__1576$fn__1577.invoke (deadline_cut_verify.clj:39)
+    clojure.core$binding_conveyor_fn$fn__5844.invoke (core.clj:2051)
+    clojure.lang.AFn.call (AFn.java:18)
+    java.util.concurrent.FutureTask.run (:-1)
+    java.util.concurrent.ThreadPoolExecutor.runWorker (:-1)
+    java.util.concurrent.ThreadPoolExecutor$Worker.run (:-1)
+    java.lang.Thread.run (:-1)
+
+Ran 19 tests containing 204 assertions.
+1 failures, 1 errors.

@@ -144,3 +144,41 @@
             (is (= "106" (:nextT page))))
           (is (.isEmpty queue))
           (is (empty? @feed/wakeups)))))))
+
+;; [EXP-DF01-R3] Why: a controlled monotonic clock specifies the exact expiry nanosecond without scheduler guesses.
+;; Rejected: labeling an approximate wall-clock publication as an exact-deadline regression.
+(deftest final-cut-at-and-after-deadline
+  (doseq [publication-time [999999 1000000] present [true false]]
+    (let [clock (atom 0) visible (atom []) captures (atom []) arms (atom 0) waits (atom 0)
+          rows [{:t "105" :kind "skipped" :reason "non-triplex"}]
+          read-page (fn [from limit]
+                      (is (= [105 1] [from limit]))
+                      (let [cut @visible]
+                        (swap! captures conj {:at @clock :rows cut})
+                        (when (= 1 (count @captures))
+                          (reset! clock publication-time)
+                          (when present (reset! visible rows))
+                          ;; Return the captured empty cut only after the deadline, as in review F1.
+                          (reset! clock 1000001))
+                        cut))
+          result (#'feed/poll-log-with-clock 105 1 1 read-page
+                   (fn [] (swap! arms inc) (fn [_] (swap! waits inc))) #(deref clock))]
+      (is (= (if present rows []) result))
+      (is (= [{:at 0 :rows []} {:at 1000001 :rows (if present rows [])}] @captures))
+      (is (= 1 @arms))
+      (is (= 0 @waits)))))
+
+(deftest zero-wait-still-captures-exactly-one-db
+  (fake-peer
+    (let [captures (atom [])]
+      (with-redefs [d/tx-report-queue (fn [_] (throw (Exception. "Zero wait subscribed")))
+                    d/remove-tx-report-queue (fn [_] (throw (Exception. "Zero wait removed a queue")))
+                    d/basis-t :t]
+        (doseq [cut [100 105]]
+          (reset! captures [])
+          (with-redefs [d/db (fn [_] (swap! captures conj cut) {:t cut})]
+            (let [page (feed/log-page :zero {"fromT" "105" "waitMs" "0"})]
+              (is (= [cut] @captures))
+              (is (= (if (= cut 105) ["105"] []) (mapv :t (:rows page))))
+              (is (= (if (= cut 105) "106" "105") (:nextT page))))))
+      (is (empty? @feed/wakeups))))))

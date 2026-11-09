@@ -163,3 +163,71 @@ Durable fresh G0 raw output and preimages are under `/Users/sam/Claude/Projects/
 
 No Docker command or engine lifecycle action occurred. Real peer notifications, actual excision/restart, live HTTP-to-peer replay,
 P3 performance, RT01/ER01-D qualification and independent acceptance remain open. No merge, push or subagent launch occurred.
+
+## Round 3 — F1: a fresh final cut after expiry
+
+**Result: offline deadline regressions, unchanged conformance and fresh full G0 PASS.** Review:
+`verify/DF01` at `bedf748341be24299bbe03c690d91aa8889b5ba8`; builder base `0f6c28c0`.
+North star: P3 response completeness under SCOPE/NORTH-STAR/TARGETS. Independent review of this fix remains pending.
+
+The reviewer identified a remaining race: an empty immutable cut captured before expiry could return after expiry. The old
+loop then returned that stale empty page, even when a transaction had published before the deadline. For a positive wait,
+the expired/empty branch now performs **one bounded final read**. Because that read begins after the monotonic expiry check,
+its `d/db` value is captured at or after expiry. Its rows are returned, including when empty. There is no repeated final-read
+loop or additional wait. `waitMs=0` retains its single read, with no subscription or wait.
+
+The loop body is in a private clock-taking helper. The unchanged five-argument `poll-log` entry point always supplies real
+`System/nanoTime`. The private clock seam lets unit tests publish at an exact synthetic deadline; it is not exposed in the
+HTTP or TypeScript API. A version using public self-dispatch interfered with the reviewer's five-argument wrapper, so it was
+replaced with this private helper. Neither copied reviewer probe was modified. Projection, cursors, TypeScript interfaces,
+queue drainer and consumer storage remain unchanged.
+
+### Attempts and gates
+
+| Attempt | Actual result / limitation |
+| --- | --- |
+| `round3/attempt-before`, `before.log` | Old source, 17 tests / 177 assertions; 3 failures. The real-time publication missed its window (0.075959–0.128542 ms **after** expiry). Retained; not adopted as a qualifying predeadline counterexample. |
+| `round3/attempt-before-02`, `before-02.log` | Unchanged retry justified by that timing miss. Publication 0.986584–1.018917 ms **before** expiry; valid window, cuts `[100,100]`, empty result/nextT=105. Two content/checkpoint failures, zero errors. |
+| `round3/attempt-after-01`, `after-01.log` | Test source-load failure: missing closing delimiter. No semantic result adopted. |
+| `round3/attempt-after-02`, `after-02.log` | 19 tests / 204 assertions, 1 failure / 1 error from the clock adapter's self-dispatch colliding with the copied probe wrapper. Retained; not treated as a PASS. |
+| `round3/attempt-after-03`, `after-03.log` | **19 tests / 208 assertions, zero failures/errors.** Valid real-clock window 0.986583–1.049833 ms before expiry; cuts `[100,100,105]`, delivered t=105 / nextT=106. Includes the unchanged original and deadline-cut reviewer probes. |
+| `round3/focused-tests.json`, `focused.log` | **4/4 TypeScript conformance tests**, zero failed/pending. Existing FD01 content/order/gap/resume/duplicates and M-FEED-GAP, SQLite readback/replay and HTTP binding checks remain unchanged. |
+| `G0-datomic-20261109T085657Z-6815e5` | **FAIL: 1,278/1,279**, one existing testkit 5,000 ms timeout; 66 expected skips. No DF01 assertion failed. |
+| `round3/timeout-repro.log` | Unchanged whole-file retry: 11 pass / 1 timeout. Failure retained. |
+| `round3/timeout-case.log` | Same timed-out case targeted alone: 1 pass / 11 deliberately filtered skips, 3.53 seconds. This is a scoped diagnostic, not a full-suite PASS. |
+| `G0-datomic-20261109T090324Z-69ac4b` | **PASS: 1,279/1,279, zero failures, 66 expected skips, zero unexpected skips.** Same source, assertions and timeouts; `previous` binds the failed full attempt. |
+
+The G0 timeout was `round3: retired stores cannot omit policies/cuts or silently decline purge execution` in unchanged
+`packages/testkit/test/route-equivalence-round3.test.ts`. Its underlying scheduling cause is unverified. Neither the failure,
+the failed whole-file retry, nor the targeted run is substituted for the final complete gate. No timeout, skip policy, testkit
+source or gate code changed to obtain the final result.
+
+The new deterministic boundary test runs the actual private loop with a controlled monotonic clock. It captures an old empty
+cut, publishes at deadline−1 ns or **exactly the deadline**, and lets that old cut return after expiry. It checks the final
+post-expiry capture and returned entries. Empty variants prove that the final read is bounded to one. A route-level zero-wait
+test checks both empty and populated results, exactly one `d/db` call, and queue APIs that throw if invoked. Exact synthetic
+nanoseconds are distinguished from the copied probe's measured real-clock publication window; no physical zero-jitter claim
+is made. The copied deadline probe still uses the real production clock, drainer, subscription and wait path.
+
+### Round-3 PASS / verdict / receipt audit
+
+| Place | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| New `feed_test.clj` boundary/zero-wait assertions and test exit | Independent expected rows, capture times/counts, single final read, exact boundary, no wait/queue for zero wait | New clock/cut/read state for each case and fresh process | Actual loop/helper or route; explicitly synthetic exact clock versus default real route clock; current gateway/test hashes |
+| Copied `deadline_cut_verify.clj` and `offline_verify.clj` | Unchanged expected row/checkpoint, timing-window, identity/stamp/excision/resume/skip checks; failure when timing window misses | Fresh JVM, queue, publication and cuts per exclusively named attempt | Byte-identical to review `bedf7483`; real clock for timing probe, fake database API, no slot claim |
+| `round3/run-offline.mjs` and combined runner | Actual child exit, test counts and output hashes; before/after input hashes must match | Exclusive output directories; source-load/timing/adapter failures retained, no output adoption | Base head plus actual gateway/probe/runner/codec/JAR/JVM SHA256; slot null; disk checked inside admission |
+| Unchanged conformance and G0 verdict | Existing semantic/mutation/readback checks and full gate count/skip/oracle checks | Fresh focused process and full gate IDs; failed/filtered attempts remain separate | Named tests, exact source/build/input snapshot and parent heavy grant; G0 source was dirty at base `0f6c28c0`, not falsely labeled a clean commit |
+| Retention/index script and report | Copy hashes match originals and canonical object digests; counts/windows come from terminal outputs | Copies terminal named attempts; preserves both G0 results and all earlier attempts | Separate round/run paths, exact copied-probe provenance, source old/new SHA256 and checksum index; retention generates no semantic PASS |
+
+No dependency install or version, lockfile, package export, image or slot configuration changed. Every heavy command used
+`heavy.mjs`; free host disk exceeded 5 GiB before admission (7.4–8.0 GiB observed). G0 used its existing host clock-read permission.
+No `lab/acceptance/` file is edited. Neither modified source path is directly named in acceptance pins; both old/new SHA256
+values are listed in `round3/SOURCE-SHA256.tsv` for the contract builder. The contract remains unchanged.
+
+`round3/SHA256SUMS` covers this appended report and the new small artifacts; prior round manifests/report hashes remain
+historical at their respective commits. Fresh G0 raw output and verified preimages for both attempts are retained under
+`/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-DF01/round3/`. No bulky evidence is committed.
+
+No engine was started or used, and no Docker command, merge, push or subagent launch occurred. Real Datomic notifications,
+actual peer restart/excision, live HTTP-to-peer replay, P3 load/latency and independent acceptance remain unverified. The
+existing live runbook remains the handoff for an orchestrator-authorized window; no new packed-consumer qualification is claimed.

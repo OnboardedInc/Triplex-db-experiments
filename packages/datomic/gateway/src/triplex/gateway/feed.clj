@@ -69,17 +69,23 @@
             (future-cancel (:worker state))
             (d/remove-tx-report-queue conn)
             (swap! wakeups dissoc conn))))))
-(defn poll-log [from limit wait-ms read-page arm-wait]
+(defn- poll-log-with-clock [from limit wait-ms read-page arm-wait now-ns]
   ;; [EXP-DF01-R2] Why: F1 reports can be stale or precede a readable cut; only the log answers.
   ;; Rejected: one wake/read (returns empty early) or reusing a delivered promise (busy spins).
-  (let [deadline (+ (System/nanoTime) (* wait-ms 1000000))]
+  (let [deadline (+ (now-ns) (* wait-ms 1000000))]
     (loop []
       (let [wait! (arm-wait) rows (vec (read-page from limit))
-            remaining (- deadline (System/nanoTime))]
+            remaining (- deadline (now-ns))]
         (cond
           (seq rows) rows
-          (<= remaining 0) rows
+          ;; [EXP-DF01-R3] Why: an empty cut captured before expiry can return after publication/expiry.
+          ;; Rejected: returning that old cut (F1); looping final reads (unbounded); extra zero-wait reads.
+          (<= remaining 0) (if (zero? wait-ms) rows (vec (read-page from limit)))
           :else (do (wait! remaining) (recur)))))))
+(defn poll-log [from limit wait-ms read-page arm-wait]
+  ;; [EXP-DF01-R3] Why: isolate the clock seam for exact-nanosecond boundary tests; route always uses the real clock.
+  ;; Rejected: redefining the production clock in the real-time reviewer probe (would invalidate its timing window).
+  (poll-log-with-clock from limit wait-ms read-page arm-wait #(System/nanoTime)))
 (defn log-page [conn input]
   (let [from (natural (get input "fromT" "0")) limit (bounded (get input "limit") 1000 1000)
         wait-ms (bounded (get input "waitMs") 0 30000)]
