@@ -93,6 +93,12 @@ export interface CompositionHandle {
     entities: readonly string[],
     basis: { validAt: number },
   ): Promise<Map<string, readonly any[]>>;
+  /** [EXP-P5N] D3: what a sweep worker needs to read SQLite itself (file, shared gate, native positions of references 1..basis.position). */
+  sweepWorkerSpec?(basis: import("./w0-world.ts").PositionBasis): Promise<{
+    file: string;
+    gate: SharedArrayBuffer;
+    natives: SharedArrayBuffer;
+  }>;
   pinBasis?(position: number, owner: string): Promise<{ release(): Promise<void> }>;
   publishOutbox(
     records: readonly import("../../../packages/w0/dist/index.js").EvaluationRecord[],

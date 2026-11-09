@@ -15,6 +15,7 @@ import { generateTrace } from "./lib/trace.ts";
 import { applyW0Trace, percentile, waitUntil } from "./lib/w0-traffic.ts";
 import { runW0Sweep, subjectList } from "./lib/sweep.ts";
 import { readW0Fingerprint } from "./lib/w0-fingerprint.ts";
+import { reachableRows, worldOf } from "./lib/w0-world.ts";
 import { publishRecords } from "./lib/w0-outbox.ts";
 import { loadW0Pins } from "./lib/evaluate.ts";
 import { Rng, seedOf } from "./lib/rng.ts";
@@ -46,6 +47,7 @@ const ROUNDS = Number(opt("rounds", "4")),
   // writers (the position map needs acknowledgements in order) and dropping the burst (about 1 command/s gives no p99).
   DILATE = Number(opt("dilate", "2")),
   SAMPLE_EVERY = Number(opt("sample-every", "10")),
+  DIRECT = flag("direct"),
   FLOOR = 5 * 1024 ** 3;
 fs.mkdirSync(outDir, { recursive: false });
 const b0 = JSON.parse(fs.readFileSync(path.join(seedDir, "receipt.json"), "utf8"));
@@ -149,6 +151,15 @@ async function activationArm(name: string, W: number) {
     index = new Map(subjects.map((s, i) => [s, i]));
   try {
     const rss0 = process.memoryUsage().rss;
+    await loadW0Pins();
+    let fpBefore: any = null;
+    if (flag("fp-before")) {
+      // G-FP before: the arm's clone must reproduce the O-DOMAIN digests at the seed basis before anything is written to it.
+      const t = performance.now();
+      requireFingerprint(await readW0Fingerprint(comp, N, { position: seedBasis, validAt: V_W0 }, new AbortController().signal), expected, N);
+      fpBefore = { status: "FINGERPRINT-MATCH-BEFORE-ACTIVATION", wallS: (performance.now() - t) / 1000 };
+    }
+    await h.broker.appendStats(true);
     const t0 = performance.now();
     const act = await comp.transact(
       [{ op: "assert", entityId: "p5:tenant", attribute: "p5/activation", value: { type: "string", value: "R2" }, validFrom: V_W0 }],
@@ -176,6 +187,15 @@ async function activationArm(name: string, W: number) {
           stage.pulls++;
         }
       },
+      pullMany: async (...a: Parameters<NonNullable<typeof comp.pullMany>>) => {
+        const t = performance.now();
+        try {
+          return await comp.pullMany!(...a);
+        } finally {
+          stage.pullMs += performance.now() - t;
+          stage.pulls += a[0].length;
+        }
+      },
       transact: async (...a: Parameters<typeof comp.transact>) => {
         const t = performance.now();
         try {
@@ -195,7 +215,7 @@ async function activationArm(name: string, W: number) {
       },
     } as typeof comp;
     // [EXP-P5N] Why: step 1 baseline. Reset the writer's time split and read the harness counters at the sweep start so the activation commit and the sweep are measured alone.
-    await h.broker.appendStats(true);
+    const actSplit: any = await h.broker.appendStats(true);
     const hs0 = { ...h.hstats },
       elu0 = performance.eventLoopUtilization();
     const walTimer = setInterval(() => (walMax = Math.max(walMax, walBytes(dst))), 100);
@@ -212,7 +232,8 @@ async function activationArm(name: string, W: number) {
       cursor: path.join(dst, "cursor.json"),
       workers: W,
       activations,
-      readThroughOwner: true,
+      readThroughOwner: !DIRECT,
+      directReads: DIRECT,
       sampleEvery: SAMPLE_EVERY,
       onPage: async (records) => {
         const t = performance.now();
@@ -222,12 +243,13 @@ async function activationArm(name: string, W: number) {
           if (coverage.has(r.subject)) throw Error("G4 duplicate evaluation");
           coverage.add(r.subject);
           if (r.world !== undefined)
-            sample.push({ subject: r.subject, world: r.world, output: W0.outputJson(r.output) });
+            sample.push({ subject: r.subject, world: r.world, worldSha256: r.worldSha256, output: W0.outputJson(r.output) } as any);
         }
         pubLog.push({ evaluations: records.map((r: any) => r.record), deliveries: actual.deliveries });
       },
     });
     const wallMs = performance.now() - started;
+    const endCounts = await comp.storeCounts();
     const eluMain = performance.eventLoopUtilization(elu0).utilization;
     const writerSplit: any = await h.broker.appendStats(false);
     const hostSplit = Object.fromEntries(Object.entries(h.hstats).map(([k, v]) => [k, (v as number) - (hs0 as any)[k]]));
@@ -243,6 +265,68 @@ async function activationArm(name: string, W: number) {
       });
       equalBytes("G2 reconcile (" + s.subject + ")", s.output, exp);
     }
+    // G-WORLD: the sampled worlds the sweep workers built must equal, byte for byte, the world the owner's route builds for the same subject at the same basis
+    // (that route is checked against O-DOMAIN by G-FP), and each record's world hash must equal the hash of its own world. Sampled, not every subject.
+    const gWorld = { compared: 0 };
+    if (flag("check-world")) {
+      for (const sm of sample as any[]) {
+        if (sha256(canonical(sm.world)) !== sm.worldSha256) throw Error("G-WORLD world hash differs from its own world (" + sm.subject + ")");
+        const page = await comp.sweepPage([sm.subject], basis),
+          ref = worldOf(sm.subject, reachableRows([sm.subject], page.rows));
+        if (canonical(ref) !== canonical(sm.world)) throw Error("G-WORLD worker world differs from the owner route (" + sm.subject + ")");
+        gWorld.compared++;
+      }
+    }
+    // G-JNL: journal triples of the activation commits are present and queryable as ordinary triples through core's public API, and the row counts are exact.
+    const gJnl: any = { pagesChecked: 0 };
+    if (flag("jnl")) {
+      const step = Math.max(1, Math.floor(pubLog.length / 16));
+      for (let i = 0; i < pubLog.length; i += step) {
+        const p = pubLog[i]!,
+          n = p.evaluations.length,
+          want = new Set(p.evaluations.map((e: any) => "p5:outbox:" + e.subject));
+        const tr: any = await comp.transactionByCommand("p5:outbox:" + sha256(canonical(p.evaluations)));
+        if (!tr.ok || !tr.value) throw Error("G-JNL transactionByCommand did not resolve the activation commit");
+        const txId = tr.value.txId;
+        const raw: any = await h.broker.pullAt(h.broker.head(), { entities: [txId] });
+        const rawBy = (a: string) => raw.rows.filter((r: any) => r.attribute === a);
+        const apiChange = await h.api.match({ entityId: txId, attribute: ":_tx/change" }),
+          apiEntity = await h.api.match({ entityId: txId, attribute: ":_tx/changed-entity" });
+        const entities = new Set(apiEntity.map((t: any) => t.value.value));
+        const changeTargets = apiChange.map((t: any) => t.value.value);
+        if (
+          raw.rows.length !== 4 + 3 * n ||
+          rawBy(":_tx/change").length !== 2 * n ||
+          rawBy(":_tx/changed-entity").length !== n ||
+          apiChange.length !== 2 * n ||
+          apiEntity.length !== n ||
+          tr.value.changes.length !== 2 * n ||
+          entities.size !== n ||
+          [...want].some((e) => !entities.has(e)) ||
+          changeTargets.some((c: any) => c.op !== "assert" || !want.has(c.entityId) || !["p5/state", "p5/deliveries"].includes(c.attribute))
+        )
+          throw Error("G-JNL journal triples differ from the expected set for page " + i);
+        // transactionsForEntity resolves the same transaction from an outbox entity (the :_tx/changed-entity channel).
+        const byEntity = await h.api.transactionsForEntity([...want][0]!, { limit: 5 });
+        if (!byEntity.transactions.some((t: any) => t.txId === txId)) throw Error("G-JNL transactionsForEntity missed the activation commit");
+        gJnl.pagesChecked++;
+      }
+      const journalExpected = 4 * pubLog.length + 3 * N,
+        factExpected = 2 * N;
+      if (writerSplit.journalRows !== journalExpected || writerSplit.factRows !== factExpected)
+        throw Error(`G-JNL writer row counts ${writerSplit.journalRows}/${writerSplit.factRows} != ${journalExpected}/${factExpected}`);
+      const delta = endCounts.assertions - arm.startCounts.assertions;
+      const wrote = writerSplit.journalRows + writerSplit.factRows + actSplit.journalRows + actSplit.factRows;
+      if (delta !== wrote) throw Error(`G-JNL store assertion delta ${delta} != rows written ${wrote}`);
+      Object.assign(gJnl, { journalRows: writerSplit.journalRows, journalExpected, factRows: writerSplit.factRows, assertionsDelta: delta, activationCommitRows: { fact: actSplit.factRows, journal: actSplit.journalRows } });
+    }
+    // G-FP after: the seed basis still reproduces the O-DOMAIN digests after the activation commits (old-cut exactness, Q89i).
+    let fpAfter: any = null;
+    if (flag("fp")) {
+      const t = performance.now();
+      requireFingerprint(await readW0Fingerprint(comp, N, { position: seedBasis, validAt: V_W0 }, new AbortController().signal), expected, N);
+      fpAfter = { status: "FINGERPRINT-MATCH-AFTER-ACTIVATION", wallS: (performance.now() - t) / 1000 };
+    }
     let state: any = emptyWireState(),
       deliveries = 0;
     for (const p of pubLog) {
@@ -254,14 +338,13 @@ async function activationArm(name: string, W: number) {
     const m = sweep.metrics,
       sum = (f: (x: any) => number) => m.reduce((a: number, x: any) => a + f(x), 0),
       tx = m.map((x: any) => x.store.transactionMs as number).sort((a: number, b: number) => a - b);
-    const endCounts = await comp.storeCounts();
     const per: number[][] = writerSplit.per,
       col = (i: number) => per.map((x) => x[i]!).sort((a, b) => a - b),
       pct = (xs: number[], q: number) => xs[Math.min(xs.length - 1, Math.ceil(xs.length * q) - 1)]!,
       sumW = (k: string) => writerSplit[k] as number;
     const unattributedS =
       (wallMs - m.reduce((a: number, x: any) => a + x.store.transactionMs, 0) -
-        sum((x) => x.cpu.decode) * 1000 - sum((x) => x.cpu.kernel) * 1000 - sum((x) => x.cpu.read) * 1000 - publishMs) / 1000;
+        sum((x) => x.cpu.decode) * 1000 - sum((x) => x.cpu.kernel) * 1000 - sum((x) => x.cpu.hash ?? 0) * 1000 - sum((x) => x.cpu.read) * 1000 - publishMs) / 1000;
     const timeline = m.map((x: any) => ({ page: x.page, ...x.tl }));
     fs.writeFileSync(path.join(outDir, `timeline-${name}.json`), JSON.stringify(timeline));
     return {
@@ -295,12 +378,12 @@ async function activationArm(name: string, W: number) {
       activationCommitMs,
       pages: m.length,
       pageTransactionMs: { p50: tx[Math.floor(tx.length / 2)], p99: tx[Math.ceil(tx.length * 0.99) - 1], max: tx.at(-1) },
-      cpuS: { read: sum((x) => x.cpu.read), decode: sum((x) => x.cpu.decode), kernel: sum((x) => x.cpu.kernel) },
+      cpuS: { read: sum((x) => x.cpu.read), decode: sum((x) => x.cpu.decode), kernel: sum((x) => x.cpu.kernel), hash: sum((x) => x.cpu.hash ?? 0) },
       cpuScope: m[0]?.cpuScope,
       storeCpuS: sum((x) => x.store.cpuMicros) / 1e6,
       walMaxBytes: walMax,
       rssGrowthBytes: rssGrowth,
-      correctness: { coverage: coverage.size, g2Sampled: sample.length, g5Pages: pubLog.length, deliveries },
+      correctness: { coverage: coverage.size, g2Sampled: sample.length, g5Pages: pubLog.length, deliveries, gWorld, gJnl, fpBefore, fpAfter },
       counts: { start: arm.startCounts, end: endCounts },
       clone: { ms: arm.cloneMs, bytes: arm.cloneBytes },
     };

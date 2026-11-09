@@ -24,30 +24,8 @@ import {
 import { seedCommands, seedOperations, type W0Command } from "./w0-seed.ts";
 import type { CompositionHandle } from "./composition.ts";
 import { publishRecords } from "./w0-outbox.ts";
-export function decodeHostRow(r: any): WorldRow {
-  const key: any = {
-    string: "value_string",
-    ref: "value_string",
-    integer: "value_string",
-    boolean: "value_boolean",
-    json: "value_json",
-    datetime: "value_datetime",
-    number: "value_number",
-  };
-  let value = r[key[r.value_type]];
-  if (r.value_type === "boolean") value = !!value;
-  if (r.value_type === "json") value = JSON.parse(value);
-  if (!key[r.value_type]) throw Error("unsupported host row value");
-  return {
-    id: r.id,
-    entityId: r.entity_id,
-    attribute: r.attribute,
-    value: { type: r.value_type, value },
-    position: r.recorded_position,
-    validFrom: r.valid_from,
-    ...(r.valid_to === null ? {} : { validTo: r.valid_to }),
-  };
-}
+import { decodeHostRow } from "./host-row.ts";
+export { decodeHostRow };
 export function commandWitness(operations: readonly any[], r: any, native: number, meta: any = {}) {
   let i = 0;
   const rows = operations.map((op) => {
@@ -403,12 +381,23 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
         return { ok: false, tag: error._tag ?? "ReadError", error };
       }
     },
+    // [EXP-P5N] Why: D3. A frozen array of the native positions of references 1..basis.position (a SharedArrayBuffer, 8 B per reference: about 5 MB at 10k, 50 MB at 100k) that sweep
+    // workers binary-search; rows at or below the basis only reference positions in it. Rejected: sending the PositionMap to every worker (36 MB of JSON per worker at 10k).
+    sweepWorkerSpec: async (basis) => {
+      assertBound();
+      requirePosition(basis, map.size);
+      const sab = new SharedArrayBuffer(8 * basis.position),
+        natives = new Float64Array(sab);
+      for (let i = 0; i < basis.position; i++) natives[i] = map.native(i + 1);
+      const handle = broker.sweepHandle();
+      return { file: handle.file, gate: handle.gate, natives: sab };
+    },
     sweepPage: async (subjects, basis) => {
       assertBound();
       requirePosition(basis, map.size);
       const nativeBasis = map.native(basis.position),
         page = await broker.sweepPage(nativeBasis, subjects, {
-          worker: sweepIndex++ % 4,
+          worker: sweepIndex++ % 16,
           validAt: basis.validAt,
         });
       return shape(page.rows, page.snapshot, page.roundTrips, basis, nativeBasis, {
@@ -658,6 +647,11 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
     broker,
     map,
     hstats,
+    // [EXP-P5N] Why: G-JNL reads the journal triples through core's public Triples service (match, transactionsForEntity), not through the broker, so "queryable as ordinary triples" is checked on the product API.
+    api: {
+      match: (pattern: any) => managed.runPromise(T.match(pattern)) as Promise<any[]>,
+      transactionsForEntity: (id: string, request?: any) => managed.runPromise(T.transactionsForEntity(id, request)) as Promise<any>,
+    },
     livePage,
     seed,
     get seeded() {

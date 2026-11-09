@@ -34,3 +34,55 @@ test("D1 world order equals the per-comparison canonical order", () => {
   });
   assert.equal(canonical(worldOf("s", rows)), canonical(oldWorldOf("s", rows)));
 });
+// [EXP-P5N] Why: D3 and D5 change who reads SQLite and who publishes; the same 50 subjects must give the same world hashes through the owner route and the direct route at several worker counts.
+// Rejected: only the 10k screen (a divergence there would cost a full run to find).
+import fs from "node:fs";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
+import { openMappedHost } from "../lib/host-store.ts";
+import { runW0Sweep, subjectList } from "../lib/sweep.ts";
+import { V_W0, W0, reachableRows, sha256 } from "../lib/w0-world.ts";
+test("direct-read pipelined sweep gives the owner route's world hashes at W=1,2,3", { timeout: 240000 }, async () => {
+  const dir = path.resolve("runs/P5N-tests", randomUUID());
+  fs.mkdirSync(dir, { recursive: true });
+  const h = await openMappedHost(path.join(dir, "store"), "p5n-direct-test:" + randomUUID());
+  try {
+    const seed = await h.seed(200, dir);
+    const basis = { position: seed.basis.tx, validAt: V_W0 },
+      subjects = subjectList(200),
+      expected = new Map<string, string>();
+    for (let o = 0; o < subjects.length; o += 64) {
+      const ss = subjects.slice(o, o + 64),
+        page = await h.comp.sweepPage(ss, basis);
+      for (const s of ss) expected.set(s, sha256(canonical(worldOf(s, reachableRows([s], page.rows)))));
+    }
+    for (const workers of [1, 2, 3]) {
+      const got = new Map<string, string>();
+      const r = await runW0Sweep({
+        comp: h.comp,
+        composition: "host",
+        lane: "qlever",
+        scope: "p5n-direct-test",
+        subjects,
+        basis,
+        sweepId: "direct-" + workers,
+        cursor: path.join(dir, `cursor-${workers}.json`),
+        workers,
+        activations: [{ tx: basis.position, from: W0.POPULATION_VALID_TIME, release: W0.R2.hash }],
+        directReads: true,
+        sampleEvery: 10,
+        onPage: async (records) => {
+          for (const x of records) {
+            got.set(x.subject, x.worldSha256);
+            assert.equal(x.world !== undefined, subjects.indexOf(x.subject) % 10 === 0);
+          }
+        },
+      });
+      assert.ok(r.complete);
+      assert.equal(r.published.length, 4);
+      assert.deepEqual([...got].sort(), [...expected].sort());
+    }
+  } finally {
+    await h.comp.close();
+  }
+});
