@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { httpCounts } from "./lib/http-counts.ts";
 import { readLatencyRun } from "../receipts/parse.ts";
 import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 /**
@@ -61,10 +62,10 @@ if (opt("world") === "w0") {
   await (await import("./w0-driver.ts")).runW0Driver(argv);
   process.exit(process.exitCode ?? 0);
 }
-const lane = opt("lane") as "xtdb" | "qlever";
+const lane = opt("lane") as "xtdb" | "qlever" | "datomic";
 const rung = opt("rung", "10k")!;
 const devSubjects = opt("subjects");
-if (!["xtdb", "qlever"].includes(lane)) throw new Error("--lane xtdb|qlever is required");
+if (!["xtdb", "qlever", "datomic"].includes(lane)) throw new Error("--lane xtdb|qlever|datomic is required");
 if (!devSubjects && !(rung in RUNGS)) throw new Error(`--rung must be one of ${Object.keys(RUNGS).join("|")}`);
 const profile = opt("profile", "smoke") as Profile;
 if (!(profile in PROFILES)) throw new Error(`--profile must be one of ${Object.keys(PROFILES).join("|")}`);
@@ -156,8 +157,10 @@ const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\
 
 const slots = JSON.parse(fs.readFileSync(path.join(REPO, "lab/config/slots.json"), "utf8"));
 const container = process.env["TX2_ENGINE_CONTAINER"] ?? null;
+const containers = lane === "datomic" ? container?.split(",").map(s => s.trim()).filter(Boolean) ?? [] : container ? [container] : [];
+const workerHttpCounts: any[] = [];
 const engineCpus = Number(process.env["TX2_ENGINE_CPUS"] ?? "0") || null;
-const engineSamples: { t: number; cpuPercent: number; memBytes: number }[] = [];
+const engineSamples: { t: number; cpuPercent: number; memBytes: number; containers: Record<string, { cpuPercent: number; memBytes: number }> }[] = [];
 const watermarkSamples: { t: number; marks: Record<string, number> }[] = [];
 let samplersOn = true;
 const docker = (args: string[], timeout = 20_000) =>
@@ -170,10 +173,12 @@ const parseBytes = (text: string) => {
 async function engineSampler() {
   while (samplersOn && container) {
     const t = now();
-    const out = await docker(["stats", "--no-stream", "--format", "{{json .}}", container], 15_000);
+    const out = await docker(["stats", "--no-stream", "--format", "{{json .}}", ...containers], 15_000);
     try {
-      const row = JSON.parse(out!.trim().split("\n")[0]!);
-      engineSamples.push({ t, cpuPercent: Number(String(row.CPUPerc).replace("%", "")), memBytes: parseBytes(String(row.MemUsage).split("/")[0]!) });
+      const rows = out!.trim().split("\n").map(line => JSON.parse(line));
+      const byContainer: Record<string, { cpuPercent: number; memBytes: number }> = Object.fromEntries(rows.map(row => [row.Name, { cpuPercent: Number(String(row.CPUPerc).replace("%", "")), memBytes: parseBytes(String(row.MemUsage).split("/")[0]!) }]));
+      if (rows.length !== containers.length) throw new Error("partial engine sample");
+      engineSamples.push({ t, cpuPercent: Object.values(byContainer).reduce((sum, r) => sum + r.cpuPercent, 0), memBytes: Object.values(byContainer).reduce((sum, r) => sum + r.memBytes, 0), containers: byContainer });
     } catch {}
     await sleep(1000);
   }
@@ -247,6 +252,7 @@ let coordinate: (position: number) => any = (position) => ({ stream: "unknown", 
 
 function main() {
   return run().catch((error) => {
+    report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
     report.status = "ERROR";
     report.error = String(error?.stack ?? error);
     log(`fatal: ${report.error}`);
@@ -328,7 +334,7 @@ async function run() {
   };
   const startWorker = async (w: number, cfg: any) => {
     const worker: any = config.composition === "memory" ? await inThreadReader(cfg) : new Worker(new URL("./reader-worker.ts", import.meta.url), { workerData: cfg, env: process.env });
-    const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && resolve()));
+    const stoppedP = new Promise<void>((resolve) => worker.on("message", (m: any) => m.type === "stopped" && (workerHttpCounts.push({ worker: w, counts: m.httpCounts }), resolve())));
     await new Promise<void>((resolve, reject) => {
       worker.on("message", (m: any) => { if (m.type === "ready") resolve(); else if (m.type === "error") reject(new Error(`reader worker ${w}: ${m.message}`)); });
       worker.on("error", reject);
@@ -680,6 +686,8 @@ async function run() {
   if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });
   else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
   report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : runOracle(finalPosition, lastAcked);
+  report.httpRequests = { main: httpCounts(), workers: workerHttpCounts };
+  report.engineSamples = engineSamples;
   report.status = "DONE";
   report.endedAt = new Date().toISOString();
   fs.writeFileSync(path.join(rawDir, "ns-log.txt"), logLines.join("\n") + "\n");
@@ -886,6 +894,9 @@ async function ryow(comp: CompositionHandle, subject: number, receipt: Receipt) 
 }
 /** Maintenance evidence (TARGETS 1.1 P1 item 3): engine log lines naming compaction, merge or rebuild. */
 async function maintenanceEvents(traceStart: number) {
+  // [DX-H1] Why: indexing needs an explicit source-bound job hook; log words alone do not prove completion.
+  // Rejected: treating arbitrary "index" log lines as a P1 maintenance witness.
+  if (lane === "datomic") return { source: null, events: [], note: "not observed: Datomic indexing job hook is unavailable", trigger: "not observed" };
   if (!container) return { source: null, events: [] as { t: number; line: string }[], note: "no TX2_ENGINE_CONTAINER: maintenance evidence not collected" };
   const since = new Date(traceStart - 1000).toISOString();
   const text = (await docker(["logs", "--timestamps", "--since", since, container], 60_000)) ?? "";
@@ -996,7 +1007,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       maintenanceEvents: maint,
       watermarks: marks.length ? { source: { min: coordinate(Math.min(...marks)), max: coordinate(Math.max(...marks)) } } : null,
       client: { workerEluMean, maxWorkerElu, mainElu: mainEluMean, saturated: (maxWorkerElu ?? 0) > 0.9 || (mainEluMean ?? 0) > 0.9 },
-      engine: { cpuPercentMean: mean(eng.map((e) => e.cpuPercent)), samples: eng.length, peakMemBytes: eng.length ? Math.max(...eng.map((e) => e.memBytes)) : null },
+      engine: { containers: Object.fromEntries(containers.map(name => [name, { cpuPercentMean: mean(eng.map(e => e.containers[name]?.cpuPercent).filter((n): n is number => n !== undefined)) }])), cpuPercentMean: mean(eng.map((e) => e.cpuPercent)), samples: eng.length, peakMemBytes: eng.length ? Math.max(...eng.map((e) => e.memBytes)) : null },
       _read: read,
       _commit: commit,
     };

@@ -12,6 +12,7 @@
  * entities at a basis, transactions({ after }), transactionByCommand). Register a new one in
  * COMPOSITIONS; reader workers resolve the same name, so all threads use the same paths.
  */
+import { countHttp } from "./http-counts.ts";
 import { Effect, core, openTriples, type Lane, type TriplesHandle } from "./triplex.ts";
 
 export interface Basis {
@@ -118,8 +119,8 @@ function failureOf(exit: any): StoreFailure {
   return { ok: false, tag: String(tag ?? "Unknown"), error };
 }
 
-async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" | "broker-h1" = "public"): Promise<CompositionHandle> {
-  const h: TriplesHandle = variant === "broker-h1" ? await (await import("./broker-h1.ts")).openBrokerH1(scope) : await openTriples(lane, scope, variant === "public-queued" ? { admissionQueue: true } : undefined);
+async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" | "broker-h1" | "reach" = "public"): Promise<CompositionHandle> {
+  const h: TriplesHandle = variant === "broker-h1" ? await (await import("./broker-h1.ts")).openBrokerH1(scope) : await openTriples(lane, scope, (variant === "public-queued" || variant === "reach") ? { admissionQueue: true } : undefined);
   const T = h.triples;
   const E = (id: string) => core.EntityId.make(id);
   const outcome = async <A>(effect: any): Promise<Outcome<A>> => {
@@ -127,6 +128,18 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     return exit._tag === "Success" ? { ok: true, value: exit.value as A } : failureOf(exit);
   };
   const pullBody = async (root: string, basis: Basis, between?: () => Promise<void>): Promise<PullResult> => {
+    if (variant === "reach") {
+      // [DX-H1] Why: one public reach at the same cut, including split-root verification.
+      // Rejected: latest-root comparison (would confuse valid commits with snapshot violations).
+      const before: any[][] | undefined = between ? await h.run(T.entities([E(root)], basis)) : undefined;
+      if (between) await between();
+      const result: any = await h.run(T.reach(E(root), basis));
+      const canonical = (rows: readonly any[]) => JSON.stringify(rows.map(t => JSON.stringify(t)).sort());
+      if (before && canonical(before[0] ?? []) !== canonical(result.triples.filter((t: any) => t.entityId === root)))
+        throw new Error("reach split-root snapshot violation");
+      return { triples: result.triples, entities: new Set([root, ...result.triples.map((t: any) => t.entityId)]).size,
+        roundTrips: between ? 2 : 1, depth: result.hops - 1, route: "source", language, waitedMs: 0 };
+    }
     const seen = new Set<string>([root]);
     let frontier = [root];
     const triples: PulledTriple[] = [];
@@ -182,6 +195,7 @@ export const COMPOSITIONS: Record<string, (lane: Lane, scope: string) => Promise
   /** In-process reference store (lib/memory.ts): diagnostic only, readers run in-thread. */
   memory: async (lane, scope) => (await import("./memory.ts")).memoryComposition(lane, scope, Number(process.env["TX2_MEMORY_SERVICE_MS"] ?? "1")),
   "broker-h1": (lane, scope) => { if(lane!=="qlever")throw Error("broker-h1 is lane Q only"); return publicComposition(lane,scope,"broker-h1"); },
+  reach: (lane, scope) => publicComposition(lane, scope, "reach"),
   public: (lane, scope) => publicComposition(lane, scope, "public"),
   /** Same surfaces; on XTDB the adapter queues writes in process (admissionQueue) instead of racing the scope position CAS. */
   "public-queued": (lane, scope) => publicComposition(lane, scope, "public-queued"),
@@ -190,7 +204,14 @@ export const COMPOSITIONS: Record<string, (lane: Lane, scope: string) => Promise
 export async function openComposition(name: string, lane: Lane, scope: string): Promise<CompositionHandle> {
   const factory = COMPOSITIONS[name];
   if (!factory) throw new Error(`unknown composition ${name}; known: ${Object.keys(COMPOSITIONS).join(", ")}`);
-  return factory(lane, scope);
+  const handle = await factory(lane, scope);
+  if (lane === "datomic") {
+    for (const key of ["transact", "pull", "sweepPull", "feedPage"] as const) {
+      const original = handle[key].bind(handle) as any;
+      (handle as any)[key] = (...args: any[]) => countHttp(key, () => original(...args));
+    }
+  }
+  return handle;
 }
 
 export { Effect };

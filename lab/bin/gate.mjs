@@ -50,7 +50,7 @@ const lanePackages = (lane, gate) => ['core', 'host', 'testkit', lane, 'qualific
 // Rejected: a manual W0 prerequisite build (not bound by the receipt), and adding W0's tests to G0 (changes the expected-skip scope).
 const buildPackages = (lane, gate) => { const packages = lanePackages(lane, gate); return gate === 'G0' && !packages.includes('w0') ? [...packages, 'w0'] : packages; };
 // [EXP-A01-0313-R2] Why: dry-run and execution share W02's GS policy and DA01's G0/G1 admission. Rejected: admitting Datomic for unimplemented G2/G4/NS routes or losing its GS lane.
-const gateLanes = gate => gate === 'GS' ? GS_LANES : ['xtdb', 'qlever', ...(['G0', 'G1'].includes(gate) ? ['datomic'] : [])];
+const gateLanes = gate => gate === 'GS' ? GS_LANES : ['xtdb', 'qlever', ...(['G0', 'G1', 'NS'].includes(gate) ? ['datomic'] : [])];
 const EXPECTED_SKIPS = path.join(REPO, 'lab/config/g0-expected-skips.json');
 const PACKET = 'qualification/workloads/temporal-workloads.json';
 const FULL_G2_EXECUTIONS = 142;

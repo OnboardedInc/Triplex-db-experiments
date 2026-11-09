@@ -1,3 +1,4 @@
+import { httpCounts } from "./lib/http-counts.ts";
 /**
  * Reader worker thread: closed-loop subject pulls at a named basis, plus the P5 sweep.
  *
@@ -30,7 +31,7 @@ import { BUCKETS, HOP_SHARE, ids, subjectInCell, type Bucket, type Hop } from ".
 import { observe, type ReadRecord } from "./lib/observe.ts";
 
 type ReaderConfig = {
-  lane: "xtdb" | "qlever";
+  lane: "xtdb" | "qlever" | "datomic";
   scope: string;
   composition: string;
   seed: string;
@@ -201,7 +202,7 @@ export async function startReader(port: any, cfg: ReaderConfig) {
       records = [];
       samples = [];
       await comp.close().catch(() => {});
-      port.postMessage({ type: "stopped" });
+      port.postMessage({ type: "stopped", httpCounts: httpCounts() });
     }
   });
 
