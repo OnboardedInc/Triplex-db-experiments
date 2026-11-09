@@ -1702,3 +1702,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   existing receipts survive Q91a and Q93a.
 - **Patterns this hour:** two more cases where one check that grants and many that only refuse beat many checks that each can grant
   (K01 via R36; G03 now asked to list its grant paths). The 30-of-40 class has now appeared on two lanes; RQ01 becomes the gate once it merges.
+
+## 2026-11-09 01:31Z: RQ01 accepted; its merge would move a pinned file; my Q93 edit had broken the contract build for an hour
+- **V-RQ01 round 3 ACCEPT** as the Q89f gate (95 tests, six planted faults caught). Merging it would change the sha256 of
+  packages/testkit/src/index.ts, which the contract pins, for four export lines. The harness moves to its own subpath entry instead
+  (CX-RQ01 round 4), so no pin moves and no contract version is needed.
+- **My error:** the Q93 rows copied from R36 began with old ruling ids (Q74d, Q83b and others), which build_contract.py read as duplicate
+  pending rulings. The build failed at that commit and I missed it, because the verify ran behind && and its absence scrolled past. Main's
+  contract did not build from that commit until c026f74. **Guard:** every orchestrator commit touching lab/acceptance/ now runs --verify as its
+  own step and checks the printed line before committing. A pre-commit hook would enforce this, but installing one was refused as persistent
+  configuration, so it is a proposal for Sam.
+- **V-DA01 round 2 FIX-FIRST:** F1 closed; a query with repeated :where or :in sections bypasses route classification (30 of 40 again).
+  DA01 round 5 classifies on a canonical parse and refuses what it cannot canonicalize, with equivalent-form property tests.
