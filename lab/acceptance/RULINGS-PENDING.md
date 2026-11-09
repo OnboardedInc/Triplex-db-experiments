@@ -101,3 +101,16 @@ The table below is R36 section 6 verbatim (old rule, its status, new text). Q83d
 | change to Q83e three frontiers F, M, T | gating, with a stopped-tail proof for (F, M] | **retired**; F and M recorded as diagnostics, T checked on the clone (K3) |
 | change to Q92c, Q92g (P5 fingerprint) | "freshly seeded or fingerprint-verified clone"; G0 after every seed or clone | unchanged; Q93a makes K01 conform to them |
 | `load-contract.json` lines 174-234 | binds Q83b, Q83d, Q83e precedence and the F/M/T schema | replace with the Q93a/b binding in the next contract version |
+
+## Q94: golden scenarios (from R37, lab/research/R37-golden-scenario-readiness.md section 5)
+| Q | Ruling | Basis |
+| --- | --- | --- |
+| Q94a (waits for Sam) | GS acceptance runs at the largest W0 rung each lane's chosen composition fits on one exclusive slot within the 50 GiB pool disk limit (expected: 100k for broker and QLever `cur` compositions; 10k for XTDB-replica and Datomic compositions unless the forecast is raised per run, Q92i). Year-one volumes are reported as a projection next to the measured rung, never as a pass. This loosens TARGETS 6 rule 3, so it waits for Sam; until he rules, GS stays OPEN at acceptance | R37 a; TARGETS threshold policy; R34 sizes; SCOPE 3.2 (state an engine limit plainly) |
+| Q94b | Every GS stream is W0-valid and every domain claim a scenario names is checked by O-DOMAIN; a scenario whose spec names a domain claim and whose run makes no such check fails closed. The W01 world vocabulary is retired | R37 b; GATE-W0; TARGETS 6 rule 2 |
+| Q94c | The GS background is the frozen TARGETS 2.1 trace through the W0 trace mapper (Q92k); the private writerTrace is retired; every measured window holds one burst and one maintenance event | R37 c; TARGETS 1.1 P1 item 3, 2.1 |
+| Q94d | GS world admission follows Q93a: a G0 content fingerprint per run; a fresh scope or verified clone per run; store counts at start and end; on lane Q the Q91a counts | R37 d; Q93a, Q92c, Q91a |
+| Q94e | Every GS receipt before contract 0.4.0 is DIAGNOSTIC: none closes an obligation or enters a comparison. The GS.12 defect and the W01b harness findings stay as defect reports | R37 e; Q90f, Q91a, Q93a |
+| Q94f | GS.04b applies only to compositions with a separate current store; on those it is required. GS.04's engine-kill schedule is required on every lane and runs only on an exclusive slot | R37 f; TARGETS 4.1 item 6; Q31e |
+| Q94g | GS.19's outbox and GS.10's publications must be the product's atomic outbox; a harness-side outbox file can pass only GS.19's P3 checks, as a diagnostic | R37 g; TARGETS 3 (atomic path to the outbox); Q42c |
+| Q94h | GS.10's race (in-flight reconciles finish on the old release) is scheduled as EXP-P5 round C, right after rounds A and B, and is required for GS.10 to close | R37 h; Q92j; TARGETS 6 row 10 |
+| Q94i (orchestrator; the superseded outcome flagged for Sam) | GS.03's vendor-revision rule goes into W0-1.2 with an O-DOMAIN `signal-ack` operation; the `superseded` outcome stays flagged for Sam | R37 i; TARGETS 6.1; W0 lacks it |
