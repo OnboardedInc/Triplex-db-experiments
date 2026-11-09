@@ -1850,3 +1850,14 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Also this stretch:** K01 round 11 corrected three XTDB wire-type assumptions from source (union spelling, I8, bpchar), live rerun queued;
   RT01 review found three defects against its own rulings (native routes wrap typed refusals, same-commit retractions keep their instant,
   empty batches skip the watermark), fix round running; erasure scanners and GS12F each in their third review.
+
+## 2026-11-09 04:27Z: hourly pass: usage 6%; R41 audits P3; review loops are long but converging
+- **Learnings since the last pass:** QLever's keep-alive stall is real and removable (QNODELAY: stalls 120/240 to 0/240, p99 59 to 7.9 ms),
+  but per-request mode handled gzip and custom aborts differently, so one shared response path comes first. GS12F accepted (typed rejection
+  of unholdable values, one bounds table per adapter); it waits for contract 0.3.14 to re-pin core. K01's first live run stopped correctly on
+  an XTDB type-name expectation and was fixed from source. RT01's review found three defects against its own rulings; all fixed.
+- **Process pattern:** P2Q is in its tenth review round, K01 its eleventh, the erasure scanners their fourth. Each round's finding is
+  narrower than the last and the fixes are now structural (wrapped read tables, closure decoding, exact encodings), so the loops are
+  converging, not cycling. The cost is wall time on one priority at a time.
+- **Scale window:** one exclusive slot at a time is the bottleneck (P2X2 on it now; queue: K01 live, P5 A1, G03, RT01 live, W02 live GS).
+- **Research:** R41 (Opus high) audits P3, the ordered resumable feed, across all three lanes, since it has had the least dedicated work.
