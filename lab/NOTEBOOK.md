@@ -2243,3 +2243,16 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **The gap:** R46 measured 4-6x in isolation; the real stack gave 1.75x. QH1 round 2 (Sonnet) decomposes per-pull CPU on the real stack, ABAB against R46's microbench path, before any further design change.
 - **DF01 round 4 (Sonnet, 302a7a63)** fixed the lane D feed emitting journal facts (real Datomic peer test; G0 1,279); in review.
 - **Lesson:** a microbench prediction holds only for the code path it measured; the gate that decomposes the real path has to come first, as R46 itself said.
+
+## 2026-11-09: OBS01 round 9 builds the sync witness offline; it has never attached to a kernel
+
+- **3403e187 (Sonnet):** the R48 bpftrace program, a strict sync-witness/1 parser, the D rule, seven refusal codes (TRACE-INCOMPLETE,
+  WITNESS-UNBOUND, UNWITNESSED-WRITE, CHECKPOINT-UNSYNCED, SYNC-MISSING, ACK-BEFORE-DURABLE, VISIBLE-BEFORE-DURABLE), eleven planted
+  writers. 32 Python + 13 Node tests; 11/11 planted modes and 36/36 fixtures return their expected codes; 3,000 parser fuzz mutations
+  refuse cleanly. In review (CX-VOBS6 round 3, offline).
+- **Blocker:** the triplex2 VM has no bpftrace, and installing it is a download that needs Sam's approval. The VM kernel is ready: Ubuntu
+  24.04, 6.8.0-117, BTF present, BPF syscall/JIT, kprobes and syscall tracepoints on, ext4_sync_fs in kallsyms. R49 (Opus) is comparing
+  sources (Ubuntu package, upstream image, static binary) by version support, privileges, provenance and exact size.
+- **Lesson:** an offline witness proves the judging logic, not that the probes fire. Until W0-W3 run, the kernel cost per commit and the
+  probe attach points are predictions.
+- **Disk:** 11 GiB free after compression. Still well short of the 60 GiB needed for a 100k run.
