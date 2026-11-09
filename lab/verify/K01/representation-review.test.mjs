@@ -112,7 +112,8 @@ for (const variant of ['integer-width','float-width']) test('D must refuse a cha
   const values=variant==='integer-width'?[1,2]:[1.5,2.5];
   const serialize=widths=>{
     const oid=variant==='integer-width'?(widths.every(w=>w===32)?23:20):(widths.every(w=>w===32)?700:701);
-    const native=widths.every(w=>w===64)?(variant==='integer-width'?':i64':':f64'):widths.every(w=>w===32)?(variant==='integer-width'?':i32':':f32'):(variant==='integer-width'?'[:union :i32 :i64]':'[:union :f32 :f64]');
+    // [EXP-K01-R11] Why: serde/types.clj:286-288 renders Poly as an EDN set. Rejected: the Arrow :union input tag as a catalog fixture.
+    const native=widths.every(w=>w===64)?(variant==='integer-width'?':i64':':f64'):widths.every(w=>w===32)?(variant==='integer-width'?':i32':':f32'):(variant==='integer-width'?'#{:i32 :i64}':'#{:f32 :f64}');
     for(let i=0;i<rows.length;i++)rows[i][column]=spec(oid,String(values[i]),native);
   };
   serialize(sourceWidths);const pin=await readG0(f.reader,expected);

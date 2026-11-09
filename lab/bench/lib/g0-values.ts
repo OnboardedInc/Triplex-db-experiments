@@ -5,8 +5,9 @@ export function wireValue(oid: number, bytes: Uint8Array, nativeType?: string) {
   const hex = Buffer.from(bytes).toString("hex");
   const text = Buffer.from(bytes).toString("utf8");
   // [EXP-K01-R9] Why: text NaN hides payloads and structured JSON can hide nested numeric types/bits. Rejected: granting from an irreversibly decoded representation; exact native transport is required for these types.
+  // [EXP-K01-R11] Why: PgType.kt:186-352,582-585,737-740 defines scalar OIDs; VarChar 1043 exists (:331-334), bpchar 1042 does not. Rejected: importing PostgreSQL types this XTDB never reports. Native SELECT * UTF8 still requires OID 25.
   if (
-    ![16, 17, 20, 21, 23, 25, 700, 701, 1042, 1043, 1700, 2950].includes(oid) ||
+    ![16, 17, 20, 21, 23, 25, 700, 701, 1043, 1700, 2950].includes(oid) ||
     ([700, 701].includes(oid) && /nan/i.test(text))
   )
     throw Error("G0 wire representation is not lossless for type " + oid);

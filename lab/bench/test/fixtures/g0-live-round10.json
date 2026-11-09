@@ -1,0 +1,156 @@
+{
+  "source": "lab/experiments/EXP-K01-seed-clone/evidence/live-round10/wire.log",
+  "sourceSha256": "786dc024992b24b0522fb39edc30ee1bd57e50962f8bc898a8abf8759a952003",
+  "note": "Frames reconstructed from the exact typed canonical witnesses printed in the live log; not a packet capture. OID, native tag and raw scalar hex are reversibly encoded there. Mixed union is the exact assertion actual string; its raw rows were never captured.",
+  "scalars": [
+    {
+      "table": "tx_wire_int_narrow",
+      "oid": 23,
+      "native": ":i32",
+      "bytesHex": "31",
+      "catalog": [
+        {
+          "column_name": "_id",
+          "xt_type": ":utf8"
+        },
+        {
+          "column_name": "_system_from",
+          "xt_type": ":instant"
+        },
+        {
+          "column_name": "_system_to",
+          "xt_type": "[:? :instant]"
+        },
+        {
+          "column_name": "_valid_from",
+          "xt_type": ":instant"
+        },
+        {
+          "column_name": "_valid_to",
+          "xt_type": "[:? :instant]"
+        },
+        {
+          "column_name": "scope_key",
+          "xt_type": ":utf8"
+        },
+        {
+          "column_name": "v",
+          "xt_type": ":i32"
+        }
+      ],
+      "canonical": "tx2-value/2;array82:object73:str4:0076wire57:f6416:4037000000000000str16:003a006900330032str8:00330031"
+    },
+    {
+      "table": "tx_wire_int_wide",
+      "oid": 20,
+      "native": ":i64",
+      "bytesHex": "31",
+      "catalog": [
+        {
+          "column_name": "_id",
+          "xt_type": ":utf8"
+        },
+        {
+          "column_name": "_system_from",
+          "xt_type": ":instant"
+        },
+        {
+          "column_name": "_system_to",
+          "xt_type": "[:? :instant]"
+        },
+        {
+          "column_name": "_valid_from",
+          "xt_type": ":instant"
+        },
+        {
+          "column_name": "_valid_to",
+          "xt_type": "[:? :instant]"
+        },
+        {
+          "column_name": "scope_key",
+          "xt_type": ":utf8"
+        },
+        {
+          "column_name": "v",
+          "xt_type": ":i64"
+        }
+      ],
+      "canonical": "tx2-value/2;array82:object73:str4:0076wire57:f6416:4034000000000000str16:003a006900360034str8:00330031"
+    },
+    {
+      "table": "tx_wire_float_narrow",
+      "oid": 700,
+      "native": ":f32",
+      "bytesHex": "312e30",
+      "catalog": [
+        {
+          "column_name": "_id",
+          "xt_type": ":utf8"
+        },
+        {
+          "column_name": "_system_from",
+          "xt_type": ":instant"
+        },
+        {
+          "column_name": "_system_to",
+          "xt_type": "[:? :instant]"
+        },
+        {
+          "column_name": "_valid_from",
+          "xt_type": ":instant"
+        },
+        {
+          "column_name": "_valid_to",
+          "xt_type": "[:? :instant]"
+        },
+        {
+          "column_name": "scope_key",
+          "xt_type": ":utf8"
+        },
+        {
+          "column_name": "v",
+          "xt_type": ":f32"
+        }
+      ],
+      "canonical": "tx2-value/2;array99:object90:str4:0076wire74:f6416:4085e00000000000str16:003a006600330032str24:003300310032006500330030"
+    },
+    {
+      "table": "tx_wire_float_wide",
+      "oid": 701,
+      "native": ":f64",
+      "bytesHex": "312e30",
+      "catalog": [
+        {
+          "column_name": "_id",
+          "xt_type": ":utf8"
+        },
+        {
+          "column_name": "_system_from",
+          "xt_type": ":instant"
+        },
+        {
+          "column_name": "_system_to",
+          "xt_type": "[:? :instant]"
+        },
+        {
+          "column_name": "_valid_from",
+          "xt_type": ":instant"
+        },
+        {
+          "column_name": "_valid_to",
+          "xt_type": "[:? :instant]"
+        },
+        {
+          "column_name": "scope_key",
+          "xt_type": ":utf8"
+        },
+        {
+          "column_name": "v",
+          "xt_type": ":f64"
+        }
+      ],
+      "canonical": "tx2-value/2;array99:object90:str4:0076wire74:f6416:4085e80000000000str16:003a006600360034str24:003300310032006500330030"
+    }
+  ],
+  "mixedIntegerType": "#{:i32 :i64}"
+}
