@@ -166,3 +166,4 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   this order): (1) EXP-QG1 phase 0 and 1 on qlever-s1 (a copy of qlever-dev's data, then the delta sweep; R35, Q91); (2) K01 live on
   xtdb-s1 once its offline review accepts; (3) G03 slot run per its SLOT-RUN.md once its fixture migration lands; (4) X02 and C8 exclusive
   G1/G2 reruns; (5) W01b GS rerun; (6) J01 compact-on G1. Unpark tx2-datomic-dev for EXP-DA04 after the window.
+- Scale window adds: (7) EXP-P5 A1 at 1k on an exclusive XTDB slot (CX-P5A writes the commands).

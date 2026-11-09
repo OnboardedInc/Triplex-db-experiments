@@ -1648,3 +1648,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
   first rebuild runs on a copy on an exclusive slot (bug #3172 can fail a rebuild, and reviews read qlever-dev live).
 - **Learning:** an assumption shared by five research documents was never built. The research index should mark each assumption as
   built, measured or assumed; that is now part of every planner brief.
+
+## 2026-11-09 00:48Z: R34 gives P5 a three-lane plan; the 100k population is 11x larger than assumed
+- **Basis on every lane:** {recordedPosition: P_act, validAt: V_act}, with P_act from the activation receipt and V_act from a deterministic
+  clock anchored at W0's valid time; no sweep names recordedAt, so Q89b never forces a slow route. One read unit per 64-subject page,
+  nothing spans pages (R25's long-transaction lesson). Ruled Q92a-k.
+- **Key finding:** W0's 100k population is 44.5M facts (basis.tx 4,338,757), 11x R24's estimate. In the A0 encodings that is about 2.85B
+  QLever quads or about 130 GB of XTDB log (estimates), so at 10k and 100k only the broker's host store (about 4 to 5 GB) fits the slot
+  disks; engine-fed arms are 1k baselines (Q92d). That states an engine limit plainly; it rules out no engine.
+- **Order:** lane X native starts now from main (CX-P5A, offline A0 at 1k and 10k; the 1k slot run joins the scale window); lane Q after
+  P2Q and SQL01 merge; lane D after DA01 and DA04.
