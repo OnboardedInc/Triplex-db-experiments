@@ -396,3 +396,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   refusals are plain Error objects, not typed. Verified: all 438,140 delivery digests, fresh 900 crash trials, evaluator 108 and lab PACK
   on the merged tree (root pack:check fails only on the excluded DuckDB tarball). Real backend retention expiry not exercised. DI01 round 2
   (Sonnet) merges main and adds a shared tagged BasisNotAvailable refusal.
+- 2026-11-09 OBS01 round 11 review FIX-FIRST (CX-VOBS7, ba10e8f7): R10-F1/F2 fixed; two Class A defects in the clock proof: A1 a failed
+  compile still yields a proof; A2 a forbidden helper call in an unrecognized spelling is skipped. Helper ids (5/118/125/160/208) match
+  the reviewer's reference but were not checked against a primary header. Orchestrator decisions for round 12 (Sonnet): adopt a dump only
+  on a successful compile; one complete compiled section, every call parsed or UNPARSED-CALL, every helper on an explicit allow-list;
+  helper ids derived at W0 from the running kernel's BTF (/sys/kernel/btf/vmlinux, enum bpf_func_id), no header download.

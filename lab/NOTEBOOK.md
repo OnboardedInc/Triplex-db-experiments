@@ -2312,3 +2312,6 @@ Where each priority stands, from evidence so far (research probes and baselines;
   from 7.8 to 15 GiB.
 - **Merged since the last entry:** contract 0.4.0 (e09c2ff4). DF01 round 4 and G03 round 7a are accepted offline or in review; see
   STATE.
+- **2026-11-09 OBS01 round 11 lesson:** a proof that counts the evidence it recognizes is not a proof that nothing else is there. The
+  clock check now accounts for every call site in one complete section against an allow-list, and takes helper ids from the kernel it
+  runs on rather than from memory.
