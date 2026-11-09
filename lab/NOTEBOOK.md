@@ -1622,3 +1622,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
     design that binds data volume (the C8 lesson) and runs on a dedicated slot.
 - **Rate of learning:** the review loop keeps finding "evidence accepted that should not be" (K01 four rounds, O-OBS four, P2Q seven).
   Each round narrows the gap, but the same class recurs; the PASS-audit step K01 round 5 introduced should become standard in builder briefs.
+
+## 2026-11-09 00:30Z: the C8 QLever timeout is the QLever lane reading from its update delta, not an integration regression
+- **CX-C8-R4:** queries are graph-scoped and byte-identical on both branches; the earlier review passed with one reader, the integration
+  ran eight. On qlever-dev the built base index holds 1 triple; all ~1.8M triples arrived by SPARQL UPDATE. A scoped base SELECT returning
+  5 rows takes 4 to 6 s, OPTIONAL joins about 700 to 860 ms each, and planner estimates are far from the real cardinalities. The in-memory
+  closure itself takes 0.5 ms. **So every QLever-lane read so far has run against the update delta.**
+- **Why it matters:** if delta-backed reads cost seconds at 1.8M triples, the lane cannot meet P1, P4 or P5 at 100M facts without folding
+  updates into a built index. **R35 (Opus high)** reads QLever 0.6.0's delta storage and rebuild options and checks whether the lane's design
+  assumed a rebuild loop from the log of record that was never built or measured.
+- **Learning:** a review's load profile is part of what it proves. C8's one-reader PASS said nothing about eight readers. Reviews now name
+  the load they ran, and integration runs the default profile.
+- **Decision:** the integration merges with this recorded as a known QLever-lane read-cost item, since C8's code is unchanged by it.
