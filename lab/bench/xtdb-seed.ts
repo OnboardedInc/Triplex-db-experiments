@@ -24,6 +24,7 @@ import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 import { openComposition } from "./lib/composition.ts";
+import { pinXtdb } from "./lib/g0-xtdb.ts";
 import { seedRung } from "./lib/seed.ts";
 import { chooseSamples } from "./lib/samples.ts";
 import { RUNGS, accountOfSubject, accountsFor, populationCounts } from "./lib/world.ts";
@@ -63,7 +64,7 @@ function distTree(pkg: string) {
 const runTag = `seed-${seedLabel}`;
 const scopeName = `ns-xtdb-${opt("subjects") ? `dev${subjects}` : rung}-seed-${seedLabel}-${sha(`${subjects}`).slice(0, 8)}`;
 const ADAPTER_PATHS = ["packages/core", "packages/xtdb", "packages/qualification"];
-const GENERATOR_FILES = ["lab/bench/xtdb-seed.ts", "lab/bench/lib/world.ts", "lab/bench/lib/commands.ts", "lab/bench/lib/seed.ts", "lab/bench/lib/rng.ts", "lab/bench/lib/samples.ts", "lab/bench/lib/composition.ts", "lab/bench/lib/triplex.ts"];
+const GENERATOR_FILES = ["lab/bench/xtdb-seed.ts", "lab/bench/lib/g0.ts", "lab/bench/lib/g0-xtdb.ts", "lab/bench/lib/world.ts", "lab/bench/lib/commands.ts", "lab/bench/lib/seed.ts", "lab/bench/lib/rng.ts", "lab/bench/lib/samples.ts", "lab/bench/lib/composition.ts", "lab/bench/lib/triplex.ts"];
 const dirtyAdapter = git(["status", "--porcelain=v1", "--", ...ADAPTER_PATHS.map((p) => `${p}/src`)]);
 const seedInputs = {
   format: "tx2-xtdb-seed-inputs/1",
@@ -115,6 +116,7 @@ const manifest = {
   },
   recorded: seed.recorded,
 };
-fs.writeFileSync(path.join(out, "manifest.json"), JSON.stringify(manifest) + "\n");
+// [EXP-K01-R7] Why: D is pinned after the last seed commit and before any freeze step, independently of process diagnostics. Rejected: deriving D from the frozen copy.
+const g0 = await pinXtdb(comp.backend.url, manifest);
+fs.writeFileSync(path.join(out, "manifest.json"), JSON.stringify({...manifest,g0}) + "\n");
 console.log(JSON.stringify({ out: path.relative(REPO, out), scope: scopeName, subjects: seed.seededSubjects, complete: seed.complete, assertions: seed.assertions, closedForm: manifest.result.assertionsMatchClosedForm, commands: seed.commands, lastPosition: seed.lastPosition, wallS: Number(wallS.toFixed(1)), factsPerS: Number(seed.factsPerS.toFixed(1)) }));
-setTimeout(() => process.exit(0), 200).unref();

@@ -14,6 +14,8 @@
  * are sampled (docker over the lab socket only); TX2_ENGINE_CPUS is the slot's CPU quota.
  * lab/bench/README.md documents the trace, the composition interface, metric names and report fields.
  */
+import { checkXtdb, expectedN01, healthXtdb, openG0, quietXtdb } from "./lib/g0-xtdb.ts";
+import { bounded } from "./lib/g0.ts";
 import { createHash, randomBytes } from "node:crypto";
 import { execFile } from "node:child_process";
 import fs from "node:fs";
@@ -98,10 +100,12 @@ const runTag = `ns${Date.now().toString(36)}${randomBytes(2).toString("hex")}`;
 const bulkManifest = config.seedManifest ? JSON.parse(fs.readFileSync(path.resolve(config.seedManifest), "utf8")) : null;
 if (bulkManifest && (bulkManifest.subjects !== rungSubjects || bulkManifest.lane !== lane || bulkManifest.seed !== config.seed))
   throw new Error(`--seed-manifest is for ${bulkManifest.lane}/${bulkManifest.subjects} subjects/seed ${bulkManifest.seed}, not ${lane}/${rungSubjects}/${config.seed}`);
+// [EXP-K01-R7] Why: every XTDB measurement needs a pin before freeze and a freshly started arm. Rejected: silently measuring the legacy in-driver seed without G0.
+if (lane === "xtdb" && config.composition !== "memory" && !bulkManifest) throw Error("XTDB requires a pre-freeze seed manifest; run xtdb-seed.ts then engine.mjs fresh or clone");
 const scopeName = bulkManifest ? bulkManifest.scope : `ns-${lane}-${config.rung.replace(/[^a-z0-9]/gi, "")}-${runTag}`;
-// [EXP-K01] Bound before anything runs: a clone without a PASS readiness verdict for this manifest's golden is refused.
+// [EXP-K01-R7] Why: provenance never grants reuse; G0 runs below in the measuring process. Rejected: reading owner-file readiness.
 if (bulkManifest?.lane === "xtdb") assertSeedInputsCurrent(bulkManifest, REPO);
-const seedPath = seedPathOf(bulkManifest, config.seedManifest ? path.resolve(config.seedManifest) : null, process.env["TRIPLEX_LAB_SLOT_OWNER"]);
+const seedPath = seedPathOf(bulkManifest, config.seedManifest ? path.resolve(config.seedManifest) : null);
 const now = () => performance.timeOrigin + performance.now();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const logLines: string[] = [];
@@ -251,12 +255,42 @@ async function run() {
         comp: writer, subjects: rungSubjects, runTag, batchFacts: config.seedBatchFacts, budgetMs: config.seedBudgetS * 1000,
         recordSubjects: new Set(oracleSubjects), recordAccounts: new Set(oracleSubjects.map((i) => accountOfSubject(i, accounts))), historySubjects: new Set(historySample), log,
       });
-  report.seedPath = seedPath;
+  // [EXP-K01-R7] Why: G0 reads this writer's endpoint in this measuring process before workers/warm-up exist. Rejected: accepting any prior process verdict or diagnostic.
+  const seedWrites = new Map<number, number>();
+  if (bulkManifest?.lane === "xtdb") {
+    if (!container) throw Error("K2 requires TX2_ENGINE_CONTAINER");
+    const recordPath=process.env["TRIPLEX_LAB_GOLDEN"];
+    const record=recordPath?JSON.parse(fs.readFileSync(recordPath,"utf8")):null;
+    const freshPath=process.env["TRIPLEX_LAB_FRESH_STATE"];
+    const fresh=freshPath?JSON.parse(fs.readFileSync(freshPath,"utf8")):null;
+    if(record&&fresh)throw Error("choose exactly one fresh or clone arm");
+    if(!record&&!fresh)throw Error("K3 requires an engine fresh-arm restart or a clone");
+    if (record) {
+      const {inspect}=await import(new URL("../bin/lib.mjs",import.meta.url).href);
+      const c=inspect(container);
+      if (record.manifest.sha256 !== createHash("sha256").update(fs.readFileSync(path.resolve(config.seedManifest!))).digest("hex") || c?.Image !== record.keyInputs.engine.imageId || c?.Config.Labels?.['tx2.system-config-sha256'] !== record.keyInputs.engine.systemConfigSha256) throw Error("K0 stale golden/runtime");
+    }
+    await healthXtdb(writer.backend.url,container);
+    // [EXP-K01-R7] Why: #6174 makes source live counts stale. Rejected: reading K3 before the clone/fresh-arm restart.
+    if(fresh&&(fresh.manifestSha256!==createHash("sha256").update(fs.readFileSync(path.resolve(config.seedManifest!))).digest("hex")||fresh.D!==bulkManifest.g0?.D))throw Error("fresh-arm binding differs");
+    await quietXtdb(writer.backend.url,record??fresh);
+    const referencePath=process.env["TRIPLEX_LAB_REFERENCE_GOLDEN"];
+    if(referencePath){const ref=JSON.parse(fs.readFileSync(referencePath,"utf8"));if(ref.g0.D!==bulkManifest.g0?.D)throw Error("E1 fresh digest differs from clone seed");}
+    const G0=await checkXtdb(writer.backend.url,bulkManifest,bulkManifest.g0);
+    report.seedPath={...seedPath,seededBy:record?"clone":"seed-writer",G0,golden:record?.key??null};
+    for (const handle of [writer,growthComp]) {
+    const pending=new Map<string,number>();
+    const remember=(receipt:any,commandId:string)=>{if(receipt&&receipt.position>seed.lastPosition){const n=pending.get(commandId);if(n===undefined)throw Error("K5 unrecorded commit");seedWrites.set(receipt.position,n);}};
+    const transact=handle.transact.bind(handle),resolve=handle.transactionByCommand.bind(handle);
+    handle.transact=async(ops,meta)=>{pending.set(String(meta.commandId),ops.filter(o=>o.op==="assert").length);const r=await transact(ops,meta);if(r.ok)remember(r.value,String(meta.commandId));return r;};
+    handle.transactionByCommand=async id=>{const r=await resolve(id);if(r.ok)remember(r.value,id);return r;};
+    }
+  } else report.seedPath = seedPath;
   const N = seed.seededSubjects;
   const popN = populationCounts(N, accounts);
   recordedCommands.push(...seed.recorded);
   report.seed = {
-    seededBy: seedPath.seededBy, plannedSubjects: rungSubjects, seededSubjects: N, complete: seed.complete, commands: seed.commands, assertions: seed.assertions,
+    seededBy: report.seedPath.seededBy, plannedSubjects: rungSubjects, seededSubjects: N, complete: seed.complete, commands: seed.commands, assertions: seed.assertions,
     expectedAssertions: popN.seedAssertions, assertionsMatchClosedForm: popN.seedAssertions === seed.assertions,
     wallS: seed.wallMs / 1000, factsPerS: seed.factsPerS, commitMs: seed.commitMs, failureCount: seed.failures.length, failures: seed.failures.slice(0, 10),
     firstPosition: coordinate(seed.firstPosition), lastPosition: coordinate(seed.lastPosition), lastInstant: seed.lastInstant, population: { planned: pop, seeded: popN },
@@ -541,6 +575,15 @@ async function run() {
   const replay = await feed.replayCheck(replayHandle, firstCrash?.checkpoint ?? seed.lastPosition);
   await replayHandle.close().catch(() => {});
   const finalPosition = await writer.currentPosition();
+  if (bulkManifest?.lane === "xtdb") {
+    const expected=expectedN01(bulkManifest),h=await openG0(writer.backend.url);
+    try {
+      if(seedWrites.size&&[...seedWrites.keys()].reduce((a,b)=>Math.min(a,b),Infinity)!==seed.lastPosition+1)throw Error("K4 first warm-up position differs");
+      if(finalPosition!==seed.lastPosition+seedWrites.size)throw Error("K5 command positions differ");
+      const additions=[...seedWrites.values()].reduce((a,b)=>a+b,0);
+      for(const table of ['tx_assertions','tx_claims','tx_attempts'] as const){const count=await bounded(signal=>h.reader.count(table,bulkManifest.scope,signal));const want=expected.counts[table]+(table==='tx_assertions'?additions:seedWrites.size);if(count!==want)throw Error("K5 end counts differ: "+table);}
+    } finally {await h.close();}
+  }
   samplersOn = false;
   clearInterval(eluTimer);
   const maintenance = await maintenanceEvents(traceStart);

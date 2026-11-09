@@ -1,0 +1,54 @@
+{
+  "head": "d35fc4b4c63f140a7f56fbaa61e7a6a2536fc3ad",
+  "at": "2026-11-09T01:21:32.367Z",
+  "disk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 2287046,
+    "bavail": 2287046,
+    "files": 103387662,
+    "ffree": 91481840
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/verify/K01/run-round7.mjs": "262cc3bc7ef15d1e6ddb49dd1c38c01811647e8dac8af78db90ab636fab38875",
+    "lab/bench/clone-check.ts": "dcab0fecc0d466386e37a196141c7b79e3d312146c67242ba3092964c1995df5",
+    "lab/bin/test/lab.test.mjs": "3105204b3055ed7bab5d3d1fcb9d6197eae569deaaaa22fe3bbfc18aafec2e2d",
+    "lab/bench/test/bench.test.ts": "56d102078a5f96b4f93c68ec58410f71b90ad2d4af8dcd33124bbf9d1b6a3424",
+    "lab/bench/lib/g0.ts": "0ecdd0ad42f678cb8a48240272fad58582c18e43511ade7f2b9da68b3bcb521b",
+    "lab/bench/lib/g0-xtdb.ts": "2bb7703d3c56450105b9e3ba7c39ebb8e210488bdde858c87de71b29bd52549c",
+    "lab/bench/lib/bulk.ts": "30fb15038aa0c945e631db948308a230034d85f90f188556c5a5f59b1e4cb920",
+    "lab/bench/driver.ts": "5a78a38cf47689e9bafc69b5e246243470d872247e734e3d988cc377b80e1187",
+    "lab/bench/xtdb-seed.ts": "f42e4c33026b1f04952a9a72e8807be2aeab9fad6cbaf269af730f7d10bd8b37",
+    "lab/bin/engine.mjs": "2cf810ef0373b4f107a1f504078ed18b9b5323a0aa1f5ea6d9ef2735ad9a5a38",
+    "lab/bin/lib.mjs": "c0bdc52edb167b4e3220cb3f78c383a0dfcc177f83ea8111bb3be458715c1c34",
+    "lab/bench/test/g0.test.ts": "4017d31ccfe9109c49a29224fcbb6c8eefef5c48085dd6fbe745c0435a319c47"
+  },
+  "runs": [
+    {
+      "label": "tests",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/g0.test.ts"
+      ],
+      "status": 1,
+      "signal": null,
+      "sha256": "a0af47b19e4dc7ac9f9847a7599e8e4ce169be1eeea8d6af1e531411196fbdfc"
+    },
+    {
+      "label": "types",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "status": 0,
+      "signal": null,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}

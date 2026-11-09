@@ -1,0 +1,427 @@
+TAP version 13
+# Subtest: trace: same inputs give byte-identical events; a different seed differs
+ok 1 - trace: same inputs give byte-identical events; a different seed differs
+  ---
+  duration_ms: 50.95075
+  type: 'test'
+  ...
+# Subtest: trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+ok 2 - trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+  ---
+  duration_ms: 10.053833
+  type: 'test'
+  ...
+# Subtest: trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+ok 3 - trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+  ---
+  duration_ms: 9.484584
+  type: 'test'
+  ...
+# Subtest: histogram: percentiles within 1/128 of exact nearest-rank values
+ok 4 - histogram: percentiles within 1/128 of exact nearest-rank values
+  ---
+  duration_ms: 18.510166
+  type: 'test'
+  ...
+# Subtest: scheduler: latency is measured from the scheduled time, including queueing behind the subject
+ok 5 - scheduler: latency is measured from the scheduled time, including queueing behind the subject
+  ---
+  duration_ms: 327.174792
+  type: 'test'
+  ...
+# Subtest: scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+ok 6 - scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+  ---
+  duration_ms: 92.539083
+  type: 'test'
+  ...
+# Subtest: world: hop classes, frozen P4 buckets and closed-form counts match materialization
+ok 7 - world: hop classes, frozen P4 buckets and closed-form counts match materialization
+  ---
+  duration_ms: 70.831333
+  type: 'test'
+  ...
+# Subtest: model: valid-time aware digests equal the materialized world at (R, V)
+ok 8 - model: valid-time aware digests equal the materialized world at (R, V)
+  ---
+  duration_ms: 1.217667
+  type: 'test'
+  ...
+# Subtest: feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+ok 9 - feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+  ---
+  duration_ms: 74.776791
+  type: 'test'
+  ...
+# Subtest: same content in another physical order and IDs grants only on fresh read
+ok 10 - same content in another physical order and IDs grants only on fresh read
+  ---
+  duration_ms: 3.247917
+  type: 'test'
+  ...
+# Subtest: G0 refuses changed
+ok 11 - G0 refuses changed
+  ---
+  duration_ms: 0.557375
+  type: 'test'
+  ...
+# Subtest: G0 refuses dropped
+ok 12 - G0 refuses dropped
+  ---
+  duration_ms: 0.299791
+  type: 'test'
+  ...
+# Subtest: G0 refuses missing-subject
+ok 13 - G0 refuses missing-subject
+  ---
+  duration_ms: 0.804958
+  type: 'test'
+  ...
+# Subtest: G0 refuses empty
+ok 14 - G0 refuses empty
+  ---
+  duration_ms: 0.447542
+  type: 'test'
+  ...
+# Subtest: G0 refuses missing-field
+ok 15 - G0 refuses missing-field
+  ---
+  duration_ms: 0.208625
+  type: 'test'
+  ...
+# Subtest: G0 refuses historical-position
+ok 16 - G0 refuses historical-position
+  ---
+  duration_ms: 0.339708
+  type: 'test'
+  ...
+# Subtest: G0 refuses retracted-position
+ok 17 - G0 refuses retracted-position
+  ---
+  duration_ms: 0.237792
+  type: 'test'
+  ...
+# Subtest: G0 refuses value
+ok 18 - G0 refuses value
+  ---
+  duration_ms: 0.487167
+  type: 'test'
+  ...
+# Subtest: G0 refuses extra
+ok 19 - G0 refuses extra
+  ---
+  duration_ms: 0.67575
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses foreign
+ok 20 - G0 binding/acquisition refuses foreign
+  ---
+  duration_ms: 0.365833
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-position
+ok 21 - G0 binding/acquisition refuses wrong-position
+  ---
+  duration_ms: 0.728709
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-count
+ok 22 - G0 binding/acquisition refuses wrong-count
+  ---
+  duration_ms: 0.314333
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses partial-count
+ok 23 - G0 binding/acquisition refuses partial-count
+  ---
+  duration_ms: 0.377834
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-scope
+ok 24 - G0 binding/acquisition refuses wrong-scope
+  ---
+  duration_ms: 0.2825
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses wrong-pin
+ok 25 - G0 binding/acquisition refuses wrong-pin
+  ---
+  duration_ms: 1.283458
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses missing-pin
+ok 26 - G0 binding/acquisition refuses missing-pin
+  ---
+  duration_ms: 0.254583
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses late
+ok 27 - G0 binding/acquisition refuses late
+  ---
+  duration_ms: 25.00325
+  type: 'test'
+  ...
+# Subtest: G0 binding/acquisition refuses failed
+ok 28 - G0 binding/acquisition refuses failed
+  ---
+  duration_ms: 0.372209
+  type: 'test'
+  ...
+# Subtest: G0 never grants from diagnostics or a cached external PASS
+ok 29 - G0 never grants from diagnostics or a cached external PASS
+  ---
+  duration_ms: 0.42175
+  type: 'test'
+  ...
+# Subtest: W0 requires the independent oracle and checks every digest
+ok 30 - W0 requires the independent oracle and checks every digest
+  ---
+  duration_ms: 0.415958
+  type: 'test'
+  ...
+# Subtest: wiring: driver reads G0 on its writer endpoint before worker/warm-up creation
+ok 31 - wiring: driver reads G0 on its writer endpoint before worker/warm-up creation
+  ---
+  duration_ms: 1.089875
+  type: 'test'
+  ...
+# Subtest: seed identity: refuse changed generators and stale or expanded adapter builds
+ok 32 - seed identity: refuse changed generators and stale or expanded adapter builds
+  ---
+  duration_ms: 11.626959
+  type: 'test'
+  ...
+# Subtest: W0 admission reads the measured fingerprint anew and refuses oracle drift
+ok 33 - W0 admission reads the measured fingerprint anew and refuses oracle drift
+  ---
+  duration_ms: 0.995042
+  type: 'test'
+  ...
+# Subtest: wiring: the source pins D before any freeze and unprepared XTDB runs refuse
+ok 34 - wiring: the source pins D before any freeze and unprepared XTDB runs refuse
+  ---
+  duration_ms: 0.341584
+  type: 'test'
+  ...
+# Subtest: pool admits the two dev engines when only they run
+ok 35 - pool admits the two dev engines when only they run
+  ---
+  duration_ms: 1.594
+  type: 'test'
+  ...
+# Subtest: pool counts external research probes and refuses with their names
+ok 36 - pool counts external research probes and refuses with their names
+  ---
+  duration_ms: 0.782291
+  type: 'test'
+  ...
+# Subtest: an uncapped external container counts as the whole VM (fail closed)
+ok 37 - an uncapped external container counts as the whole VM (fail closed)
+  ---
+  duration_ms: 0.105375
+  type: 'test'
+  ...
+# Subtest: a reserved container counts once even while it also runs
+ok 38 - a reserved container counts once even while it also runs
+  ---
+  duration_ms: 0.113708
+  type: 'test'
+  ...
+# Subtest: disk forecast refuses past the 50 GiB used limit
+ok 39 - disk forecast refuses past the 50 GiB used limit
+  ---
+  duration_ms: 0.084
+  type: 'test'
+  ...
+# Subtest: slotInfo rejects forbidden and probe ports and names containers and volumes
+ok 40 - slotInfo rejects forbidden and probe ports and names containers and volumes
+  ---
+  duration_ms: 0.384666
+  type: 'test'
+  ...
+# Subtest: withDirLock serializes and breaks a lock whose owner pid is dead
+ok 41 - withDirLock serializes and breaks a lock whose owner pid is dead
+  ---
+  duration_ms: 226.322875
+  type: 'test'
+  ...
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] heavy: waiting for one of 2 slots; held by pid 20458 "a", pid 20458 "b"
+# Subtest: withPool read-modify-writes the ledger atomically across processes
+ok 42 - withPool read-modify-writes the ledger atomically across processes
+  ---
+  duration_ms: 550.143917
+  type: 'test'
+  ...
+# Subtest: reconcile drops only reservations with no container and a dead reserving pid
+ok 43 - reconcile drops only reservations with no container and a dead reserving pid
+  ---
+  duration_ms: 0.630916
+  type: 'test'
+  ...
+# Subtest: heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+ok 44 - heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+  ---
+  duration_ms: 126.980459
+  type: 'test'
+  ...
+# Subtest: object store is content addressed and refuses dependency caches and secret-like names
+ok 45 - object store is content addressed and refuses dependency caches and secret-like names
+  ---
+  duration_ms: 1.393292
+  type: 'test'
+  ...
+# Subtest: language classification: pure XTQL, pure SQL, hybrid, strict substeps
+ok 46 - language classification: pure XTQL, pure SQL, hybrid, strict substeps
+  ---
+  duration_ms: 0.310166
+  type: 'test'
+  ...
+# Subtest: verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+ok 47 - verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+  ---
+  duration_ms: 0.191375
+  type: 'test'
+  ...
+# Subtest: caseLanguages lists every substep language in order
+ok 48 - caseLanguages lists every substep language in order
+  ---
+  duration_ms: 0.199834
+  type: 'test'
+  ...
+# Subtest: contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+ok 49 - contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+  ---
+  duration_ms: 0.460958
+  type: 'test'
+  ...
+# Subtest: second-writer guard refuses a second container on a slot volume unless its config is read-only
+ok 50 - second-writer guard refuses a second container on a slot volume unless its config is read-only
+  ---
+  duration_ms: 0.412416
+  type: 'test'
+  ...
+# Subtest: second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+ok 51 - second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+  ---
+  duration_ms: 0.193625
+  type: 'test'
+  ...
+# Subtest: follower config must be read-only and read the writer's own log and storage paths
+ok 52 - follower config must be read-only and read the writer's own log and storage paths
+  ---
+  duration_ms: 0.293583
+  type: 'test'
+  ...
+# Subtest: follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+ok 53 - follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+  ---
+  duration_ms: 30.724833
+  type: 'test'
+  ...
+# Subtest: cpusets parse against the VM and unpinned containers overlap everything
+ok 54 - cpusets parse against the VM and unpinned containers overlap everything
+  ---
+  duration_ms: 0.266583
+  type: 'test'
+  ...
+# Subtest: golden key: canonical over its inputs, changes with any seed or engine input, ignores slot placement
+ok 55 - golden key: canonical over its inputs, changes with any seed or engine input, ignores slot placement
+  ---
+  duration_ms: 1.078417
+  type: 'test'
+  ...
+# Subtest: host disk floor: a copy that would leave less than 5 GiB is refused (Q74f)
+ok 56 - host disk floor: a copy that would leave less than 5 GiB is refused (Q74f)
+  ---
+  duration_ms: 0.184334
+  type: 'test'
+  ...
+# Subtest: volume listings parse, hash every field, fail closed on truncation, as a refusal-only check
+ok 57 - volume listings parse, hash every field, fail closed on truncation, as a refusal-only check
+  ---
+  duration_ms: 0.579042
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid request-memory
+ok 58 - resource validation refuses missing/invalid request-memory
+  ---
+  duration_ms: 0.085416
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid request-disk
+ok 59 - resource validation refuses missing/invalid request-disk
+  ---
+  duration_ms: 0.034417
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid reservation-memory
+ok 60 - resource validation refuses missing/invalid reservation-memory
+  ---
+  duration_ms: 0.029917
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid reservation-disk
+ok 61 - resource validation refuses missing/invalid reservation-disk
+  ---
+  duration_ms: 0.03125
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid VM-cap
+ok 62 - resource validation refuses missing/invalid VM-cap
+  ---
+  duration_ms: 0.027625
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid pool-cap
+ok 63 - resource validation refuses missing/invalid pool-cap
+  ---
+  duration_ms: 0.155125
+  type: 'test'
+  ...
+# Subtest: resource validation refuses missing/invalid external-cap
+ok 64 - resource validation refuses missing/invalid external-cap
+  ---
+  duration_ms: 0.040833
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v 100 10 90 10% /)
+ok 65 - VM disk parser requires complete sane bytes (/dev/v 100 10 90 10% /)
+  ---
+  duration_ms: 0.098084
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v NaN 10 90 10% /)
+ok 66 - VM disk parser requires complete sane bytes (/dev/v NaN 10 90 10% /)
+  ---
+  duration_ms: 0.044667
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v 100 -1 90 10% /)
+ok 67 - VM disk parser requires complete sane bytes (/dev/v 100 -1 90 10% /)
+  ---
+  duration_ms: 0.028417
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (/dev/v 100 10 100 10% /)
+ok 68 - VM disk parser requires complete sane bytes (/dev/v 100 10 100 10% /)
+  ---
+  duration_ms: 0.028917
+  type: 'test'
+  ...
+# Subtest: VM disk parser requires complete sane bytes (undefined)
+ok 69 - VM disk parser requires complete sane bytes (undefined)
+  ---
+  duration_ms: 0.062208
+  type: 'test'
+  ...
+1..69
+# tests 69
+# suites 0
+# pass 69
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1028.37825
