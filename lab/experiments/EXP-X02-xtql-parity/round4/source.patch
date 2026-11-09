@@ -1,0 +1,341 @@
+diff --git a/packages/xtdb/src/native/ReadOnlySql.ts b/packages/xtdb/src/native/ReadOnlySql.ts
+index c7b080a..3b1b74a 100644
+--- a/packages/xtdb/src/native/ReadOnlySql.ts
++++ b/packages/xtdb/src/native/ReadOnlySql.ts
+@@ -1,3 +1,5 @@
++import { nativeSqlTokens } from "./SqlTokens.js";
++
+ /**
+  * A lexical query-only envelope, not a SQL AST or a temporal query translator.
+  * The pinned XTDB grammar separates queries from DML/transaction statements:
+@@ -5,87 +7,7 @@
+  * In particular, reject modifying CTEs and statement escapes before execution.
+  */
+ export const readOnlyNativeSql = (sql: string): string => {
+-  const words: string[] = [];
+-  const tokens: string[] = [];
+-  let end: number | undefined;
+-  for (let index = 0; index < sql.length; ) {
+-    const char = sql[index]!,
+-      next = sql[index + 1];
+-    if (/\s/.test(char)) {
+-      index++;
+-      continue;
+-    }
+-    if (char === "-" && next === "-") {
+-      // Match the pinned lexer, not just common LF input. SqlLexer.g4:13
+-      // terminates comments at CR or LF; ignoring CR could conceal a second
+-      // statement from this local query-only envelope. Retained counterexample:
+-      // qualification/evidence/native-sql-cr-boundary-baseline-v1.json.
+-      // https://github.com/xtdb/xtdb/blob/v2.2.0/core/src/main/antlr/xtdb/antlr/SqlLexer.g4
+-      index += 2;
+-      while (index < sql.length && sql[index] !== "\r" && sql[index] !== "\n") index++;
+-      continue;
+-    }
+-    if (char === "/" && next === "*") {
+-      const close = sql.indexOf("*/", index + 2);
+-      if (close < 0 || sql.slice(index + 2, close).includes("/*"))
+-        throw new TypeError("Native SQL requires closed, non-nested block comments");
+-      index = close + 2;
+-      continue;
+-    }
+-    if (end !== undefined)
+-      throw new TypeError("Native reads accept one query, not multiple statements");
+-    if (char === ";") {
+-      end = index;
+-      index++;
+-      continue;
+-    }
+-    if (char === "'" || char === '"') {
+-      tokens.push("<quoted>");
+-      const quote = char;
+-      const escaped =
+-        quote === "'" &&
+-        index > 0 &&
+-        /[eE]/.test(sql[index - 1]!) &&
+-        (index < 2 || !/[A-Za-z0-9_]/.test(sql[index - 2]!));
+-      let closed = false;
+-      for (index++; index < sql.length; index++) {
+-        if (escaped && sql[index] === "\\") {
+-          index++;
+-          continue;
+-        }
+-        if (sql[index] === quote) {
+-          if (sql[index + 1] === quote) {
+-            index++;
+-            continue;
+-          }
+-          index++;
+-          closed = true;
+-          break;
+-        }
+-      }
+-      if (!closed) throw new TypeError("Unclosed native SQL literal or identifier");
+-      continue;
+-    }
+-    if (char === "$") {
+-      const delimiter = /^\$(?:[A-Za-z_][A-Za-z0-9_]*)?\$/.exec(sql.slice(index))?.[0];
+-      if (delimiter) {
+-        tokens.push("<quoted>");
+-        const close = sql.indexOf(delimiter, index + delimiter.length);
+-        if (close < 0) throw new TypeError("Unclosed native SQL dollar-quoted literal");
+-        index = close + delimiter.length;
+-        continue;
+-      }
+-    }
+-    const word = /^[A-Za-z_][A-Za-z0-9_]*/.exec(sql.slice(index))?.[0];
+-    if (word) {
+-      words.push(word.toUpperCase());
+-      tokens.push(word.toUpperCase());
+-      index += word.length;
+-    } else {
+-      tokens.push(char);
+-      index++;
+-    }
+-  }
++  const { tokens, words, end } = nativeSqlTokens(sql);
+   // [EXP-X02-Q79e] Why: match groups once on comment/literal-aware tokens.
+   // Rejected: character lookahead (comments and quoted parentheses change boundaries).
+   const closingParentheses = new Map<number, number>();
+@@ -105,6 +27,61 @@ export const readOnlyNativeSql = (sql: string): string => {
+   // conceal set operators at this level. Rejected: enumerating parenthesis shapes
+   // (misses compound queries) or skipping arbitrary '(' (admits wrapped arrays).
+   const setOperators = new Set(["UNION", "INTERSECT", "EXCEPT"]);
++  const suffixStarts = new Set(["ORDER", "OFFSET", "FETCH", "LIMIT"]);
++  // [EXP-X02-R4] Why: Sql.g4:693-733 attaches ORDER BY and offsetAndLimit
++  // to the query expression, including a grouped body. Rejected: treating a
++  // grouped primary as the entire expression or swallowing arbitrary suffix text.
++  const isSuffix = (start: number, end: number): boolean => {
++    let cursor = start;
++    if (tokens[cursor] === "ORDER") {
++      if (tokens[++cursor] !== "BY") return false;
++      const body = ++cursor;
++      while (cursor < end && !["OFFSET", "FETCH", "LIMIT"].includes(tokens[cursor]!)) {
++        if (tokens[cursor] === "(") {
++          const close = closingParentheses.get(cursor);
++          if (close === undefined || close >= end) return false;
++          cursor = close + 1;
++        } else {
++          if (tokens[cursor] === ")" || setOperators.has(tokens[cursor]!)) return false;
++          cursor++;
++        }
++      }
++      if (cursor === body) return false;
++    }
++    const count = () => {
++      if (!/^(?:[0-9]+|\$[0-9]+|\?)$/.test(tokens[cursor] ?? "")) return false;
++      cursor++;
++      return true;
++    };
++    const offset = () => {
++      if (tokens[cursor] !== "OFFSET") return false;
++      cursor++;
++      if (!count()) return false;
++      if (["ROW", "ROWS"].includes(tokens[cursor] ?? "")) cursor++;
++      return true;
++    };
++    const fetch = () => {
++      if (tokens[cursor] === "LIMIT") {
++        cursor++;
++        return count();
++      }
++      if (tokens[cursor] !== "FETCH" || !["FIRST", "NEXT"].includes(tokens[++cursor] ?? ""))
++        return false;
++      cursor++;
++      if (!["ROW", "ROWS"].includes(tokens[cursor] ?? "") && !count()) return false;
++      if (!["ROW", "ROWS"].includes(tokens[cursor++] ?? "") || tokens[cursor++] !== "ONLY")
++        return false;
++      return true;
++    };
++    if (tokens[cursor] === "OFFSET") {
++      if (!offset()) return false;
++      if (cursor < end && !fetch()) return false;
++    } else if (cursor < end) {
++      if (!fetch()) return false;
++      if (cursor < end && !offset()) return false;
++    }
++    return cursor === end;
++  };
+   const isQueryExpression = (start: number, end: number): boolean => {
+     let cursor = start;
+     while (cursor < end) {
+@@ -116,7 +93,11 @@ export const readOnlyNativeSql = (sql: string): string => {
+       } else {
+         if (!["SELECT", "VALUES", "WITH", "FROM"].includes(tokens[cursor] ?? "")) return false;
+         const body = ++cursor;
+-        while (cursor < end && !setOperators.has(tokens[cursor]!)) {
++        while (
++          cursor < end &&
++          !setOperators.has(tokens[cursor]!) &&
++          !suffixStarts.has(tokens[cursor]!)
++        ) {
+           if (tokens[cursor] === "(") {
+             const close = closingParentheses.get(cursor);
+             if (close === undefined || close >= end) return false;
+@@ -129,6 +110,7 @@ export const readOnlyNativeSql = (sql: string): string => {
+         if (cursor === body) return false;
+       }
+       if (cursor === end) return true;
++      if (suffixStarts.has(tokens[cursor]!)) return isSuffix(cursor, end);
+       if (!setOperators.has(tokens[cursor]!)) return false;
+       cursor++;
+       if (tokens[cursor] === "ALL" || tokens[cursor] === "DISTINCT") cursor++;
+@@ -143,7 +125,7 @@ export const readOnlyNativeSql = (sql: string): string => {
+     if (!["ANY", "SOME", "ALL"].includes(token)) continue;
+     // [EXP-X02-R2] Why: quantified comparisons follow a comparison operator.
+     // Rejected: rejecting every ALL (FOR ALL VALID_TIME and aggregate ALL are supported).
+-    if (!["=", ">", "<"].includes(tokens[i - 1] ?? "")) continue;
++    if (!["=", "!=", "<>", ">", ">=", "<", "<="].includes(tokens[i - 1] ?? "")) continue;
+     if (token === "ALL" && ["SELECT", "UNION", "INTERSECT", "EXCEPT"].includes(tokens[i - 1] ?? ""))
+       continue;
+     const opening = i + 1;
+diff --git a/packages/xtdb/test/native-query.test.ts b/packages/xtdb/test/native-query.test.ts
+index f4ab01d..a917164 100644
+--- a/packages/xtdb/test/native-query.test.ts
++++ b/packages/xtdb/test/native-query.test.ts
+@@ -5,7 +5,12 @@ import { TypeExpr } from "@triplex-build/triplex/config";
+ import { DatabaseScope } from "@triplex-build/triplex/runtime";
+ import type { XtdbBasis, XtdbClient, XtdbQueryOptions } from "../src/XtdbClient.js";
+ import { makeXtdbNativeQueries } from "../src/native/NativeQueries.js";
+-import { queryExpressionCorpus } from "./query-expression-corpus.js";
++import {
++  queryExpressionCorpus,
++  lexicalQueryCorpus,
++  lexicalUnsafeCorpus,
++  lexicalRefusedCorpus,
++} from "./query-expression-corpus.js";
+ import { readOnlyNativeSql } from "../src/native/ReadOnlySql.js";
+ 
+ const scope = DatabaseScope.test("native-unit");
+@@ -89,6 +94,27 @@ describe("XTDB native read provider", () => {
+     }
+     expect(calls.some(({ sql }) => sql.includes("ARRAY[1,2]"))).toBe(false);
+   });
++  // [EXP-X02-R4] Why: require dispatch for every generated lexer/suffix form,
++  // and typed pre-dispatch refusal for all boundary/mutation variations.
++  // Rejected: mock success as engine evidence (real comparisons are retained separately).
++  it("classifies pinned lexer and suffix productions", async () => {
++    for (const { sql } of lexicalQueryCorpus()) {
++      const { client, calls } = fixture();
++      await Effect.runPromise(
++        makeXtdbNativeQueries(client, scope).selectSql(contract, { owner: "o" }, () => sql),
++      );
++      expect(calls.some((call) => call.sql.includes(sql))).toBe(true);
++    }
++    for (const sql of [...lexicalUnsafeCorpus(), ...lexicalRefusedCorpus()]) {
++      const { client, calls } = fixture();
++      const exit = await Effect.runPromiseExit(
++        makeXtdbNativeQueries(client, scope).selectSql(contract, { owner: "o" }, () => sql),
++      );
++      expect(Exit.isFailure(exit)).toBe(true);
++      if (Exit.isFailure(exit)) expect(Cause.hasDies(exit.cause)).toBe(false);
++      expect(calls.some((call) => call.sql.includes(sql))).toBe(false);
++    }
++  }, 60_000);
+   // [EXP-X02-Q79e] Why: check every generated expression and invalid productions
+   // through the provider. Rejected: six more hand-selected UNION spellings.
+   it("classifies the generated query-expression grammar", async () => {
+diff --git a/packages/xtdb/test/query-expression-corpus.ts b/packages/xtdb/test/query-expression-corpus.ts
+index f1aa8fd..9fe4bce 100644
+--- a/packages/xtdb/test/query-expression-corpus.ts
++++ b/packages/xtdb/test/query-expression-corpus.ts
+@@ -63,3 +63,99 @@ export const queryExpressionCorpus = () => {
+     ),
+   );
+ };
++
++// [EXP-X02-R4] Why: generate from the pinned identifier productions, recursive
++// BLOCK_COMMENT, and queryExpressionNoWith suffix productions. Rejected: another
++// six-case allowlist that misses a delimiter, nesting level or suffix combination.
++const identifierForms = [
++  ["alpha", "beta"],
++  ["_a1", "_b2"],
++  ["a$tag$", "z$tag$b"],
++  ["a$UNION", "b$EXCEPT"],
++  ['"UNION"', '"INTERSECT"'],
++  ['"a""UNION""b"', '"x""EXCEPT""y"'],
++  ['"雪😀"', '"()"'],
++  ["`UNION`", "`EXCEPT`"],
++  ["`(`", "`)`"],
++  ["`a``UNION``b`", "`b``INTERSECT``c`"],
++  ["`雪😀`", "`()`"],
++  ["`a$tag$`", "`$tag$b`"],
++  ['"a$tag$"', '"$tag$b"'],
++] as const;
++const nestedComment = (depth: number, payload = "' \" ` $tag$ ( ) ; DELETE --\r\n") => {
++  let result = payload;
++  for (let i = 0; i < depth; i++) result = "/* " + result + " */";
++  return depth ? result : "";
++};
++const wrapSql = (sql: string, depth: number, gap: string) => {
++  for (let i = 0; i < depth; i++) sql = `(${gap}${sql}${gap})`;
++  return sql;
++};
++export const lexicalQueryCorpus = () => {
++  const cases: { family: string; sql: string }[] = [];
++  for (const [left, right] of identifierForms)
++    for (const depth of [1, 2, 3])
++      for (const comments of [0, 3])
++        for (const q of ["ANY", "SOME", "ALL"]) {
++          const gap = " " + nestedComment(comments) + " ";
++          cases.push({
++            family: "identifier",
++            sql: `WITH ${left} AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ${q}${gap}${wrapSql("SELECT 1", depth, gap)} AND EXISTS (SELECT 1 AS ${right})`,
++          });
++        }
++  for (const depth of [1, 2, 3, 8, 64])
++    for (const payload of ["( )", "' \" ` ; --\r\n", "$a$ UNION SELECT ANY ARRAY[1] DELETE"])
++      for (const q of ["ANY", "SOME", "ALL"]) {
++        const comment = nestedComment(depth, payload);
++        cases.push({
++          family: "comment",
++          sql: `SELECT ${comment} 'x' AS v WHERE 1 = ${q} ${comment} (SELECT ${comment} 1)`,
++        });
++      }
++  const offsets = ["OFFSET 0", "OFFSET 0 ROW", "OFFSET 0 ROWS"];
++  const fetches = ["LIMIT 1", "FETCH FIRST ROW ONLY", "FETCH NEXT 1 ROWS ONLY"];
++  const windows = [
++    "",
++    ...offsets,
++    ...fetches,
++    ...offsets.flatMap((o) => fetches.flatMap((f) => [o + " " + f, f + " " + o])),
++  ];
++  for (const body of ["SELECT 1", "VALUES (1)", "(SELECT 1) UNION ALL SELECT 2"])
++    for (const order of ["", "ORDER BY (1) DESC NULLS LAST"])
++      for (const window of windows)
++        for (const depth of [1, 2, 3])
++          for (const comments of [0, 2])
++            for (const q of ["ANY", "SOME", "ALL"]) {
++              const gap = " " + nestedComment(comments) + " ";
++              const suffix = (order + " " + window).trim().split(/ +/).join(gap);
++              cases.push({
++                family: "suffix",
++                sql: `SELECT 'x' AS v WHERE 1 = ${q} (${gap}${wrapSql(body, depth, gap)}${gap}${suffix})`,
++              });
++            }
++  return cases;
++};
++export const lexicalUnsafeCorpus = () =>
++  identifierForms.flatMap(([left, right]) =>
++    [0, 1, 4].flatMap((depth) =>
++      ["ANY", "SOME", "ALL"].flatMap((q) => {
++        const gap = " " + nestedComment(depth) + " ";
++        return [
++          `WITH ${left} AS (SELECT 1) SELECT 'x' AS v WHERE 1 = ${q}${gap}(ARRAY[1,2]) AND EXISTS(SELECT 1 AS ${right})`,
++          `SELECT 1 AS ${left}; DELETE FROM tx_assertions; SELECT 2 AS ${right}`,
++          `SELECT 'x' AS v WHERE 1 = ${q} ((SELECT 1) ORDER BY (SELECT 1 WHERE 1 = SOME${gap}ARRAY[1]))`,
++        ];
++      }),
++    ),
++  );
++export const lexicalRefusedCorpus = () => [
++  ...[1, 2, 3, 16].map((depth) => `SELECT 1 ${"/*".repeat(depth)} ' ) ; SELECT 2`),
++  ...["\u00a0", "\v", "\f", "\ufeff", "\u2028", "\u202f", "ſ", "K", "雪"].map(
++    (char) => `SELECT 1 AS a${char}$tag$; SELECT 2 AS z$tag$b`,
++  ),
++  'SELECT 1 AS "a/b"',
++  "SELECT 1 AS `a/b`",
++  "SELECT 1 WHERE 1 = ANY ((SELECT 1) LIMIT)",
++  "SELECT 1 WHERE 1 = ANY ((SELECT 1) ORDER BY)",
++  "SELECT 1 WHERE 1 = ANY ((SELECT 1) LIMIT 1 UNION SELECT 2)",
++];

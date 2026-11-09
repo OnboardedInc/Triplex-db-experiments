@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 86263 "CX-VP5A-r2-multipage", pid 74818 "CX-OBS01-ER01S-R3-retain", pid 74646 "CX-VP5A-r2-G6", pid 88945 "CX-P2X2-G1-off"
+[lab] G0-xtdb-20261109T035923Z-2980c9: raw output runs/G0/G0-xtdb-20261109T035923Z-2980c9
+[lab] heavy: waiting for one of 4 slots; held by pid 86263 "CX-VP5A-r2-multipage", pid 91263 "CX-A01-0313-R2-G0-xtdb", pid 74646 "CX-VP5A-r2-G6", pid 88945 "CX-P2X2-G1-off"
+PASS G0 xtdb scope=full executed=1218 pass=1218 fail=0 skip=137
+receipt: lab/runs/G0/G0-xtdb-20261109T035923Z-2980c9.json

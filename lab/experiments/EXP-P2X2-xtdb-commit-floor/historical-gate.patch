@@ -1,0 +1,23 @@
+diff --git a/lab/bin/engine.mjs b/lab/bin/engine.mjs
+index b360945f..24c0277d 100644
+--- a/lab/bin/engine.mjs
++++ b/lab/bin/engine.mjs
+@@ -30 +30,2 @@ export function effectiveConfig(config, info) {
+-    const yaml = fs.readFileSync(path.join(MAIN, 'xtdb-config.yaml'));
++    // [EXP-P2X2] Why: bind the same pinned 300-thread slot as current engine.mjs. Rejected: rewriting the live mount with historical config.
++    const yaml = fs.readFileSync(path.join(process.env.TX2_CONFIG_DIR ?? MAIN, 'xtdb-config.yaml'));
+@@ -35 +36 @@ export function effectiveConfig(config, info) {
+-      env: { JDK_JAVA_OPTIONS: info.javaOpts }, memBytes: info.memBytes, cpus: info.cpus,
++      env: { JDK_JAVA_OPTIONS: info.javaOpts }, memBytes: info.memBytes, cpus: info.cpus, cpusetCpus: '4,5',
+diff --git a/lab/bin/gate.mjs b/lab/bin/gate.mjs
+index 6106b01b..26b04ebf 100644
+--- a/lab/bin/gate.mjs
++++ b/lab/bin/gate.mjs
+@@ -74 +74,3 @@ class Run {
+-    const release = heavy ? await acquireHeavy(`${this.runId} ${name}`) : () => {};
++    // [EXP-P2X2] Why: heavy.mjs owns one token for this entire invocation. Rejected: nested tokens (starves a four-token pool).
++    if (process.env.P2X2_OUTER_HEAVY !== '1') throw new Error('run this adapted gate through heavy.mjs');
++    const release = () => {};
+@@ -92 +94 @@ async function build(run) {
+-  const step = await run.step('build', 'pnpm', [...filters, 'build'], { heavy: true, env: cleanEnv() });
++  const step = await run.step('build', 'pnpm', ['--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store', ...filters, 'build'], { heavy: true, env: cleanEnv() });

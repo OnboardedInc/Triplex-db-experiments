@@ -12,7 +12,10 @@ main(async () => {
   const { options } = parseArgs(process.argv.slice(2));
   const command = options['--'];
   if (!command?.length) fail('USAGE', 'usage: heavy.mjs [--label TEXT] -- <cmd...>');
-  const release = await acquireHeavy(options.label ?? command.join(' '));
+  // [EXP-W02-R2] Why: contested short gaps can starve a builder's ordered setup/checks at 1 s polling. Rejected: increasing HEAVY_SLOTS (would change the lab resource limit).
+  const pollMs = Number(options['poll-ms'] ?? 1000);
+  if (!Number.isSafeInteger(pollMs) || pollMs < 100 || pollMs > 30000) fail('USAGE', '--poll-ms must be an integer from 100 to 30000');
+  const release = await acquireHeavy(options.label ?? command.join(' '), { pollMs });
   const code = await new Promise(resolve => {
     const child = spawn(command[0], command.slice(1), { stdio: 'inherit' });
     for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => child.kill(signal));

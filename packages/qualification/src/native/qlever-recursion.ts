@@ -49,6 +49,10 @@ interface Session {
     definitions: readonly {
       readonly name: string;
       readonly edges: (ctx: Context, parameters: unknown) => string;
+      readonly seeds?: (
+        ctx: Context,
+        parameters: unknown,
+      ) => readonly string[] | { readonly query: string };
     }[],
     build: (ctx: RelationContext, parameters: unknown) => string,
     options?: NativeReadOptions & { readonly maxRelationRows?: number },
@@ -107,10 +111,14 @@ export const evaluateQleverNativeRecursiveWorkload = (
       });
       return result.rows as RecordValue[];
     };
+    // [EXP-C8] Every relation names its seeds (the bound start), so the native API answers each
+    // closure with read-only frontier rounds from those seeds instead of materializing the
+    // all-pairs closure in a scratch graph (R10 finding 2, 6.3 Tier 2).
+    type Seeds = (ctx: Context, input: RecordValue) => readonly string[] | { readonly query: string };
     const closure = (
       name: string,
       parameters: RecordValue,
-      fields: readonly [string, string][],
+      fields: readonly (readonly [string, string, Seeds])[],
       answer: TypeExpr.TypeExpr,
       build: (ctx: RelationContext, input: RecordValue) => string,
     ) =>
@@ -124,10 +132,11 @@ export const evaluateQleverNativeRecursiveWorkload = (
             row: answer,
           },
           parameters,
-          fields.map(([name, field]) => ({
+          fields.map(([name, field, seeds]) => ({
             name,
             edges: (ctx: Context) =>
               `SELECT DISTINCT ?source ?target WHERE { ${f(ctx, "?source", field, "?target")} }`,
+            seeds: (ctx: Context, input: unknown) => seeds(ctx, input as RecordValue),
           })),
           (ctx, input) => build(ctx, input as RecordValue),
           { basis: basisOf(entry), timeoutMs: 30_000, maxRows: 1000, maxRelationRows: 100_000 },
@@ -139,8 +148,8 @@ export const evaluateQleverNativeRecursiveWorkload = (
         "inherited-access",
         { user: p.user.value, resource: p.resource.value },
         [
-          ["member", "_member"],
-          ["resource", "_resource"],
+          ["member", "_member", (_c, i) => [String(i["user"])]],
+          ["resource", "_resource", (_c, i) => [String(i["resource"])]],
         ],
         row({ allowed: TypeExpr.boolean }),
         (ctx, input) =>
@@ -152,7 +161,7 @@ export const evaluateQleverNativeRecursiveWorkload = (
       const rows = yield* closure(
         "container-leaves",
         { container: p.container.value },
-        [["contains", "_contains"]],
+        [["contains", "_contains", (_c, i) => [String(i["container"])]]],
         row({ item: TypeExpr.text }),
         (ctx, input) =>
           `SELECT DISTINCT ?item WHERE { ${ctx.relation("contains", "?container", "?item")} ${equal(ctx, "?container", input["container"])} FILTER NOT EXISTS { ${f(ctx, "?item", "_contains", "?child")} } }`,
@@ -163,7 +172,7 @@ export const evaluateQleverNativeRecursiveWorkload = (
       const rows = yield* closure(
         "recalled-customers",
         { lot: p.contaminated_lot.value },
-        [["production", "_production"]],
+        [["production", "_production", (_c, i) => [String(i["lot"])]]],
         row({ customer: TypeExpr.text }),
         (ctx, input) =>
           `SELECT DISTINCT ?customer WHERE { ${f(ctx, "?contamination", "contaminated_lot", "?contaminatedLot")} ${equal(ctx, "?contaminatedLot", input["lot"])} ${ctx.relation("production", "?sourceLot", "?lot")} ${equal(ctx, "?sourceLot", input["lot"])} ${f(ctx, "?shipment", "shipped_lot", "?lot")} ${f(ctx, "?shipment", "customer", "?customer")} }`,
@@ -177,7 +186,18 @@ export const evaluateQleverNativeRecursiveWorkload = (
         requestedClosure
           ? { application: p.application.value }
           : { environment: p.environment.value },
-        [["dependency", "_dependency"]],
+        [
+          [
+            "dependency",
+            "_dependency",
+            requestedClosure
+              ? (_c, i) => [String(i["application"])]
+              : (ctx, i) => ({
+                  // Every application deployed in the environment: a few-source closure.
+                  query: `SELECT DISTINCT ?seed WHERE { ${f(ctx, "?deployment", "environment", "?environment")} ${equal(ctx, "?environment", i["environment"])} ${f(ctx, "?deployment", "application", "?seed")} }`,
+                }),
+          ],
+        ],
         row({ answer: TypeExpr.text }),
         (ctx, input) =>
           requestedClosure
@@ -190,7 +210,7 @@ export const evaluateQleverNativeRecursiveWorkload = (
       const rows = yield* closure(
         "reachability-closure",
         { from: p.from.value },
-        [["support", "_support"]],
+        [["support", "_support", (_c, i) => [String(i["from"])]]],
         row({ target: TypeExpr.text }),
         (ctx, input) =>
           `SELECT DISTINCT ?target WHERE { ${ctx.relation("support", "?source", "?target")} ${equal(ctx, "?source", input["from"])} }`,

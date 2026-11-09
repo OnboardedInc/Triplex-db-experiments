@@ -9,6 +9,7 @@
  * `Triples` service guarantees.
  */
 
+export { exactIntegerLimitCase, valueLimitCases } from "./valueLimits.js";
 import { Effect } from "effect";
 import {
   boolean,
@@ -2885,3 +2886,15 @@ export function runtimeConformance(
       : runtime.layer({ ...baseOptions, capabilities });
   return makeTriplesConformanceSuite().pipe(Effect.provide(layer));
 }
+
+export {
+  makeRouteEquivalenceCases,
+  canonicalRouteValue,
+  type RouteFixture,
+  type RouteRead,
+} from "./routeEquivalence.js";
+export {
+  makeRouteEquivalenceScenario,
+  type RouteHistoryCommand,
+  type RouteHistoryOperation,
+} from "./routeHistory.js";

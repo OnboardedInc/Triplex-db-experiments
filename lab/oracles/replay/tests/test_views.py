@@ -163,5 +163,48 @@ class Aggregates(unittest.TestCase):
         self.assertEqual(groups, [("integer", "1"), ("integer", "1"), ("integer", "2"), ("number", "1")])
 
 
+class ReferencePageInput(unittest.TestCase):
+    def test_reference_page_malformed_inputs_exit_two(self):
+        import json
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+        from lab.oracles.replay import selfcheck as C
+        cli = Path(C.__file__).with_name("cli.py")
+        refs = [{"query": "a", "page": page} for page in ("0", 0.0, -2, True, False, None, 3, [], {}, 10**30, "huge-integer")]
+        refs += [None, [], "a", 0, {}, {"query": []}, {"query": 1}, {"query": None}]
+        for ref in refs:
+            with self.subTest(ref=ref):
+                c = C._paged_case()
+                c["queries"] = [dict(c["queries"][0], id="a"),
+                                {"id": "b", "kind": "entityPage", "entityType": "T", "cursorFrom": ref}]
+                with tempfile.TemporaryDirectory(prefix="CX-OREPLAY-049-") as tmp:
+                    case_path = Path(tmp) / "case.json"
+                    case_path.write_text(json.dumps(c).replace('"huge-integer"', "9" * 5000))
+                    proc = subprocess.run([sys.executable, "-I", str(cli), str(case_path)],
+                                          capture_output=True, text=True)
+                self.assertEqual(proc.returncode, 2, proc.stderr)
+                self.assertEqual(proc.stdout, "")
+                self.assertIn("malformed case", proc.stderr)
+                self.assertNotIn("Traceback", proc.stderr)
+
+    def test_reference_page_valid_indices_and_terminal_page(self):
+        from lab.oracles.replay import selfcheck as C
+        for selector in ({}, {"page": 0}, {"page": 1}):
+            c = C._paged_case()
+            c["queries"] = [dict(c["queries"][0], id="a"),
+                            {"id": "b", "kind": "entityPage", "entityType": "T",
+                             "cursorFrom": dict(query="a", **selector)}]
+            rep = evaluate(c)
+            self.assertIn("result", rep["queries"][1])
+        # [O-REPLAY-049] Why: an in-range terminal page has no continuation.
+        # Rejected: treating range validation as permission to invent a cursor.
+        c["queries"][1]["cursorFrom"]["page"] = 2
+        from lab.oracles.replay import values as V
+        with self.assertRaises(V.OracleInputError):
+            evaluate(c)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,104 @@
+{
+  "experiment": "EXP-RQ01",
+  "at": "2026-11-09T00:00:07.936Z",
+  "head": "908ebada5d862183f0b4ea3bbc46ee46296aee6c",
+  "seeds": [
+    1,
+    42,
+    890,
+    89,
+    891
+  ],
+  "reference": "offline-fold-not-independent",
+  "source": {
+    "packages/testkit/src/index.ts": "767d727a802740e8db2ccdc430f5aebef187f13b29c8f5ce8bedf121567c3402",
+    "packages/testkit/src/route-equivalence.ts": "0cb7834a739a89b1f9daf885d8033fc1876c116186ca53a32d0c369698c2a3cc",
+    "packages/testkit/src/offline-route-fixtures.ts": "650ea9aae64ea7a583439098ce89b0c3d0e39f9273f1bc27d35d786d944da4c6",
+    "packages/testkit/test/route-equivalence.test.ts": "2664c22820d29b80fd345a1d0176f00984c781c092219f5e08026818b310305d",
+    "packages/xtdb/test/route-equivalence.test.ts": "5e123cb30d5b97304b09f14f5b761a3f2d8dd21b33de201898b9b4b5d0ae654c",
+    "packages/qlever/test/route-equivalence.test.ts": "8ab47376c338c8cd55b81327b1219c4d6638f628d47a16d0377026dfe577eb21",
+    "packages/xtdb/src/XtdbStorageAdapter.ts": "204b856f7c3792c04b46a61ebe19b51fa0db053c1594d6f5aaa1149f14179560",
+    "packages/xtdb/src/codecs.ts": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+    "lab/experiments/EXP-RQ01/gate.mjs": "1b4c2cb1cd37e27643e31965eefd3ec48fd13f8e262e34d5b43a6e607875cb93",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+  },
+  "sourceStillMatches": true,
+  "results": [
+    {
+      "label": "testkit",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--configLoader",
+        "runner",
+        "--config",
+        "packages/testkit/vitest.config.ts",
+        "packages/testkit/test"
+      ],
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/rq01",
+      "status": 0,
+      "signal": null
+    },
+    {
+      "label": "xtdb",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--configLoader",
+        "runner",
+        "--root",
+        "packages/xtdb",
+        "--config",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/packages/xtdb/vitest.config.ts",
+        "test/route-equivalence.test.ts"
+      ],
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/rq01",
+      "status": 1,
+      "signal": null
+    },
+    {
+      "label": "qlever",
+      "command": [
+        "node",
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--configLoader",
+        "runner",
+        "--root",
+        "packages/qlever",
+        "--config",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/packages/qlever/vitest.config.ts",
+        "test/route-equivalence.test.ts"
+      ],
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/rq01",
+      "status": 0,
+      "signal": null
+    },
+    {
+      "label": "typecheck",
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "packages/testkit/tsconfig.json"
+      ],
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/rq01",
+      "status": 0,
+      "signal": null
+    },
+    {
+      "label": "build",
+      "command": [
+        "node",
+        "node_modules/tsdown/dist/run.mjs"
+      ],
+      "cwd": "/Users/sam/projects/triplex-db-2/.claude/worktrees/rq01/packages/testkit",
+      "status": 0,
+      "signal": null
+    }
+  ],
+  "passed": false
+}

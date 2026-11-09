@@ -1,0 +1,1277 @@
+{
+  "format": "tx2-da01-evidence-files/1",
+  "implementationHead": "034563a4a0408efce2230bf77271790fd02c3ae3",
+  "at": "2026-11-08T23:20:53.412Z",
+  "entries": [
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/.gitignore",
+      "bytes": 125,
+      "sha256": "5b95b605f5d9dfc4faf2c04e0865c8c294b888f2dac2b388856dfd9cbdc88c1a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/REPORT.md",
+      "bytes": 457,
+      "sha256": "a773a13d02ac5ba98e27d49f97651c7cb8740d40035b11cd14df8da64042acaf"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/consumer-check-2.mjs",
+      "bytes": 3424,
+      "sha256": "691407d12da8effd1a08f4178d41f0aa7114a2942a374290e1bcec2565baa993"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/consumer-check-3.mjs",
+      "bytes": 3927,
+      "sha256": "898fc525b7aad75524c48ec3f2f736799585399f152b30d713ebdc238f7343fa"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/consumer-check.mjs",
+      "bytes": 3270,
+      "sha256": "23c3e4523d0249760fd7267557571957d95da89f3d49a9918f61b35c61521494"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/diagnose-suite-after-cap.mjs",
+      "bytes": 1735,
+      "sha256": "9c651cbc4a6958549c154626d8c604e2f6bb22fc245852f81e2fd6675a1df791"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/diagnose-suite-after-order.mjs",
+      "bytes": 1737,
+      "sha256": "1ea8f2efae4e3d9374bfd0d2702d877e110ec330d0ad0af4e8fe94dfa7aff445"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/diagnose-suite.mjs",
+      "bytes": 1736,
+      "sha256": "7b59af74e03df625006fc9834d8a0499666a57c54190094e4f9195edcf22635c"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/evidence-manifest-final.mjs",
+      "bytes": 1546,
+      "sha256": "ee6251483716af1079953d1e4fa7ffdad804d8a2452295ba23abc826628265a4"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/evidence-manifest.mjs",
+      "bytes": 1500,
+      "sha256": "4f61038d24cbf7c79fbff86c767168f3b6af830ab5bae4c4a0ef2d1fbdde8ac1"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/finalize-evidence-final.mjs",
+      "bytes": 5304,
+      "sha256": "a736547f789c0d1fe4d59a3a6529303a941f9a81b56466c9c138482f6d510c74"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/finalize-evidence.mjs",
+      "bytes": 4566,
+      "sha256": "4a740747f4b693564813181063e67362dd25a78f7df30f176ed04a2bc689ab2f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/measure.mjs",
+      "bytes": 2235,
+      "sha256": "65913c4568f5e466746a084c2f8fa4653124e152cdb1f54199b9bf1715b0467a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/G0.log",
+      "bytes": 362,
+      "sha256": "6f3cf9140b8f274770543679a517c39af390e8ccd44cf1d5259e709b9f191632"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/G1-admission.log",
+      "bytes": 349,
+      "sha256": "d4ca0c67be2b7454f3c3a10f66481cc0d8edab04d1c8d6e7493ad9c151096319"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/G1-unsupported-lane.log",
+      "bytes": 378,
+      "sha256": "ec772a5b04b051f40dec17aca609f2d08db0b39508fd908a27dfbb682cfd1f7d"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/UNAPPLIED-INCOMPLETE-storage-draft.patch",
+      "bytes": 43925,
+      "sha256": "2504f4eb7888be42e22a561cf88847fe169f246f0768971b9a4a80ecc171c0f4"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G0-1.log",
+      "bytes": 277,
+      "sha256": "81eb68947977a88bd89d6b33d21b807f0f117bb0c226576ea7abf6e5f576bf4f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G0-2.log",
+      "bytes": 460,
+      "sha256": "6ba7d69bbc7da079d26927b76561d1d59df131698fa26fec1eefb1e4704483ba"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G0-3.log",
+      "bytes": 560,
+      "sha256": "2bcc993f936f6cd438469c1e490e55c7e5e2479369381f4db15c61057c4ac9ad"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G0-4.log",
+      "bytes": 252,
+      "sha256": "53ab78cfcbfa0346255dce15d6e9d9600a7fe3656a5a7b2e0e75c0b4c5c1a5c0"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G0-5.log",
+      "bytes": 422,
+      "sha256": "26043ffd79cafa15b96ce3e98061077f9ab4bb5a55c54ddfb79afa02238ae62f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G1-1.log",
+      "bytes": 369,
+      "sha256": "0e55f3131e15303977ba4c942fa2ba93f968f5db4a796f95f08e5bb3cd91d17d"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G1-2.log",
+      "bytes": 1139,
+      "sha256": "c51a2b195bd77b7e367aa965b367b9b400260c9cc13e9c3f7be97ed18d520386"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G1-3.log",
+      "bytes": 303,
+      "sha256": "a5221efc395af6c745f5cc538c0071ead6053fbde17e66e21b7f9b3fcd5e85cb"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G1-4.log",
+      "bytes": 434,
+      "sha256": "bcb85644b51d55c694127518c362822bfc37803fa79db72fe6ab1dcb20c2504e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G1-5.log",
+      "bytes": 613,
+      "sha256": "2eb802e42465ea8fff657572691dad2e83b2f4039a78f6e88c4c63e9abae0c80"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G1-6.log",
+      "bytes": 347,
+      "sha256": "3505b3c9fc9e6ef7873216d4c50ce5d2043355eb42578f5a97aa72842b3ffa6f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G1-7.log",
+      "bytes": 290,
+      "sha256": "d181d93458a6e0ab39ec2a5bfe16399e863feeb219c9fd4a20117eb85be5576b"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G1-8.log",
+      "bytes": 508,
+      "sha256": "e05866f438540adf5216dde9466290884b05a3f623ea6f8cf9e6026c0d6d3a5a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/G1-9.log",
+      "bytes": 290,
+      "sha256": "017b1f38c509653dad440d1e5d6d45ba2602a822656dd69fa7ece41c9d9f5746"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/SUMMARY.json",
+      "bytes": 12565,
+      "sha256": "517bb7902ae557a663e7673e9ea9605a0f559ccd65267183d2d4250846737270"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/build-1.log",
+      "bytes": 2242,
+      "sha256": "51930b7452fc8fe65bc42207e38e7538707793f113e9b67f7d7de9ee94bf860d"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/build-2.log",
+      "bytes": 2242,
+      "sha256": "7074a1e37aa1db903e4ce44790a448968cb187c5c4c8b1434cc98e16290cb4ff"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/build-3.log",
+      "bytes": 2242,
+      "sha256": "11bebb9d3d60d7a160ae1a47bdf5b798981f689e4efb8e729ae9fb35ae68ce7b"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/build-4.log",
+      "bytes": 2586,
+      "sha256": "1755711c31151a1a18fb6e7fd10d70106e903670df1ec1c58645851aa1ef4814"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/build-5.log",
+      "bytes": 2423,
+      "sha256": "167ff036f9e583767ec0ad5d02680e45ea063074477c8842a719793b7bd37693"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/build-6.log",
+      "bytes": 2242,
+      "sha256": "50132f0c92b20d789f0bbfed2bea66d9cb07a4c656cf8ab48a8c9f3c7bb5ad24"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/build-7.log",
+      "bytes": 3000,
+      "sha256": "2dea595efa252c3fd775babc260efb6e0bcd7c7dc799d53a31200ea711eef7c0"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/build-ts-1.log",
+      "bytes": 2009,
+      "sha256": "5a4aedecb196439a5f806deaa646adadd46c98e1dca2d158dddb7baaeb875a0d"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/build-ts-2.log",
+      "bytes": 2925,
+      "sha256": "4b6284acb17f4c8fa33e2a9a4cfcb78db14cf5d0db53ba29cd5611363893955a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/build-ts-3.log",
+      "bytes": 2010,
+      "sha256": "d0c63e886792b36c90a3c86ffafb50e952fc45183ad7bfdbaa83122289f6c654"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-2.log",
+      "bytes": 2009,
+      "sha256": "4bf3b49f2681607be809eeb30f70d6324debcc5322463f661284cc23fbde1d6a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-2/package.json",
+      "bytes": 508,
+      "sha256": "e00061b9c1342010db438dc6a63527a02093fee3d18777083f8b697a1b89d4d1"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-2/pnpm-lock.yaml",
+      "bytes": 2957,
+      "sha256": "711a01c5757c9db3298cd6a89c711972efe96b71630c07c6152f7807928008b2"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-2/smoke.mjs",
+      "bytes": 1356,
+      "sha256": "d44a86d9c25cd6f39ff88bc29935c23d313b22dd69dd781fd9b32d7d6414681f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3.log",
+      "bytes": 316,
+      "sha256": "a75b81e47c8f498b213821f0573f31ee5603bdc1f1268d423b4775aeb80ede4d"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/inputs.json",
+      "bytes": 634,
+      "sha256": "fe35e927222b38e939aa8f364ea28f544edc8b3dd11ffec4a60ce901af53776d"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/package.json",
+      "bytes": 782,
+      "sha256": "435591182f9ce1d6451b5fe2046f019f6d1647046ebbf7f368508ad7b8cbaec1"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/pnpm-lock.yaml",
+      "bytes": 2900,
+      "sha256": "59d2f3d8ad64e2f8e7a75fdefc9e6c3e795637ae86ea5eb968ca77a57d168982"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke-image6.json",
+      "bytes": 504,
+      "sha256": "e9665b42604925d36536f3583a48bac573e9238aab352b736a15aaa7d2786d8b"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke-image6.mjs",
+      "bytes": 1382,
+      "sha256": "eedc0bd7496a24bddeed8adb2ed611c26d2b8650e4bd093641f826796be83aac"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke-image7.json",
+      "bytes": 504,
+      "sha256": "f4410c0204d4b2f902da01d32496709f8b26cbc47196df28d30899b3deb601fd"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke-image7.mjs",
+      "bytes": 1382,
+      "sha256": "e3b7afb10972e225e25e73779a528ef66e6076e29d42550d9a4d3d7cefb2bd25"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke-receipt.json",
+      "bytes": 504,
+      "sha256": "f51c570f25477cf2a53a4f72e03ce89613cd1a3253d93e49fad0450919887b51"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-3/smoke.mjs",
+      "bytes": 1356,
+      "sha256": "d44a86d9c25cd6f39ff88bc29935c23d313b22dd69dd781fd9b32d7d6414681f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-image6.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer-image7.log",
+      "bytes": 178,
+      "sha256": "a96a0105f0ee03d69813d766975841482c80def1f2b7ade2ca30df915bc9cefc"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer.log",
+      "bytes": 1228,
+      "sha256": "173a1d511f395c5090cf91589cacf4f50aa607c181965fc86f39179596bf2161"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer/package.json",
+      "bytes": 508,
+      "sha256": "e00061b9c1342010db438dc6a63527a02093fee3d18777083f8b697a1b89d4d1"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/consumer/smoke.mjs",
+      "bytes": 1356,
+      "sha256": "d44a86d9c25cd6f39ff88bc29935c23d313b22dd69dd781fd9b32d7d6414681f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/datoms-final.json",
+      "bytes": 2501,
+      "sha256": "c3c4c497fcec69488d3c24d940ead93f8d3754e386f66b1ed4bc8ef58f40fec8"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/datoms-final.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/datoms-image7.json",
+      "bytes": 2501,
+      "sha256": "12e0cee456664852103aad5d804cffc0c5846e6b546bb0a2e8e6537532b3a959"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/datoms-image7.log",
+      "bytes": 178,
+      "sha256": "a96a0105f0ee03d69813d766975841482c80def1f2b7ade2ca30df915bc9cefc"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/datoms.json",
+      "bytes": 2502,
+      "sha256": "22e7c39c5689e81f3cd3f43c66a4d97ab2965dde3db0ea9401aa45fba145b053"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/datoms.log",
+      "bytes": 850,
+      "sha256": "4c57c9d5d06cbb1ac412d5fd64b7a940317859e087701db3beb2f968c08b975a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/down-1.log",
+      "bytes": 104,
+      "sha256": "dc7eda5694500f3d71d8d43dbdead8c2d191b77168303235743386e8026e96ca"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/down-2.log",
+      "bytes": 104,
+      "sha256": "dc7eda5694500f3d71d8d43dbdead8c2d191b77168303235743386e8026e96ca"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/down-3.log",
+      "bytes": 104,
+      "sha256": "dc7eda5694500f3d71d8d43dbdead8c2d191b77168303235743386e8026e96ca"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/down-4.log",
+      "bytes": 104,
+      "sha256": "dc7eda5694500f3d71d8d43dbdead8c2d191b77168303235743386e8026e96ca"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/down-5.log",
+      "bytes": 104,
+      "sha256": "dc7eda5694500f3d71d8d43dbdead8c2d191b77168303235743386e8026e96ca"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/down-6.log",
+      "bytes": 104,
+      "sha256": "dc7eda5694500f3d71d8d43dbdead8c2d191b77168303235743386e8026e96ca"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/engine-status-final.txt",
+      "bytes": 2518,
+      "sha256": "b4f6f783ef9a02bda358a84a00b958eabca89f0429686eb25d88330c95ac5ac8"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final-evidence-final.log",
+      "bytes": 1941,
+      "sha256": "860b453af0b8af8f5952e7b9aef3cc8832ee0ba0e5f887afc6e314163812f7d4"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final-evidence.log",
+      "bytes": 1521,
+      "sha256": "00fb8d4610a0ed0d27b729e2068f9f4ce82ff970aa323d570954f2b2c7409c1e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/FILES.json",
+      "bytes": 57504,
+      "sha256": "c57e945414a939f0af9a7fb0ac8d7a833c8b1e0255f51cf4b7764558fe4be2b0"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/SUMMARY.json",
+      "bytes": 18198,
+      "sha256": "8140a4f0697b99e876e38e2694dd442aab20196413f62279d8d1cb638c5a95c9"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/engine-status-final.txt",
+      "bytes": 2567,
+      "sha256": "427a7cc4ef011010c3f0d80028df2ce3c92ed01a8e5ae3150bd8281b827f11bf"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G0-datomic-20261108T222137Z-82057a/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "5d8b6580057a46378a6731fd39094c31cee9d679d4710b65f688e8cb2b596c40"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G0-datomic-20261108T222137Z-82057a/receipt.json",
+      "bytes": 31840,
+      "sha256": "09b90fe8cd9187a7fe8ba06d3905fff56b21b34ce79f3da0cb6c1564afd4d0ec"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G0-datomic-20261108T223725Z-45c7d7/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "0142315e911aea778c43ac6b19d839f759de53969a93d377b9e9604a918ad9f5"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G0-datomic-20261108T223725Z-45c7d7/receipt.json",
+      "bytes": 24253,
+      "sha256": "84c4c1ab10c28eb01fee20d1230a33f291a95b939bf1bcb49f22118ed3da58f1"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G0-datomic-20261108T224655Z-68c953/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "8415c2a8dfb83d6765a28d3478bc256ce881898bbefe2938d226187352552467"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G0-datomic-20261108T224655Z-68c953/receipt.json",
+      "bytes": 24604,
+      "sha256": "056d9314104488c6bdaab1eed48c82c17fe909445dbaec9d6806137e46c9620c"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G0-datomic-20261108T230305Z-72394b/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "b94867a90bebcf3efb5a2ecb99cdab575aaa77c25ee9b6d174e7439367df9e4f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G0-datomic-20261108T230305Z-72394b/receipt.json",
+      "bytes": 25225,
+      "sha256": "7be017637fc559641c0a7833382064995c179e37467d47f6be8cb420c692943e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G0-datomic-20261108T231043Z-594b80/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "19b1b1e30ab8fc421436a49701e950f93e0fd002bc6b3d87e4203d7f2f9972e0"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G0-datomic-20261108T231043Z-594b80/receipt.json",
+      "bytes": 25433,
+      "sha256": "93bd2db48e2a4b77d4c80520ed2a8c3d63a654da65c984998125efdf5082d2fd"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T222406Z-bff062/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "594f42c8686cf8f436bc25d2143c56f387c8711c0b79b8b4cbeafe9ff14f4f44"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T222406Z-bff062/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "594f42c8686cf8f436bc25d2143c56f387c8711c0b79b8b4cbeafe9ff14f4f44"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T222406Z-bff062/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "ea7deaca8b65272886c021da23997badb4afc9b2685f4982aa21b202a1650fed"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T222406Z-bff062/g1-report.json",
+      "bytes": 32587,
+      "sha256": "0d8b264baa796fcc335f9116e8987cd58ec5a9a07f6c3ca225eee591a57cffbd"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T222406Z-bff062/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T222406Z-bff062/lab-conformance.stdout.txt",
+      "bytes": 205,
+      "sha256": "aec00055fbbedbd138ada3a0bd02329088b75c57566d2e760d036a2b6d8c701b"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T222406Z-bff062/receipt.json",
+      "bytes": 64769,
+      "sha256": "eb0594b90fa943c9ae12070d1940810fa627635f0376656332adc8e3c12e56cb"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T223616Z-1dff2b/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "20979845998aaf493acef2c6d2f5ede6886c64eee3a051ce3fff45b043c20a62"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T223616Z-1dff2b/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "20979845998aaf493acef2c6d2f5ede6886c64eee3a051ce3fff45b043c20a62"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T223616Z-1dff2b/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "3543d9e52fbbfff14bb0bd6e097343e809a49cdb0af32bd049a7b4ddfecb0bea"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T223616Z-1dff2b/g1-report.json",
+      "bytes": 30786,
+      "sha256": "75915e8f1cb0ae7160574d50c5c9ba7f2401cb31702cb6ac24222b9ef57ef0b8"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T223616Z-1dff2b/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T223616Z-1dff2b/lab-conformance.stdout.txt",
+      "bytes": 204,
+      "sha256": "ec90fb719152f39dae34ddafd6c00faebed12882fd473716b714906c0484c51f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T223616Z-1dff2b/receipt.json",
+      "bytes": 53724,
+      "sha256": "81d800748385f9b6cc74b5ae9b5dff9cc1250eb1b42971bea28b90b0936bf92b"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224620Z-529728/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "f53288b16aa523543b6f6d4f2fee044362e813172ed6ecd1ae9a8d0e20048813"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224620Z-529728/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "f53288b16aa523543b6f6d4f2fee044362e813172ed6ecd1ae9a8d0e20048813"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224620Z-529728/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "0dec5727cc74c5eab9c79c4e33b87d2188d69724f638d33e370b602ee536857e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224620Z-529728/g1-report.json",
+      "bytes": 30637,
+      "sha256": "aff288a4b0f6b8d09c01ab07b3aed04da2c2145498001cf4db72c7fd45cb4edd"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224620Z-529728/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224620Z-529728/lab-conformance.stdout.txt",
+      "bytes": 204,
+      "sha256": "5185b200c7cd40497dbfd37a765b40bfd31f9c39a755264a60c29f21a6b17a4a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224620Z-529728/receipt.json",
+      "bytes": 53715,
+      "sha256": "d8ce8a8ea22488789f491e0d8d7af1f4ff84da73e72f4b1f34f8e03a50fcf364"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224821Z-5d506c/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "8415c2a8dfb83d6765a28d3478bc256ce881898bbefe2938d226187352552467"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224821Z-5d506c/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "8415c2a8dfb83d6765a28d3478bc256ce881898bbefe2938d226187352552467"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224821Z-5d506c/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "52ee14aada175ef0d87c912f9c38a791427f1fda666bbf28b1ad002509397b36"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224821Z-5d506c/g1-report.json",
+      "bytes": 30636,
+      "sha256": "186fad2493006837feaaa08a191dd720cb29210ed7e6efe0d6778ca67e26afd0"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224821Z-5d506c/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224821Z-5d506c/lab-conformance.stdout.txt",
+      "bytes": 204,
+      "sha256": "6f876cf77dea33435e36444d790cc9ae944922a034011ae2d9fee58ff6a19434"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T224821Z-5d506c/receipt.json",
+      "bytes": 53444,
+      "sha256": "7e86481c87fd0952ecfa8240f895aae59bb8b3666145a75f00ee9c28a407835a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230329Z-959465/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "b94867a90bebcf3efb5a2ecb99cdab575aaa77c25ee9b6d174e7439367df9e4f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230329Z-959465/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "b94867a90bebcf3efb5a2ecb99cdab575aaa77c25ee9b6d174e7439367df9e4f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230329Z-959465/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "d533fe3560ca0dfdd5dc634701ee41946b61980411ca07a991e5d03516d505ee"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230329Z-959465/g1-report.json",
+      "bytes": 30657,
+      "sha256": "711ff37dafe26e91a6d60d8f4a1dde3b82f81e38d4c80a48d0033a856de2c257"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230329Z-959465/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230329Z-959465/lab-conformance.stdout.txt",
+      "bytes": 204,
+      "sha256": "734ba8de6e74750b1bb5e6d6414f41fc20c6598c73f564371baa388d9a818a05"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230329Z-959465/receipt.json",
+      "bytes": 54067,
+      "sha256": "2a6343a45d6e2266f9a78a417356ee61c549b95288ce93303ade5954423d3949"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230444Z-41d742/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "f53288b16aa523543b6f6d4f2fee044362e813172ed6ecd1ae9a8d0e20048813"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230444Z-41d742/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "f53288b16aa523543b6f6d4f2fee044362e813172ed6ecd1ae9a8d0e20048813"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230444Z-41d742/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "e2b4e73e4ebc555c372d77efdcabf47ac14e091f1f448156f3235c5dbcbc9110"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230444Z-41d742/g1-report.json",
+      "bytes": 30625,
+      "sha256": "08b8a266abe044ccb9d87bf846f31546c18d09d383c5671849747e909a189da3"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230444Z-41d742/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230444Z-41d742/lab-conformance.stdout.txt",
+      "bytes": 204,
+      "sha256": "8ec36787fc1b7d498393135158c16b7de9ff47f6d10fb0b96eeaa1d8f8215dd1"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T230444Z-41d742/receipt.json",
+      "bytes": 54097,
+      "sha256": "3c0c6fa15b1de4c3e94df499b704015e3e19fe49fcbcaacc50795a915a548fe2"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231116Z-acb0cb/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "d9aa6d89619267212f2b297ce87ab4070d635a291d0a60bb03610f3b9669429a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231116Z-acb0cb/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "d9aa6d89619267212f2b297ce87ab4070d635a291d0a60bb03610f3b9669429a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231116Z-acb0cb/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "62e82bc396bad9e16a3cbb2a956477fb412d1369f237cc4b0d6ceadfbc517b9c"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231116Z-acb0cb/g1-report.json",
+      "bytes": 30639,
+      "sha256": "a33b1eaa31edc240f9ae8307db7fdc062d6219bf25316e4ba21fc6605935e955"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231116Z-acb0cb/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231116Z-acb0cb/lab-conformance.stdout.txt",
+      "bytes": 204,
+      "sha256": "fcd23106e5ac995d38e430abc90016428968866921579eeff633d8bf23540186"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231116Z-acb0cb/receipt.json",
+      "bytes": 54248,
+      "sha256": "adf3a16c9fbb18a42726487a1c8a43ad4b2743403a9501e990558d850ae33621"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231255Z-141399/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "c91bb2d7cc1389eebaaa129812a60ff60a4f01caeaf6c36962010e954bf12948"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231255Z-141399/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "c91bb2d7cc1389eebaaa129812a60ff60a4f01caeaf6c36962010e954bf12948"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231255Z-141399/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "e2960f454a68903eb81ee46c05512c874593a6cdcdf093aded848e7bf60a03d5"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231255Z-141399/g1-report.json",
+      "bytes": 30655,
+      "sha256": "0a8d1d0f1a8440b085663f285bcb9263445613b8014c3f6238be07c6573f4d8e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231255Z-141399/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231255Z-141399/lab-conformance.stdout.txt",
+      "bytes": 204,
+      "sha256": "f9f3be5733e3f2c9d0c92398c5a5cc6df8aeb27094eccf05362ace61da89d973"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/gates/G1-datomic-20261108T231255Z-141399/receipt.json",
+      "bytes": 54347,
+      "sha256": "8dbcc8ad2ad4d92b5a425512a0bf6cdb3a07d70b924e33ccfdff89f50cc8ae6b"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/image-builds/build-1.json",
+      "bytes": 148462,
+      "sha256": "cd99363a46b0a5ecffdbc6bfc82059a7ce1b558c8f1b3d6d0442b9809d5d2d58"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/image-builds/build-2.json",
+      "bytes": 148462,
+      "sha256": "9f8c4249ae5922a1af265372ab8d5dca17ca1c73c599f20d26c7a15e3cd6f198"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/image-builds/build-3.json",
+      "bytes": 148462,
+      "sha256": "7350cb652bad6ec98c460ccdf1fded6a9e512d589159895332d00e741c244dbc"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/image-builds/build-4.json",
+      "bytes": 148462,
+      "sha256": "0525c35631bed679d884212aa13dd4090d17db4177485fe24df2e22e6721fd2f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/image-builds/build-5.json",
+      "bytes": 148462,
+      "sha256": "9bec9f7576c46de60b647a351b36bb85deb7ab392228346ead3bf66e6ab29439"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/image-builds/build-6.json",
+      "bytes": 148462,
+      "sha256": "bb05ba1ab2e9c50190009f6c3d246597151efddd1e3cdb33513fa86819d2c36c"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/image-builds/build-7.json",
+      "bytes": 148462,
+      "sha256": "bdfe6067d122a1985a51d40924129ac9f2f681942f789c3f79678763d71ffb4b"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/final/manifest-validation.json",
+      "bytes": 210,
+      "sha256": "0ab1e642093bc3d2e3e5ba4d9dac4a6399e8f8259803cc704570eb8a6188579a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G0-datomic-20261108T222137Z-82057a/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "5d8b6580057a46378a6731fd39094c31cee9d679d4710b65f688e8cb2b596c40"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G0-datomic-20261108T222137Z-82057a/receipt.json",
+      "bytes": 31840,
+      "sha256": "09b90fe8cd9187a7fe8ba06d3905fff56b21b34ce79f3da0cb6c1564afd4d0ec"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G0-datomic-20261108T223725Z-45c7d7/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "0142315e911aea778c43ac6b19d839f759de53969a93d377b9e9604a918ad9f5"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G0-datomic-20261108T223725Z-45c7d7/receipt.json",
+      "bytes": 24253,
+      "sha256": "84c4c1ab10c28eb01fee20d1230a33f291a95b939bf1bcb49f22118ed3da58f1"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G0-datomic-20261108T224655Z-68c953/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "8415c2a8dfb83d6765a28d3478bc256ce881898bbefe2938d226187352552467"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G0-datomic-20261108T224655Z-68c953/receipt.json",
+      "bytes": 24604,
+      "sha256": "056d9314104488c6bdaab1eed48c82c17fe909445dbaec9d6806137e46c9620c"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T222406Z-bff062/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "594f42c8686cf8f436bc25d2143c56f387c8711c0b79b8b4cbeafe9ff14f4f44"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T222406Z-bff062/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "594f42c8686cf8f436bc25d2143c56f387c8711c0b79b8b4cbeafe9ff14f4f44"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T222406Z-bff062/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "ea7deaca8b65272886c021da23997badb4afc9b2685f4982aa21b202a1650fed"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T222406Z-bff062/g1-report.json",
+      "bytes": 32587,
+      "sha256": "0d8b264baa796fcc335f9116e8987cd58ec5a9a07f6c3ca225eee591a57cffbd"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T222406Z-bff062/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T222406Z-bff062/lab-conformance.stdout.txt",
+      "bytes": 205,
+      "sha256": "aec00055fbbedbd138ada3a0bd02329088b75c57566d2e760d036a2b6d8c701b"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T222406Z-bff062/receipt.json",
+      "bytes": 64769,
+      "sha256": "eb0594b90fa943c9ae12070d1940810fa627635f0376656332adc8e3c12e56cb"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T223616Z-1dff2b/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "20979845998aaf493acef2c6d2f5ede6886c64eee3a051ce3fff45b043c20a62"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T223616Z-1dff2b/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "20979845998aaf493acef2c6d2f5ede6886c64eee3a051ce3fff45b043c20a62"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T223616Z-1dff2b/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "3543d9e52fbbfff14bb0bd6e097343e809a49cdb0af32bd049a7b4ddfecb0bea"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T223616Z-1dff2b/g1-report.json",
+      "bytes": 30786,
+      "sha256": "75915e8f1cb0ae7160574d50c5c9ba7f2401cb31702cb6ac24222b9ef57ef0b8"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T223616Z-1dff2b/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T223616Z-1dff2b/lab-conformance.stdout.txt",
+      "bytes": 204,
+      "sha256": "ec90fb719152f39dae34ddafd6c00faebed12882fd473716b714906c0484c51f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T223616Z-1dff2b/receipt.json",
+      "bytes": 53724,
+      "sha256": "81d800748385f9b6cc74b5ae9b5dff9cc1250eb1b42971bea28b90b0936bf92b"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224620Z-529728/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "f53288b16aa523543b6f6d4f2fee044362e813172ed6ecd1ae9a8d0e20048813"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224620Z-529728/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "f53288b16aa523543b6f6d4f2fee044362e813172ed6ecd1ae9a8d0e20048813"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224620Z-529728/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "0dec5727cc74c5eab9c79c4e33b87d2188d69724f638d33e370b602ee536857e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224620Z-529728/g1-report.json",
+      "bytes": 30637,
+      "sha256": "aff288a4b0f6b8d09c01ab07b3aed04da2c2145498001cf4db72c7fd45cb4edd"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224620Z-529728/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224620Z-529728/lab-conformance.stdout.txt",
+      "bytes": 204,
+      "sha256": "5185b200c7cd40497dbfd37a765b40bfd31f9c39a755264a60c29f21a6b17a4a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224620Z-529728/receipt.json",
+      "bytes": 53715,
+      "sha256": "d8ce8a8ea22488789f491e0d8d7af1f4ff84da73e72f4b1f34f8e03a50fcf364"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224821Z-5d506c/build-manifest-after.json",
+      "bytes": 93960,
+      "sha256": "8415c2a8dfb83d6765a28d3478bc256ce881898bbefe2938d226187352552467"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224821Z-5d506c/build-manifest.json",
+      "bytes": 93960,
+      "sha256": "8415c2a8dfb83d6765a28d3478bc256ce881898bbefe2938d226187352552467"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224821Z-5d506c/datomic-cleanup.json",
+      "bytes": 21584,
+      "sha256": "52ee14aada175ef0d87c912f9c38a791427f1fda666bbf28b1ad002509397b36"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224821Z-5d506c/g1-report.json",
+      "bytes": 30636,
+      "sha256": "186fad2493006837feaaa08a191dd720cb29210ed7e6efe0d6778ca67e26afd0"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224821Z-5d506c/lab-conformance.stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224821Z-5d506c/lab-conformance.stdout.txt",
+      "bytes": 204,
+      "sha256": "6f876cf77dea33435e36444d790cc9ae944922a034011ae2d9fee58ff6a19434"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/gates/G1-datomic-20261108T224821Z-5d506c/receipt.json",
+      "bytes": 53444,
+      "sha256": "7e86481c87fd0952ecfa8240f895aae59bb8b3666145a75f00ee9c28a407835a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/image-builds/build-1.json",
+      "bytes": 148462,
+      "sha256": "cd99363a46b0a5ecffdbc6bfc82059a7ce1b558c8f1b3d6d0442b9809d5d2d58"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/image-builds/build-2.json",
+      "bytes": 148462,
+      "sha256": "9f8c4249ae5922a1af265372ab8d5dca17ca1c73c599f20d26c7a15e3cd6f198"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/image-builds/build-3.json",
+      "bytes": 148462,
+      "sha256": "7350cb652bad6ec98c460ccdf1fded6a9e512d589159895332d00e741c244dbc"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/image-builds/build-4.json",
+      "bytes": 148462,
+      "sha256": "0525c35631bed679d884212aa13dd4090d17db4177485fe24df2e22e6721fd2f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/image-builds/build-5.json",
+      "bytes": 148462,
+      "sha256": "9bec9f7576c46de60b647a351b36bb85deb7ab392228346ead3bf66e6ab29439"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/install-2.log",
+      "bytes": 1027,
+      "sha256": "79820e77a6a9bd9c6de04400b49d4097bc6b2f0ca7376dcc9f3017249fe7a744"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/lint-final.log",
+      "bytes": 92,
+      "sha256": "b0a5149fedf6d5af69a9d75d10d497b74ba816ce1d3d690eac1870f8b6c059a3"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/lint.log",
+      "bytes": 5020,
+      "sha256": "dacb1d561b6684d81e84de6b93fc37f8d2fc8c958bd29c0f2eecfa43fab0c41e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/live-1.log",
+      "bytes": 2648,
+      "sha256": "616cdac045efdbd1313d8768dfa488a94af3f70ec051ca37c94d5c3dcb0788d3"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/live-2.log",
+      "bytes": 1222,
+      "sha256": "4f8519815def652e3afc9c4e29a340a26466732c53150dc23a93b44a4b9f98a7"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/live-3.log",
+      "bytes": 382,
+      "sha256": "6d983e146405f4422b3ffb794c2be47b2975f5b064a04cf1c110be4d49782c3e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/live-4.log",
+      "bytes": 206,
+      "sha256": "3839e47883b2014e169d27ac4abcb5ea69f0b30973defd179c0631a7907c501b"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/live-5.log",
+      "bytes": 206,
+      "sha256": "6ef6b9fed9d36b26ed18f95ced1abf00d1843c2b5b629f5c7b3f69321e592e38"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/live-6.log",
+      "bytes": 207,
+      "sha256": "1cf4bf6f7283a7c3c61ae9b12daa728f7434f1c28b54c1d3f02035c8c4c97d90"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/live-7.log",
+      "bytes": 206,
+      "sha256": "ffbc2e0244dfa43c814f3381d6074efb5423657b1bf0924aded60fd5aae712ca"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/live-final.log",
+      "bytes": 1064,
+      "sha256": "f58b5bf078db1f61e31cc1e0d6e239599e7e412dbe7c876842e59c0eca0907db"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/live-image7.log",
+      "bytes": 4987,
+      "sha256": "39aaef721f9d867662f070d1ba6975f5d1f7d2d92debc129a0925a9ccc5da39e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/live-lifecycle.log",
+      "bytes": 6356,
+      "sha256": "07dea997b64aa4afe8fd10148f4eb00672f5da54be3f5bd3f9adcc155fd8a51f"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/measure-image4.mjs",
+      "bytes": 2090,
+      "sha256": "9972b5d9011131e1820c412666c20be11906c8d4c2135c2ab7ecccb694321994"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/pack-check.log",
+      "bytes": 1694,
+      "sha256": "9675df5d1ea50b4a5044683b646fe686951332c96b19fe8744ab963e3d87e3db"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/package-2.log",
+      "bytes": 1345,
+      "sha256": "9f2aaeba09c48e622069efa68dd665a7465589b829ce897739709076c9b3c1c2"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/package.log",
+      "bytes": 806,
+      "sha256": "71686150b65f24c23e818d6742c4f316a2f874d29505f9b2e36fa985b1b53d16"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/selftest-1.log",
+      "bytes": 115,
+      "sha256": "ca9642dff36d6b35959406f483802227217ee8a40a9679f47d754637f9a6c52a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/selftest-2.log",
+      "bytes": 115,
+      "sha256": "ca9642dff36d6b35959406f483802227217ee8a40a9679f47d754637f9a6c52a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/selftest-3.log",
+      "bytes": 152,
+      "sha256": "3cebd8809908071d30af71371264055c26f631f2993a6b6e9bda7751947a7330"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/selftest-4.log",
+      "bytes": 200,
+      "sha256": "379dbc0adfd8848b527d17e3310b9df7324118de1a2c9b163665a85f8b643958"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/selftest-5.log",
+      "bytes": 333,
+      "sha256": "de00bed2b26609da8494b0370659ede00132cd3befb113d3108cde68419129cf"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/selftest-6.log",
+      "bytes": 115,
+      "sha256": "d4afc3f414d7e88a50297e555ebdfeac8067b4122c3b1ef064e8a01288fdd14e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/selftest-8.log",
+      "bytes": 152,
+      "sha256": "1d83883769a4290ba8f5547c1bc46bb406af4e6e623eca14b32e96a1d3fa0972"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/selftest-9.log",
+      "bytes": 1079,
+      "sha256": "535e25d6997f3b7f5b09ee01f1e88e88030bb050f59796b52b152b83cbf90d09"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/selftest-final.log",
+      "bytes": 152,
+      "sha256": "3cebd8809908071d30af71371264055c26f631f2993a6b6e9bda7751947a7330"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/suite-after-cap.json",
+      "bytes": 6399,
+      "sha256": "bebd5cdb32062135ca79d511dd7e3c853f443f9ce0031c80b43f8de1ca700073"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/suite-after-cap.log",
+      "bytes": 4567,
+      "sha256": "42e5de6a53d2c767ab855305c71ec69078469076e2e0bb5a9f4825b80505cae2"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/suite-after-order.json",
+      "bytes": 4790,
+      "sha256": "38da530eab927b220e0f07aa8be733246f8a38cdfeba7900ecc8645c1755af53"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/suite-after-order.log",
+      "bytes": 3291,
+      "sha256": "05a853a95dcdb42145a3ab85e8b10ff39b2b0b432324dfae170664d72b02c66e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/suite-diagnostic.json",
+      "bytes": 2186,
+      "sha256": "d9c9c1cecafa6236d68d02e8104b67a4eb04d897625b7aec4b4b277a7dcff43c"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/suite-diagnostic.log",
+      "bytes": 1514,
+      "sha256": "023450ae2614710fa619ae81a333086cd17cf1f91696133984174db424239bab"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/typecheck-3.log",
+      "bytes": 212,
+      "sha256": "e733c8df1c73525616e767e945fdf203b331553818fda3f1061b91003bd21ff1"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/typecheck-4.log",
+      "bytes": 171,
+      "sha256": "40ec1a9453915298de6238677cff8b77734654e095d6671293681489cbb7b98b"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/typecheck-5.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/unit-1.log",
+      "bytes": 206,
+      "sha256": "1d302936bea029f70e7319c19aa33d80c39f8798206936ff5a9d8e73d288ed68"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/unit-2.log",
+      "bytes": 589,
+      "sha256": "4c33790e5405e481da05d84edbbdabaa148e1fcf6bbf70e255a5777213b6d13e"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/up-1.log",
+      "bytes": 233,
+      "sha256": "1fa798b55cf403d2c2b80e52918d16dc951a16a92383e25992d94e639f5dbf06"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/up-2.log",
+      "bytes": 394,
+      "sha256": "7fab9bd5bf2f45babdd4af2fdaa2e6e8f2cc72ec1c24275c7fb4b1a5147163d0"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/up-3.log",
+      "bytes": 442,
+      "sha256": "27c625d3b5e6361345f2b6cfbd2f29653a844110d7298d5de8e36654e897ef5c"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/up-4.log",
+      "bytes": 394,
+      "sha256": "987d3a5334dac8294c623e42800ae3dc942052a9fa4ad988c6dae6a3c26aeba1"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/up-5.log",
+      "bytes": 394,
+      "sha256": "25759c0a64b6fe3e6be2f3b382401045353a9b7844230055514c62731b6c6d63"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/up-6.log",
+      "bytes": 394,
+      "sha256": "3101dd5478bfd019f9ec23fa5f765beb34df8c940f7f6750c9fb66d2a1a0bee4"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/continued/up-7.log",
+      "bytes": 394,
+      "sha256": "d875b3b4f9829b1fdfe1a35364793edf2c07e61b2dc99ea18e9791d1f6af2500"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/engine-status.txt",
+      "bytes": 2221,
+      "sha256": "55f07297ee637e001266810010256ce4d150df6a0062b169cd9dde74d5c5a35c"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/install.log",
+      "bytes": 2028,
+      "sha256": "2f9d3843c10ab9c7119aebc19d09d03d58a8b58a1a43f4ae122efa1c62b1d31a"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01-datomic-adapter/receipts/resident-routes.json",
+      "bytes": 1305,
+      "sha256": "17ff8d8eb0805bfafe34c112e4d6dd0a1a01b7239189c31005831aeef22f46d0"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01/BRIEF.md",
+      "bytes": 8727,
+      "sha256": "0051a81cf53c8735e44b3bdd21db9c12e5430074553eec83f71c4df1f742f244"
+    },
+    {
+      "path": "lab/experiments/EXP-DA01/REPORT.md",
+      "bytes": 16748,
+      "sha256": "8643a84380ac7810beb4743c1562230a9729e050811b5a96d8126f1a3ed99835"
+    },
+    {
+      "path": "lab/runs/G0/G0-datomic-20261108T222137Z-82057a.json",
+      "bytes": 31840,
+      "sha256": "09b90fe8cd9187a7fe8ba06d3905fff56b21b34ce79f3da0cb6c1564afd4d0ec"
+    },
+    {
+      "path": "lab/runs/G0/G0-datomic-20261108T223725Z-45c7d7.json",
+      "bytes": 24253,
+      "sha256": "84c4c1ab10c28eb01fee20d1230a33f291a95b939bf1bcb49f22118ed3da58f1"
+    },
+    {
+      "path": "lab/runs/G0/G0-datomic-20261108T224655Z-68c953.json",
+      "bytes": 24604,
+      "sha256": "056d9314104488c6bdaab1eed48c82c17fe909445dbaec9d6806137e46c9620c"
+    },
+    {
+      "path": "lab/runs/G0/G0-datomic-20261108T230305Z-72394b.json",
+      "bytes": 25225,
+      "sha256": "7be017637fc559641c0a7833382064995c179e37467d47f6be8cb420c692943e"
+    },
+    {
+      "path": "lab/runs/G0/G0-datomic-20261108T231043Z-594b80.json",
+      "bytes": 25433,
+      "sha256": "93bd2db48e2a4b77d4c80520ed2a8c3d63a654da65c984998125efdf5082d2fd"
+    },
+    {
+      "path": "lab/runs/G1/G1-datomic-20261108T222406Z-bff062.json",
+      "bytes": 64769,
+      "sha256": "eb0594b90fa943c9ae12070d1940810fa627635f0376656332adc8e3c12e56cb"
+    },
+    {
+      "path": "lab/runs/G1/G1-datomic-20261108T223616Z-1dff2b.json",
+      "bytes": 53724,
+      "sha256": "81d800748385f9b6cc74b5ae9b5dff9cc1250eb1b42971bea28b90b0936bf92b"
+    },
+    {
+      "path": "lab/runs/G1/G1-datomic-20261108T224620Z-529728.json",
+      "bytes": 53715,
+      "sha256": "d8ce8a8ea22488789f491e0d8d7af1f4ff84da73e72f4b1f34f8e03a50fcf364"
+    },
+    {
+      "path": "lab/runs/G1/G1-datomic-20261108T224821Z-5d506c.json",
+      "bytes": 53444,
+      "sha256": "7e86481c87fd0952ecfa8240f895aae59bb8b3666145a75f00ee9c28a407835a"
+    },
+    {
+      "path": "lab/runs/G1/G1-datomic-20261108T230329Z-959465.json",
+      "bytes": 54067,
+      "sha256": "2a6343a45d6e2266f9a78a417356ee61c549b95288ce93303ade5954423d3949"
+    },
+    {
+      "path": "lab/runs/G1/G1-datomic-20261108T230444Z-41d742.json",
+      "bytes": 54097,
+      "sha256": "3c0c6fa15b1de4c3e94df499b704015e3e19fe49fcbcaacc50795a915a548fe2"
+    },
+    {
+      "path": "lab/runs/G1/G1-datomic-20261108T231116Z-acb0cb.json",
+      "bytes": 54248,
+      "sha256": "adf3a16c9fbb18a42726487a1c8a43ad4b2743403a9501e990558d850ae33621"
+    },
+    {
+      "path": "lab/runs/G1/G1-datomic-20261108T231255Z-141399.json",
+      "bytes": 54347,
+      "sha256": "8dbcc8ad2ad4d92b5a425512a0bf6cdb3a07d70b924e33ccfdff89f50cc8ae6b"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 5260 "CX-VP2Q-4-package-live", pid 10808 "CX-VO05-2-builder-gates", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 12030 "CX-X02-Q79e-G0", pid 10808 "CX-VO05-2-builder-gates", pid 3055 "CX-VP2Q-4-live-prior", pid 10096 "DA01-G1"
+grammar-live 0 null
+subquery-regression 0 null
+delta-live 0 null
+offline-source 0 null
+probe-source 0 null
+probe-sums 0 null
+delta-offline 0 null
+delta-sums 0 null

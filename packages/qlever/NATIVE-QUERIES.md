@@ -67,22 +67,22 @@ graph access does not automatically inherit helper cuts, portable Datalog
 errors, authorization or pending-transaction overlays. The matched71-task
 library qualifies its authored native queries separately from the foundation44.
 
-## Optional native relation maintenance
+## Read-only native relations (contract C8, EXP-C8)
 
-`selectWithRelations(contract, input, definitions, build, options)` materializes
-only each definition's authored native `SELECT ?source ?target` into a fresh
-owned graph at one resolved source cut. The final builder uses
-`ctx.relation(name, source, target)` for native property-path closure. Endpoints
-are authored variable strings or explicit `ctx.entity` literal carriers.
-
-All relational work stays in QLever. `maxRelationRows` bounds complete direct
-and closure relations; exceeding it returns an error. The trace records source
-acquisition, domain checks, graph writes, counts, result consumption and cleanup.
-These maintenance writes never assert Triplex application facts or advance its
-journal. An unresolved update acknowledgement is reconciled by its atomic
-receipt before cleanup; unresolved state is retained rather than replayed.
-Cleanup deletes the owned working triples and leaves a small charged receipt.
-It does not establish immediate disk reclamation or incremental maintenance.
+`selectWithRelations(contract, input, definitions, build, options)` answers bounded
+closures with SPARQL reads only. Each definition's authored `SELECT ?source ?target`
+(plain string endpoints) is read at one resolved source cut; optional `seeds(ctx, input)`
+(ids, or `{ query }` projecting `?seed`) restricts the relation to pairs from those
+starts, otherwise every source is closed. The closure runs in the shared
+`frontierClosure` and reaches the final builder as an inline `VALUES` block through
+`ctx.relation(name, source, target)` (variables or `ctx.entity` literal carriers).
+`relationStrategy: "single-read"` (default) reads the edge relation once; `"rounds"`
+reads once per frontier round with the frontier as one `VALUES` block. No graph is
+written, so no read empties QLever's result cache or grows its delta.
+`maxRelationRows` bounds edges, reached nodes and pairs; exceeding it is an error,
+never a partial closure. No property path with both ends unbound and no `p*` with a
+constant start is issued; a current-graph property-path tier (R10 6.3) needs plain IRI
+triples this mapping does not have yet.
 
 The source inspiration is QLever v0.6.0's native
 [TransitivePath implementation](https://github.com/ad-freiburg/qlever/blob/6c5861a/src/engine/TransitivePathBase.h).

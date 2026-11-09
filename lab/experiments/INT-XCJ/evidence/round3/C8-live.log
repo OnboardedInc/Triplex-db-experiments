@@ -1,0 +1,51 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 46869 "CX-VP2Q-4-r7-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 46869 "CX-VP2Q-4-r7-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 46869 "CX-VP2Q-4-r7-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 6303 "CX-OBS01-R2-x09"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/packages/qualification
+
+ ✓ test/engine-write-counter.test.ts (64 tests | 62 skipped) 4654ms
+   ✓ QLever write counter (live) (1)
+     ✓ queries count zero writes; one update counts one write 4488ms
+stdout | test/c8-reads-never-write.test.ts > C8 on XTDB: reads never write (engine boundary) > counts zero writes across rule queries, maintained reads, native closures and a load run
+{"c8":"xtdb","readWindow":{"lane":"xtdb","connections":1,"statements":63,"writes":0,"commits":0,"commands":22,"unparsed":0,"samples":[]},"frontierRoundMs":[1177,702,975],"load":{"readers":8,"ms":8000,"recursiveReadIterations":8,"proxy":{"lane":"xtdb","connections":14,"statements":470,"writes":0,"commits":0,"commands":184,"unparsed":0,"samples":[]}},"writerAlone":{"commits":10,"p50":798,"p99":1037,"max":1037},"writerWithRecursiveReaders":{"commits":3,"p50":3820,"p99":4066,"max":4066}}
+
+ ❯ test/c8-reads-never-write.test.ts (2 tests | 1 failed) 203890ms
+   ✓ C8 on XTDB: reads never write (engine boundary) (1)
+     ✓ counts zero writes across rule queries, maintained reads, native closures and a load run 112733ms
+   ❯ C8 on QLever: reads never write (engine boundary) (1)
+     × counts zero updates across rule queries, native closures and a load run 91157ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/c8-reads-never-write.test.ts > C8 on QLever: reads never write (engine boundary) > counts zero updates across rule queries, native closures and a load run
+ReadError: QLever Datalog execution failed: TimeoutError: The operation was aborted due to timeout
+ ❯ fail ../qlever/src/QleverQueryExecutor.ts:53:7
+     51|   cause instanceof DatalogValidationError || cause instanceof UnboundV…
+     52|     ? cause
+     53|     : new ReadError({ message: `QLever Datalog execution failed: ${Str…
+       |       ^
+     54| const safeCount = (value: string | undefined): number => {
+     55|   const result = Number(value ?? 0);
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:42
+ ❯ ~effect/Utils/internal ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/Utils.ts:198:14
+ ❯ PrimitiveImpl.~effect/Effect/args ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1113:23
+ ❯ PrimitiveImpl.~effect/Effect/evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:980:22
+ ❯ FiberImpl.runLoop ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:653:41
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:594:23
+ ❯ FiberImpl.evaluate ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:588:27
+ ❯ ../../node_modules/.pnpm/effect@4.0.3/node_modules/effect/src/internal/effect.ts:1158:17
+
+Caused by: TimeoutError: The operation was aborted due to timeout
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { code: 23, INDEX_SIZE_ERR: 1, DOMSTRING_SIZE_ERR: 2, HIERARCHY_REQUEST_ERR: 3, WRONG_DOCUMENT_ERR: 4, INVALID_CHARACTER_ERR: 5, NO_DATA_ALLOWED_ERR: 6, NO_MODIFICATION_ALLOWED_ERR: 7, NOT_FOUND_ERR: 8, NOT_SUPPORTED_ERR: 9, INUSE_ATTRIBUTE_ERR: 10, INVALID_STATE_ERR: 11, SYNTAX_ERR: 12, INVALID_MODIFICATION_ERR: 13, NAMESPACE_ERR: 14, INVALID_ACCESS_ERR: 15, VALIDATION_ERR: 16, TYPE_MISMATCH_ERR: 17, SECURITY_ERR: 18, NETWORK_ERR: 19, ABORT_ERR: 20, URL_MISMATCH_ERR: 21, QUOTA_EXCEEDED_ERR: 22, TIMEOUT_ERR: 23, INVALID_NODE_TYPE_ERR: 24, DATA_CLONE_ERR: 25 }
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 3 passed | 62 skipped (66)
+   Start at  18:53:19
+   Duration  209.71s (tests 100%)
+
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/int-xcj/lab/experiments/INT-XCJ/evidence/round3/C8-live.json

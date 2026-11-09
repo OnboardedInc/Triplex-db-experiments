@@ -1,0 +1,4 @@
+[lab] G0-xtdb-20261109T001825Z-288416: raw output runs/G0/G0-xtdb-20261109T001825Z-288416
+[lab] heavy: waiting for one of 4 slots; held by pid 44233 "DA01-r3-G1", pid 44232 "DA01-r3-G0", pid 37317 "CX-G03-r3-claim-suites2", pid 52125 "CX-INT-XCJ-final-G0"
+PASS G0 xtdb scope=full executed=1168 pass=1168 fail=0 skip=137
+receipt: lab/runs/G0/G0-xtdb-20261109T001825Z-288416.json

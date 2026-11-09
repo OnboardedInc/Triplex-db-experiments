@@ -1,0 +1,81 @@
+{
+  "originalBase": "8d098718",
+  "originalRegeneration": "1e22e79a",
+  "restoredMain": "62bcc8a325ceb07ba391c160c4ec83d3c8af320c",
+  "restorationCommit": "564d79b3",
+  "implementationPins": [
+    {
+      "path": "packages/testkit/src/index.ts",
+      "oldSha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+      "newSha256": "432cec5c6aa33150c5c6f6c54091184edcaece3395ee3c809524c5502594a6d6"
+    }
+  ],
+  "revertedGeneratedMetadataPins": [
+    {
+      "path": "lab/acceptance/budgets.json",
+      "oldSha256": "c09b5257c08d050d9c99d8e1595cd4817b9c8c1337afba291109e7fd0c7a8159",
+      "newSha256": "5ac9f83af125c50fbf04a62669c2b18e7ac4eaba023b560bfe1fb57e833503d3"
+    },
+    {
+      "path": "lab/acceptance/load-contract.json",
+      "oldSha256": "c54af6122604a7cbe49c4de41ba658f9076cea8701f90cc4e3583f1cad009428",
+      "newSha256": "0eed6e91719ec5f4b30d0d55cc9d656012232054f3a9c64a7bb53ba7ab0212a4"
+    }
+  ],
+  "coreSourceDeltas": [
+    {
+      "path": "packages/core/src/config/ConfigStore.ts",
+      "oldSha256": "7a3c946532e6af30fe89d3bdaffd4cc691a95ff3ba3243a397d43534d2a37053",
+      "newSha256": "0593471fd68ef24e3ddab77e74c4037892f07cdb5de62b8cad99de75fd423f24",
+      "note": "source delta; not an explicit moved contract pin in that regeneration"
+    },
+    {
+      "path": "packages/core/src/config/EntityValidation.ts",
+      "oldSha256": "3ccaf08b621517aa3955a6eb4a3113edb617f71d79ce835a5f0c601d3efa18f4",
+      "newSha256": "8adb3638b8092475887fd0880ece5813c5b4d3baf136bfe3905c67fe07d0e5d3",
+      "note": "source delta; not an explicit moved contract pin in that regeneration"
+    },
+    {
+      "path": "packages/core/src/derivation/Materialization.ts",
+      "oldSha256": "4b7a15073ce98216bfb2e73eb6e111e34891ad77342ef5a65d1538298a89cba5",
+      "newSha256": "d62e9cb8b1e97333f701fb8eb5398349a35ed7af6b39a9a0f1539c3b572ef71e",
+      "note": "source delta; not an explicit moved contract pin in that regeneration"
+    },
+    {
+      "path": "packages/core/src/derivation/Overlay.ts",
+      "oldSha256": "1f1625339214a66fdb5876d25d109fd74c78d56a26e7a0a56b04b9f4d223b50b",
+      "newSha256": "a8ff445cf775896a49fb79f95ece30eb629e18fad42eceeae65633a4d3046fae",
+      "note": "source delta; not an explicit moved contract pin in that regeneration"
+    },
+    {
+      "path": "packages/core/src/kv/layers/KvTriplesLive.ts",
+      "oldSha256": "d97c302ee63e068cd3b475e2f41707210b1d5ace2a965e18c9ad19b211cde7bd",
+      "newSha256": "f6bb46d1bd96bf42eccec562c1a794b2de23a0b1f578ad29e347f73c7c8ed3ae",
+      "note": "source delta; not an explicit moved contract pin in that regeneration"
+    },
+    {
+      "path": "packages/core/src/operational/ConsumerCheckpoint.ts",
+      "oldSha256": "9130fd037ccbc5f845cd8db17f684f9893f57c9b5896bbc1bce33ef855203718",
+      "newSha256": "08b5eeff172963d73f035592e7897f8b48ccb896a1969cc8bb7d7704b8cc145e",
+      "note": "source delta; not an explicit moved contract pin in that regeneration"
+    },
+    {
+      "path": "packages/core/src/store/Triples.ts",
+      "oldSha256": "f8c0d35c1308c96796843ef15da8047ae9acfb0d08064f4f5cb60fe7d8e8b62a",
+      "newSha256": "7e5bd8c3e83e0d468912be4f01719d6bdd4f54c84c9bbc08ee0f10cdf05159c0",
+      "note": "source delta; not an explicit moved contract pin in that regeneration"
+    },
+    {
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "oldSha256": "1fc030c442179a937f544b865983b45b577c124aa3b338528823f93dc828a36c",
+      "newSha256": "14efc06b46f127dca25882cd2deea720cd074f6542b4a01ce092e8c42cf414e1",
+      "note": "source delta; not an explicit moved contract pin in that regeneration"
+    },
+    {
+      "path": "packages/core/src/store/validateValues.ts",
+      "oldSha256": null,
+      "newSha256": "56d0efd4e96e5ee279f54faf762327596fec592b44bc8d913c729e344f82fb92",
+      "note": "source delta; not an explicit moved contract pin in that regeneration"
+    }
+  ]
+}

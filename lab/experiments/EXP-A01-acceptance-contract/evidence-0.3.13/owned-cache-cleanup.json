@@ -1,0 +1,22 @@
+{
+  "atEpoch": 1794193112.027175,
+  "freeBefore": 5093060608,
+  "freeAfter": 5387165696,
+  "removed": [
+    {
+      "path": "node_modules/.pnpm/@distilled.cloud+gcp@1.0.0-rc.13_effect@4.0.3",
+      "files": 2703,
+      "bytes": 286293018,
+      "listingSha256": "37571b5e5c7c07316d0216375d9dcd1b464eddb20cf0d907fc606725d75c0bb9",
+      "reason": "Unused cloud provisioning dependency copies in this worktree only; G0 package scripts do not import them; lockfile and owned store retained for offline restoration."
+    },
+    {
+      "path": "node_modules/.pnpm/@distilled.cloud+aws@1.0.0-rc.13_effect@4.0.3",
+      "files": 2655,
+      "bytes": 209863994,
+      "listingSha256": "78f993718f9034b3d0cc45b457b645441c04995cccc56f8414ea62796537151b",
+      "reason": "Unused cloud provisioning dependency copies in this worktree only; G0 package scripts do not import them; lockfile and owned store retained for offline restoration."
+    }
+  ],
+  "sourceAndStoreUntouched": true
+}

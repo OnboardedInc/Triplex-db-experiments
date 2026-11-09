@@ -46,16 +46,20 @@ isolation; is Datomic dev storage acceptable for the final acceptance run, or mu
 ## Merged 2026-11-08: E01 claim evaluator (f060f7e, 128/128 on main); follow-up: the poison marker lives in the shared .git, so one
 worktree's refusal blocks every worktree (move it to the worktree's own git dir).
 
+## Pending Sam decisions on VM security (Q86g, from R28): (H1) narrow the triplex2 colima mounts: today $HOME is mounted writable
+into the VM, so every Docker socket holder (all lab agents) can write anywhere in Sam's home; (H2) block outbound traffic from tx2
+containers: today the VM reaches every Mac 127.0.0.1 service, including ports 15442 and 17019. Both need a VM restart (all residents).
+
 ## Running agents (10; protocol lab/PROTOCOL.md since 2026-11-08: Codex builders medium, Codex reviewers high, Opus planners high)
 | Agent | Role, model, effort | Priority | Output |
 | --- | --- | --- | --- |
 | CX-DA01 lane D adapter (exp/DA01-datomic-adapter, on DA00 702643f) | builder, Codex medium | lane D, goal 7 floor | storage adapter, Datalog executor, G1 |
 | CX-VP2Q-4 (verify/P2Q) | reviewer, Codex high | P2, P3 | delta re-check of broker round 3 1b55d2e |
 | CX-SQL01 (exp/SQL01-broker-sqlite, on 1b55d2e) | builder, Codex medium | P2, P4, P5 | broker SQLite file per R25 (Q84): log of record, pinned readers, H1 rows |
-| CX-VX02-3 (verify/X02) | reviewer, Codex high | XTQL lane | delta re-check of X02 round 3 200d669; C8 514c3b6 ACCEPTED, merges after X02 |
-| CX-VA01-0311 (verify/A01-0311) | reviewer, Codex high | floor for claims | review of contract 0.3.11 36d7434 (338/338 regressions; lane D 153 obligations blocked) |
-| R28 isolation design for EXP-G03 | planner, Opus 5.5, high | floor for claims | /Users/sam/Claude/Projects/triplex-db-2/R28/ |
-| CX-VDA00 (verify/DA00) | reviewer, Codex high | lane D floor | review of lane D bring-up 702643f |
+| CX-X02-R3 resumed (exp/X02-xtql-parity) | builder, Codex medium | XTQL lane | Q79e grammar-based operand classification with a generated corpus; C8 merges after X02 |
+| CX-A01-0311-R2 (contract/0.3.11) | builder, Codex medium | floor for claims | 0.3.11 fix round: O-REPLAY row results in comparators, Unicode, lane D composition fields, Q76c matrix record |
+| CX-G03 (exp/G03-executing-gate) | builder, Codex medium | floor for claims | executing gate with container isolation per R28 (Q86a-f) |
+| (queued) CX-DA01 round 2: Q85a-d (V-DA00 FIX-FIRST) after its current round | builder, Codex medium | lane D floor | then a joint DA00+DA01 review |
 | CX-VO05-2 (verify/O05) | reviewer, Codex high | floor | review of O-OBS round 2 463703d |
 | CX-OBS01 (exp/OBS01-observer) | builder, Codex medium | floor | observer sidecar writing obs-bundle/1 (R27, Q82) |
 | R25 finish: SQLite pinned readers for the broker file and H1 (continuation) | planner, Opus 5.5, high | P1, P2, P4, P5 | /Users/sam/Claude/Projects/triplex-db-2/R25/ |
@@ -128,3 +132,148 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - R21: file the XTDB DECIMAL-to-BIGINT-through-double and `= ANY` precedence findings upstream? (publishes lab findings; not done)
 - R18: Datomic-style `noHistory` for high-churn attributes? Default kept: history for everything (audit is a must-have).
 - GS.03: a vendor's older revision arriving after a newer one is acknowledged as `superseded`, changes no current value, and is journaled.
+
+- 22:35Z: running now: CX-A01-0311, CX-K01-R2, CX-DA01, CX-SQL01, CX-OBS01, CX-G03, CX-P2Q-R3 (round 4 fix F1), CX-VX02-3 (round 4 review), CX-O05-R2 (round 3 fixes R2-F1..F3). 9 of 10.
+- K01 round 2 (05a23dd): Q83d settle evidence implemented, 41 tests and tsc pass; offline review CX-VK01 launched. Live run waits for the
+  scale window: it needs pool capacity (park tx2-datomic-dev) and slot s1 cleared, but s1 holds CX-OBS01's retained source and canary, so
+  OBS01 must release s1 first. Nothing was deleted.
+- Running (9): CX-DA01, CX-SQL01, CX-A01-0311 (r3: evaluator suite), CX-X02-R3 (r4: Q79f), CX-P2Q-R3 (r5), CX-K01-R2 (r3),
+  CX-VO05-2 (O-OBS r3 review), CX-OBS01 (r2; releases s1), CX-G03 (r2, no-slot work). Contract 0.3.11 merge undone per Q87.
+  Scale window after DA01: park tx2-datomic-dev; K01 live, G03 slot run, W01b GS, J01 compact-on G1, X02/C8 exclusive reruns.
+- SQL01 delivered (53d41ad): 73 package + 23 semantic + 5 live tests, 80 SIGKILLs with zero ACKed commits lost, outage pulls 1 ms at 10k
+  and 30k commands. Open: one unreproduced pinned read that returned 30 of 40 facts (possible P1 torn read). Review CX-VSQL01 launched,
+  told to reproduce that first. EXP-P5 waits for the SQL01 merge.
+- DA01 round 1 delivered (4a540cc): G0 1,024 tests, G1 88/88 plus the full suite twice; resident READY, volume kept. Round 2 (Q85a-d
+  fixes from V-DA00) dispatched; then a joint DA00+DA01 review. The Datomic resident stays up for DA01 round 2, so the scale window
+  opens when K01 (offline review), X02 (review) and G03 (fixture migration) are ready for slot runs, not before.
+- Contract 0.3.11 merged to main (Q87 gate: 108/108 evaluator, --verify byte-identical). O-REPLAY 0.4.9 pinned; lane D registered.
+  Next contract: 0.3.12 compiles Q72, Q79e-f, Q80, Q82-Q87 plus G03's box pins. When CX-G03 round 3 ends, its next round starts by
+  merging main (0.3.11 touched the same fixtures).
+- INT-XCJ: X02 merged on int/X02-C8-J01 (7fcf69e): G0 1,070/1,070, evaluator 108/108; contract --verify fails only because X02 changed
+  pinned packages/qualification/src/native/xtdb-workloads.ts. Pinned sources change only with a contract version, so contract 0.3.12
+  round 2 merges int/X02-C8-J01 and re-pins it after checking the diff does not change the measured workload. INT-XCJ continues with C8, J01.
+- Queued: EXP-DA04 (lane D on Postgres SQL storage, Q88b) after DA01 round 2 and the joint DA00+DA01 review merge; before DA03.
+- Queued for DA01 round 3: Q89d (pin multi-request Datalog to one db, refuse future positions, seek the position-to-t map, enumerate by
+  subject). Queued for SQL01's next round: Q89b on H1's pull predicate (sqlite-worker.ts:158). Running: CX-RQ01 (harness), R33 (design).
+- SQL01 ACCEPT default-off (verify/SQL01 73fbe45); merges after P2Q in one integration round. Contract 0.3.12 (f5e7a41) in review; its
+  round 2 re-pins the INT-XCJ workload files. P2Q round 7 fix (Q89c) running.
+- Queued: EXP-RT01 round A (core, testkit, harness, both A0s) from main after RQ01 merges (Q90g). Running: CX-O06 (O-REPLAY 0.5.0).
+- Pending Sam: Q86g (VM H1/H2), Q78e tenant isolation (lane D), Q89g public commit pin (A/B/C; R33 recommends C).
+- INT-XCJ complete at b916d5d: X02, C8, J01 (default-off) integrated; G0 1,168/1,168, evaluator 108/108, C8 and J01 live tests proven
+  (except the QLever C8 closure timeout, under CX-C8-R4). Main gets it in one step after contract 0.3.12 re-pins the two workload files
+  (0.3.12 round 3 merges int/X02-C8-J01) and C8-R4 reports.
+- Scale window plan (park tx2-datomic-dev once CX-VDA01 finishes; pool then 6.5 of 11 GiB, one 3.5 GiB exclusive slot at a time, run in
+  this order): (1) EXP-QG1 phase 0 and 1 on qlever-s1 (a copy of qlever-dev's data, then the delta sweep; R35, Q91); (2) K01 live on
+  xtdb-s1 once its offline review accepts; (3) G03 slot run per its SLOT-RUN.md once its fixture migration lands; (4) X02 and C8 exclusive
+  G1/G2 reruns; (5) W01b GS rerun; (6) J01 compact-on G1. Unpark tx2-datomic-dev for EXP-DA04 after the window.
+- Scale window adds: (7) EXP-P5 A1 at 1k on an exclusive XTDB slot (CX-P5A writes the commands).
+- Main now has contract 0.3.12 (O-OBS pinned for screening, Q72/Q79e-f/Q80/Q82-Q88 compiled, workload re-pins) plus X02, C8 and J01
+  (default-off); Q87 gate 108/108 on main after the merge. Next contract: 0.4.0 with RT01, O-REPLAY 0.5.0, Q89-Q92 and G03's pins.
+- O-REPLAY 0.5.0 ACCEPT (exp/O06-oracle-record-time fed510e; verify/O06 fc78350): ready to pin in contract 0.4.0 together with RT01
+  (the oracle merge and pin move go in one commit, Q45a). Not merged alone: 0.4.0 needs RT01's product side first.
+- OBS01 round 5 (c55a728): all ten protocols worked; 1 PASS, 9 FAIL, 20 negatives refused, 59 tests. The nine remaining gaps need
+  sources the shared residents cannot give without changes (engine statement logs, read-only engine-config mounts, crash and memory-failure
+  windows, physical-file inventory for erasure scans); round5/SOURCES.md names each change. OBS01 pauses until the scale window, where those
+  protocols run on exclusive slots configured for observation (with G03's containers); no resident is changed.
+- K01 round 8 (6f7e11f): G0 covers all 89 declared columns in 11 tables plus dynamic columns; 167 tests. In review round 7. Queued for
+  K01's next round: Q93c's normalized digest D' for E1 (fresh seed against golden).
+- Queued: ER01-C (erasure core) after RT01 round A merges; then ER01-X and ER01-R; ER01-Q behind SQL01 and QG1 phase 2; ER01-D behind DA04.
+  Running: ER01-S scanners (CX-OBS01). Pending Sam: Q95-S (S1-S4).
+- Scale window OPEN (tx2-datomic-dev parked by the orchestrator, volume tx2-datomic-dev-data kept). Running in it: CX-QG1 on qlever-s1.
+  Unpark for EXP-DA04 after the window.
+- Housekeeping rule: when a branch merges or its verdict is recorded, archive untracked and ignored files of its builder and reviewer
+  worktrees to /Users/sam/Claude/Projects/triplex-db-2/worktree-archive/ and git worktree remove them. Host disk 15 GiB free after 38 removals.
+- Note: agents whose worktree was archived and removed (CX-INT-XCJ, CX-X02-R3, CX-VX02-3, CX-VDA01, CX-VSQL01-2, CX-J01-R2, CX-VJ01-2,
+  CX-VC8-3 and the older ones in worktree-archive/INDEX.txt) cannot be resumed (codex needs its launch cwd); follow-up work on those
+  branches uses a fresh launch with a new worktree. CX-XRUN replaces CX-INT-XCJ for the XTDB exclusive reruns.
+- Scale window queue (one exclusive 3.5 GiB slot at a time; CX-XRUN holds xtdb-s1 now): next K01 live two-start and E1 per
+  .claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/LIVE-round10.md (K01 r10 e525760, 397 tests; offline review skipped in favor of the
+  live run because the remaining risk is native wire fidelity; an independent reviewer reads the live receipts after); then P5 A1 at 1k;
+  then G03's slot run; then RT01 live G2 conformance and the G6 latency comparison on one slot; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04.
+- Scale window queue update: EXP-P2X2 on xtdb-s1 (running, CX-P2X2); then the K01 live rerun (LIVE-round11; the first live run stopped
+  correctly because XTDB reports a mixed-width integer column as #{:i32 :i64}, not :union); then P5 A1 at 1k; then G03's slot run; then RT01
+  live G2 and G6; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04. P2Q round 10 review stopped by the Codex content filter
+  after writing its verdict (FIX-FIRST, F1 and F2); its report went to the builder as is.
+- GS12F accepted (verify/GS12F f5664a1: every functional check passed; its one blocker, being behind main, closed at 2fdf491: lab/acceptance
+  diff against main empty, 854 core and 55 bounds tests pass). It moves pinned core files, so it merges with contract 0.3.14, which re-pins
+  them (after 0.3.13 lands). Queue for 0.3.14: GS12F; QNODELAY if accepted; any other accepted branch that moves pins.
+- P5 round A ACCEPT-OFFLINE (verify/P5A 85c1b13: 207 suite, 57 await-boundary and 2 late-cleanup tests). Ready for its A1 run at 1k on an
+  exclusive XTDB slot (A1-RUNBOOK.md in .claude/worktrees/p5a), queued after K01's live rerun. Its g0.ts guard commit goes onto K01's branch.
+- ER01-S accepted for offline fixtures (verify/ER01-S b81e102); merges with the observer branch when ER01-C lands. Open: CPU/time bounds on
+  large base64 inputs.
+- 2026-11-09 queue update: xtdb-s1 held by CX-P5A (P5 A1 at 1k). Next: K01 live rerun per LIVE-round12.md (K01 aec5a715, offline ACCEPT
+  verify/K01 12a30d8: the G0 expected count now includes journal rows, 61,384 for the round 11 seed); then G03's slot run; then RT01 live
+  G2/G6 after round 4; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04. Contract 0.3.14 (CX-A01-0314) building with
+  INT-Q (accepted, verify/INT-Q c14cdfc9) and GS12F, compiling Q96 and Q97.
+- 2026-11-09 disk: free space fell to 4.8 GiB. Archived and removed 5 finished worktrees (p2x2, verify-p2x2, contract-0312, sql01,
+  verify-int-q; INDEX.txt in worktree-archive/), now 9.9 GiB free. Nine agent-* worktrees (about 22 GiB) are locked by this session's
+  agent tool and stay. runs/engines/datomic-build is 5.4 GiB and stays until EXP-DA04 no longer needs image rebuilds.
+- 2026-11-09 RT01 round A ACCEPT-OFFLINE (verify/RT01 7222e7e9; builder 472c2c24): F7 fixed, F1-F6 pass, explicit validAt filtering
+  intact (55 cuts), reader audit by stored data over 800 files. Open: N1 (low) journal-clock.test.ts:40 passes a nested basis that is
+  ignored; live G2/G6 (scale window, after the K01 smoke run); re-pins in contract 0.4.0 with O-REPLAY 0.5.0, Q89 (except Q89g, waiting
+  for Sam), Q90, Q92, Q95 (except S1-S4, waiting for Sam) and G03's pins. 0.4.0 starts after 0.3.14 is accepted and merged.
+- Repo-wide pack gate blocked by DuckDB TS4023 declaration errors (packages/duckdb effect-storage.ts:112, TypeDomains.ts:17), so
+  check-packages.mjs rejects the DuckDB tarball. DuckDB belongs to another team (SCOPE 4.3): do not edit it. Queued small task: give the
+  lab its own pack gate over lab-owned packages, which reports DuckDB's status separately as out of scope rather than hiding it.
+- 2026-11-09 disk rule: the triplex2 VM's disk image does not shrink when volumes are removed. `colima ssh -p triplex2 -- sudo fstrim -av`
+  returned 32.9 GiB (image 59 GiB to 26 GiB; host free 7.2 GiB to 40 GiB). Run it after any slot run that removes volumes, and whenever
+  host free space is below 15 GiB, then `docker context use colima` (memory: triplex2-docker-context). It is safe with containers running.
+- 2026-11-09 K01 round 13 (9b764517): typed catalog checks for tables the seed does not write; a diagnostic smoke run found two missing
+  imports (fixed offline); source restarts matched D/L, a fresh seed matched D'. CX-VK01 reviews; then the full live run. P5 A1 waits for
+  K01's native G0 handoff, then reruns (disk is no longer the constraint).
+- 2026-11-09 K01 round 13 ACCEPT-OFFLINE (verify/K01 88bce4f0; 511 tests; five smoke captures reproduce D/D'). Next in the scale window
+  after CX-RT01 releases xtdb-s1: the full K01 live run (LIVE runbook at 9b764517 plus the reviewer's tests), then P5 A1.
+- Queued small task (from K01 r13): lab/bin/*.mjs are not semantically type-checked, so an unbound name (sha256File) inside an unexecuted
+  branch passed 437 tests. Enable TypeScript checkJs over every lab/bin and lab/bench JavaScript file, triage the diagnostics, and fail
+  the lab check on unbound names.
+- 2026-11-09 R43 (critical path to the first PASS) adopted. First PASS candidate: NS.P3 on the broker log source (all-QLever(+log)
+  column; one closure also covers P2B's broker+XTDB column). Longest chain is the qualification machinery: R44 NS-run design, G03 rounds
+  5-7, G03 slot run, M01 A/A, A0 under PAIR-0, contract 0.4.1, calibration, prerequisite claims, three acceptance runs, verifier (about 12
+  rounds, about 16 slot hours). Orchestrator rulings Q99a-e pending; scale window reordered by Q99d: RT01 live (running), G03 slot run,
+  M01 A/A duet, OBS01, P3 screening, A0 under PAIR-0, calibration, acceptance; then K01 live, P5 A1, W02, DA04.
+- **Ask Sam first (both block every NS cell):** Q99-S1 the NS rung (largest W0 rung each composition fits on one slot; year-one reported
+  as a projection; NS.P5 scoped release stays at 100k), asked with Q94a; and the host half of Q60: may acceptance windows of 1 to 3 hours
+  pause his default colima VM (his Onboarded stack) and other heavy host jobs, since absolute bars count only in GREEN windows.
+- 2026-11-09 07:10Z goal check: all 10 agents writing (logs updated within the last minute); usage 8%; disk 29 GiB free. Gap against
+  Sam's goal ("continue all [three lanes] in parallel"): no lane D agent is running, since R43 ranked lane D off the critical path and
+  the Datomic dev slot is parked for pool memory. R43 ranks the queue, but Sam's goal keeps lane D active, so **the next free agent goes
+  to lane D**: EXP-DF01 offline (R41 E6: the gateway route GET /v1/db/{db}/log long-poll over d/tx-range, the position-to-t map per
+  Q89d, the Triplex stamp from the transaction annotation, FD01's host SQLite consumer store, resume across excision, restart resumes
+  from the log alone) built and tested against a fake report queue, with live dev-storage runs when the pool allows.
+- 2026-11-09 QNODELAY ACCEPT (verify/QNODELAY 1f59d223, scoped to R4-F1..F3; replay 120/240 vs 0/240; keep-alive default). Queued for a
+  default-off merge in the next contract after 0.3.14 (0.4.0). P5 round B (CX-P5B) starts on contract/0.3.14 with round A merged: host
+  store screening B0-B2 per R34 6, diagnostic; P5 A1 on native XTDB is demoted per R43.
+- 2026-11-09 EXP-CRNS built (2f299bfa; 145 tests incl. F1-F20 and both evaluator suites); CX-VCRNS reviewing. Queued for the next free
+  agent slot: the Opus review of CRNS's forgery list against R44 4.4, given the code and not R44's conclusions (R44 8.2 row R1).
+- 2026-11-09 CHECKJS round 2 (f72cd5ad): coverage inverted (371 checked roots, 78 justified exclusions, 116 generated outputs); one suite
+  test fails only because a comment-annotated pinned oracle helper needs re-pinning in the next contract. Queued: CX-VCHECKJS round 2
+  when a slot frees (off the critical path). Running now in its slot: the Opus forgery review of CRNS (lab/verify/CRNS-opus/).
+- 2026-11-09 M01 rebase ACCEPT (verify/M01-rebase 3a354133: 52/52, 216 paired comparisons unchanged, single-arm hard rule RED). Merges
+  default-off through contract 0.4.0. **Contract 0.4.0 queue:** RT01 round A (after live G2/G6), O-REPLAY 0.5.0, FD01, QNODELAY, M01
+  rebase, CHECKJS re-pins (three oracle helpers, comment-only), P3M when NSR lands, G03's isolation pins; compile Q89 (minus g), Q90,
+  Q92, Q95 (minus S), Q98a-i. Q99, Q100, Q101 stay pending until R43's 0.4.1. CX-G03 builds the V1-V7 VM probes now and runs them when
+  the exclusive slot frees.
+- 2026-11-09 CHECKJS ACCEPT (verify/CHECKJS d4b0caa9; coverage inverted; 78 exclusions audited). Joins the 0.4.0 queue with its
+  comment-only oracle re-pins. CX-PACK started: a lab-owned pack gate that reports the out-of-scope DuckDB package separately, and the cause
+  of the unbuilt-CLI pack failure seen by NSR and DF01.
+- 2026-11-09 contract 0.3.14 on main (1de3e640). EXP-QH1 is unblocked but waits for R45 (host store layout), because QH1 reads H1's
+  live_rows, which R45 may change; QH1 starts on the new layout. RT01 live G6 waits for host disk above 10 GiB (7.8 GiB now).
+- 2026-11-09 EXP-PACK merged (3d9dca59; verify/PACK d4a7d225): the lab pack gate lists packages from the pnpm workspace, imports every
+  public entry point in a fresh process, and reports DuckDB as out of scope. Builders and reviewers use it instead of check-packages.mjs.
+- 2026-11-09 disk rule addition: large stores in evidence that a report has already analyzed are compressed in place (tar | zstd, verified
+  with zstd -t and a hash of the main file after extraction, original hashes in ORIGINAL-SHA256SUMS.txt, a COMPRESSED.txt note), never
+  deleted. P5B's 10k store and seed (11.8 GB) became a 372 MB archive; host free went from 6.7 to 18 GiB. P2X2's node_modules copies were
+  archived the same way. Slot queue now: RT01 live G6 (running), then DF01 live on datomic-dev (DF01 ACCEPT-OFFLINE, verify/DF01
+  c98bbff8), then the M01 A/A calibration window, OBS01, P3 screening per Q99d.
+- NSR F2 moved from in-process loader guards to a filesystem boundary (round 4): the driver's runtime layout holds only the closed
+  artifact, enforced offline with Node's permission model.
+- 2026-11-09 R46 (P4 per-core from H1): today's QH1 design is 4-5x over the 909 us CPU budget per pull; one combination reaches the bar
+  with no commit cost (compact rows clustered by owner +5.2 B/fact, one worker op per pull in one read transaction, the answer built as
+  one text by SQLite and parsed once, lean decode): 1,140-1,720 pulls per CPU second, margin 1.04-1.56x. The read-side domain check
+  (assertValueInDomain, about 1 us per row) needs an exact fast path in core, shared by all lanes. A per-subject document reaches
+  3,100-4,000 but adds 0.91 ms to commit p50: fallback arm only. **EXP-QH1 starts after HS01 lands**, on the compact layout plus the owner
+  key, with R46 section 9's gates (decomposition G0, codec G4c, fixed CPU accounting). Rulings Q105a (per-core accounting), Q105b
+  (round-tripping doubles on serialized paths) pending. Note for HS01's reviewer: check the codec with Q105b's inputs.
+- 2026-11-09 NSR ACCEPT-OFFLINE (verify/NSR-r4 bd0555df; driver isolation by filesystem layout and Node's permission model; exact output
+  grant; minimal recorded environment). G03 round 5 (the NS runner, R44 B2) started on G03 + NSR 709a18f1. R43 chain now: G03 rounds 5-7,
+  then the G03 slot run, M01 A/A, OBS01 round 6, P3 screening, A0 under PAIR-0, contract 0.4.1, calibration, acceptance.

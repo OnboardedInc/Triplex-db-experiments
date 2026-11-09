@@ -1,0 +1,168 @@
+[
+  {
+    "label": "contract-tests-committed",
+    "head": "a317c52b608f98ce2c200e0a2bbd6d1694729e4c",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/contract-tests-committed-8ad1b7b3-acef-465f-a668-535695c1ac43/receipt.json",
+    "sha256": "96ef341f902083f68244eaccd9b14e17a80ade89548e7cff2c9f4b8580e479e2",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T05:50:28.067Z",
+    "end": "2026-11-09T05:50:28.637Z"
+  },
+  {
+    "label": "contract-tests-final",
+    "head": "df4881217056137dfba549359cdc7a5a492b2f77",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/contract-tests-final-20b2858a-3c86-4da3-9b42-2ac37289db8c/receipt.json",
+    "sha256": "b6f3a4f8ff247356252f60f214b1a522aba97678d4fcf40235162be504976b84",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T05:58:55.772Z",
+    "end": "2026-11-09T05:58:56.521Z"
+  },
+  {
+    "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/contract-tests-final-e0e4aa62-b5a5-4d31-90df-fb0bd0d2ef65",
+    "receipt": null,
+    "status": "preflight disk refusal; command did not start"
+  },
+  {
+    "label": "evaluator-committed",
+    "head": "a317c52b608f98ce2c200e0a2bbd6d1694729e4c",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/evaluator-committed-b974f792-08c9-4135-b8a3-0beb5cd7ea64/receipt.json",
+    "sha256": "c30fc30922d096ef96757dab30008a13d2e970dddafa792afd4254b632b4b7d0",
+    "result": {
+      "code": 1,
+      "signal": null
+    },
+    "sourceStillMatches": false,
+    "start": "2026-11-09T05:50:17.437Z",
+    "end": "2026-11-09T05:53:48.788Z"
+  },
+  {
+    "label": "evaluator",
+    "head": "6b6c8bc4b59e92711a5a7eace80f5c654b5fdc9e",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/evaluator-e129271c-3832-4dee-9d6d-24d9d9d24bae/receipt.json",
+    "sha256": "089a9f9bd35314ccd4320973d49617866fd15e96ee998a521b3c3ce17ba41749",
+    "result": {
+      "code": 1,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T05:48:42.198Z",
+    "end": "2026-11-09T05:49:35.058Z"
+  },
+  {
+    "label": "evaluator-final",
+    "head": "df4881217056137dfba549359cdc7a5a492b2f77",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/evaluator-final-9a856764-f9e4-4894-96c6-3e066a83e4ef/receipt.json",
+    "sha256": "4a36ace2893b1fb88f64c9c4d229b28a143150092942f7afb961ff545927fab4",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T05:58:53.866Z",
+    "end": "2026-11-09T06:01:51.272Z"
+  },
+  {
+    "label": "g0-datomic-final",
+    "head": "df4881217056137dfba549359cdc7a5a492b2f77",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/g0-datomic-final-9d1f2e60-9f15-414f-a4a3-10c86c3ff61c/receipt.json",
+    "sha256": "c91e9d5f7dbe97642401c04bfda202fc0e8efcbbcbf942feefb64bfc0571f0ed",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:00:35.063Z",
+    "end": "2026-11-09T06:01:55.886Z"
+  },
+  {
+    "label": "g0-qlever-final",
+    "head": "df4881217056137dfba549359cdc7a5a492b2f77",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/g0-qlever-final-e6d8fbdf-295f-4730-866f-6733073a5d7b/receipt.json",
+    "sha256": "d8cab0f1e5197c115872670e4bd949ea893592b17c0c397ed2e8ee22f3476662",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:03:11.999Z",
+    "end": "2026-11-09T06:05:20.068Z"
+  },
+  {
+    "label": "g0-xtdb",
+    "head": "a317c52b608f98ce2c200e0a2bbd6d1694729e4c",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/g0-xtdb-1a6a09ec-9dd7-48ab-b77b-1b87f0474c46/receipt.json",
+    "sha256": "96ef00998d7d3bbca1f6ba1d9cfc97a27aff81bb270e006202af0a0eb6e2e0d5",
+    "result": {
+      "code": 1,
+      "signal": null
+    },
+    "sourceStillMatches": false,
+    "start": "2026-11-09T05:49:50.154Z",
+    "end": "2026-11-09T05:53:45.568Z"
+  },
+  {
+    "label": "g0-xtdb-final",
+    "head": "df4881217056137dfba549359cdc7a5a492b2f77",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/g0-xtdb-final-2358612e-99c1-407e-9d05-3de044c82a5a/receipt.json",
+    "sha256": "ff404e927558a1a570f59bd08813a1b957c34af23328aa5336acf9980afc42b9",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T05:58:53.866Z",
+    "end": "2026-11-09T06:00:13.057Z"
+  },
+  {
+    "label": "mutations-final",
+    "head": "df4881217056137dfba549359cdc7a5a492b2f77",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/mutations-final-bfc10157-18ec-47e5-b236-14717b1c2a67/receipt.json",
+    "sha256": "4e96640c4f5962eeb96feceba48a2973299987412245e0e2eb4b421bb79d898c",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T05:58:53.866Z",
+    "end": "2026-11-09T06:04:03.079Z"
+  },
+  {
+    "label": "verify-committed",
+    "head": "a317c52b608f98ce2c200e0a2bbd6d1694729e4c",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/verify-committed-880c2802-07ca-47b6-bf5f-d6b5debcb1bc/receipt.json",
+    "sha256": "8aa127d79295ddbcabe96d5bb17c0028b5e64219e7e555f6cb6e6a2411e826f2",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T05:50:27.360Z",
+    "end": "2026-11-09T05:50:27.911Z"
+  },
+  {
+    "label": "verify-final",
+    "head": "df4881217056137dfba549359cdc7a5a492b2f77",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/verify-final-00337b5a-8f46-4f1e-b074-f8e7e7cb6a6f/receipt.json",
+    "sha256": "b6797d07b76e8a912ed49b905a9cee07559302972229d29e698a4a2ec48b0be9",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T05:58:55.013Z",
+    "end": "2026-11-09T05:58:55.633Z"
+  },
+  {
+    "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/verify-final-4dbba560-2942-445f-90bd-64d4f079971c",
+    "receipt": null,
+    "status": "preflight disk refusal; command did not start"
+  }
+]

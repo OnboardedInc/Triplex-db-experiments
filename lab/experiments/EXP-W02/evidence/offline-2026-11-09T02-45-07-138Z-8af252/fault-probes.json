@@ -1,0 +1,3493 @@
+{
+ "schedules": [
+  {
+   "classification": "OFFLINE-FAULT-MODEL",
+   "crash": "before-effect",
+   "events": [
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "before-effect",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "resumed",
+     "position": 5
+    },
+    {
+     "point": "before-effect",
+     "phase": "resumed",
+     "position": 5
+    },
+    {
+     "point": "after-effect-before-checkpoint",
+     "phase": "resumed",
+     "position": 6
+    },
+    {
+     "point": "after-checkpoint",
+     "phase": "resumed",
+     "position": 7
+    }
+   ],
+   "effects": 1,
+   "deliveryKeys": [
+    [
+     "wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9",
+     1
+    ]
+   ]
+  },
+  {
+   "classification": "OFFLINE-FAULT-MODEL",
+   "crash": "after-effect-before-checkpoint",
+   "events": [
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "before-effect",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "after-effect-before-checkpoint",
+     "phase": "first",
+     "position": 6
+    },
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "resumed",
+     "position": 6
+    },
+    {
+     "point": "before-effect",
+     "phase": "resumed",
+     "position": 6
+    },
+    {
+     "point": "after-effect-before-checkpoint",
+     "phase": "resumed",
+     "position": 7
+    },
+    {
+     "point": "after-checkpoint",
+     "phase": "resumed",
+     "position": 8
+    }
+   ],
+   "effects": 1,
+   "deliveryKeys": [
+    [
+     "wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9",
+     1
+    ]
+   ]
+  },
+  {
+   "classification": "OFFLINE-FAULT-MODEL",
+   "crash": "after-checkpoint",
+   "events": [
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "before-effect",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "after-effect-before-checkpoint",
+     "phase": "first",
+     "position": 6
+    },
+    {
+     "point": "after-checkpoint",
+     "phase": "first",
+     "position": 7
+    }
+   ],
+   "effects": 1,
+   "deliveryKeys": [
+    [
+     "wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9",
+     1
+    ]
+   ]
+  },
+  {
+   "classification": "OFFLINE-FAULT-MODEL",
+   "crash": "after-enqueue-before-delivery",
+   "events": [
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "first",
+     "position": 5
+    },
+    {
+     "point": "after-enqueue-before-delivery",
+     "phase": "resumed",
+     "position": 5
+    },
+    {
+     "point": "before-effect",
+     "phase": "resumed",
+     "position": 5
+    },
+    {
+     "point": "after-effect-before-checkpoint",
+     "phase": "resumed",
+     "position": 6
+    },
+    {
+     "point": "after-checkpoint",
+     "phase": "resumed",
+     "position": 7
+    }
+   ],
+   "effects": 1,
+   "deliveryKeys": [
+    [
+     "wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9",
+     1
+    ]
+   ]
+  },
+  {
+   "kind": "lost-ack",
+   "first": 1,
+   "resolved": 1,
+   "retry": "CommandAlreadyCommittedError"
+  },
+  {
+   "kind": "maintenance",
+   "events": [
+    {
+     "kind": "memory-index-rebuild",
+     "watermark": 1,
+     "assertions": 7
+    },
+    {
+     "kind": "memory-index-rebuild",
+     "watermark": 1,
+     "assertions": 7
+    },
+    {
+     "kind": "fallback",
+     "requested": 2,
+     "watermark": 1,
+     "waitedMs": 0
+    },
+    {
+     "kind": "memory-index-rebuild",
+     "watermark": 2,
+     "assertions": 8
+    }
+   ]
+  }
+ ],
+ "probes": [
+  {
+   "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+   "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336",
+   "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:0"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:0:6"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1850"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:1:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:1"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:outbox",
+       "attribute": "frame",
+       "value": {
+        "type": "string",
+        "value": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"position\":2,\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:2:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:2"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[],\"projection\":[]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:3:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:3"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "0"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:4:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:4"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:3:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:5:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:5"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:4:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "1"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:6:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:6"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "e5478c0c7434e76b31d5fe0aadfe579331aef6c7636ca5b277d38d5861715aa4"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "e5478c0c7434e76b31d5fe0aadfe579331aef6c7636ca5b277d38d5861715aa4"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 2,
+     "expected": 2,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "state:pl:p",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "domain:pl:p",
+     "ok": true,
+     "observed": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "expected": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000,
+      "inputSha256": "0b75f02f723ecff312b2e6b5283a29a1ac238ee9b51868258f9eaa416e61f4a6",
+      "oracleIdentity": "2678b4e6dceaf5fddea6d018f86d6bf1fa9538c0371c9a0f45df32fc6e0464ea"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "publication-content",
+     "ok": true,
+     "observed": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "expected": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "receiver-content",
+     "ok": true,
+     "observed": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "expected": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "exactly-once-visible-effects",
+     "ok": true,
+     "observed": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "expected": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "checkpoint-resumed",
+     "ok": true,
+     "observed": 1,
+     "expected": 1,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "4a210da112eddbfad3391aedc193b77a1d8a1201216f798940662c83dcde0cf4"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "4a210da112eddbfad3391aedc193b77a1d8a1201216f798940662c83dcde0cf4"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "4a210da112eddbfad3391aedc193b77a1d8a1201216f798940662c83dcde0cf4"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "4a210da112eddbfad3391aedc193b77a1d8a1201216f798940662c83dcde0cf4"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "4a210da112eddbfad3391aedc193b77a1d8a1201216f798940662c83dcde0cf4"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "4a210da112eddbfad3391aedc193b77a1d8a1201216f798940662c83dcde0cf4"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "4a210da112eddbfad3391aedc193b77a1d8a1201216f798940662c83dcde0cf4"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 7,
+     "expected": 7,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "state:gs:receiver",
+     "ok": true,
+     "observed": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "expected": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "aec2a1b9db0babdd26d84e71855bf5ddf385ecf2f3013c9e3c203ec74da6a31e"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "aec2a1b9db0babdd26d84e71855bf5ddf385ecf2f3013c9e3c203ec74da6a31e"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "aec2a1b9db0babdd26d84e71855bf5ddf385ecf2f3013c9e3c203ec74da6a31e"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "aec2a1b9db0babdd26d84e71855bf5ddf385ecf2f3013c9e3c203ec74da6a31e"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "aec2a1b9db0babdd26d84e71855bf5ddf385ecf2f3013c9e3c203ec74da6a31e"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "aec2a1b9db0babdd26d84e71855bf5ddf385ecf2f3013c9e3c203ec74da6a31e"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "aec2a1b9db0babdd26d84e71855bf5ddf385ecf2f3013c9e3c203ec74da6a31e"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 7,
+     "expected": 7,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "state:gs:consumer",
+     "ok": true,
+     "observed": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "expected": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "ac8252465857186b36917921e194a1b7ca0753924bc07fffeb0df3439aa8f5a3"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "ac8252465857186b36917921e194a1b7ca0753924bc07fffeb0df3439aa8f5a3"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "ac8252465857186b36917921e194a1b7ca0753924bc07fffeb0df3439aa8f5a3"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "ac8252465857186b36917921e194a1b7ca0753924bc07fffeb0df3439aa8f5a3"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "ac8252465857186b36917921e194a1b7ca0753924bc07fffeb0df3439aa8f5a3"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "ac8252465857186b36917921e194a1b7ca0753924bc07fffeb0df3439aa8f5a3"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "ac8252465857186b36917921e194a1b7ca0753924bc07fffeb0df3439aa8f5a3"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 7,
+     "expected": 7,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    },
+    {
+     "id": "state:gs:outbox",
+     "ok": true,
+     "observed": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "expected": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "a93e2959-345c-4937-8ae6-fd181eb1e27e",
+     "endpoint": "memory://ed913754-173f-4477-9cc9-d47a8a1c0336",
+     "scope": "ed913754-173f-4477-9cc9-d47a8a1c0336"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "e5478c0c7434e76b31d5fe0aadfe579331aef6c7636ca5b277d38d5861715aa4",
+     "caseId": "a93e2959-345c-4937-8ae6-fd181eb1e27e:0"
+    },
+    {
+     "caseSha256": "4a210da112eddbfad3391aedc193b77a1d8a1201216f798940662c83dcde0cf4",
+     "caseId": "a93e2959-345c-4937-8ae6-fd181eb1e27e:1"
+    },
+    {
+     "caseSha256": "aec2a1b9db0babdd26d84e71855bf5ddf385ecf2f3013c9e3c203ec74da6a31e",
+     "caseId": "a93e2959-345c-4937-8ae6-fd181eb1e27e:2"
+    },
+    {
+     "caseSha256": "ac8252465857186b36917921e194a1b7ca0753924bc07fffeb0df3439aa8f5a3",
+     "caseId": "a93e2959-345c-4937-8ae6-fd181eb1e27e:3"
+    }
+   ]
+  },
+  {
+   "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+   "scope": "98532d29-f3dc-404b-bd70-b798185c40a9",
+   "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:0"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:0:6"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1850"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:1:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:1"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:outbox",
+       "attribute": "frame",
+       "value": {
+        "type": "string",
+        "value": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"position\":2,\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:2:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:2"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[],\"projection\":[]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:3:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:3"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "0"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:4:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:4"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:3:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:5:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:5"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:5:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:6:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:6"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:4:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "1"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:7:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:7"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "75fb95096ba5c2763e503eb662f542ef8553103fcc8eea3fe36ff8fd4c96fe6b"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "75fb95096ba5c2763e503eb662f542ef8553103fcc8eea3fe36ff8fd4c96fe6b"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 2,
+     "expected": 2,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "state:pl:p",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "domain:pl:p",
+     "ok": true,
+     "observed": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "expected": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000,
+      "inputSha256": "0b75f02f723ecff312b2e6b5283a29a1ac238ee9b51868258f9eaa416e61f4a6",
+      "oracleIdentity": "2678b4e6dceaf5fddea6d018f86d6bf1fa9538c0371c9a0f45df32fc6e0464ea"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "publication-content",
+     "ok": true,
+     "observed": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "expected": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "receiver-content",
+     "ok": true,
+     "observed": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "expected": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "receiver-content",
+     "ok": true,
+     "observed": "{\"applied\":{\"effects\":[],\"projection\":[]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "expected": "{\"applied\":{\"effects\":[],\"projection\":[]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "exactly-once-visible-effects",
+     "ok": true,
+     "observed": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "expected": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "checkpoint-resumed",
+     "ok": true,
+     "observed": 1,
+     "expected": 1,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "cf95bc2b369ad1bf941b1e644f64c59af80b793023c69e8a8bebdaa3506066aa"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "cf95bc2b369ad1bf941b1e644f64c59af80b793023c69e8a8bebdaa3506066aa"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "cf95bc2b369ad1bf941b1e644f64c59af80b793023c69e8a8bebdaa3506066aa"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "cf95bc2b369ad1bf941b1e644f64c59af80b793023c69e8a8bebdaa3506066aa"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "cf95bc2b369ad1bf941b1e644f64c59af80b793023c69e8a8bebdaa3506066aa"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "cf95bc2b369ad1bf941b1e644f64c59af80b793023c69e8a8bebdaa3506066aa"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "cf95bc2b369ad1bf941b1e644f64c59af80b793023c69e8a8bebdaa3506066aa"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:7",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":8}",
+     "expected": "{\"outcome\":\"committed\",\"position\":8}",
+     "binding": {
+      "command": 7,
+      "caseSha256": "cf95bc2b369ad1bf941b1e644f64c59af80b793023c69e8a8bebdaa3506066aa"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 8,
+     "expected": 8,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "state:gs:receiver",
+     "ok": true,
+     "observed": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,7]]",
+     "expected": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,7]]",
+     "binding": {
+      "P": 8,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "0501205f204fa72c42faa8ca6ede4d0852b5eccbd61f4c938e41a60f497e03bd"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "0501205f204fa72c42faa8ca6ede4d0852b5eccbd61f4c938e41a60f497e03bd"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "0501205f204fa72c42faa8ca6ede4d0852b5eccbd61f4c938e41a60f497e03bd"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "0501205f204fa72c42faa8ca6ede4d0852b5eccbd61f4c938e41a60f497e03bd"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "0501205f204fa72c42faa8ca6ede4d0852b5eccbd61f4c938e41a60f497e03bd"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "0501205f204fa72c42faa8ca6ede4d0852b5eccbd61f4c938e41a60f497e03bd"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "0501205f204fa72c42faa8ca6ede4d0852b5eccbd61f4c938e41a60f497e03bd"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:7",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":8}",
+     "expected": "{\"outcome\":\"committed\",\"position\":8}",
+     "binding": {
+      "command": 7,
+      "caseSha256": "0501205f204fa72c42faa8ca6ede4d0852b5eccbd61f4c938e41a60f497e03bd"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 8,
+     "expected": 8,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "state:gs:consumer",
+     "ok": true,
+     "observed": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,8]]",
+     "expected": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,8]]",
+     "binding": {
+      "P": 8,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "08bc1b5a40bb589d0dd02e2a98b7ed14e1baf850ff4b3a1dc4034959fa3883cc"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "08bc1b5a40bb589d0dd02e2a98b7ed14e1baf850ff4b3a1dc4034959fa3883cc"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "08bc1b5a40bb589d0dd02e2a98b7ed14e1baf850ff4b3a1dc4034959fa3883cc"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "08bc1b5a40bb589d0dd02e2a98b7ed14e1baf850ff4b3a1dc4034959fa3883cc"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "08bc1b5a40bb589d0dd02e2a98b7ed14e1baf850ff4b3a1dc4034959fa3883cc"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "08bc1b5a40bb589d0dd02e2a98b7ed14e1baf850ff4b3a1dc4034959fa3883cc"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "08bc1b5a40bb589d0dd02e2a98b7ed14e1baf850ff4b3a1dc4034959fa3883cc"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "command-outcome:7",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":8}",
+     "expected": "{\"outcome\":\"committed\",\"position\":8}",
+     "binding": {
+      "command": 7,
+      "caseSha256": "08bc1b5a40bb589d0dd02e2a98b7ed14e1baf850ff4b3a1dc4034959fa3883cc"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 8,
+     "expected": 8,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    },
+    {
+     "id": "state:gs:outbox",
+     "ok": true,
+     "observed": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "expected": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "binding": {
+      "P": 8,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "d84800c6-cd69-41e5-a056-27b2c6d0df56",
+     "endpoint": "memory://98532d29-f3dc-404b-bd70-b798185c40a9",
+     "scope": "98532d29-f3dc-404b-bd70-b798185c40a9"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "75fb95096ba5c2763e503eb662f542ef8553103fcc8eea3fe36ff8fd4c96fe6b",
+     "caseId": "d84800c6-cd69-41e5-a056-27b2c6d0df56:0"
+    },
+    {
+     "caseSha256": "cf95bc2b369ad1bf941b1e644f64c59af80b793023c69e8a8bebdaa3506066aa",
+     "caseId": "d84800c6-cd69-41e5-a056-27b2c6d0df56:1"
+    },
+    {
+     "caseSha256": "0501205f204fa72c42faa8ca6ede4d0852b5eccbd61f4c938e41a60f497e03bd",
+     "caseId": "d84800c6-cd69-41e5-a056-27b2c6d0df56:2"
+    },
+    {
+     "caseSha256": "08bc1b5a40bb589d0dd02e2a98b7ed14e1baf850ff4b3a1dc4034959fa3883cc",
+     "caseId": "d84800c6-cd69-41e5-a056-27b2c6d0df56:3"
+    }
+   ]
+  },
+  {
+   "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+   "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+   "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:0"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:0:6"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1850"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:1:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:1"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:outbox",
+       "attribute": "frame",
+       "value": {
+        "type": "string",
+        "value": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"position\":2,\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:2:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:2"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[],\"projection\":[]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:3:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:3"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "0"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:4:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:4"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:3:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:5:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:5"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:4:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "1"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:6:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:6"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "8e591c099dc682e93acfcfc2ac01993c00ff45d6099d10634876673e20875f62"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "8e591c099dc682e93acfcfc2ac01993c00ff45d6099d10634876673e20875f62"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 2,
+     "expected": 2,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "state:pl:p",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "domain:pl:p",
+     "ok": true,
+     "observed": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "expected": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000,
+      "inputSha256": "0b75f02f723ecff312b2e6b5283a29a1ac238ee9b51868258f9eaa416e61f4a6",
+      "oracleIdentity": "2678b4e6dceaf5fddea6d018f86d6bf1fa9538c0371c9a0f45df32fc6e0464ea"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "publication-content",
+     "ok": true,
+     "observed": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "expected": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "receiver-content",
+     "ok": true,
+     "observed": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "expected": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "exactly-once-visible-effects",
+     "ok": true,
+     "observed": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "expected": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "checkpoint-resumed",
+     "ok": true,
+     "observed": 1,
+     "expected": 1,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "a0b000e27a5f3774efe52d98756b7eedfcf7031638cd83c411416546d094c72c"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "a0b000e27a5f3774efe52d98756b7eedfcf7031638cd83c411416546d094c72c"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "a0b000e27a5f3774efe52d98756b7eedfcf7031638cd83c411416546d094c72c"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "a0b000e27a5f3774efe52d98756b7eedfcf7031638cd83c411416546d094c72c"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "a0b000e27a5f3774efe52d98756b7eedfcf7031638cd83c411416546d094c72c"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "a0b000e27a5f3774efe52d98756b7eedfcf7031638cd83c411416546d094c72c"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "a0b000e27a5f3774efe52d98756b7eedfcf7031638cd83c411416546d094c72c"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 7,
+     "expected": 7,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "state:gs:receiver",
+     "ok": true,
+     "observed": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "expected": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "7fd2bf3bdcd8d2423b39e22e74663f5f54245de6a93ff51850c31677f549182d"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "7fd2bf3bdcd8d2423b39e22e74663f5f54245de6a93ff51850c31677f549182d"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "7fd2bf3bdcd8d2423b39e22e74663f5f54245de6a93ff51850c31677f549182d"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "7fd2bf3bdcd8d2423b39e22e74663f5f54245de6a93ff51850c31677f549182d"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "7fd2bf3bdcd8d2423b39e22e74663f5f54245de6a93ff51850c31677f549182d"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "7fd2bf3bdcd8d2423b39e22e74663f5f54245de6a93ff51850c31677f549182d"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "7fd2bf3bdcd8d2423b39e22e74663f5f54245de6a93ff51850c31677f549182d"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 7,
+     "expected": 7,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "state:gs:consumer",
+     "ok": true,
+     "observed": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "expected": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "7a4361b6590362e60a74f2884853b9f4cb1778e0d66ff1dccb84295722971f17"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "7a4361b6590362e60a74f2884853b9f4cb1778e0d66ff1dccb84295722971f17"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "7a4361b6590362e60a74f2884853b9f4cb1778e0d66ff1dccb84295722971f17"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "7a4361b6590362e60a74f2884853b9f4cb1778e0d66ff1dccb84295722971f17"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "7a4361b6590362e60a74f2884853b9f4cb1778e0d66ff1dccb84295722971f17"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "7a4361b6590362e60a74f2884853b9f4cb1778e0d66ff1dccb84295722971f17"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "7a4361b6590362e60a74f2884853b9f4cb1778e0d66ff1dccb84295722971f17"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 7,
+     "expected": 7,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    },
+    {
+     "id": "state:gs:outbox",
+     "ok": true,
+     "observed": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "expected": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "5f0a898c-b080-4c9a-b35c-c5973f8105a0",
+     "endpoint": "memory://6a1c0ed8-59c0-4bed-b77a-5651ac13c577",
+     "scope": "6a1c0ed8-59c0-4bed-b77a-5651ac13c577"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "8e591c099dc682e93acfcfc2ac01993c00ff45d6099d10634876673e20875f62",
+     "caseId": "5f0a898c-b080-4c9a-b35c-c5973f8105a0:0"
+    },
+    {
+     "caseSha256": "a0b000e27a5f3774efe52d98756b7eedfcf7031638cd83c411416546d094c72c",
+     "caseId": "5f0a898c-b080-4c9a-b35c-c5973f8105a0:1"
+    },
+    {
+     "caseSha256": "7fd2bf3bdcd8d2423b39e22e74663f5f54245de6a93ff51850c31677f549182d",
+     "caseId": "5f0a898c-b080-4c9a-b35c-c5973f8105a0:2"
+    },
+    {
+     "caseSha256": "7a4361b6590362e60a74f2884853b9f4cb1778e0d66ff1dccb84295722971f17",
+     "caseId": "5f0a898c-b080-4c9a-b35c-c5973f8105a0:3"
+    }
+   ]
+  },
+  {
+   "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+   "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+   "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:p",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:0"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:0:6"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1850"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:1:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:1"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:outbox",
+       "attribute": "frame",
+       "value": {
+        "type": "string",
+        "value": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"position\":2,\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:2:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:2"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[],\"projection\":[]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:3:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:3"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "0"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:4:0"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:4"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:3:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:receiver",
+       "attribute": "state",
+       "value": {
+        "type": "string",
+        "value": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:5:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:5"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:4:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "gs:consumer",
+       "attribute": "checkpoint",
+       "value": {
+        "type": "string",
+        "value": "1"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:6:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:6"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "98fc834a91c04c538e6fdda709be39a7a4b873283f304fc78e51dfa87a40b4ff"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "98fc834a91c04c538e6fdda709be39a7a4b873283f304fc78e51dfa87a40b4ff"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 2,
+     "expected": 2,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "state:pl:p",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:p\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:p\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:p\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:p\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:p\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "domain:pl:p",
+     "ok": true,
+     "observed": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "expected": "{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"dependencies\":[[\"jur:a\",\"stateMinWageCents\"],[\"loc:a\",\"jurisdiction\"],[\"pl:p\",\"baselinePayRateCents\"],[\"pl:p\",\"bgcStatus\"],[\"pl:p\",\"decisions\"],[\"pl:p\",\"documents\"],[\"pl:p\",\"everifyStatus\"],[\"pl:p\",\"everifyStatusAt\"],[\"pl:p\",\"everifySubmitResult\"],[\"pl:p\",\"location\"],[\"pl:p\",\"payRateCents\"],[\"pl:p\",\"section1AttestedAt\"],[\"pl:p\",\"ssn\"],[\"pl:p\",\"startDate\"],[\"pl:p\",\"weeklyMinutes\"]],\"flags\":[],\"obligations\":[{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn@due\",\"kind\":\"due\",\"rule\":\"EVSUB\"},{\"boundary\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2@due\",\"kind\":\"due\",\"rule\":\"I9S2\"}],\"release\":\"sha256:fd57551afda2da8e660685b587d1c2da6a2d18790ead2fb0762e69931d34b031\",\"subject\":\"pl:p\",\"tasks\":[{\"dueAt\":null,\"id\":\"pl:p#bgc.adjudicate\",\"kind\":\"bgc.adjudicate\",\"overdue\":false,\"rule\":\"BGC\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#everify.collect-ssn\",\"kind\":\"everify.collect-ssn\",\"overdue\":false,\"rule\":\"EVSUB\"},{\"dueAt\":\"2026-11-03T00:00:00.000000Z\",\"id\":\"pl:p#i9.section1\",\"kind\":\"i9.section1\",\"overdue\":true,\"rule\":\"I9S1\"},{\"dueAt\":\"2026-11-06T00:00:00.000000Z\",\"id\":\"pl:p#i9.section2\",\"kind\":\"i9.section2\",\"overdue\":false,\"rule\":\"I9S2\"},{\"dueAt\":\"2026-11-02T00:00:00.000000Z\",\"id\":\"pl:p#pay.below-minimum\",\"kind\":\"pay.below-minimum\",\"overdue\":true,\"rule\":\"MINWAGE\"}],\"trace\":[{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"LIFE\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"I9S1\"},{\"inputs\":[1],\"key\":\"\",\"row\":4,\"rule\":\"I9S2\"},{\"inputs\":[1],\"key\":\"\",\"row\":2,\"rule\":\"EVSUB\"},{\"inputs\":[],\"key\":\"\",\"row\":1,\"rule\":\"EVSTAT\"},{\"inputs\":[1],\"key\":\"\",\"row\":5,\"rule\":\"BGC\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"DOCEXP\"},{\"inputs\":[1,2],\"key\":\"\",\"row\":5,\"rule\":\"MINWAGE\"},{\"inputs\":[1],\"key\":\"\",\"row\":3,\"rule\":\"OT\"},{\"inputs\":[1],\"key\":\"\",\"row\":1,\"rule\":\"PAYCHG\"},{\"inputs\":[],\"key\":\"\",\"row\":0,\"rule\":\"PROP\"}],\"workItems\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"inputs\":[1,2],\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]}",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000,
+      "inputSha256": "0b75f02f723ecff312b2e6b5283a29a1ac238ee9b51868258f9eaa416e61f4a6",
+      "oracleIdentity": "2678b4e6dceaf5fddea6d018f86d6bf1fa9538c0371c9a0f45df32fc6e0464ea"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "publication-content",
+     "ok": true,
+     "observed": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "expected": "{\"deliveries\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"state\":{\"items\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"retired\":false,\"seq\":1,\"subject\":\"pl:p\"}],\"pending\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"subjects\":[{\"basis\":{\"tx\":2,\"validTime\":\"2026-11-04T12:00:00.000000Z\"},\"subject\":\"pl:p\"}]}}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "receiver-content",
+     "ok": true,
+     "observed": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "expected": "{\"applied\":{\"effects\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"key\":\"\",\"kind\":\"notify.pay-below-minimum\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"rule\":\"MINWAGE\",\"seq\":1,\"subject\":\"pl:p\",\"version\":\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\"}]},\"state\":{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "exactly-once-visible-effects",
+     "ok": true,
+     "observed": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "expected": "{\"effects\":[{\"done\":1,\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"waiting\":[]}],\"projection\":[{\"id\":\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\",\"payload\":{\"floorCents\":1850,\"payRateCents\":1650},\"seq\":1}]}",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "checkpoint-resumed",
+     "ok": true,
+     "observed": 1,
+     "expected": 1,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "66628adaa8eca0cc27df3f1bc91a469b8c2f84deb464cd64558cc89a757b0292"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "66628adaa8eca0cc27df3f1bc91a469b8c2f84deb464cd64558cc89a757b0292"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "66628adaa8eca0cc27df3f1bc91a469b8c2f84deb464cd64558cc89a757b0292"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "66628adaa8eca0cc27df3f1bc91a469b8c2f84deb464cd64558cc89a757b0292"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "66628adaa8eca0cc27df3f1bc91a469b8c2f84deb464cd64558cc89a757b0292"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "66628adaa8eca0cc27df3f1bc91a469b8c2f84deb464cd64558cc89a757b0292"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "66628adaa8eca0cc27df3f1bc91a469b8c2f84deb464cd64558cc89a757b0292"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 7,
+     "expected": 7,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "state:gs:receiver",
+     "ok": true,
+     "observed": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "expected": "[[\"gs:receiver\",\"state\",{\"type\":\"string\",\"value\":\"{\\\"effects\\\":[{\\\"done\\\":1,\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"waiting\\\":[]}],\\\"projection\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"seq\\\":1}]}\"},1793793600000,null,6]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "01bf1b47b73239c49469cf4b295d903288e1fade08eda647d3ea57a4e8c83283"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "01bf1b47b73239c49469cf4b295d903288e1fade08eda647d3ea57a4e8c83283"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "01bf1b47b73239c49469cf4b295d903288e1fade08eda647d3ea57a4e8c83283"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "01bf1b47b73239c49469cf4b295d903288e1fade08eda647d3ea57a4e8c83283"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "01bf1b47b73239c49469cf4b295d903288e1fade08eda647d3ea57a4e8c83283"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "01bf1b47b73239c49469cf4b295d903288e1fade08eda647d3ea57a4e8c83283"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "01bf1b47b73239c49469cf4b295d903288e1fade08eda647d3ea57a4e8c83283"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 7,
+     "expected": 7,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "state:gs:consumer",
+     "ok": true,
+     "observed": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "expected": "[[\"gs:consumer\",\"checkpoint\",{\"type\":\"string\",\"value\":\"1\"},1793793600000,null,7]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "70799ee866cf76551050075d8cbd89cd6bcf66ac7a76e845f874beab6c3b7680"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "70799ee866cf76551050075d8cbd89cd6bcf66ac7a76e845f874beab6c3b7680"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:2",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":3}",
+     "expected": "{\"outcome\":\"committed\",\"position\":3}",
+     "binding": {
+      "command": 2,
+      "caseSha256": "70799ee866cf76551050075d8cbd89cd6bcf66ac7a76e845f874beab6c3b7680"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:3",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":4}",
+     "expected": "{\"outcome\":\"committed\",\"position\":4}",
+     "binding": {
+      "command": 3,
+      "caseSha256": "70799ee866cf76551050075d8cbd89cd6bcf66ac7a76e845f874beab6c3b7680"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:4",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":5}",
+     "expected": "{\"outcome\":\"committed\",\"position\":5}",
+     "binding": {
+      "command": 4,
+      "caseSha256": "70799ee866cf76551050075d8cbd89cd6bcf66ac7a76e845f874beab6c3b7680"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:5",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":6}",
+     "expected": "{\"outcome\":\"committed\",\"position\":6}",
+     "binding": {
+      "command": 5,
+      "caseSha256": "70799ee866cf76551050075d8cbd89cd6bcf66ac7a76e845f874beab6c3b7680"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "command-outcome:6",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":7}",
+     "expected": "{\"outcome\":\"committed\",\"position\":7}",
+     "binding": {
+      "command": 6,
+      "caseSha256": "70799ee866cf76551050075d8cbd89cd6bcf66ac7a76e845f874beab6c3b7680"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 7,
+     "expected": 7,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    },
+    {
+     "id": "state:gs:outbox",
+     "ok": true,
+     "observed": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "expected": "[[\"gs:outbox\",\"frame\",{\"type\":\"string\",\"value\":\"{\\\"deliveries\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"position\\\":2,\\\"state\\\":{\\\"items\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"retired\\\":false,\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\"}],\\\"pending\\\":[{\\\"id\\\":\\\"wi:0386c2364212b068abe86e4685fae5270ea5b55ec05a19299f54baa4435a6fb9\\\",\\\"key\\\":\\\"\\\",\\\"kind\\\":\\\"notify.pay-below-minimum\\\",\\\"payload\\\":{\\\"floorCents\\\":1850,\\\"payRateCents\\\":1650},\\\"rule\\\":\\\"MINWAGE\\\",\\\"seq\\\":1,\\\"subject\\\":\\\"pl:p\\\",\\\"version\\\":\\\"wv:bdb1627233ea85742a3cde19bd7a374d4b15d5249ad0c04725b10b59c30ba33f\\\"}],\\\"subjects\\\":[{\\\"basis\\\":{\\\"tx\\\":2,\\\"validTime\\\":\\\"2026-11-04T12:00:00.000000Z\\\"},\\\"subject\\\":\\\"pl:p\\\"}]}}\"},1793793600000,null,3]]",
+     "binding": {
+      "P": 7,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3",
+     "endpoint": "memory://be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43",
+     "scope": "be5d0ba9-1b9a-4e5a-bd0f-de088bc1bf43"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "98fc834a91c04c538e6fdda709be39a7a4b873283f304fc78e51dfa87a40b4ff",
+     "caseId": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3:0"
+    },
+    {
+     "caseSha256": "66628adaa8eca0cc27df3f1bc91a469b8c2f84deb464cd64558cc89a757b0292",
+     "caseId": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3:1"
+    },
+    {
+     "caseSha256": "01bf1b47b73239c49469cf4b295d903288e1fade08eda647d3ea57a4e8c83283",
+     "caseId": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3:2"
+    },
+    {
+     "caseSha256": "70799ee866cf76551050075d8cbd89cd6bcf66ac7a76e845f874beab6c3b7680",
+     "caseId": "ca322e44-5af1-4006-ba1e-c91b1f8f35d3:3"
+    }
+   ]
+  },
+  {
+   "attempt": "98431bec-09f5-4a4b-907d-2596e44de7ad",
+   "scope": "3c3fce3b-c873-4dee-a036-4fbacbf11a06",
+   "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "lost-ack"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "lost-ack-original-tx",
+     "ok": true,
+     "observed": "_tx/mem1",
+     "expected": "_tx/mem1",
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "98431bec-09f5-4a4b-907d-2596e44de7ad",
+     "endpoint": "memory://3c3fce3b-c873-4dee-a036-4fbacbf11a06",
+     "scope": "3c3fce3b-c873-4dee-a036-4fbacbf11a06"
+    },
+    {
+     "id": "lost-ack-original-position",
+     "ok": true,
+     "observed": 1,
+     "expected": 1,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "98431bec-09f5-4a4b-907d-2596e44de7ad",
+     "endpoint": "memory://3c3fce3b-c873-4dee-a036-4fbacbf11a06",
+     "scope": "3c3fce3b-c873-4dee-a036-4fbacbf11a06"
+    },
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "18c4e8695188e842b34accde160e8183872dcf1779fd74ee66f2f5dc71331e65"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "98431bec-09f5-4a4b-907d-2596e44de7ad",
+     "endpoint": "memory://3c3fce3b-c873-4dee-a036-4fbacbf11a06",
+     "scope": "3c3fce3b-c873-4dee-a036-4fbacbf11a06"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 1,
+     "expected": 1,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "98431bec-09f5-4a4b-907d-2596e44de7ad",
+     "endpoint": "memory://3c3fce3b-c873-4dee-a036-4fbacbf11a06",
+     "scope": "3c3fce3b-c873-4dee-a036-4fbacbf11a06"
+    },
+    {
+     "id": "state:pl:a",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1500\"},1793793600000,null,1],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:a\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:a\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:a\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:a\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:a\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1500\"},1793793600000,null,1],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:a\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:a\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:a\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1650\"},1793793600000,null,1],[\"pl:a\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:a\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 1,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "98431bec-09f5-4a4b-907d-2596e44de7ad",
+     "endpoint": "memory://3c3fce3b-c873-4dee-a036-4fbacbf11a06",
+     "scope": "3c3fce3b-c873-4dee-a036-4fbacbf11a06"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "18c4e8695188e842b34accde160e8183872dcf1779fd74ee66f2f5dc71331e65",
+     "caseId": "98431bec-09f5-4a4b-907d-2596e44de7ad:0"
+    }
+   ]
+  },
+  {
+   "attempt": "1f002f43-8a8a-4249-9997-eaf94bb91f90",
+   "scope": "2f79309d-615e-45fb-af0a-3bffbaa0fd28",
+   "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+   "commands": [
+    {
+     "operations": [
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "startDate",
+       "value": {
+        "type": "string",
+        "value": "2026-11-02"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:0"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "location",
+       "value": {
+        "type": "ref",
+        "value": "loc:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:1"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1650"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "weeklyMinutes",
+       "value": {
+        "type": "integer",
+        "value": "2400"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:3"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "bgcStatus",
+       "value": {
+        "type": "string",
+        "value": "consider"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:4"
+      },
+      {
+       "op": "assert",
+       "entityId": "loc:a",
+       "attribute": "jurisdiction",
+       "value": {
+        "type": "ref",
+        "value": "jur:a"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:5"
+      },
+      {
+       "op": "assert",
+       "entityId": "jur:a",
+       "attribute": "stateMinWageCents",
+       "value": {
+        "type": "integer",
+        "value": "1500"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:0:6"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:0"
+     }
+    },
+    {
+     "operations": [
+      {
+       "op": "retract",
+       "target": "a:0:2"
+      },
+      {
+       "op": "assert",
+       "entityId": "pl:a",
+       "attribute": "payRateCents",
+       "value": {
+        "type": "integer",
+        "value": "1850"
+       },
+       "validFrom": 1793793600000,
+       "ref": "a:1:1"
+      }
+     ],
+     "meta": {
+      "actor": "gs-probe",
+      "commandId": "probe:1"
+     }
+    }
+   ],
+   "checks": [
+    {
+     "id": "command-outcome:0",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":1}",
+     "expected": "{\"outcome\":\"committed\",\"position\":1}",
+     "binding": {
+      "command": 0,
+      "caseSha256": "083aeec394484f50b0546c8a33ad7e045ea685c5276bd420f78d3ad81d05c2bb"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "1f002f43-8a8a-4249-9997-eaf94bb91f90",
+     "endpoint": "memory://2f79309d-615e-45fb-af0a-3bffbaa0fd28",
+     "scope": "2f79309d-615e-45fb-af0a-3bffbaa0fd28"
+    },
+    {
+     "id": "command-outcome:1",
+     "ok": true,
+     "observed": "{\"outcome\":\"committed\",\"position\":2}",
+     "expected": "{\"outcome\":\"committed\",\"position\":2}",
+     "binding": {
+      "command": 1,
+      "caseSha256": "083aeec394484f50b0546c8a33ad7e045ea685c5276bd420f78d3ad81d05c2bb"
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "1f002f43-8a8a-4249-9997-eaf94bb91f90",
+     "endpoint": "memory://2f79309d-615e-45fb-af0a-3bffbaa0fd28",
+     "scope": "2f79309d-615e-45fb-af0a-3bffbaa0fd28"
+    },
+    {
+     "id": "unique-receipt-txIds",
+     "ok": true,
+     "observed": 2,
+     "expected": 2,
+     "binding": {},
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "1f002f43-8a8a-4249-9997-eaf94bb91f90",
+     "endpoint": "memory://2f79309d-615e-45fb-af0a-3bffbaa0fd28",
+     "scope": "2f79309d-615e-45fb-af0a-3bffbaa0fd28"
+    },
+    {
+     "id": "state:pl:a",
+     "ok": true,
+     "observed": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1500\"},1793793600000,null,1],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:a\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:a\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:a\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"pl:a\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:a\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "expected": "[[\"jur:a\",\"stateMinWageCents\",{\"type\":\"integer\",\"value\":\"1500\"},1793793600000,null,1],[\"loc:a\",\"jurisdiction\",{\"type\":\"ref\",\"value\":\"jur:a\"},1793793600000,null,1],[\"pl:a\",\"bgcStatus\",{\"type\":\"string\",\"value\":\"consider\"},1793793600000,null,1],[\"pl:a\",\"location\",{\"type\":\"ref\",\"value\":\"loc:a\"},1793793600000,null,1],[\"pl:a\",\"payRateCents\",{\"type\":\"integer\",\"value\":\"1850\"},1793793600000,null,2],[\"pl:a\",\"startDate\",{\"type\":\"string\",\"value\":\"2026-11-02\"},1793793600000,null,1],[\"pl:a\",\"weeklyMinutes\",{\"type\":\"integer\",\"value\":\"2400\"},1793793600000,null,1]]",
+     "binding": {
+      "P": 2,
+      "V": 1793793600000
+     },
+     "sourceSha256": "3bb8c5bef01a3c1d6f749792207033305ea9a0b2a7b066bb85c7c2303e11ac99",
+     "attempt": "1f002f43-8a8a-4249-9997-eaf94bb91f90",
+     "endpoint": "memory://2f79309d-615e-45fb-af0a-3bffbaa0fd28",
+     "scope": "2f79309d-615e-45fb-af0a-3bffbaa0fd28"
+    }
+   ],
+   "oracleCases": [
+    {
+     "caseSha256": "083aeec394484f50b0546c8a33ad7e045ea685c5276bd420f78d3ad81d05c2bb",
+     "caseId": "1f002f43-8a8a-4249-9997-eaf94bb91f90:0"
+    }
+   ]
+  }
+ ]
+}

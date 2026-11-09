@@ -1,0 +1,193 @@
+TAP version 13
+# Subtest: pool admits the two dev engines when only they run
+ok 1 - pool admits the two dev engines when only they run
+  ---
+  duration_ms: 0.684083
+  type: 'test'
+  ...
+# Subtest: pool counts external research probes and refuses with their names
+ok 2 - pool counts external research probes and refuses with their names
+  ---
+  duration_ms: 0.475541
+  type: 'test'
+  ...
+# Subtest: an uncapped external container counts as the whole VM (fail closed)
+ok 3 - an uncapped external container counts as the whole VM (fail closed)
+  ---
+  duration_ms: 0.067
+  type: 'test'
+  ...
+# Subtest: a reserved container counts once even while it also runs
+ok 4 - a reserved container counts once even while it also runs
+  ---
+  duration_ms: 0.062708
+  type: 'test'
+  ...
+# Subtest: disk forecast refuses past the 50 GiB used limit
+ok 5 - disk forecast refuses past the 50 GiB used limit
+  ---
+  duration_ms: 0.117916
+  type: 'test'
+  ...
+# Subtest: slotInfo rejects forbidden and probe ports and names containers and volumes
+ok 6 - slotInfo rejects forbidden and probe ports and names containers and volumes
+  ---
+  duration_ms: 0.347584
+  type: 'test'
+  ...
+# Subtest: withDirLock serializes and breaks a lock whose owner pid is dead
+ok 7 - withDirLock serializes and breaks a lock whose owner pid is dead
+  ---
+  duration_ms: 225.073375
+  type: 'test'
+  ...
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] waiting for pool lock (held by pid 39622)
+# [lab] heavy: waiting for one of 2 slots; held by pid 39512 "a", pid 39512 "b"
+# Subtest: withPool read-modify-writes the ledger atomically across processes
+ok 8 - withPool read-modify-writes the ledger atomically across processes
+  ---
+  duration_ms: 582.614708
+  type: 'test'
+  ...
+# Subtest: reconcile drops only reservations with no container and a dead reserving pid
+ok 9 - reconcile drops only reservations with no container and a dead reserving pid
+  ---
+  duration_ms: 0.833125
+  type: 'test'
+  ...
+# Subtest: heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+ok 10 - heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+  ---
+  duration_ms: 120.272708
+  type: 'test'
+  ...
+# Subtest: object store is content addressed and refuses dependency caches and secret-like names
+ok 11 - object store is content addressed and refuses dependency caches and secret-like names
+  ---
+  duration_ms: 1.793833
+  type: 'test'
+  ...
+# Subtest: language classification: pure XTQL, pure SQL, hybrid, strict substeps
+ok 12 - language classification: pure XTQL, pure SQL, hybrid, strict substeps
+  ---
+  duration_ms: 0.305917
+  type: 'test'
+  ...
+# Subtest: verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+ok 13 - verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+  ---
+  duration_ms: 0.192208
+  type: 'test'
+  ...
+# Subtest: caseLanguages lists every substep language in order
+ok 14 - caseLanguages lists every substep language in order
+  ---
+  duration_ms: 0.182084
+  type: 'test'
+  ...
+# Subtest: contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+ok 15 - contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+  ---
+  duration_ms: 1.470834
+  type: 'test'
+  ...
+# Subtest: second-writer guard refuses a second container on a slot volume unless its config is read-only
+ok 16 - second-writer guard refuses a second container on a slot volume unless its config is read-only
+  ---
+  duration_ms: 0.648375
+  type: 'test'
+  ...
+# Subtest: second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+ok 17 - second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+  ---
+  duration_ms: 0.238
+  type: 'test'
+  ...
+# Subtest: follower config must be read-only and read the writer's own log and storage paths
+ok 18 - follower config must be read-only and read the writer's own log and storage paths
+  ---
+  duration_ms: 0.346875
+  type: 'test'
+  ...
+# Subtest: follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+ok 19 - follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+  ---
+  duration_ms: 4.251166
+  type: 'test'
+  ...
+# Subtest: cpusets parse against the VM and unpinned containers overlap everything
+ok 20 - cpusets parse against the VM and unpinned containers overlap everything
+  ---
+  duration_ms: 0.179
+  type: 'test'
+  ...
+# Subtest: queued writer waits for replacement runtime after a restart
+ok 21 - queued writer waits for replacement runtime after a restart
+  ---
+  duration_ms: 2.84175
+  type: 'test'
+  ...
+# Subtest: missing assertion reference is blocked and never submitted to the engine
+ok 22 - missing assertion reference is blocked and never submitted to the engine
+  ---
+  duration_ms: 1.210583
+  type: 'test'
+  ...
+# Subtest: generic I/O errors do not assert engine timeout or semantic success
+ok 23 - generic I/O errors do not assert engine timeout or semantic success
+  ---
+  duration_ms: 0.384709
+  type: 'test'
+  ...
+# Subtest: CS-GS has exactly the contract denominator with 40 nonempty witness selectors
+ok 24 - CS-GS has exactly the contract denominator with 40 nonempty witness selectors
+  ---
+  duration_ms: 19.374625
+  type: 'test'
+  ...
+# Subtest: all 20 streams are deterministic, W0 vocabulary only, and include a complete burst
+ok 25 - all 20 streams are deterministic, W0 vocabulary only, and include a complete burst
+  ---
+  duration_ms: 1113.433375
+  type: 'test'
+  ...
+# Subtest: short or nonfinite windows cannot silently remove the burst
+ok 26 - short or nonfinite windows cannot silently remove the burst
+  ---
+  duration_ms: 0.384083
+  type: 'test'
+  ...
+# Subtest: all four domain operations execute independent case bytes
+ok 27 - all four domain operations execute independent case bytes
+  ---
+  duration_ms: 324.276667
+  type: 'test'
+  ...
+# Subtest: domain claim rejects prose, wrong content, stale run and missing named claim coverage
+ok 28 - domain claim rejects prose, wrong content, stale run and missing named claim coverage
+  ---
+  duration_ms: 159.223125
+  type: 'test'
+  ...
+# Subtest: qualification refuses legacy world, old contract and delta-only QLever
+ok 29 - qualification refuses legacy world, old contract and delta-only QLever
+  ---
+  duration_ms: 0.245333
+  type: 'test'
+  ...
+# Subtest: QLever broker path is explicit, owned and selected
+ok 30 - QLever broker path is explicit, owned and selected
+  ---
+  duration_ms: 0.616916
+  type: 'test'
+  ...
+1..30
+# tests 30
+# suites 0
+# pass 30
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1922.071125

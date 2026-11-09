@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "integerPattern": "(0|-?[1-9][0-9]*)",
+  "longMin": "-9223372036854775808",
+  "longMax": "9223372036854775807",
+  "decimalPattern": "-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?",
+  "scaleMin": "-2147483648",
+  "scaleMax": "2147483647",
+  "exponentMin": "-2147483647",
+  "exponentMax": "2147483648",
+  "keywordPattern": ":[^\\u0009-\\u000d \\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff:/]+(/[^\\u0009-\\u000d \\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff:/]+)?",
+  "uuidPattern": "[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}",
+  "representations": {
+    "long": "canonical signed int64 decimal text",
+    "ref": "canonical signed int64 decimal text",
+    "instant": "canonical signed int64 epoch milliseconds text",
+    "bigint": "canonical unbounded signed decimal integer text",
+    "bigdec": "decimal text; exact coefficient and signed int32 scale = fractional digits minus exponent; bounded JVM exponent parser",
+    "double": "finite IEEE754 binary64 JSON number; preserve negative zero",
+    "string": "JSON string",
+    "keyword": "colon-prefixed namespace/name text matching keywordPattern",
+    "uuid": "hyphenated hexadecimal UUID text matching uuidPattern",
+    "bool": "JSON boolean"
+  }
+}

@@ -270,3 +270,35 @@ test('cpusets parse against the VM and unpinned containers overlap everything', 
   assert.deepEqual(lib.cpusetOverlap('0,1', '1-2', 6), [1]);
   assert.deepEqual(lib.cpusetOverlap('0,1', null, 6), [0, 1]);
 });
+
+// [EXP-DA00] Why: adding a lane must not silently recreate X/Q residents. Rejected: shape-only config assertions (miss byte hash drift).
+test('Datomic addition leaves every existing slot effective-config hash unchanged', async () => {
+  const { effectiveConfig } = await import('../engine.mjs');
+  const expected = {
+    xtdb: ['034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac', '13f5a70b36655b51fdf6daca77cc8bc215c4ef8bc044569867500fb286458927', '2f8c2b72780491e138480dc2505669ace09bb0b018c200d9f7d0460d8b8b5ec0', 'a714f64039f0a5dc69dd1c4ff0160ec8027016fc1fcf595986714b527c9cd96b'],
+    qlever: ['c10589d0cdd0e69b45bed28702540377efa735a7f511dbedd82b4de42bd342e6', '44b08fad7eebf4a958742f832f3cc3c2035f39ea2a0ef9d3aa141aa3e697555a', '2d7cce7d2425fc67ab48b3d7136f31786f255f447ae8a89f9faed86060b4372f', '3c97a4d5102d5bb72b4345eafb3025e2312ba9b49c35bd934750bcf895bd08ba'],
+  };
+  for (const lane of ['xtdb', 'qlever']) for (const [i, slot] of ['dev', 's1', 's2', 's3'].entries())
+    assert.equal(effectiveConfig(config, lib.slotInfo(config, lane, slot)).sha256, expected[lane][i]);
+});
+test('Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist with an exclusive slot', async () => {
+  const { effectiveConfig } = await import('../engine.mjs');
+  const info = lib.slotInfo(config, 'datomic', 'dev');
+  assert.equal(info.parkable, true);
+  assert.equal(info.memBytes, 2.75 * GiB);
+  assert.equal(info.port, 8470);
+  assert.equal(info.cpusetCpus, '0,1');
+  const effective = effectiveConfig(config, info).effective;
+  assert.equal(effective.configMountMode, 'ro');
+  assert.match(effective.transactorOpts, /-Xmx640m/);
+  assert.match(effective.gatewayOpts, /-Xmx1g/);
+  assert.deepEqual(lib.cpusetOverlap(effective.txCpus, effective.gwCpus, config.vm.cpus), []);
+  const bad = { ...info, gwCpus: '0' };
+  assert.throws(() => effectiveConfig(config, bad), /overlap/);
+  const reservations = ['xtdb', 'qlever', 'datomic'].map(lane => {
+    const s = lib.slotInfo(config, lane, 'dev'); return { container: s.container, memBytes: s.memBytes, diskForecastBytes: 0 };
+  });
+  const verdict = lib.admission({ config, reservations, running: [], request: { container: 'tx2-xtdb-s1', memBytes: 3.5 * GiB, diskForecastBytes: 0 }, diskUsedBytes: 0 });
+  assert.equal(verdict.ok, false);
+  assert.match(verdict.reasons.join(' '), /memory/);
+});

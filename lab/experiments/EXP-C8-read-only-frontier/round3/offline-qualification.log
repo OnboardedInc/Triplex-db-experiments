@@ -1,0 +1,12 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a7aa958fb271ddb16/packages/qualification
+
+
+ Test Files  4 passed | 2 skipped (6)
+      Tests  92 passed | 50 skipped (142)
+   Start at  16:53:43
+   Duration  2.78s (import 56%, tests 30%, transform 13%, worker 1%)
+
+    Isolate  6 workers spawned · ~79ms startup each (spawn + environment, per file)
+             at least ~394ms faster with isolate: false — reuses workers across files instead of one per file
+

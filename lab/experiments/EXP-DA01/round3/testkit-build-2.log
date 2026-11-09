@@ -1,0 +1,25 @@
+
+> @triplex-build/triplex-testkit@0.2.0 build /Users/sam/projects/triplex-db-2/.claude/worktrees/da01/packages/testkit
+> tsdown
+
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/da01/packages/testkit/tsdown.config.ts 
+ℹ entry: src/index.ts, src/routeEquivalence.ts, src/routeHistory.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ Cleaning 8 files
+ℹ dist/index.js                    87.58 kB │ gzip: 16.13 kB
+ℹ dist/routeEquivalence.js          2.44 kB │ gzip:  0.99 kB
+ℹ dist/routeHistory.js              2.16 kB │ gzip:  0.94 kB
+ℹ dist/index.js.map               157.59 kB │ gzip: 27.54 kB
+ℹ dist/routeEquivalence.js.map      5.29 kB │ gzip:  1.96 kB
+ℹ dist/routeHistory.js.map          5.05 kB │ gzip:  1.94 kB
+ℹ dist/index.d.ts.map               0.84 kB │ gzip:  0.35 kB
+ℹ dist/routeEquivalence.d.ts.map    0.59 kB │ gzip:  0.28 kB
+ℹ dist/routeHistory.d.ts.map        0.52 kB │ gzip:  0.25 kB
+ℹ dist/index.d.ts                   2.63 kB │ gzip:  0.96 kB
+ℹ dist/routeHistory.d.ts            1.13 kB │ gzip:  0.43 kB
+ℹ dist/routeEquivalence.d.ts        0.98 kB │ gzip:  0.39 kB
+ℹ 12 files, total: 266.79 kB
+✔ Build complete in 1114ms

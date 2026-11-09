@@ -1,0 +1,18 @@
+{
+  "path": "lab/config/g0-expected-skips.json",
+  "beforeSha256": "4cbd2872b261cbc02ae1cab5f03d33f3c3096b75a8abbe6b1ad3f743beb745f2",
+  "afterSha256": "64f74ee9a77fc3b336f6236428335b789f1c2bceded36ddb88efa2b74c007348",
+  "added": [
+    "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) lets exactly one of two racing commands with the same id commit, for every tricky id",
+    "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) rejects an existing assertion id and an existing operation as a definite identity conflict",
+    "packages/xtdb/test/commit-encoding.test.ts :: XTDB compact commit guards against the engine (EXP-J01) refuses a stale source cut as a serialization conflict"
+  ],
+  "reason": "live test; runs in G1 against the shared dev residents (J01, INT-XCJ)",
+  "countsChange": {
+    "xtdb": [
+      84,
+      87
+    ]
+  },
+  "contractPinned": false
+}

@@ -1,0 +1,1570 @@
+test_q70m_entity_before_float (__main__.ContinuationInputRegressions.test_q70m_entity_before_float) ... ok
+test_q70m_journal_after_boolean (__main__.ContinuationInputRegressions.test_q70m_journal_after_boolean) ... ok
+test_q70m_journal_after_string (__main__.ContinuationInputRegressions.test_q70m_journal_after_string) ... ok
+test_q70o_cursor_page_boolean (__main__.ContinuationInputRegressions.test_q70o_cursor_page_boolean) ... ok
+test_q75c_compiled_runner_cannot_lose_projection_pin (__main__.ReviewRegressions.test_q75c_compiled_runner_cannot_lose_projection_pin) ... ok
+test_q75c_malformed_hash_rejected (__main__.ReviewRegressions.test_q75c_malformed_hash_rejected) ... ok
+test_q75c_replay_entrypoint_alone_is_not_pin (__main__.ReviewRegressions.test_q75c_replay_entrypoint_alone_is_not_pin) ... ok
+test_q75c_runner_argv_file_must_be_pinned (__main__.ReviewRegressions.test_q75c_runner_argv_file_must_be_pinned) ... ok
+test_q75g_actual_oracle_aggregate_answer (__main__.ReviewRegressions.test_q75g_actual_oracle_aggregate_answer) ... ok
+test_q75g_ascii_row_control (__main__.ReviewRegressions.test_q75g_ascii_row_control) ... ok
+test_q75g_bag_preserves_duplicate_count (__main__.ReviewRegressions.test_q75g_bag_preserves_duplicate_count) ... ok
+test_q75g_bag_reorders_inside_second_query (__main__.ReviewRegressions.test_q75g_bag_reorders_inside_second_query) ... ok
+test_q75g_command_outcomes_are_exact (__main__.ReviewRegressions.test_q75g_command_outcomes_are_exact) ... ok
+test_q75g_inflight_bag_reorders (__main__.ReviewRegressions.test_q75g_inflight_bag_reorders) ... ok
+test_q75g_inflight_prefix_identity_is_exact (__main__.ReviewRegressions.test_q75g_inflight_prefix_identity_is_exact) ... ok
+test_q75g_ordered_rejects_reordering (__main__.ReviewRegressions.test_q75g_ordered_rejects_reordering) ... ok
+test_q75g_query_identity_is_exact (__main__.ReviewRegressions.test_q75g_query_identity_is_exact) ... ok
+test_q75g_set_ignores_duplicate_count (__main__.ReviewRegressions.test_q75g_set_ignores_duplicate_count) ... ok
+test_q75g_state_is_exact (__main__.ReviewRegressions.test_q75g_state_is_exact) ... ok
+test_q75g_unicode_equal_rows (__main__.ReviewRegressions.test_q75g_unicode_equal_rows) ... ok
+test_q75g_unicode_inflight_rows (__main__.ReviewRegressions.test_q75g_unicode_inflight_rows) ... ok
+test_q75g_unicode_object_values (__main__.ReviewRegressions.test_q75g_unicode_object_values) ... ok
+test_q75h_no_partial_rows (__main__.ReviewRegressions.test_q75h_no_partial_rows) ... ok
+test_q75h_no_string_or_empty_causes (__main__.ReviewRegressions.test_q75h_no_string_or_empty_causes) ... ok
+test_q75h_optional_cause (__main__.ReviewRegressions.test_q75h_optional_cause) ... ok
+test_q75h_structured_message_cause (__main__.ReviewRegressions.test_q75h_structured_message_cause) ... ok
+test_q75h_structured_tag_cause (__main__.ReviewRegressions.test_q75h_structured_tag_cause) ... ok
+test_q75i_promotion_refused_before_executor_calls (__main__.ReviewRegressions.test_q75i_promotion_refused_before_executor_calls) ... ok
+test_q76c_matrix_records_ignored_tail_constraint_defect (__main__.ReviewRegressions.test_q76c_matrix_records_ignored_tail_constraint_defect) ... ok
+test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) ... 
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.found.unchanged44') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.value-kinds-roundtrip') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.out-of-range-rejected') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.decimal') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.wire.write-guards') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.tdk1-admission') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.tdk1-ranges') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.tdk1-differential') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.tdk1-serialization') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.tdk1-writer-negative') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.channel-routing') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.outbox.publication-sequence') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.outbox.receiver-ordering') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.outbox.atomic-unit') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.invalid-rejected') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.storage-widening-safe') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.native-parameters') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.schema.required') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.schema.cardinality') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.schema.unique') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.schema.reference-target') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.schema.release-derived-contracts') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='PKT.full142') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G2.arith.integer-exact') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G2.arith.binary64') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G2.expr.cross-family-comparison') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G2.errors.typed-taxonomy') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G2.strings.codepoint-supported') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.plan.explain') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.plan.access-path-at-scale') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.admission.preconstruction') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.cost.budget-honored') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.recursion.scalable') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.recursion.read-only-frontier') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G4.neg.correlated-not-exists') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G4.neg.correlated-not-exists-raw') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G4.cut.task-wide-fixed') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G4.neg.conflict-semantics') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G5.agg.shape-controls') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G5.agg.full-support') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G5.agg.typed-groups') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G5.agg.projection-sums') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.cancel.observed-drain') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.deadline.enforced') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.cancel.preaborted-no-work') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.cleanup.scratch-zero') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.ownership.bounded-connections') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.resource.memory-failure-contained') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.write.atomic') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.write.command-idempotency') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.write.preconditions-cas') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.receipt.journal-complete') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.journal.logical-contract') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.commit.protocol-transitions') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.composition.overlay-rules') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.broker.promotion-hardening') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.recovery.backup-restore') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.migration.schema-evolution') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.migration.valid-writes-never-rejected') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.eligibility.c1-routing') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.publish.coherent') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.publish.basis-honesty') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.publish.valid-boundary') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.reuse.positive-witness') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.support.incremental-witness') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.support.alternate-maintained') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.temporal.half-open-intervals') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.temporal.recorded-cuts') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.history.raw-lifetime-compat') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.history.snapshot-metadata') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.corrections.preserve') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.lineage.supporting-assertions') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.presence.explicit') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.deletion.entity') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.cascade.restrict-detach-cascade') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.pkg.clean-consumer-slice') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.pkg.type-witnesses') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.scope.ownership-refusal') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.scope.shared-collision') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.cursor.stable') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.cursor.deep-page-cost') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.cursor.continuation-transitions') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.capabilities.truthful') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.lifecycle.open-close') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.native.entry-checks') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.native.read-only-and-safe-params') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.repo.entity-suite') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.repo.mutation-controls') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.raw.parity') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.raw.mapped-recipes') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.raw.guide-only-authoring') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.raw.capability-matrix') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.native.fragment-equivalence') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.P1') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.P2') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.P3') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.P4') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.P5') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.SEC.bulk-lane') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.SEC.retro-and-audit') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.calibration') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.01') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.02') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.03') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.04') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.05') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.06') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.07') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.08') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.09') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.10') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.11') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.12') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.13') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.14') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.15') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.16') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.17') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.18') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.19') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.20') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.commit-idempotent') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.snapshot-reads') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.change-feed') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.no-silent-precision-loss') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.pii-erasure') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.tenant-isolation') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.outbox-atomic') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.read-your-write') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.sweep-pins-position') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.retro-corrections') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.visibility-boundary') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.protected-copies') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.restore-reapplies') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.composition.watermark-routing') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.composition.ack-and-routed-ryow') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.position.coordinates') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.position.bound-after-publication') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='W0.coverage-floors') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.commit-semantics') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.query-semantics') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.residual-shapes') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.reproduction-modulo') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.composition.identity-bound') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.evaluator.incomplete-receipts') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.population.year-one') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.rungs.ladder') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.correctness.query-families') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.capacity.admitted') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.metrics.reported') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.maintenance.correct-during') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.restart.at-scale') ... FAIL
+  test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.budgets.cumulative') ... FAIL
+test_q78_composition_schema_allows_datomic (__main__.ReviewRegressions.test_q78_composition_schema_allows_datomic) ... ok
+test_q78_datomic_null_a0 (__main__.ReviewRegressions.test_q78_datomic_null_a0) ... ok
+test_q78_every_generic_obligation_applies_to_d (__main__.ReviewRegressions.test_q78_every_generic_obligation_applies_to_d) ... ok
+test_q78_no_existing_raw_exception_transfers_to_d (__main__.ReviewRegressions.test_q78_no_existing_raw_exception_transfers_to_d) ... ok
+test_q81a_final_input_requirement_survives_generation (__main__.ReviewRegressions.test_q81a_final_input_requirement_survives_generation) ... ok
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.found.unchanged44')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-TESTKIT', 'oracle-unpinned:O-TESTKIT']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.value-kinds-roundtrip')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.out-of-range-rejected')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.decimal')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['refused:O-REPLAY:scale-evolution', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.wire.write-guards')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.tdk1-admission')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-TDK1', 'oracle-unaccepted:O-TDK1']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.tdk1-ranges')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-TDK1', 'oracle-unaccepted:O-TDK1']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.tdk1-differential')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-TDK1', 'oracle-unaccepted:O-TDK1']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.tdk1-serialization')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-TDK1', 'oracle-unaccepted:O-TDK1']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.tdk1-writer-negative')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-TDK1', 'oracle-unaccepted:O-TDK1', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.decimal.channel-routing')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-TDK1', 'oracle-unaccepted:O-TDK1', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.outbox.publication-sequence')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.outbox.receiver-ordering')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.outbox.atomic-unit')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.invalid-rejected')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.storage-widening-safe')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['refused:O-REPLAY:scale-evolution']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.types.native-parameters')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.schema.required')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.schema.cardinality')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.schema.unique')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.schema.reference-target')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G1.schema.release-derived-contracts')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-SPEC', 'oracle-unpinned:O-SPEC']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='PKT.full142')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-EVT', 'oracle-unpinned:O-EVT']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G2.arith.integer-exact')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G2.arith.binary64')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G2.expr.cross-family-comparison')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G2.errors.typed-taxonomy')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G2.strings.codepoint-supported')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-STR', 'oracle-unpinned:O-STR', 'oracle-runner-unpinned:O-COLL', 'oracle-unpinned:O-COLL']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.plan.explain')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-PLAN', 'oracle-unpinned:O-PLAN']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.plan.access-path-at-scale')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-PLAN', 'oracle-unpinned:O-PLAN']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.admission.preconstruction')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR', 'oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.cost.budget-honored')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-PLAN', 'oracle-unpinned:O-PLAN', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.recursion.scalable')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G3.recursion.read-only-frontier')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G4.neg.correlated-not-exists')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-SHAPE', 'oracle-unpinned:O-SHAPE']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G4.neg.correlated-not-exists-raw')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-SHAPE', 'oracle-unpinned:O-SHAPE']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G4.cut.task-wide-fixed')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-EVT', 'oracle-unpinned:O-EVT']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G4.neg.conflict-semantics')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G5.agg.shape-controls')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-SHAPE', 'oracle-unpinned:O-SHAPE']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G5.agg.full-support')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G5.agg.typed-groups')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G5.agg.projection-sums')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.cancel.observed-drain')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.deadline.enforced')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.cancel.preaborted-no-work')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.cleanup.scratch-zero')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.ownership.bounded-connections')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G6.resource.memory-failure-contained')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.write.atomic')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.write.command-idempotency')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.write.preconditions-cas')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.receipt.journal-complete')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.journal.logical-contract')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.commit.protocol-transitions')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.composition.overlay-rules')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.broker.promotion-hardening')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.recovery.backup-restore')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.migration.schema-evolution')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['refused:O-REPLAY:scale-evolution']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.migration.valid-writes-never-rejected')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['refused:O-REPLAY:scale-evolution']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.eligibility.c1-routing')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-PLAN', 'oracle-unpinned:O-PLAN']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.publish.coherent')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.publish.basis-honesty')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.publish.valid-boundary')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.reuse.positive-witness')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.support.incremental-witness')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.support.alternate-maintained')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.temporal.half-open-intervals')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.temporal.recorded-cuts')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.history.raw-lifetime-compat')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-HAM', 'oracle-unpinned:O-HAM']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.history.snapshot-metadata')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-CFG8', 'oracle-unpinned:O-CFG8', 'oracle-runner-unpinned:O-HAM', 'oracle-unpinned:O-HAM']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.corrections.preserve')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.lineage.supporting-assertions')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.presence.explicit')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-CFG8', 'oracle-unpinned:O-CFG8']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.deletion.entity')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.cascade.restrict-detach-cascade')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.pkg.clean-consumer-slice')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.pkg.type-witnesses')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-SPEC', 'oracle-unpinned:O-SPEC']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.scope.ownership-refusal')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.scope.shared-collision')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.cursor.stable')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.cursor.deep-page-cost')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.cursor.continuation-transitions')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.capabilities.truthful')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.lifecycle.open-close')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.native.entry-checks')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.native.read-only-and-safe-params')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR', 'oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.repo.entity-suite')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.repo.mutation-controls')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['refused:O-REPLAY:scale-evolution']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.raw.parity')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-STR', 'oracle-unpinned:O-STR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.raw.mapped-recipes')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-STR', 'oracle-unpinned:O-STR', 'oracle-runner-unpinned:O-COLL', 'oracle-unpinned:O-COLL', 'oracle-runner-unpinned:O-SHAPE', 'oracle-unpinned:O-SHAPE', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.raw.guide-only-authoring')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.raw.capability-matrix')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.native.fragment-equivalence')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.P1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.P2')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.P3')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.P4')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.P5')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.SEC.bulk-lane')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.SEC.retro-and-audit')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='NS.calibration')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.01')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.02')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.03')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.04')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.05')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.06')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.07')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.08')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.09')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.10')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.11')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.12')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.13')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.14')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.15')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.16')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.17')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.18')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.19')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='GS.20')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['gs-diagnostic-before-0.4.0:Q94e', 'oracle-runner-unpinned:O-HAND', 'oracle-unpinned:O-HAND', 'oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.commit-idempotent')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.snapshot-reads')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.change-feed')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.no-silent-precision-loss')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.pii-erasure')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.tenant-isolation')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.outbox-atomic')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.read-your-write')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.sweep-pins-position')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='REQ.retro-corrections')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.visibility-boundary')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.protected-copies')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.restore-reapplies')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G8.composition.watermark-routing')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.composition.ack-and-routed-ryow')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS', 'oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.position.coordinates')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G7.position.bound-after-publication')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='W0.coverage-floors')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.commit-semantics')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.query-semantics')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.residual-shapes')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-runner-unpinned:O-ERR']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G9.erasure.reproduction-modulo')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='G10.composition.identity-bound')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='R.evaluator.incomplete-receipts')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.population.year-one')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.rungs.ladder')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.correctness.query-families')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.capacity.admitted')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.metrics.reported')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.maintenance.correct-during')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.restart.at-scale')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in []
+
+======================================================================
+FAIL: test_q78_all_d_obligations_have_null_image_blocker (__main__.ReviewRegressions.test_q78_all_d_obligations_have_null_image_blocker) (obligation='S.budgets.cumulative')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/contract-0312/lab/verify/A01/regressions_review0311.py", line 173, in test_q78_all_d_obligations_have_null_image_blocker
+    self.assertIn('image-unpinned:datomic', M['contract_blockers'](o, 'datomic-datalog'))
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'image-unpinned:datomic' not found in ['oracle-screening-only:O-OBS']
+
+----------------------------------------------------------------------
+Ran 35 tests in 0.428s
+
+FAILED (failures=153)

@@ -1,0 +1,2 @@
+CONTRACT INVALID:
+Q61a/Q61j/Q61k: contract source, retained fault witnesses, A0 verified through measuredBy

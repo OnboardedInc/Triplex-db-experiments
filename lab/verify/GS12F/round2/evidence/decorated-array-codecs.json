@@ -1,0 +1,146 @@
+[
+  {
+    "profile": "memory",
+    "key": "4294967295",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  },
+  {
+    "profile": "memory",
+    "key": "9007199254740993",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  },
+  {
+    "profile": "foundationdb",
+    "key": "4294967295",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  },
+  {
+    "profile": "foundationdb",
+    "key": "9007199254740993",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  },
+  {
+    "profile": "xtdb",
+    "key": "4294967295",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "undefined",
+    "error": "TypeError: Sparse JSON arrays are not supported\n    at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:55:36)\n    at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:73:10)\n    at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:107:7)\n    at row (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:65:6)\n    at xtdb (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:81:54)\n    at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:111:19\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20\n    at new Promise (<anonymous>)",
+    "typed": false
+  },
+  {
+    "profile": "xtdb",
+    "key": "9007199254740993",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "undefined",
+    "error": "TypeError: Sparse JSON arrays are not supported\n    at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:55:36)\n    at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:73:10)\n    at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:107:7)\n    at row (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:65:6)\n    at xtdb (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:81:54)\n    at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:111:19\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20\n    at new Promise (<anonymous>)",
+    "typed": false
+  },
+  {
+    "profile": "qlever",
+    "key": "4294967295",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "undefined",
+    "error": "TypeError: Sparse JSON arrays are unsupported\n    at go (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:122:36)\n    at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:135:10)\n    at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:166:7)\n    at row (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:65:6)\n    at qlever (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:82:57)\n    at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:111:19\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20\n    at new Promise (<anonymous>)",
+    "typed": false
+  },
+  {
+    "profile": "qlever",
+    "key": "9007199254740993",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "undefined",
+    "error": "TypeError: Sparse JSON arrays are unsupported\n    at go (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:122:36)\n    at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:135:10)\n    at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:166:7)\n    at row (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:65:6)\n    at qlever (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:82:57)\n    at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:111:19\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20\n    at new Promise (<anonymous>)",
+    "typed": false
+  },
+  {
+    "profile": "sqlite",
+    "key": "4294967295",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  },
+  {
+    "profile": "sqlite",
+    "key": "9007199254740993",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  },
+  {
+    "profile": "postgres",
+    "key": "4294967295",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  },
+  {
+    "profile": "postgres",
+    "key": "9007199254740993",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  },
+  {
+    "profile": "cloudflare",
+    "key": "4294967295",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  },
+  {
+    "profile": "cloudflare",
+    "key": "9007199254740993",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  },
+  {
+    "profile": "duckdb",
+    "key": "4294967295",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  },
+  {
+    "profile": "duckdb",
+    "key": "9007199254740993",
+    "admittedByTable": true,
+    "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
+    "decoded": "{ type: 'json', value: [ null ] }",
+    "error": "undefined",
+    "typed": false
+  }
+]

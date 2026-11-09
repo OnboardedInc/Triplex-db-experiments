@@ -61,3 +61,41 @@ export {
   nativeEvidenceValue,
   nativeAttributeKey,
 } from "../native/NativeQuery.js";
+export {
+  type FrontierEdge,
+  type FrontierBudgets,
+  type FrontierClosure,
+  type FrontierClosureInput,
+  type FrontierRoundStats,
+  type RecursionBudgetKind,
+  FRONTIER_DEFAULTS,
+  RecursionBudgetExceeded,
+  resolveFrontierBudgets,
+  frontierClosure,
+  reachFrom,
+  closurePairs,
+  ruleClosure,
+  memoryEdges,
+  type RuleStep,
+  type RuleTail,
+  countSimplePaths,
+} from "../native/FrontierClosure.js";
+
+export {
+  constructSnapshotReads,
+  constructReadDispatch,
+  constructReadSurface,
+  createReadConstructor,
+  exactReadService,
+  type SnapshotReadPolicy,
+} from "../storage/ReadSurface.js";
+
+export { isTriplesRead } from "../store/TriplesLive.js";
+export {
+  decodeValueColumns,
+  ValueDomains,
+  invalidValue,
+  assertValueInDomain,
+  storedValueDomain,
+  type ValueDomain,
+} from "../ValueDomain.js";

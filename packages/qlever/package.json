@@ -24,10 +24,12 @@
     "test": "vitest run --maxWorkers=1 --no-file-parallelism"
   },
   "dependencies": {
-    "@triplex-build/triplex": "workspace:^"
+    "@triplex-build/triplex": "workspace:^",
+    "better-sqlite3": "catalog:"
   },
   "devDependencies": {
     "@triplex-build/triplex-testkit": "workspace:^",
+    "@types/better-sqlite3": "catalog:",
     "@types/node": "catalog:",
     "effect": "catalog:",
     "tsdown": "catalog:",

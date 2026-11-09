@@ -1,0 +1,12 @@
+[
+  {
+    "path": "lab/verify/SQL01/routes-round2.test.ts",
+    "origin": "73fbe45",
+    "sha256": "56c36efe5fc9efee6b33ef5c5c167bd64f0c67d5876246196eca7b1a94aa2432"
+  },
+  {
+    "path": "lab/verify/SQL01/checkpoint-round2.test.ts",
+    "origin": "73fbe45",
+    "sha256": "367c4d3fdd8761c7e42484070d374372989f8d357b8f60f387114cb3bb01e557"
+  }
+]

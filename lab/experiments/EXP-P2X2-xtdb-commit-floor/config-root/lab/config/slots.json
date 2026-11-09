@@ -1,0 +1,54 @@
+{
+  "format": "tx2-slots/1",
+  "dockerHost": "unix:///Users/sam/.colima/triplex2/docker.sock",
+  "vm": { "memBytes": 12884901888, "cpus": 6, "diskBytes": 63088406528 },
+  "pool": {
+    "memLimitBytes": 11811160064,
+    "diskUsedLimitBytes": 53687091200,
+    "note": "Sum of memory caps of every tx2-* reservation plus running tx2-* containers outside the ledger (research probes) plus the new one must stay <= memLimitBytes (11 GiB of 12). VM disk used plus every active reservation's disk forecast plus the new one must stay <= diskUsedLimitBytes (50 GiB of the 60 GiB VM disk, PLAN section 7)."
+  },
+  "forbiddenPorts": [15442, 17019],
+  "reservedPortRanges": [{ "from": 5461, "to": 5469, "owner": "research probes" }, { "from": 7061, "to": 7069, "owner": "research probes" }],
+  "lanes": {
+    "xtdb": {
+      "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "configSource": ["xtdb-config.yaml", "compose.xtdb.yaml"],
+      "containerPort": 5432,
+      "urlTemplate": "postgres://xtdb:xtdb@127.0.0.1:{port}/xtdb",
+      "envVar": "XTDB_URL",
+      "integrationEnv": { "XTDB_INTEGRATION": "1" },
+      "diskForecastNote": "Start conservative: XTDB pre-GC growth about 5.5x was seen on the homebase (PLAN section 7). dev holds many small test scopes; s* hold scale runs. Scale experiments refine these.",
+      "follower": {
+        "configFile": "lab/config/xtdb-follower-config.yaml",
+        "memBytes": 1879048192, "cpus": 2, "javaOpts": "-Xmx768m -XX:MaxDirectMemorySize=768m", "portOffset": 10, "volumeMode": "ro",
+        "profiles": { "small": { "configFile": "lab/config/xtdb-follower-small-config.yaml", "memBytes": 1073741824, "javaOpts": "-Xmx512m -XX:MaxDirectMemorySize=256m", "note": "EXP-X05 follower sized to the 4.5 GiB the pool leaves beside both dev residents (orchestrator slot plan 2026-11-07): writer 3.5 + follower 1.0 GiB. Below R19 E9's 1.5-1.75 GiB, so results on it are provisional." } },
+        "note": "EXP-X05 read-only follower tx2-xtdb-<slot>-ro on the slot's volume, admitted against the pool like any reservation, held under the slot's lock. 1.75 GiB is R19 1.6/E9's smallest sane read node. volumeMode ro mounts the volume read-only at the kernel as a second barrier behind readOnlyDatabases. Port is the slot port + portOffset."
+      }
+    },
+    "qlever": {
+      "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "imageId": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+      "configSource": ["qlever-start.sh", "compose.qlever.yaml"],
+      "containerPort": 7019,
+      "urlTemplate": "http://127.0.0.1:{port}",
+      "envVar": "QLEVER_URL",
+      "integrationEnv": { "QLEVER_INTEGRATION": "1" },
+      "diskForecastNote": "Start conservative: a QLever rebuild keeps previous.* index files next to the new ones (about 2x index bytes) plus delta growth during the rebuild (PLAN section 7)."
+    }
+  },
+  "slots": {
+    "xtdb": {
+      "dev": { "port": 5470, "memBytes": 3221225472, "cpus": 2, "javaOpts": "-Xmx1500m -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 4294967296, "mode": "resident" },
+      "s1": { "port": 5471, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive" },
+      "s2": { "port": 5472, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive" },
+      "s3": { "port": 5473, "memBytes": 3758096384, "cpus": 2, "javaOpts": "-Xmx2g -XX:MaxDirectMemorySize=1g", "diskForecastBytes": 8589934592, "mode": "exclusive" }
+    },
+    "qlever": {
+      "dev": { "port": 7070, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2000M", "diskForecastBytes": 4294967296, "mode": "resident", "note": "Raised from 2.5 GiB / 1500M on 2026-11-08: OOM-killed three times (20:57Z, 22:02Z and earlier) under several agents' shared load while its persisted delta grew; recreated with --fresh to drop the delta." },
+      "s1": { "port": 7071, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2500M", "diskForecastBytes": 8589934592, "mode": "exclusive" },
+      "s2": { "port": 7072, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2500M", "diskForecastBytes": 8589934592, "mode": "exclusive" },
+      "s3": { "port": 7073, "memBytes": 3758096384, "cpus": 2, "qleverMemory": "2500M", "diskForecastBytes": 8589934592, "mode": "exclusive" }
+    }
+  }
+}

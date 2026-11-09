@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 25540 "CX-A01-0312-R2-evaluator", pid 49577 "CX-C8-R4-default-control", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 25540 "CX-A01-0312-R2-evaluator", pid 49577 "CX-C8-R4-default-control", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 25540 "CX-A01-0312-R2-evaluator", pid 49577 "CX-C8-R4-default-control", pid 37317 "CX-G03-r3-claim-suites2", pid 25539 "CX-A01-0312-R2-mutations"

@@ -1,0 +1,294 @@
+{
+  "testedSource": "3de54ac5f5ebc6c2c6d12ed902a6cb1ea360d590",
+  "sourceHashesStableAfterAllGates": true,
+  "mainMerged": "b31ec9429aaeae4dd6243e9d274f8e2e0e4ad56f",
+  "integrationMerged": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+  "generatorVerify": "six outputs byte-identical",
+  "contractTests": 14,
+  "mutations": {
+    "catalog": 532,
+    "active": 451,
+    "caught": 451,
+    "missed": 0,
+    "retiredAnchors": 81,
+    "newControls": [
+      "CAUGHT Q88a literal weakened: Q88a: literal ruling and storage consumer must match authority",
+      "CAUGHT Q88a consumer dropped: Q88a: literal ruling and storage consumer must match authority",
+      "CAUGHT Q88b literal weakened: Q88b: literal ruling and storage consumer must match authority",
+      "CAUGHT Q88b consumer dropped: Q88b: literal ruling and storage consumer must match authority",
+      "CAUGHT Q88c literal weakened: Q88c: literal ruling and storage consumer must match authority",
+      "CAUGHT Q88c consumer dropped: Q88c: literal ruling and storage consumer must match authority",
+      "CAUGHT Q45a xtdb-workloads.ts repin reverted: Q45a: reviewed workload repin mismatch: packages/qualification/src/native/xtdb-workloads.ts",
+      "CAUGHT Q45a xtdb-workloads.ts repin omitted: Q45a: both reviewed workload repins required",
+      "CAUGHT Q45a qlever-workloads.ts repin reverted: Q45a: reviewed workload repin mismatch: packages/qualification/src/native/qlever-workloads.ts",
+      "CAUGHT Q45a qlever-workloads.ts repin omitted: Q45a: both reviewed workload repins required",
+      "CAUGHT Q88 dev evidence promoted: Q88: dev evidence stays diagnostic, SQL storage and erasure requirements preserved",
+      "CAUGHT Q88 unsafe peer role: Q88: dev evidence stays diagnostic, SQL storage and erasure requirements preserved"
+    ]
+  },
+  "evaluator": {
+    "pass": 108,
+    "fail": 0,
+    "skipped": 0,
+    "assertionsWeakened": false
+  },
+  "g0": {
+    "runId": "G0-xtdb-20261109T003626Z-7069fe",
+    "verdict": "PASS",
+    "scope": "full",
+    "counts": {
+      "executed": 1168,
+      "pass": 1168,
+      "fail": 0,
+      "skip": 137,
+      "expectedSkip": 137,
+      "unexpectedSkip": 0
+    },
+    "sourceDiffBytes": 0,
+    "stashCommit": null,
+    "verifiedObjects": [
+      {
+        "path": "pnpm-lock.yaml",
+        "sha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500",
+        "verified": true
+      },
+      {
+        "path": "lab/bin/gate.mjs",
+        "sha256": "f1cbaa46a08e5a3538ab120aef44257b3e1a8b7471f35d2621f747355a3ca465",
+        "verified": true
+      },
+      {
+        "path": "lab/bin/lib.mjs",
+        "sha256": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e",
+        "verified": true
+      },
+      {
+        "path": "lab/bin/receipt.mjs",
+        "sha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+        "verified": true
+      },
+      {
+        "path": "lab/bin/engine.mjs",
+        "sha256": "b2bb06172efd2791ec323285998e560ace543a38e022dff489c601d3c879c608",
+        "verified": true
+      },
+      {
+        "path": "lab/bin/heavy-lock.mjs",
+        "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+        "verified": true
+      },
+      {
+        "path": "lab/config/slots.json",
+        "sha256": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/build-manifest.json",
+        "sha256": "5376376910764c44ecd3614323ba7ead0277d22fedf819c3c225d7e1a6d24f43",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-core.json",
+        "sha256": "0f7ca4c0655c6af30ea69f07921d3917e1bccae5ec1055efa38ad040ee664d4b",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-testkit.json",
+        "sha256": "fcf2970ad32a8d39b6cd79f4a56c7407611160cbf4f85fa9f6c16ef6438c369c",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-xtdb.json",
+        "sha256": "027ff3e82eb7230cc0137476996898cdea2807ce41039009d360c0dd00f34a3f",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-qualification.json",
+        "sha256": "fb9029952c3cad158e9d267416889dc4fb7ff440b42d3aa328d6fb39546bf046",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/typecheck.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/typecheck.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-core.stdout.txt",
+        "sha256": "866675993033264e9e4e9a8923b527177da24f963432bd5d877339f1c69e0645",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-core.stderr.txt",
+        "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-testkit.stdout.txt",
+        "sha256": "44adeb0d65e282d99dac24d7db187d6a1847a69fc580c94d3db957e239e96800",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-testkit.stderr.txt",
+        "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-xtdb.stdout.txt",
+        "sha256": "c9b86ed67d56725db91dde901cf7025fec20860b93de3320b1cf62a556b28e41",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-xtdb.stderr.txt",
+        "sha256": "cd12bf77971ecb29f91c2401b14c7b7ff8320c34d5932f4d9244f76e61f1e56f",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-qualification.stdout.txt",
+        "sha256": "c954c5051ab924a6e40b2f030142f5db01416ad201914fa635190b246126efd4",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/vitest-qualification.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-qualification.stdout.txt",
+        "sha256": "29b25d9d3adfa5fa7151183f46f253103f5a2d363c1c12117000738c8b2fea20",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-qualification.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-engine-cases.stdout.txt",
+        "sha256": "16ea8767db04f0da7a60475e96401bab486b76213311186ca077528597d50d99",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-engine-cases.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-ns-bench.stdout.txt",
+        "sha256": "54d7880eb6d6dae7f738da96c9cf8d773b30919a64f2aecca9eb33abe87caa29",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/node-test-ns-bench.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-validate-workloads.stdout.txt",
+        "sha256": "f2a7cd0a3133b70369859ba9a8636acd61a8b951837618be9dd0bbdd70e79ff0",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-validate-workloads.stderr.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-unittest.stdout.txt",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "verified": true
+      },
+      {
+        "path": "runs/G0/G0-xtdb-20261109T003626Z-7069fe/oracle-unittest.stderr.txt",
+        "sha256": "074aa60e9867590e0e323dbebd1b32cbd211eca2750ece3171d00ba27b6ba2d5",
+        "verified": true
+      },
+      {
+        "path": "qualification/workloads/temporal-workloads.json",
+        "sha256": "322c773db2049b5a704d36925738859aef4982ca27194d13a659d1b0e9081271",
+        "verified": true
+      },
+      {
+        "path": "qualification/workloads/event_oracles.py",
+        "sha256": "6870caddffa3909c3b89e70484176388c74b9e5eae5db1af281ee58e0b3d9b02",
+        "verified": true
+      },
+      {
+        "path": "qualification/workloads/validate_workloads.py",
+        "sha256": "c2e6ab9bd5456793c37f70cac6db47d7601abd636292c2a976ef86c0ddb08d61",
+        "verified": true
+      },
+      {
+        "path": "qualification/workloads/test_event_oracles.py",
+        "sha256": "0151831a2a2b0ce60bcbb08cf2234764458cf114057a3e30b1623d5c8dbb26a7",
+        "verified": true
+      },
+      {
+        "path": "qualification/workloads/engine_cases.mjs",
+        "sha256": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50",
+        "verified": true
+      },
+      {
+        "path": "qualification/workloads/test_engine_cases.mjs",
+        "sha256": "7d1d406e659f8a9f917c84a6a9c76517b0262cae07851500b58fa6ead1dd409a",
+        "verified": true
+      },
+      {
+        "path": "qualification/adapter/scale-fixture.mjs",
+        "sha256": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+        "verified": true
+      },
+      {
+        "path": "lab/config/g0-expected-skips.json",
+        "sha256": "64f74ee9a77fc3b336f6236428335b789f1c2bceded36ddb88efa2b74c007348",
+        "verified": true
+      },
+      {
+        "path": "lab/acceptance/obligations.json",
+        "sha256": "2ba0ba03c84e0a02a38d7cd32536530bf5d7999ddda3de429606250633d2b78b",
+        "verified": true
+      }
+    ]
+  },
+  "screeningTests": 3,
+  "reviewerRegressions": 35,
+  "realPayloadRegressions": 5,
+  "q47d": "PASS",
+  "pendingRulings": [
+    "Q51b",
+    "Q73a",
+    "Q73b",
+    "Q78e",
+    "Q81b",
+    "Q81c",
+    "Q86g",
+    "Q89a",
+    "Q89b",
+    "Q89c",
+    "Q89d",
+    "Q89e",
+    "Q89f",
+    "Q89g",
+    "Q89h",
+    "Q89i",
+    "Q90a",
+    "Q90b",
+    "Q90c",
+    "Q90d",
+    "Q90e",
+    "Q90f",
+    "Q90g"
+  ],
+  "round3Rules": [
+    "Q88a",
+    "Q88b",
+    "Q88c"
+  ],
+  "hunkCount": 17,
+  "logicalWorkloadChangingHunks": 0,
+  "transitiveHash": "ad199b4c915846f24ef6c445dfd9d224bfb2f7a3751cd27a09813706af52f56e"
+}

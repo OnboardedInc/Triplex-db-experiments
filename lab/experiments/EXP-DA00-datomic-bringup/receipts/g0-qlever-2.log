@@ -1,0 +1,9 @@
+[lab] G0-qlever-20261108T215940Z-c6686e: raw output runs/G0/G0-qlever-20261108T215940Z-c6686e
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 71487 "CX-VP2Q-3-nonzero-retry", pid 50198 "DA00-G0-final-source", pid 54453 "CX-A01-0311-regressions"
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 71487 "CX-VP2Q-3-nonzero-retry", pid 50198 "DA00-G0-final-source", pid 73337 "CX-VJ01-2-arrays"
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 81858 "CX-VC8-3-probes", pid 50198 "DA00-G0-final-source", pid 73337 "CX-VJ01-2-arrays"
+[lab] heavy: waiting for one of 4 slots; held by pid 72833 "R25-sweepshort-b-r4", pid 81982 "CX-VJ01-2-frontier", pid 50198 "DA00-G0-final-source", pid 81859 "CX-VC8-3-offline"
+[lab] heavy: waiting for one of 4 slots; held by pid 35592 "CX-VX02-2-delta-sums", pid 81982 "CX-VJ01-2-frontier", pid 50198 "DA00-G0-final-source", pid 81860 "CX-VC8-3-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 82472 "CX-VJ01-2-xtql", pid 81982 "CX-VJ01-2-frontier", pid 50198 "DA00-G0-final-source", pid 81860 "CX-VC8-3-live"
+PASS G0 qlever scope=full executed=1018 pass=1018 fail=0 skip=67
+receipt: lab/runs/G0/G0-qlever-20261108T215940Z-c6686e.json

@@ -1,0 +1,30 @@
+{"name":"actor due-work ranges preserve numeric aliases, visibility, ordering, and limits","elapsedMs":996,"status":"PASS"}
+{"name":"Datalog reads are bounded by default and cursors traverse the complete snapshot","elapsedMs":342,"status":"PASS"}
+{"name":"historical cursor pages intersect recorded time and the commit snapshot","elapsedMs":67,"status":"PASS"}
+{"name":"recursive relations support cursor pagination and optional total counts","elapsedMs":96,"status":"PASS"}
+{"name":"assert then get and match return the fact","elapsedMs":22,"status":"PASS"}
+{"name":"same-value facts in one batch keep distinct identities","elapsedMs":19,"status":"PASS"}
+{"name":"datalog query finds asserted facts","elapsedMs":24,"status":"PASS"}
+{"name":"datalog projections preserve scalar types without guessing from text","elapsedMs":31,"status":"PASS"}
+{"name":"datalog deduplicates flattened scalar families before grouping and pagination","elapsedMs":48,"status":"PASS"}
+{"name":"datalog constant projections retain their scalar values through pagination","elapsedMs":27,"status":"PASS"}
+{"name":"datalog pattern constants use flattened scalar identity in filters","elapsedMs":84,"status":"PASS"}
+{"name":"datalog value joins compare every scalar family","elapsedMs":51,"status":"PASS"}
+{"name":"datalog equality predicates compare numeric values as numbers","elapsedMs":41,"status":"PASS"}
+{"name":"datalog equality keeps identity bindings string-typed","elapsedMs":57,"status":"PASS"}
+{"name":"ordered Datalog predicates accept only numeric scalar families","elapsedMs":29,"status":"PASS"}
+{"name":"datalog reverse lookup matches an explicitly typed ref constant","elapsedMs":24,"status":"PASS"}
+{"name":"datalog joins a variable bound from a ref in value position","elapsedMs":24,"status":"PASS"}
+{"name":"datalog supports multi-hop joins over ref edges","elapsedMs":33,"status":"PASS"}
+{"name":"datalog recursive rules compute the same transitive closure","elapsedMs":152,"status":"PASS"}
+{"name":"datalog rule patterns unify repeated variables","elapsedMs":26,"status":"PASS"}
+{"name":"datalog aggregations group, filter, and order consistently","elapsedMs":23,"status":"PASS"}
+{"name":"datalog having preserves typed group and aggregate equality","elapsedMs":51,"status":"PASS"}
+{"name":"datalog aggregates preserve duplicate rows and define empty and distinct results","elapsedMs":31,"status":"PASS"}
+{"name":"datalog conjunctions establish bindings independent of clause order","elapsedMs":21,"status":"PASS"}
+{"name":"datalog rejects invalid and unbound queries with backend-neutral typed errors","elapsedMs":1,"status":"PASS"}
+{"name":"wrapped filters preserve scalar types and SQL null semantics","elapsedMs":135,"status":"PASS"}
+{"name":"Datalog ordering and pagination preserve mixed scalar order","elapsedMs":137,"status":"PASS"}
+{"name":"datalog untyped strings match string and ref values while typed refs stay exact","elapsedMs":42,"status":"PASS"}
+{"name":"transact records provenance datoms","elapsedMs":19,"status":"PASS"}
+{"name":"conditional transactions are atomic and journal their changes","elapsedMs":193,"status":"FAIL","cause":"Cause([Fail(ReadError: Datomic read failed (cause: Error: Gateway response exceeds 1 MiB (cause: Error: Gateway response exceeds 1 MiB)))])"}

@@ -1,3 +1,4 @@
+import { ValueDomains, storedValueDomain } from "@triplex-build/triplex/runtime";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Exit, Semaphore } from "effect";
 import { isPatternVariable, type ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -11,6 +12,12 @@ import {
   type QueryPattern,
 } from "@triplex-build/triplex/runtime";
 import type { QleverClient } from "./QleverClient.js";
+import type { HostBroker } from "./broker/broker.js";
+import { BasisNotAvailable } from "./broker/errors.js";
+import {
+  makeQleverBrokerStorageAdapter,
+  type BrokerAdapterOptions,
+} from "./broker/BrokerStorageAdapter.js";
 import {
   assertionIri,
   claimIri,
@@ -21,7 +28,8 @@ import {
   literal as lit,
   packValue,
   decodeRow,
-  rowFields,
+  encodedRowFields,
+  type QleverCommitEncoding,
   numericOrderKey as order,
   numericFromOrderKey,
 } from "./rdf.js";
@@ -79,8 +87,24 @@ export const makeQleverStorageAdapter = (
     readonly maxRetries?: number;
     readonly resolutionTimeoutMs?: number;
     readonly admissionQueue?: boolean;
+    /** EXP-J01: default `a0`; `compact` omits never-read channels (rdf.ts UNREAD_CHANNELS). */
+    readonly commitEncoding?: QleverCommitEncoding;
+    /**
+     * EXP-P2Q candidate (default off): the host log plus broker is the source of truth, the ACK follows the
+     * durable frame, and reads route through the broker's overlay (src/broker/BrokerStorageAdapter.ts).
+     */
+    readonly broker?: HostBroker;
+    readonly brokerOptions?: BrokerAdapterOptions;
   } = {},
 ): QleverStorageAdapterService => {
+  const commitEncoding = options.commitEncoding ?? "a0";
+  if (commitEncoding !== "a0" && commitEncoding !== "compact")
+    throw new TypeError("Unknown QLever commit encoding; choose a0 or compact");
+  if (options.broker)
+    return makeQleverBrokerStorageAdapter(client, scopeKey, options.broker, {
+      ...(options.maxRetries === undefined ? {} : { maxRetries: options.maxRetries }),
+      ...options.brokerOptions,
+    });
   const graph = graphIri(scopeKey),
     key = Symbol(scopeKey),
     admission = Semaphore.makeUnsafe(1);
@@ -90,6 +114,10 @@ export const makeQleverStorageAdapter = (
       try: thunk,
       catch: (cause) => new ReadError({ message: "QLever read failed", cause }),
     });
+  // V-P2Q M2 on A0, a pure guard: the highest source position this adapter has read. A read at an explicit
+  // position at or below it is unchanged (no extra request); above it, the position is read once more and a
+  // basis A0 has not published yet fails typed instead of answering now and differently after a later commit.
+  let observedPosition = 0;
   const position = () =>
     read(async (signal) => {
       const rows = await client.query(
@@ -98,6 +126,7 @@ export const makeQleverStorageAdapter = (
       );
       const value = Number(rows[0]?.["position"]?.value ?? 0);
       if (!Number.isSafeInteger(value) || value < 0) throw new TypeError("Unsafe source position");
+      if (value > observedPosition) observedPosition = value;
       return value;
     });
   const required = Effect.flatMap(current, (state) =>
@@ -114,6 +143,23 @@ export const makeQleverStorageAdapter = (
   ): Effect.Effect<readonly TripleRow[], ReadError> =>
     Effect.gen(function* () {
       const state = yield* current;
+      if (
+        state === undefined &&
+        basis?.recordedPosition !== undefined &&
+        basis.recordedPosition > observedPosition
+      ) {
+        const published = yield* position();
+        if (basis.recordedPosition > published)
+          return yield* Effect.fail(
+            new BasisNotAvailable({
+              required: basis.recordedPosition,
+              observed: published,
+              replica: "QLever (A0)",
+              surface: "a0-repository",
+              waitedMs: 0,
+            }),
+          );
+      }
       const k =
         state === undefined
           ? basis?.recordedPosition
@@ -193,7 +239,7 @@ export const makeQleverStorageAdapter = (
       try: async () => {
         const values: [string, string, string][] = [];
         for (const row of state.rows.values())
-          for (const [column, value] of rowFields(row))
+          for (const [column, value] of encodedRowFields(row, commitEncoding))
             values.push([assertionIri(row.id), f(column), value]);
         values.push(
           [metaIri, f("position"), lit(String(state.position))],
@@ -343,7 +389,11 @@ export const makeQleverStorageAdapter = (
           const exit = yield* Effect.exit(
             Effect.uninterruptible(persist(state, operationId, randomUUID())),
           );
-          if (Exit.isSuccess(exit)) return result;
+          if (Exit.isSuccess(exit)) {
+            // A0 ACKs after publication, so its own commit position is published (keeps the M2 guard free).
+            if (state.position > observedPosition) observedPosition = state.position;
+            return result;
+          }
           return yield* Effect.failCause(exit.cause).pipe(
             Effect.catch((error) =>
               error instanceof QleverSerializationConflict &&
@@ -372,7 +422,7 @@ export const makeQleverStorageAdapter = (
             id,
             entity_id: input.entityId,
             attribute: input.attribute,
-            ...packValue(input.value),
+            ...packValue(input.value, storedValueDomain(ValueDomains.qlever, input.attribute)),
             recorded_at: timestamp,
             recorded_position: position,
             valid_from: input.validFrom ?? timestamp,
@@ -393,6 +443,7 @@ export const makeQleverStorageAdapter = (
       }),
     );
   return {
+    valueDomain: ValueDomains.qlever,
     supportedValueTypes: [
       "string",
       "number",

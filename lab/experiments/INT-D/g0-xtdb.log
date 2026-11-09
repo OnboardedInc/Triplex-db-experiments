@@ -1,0 +1,7 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 50573 "CX-RT01-stable-0089", pid 42667 "CX-VGS12F-review", pid 4626 "CX-W02-r2-build"
+[lab] G0-xtdb-20261109T023636Z-7f1117: raw output runs/G0/G0-xtdb-20261109T023636Z-7f1117
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 50573 "CX-RT01-stable-0089", pid 42667 "CX-VGS12F-review", pid 16807 "CX-INT-D-G0-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 63825 "CX-QG1-build-attempt2", pid 42667 "CX-VGS12F-review", pid 16807 "CX-INT-D-G0-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 42667 "CX-VGS12F-review", pid 16807 "CX-INT-D-G0-xtdb"
+PASS G0 xtdb scope=full executed=1218 pass=1218 fail=0 skip=137
+receipt: lab/runs/G0/G0-xtdb-20261109T023636Z-7f1117.json

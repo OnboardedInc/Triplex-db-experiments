@@ -1,0 +1,80 @@
+{
+  "counts": {
+    "grammar-live": {
+      "pass": 1818,
+      "total": 1818
+    },
+    "subquery-regression": {
+      "pass": 6,
+      "total": 6
+    },
+    "delta-live": {
+      "pass": 22,
+      "total": 22
+    },
+    "source-sums": {
+      "pass": 20,
+      "total": 20
+    },
+    "delta-sums": {
+      "pass": 30,
+      "total": 30
+    },
+    "grammar-unsafe": {
+      "pass": 1818,
+      "total": 1818
+    },
+    "reviewer-union": {
+      "pass": 6,
+      "total": 6
+    },
+    "lexer-safe": {
+      "pass": 3153,
+      "total": 3153
+    },
+    "lexer-unsafe": {
+      "pass": 915,
+      "total": 915
+    },
+    "lexer-spot": {
+      "pass": 21,
+      "total": 21
+    },
+    "overflow": {
+      "pass": 10,
+      "total": 10
+    },
+    "exact": {
+      "pass": 120,
+      "total": 120
+    },
+    "defaults": {
+      "pass": 213,
+      "total": 213
+    },
+    "source-hazards": {
+      "expected-records": 13,
+      "total": 13
+    }
+  },
+  "G0": {
+    "executed": 968,
+    "pass": 968,
+    "fail": 0,
+    "skip": 130,
+    "expectedSkip": 130,
+    "unexpectedSkip": 0
+  },
+  "sourceMaps": 13,
+  "grammarForms": 101,
+  "grammarDepths": [
+    1,
+    2,
+    3
+  ],
+  "reviewerBaseline": "7873fea",
+  "syntaxExpectationAdaptation": [
+    "parenthesized-any-operand",
+    "parenthesized-some-operand"
+  ]
+}

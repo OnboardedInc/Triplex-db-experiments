@@ -21,6 +21,7 @@
 import { residentObserver } from './resident-observer.mjs';
 import { archiveVolume } from './archive-volume.mjs';
 import { observerUp, observerDown, observerWatch, observerWitness, observerImage, observerBridge, observerRetain, observerCommand } from './observer.mjs';
+import { stageDatomicContext, verifiedTree, verifyDatomicContext } from './datomic-context.mjs';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
@@ -28,7 +29,7 @@ import path from 'node:path';
 import {
   CONFIG_DIR, ENGINE_DIR, LabError, POOL_FILE, dockerArgs, OWNER_FORMAT, REPO, admission, appendEvent, atomicJson, checkFollowerConfig,
   containersOnVolume, cpusetOverlap, defaultHolder, docker, dockerStats, fail, fmtBytes, inspect, listTx2Containers, loadSlots, main, now,
-  parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool,
+  parseArgs, parseCpuset, readJson, readOwner, reconcile, sha256, sleep, slotInfo, vmDisk, volumeBytes, volumeGuard, withPool, sha256File,
 } from './lib.mjs';
 
 /**
@@ -65,6 +66,123 @@ export function assertSingleWriter(info, eff) {
   const verdict = volumeGuard({ volume: info.volume, container: info.container, configText: fs.readFileSync(eff.files.config, 'utf8'), mountedBy: containersOnVolume(info.volume) });
   if (!verdict.ok) fail('REFUSED', verdict.reason);
   return verdict;
+}
+
+// [EXP-DA00] Why: source-relative byte manifests bind image and gateway; reject tag drift. Rejected: trusting a mutable local tag.
+export function datomicTree(dir) {
+  return verifiedTree(dir);
+}
+export function datomicSources() {
+  const config = datomicTree(path.join(CONFIG_DIR, 'lab/config/datomic'));
+  const gateway = datomicTree(path.join(CONFIG_DIR, 'packages/datomic/gateway'));
+  const codec = { path: 'codec-spec.json', bytes: fs.statSync(path.join(CONFIG_DIR, 'packages/datomic/src/codec-spec.json')).size,
+    sha256: sha256File(path.join(CONFIG_DIR, 'packages/datomic/src/codec-spec.json')) };
+  return { config, gateway, codec, sha256: sha256(JSON.stringify({ config, gateway, codec })) };
+}
+function assertDatomicImage(info) {
+  const out = docker(['image', 'inspect', info.laneConf.image], { allowFail: true });
+  const image = out && JSON.parse(out)[0];
+  if (!image || !info.laneConf.imageId || image.Id !== info.laneConf.imageId)
+    fail('REFUSED', 'Datomic local image id differs from slots.json; run engine.mjs build --lane datomic');
+  if (image.Config.Labels?.['tx2.build-inputs-sha256'] !== info.laneConf.buildInputsSha256 || datomicSources().sha256 !== info.laneConf.sourceInputsSha256)
+    fail('REFUSED', 'Datomic image build inputs differ from current source; rebuild and review the new pin');
+  return image;
+}
+function datomicDiskFloor() {
+  const disk = fs.statfsSync(REPO);
+  if (disk.bavail * disk.bsize < 5 * 1024 ** 3) fail('REFUSED', 'Host free disk below 5 GiB');
+}
+async function buildDatomic(config) {
+  datomicDiskFloor();
+  const download = '/Users/sam/Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745';
+  const zip = path.join(download, 'datomic-pro-1.0.7745.zip');
+  const dist = path.join(download, 'extracted/datomic-pro-1.0.7745');
+  const verification = readJson(path.join(CONFIG_DIR, 'lab/config/datomic/verification.json'));
+  if (sha256File(zip) !== verification.zipSha256) fail('REFUSED', 'Datomic zip checksum differs');
+  const peer = path.join(dist, 'peer-1.0.7745.jar');
+  const sums = fs.readFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/SHA256SUMS'), 'utf8');
+  if (!sums.includes(`${sha256File(peer)}  peer-1.0.7745.jar`)) fail('REFUSED', 'Datomic extracted peer checksum differs');
+  const check = spawnSync('python3', ['-c', `import hashlib,pathlib,sys,zipfile
+root=pathlib.Path(sys.argv[2]); archive=zipfile.ZipFile(sys.argv[1]); prefix='datomic-pro-1.0.7745/'
+expected={n[len(prefix):]:hashlib.sha256(archive.read(n)).hexdigest() for n in archive.namelist() if n.startswith(prefix) and not n.endswith('/')}
+actual={str(f.relative_to(root)):hashlib.sha256(f.read_bytes()).hexdigest() for f in root.rglob('*') if f.is_file()}
+assert actual==expected, 'Extracted Datomic bytes differ from the pinned ZIP'
+`, zip, dist], { encoding: 'utf8' });
+  if (check.status !== 0) fail('REFUSED', `Datomic extraction verification failed: ${check.stderr}`);
+  const gpg = spawnSync('gpg', ['--homedir', path.join(download, 'gnupg'), '--status-fd', '1', '--verify', path.join(CONFIG_DIR, 'lab/config/datomic/peer.jar.asc'), peer], { encoding: 'utf8' });
+  if (gpg.status !== 0 || !gpg.stdout.includes(`VALIDSIG ${verification.fingerprint} `)) fail('REFUSED', 'Datomic peer signature failed');
+  const sources = datomicSources();
+  const distribution = datomicTree(dist);
+  const buildInputsSha256 = sha256(JSON.stringify({ sources, distribution }));
+  const parent = path.join(ENGINE_DIR, 'datomic-build');
+  fs.mkdirSync(parent, { recursive: true });
+  const context = path.join(parent, `${buildInputsSha256}-${process.pid}-${Date.now()}`);
+  const fileInput = (source, destination, file) => ({ source, destination, manifest: [{ ...file, path: '' }] });
+  const staged = stageDatomicContext(context, [
+    { source: dist, destination: 'datomic', manifest: distribution },
+    { source: path.join(CONFIG_DIR, 'lab/config/datomic'), destination: 'config', manifest: sources.config },
+    { source: path.join(CONFIG_DIR, 'packages/datomic/gateway'), destination: 'gateway', manifest: sources.gateway },
+    fileInput(path.join(CONFIG_DIR, 'packages/datomic/src/codec-spec.json'), 'gateway/codec-spec.json', sources.codec),
+    fileInput(path.join(CONFIG_DIR, 'lab/config/datomic/Dockerfile'), 'Dockerfile', sources.config.find(f => f.path === 'Dockerfile')),
+  ]);
+  // [EXP-DA01] Why: ZIP extraction omits executable mode bits; only verified bin files receive the documented 0755 transform. Rejected: preserving arbitrary host executable bits.
+  for (const name of fs.readdirSync(path.join(context, 'datomic/bin')))
+    if (fs.statSync(path.join(context, 'datomic/bin', name)).isFile()) fs.chmodSync(path.join(context, 'datomic/bin', name), 0o755);
+  verifyDatomicContext(context, staged);
+  const dockerConfig = path.join(ENGINE_DIR, 'datomic-docker-config');
+  const buildxConfig = path.join(ENGINE_DIR, 'datomic-buildx');
+  fs.mkdirSync(dockerConfig, { recursive: true });
+  fs.mkdirSync(buildxConfig, { recursive: true });
+  const result = spawnSync('docker', dockerArgs(['build', '--platform', 'linux/arm64', '--build-arg', `BUILD_INPUTS_SHA256=${buildInputsSha256}`, '-t', config.lanes.datomic.image, context]), { stdio: 'inherit', env: { ...process.env, DOCKER_CONFIG: dockerConfig, BUILDX_CONFIG: buildxConfig } });
+  if (result.status !== 0) fail('DOCKER', 'Datomic image build failed');
+  if (sources.sha256 !== datomicSources().sha256) fail('REFUSED', 'Datomic source changed during build; image not pinned');
+  const image = JSON.parse(docker(['image', 'inspect', config.lanes.datomic.image]))[0];
+  Object.assign(config.lanes.datomic, { imageId: image.Id, buildInputsSha256, sourceInputsSha256: sources.sha256 });
+  // Update Datomic keys only, preserving existing lane configuration bytes.
+  const slotsFile = path.join(CONFIG_DIR, 'lab/config/slots.json');
+  let text = fs.readFileSync(slotsFile, 'utf8');
+  for (const key of ['imageId', 'buildInputsSha256', 'sourceInputsSha256']) {
+    const value = config.lanes.datomic[key];
+    const start = text.indexOf('"datomic":');
+    const end = text.indexOf('\n  },\n  "slots"', start);
+    let section = text.slice(start, end);
+    const pattern = new RegExp(`"${key}": (?:null|"[^"]*")`);
+    if (pattern.test(section)) section = section.replace(pattern, `"${key}": "${value}"`);
+    else section = section.replace(/\n    }$/, `,\n      "${key}": "${value}"\n    }`);
+    text = text.slice(0, start) + section + text.slice(end);
+  }
+  fs.writeFileSync(slotsFile, text);
+  const receipt = { imageId: image.Id, imageSize: image.Size, buildInputsSha256, sourceInputsSha256: sources.sha256, context, staged, sources, distribution, verification, gpg: { stdout: gpg.stdout, stderr: gpg.stderr } };
+  atomicJson(path.join(context, 'build-receipt.json'), receipt);
+  appendEvent({ event: 'datomic-build', imageId: image.Id, buildInputsSha256 });
+  console.log(JSON.stringify({ ...config.lanes.datomic, imageSize: image.Size, receipt: path.join(context, 'build-receipt.json') }, null, 2));
+}
+async function selftestDatomic(config, opts) {
+  datomicDiskFloor();
+  const info = slotInfo(config, 'datomic', 'dev');
+  assertDatomicImage(info);
+  const name = 'tx2-datomic-selftest';
+  const holder = defaultHolder(opts);
+  // [EXP-DA00] Why: ephemeral tests consume real pool capacity. Rejected: unaccounted docker run --rm.
+  await withPool(async ledger => {
+    const all = listTx2Containers({ all: true });
+    reconcile(ledger, all);
+    if (ledger.reservations.some(e => e.container === name) || inspect(name)) fail('REFUSED', 'Datomic selftest already owned/running');
+    const request = { container: name, memBytes: 1.5 * 1024 ** 3, diskForecastBytes: 0 };
+    const verdict = admission({ config, reservations: ledger.reservations, running: all, request, diskUsedBytes: vmDisk(config).usedBytes });
+    if (!verdict.ok) fail('REFUSED', `pool refuses selftest: ${verdict.reasons.join('; ')}`);
+    ledger.reservations.push({ ...request, holder, lane: 'datomic', slot: 'selftest', cpus: 1, pid: process.pid, state: 'starting', reservedAt: now() });
+    appendEvent({ event: 'reserved', container: name, holder });
+  });
+  try {
+    const result = spawnSync('docker', dockerArgs(['run', '--rm', '--name', name, '--network', 'none', '--memory', String(1.5 * 1024 ** 3), '--memory-swap', String(1.5 * 1024 ** 3), '--cpus', '1', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', `tx2.holder=${holder}`, info.laneConf.imageId, 'selftest']), { stdio: 'inherit' });
+    if (result.status !== 0) fail('ENGINE', 'Datomic selftest failed');
+    appendEvent({ event: 'datomic-selftest-pass', imageId: info.laneConf.imageId });
+  } finally {
+    if (inspect(name)) fail('ENGINE', 'Selftest container remains; reservation retained');
+    await withPool(async ledger => { ledger.reservations = ledger.reservations.filter(e => e.container !== name); });
+    appendEvent({ event: 'released', container: name, holder });
+  }
 }
 
 /** Effective engine configuration: the bytes the container actually runs with. */
@@ -114,16 +232,67 @@ export function effectiveConfig(config, info) {
     };
     return { effective, sha256: sha256(JSON.stringify(effective)), files: { config: file, ...(logging ? { logConfig } : {}) } };
   }
+  if (info.lane === 'datomic') {
+    const sources = datomicSources();
+    const transactor = path.join(dir, 'transactor.properties');
+    const entrypoint = path.join(dir, 'entrypoint.sh');
+    fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/transactor.properties'), transactor);
+    fs.copyFileSync(path.join(CONFIG_DIR, 'lab/config/datomic/entrypoint.sh'), entrypoint);
+    const effective = {
+      lane: 'datomic', slot: info.slot, image: info.laneConf.image, imageId: info.laneConf.imageId,
+      buildInputsSha256: info.laneConf.buildInputsSha256, sourceInputsSha256: sources.sha256,
+      gatewaySourceSha256: sha256(JSON.stringify(sources.gateway)), configMountMode: 'ro',
+      transactorOpts: info.transactorOpts, gatewayOpts: info.gatewayOpts,
+      txCpus: info.txCpus, gwCpus: info.gwCpus, profile: info.slot === 'dev' ? 'dev' : 'exclusive',
+      memBytes: info.memBytes, cpus: info.cpus, ...pin,
+      publish: `127.0.0.1:${info.port}:8080`, volume: `${info.volume}:/data`,
+      health: `bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080; printf "GET /health HTTP/1.0\\r\\n\\r\\n" >&3; head -n 1 <&3 | grep -q "HTTP/1.[01] 200"'`,
+    };
+    if (cpusetOverlap(info.txCpus, info.gwCpus, config.vm.cpus).length) fail('CONFIG', 'Datomic JVM cpusets overlap');
+    if (info.cpusetCpus) {
+      const allowed = parseCpuset(info.cpusetCpus, config.vm.cpus);
+      for (const cpu of [...parseCpuset(info.txCpus, config.vm.cpus), ...parseCpuset(info.gwCpus, config.vm.cpus)])
+        if (!allowed.includes(cpu)) fail('CONFIG', 'Datomic JVM CPUs outside container cpuset');
+    }
+    return { effective, sha256: sha256(JSON.stringify(effective)), files: { transactor, entrypoint } };
+  }
   // QLever: repo qlever-start.sh with the slot's query memory (-m). Port stays 7019 inside.
   const original = fs.readFileSync(path.join(CONFIG_DIR, 'qlever-start.sh'), 'utf8');
   if (!/ -m 2G /.test(original)) fail('CONFIG', 'qlever-start.sh no longer has "-m 2G"; update engine.mjs');
-  let script = original.replace(' -m 2G ', ` -m ${info.qleverMemory} `);
-  // [EXP-OBS01] Why: protocol slots need Q1/Q3; rejected: altering shared dev residents.
+  // [EXP-QG1] Why: an exclusive slot can boot an immutable captured index or N-Quads
+  // without mutating a running index. Rejected: docker cp over live index files (unsafe).
+  const seedFiles = info.qleverSeedDir ? Object.fromEntries(fs.readdirSync(info.qleverSeedDir)
+    .filter(name => name === 'seed.nq.gz' || /^triplex\.[a-zA-Z0-9._-]+$/.test(name))
+    .sort().map(name => [name, sha256(fs.readFileSync(path.join(info.qleverSeedDir, name)))])) : null;
+  if (seedFiles && !seedFiles['seed.nq.gz'] && !seedFiles['triplex.index.pso']) fail('CONFIG', 'seed has neither N-Quads nor a base index');
+  const seedDigest = seedFiles ? sha256(JSON.stringify(seedFiles)) : null;
+  const seedChecks = seedFiles ? Object.entries(seedFiles).map(([name, hash]) => `${hash}  ${name}`).join('\n') : '';
+  const seed = info.qleverSeedDir ? `if [[ -f /data/.qg1-seeded ]]; then
+  [[ "$(cat /data/.qg1-seeded)" = "${seedDigest}" ]] || { echo 'seed binding changed' >&2; exit 1; }
+else
+  [[ ! -f /data/triplex.index.pso ]] || { echo 'seed requires an empty index volume' >&2; exit 1; }
+  (cd /seed; sha256sum -c <<'QG1_SUMS'
+${seedChecks}
+QG1_SUMS
+  )
+  if [[ -f /seed/seed.nq.gz ]]; then
+    cd /data
+    printf '%s' '{"num-triples-per-batch":500000}' > /data/qg1-settings.json
+    gunzip -c /seed/seed.nq.gz | qlever-index -i triplex -f - -F nq -s /data/qg1-settings.json --stxxl-memory 512M --no-patterns
+  else
+    cp /seed/triplex.* /data/
+  fi
+  printf '%s' '${seedDigest}' > /data/.qg1-seeded
+fi
+` : '';
+  let script = original.replace('cd /data\n', `cd /data\n${seed}`).replace(' -m 2G ', ` -m ${info.qleverMemory} `);
   if (info.observationSources) script = script.replace('--no-metrics-log', ['all','logs'].includes(info.observationFeatures ?? 'all') ? '--enable-metrics' : '--enable-metrics --no-metrics-log');
+  const boundScript = info.qleverSeedDir ? script.replace(' --persist-updates ', ' --rebuild-keep-previous-index-dirs none --persist-updates ') : script;
   const file = path.join(dir, 'start.sh');
-  fs.writeFileSync(file, script);
+  fs.writeFileSync(file, boundScript);
   const effective = {
-    lane: 'qlever', slot: info.slot, image: info.laneConf.image, startScriptSha256: sha256(script),
+    ...(info.qleverSeedDir ? { seedDir: info.qleverSeedDir, seedFiles, seedDigest } : {}),
+    lane: 'qlever', slot: info.slot, image: info.laneConf.image, startScriptSha256: sha256(boundScript),
     ...(info.observationSources ? { observationFeatures: info.observationFeatures ?? 'all' } : {}),
     sourceStartScriptSha256: sha256(original), qleverMemory: info.qleverMemory, memBytes: info.memBytes, cpus: info.cpus, ...pin,
     ...(info.observationSources ? { observerClockPublish: `127.0.0.1:${info.port + 10000}:18080`, observerProxyPublish: `127.0.0.1:${info.port + 11000}:18090` } : {}),
@@ -146,9 +315,13 @@ function runArgs(info, eff, holder) {
     '-p', e.publish, ...(e.observerClockPublish ? ['-p', e.observerClockPublish] : []), ...(e.observerProxyPublish ? ['-p',e.observerProxyPublish] : []), ...(e.readOnlyPublish ? ['-p',e.readOnlyPublish] : []), ...(info.diagnosticDirect ? ['-p',`127.0.0.1:${info.port+14000}:${info.lane==='xtdb' ? 5432 : 7019}`] : []), '-v', e.volume,
     '--health-cmd', e.health, '--health-interval', '5s', '--health-timeout', '3s', '--health-start-period', '20s', '--health-retries', '3',
   ];
+  if (info.lane === 'datomic')
+    return [...common, '-v', `${eff.files.transactor}:/config/transactor.properties:ro`, '-v', `${eff.files.entrypoint}:/config/entrypoint.sh:ro`, '-e', `TRANSACTOR_JAVA_OPTS=${e.transactorOpts}`, '-e', `GATEWAY_JAVA_OPTS=${e.gatewayOpts}`,
+      '-e', `TX_CPUS=${e.txCpus}`, '-e', `GW_CPUS=${e.gwCpus}`, '-e', `DATOMIC_PROFILE=${e.profile}`,
+      '-e', `GATEWAY_SOURCE_SHA256=${e.gatewaySourceSha256}`, info.laneConf.imageId];
   if (info.lane === 'xtdb')
     return [...common, '-e', `JDK_JAVA_OPTIONS=${e.env.JDK_JAVA_OPTIONS}`, ...(eff.files.logConfig ? ['-v', `${eff.files.logConfig}:/etc/xtdb/log4j2.xml:ro`] : []), '-v', `${eff.files.config}:/etc/xtdb/config.yaml:ro`, info.laneConf.image, ...e.cmd];
-  return [...common, '--platform', 'linux/arm64', '-v', `${eff.files.startScript}:/config/start.sh:ro`, '--entrypoint', '/bin/bash', info.laneConf.image, '/config/start.sh'];
+  return [...common, ...(info.qleverSeedDir ? ['-v', `${info.qleverSeedDir}:/seed:ro`] : []), '--platform', 'linux/arm64', '-v', `${eff.files.startScript}:/config/start.sh:ro`, '--entrypoint', '/bin/bash', info.laneConf.image, '/config/start.sh'];
 }
 
 const tcpOpen = port => new Promise(resolve => {
@@ -168,6 +341,14 @@ export async function probe(info) {
     const nativeBinding=c.HostConfig.PortBindings?.['5432/tcp']?.find(b=>b.HostIp==='127.0.0.1');
     const open = nativeBinding ? await tcpOpen(Number(nativeBinding.HostPort)) : true;
     return { ok: health === 'healthy' && open, why: `health=${health} pgwire=${open ? 'open' : 'closed'}` };
+  }
+  if (info.lane === 'datomic') {
+    try {
+      const response = await fetch(`${info.endpoint}/health`, { signal: AbortSignal.timeout(3000) });
+      const body = await response.json();
+      const expected = sha256(JSON.stringify(datomicSources().gateway));
+      return { ok: response.ok && body.datomicVersion === '1.0.7745' && body.gatewaySourceHash === expected, why: `gateway HTTP ${response.status}` };
+    } catch (error) { return { ok: false, why: `gateway ${error.message}` }; }
   }
   if (!c.HostConfig.PortBindings?.['7019/tcp']) return { ok:c.State.Health?.Status==='healthy', why:`internal engine health=${c.State.Health?.Status}` };
   const nativePort=c.HostConfig.PortBindings['7019/tcp'].find(b=>b.HostIp==='127.0.0.1')?.HostPort;
@@ -234,6 +415,7 @@ function releaseSlot(info) {
 async function up(config, info, opts) {
   const holder = defaultHolder(opts);
   if (opts.fresh && inspect(`tx2-obs-${info.lane}-${info.slot}`)) fail('REFUSED', 'stop the observer before replacing its engine');
+  if (info.lane === 'datomic') assertDatomicImage(info);
   const slot = acquireSlot(info, holder, opts.exp);
   try {
     const eff = effectiveConfig(config, info);
@@ -474,6 +656,8 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const command = positional[0];
   const config = loadSlots();
   if (command === 'status') return status(config);
+  if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
+  if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
   if (command === 'observer-image') return observerImage(options);
   if (command === 'observer-retain') return observerRetain(options);
   if (!['up', 'down', 'logs', 'observer-up', 'observer-down', 'observer-watch', 'observer-witness', 'observer-bridge', 'observer-command', 'archive-volume', 'observer-resident'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
@@ -509,6 +693,19 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     info.observationFeatures = options['observation-features'] ?? 'all';
     if (!['all','none','logs','spans'].includes(info.observationFeatures)) fail('USAGE','unknown observation feature profile');
     info.diagnosticDirect = Boolean(options['diagnostic-direct']);
+  }
+  // [EXP-QG1] Why: overrides never reach shared residents; effective bytes bind the run.
+  // Rejected: changing slots.json for everyone during a measurement window.
+  if (options['qlever-memory'] || options['qlever-seed-dir']) {
+    if (info.lane !== 'qlever' || info.mode !== 'exclusive') fail('USAGE', 'QLever overrides require an exclusive QLever slot');
+    if (options['qlever-memory']) {
+      if (options['qlever-memory'] !== '1000M') fail('USAGE', 'only the experiment memory override 1000M is allowed');
+      info.qleverMemory = options['qlever-memory'];
+    }
+    if (options['qlever-seed-dir']) {
+      info.qleverSeedDir = fs.realpathSync(options['qlever-seed-dir']);
+      if (!fs.statSync(info.qleverSeedDir).isDirectory()) fail('USAGE', 'seed must be a directory');
+    }
   }
   if (options.follower) {
     const fol = followerInfo(config, info, options);

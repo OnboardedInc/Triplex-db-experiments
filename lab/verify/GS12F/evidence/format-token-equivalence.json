@@ -1,0 +1,14 @@
+[
+  {
+    "name": "adversarial.test.ts",
+    "identicalSignificantTranspiledTokens": false,
+    "beforeTokenCount": 399,
+    "afterTokenCount": 404
+  },
+  {
+    "name": "controls.test.ts",
+    "identicalSignificantTranspiledTokens": true,
+    "beforeTokenCount": 44,
+    "afterTokenCount": 44
+  }
+]

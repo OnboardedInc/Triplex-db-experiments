@@ -11,6 +11,7 @@ import {
   StorageAdapter,
   QueryExecutor,
   MigrationError,
+  ValueDomains,
 } from "../../src/runtime/index.js";
 import { makeTestKvBackend } from "../../src/kv/kv/InMemoryKvBackend.js";
 
@@ -222,6 +223,7 @@ describe("public runtime composition", () => {
       StorageAdapter,
       Effect.acquireRelease(
         Effect.succeed({
+          valueDomain: ValueDomains.memory,
           withTransaction: <A, E>(effect: Effect.Effect<A, E>) => effect,
           nextCommitPosition: unused,
           currentCommitPosition: unused,

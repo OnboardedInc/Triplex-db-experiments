@@ -1,0 +1,13 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 47601 "CX-A01-0312-R3-evaluator", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 47601 "CX-A01-0312-R3-evaluator", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 47601 "CX-A01-0312-R3-evaluator", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 47601 "CX-A01-0312-R3-evaluator", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 97114 "CX-K01-R6-offline", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+[lab] G0-xtdb-20261109T003626Z-7069fe: raw output runs/G0/G0-xtdb-20261109T003626Z-7069fe
+error: could not write index
+[lab] heavy: waiting for one of 4 slots; held by pid 84142 "CX-A01-0312-R3-G0", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 84142 "CX-A01-0312-R3-G0", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 84142 "CX-A01-0312-R3-G0", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 47602 "CX-A01-0312-R3-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 84142 "CX-A01-0312-R3-G0", pid 56446 "CX-VP2Q-4-R8-final-live", pid 67892 "CX-G03-r3-claim-suites3", pid 56291 "CX-K01-R6-offline"
+PASS G0 xtdb scope=full executed=1168 pass=1168 fail=0 skip=137
+receipt: lab/runs/G0/G0-xtdb-20261109T003626Z-7069fe.json

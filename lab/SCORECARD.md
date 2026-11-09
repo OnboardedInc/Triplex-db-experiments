@@ -8,7 +8,7 @@ checkout only. Cell values: OPEN, MEASURED(<value, receipt>), PASS(<receipt>), G
 | Priority | all-XTDB (XTQL) | all-XTDB (SQL) | all-QLever (+log) | XTDB SoT + QLever reads | QLever SoT + XTDB reads |
 | --- | --- | --- | --- | --- | --- |
 | P1 pinned reads never block writers | OPEN | OPEN | OPEN | OPEN | OPEN |
-| P2 small atomic idempotent commits, low latency | OPEN | (shared with XTQL) | OPEN | OPEN | OPEN |
+| P2 small atomic idempotent commits, low latency | GAP(native XTDB commit path closed, Q96d, verify/P2X2 4155fda7; workaround: broker as source of truth, EXP-P2B) | (shared with XTQL) | OPEN | GAP(as all-XTDB, Q96d) | OPEN |
 | P3 ordered resumable change feed | OPEN | (shared) | OPEN | OPEN | OPEN |
 | P4 fast current values, separate from history | OPEN | OPEN | OPEN | OPEN | OPEN |
 | P5 release activation over 100k subjects | OPEN | OPEN | OPEN | OPEN | OPEN |
@@ -22,6 +22,10 @@ checkout only. Cell values: OPEN, MEASURED(<value, receipt>), PASS(<receipt>), G
 | P3 | No native change stream; METADATA plus feed row in the same tx, one source-log tailer: lag p50 29-35 ms, p99 about 120 ms; 32 pollers on `xt.txs` stalled commits | pending |
 | P4 | Flat with history: single-subject pull p50 3.95 / 3.81 / 5.34 ms at depth 1 / 3 / 10; a 4-query 40-entity pull 35-40 ms p50 | pending |
 | P5 | Token pins no files; 100k subjects in about 41 s alone, 91 s under live load (bar 100 s); live pull p99 +39% (bar 1.5x) | pending |
+
+Note (2026-11-09, R43 1.3): MEASURED diagnostic values so far: P2X2 F3 p50/p99 7.68/21.81 ms and F5 fresh 33.00/63.26 ms
+(native XTDB); P2B round 2 broker in memory with 256 readers in a worker 7.32/55.42 ms (not live, not reviewed). The columns predate
+the broker, H1 and lane D; R43 gap 11 restates them by TARGETS 4.1 assignments in a later scorecard version.
 
 ## 2. Golden scenarios (GS gate, 20 scenarios in TARGETS.md section 6)
 

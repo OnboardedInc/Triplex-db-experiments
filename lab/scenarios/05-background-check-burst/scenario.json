@@ -3,24 +3,61 @@
   "id": 5,
   "slug": "background-check-burst",
   "title": "Background-check results burst",
-  "priorities": ["P1", "P3"],
-  "status": "spec",
+  "priorities": [
+    "P1",
+    "P3"
+  ],
+  "status": "runnable",
   "source": "lab/TARGETS.md section 6 row 5",
   "story": "A vendor posts results for 5,000 subjects in 5 minutes while the UI reads.",
   "checked": "Live read p99 holds; the feed reports every changed subject within the lag bar.",
   "seed": 20261105,
-  "yearOne": { "subjects": 5000, "windowMs": 300000 },
+  "yearOne": {
+    "subjects": 5000,
+    "windowMs": 300000
+  },
   "params": {},
   "rungs": {
-    "10k": { "subjects": 250, "negatives": 20, "burstMs": 60000, "liveMs": 90000, "trace": { "subjects": 30, "factsPerSecond": 15 } }
+    "10k": {
+      "subjects": 40,
+      "negatives": 5,
+      "burstMs": 20000,
+      "liveMs": 30000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    }
   },
-  "rungNote": "At 10k: 250 results in 60 s, about the year-one per-second rate (5,000 / 300 s = 16.7/s) scaled to 4.2/s for a shared slot.",
-  "witnesses": { "positive": "subjects whose background-check result arrives", "negative": "onboarded subjects without a result" },
-  "domain": ["the background-check obligation of each changed subject is re-evaluated (O-DOMAIN)"],
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6.",
+  "witnesses": {
+    "positive": "subjects whose background-check result arrives",
+    "negative": "onboarded subjects without a result"
+  },
+  "domain": [
+    "the background-check obligation of each changed subject is re-evaluated (O-DOMAIN)"
+  ],
   "bars": [
-    { "id": "P1.read.p99", "metric": "read.p99", "op": "<=", "value": 100, "unit": "ms", "source": "TARGETS section 1 P1" },
-    { "id": "P3.feed.lag.p99", "metric": "feed.lag.p99", "op": "<=", "value": 250, "unit": "ms", "source": "TARGETS section 1 P3" }
+    {
+      "id": "P1.read.p99",
+      "metric": "read.p99",
+      "op": "<=",
+      "value": 100,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    },
+    {
+      "id": "P3.feed.lag.p99",
+      "metric": "feed.lag.p99",
+      "op": "<=",
+      "value": 250,
+      "unit": "ms",
+      "source": "TARGETS section 1 P3"
+    }
   ],
   "faults": [],
-  "oracle": { "source": "O-REPLAY", "gaps": [] }
+  "oracle": {
+    "source": "O-REPLAY",
+    "gaps": []
+  }
 }

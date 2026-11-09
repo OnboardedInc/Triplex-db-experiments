@@ -1,4 +1,6 @@
+import { createReadConstructor, exactReadService } from "@triplex-build/triplex/runtime";
 import { Effect } from "effect";
+import { readOnlyQleverClient } from "./ReadOnlyClient.js";
 import {
   assertDatalogQuery,
   assertWrappedQuery,
@@ -23,11 +25,27 @@ import { fieldIri, graphIri, metaIri } from "./rdf.js";
 import type { QleverClient } from "./QleverClient.js";
 import type { QleverDomainPlan } from "./FamilyDomains.js";
 import type { QleverSourcePlan } from "./ScalarSource.js";
-import { materializeQleverRules } from "./recursion.js";
+import { evaluateQleverRules, placeholderQleverRuleRelations } from "./recursion.js";
 import { prepareAggregateAnswers } from "./AggregateAnswers.js";
+import { BasisNotAvailable, ReplicaUnavailable, isUnreachable } from "./broker/errors.js";
+import type { ReplicaSnapshot } from "./broker/broker.js";
+
+const readConstructor = createReadConstructor();
+export const isQleverExecutorRead = readConstructor.isRead;
 
 export interface QleverQueryOptions {
   readonly sourceView?: Effect.Effect<QleverSourceView | undefined>;
+  /**
+   * EXP-P2Q broker mode (default absent): the basis gate (`BasisGate` in broker/BrokerStorageAdapter.ts). The
+   * compiled query reads only the replica, in several requests, so the broker adapter waits (deadline-aware,
+   * RULINGS Q31d) until the replica has reached the requested basis (or sourceK inside a transaction, or the
+   * broker head when none is named) and returns a snapshot; once the last request has returned, `after` refuses
+   * the answer if the replica was reset in between (RULINGS Q67c, Q72b).
+   */
+  readonly resolveBasis?: ((requested: number | undefined) => Promise<ReplicaSnapshot>) & {
+    readonly inTransaction: (sourceK: number, requested?: number) => Promise<ReplicaSnapshot>;
+    readonly after: (snapshot: ReplicaSnapshot) => Promise<void>;
+  };
   readonly sourcePlan?: QleverSourcePlan;
   readonly domainPlan?: QleverDomainPlan;
   readonly timeoutMs?: number;
@@ -46,8 +64,13 @@ export interface QleverQueryOptions {
   /** Explicit persisted-leaf order liveness experiment; defaults stay unchanged. */
   readonly scalarOrderPlan?: "live";
 }
+// The broker gate's typed BasisNotAvailable and ReplicaUnavailable pass through (EXP-P2Q, V-P2Q M3); only the
+// gate raises them, so every A0 failure is wrapped exactly as before.
 const fail = (cause: unknown) =>
-  cause instanceof DatalogValidationError || cause instanceof UnboundVariableError
+  cause instanceof DatalogValidationError ||
+  cause instanceof UnboundVariableError ||
+  cause instanceof BasisNotAvailable ||
+  cause instanceof ReplicaUnavailable
     ? cause
     : new ReadError({ message: `QLever Datalog execution failed: ${String(cause)}`, cause });
 const safeCount = (value: string | undefined): number => {
@@ -87,7 +110,7 @@ const metrics = (query: DatalogQuery, elapsed: number): QueryMetrics => ({
 });
 
 /** Public Triplex QueryExecutor backed exclusively by QLever SPARQL operators. */
-export const makeQleverQueryExecutor = (
+const queryExecutor = (
   client: QleverClient,
   scopeKey: string,
   options: QleverQueryOptions = {},
@@ -200,6 +223,7 @@ export const makeQleverQueryExecutor = (
             );
           if (
             sourceView &&
+            !(options.resolveBasis && basis?.recordedPosition !== undefined) &&
             (basis?.recordedAt !== undefined ||
               (basis?.recordedPosition !== undefined &&
                 basis.recordedPosition !== sourceView.sourcePosition))
@@ -209,12 +233,51 @@ export const makeQleverQueryExecutor = (
               message:
                 "QLever historical Datalog inside a pending transaction is not yet qualified",
             });
+          // EXP-P2Q broker mode (V-P2Q C1, C2, N2): the compiled SPARQL reads only the replica, so inside a
+          // transaction the replica's real marker must reach sourceK, and outside it the requested basis, before
+          // the query runs; `after` checks the snapshot once the last request has returned. A0 has no gate.
+          const gate = options.resolveBasis;
+          const snapshot = gate
+            ? sourceView
+              ? await gate.inTransaction(sourceView.sourcePosition, basis?.recordedPosition)
+              : await gate(basis?.recordedPosition)
+            : undefined;
+          // [EXP-P2Q] Why: an explicit committed cut excludes staged assertions and retractions.
+          // Rejected: inlining the pending view (its visibility rules intentionally include own writes).
+          const compileSourceView =
+            gate && basis?.recordedPosition !== undefined ? undefined : sourceView;
+          // [EXP-P2Q] Why: every answer/materialization SELECT needs the broker outage reason.
+          // Rejected: classifying the whole run (compiler/validation errors are not transport failures).
+          const replicaClient: QleverClient = snapshot
+            ? {
+                update: (...args) => client.update(...args),
+                command: (...args) => client.command(...args),
+                cancel: (...args) => client.cancel(...args),
+                close: () => client.close(),
+                query: async (sparql, requestOptions) => {
+                  try {
+                    return await client.query(sparql, requestOptions);
+                  } catch (cause) {
+                    if (!(cause instanceof ReadError) && isUnreachable(cause))
+                      throw new ReplicaUnavailable({
+                        required: snapshot.basis,
+                        observed: snapshot.marker.position,
+                        replica: "the QLever replica",
+                        surface: "datalog",
+                        cause,
+                      });
+                    throw cause;
+                  }
+                },
+              }
+            : client;
           const position =
+            snapshot?.basis ??
             sourceView?.sourcePosition ??
             basis?.recordedPosition ??
             safeCount(
               (
-                await client.query(
+                await replicaClient.query(
                   `SELECT ?position WHERE { GRAPH ${graphIri(scopeKey)} { ${metaIri} ${fieldIri("position")} ?position } }`,
                   { signal, timeoutMs: nativeTimeoutMs, maxResponseBytes },
                 )
@@ -225,8 +288,9 @@ export const makeQleverQueryExecutor = (
             recordedPosition: position,
             ...(basis?.recordedAt === undefined ? {} : { recordedAt: basis.recordedAt }),
           };
-          const runId = logical.rules?.length
-            ? await materializeQleverRules(client, logical, scopeKey, {
+          // [EXP-C8] Rules are evaluated with SPARQL reads only (recursion.ts); no update.
+          const ruleRelations = logical.rules?.length
+            ? await evaluateQleverRules(replicaClient, logical, scopeKey, {
                 basis: resolved,
                 signal,
                 maxRows: maxRecursiveRows,
@@ -240,7 +304,7 @@ export const makeQleverQueryExecutor = (
                 onCompilation: (duration: number) => {
                   compilationTimeMs += duration;
                 },
-                ...(sourceView ? { sourceView } : {}),
+                ...(compileSourceView ? { sourceView: compileSourceView } : {}),
               })
             : undefined;
           const compileOptions = {
@@ -251,15 +315,15 @@ export const makeQleverQueryExecutor = (
             ...(options.retirementPlan ? { retirementPlan: options.retirementPlan } : {}),
             ...(options.scalarOrderPlan ? { scalarOrderPlan: options.scalarOrderPlan } : {}),
             maxResultRows,
-            ...(sourceView ? { sourceView } : {}),
+            ...(compileSourceView ? { sourceView: compileSourceView } : {}),
             ...(cursorValues ? { cursorValues } : {}),
-            ...(runId ? { runId } : {}),
+            ...(ruleRelations ? { ruleRelations } : {}),
           };
           let compiled = compile(compileOptions);
           for (const check of compiled.checks)
             if (
               (
-                await client.query(check.sparql, {
+                await replicaClient.query(check.sparql, {
                   signal,
                   timeoutMs: nativeTimeoutMs,
                   maxResponseBytes,
@@ -272,7 +336,7 @@ export const makeQleverQueryExecutor = (
               });
           const numericDomains = new Map<string, NumericDomain>();
           if (compiled.familyDomain) {
-            const rows = await client.query(compiled.familyDomain.sparql, {
+            const rows = await replicaClient.query(compiled.familyDomain.sparql, {
               signal,
               timeoutMs: nativeTimeoutMs,
               maxResponseBytes,
@@ -291,7 +355,7 @@ export const makeQleverQueryExecutor = (
           }
 
           for (const probe of compiled.domains) {
-            const rows = await client.query(probe.sparql, {
+            const rows = await replicaClient.query(probe.sparql, {
               signal,
               timeoutMs: nativeTimeoutMs,
               maxResponseBytes,
@@ -332,7 +396,7 @@ export const makeQleverQueryExecutor = (
             }
           }
           compiled = compile({ ...compileOptions, numericDomains });
-          const raw = await client.query(compiled.sparql, {
+          const raw = await replicaClient.query(compiled.sparql, {
             signal,
             timeoutMs: nativeTimeoutMs,
             maxResponseBytes,
@@ -353,13 +417,14 @@ export const makeQleverQueryExecutor = (
           if (compiled.countSparql)
             totalCount = safeCount(
               (
-                await client.query(compiled.countSparql, {
+                await replicaClient.query(compiled.countSparql, {
                   signal,
                   timeoutMs: nativeTimeoutMs,
                   maxResponseBytes,
                 })
               )[0]?.["total"]?.value,
             );
+          if (gate && snapshot) await gate.after(snapshot);
           const executionTimeMs = Math.max(
             0,
             performance.now() - executionStarted - compilationTimeMs,
@@ -412,7 +477,9 @@ export const makeQleverQueryExecutor = (
           ...(options.negationPlan ? { negationPlan: options.negationPlan } : {}),
           ...(options.retirementPlan ? { retirementPlan: options.retirementPlan } : {}),
           ...(options.scalarOrderPlan ? { scalarOrderPlan: options.scalarOrderPlan } : {}),
-          ...(logical.rules?.length ? { runId: "<query-run>" } : {}),
+          ...(logical.rules?.length
+            ? { ruleRelations: placeholderQleverRuleRelations(logical) }
+            : {}),
           ...(aggregateAnswers
             ? { maxResultRows: Math.min(maxResultRows, maxAggregateAnswerRows) }
             : {}),
@@ -437,10 +504,25 @@ export const makeQleverQueryExecutor = (
       },
       catch: fail,
     });
-  return {
-    execute: (query, debug = false, basis) => run(query, debug, basis),
-    executePage: (query, debug = false, basis, cursor) => run(query, debug, basis, cursor),
+  const reads = readConstructor.dispatch(
+    {
+      execute: (...args: Parameters<QueryExecutorService["execute"]>) => args,
+      executePage: (...args: Parameters<QueryExecutorService["executePage"]>) => args,
+    },
+    (...args: Parameters<typeof run>) => run(...args),
+  );
+  reads satisfies Omit<QueryExecutorService, "explain" | "explainPage">;
+  return exactReadService<QueryExecutorService>()({
+    ...reads,
     explain,
     explainPage: explain,
-  };
+  });
 };
+
+// [EXP-C8] Read entry point: the shared client is handed over as a write-refusing view
+// (ReadOnlyClient.ts), so no read path can reach the engine with a write.
+export const makeQleverQueryExecutor = (
+  client: QleverClient,
+  scopeKey: string,
+  options: QleverQueryOptions = {},
+): QueryExecutorService => queryExecutor(readOnlyQleverClient(client), scopeKey, options);

@@ -1,0 +1,12 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 69596 "CX-VSQL01-r2-final-live", pid 2651 "CX-G03-r3-smoke", pid 55759 "CX-VSQL01-r2-final-semantic"
+[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 69596 "CX-VSQL01-r2-final-live", pid 2651 "CX-G03-r3-smoke", pid 55759 "CX-VSQL01-r2-final-semantic"
+[lab] heavy: waiting for one of 4 slots; held by pid 12218 "DA01-r2-image", pid 69596 "CX-VSQL01-r2-final-live", pid 2651 "CX-G03-r3-smoke", pid 55759 "CX-VSQL01-r2-final-semantic"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/da01
+
+
+ Test Files  2 passed (2)
+      Tests  100 passed (100)
+   Start at  18:30:29
+   Duration  1.15s (import 54%, transform 35%, tests 8%, worker 2%)
+

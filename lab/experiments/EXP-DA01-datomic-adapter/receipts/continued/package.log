@@ -1,0 +1,7 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 45994 "CX-VP2Q-4-r5-live", pid 43591 "CX-SQL01-r2-verifier", pid 62697 "DA01-G1-repeat", pid 43700 "CX-SQL01-r2-live"
+ EPERM  EPERM: operation not permitted, mkdir '/Users/sam/projects/triplex-db-2/.claude/lab'
+
+pnpm: EPERM: operation not permitted, mkdir '/Users/sam/projects/triplex-db-2/.claude/lab'
+    at async Object.mkdir (node:internal/fs/promises:858:10)
+    at async api (/Users/sam/projects/triplex-db-2/.pnpm-store/v11/links/@/pnpm/10.11.0/c7f5ce4368dcc6074b8d12f555e89cedf6fb5f2d81d18939df0ed74c174a8e24/node_modules/pnpm/dist/pnpm.cjs:209567:7)
+    at async /Users/sam/projects/triplex-db-2/.pnpm-store/v11/links/@/pnpm/10.11.0/c7f5ce4368dcc6074b8d12f555e89cedf6fb5f2d81d18939df0ed74c174a8e24/node_modules/pnpm/dist/pnpm.cjs:209480:32

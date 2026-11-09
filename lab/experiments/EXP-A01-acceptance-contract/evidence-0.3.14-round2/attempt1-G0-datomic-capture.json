@@ -1,0 +1,26 @@
+{
+  "runId": "G0-datomic-20261109T064152Z-3ce0f5",
+  "lane": "datomic",
+  "source": "b9444df2fed1e7a5e8577cd5789d9d56097ce183",
+  "verdict": "PASS",
+  "counts": {
+    "executed": 1258,
+    "pass": 1258,
+    "fail": 0,
+    "skip": 66,
+    "expectedSkip": 66,
+    "unexpectedSkip": 0
+  },
+  "previous": null,
+  "capturedAtEpoch": 1794206619.502408,
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/round2/g0/G0-datomic-20261109T064152Z-3ce0f5",
+  "files": 612,
+  "bytes": 6727848,
+  "builtFiles": 548,
+  "objects": 48,
+  "manifestSha256": "5d826b098088895cab4b400a27fdba0580ad0d11c75a0eb87de27eb0ca479980",
+  "sourceDiffBytes": 0,
+  "slot": null,
+  "startedAt": "2026-11-09T06:41:52.269Z",
+  "endedAt": "2026-11-09T06:42:57.578Z"
+}

@@ -1,0 +1,118 @@
+TAP version 13
+# Subtest: accepts the exact bound 142-case small-functional matrix
+ok 1 - accepts the exact bound 142-case small-functional matrix
+  ---
+  duration_ms: 11.048458
+  type: 'test'
+  ...
+# Subtest: rejects two reports from the same backend
+ok 2 - rejects two reports from the same backend
+  ---
+  duration_ms: 1.367542
+  type: 'test'
+  ...
+# Subtest: detects a crossed receipt from another run of the same backend
+ok 3 - detects a crossed receipt from another run of the same backend
+  ---
+  duration_ms: 8.445375
+  type: 'test'
+  ...
+# Subtest: does not accept parsed objects without the bound raw artifact
+ok 4 - does not accept parsed objects without the bound raw artifact
+  ---
+  duration_ms: 4.430708
+  type: 'test'
+  ...
+# Subtest: old unbound receipts remain incomplete rather than retroactively qualified
+ok 5 - old unbound receipts remain incomplete rather than retroactively qualified
+  ---
+  duration_ms: 5.8375
+  type: 'test'
+  ...
+# Subtest: requires known frontend, built runtime, testkit and shared harness hashes
+ok 6 - requires known frontend, built runtime, testkit and shared harness hashes
+  ---
+  duration_ms: 5.934459
+  type: 'test'
+  ...
+# Subtest: rejects substituted case identities even when the count remains 142
+ok 7 - rejects substituted case identities even when the count remains 142
+  ---
+  duration_ms: 5.886083
+  type: 'test'
+  ...
+# Subtest: rejects altered cuts even when identity, artifact and counters match
+ok 8 - rejects altered cuts even when identity, artifact and counters match
+  ---
+  duration_ms: 5.94175
+  type: 'test'
+  ...
+# Subtest: checks the independent oracle even when both reports claim the same wrong answer passed
+ok 9 - checks the independent oracle even when both reports claim the same wrong answer passed
+  ---
+  duration_ms: 6.278
+  type: 'test'
+  ...
+# Subtest: compares unordered query calls as bags while preserving duplicate-call cost
+ok 10 - compares unordered query calls as bags while preserving duplicate-call cost
+  ---
+  duration_ms: 10.19525
+  type: 'test'
+  ...
+# Subtest: detects shared frontend drift even when each individual run stayed stable
+ok 11 - detects shared frontend drift even when each individual run stayed stable
+  ---
+  duration_ms: 7.21925
+  type: 'test'
+  ...
+# Subtest: rejects duplicate case identities
+ok 12 - rejects duplicate case identities
+  ---
+  duration_ms: 3.807333
+  type: 'test'
+  ...
+# Subtest: fractional offered schedules never release before the actual clock reaches them
+ok 13 - fractional offered schedules never release before the actual clock reaches them
+  ---
+  duration_ms: 25.490792
+  type: 'test'
+  ...
+# Subtest: queued requests expire from their offered deadline without entering the backend or leaking a slot
+ok 14 - queued requests expire from their offered deadline without entering the backend or leaking a slot
+  ---
+  duration_ms: 22.445041
+  type: 'test'
+  ...
+# Subtest: bounded rejection is immediate and does not alter already admitted requests
+ok 15 - bounded rejection is immediate and does not alter already admitted requests
+  ---
+  duration_ms: 1.884333
+  type: 'test'
+  ...
+# Subtest: independent oracle follows returned P and keeps historical R stable across corrections
+ok 16 - independent oracle follows returned P and keeps historical R stable across corrections
+  ---
+  duration_ms: 6.16375
+  type: 'test'
+  ...
+# Subtest: cold probes span the declared distinct-entity population and never change under hot corrections
+ok 17 - cold probes span the declared distinct-entity population and never change under hot corrections
+  ---
+  duration_ms: 3.94375
+  type: 'test'
+  ...
+# Subtest: oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+ok 18 - oracle refuses changed recipe, wrong seed commit count and an excessive catalog
+  ---
+  duration_ms: 0.782166
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 132.69575

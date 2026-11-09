@@ -1,0 +1,258 @@
+{
+  "format": "tx2-da01-round4/1",
+  "at": "2026-11-09T01:13:56.782Z",
+  "implementationHead": "b76b9c962a2f47e0d0ae5e3ef4ea57e2d58988b5",
+  "gates": [
+    {
+      "runId": "G0-datomic-20261109T011153Z-d9516d",
+      "previous": "G0-datomic-20261109T001802Z-f61e8a",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 1095,
+        "pass": 1095,
+        "fail": 0,
+        "skip": 62,
+        "expectedSkip": 62,
+        "unexpectedSkip": 0
+      }
+    },
+    {
+      "runId": "G1-datomic-20261109T010729Z-f49dcd",
+      "previous": "G1-datomic-20261109T002002Z-e3adf2",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "queryMatrix": {
+        "bases": 12,
+        "paths": [
+          "adapter-pattern",
+          "adapter-batch",
+          "compiled",
+          "rules",
+          "optional",
+          "native-history",
+          "native-literal",
+          "native-numeric",
+          "native-ground-history",
+          "native-ground",
+          "native-ident",
+          "native-source",
+          "native-omitted",
+          "native-nested",
+          "native-map-ground",
+          "live-pull-batch",
+          "live-pull-pattern",
+          "live-pull-id",
+          "live-pull-all",
+          "held/native-history",
+          "staged/native-history",
+          "held/native-literal",
+          "staged/native-literal",
+          "held/native-numeric",
+          "staged/native-numeric",
+          "held/native-ground-history",
+          "staged/native-ground-history",
+          "held/native-ground",
+          "staged/native-ground",
+          "held/native-ident",
+          "staged/native-ident",
+          "held/native-source",
+          "staged/native-source",
+          "held/native-omitted",
+          "staged/native-omitted",
+          "held/native-nested",
+          "staged/native-nested",
+          "held/native-map-ground",
+          "staged/native-map-ground"
+        ],
+        "observations": 936,
+        "refusals": 404
+      }
+    },
+    {
+      "runId": "G1-datomic-20261109T011231Z-5c906f",
+      "previous": "G1-datomic-20261109T010729Z-f49dcd",
+      "verdict": "PASS",
+      "counts": {
+        "executed": 88,
+        "expected": 88,
+        "pass": 88,
+        "fail": 0,
+        "skip": 0,
+        "suite": "PASS",
+        "byPhase": {
+          "current": {
+            "pass": 44,
+            "total": 44
+          },
+          "reopen": {
+            "pass": 44,
+            "total": 44
+          }
+        }
+      },
+      "queryMatrix": {
+        "bases": 12,
+        "paths": [
+          "adapter-pattern",
+          "adapter-batch",
+          "compiled",
+          "rules",
+          "optional",
+          "native-history",
+          "native-literal",
+          "native-numeric",
+          "native-ground-history",
+          "native-ground",
+          "native-ident",
+          "native-source",
+          "native-omitted",
+          "native-nested",
+          "native-map-ground",
+          "live-pull-batch",
+          "live-pull-pattern",
+          "live-pull-id",
+          "live-pull-all",
+          "held/native-history",
+          "staged/native-history",
+          "held/native-literal",
+          "staged/native-literal",
+          "held/native-numeric",
+          "staged/native-numeric",
+          "held/native-ground-history",
+          "staged/native-ground-history",
+          "held/native-ground",
+          "staged/native-ground",
+          "held/native-ident",
+          "staged/native-ident",
+          "held/native-source",
+          "staged/native-source",
+          "held/native-omitted",
+          "staged/native-omitted",
+          "held/native-nested",
+          "staged/native-nested",
+          "held/native-map-ground",
+          "staged/native-map-ground"
+        ],
+        "observations": 936,
+        "refusals": 404
+      }
+    }
+  ],
+  "builds": [
+    {
+      "imageId": "sha256:53c2f269067839f40fd39e8c43ac7a76c7734d3fa2427cd5c2fc70db4ed6f5b9",
+      "buildInputsSha256": "8f7ec8f6f48becc4a7fa0ac675e49a2f741419c90bc1e2de337ebbc356c8f374",
+      "sourceInputsSha256": "8f113042df9aae941b365ad6cf4ba8104a1b4a0e6dd03e063296d310cdbad6ad",
+      "gatewaySourceHash": "2481f5cfc9829e0558424a947fd592e756d5cf3f8509c4d63cfcf184cc12e92a",
+      "context": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/8f7ec8f6f48becc4a7fa0ac675e49a2f741419c90bc1e2de337ebbc356c8f374-51927-1794185791922",
+      "stagedFiles": 811
+    },
+    {
+      "imageId": "sha256:cb391925c6f69e55c334f220570765dfdd83902825e2b906b6544dc06ae9ba7e",
+      "buildInputsSha256": "4dc24af96e40e89226731edf1f116f540543742f2ef7080f4db10b50e8a46d7a",
+      "sourceInputsSha256": "182843ca578049e86d4e55f0553c6d2f691e6ec16c8c5fe0609505bf1eaade1c",
+      "gatewaySourceHash": "4174f6ab33800f45aacc3f39e30620c4d8faedda445f4fd4905f1769efb950ab",
+      "context": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/4dc24af96e40e89226731edf1f116f540543742f2ef7080f4db10b50e8a46d7a-88366-1794185899747",
+      "stagedFiles": 811
+    }
+  ],
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "4174f6ab33800f45aacc3f39e30620c4d8faedda445f4fd4905f1769efb950ab"
+  },
+  "owner": {
+    "format": "tx2-slot-owner/1",
+    "lane": "datomic",
+    "slot": "dev",
+    "mode": "resident",
+    "container": "tx2-datomic-dev",
+    "volume": "tx2-datomic-dev-data",
+    "endpoint": "http://127.0.0.1:8470",
+    "port": 8470,
+    "holder": "EXP-DA01",
+    "experiment": "EXP-DA01",
+    "pid": 2608,
+    "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01",
+    "createdAt": "2026-11-09T00:59:02.615Z"
+  },
+  "preservation": [
+    {
+      "db": "s-5a377987b021d5401900564fbae6a1ee",
+      "status": 200,
+      "basis": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      },
+      "checkedAt": "2026-11-09T01:13:56.634Z"
+    },
+    {
+      "db": "s-f43d78e756286da105c6aa52db4e63e5",
+      "status": 200,
+      "basis": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      },
+      "checkedAt": "2026-11-09T01:13:56.710Z"
+    }
+  ],
+  "live": {
+    "passed": 118,
+    "created": 18,
+    "deleted": 18,
+    "declarationRebuilds": [
+      {
+        "file": "packages/core/dist/kv/layers/KvTriplesLive.d.ts",
+        "liveSha256": "3325b53ab034666447eab034f059facd1dfad5515cd2b40d338994b539ba43af",
+        "gateSha256": "1e61ae71a24c53db9e7e6456ae83a69fb5b7a9ffe3d121a82a2847c2e0ddc902"
+      },
+      {
+        "file": "packages/core/dist/store/TriplesLive.d.ts",
+        "liveSha256": "ab762610713a91580356d680888edeab209b727691787a8dd5281a2e3d85497b",
+        "gateSha256": "89e749fca8a162a7adec070163649ce25d6a360ac2ab5210415580500af460f0"
+      },
+      {
+        "file": "packages/core/dist/store/TriplesLive.d.ts.map",
+        "liveSha256": "8fc7e7a7724b92eb31ff80385ad21c77fbb3080287a8af397e571b402a940299",
+        "gateSha256": "db41a105f73a5420a5867669bc6425849f75f4a2b7f7218984e69b3cfe31e94e"
+      }
+    ]
+  },
+  "jvm": {
+    "tests": 8,
+    "assertions": 171
+  },
+  "hostFreeBytes": 10821140480
+}

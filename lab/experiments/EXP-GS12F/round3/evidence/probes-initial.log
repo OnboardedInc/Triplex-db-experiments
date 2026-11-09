@@ -1,0 +1,15 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 45884 "CX-RT01-final-named-error", pid 67604 "CX-QG1-phase1-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 45884 "CX-RT01-final-named-error", pid 67604 "CX-QG1-phase1-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 94204 "CX-QG1-compress-completed-fixed", pid 67604 "CX-QG1-phase1-attempt3"
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../../vitest.workspace-aliases" without a file extension (lab/experiments/EXP-GS12F/round3/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f
+
+
+ Test Files  3 passed (3)
+      Tests  29 passed (29)
+   Start at  21:54:20
+   Duration  1.57s (transform 44%, import 44%, tests 11%, worker 1%)
+

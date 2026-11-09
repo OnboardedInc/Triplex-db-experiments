@@ -1,0 +1,144 @@
+{
+  "attempt": "offline-2026-11-09T01-57-49-766Z-38786b",
+  "classification": "OFFLINE-DIAGNOSTIC",
+  "startedAt": "2026-11-09T01:57:49.770Z",
+  "sources": {
+    "lab/scenarios/v2/generate.ts": "8e4790d6d0bc818937ba40d43e720a4f27a5e4c80209e5110b4cdc7eaf89e5aa",
+    "lab/scenarios/v2/expect.ts": "5a079461e55327ffbb8162f0c17dfcae0a823f3250f0b7c57cc0027197b6cd1d",
+    "lab/scenarios/v2/run.ts": "798537ab57a771eccfe50707976e8dfed75e99110452b6012b7ed2ff6e6415f3",
+    "lab/scenarios/v2/admission.ts": "87d1bfdfd013af520b8723385a2fba2176dd15a6ff5a013e8796904b6622f1de",
+    "lab/scenarios/lib/domain.mjs": "d9f4ed4235386642a01c2865a8d63f1905aba04a079851114bdfca313626798f",
+    "lab/scenarios/lib/policy.mjs": "a3ab097e68cbf42be090038cae79f0a26b9111c48cd761f82566f8c0280e6f3a",
+    "lab/bench/lib/g0.ts": "f26ada16b5f03316eb005eb94adc29a07ad0257f1426b6ec5f56fd433ff7deb4",
+    "lab/bench/lib/w0-trace.ts": "28ffa1a0b29952058857d2ed117bc5cf62850a7fea3242c6f0133cf23cbcdc1d",
+    "lab/bench/lib/trace.ts": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+    "lab/acceptance/cases/CS-GS.json": "916cc05e868de2212e248271a1ecdbf8fcd71a115d286fe638f599a62fb7c320"
+  },
+  "commands": [
+    {
+      "name": "build-w0",
+      "argv": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "-p",
+        "packages/w0/tsconfig.json"
+      ],
+      "startedAt": "2026-11-09T01:57:49.770Z",
+      "endedAt": "2026-11-09T01:57:51.134Z",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "live-types",
+      "argv": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "--module",
+        "NodeNext",
+        "--target",
+        "ES2022",
+        "--allowImportingTsExtensions",
+        "--skipLibCheck",
+        "--types",
+        "node",
+        "lab/scenarios/v2/run.ts",
+        "lab/scenarios/v2/admission.test.ts"
+      ],
+      "startedAt": "2026-11-09T01:57:51.136Z",
+      "endedAt": "2026-11-09T01:57:52.292Z",
+      "exitCode": 2,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "f067c1099e507d01cd48bc5bd26d1a94551436bc30f7e557afe60409b4ab11a4",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "types",
+      "argv": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/scenarios/v2/tsconfig.json"
+      ],
+      "startedAt": "2026-11-09T01:57:52.292Z",
+      "endedAt": "2026-11-09T01:57:53.332Z",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "unit",
+      "argv": [
+        "node",
+        "--experimental-strip-types",
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/scenarios/lib/runner.test.mjs",
+        "lab/scenarios/v2/offline.test.ts"
+      ],
+      "startedAt": "2026-11-09T01:57:53.332Z",
+      "endedAt": "2026-11-09T01:57:55.290Z",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "1c56f847711e2e975e869fe3c08d80221f47ca6d50fe771ba40a60a4cd02b10d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "admission",
+      "argv": [
+        "node",
+        "--experimental-strip-types",
+        "--test",
+        "lab/scenarios/v2/admission.test.ts"
+      ],
+      "startedAt": "2026-11-09T01:57:55.290Z",
+      "endedAt": "2026-11-09T01:57:56.953Z",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "77923a699b351dec41a9c7f2cc983344b1f14e5cbc929437593eadff6074201f",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "goldens",
+      "argv": [
+        "node",
+        "--experimental-strip-types",
+        "lab/scenarios/v2/expect.ts",
+        "--check"
+      ],
+      "startedAt": "2026-11-09T01:57:56.953Z",
+      "endedAt": "2026-11-09T01:58:03.392Z",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "70e5af156daa9a4017cf0a7b91cbd514bc7a4f2dcb541dbcc36ff2005407ffd6",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cases",
+      "argv": [
+        "node",
+        "lab/scenarios/v2/cases.mjs",
+        "--check"
+      ],
+      "startedAt": "2026-11-09T01:58:03.392Z",
+      "endedAt": "2026-11-09T01:58:03.442Z",
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "e3535223449088a75abc8188b65c50c2d6bb851e3af203380a0cbc69ae9ae07a",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "endedAt": "2026-11-09T01:58:03.442Z",
+  "sourceUnchanged": true
+}

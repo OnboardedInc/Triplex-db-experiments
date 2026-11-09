@@ -1,0 +1,1058 @@
+[
+  {
+    "label": "integer:9223372036854775808",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '9223372036854775808' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:9223372036854775808",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '9223372036854775808' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:9223372036854775808",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '9223372036854775808' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-9223372036854775809",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-9223372036854775809' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-9223372036854775809",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-9223372036854775809' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-9223372036854775809",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-9223372036854775809' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:01",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '01' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:01",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '01' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:01",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '01' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-0",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-0' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-0",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-0' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:-0",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '-0' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:+1",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '+1' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:+1",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '+1' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:+1",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '+1' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:1e3",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '1e3' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:1e3",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '1e3' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "integer:1e3",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'integer', value: '1e3' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "number:NaN",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: number must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "number:NaN",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: number must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "number:NaN",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 3,
+      "claims": 1,
+      "queries": 4,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: number must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "number:Infinity",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: number must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "number:Infinity",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: number must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "number:Infinity",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 3,
+      "claims": 1,
+      "queries": 4,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: number must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "datetime:NaN",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: datetime must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "datetime:NaN",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: datetime must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "datetime:NaN",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 3,
+      "claims": 1,
+      "queries": 4,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: datetime must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "datetime:Infinity",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: datetime must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "datetime:Infinity",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: datetime must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "datetime:Infinity",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 3,
+      "claims": 1,
+      "queries": 4,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: datetime must be finite\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:90:48)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:nonfinite",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: JSON numbers must be finite\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:39:42)\n              at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:49\n              at Array.map (<anonymous>)\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:10)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:nonfinite",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: JSON numbers must be finite\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:39:42)\n              at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:49\n              at Array.map (<anonymous>)\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:10)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:nonfinite",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 3,
+      "claims": 1,
+      "queries": 4,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: JSON numbers must be finite\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:39:42)\n              at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:49\n              at Array.map (<anonymous>)\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:10)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:undefined",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Unsupported JSON value: undefined\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:42:42)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:undefined",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Unsupported JSON value: undefined\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:42:42)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:undefined",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 3,
+      "claims": 1,
+      "queries": 4,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Unsupported JSON value: undefined\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:42:42)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:cycle",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Cyclic JSON is not supported\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:43:32)\n              at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:49\n              at Array.map (<anonymous>)\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:10)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:cycle",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Cyclic JSON is not supported\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:43:32)\n              at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:49\n              at Array.map (<anonymous>)\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:10)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:cycle",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 3,
+      "claims": 1,
+      "queries": 4,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Cyclic JSON is not supported\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:43:32)\n              at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:49\n              at Array.map (<anonymous>)\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:60:10)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:bigint",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Unsupported JSON value: bigint\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:42:42)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:bigint",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Unsupported JSON value: bigint\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:42:42)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "json:bigint",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 3,
+      "claims": 1,
+      "queries": 4,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Unsupported JSON value: bigint\n              at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:42:42)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:66:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:99:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "blob:negative-size",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Blob size must be a nonnegative safe integer\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:104:15)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "blob:negative-size",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 1,
+      "claims": 0,
+      "queries": 1,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Blob size must be a nonnegative safe integer\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:104:15)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "blob:negative-size",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 2,
+      "claims": 0,
+      "queries": 2,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 3,
+      "claims": 1,
+      "queries": 4,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid XTDB assertion',\n          cause: TypeError: Blob size must be a nonnegative safe integer\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:104:15)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:517:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27)\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:806:17\n              at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:783:27,\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": false
+  },
+  {
+    "label": "decimal:excess-scale",
+    "api": "assert",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'decimal', value: '16.501' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "decimal:excess-scale",
+    "api": "assertBatch",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'decimal', value: '16.501' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  },
+  {
+    "label": "decimal:excess-scale",
+    "api": "transact",
+    "initial": {
+      "queries": 0,
+      "mutations": 1
+    },
+    "before": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "after": {
+      "tx": 0,
+      "claims": 0,
+      "queries": 0,
+      "mutations": 1
+    },
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          field: 'value',\n          value: { type: 'decimal', value: '16.501' },\n          message: 'Invalid triple value for :review/value on review:entity',\n          _tag: 'InvalidTripleError'\n        }\n      }\n    ]\n  }\n}",
+    "typed": true
+  }
+]

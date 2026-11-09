@@ -1,0 +1,19 @@
+{
+    "git-hash-index": "6c5861a",
+    "git-hash-server": "6c5861a",
+    "name-index": "no index name specified",
+    "name-text-index": "",
+    "num-entity-occurrences": 0,
+    "num-objects-internal": 0,
+    "num-objects-normal": 1,
+    "num-permutations": 6,
+    "num-predicates-internal": 0,
+    "num-predicates-normal": 1,
+    "num-subjects-internal": 0,
+    "num-subjects-normal": 1,
+    "num-text-records": 0,
+    "num-triples-internal": 0,
+    "num-triples-normal": 1,
+    "num-word-occurrences": 0,
+    "version-server": "v0.6.0"
+}

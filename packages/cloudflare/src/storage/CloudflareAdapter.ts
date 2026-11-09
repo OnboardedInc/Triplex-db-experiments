@@ -1,3 +1,4 @@
+import { ValueDomains, storedValueDomain } from "@triplex-build/triplex/runtime";
 /**
  * CloudflareAdapter - Cloudflare Durable Object implementation of StorageAdapter
  *
@@ -271,7 +272,10 @@ export function makeCloudflareAdapter(ctx: DOState): SqlStorageAdapterService {
   const insert: StorageAdapterService["insert"] = (input, txId, timestamp, id, position) =>
     Effect.try({
       try: () => {
-        const packed = packValue(input.value);
+        const packed = packValue(
+          input.value,
+          storedValueDomain(ValueDomains.cloudflare, input.attribute),
+        );
 
         sqlStorage.exec(
           `INSERT INTO triples (
@@ -352,7 +356,10 @@ export function makeCloudflareAdapter(ctx: DOState): SqlStorageAdapterService {
         for (let index = 0; index < inputs.length; index++) {
           const input = inputs[index]!;
           const id = ids[index]!;
-          const packed = packValue(input.value);
+          const packed = packValue(
+            input.value,
+            storedValueDomain(ValueDomains.cloudflare, input.attribute),
+          );
 
           sqlStorage.exec(
             `INSERT INTO triples (
@@ -522,7 +529,7 @@ export function makeCloudflareAdapter(ctx: DOState): SqlStorageAdapterService {
         }
 
         if (pattern.value && "type" in pattern.value) {
-          const packed = packValue(pattern.value);
+          const packed = packValue(pattern.value, ValueDomains.cloudflare);
           conditions.push(`value_type = ?`);
           params.push(packed.value_type);
 
@@ -647,6 +654,7 @@ export function makeCloudflareAdapter(ctx: DOState): SqlStorageAdapterService {
   // =========================================================================
 
   return {
+    valueDomain: ValueDomains.cloudflare,
     withTransaction,
     nextCommitPosition,
     currentCommitPosition,

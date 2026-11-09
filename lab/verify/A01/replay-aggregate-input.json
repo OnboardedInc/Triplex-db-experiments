@@ -1,0 +1,44 @@
+{
+  "format": "triplex-db-2/o-replay-case/1",
+  "caseId": "review-aggregate-shape",
+  "defaultScope": "s",
+  "commands": [
+    {
+      "clock": 1,
+      "operations": [
+        {
+          "op": "assert",
+          "ref": "a",
+          "entityId": "e",
+          "attribute": ":amount",
+          "value": {
+            "type": "integer",
+            "value": "2"
+          },
+          "validFrom": 0
+        }
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "sum",
+      "kind": "aggregate",
+      "cut": {
+        "validAt": 0
+      },
+      "match": {
+        "attributes": {
+          "amt": ":amount"
+        }
+      },
+      "aggregates": [
+        {
+          "op": "sum",
+          "var": "amt",
+          "as": "total"
+        }
+      ]
+    }
+  ]
+}

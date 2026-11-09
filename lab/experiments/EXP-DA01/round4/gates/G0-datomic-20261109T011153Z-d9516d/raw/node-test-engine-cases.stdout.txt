@@ -1,0 +1,88 @@
+TAP version 13
+# Subtest: twenty-workload plans derive from cases without consulting expected answers or assertion projections
+ok 1 - twenty-workload plans derive from cases without consulting expected answers or assertion projections
+  ---
+  duration_ms: 3.687166
+  type: 'test'
+  ...
+# Subtest: native commands retain typed event payloads and use interval patches for state
+ok 2 - native commands retain typed event payloads and use interval patches for state
+  ---
+  duration_ms: 1.854458
+  type: 'test'
+  ...
+# Subtest: price lookup carries each purchase timestamp to the mapped knowledge cut
+ok 3 - price lookup carries each purchase timestamp to the mapped knowledge cut
+  ---
+  duration_ms: 1.012333
+  type: 'test'
+  ...
+# Subtest: claim lookup resolves the policy edge and retains the original and corrected cuts
+ok 4 - claim lookup resolves the policy edge and retains the original and corrected cuts
+  ---
+  duration_ms: 0.371083
+  type: 'test'
+  ...
+# Subtest: alternate-support baseline preserves physical support IDs and binds exact cuts
+ok 5 - alternate-support baseline preserves physical support IDs and binds exact cuts
+  ---
+  duration_ms: 0.2305
+  type: 'test'
+  ...
+# Subtest: alternate-support baseline rejects graphs outside its finite witness contract
+ok 6 - alternate-support baseline rejects graphs outside its finite witness contract
+  ---
+  duration_ms: 0.192375
+  type: 'test'
+  ...
+# Subtest: webhook deliveries preserve source identity and authoritative revision query plans
+ok 7 - webhook deliveries preserve source identity and authoritative revision query plans
+  ---
+  duration_ms: 0.468917
+  type: 'test'
+  ...
+# Subtest: dependency plans use set recursion for cycles and preserve the exact vulnerability endpoint
+ok 8 - dependency plans use set recursion for cycles and preserve the exact vulnerability endpoint
+  ---
+  duration_ms: 0.166708
+  type: 'test'
+  ...
+# Subtest: logical knowledge cuts map after complete event groups and before first knowledge
+ok 9 - logical knowledge cuts map after complete event groups and before first knowledge
+  ---
+  duration_ms: 0.282792
+  type: 'test'
+  ...
+# Subtest: common inventory projection preserves exact integer values and empty ledgers
+ok 10 - common inventory projection preserves exact integer values and empty ledgers
+  ---
+  duration_ms: 0.557791
+  type: 'test'
+  ...
+# Subtest: recall corrections preserve contamination and independent shipment records
+ok 11 - recall corrections preserve contamination and independent shipment records
+  ---
+  duration_ms: 0.189875
+  type: 'test'
+  ...
+# Subtest: funnel preserves immutable event IDs, strict order and half-open integer windows
+ok 12 - funnel preserves immutable event IDs, strict order and half-open integer windows
+  ---
+  duration_ms: 0.181709
+  type: 'test'
+  ...
+# Subtest: runner requires an explicit fresh output and rejects unimplemented selections
+ok 13 - runner requires an explicit fresh output and rejects unimplemented selections
+  ---
+  duration_ms: 0.394667
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 73.115334

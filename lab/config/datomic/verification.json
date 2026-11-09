@@ -1,0 +1,18 @@
+{
+  "zipSha256": "60ac6bc5f04fefb85a5aeef6a5e6c5369c5a880ca6b9f205e00a12719e7bd2dc",
+  "zipBytes": 272751248,
+  "peerSha1": "a976733ab47a8ed3f19c687995e09f406191f9b7",
+  "peerSha1Url": "https://repo.maven.apache.org/maven2/com/datomic/peer/1.0.7745/peer-1.0.7745.jar.sha1",
+  "gpgVerdict": "VALIDSIG",
+  "fingerprint": "749F6F7C583CA630FF76AECDF255D6EA3FD20B93",
+  "keySource": "https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x749F6F7C583CA630FF76AECDF255D6EA3FD20B93",
+  "keyTrust": "Signature valid; keyserver key identity not independently certified",
+  "baseIndexDigest": "sha256:0eda5830ed7b669abc246a8dc520ea8a23cab06f9a8d4b6964109e2f2394e46f",
+  "arm64Manifest": "sha256:e29bfdff2f7245d8be69ee092651149c026e1b8c2b2d4967c9563963f30076f3",
+  "jars": {
+    "clojure-1.12.5.jar": "dfdee131460216a84fef22e537bb0d0579965f8f70338d748323dff26f8e5a8b",
+    "jetty-server-9.4.53.v20231009.jar": "9c4e9c6cb0a7a541031500af0823b678f65d809f481efa9cadd1ff81bda19f78",
+    "ring-jetty-adapter-1.10.0.jar": "8d224dc95a88da7e42da9b7f68527eca18070803fe0b1c74ee2da6a794281dfc",
+    "data.json-2.5.2.jar": "0938c730961d32b331ea7e5cd7c6a822c0a889def79d1c3f2af4dd201fdddeb3"
+  }
+}

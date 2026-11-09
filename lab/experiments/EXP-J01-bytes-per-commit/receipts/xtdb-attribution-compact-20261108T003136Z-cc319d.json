@@ -1,0 +1,273 @@
+{
+  "format": "j01-receipt/1",
+  "id": "xtdb-attribution-compact-20261108T003136Z-cc319d",
+  "kind": "xtdb-attribution-compact",
+  "writtenAt": "2026-11-08T00:31:36.482Z",
+  "identity": {
+    "gitHead": "83b384334610043bd29ccc7f2b5f0ba0384361bc",
+    "dirty": true,
+    "diffSha256": "519e67e0fb3378b8988cb3ae0635b2c1f7bdfc8011703ef27083209f48ba874a",
+    "distSha256": "5315e5ffbb95b0d32f7d4788685412a1e6daab53a8b4a34919ecd80f932620b9",
+    "engines": {
+      "xtdb": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+      "qlever": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec"
+    },
+    "endpoints": {
+      "xtdb": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+      "qlever": "http://127.0.0.1:7070"
+    },
+    "node": "v22.23.2",
+    "host": {
+      "cpus": 12,
+      "loadavg": [
+        10.17,
+        9.3,
+        10.01
+      ]
+    }
+  },
+  "lane": "xtdb",
+  "label": "compact",
+  "commitEncoding": "compact",
+  "scopeKeyLength": 82,
+  "real": [
+    {
+      "facts": 1,
+      "recordBytes": 13123,
+      "interleaved": 0,
+      "ops": [
+        "sql",
+        "sql",
+        "put-docs",
+        "put-docs",
+        "put-docs",
+        "put-docs"
+      ],
+      "statements": 6,
+      "params": 158,
+      "sqlChars": 1979
+    },
+    {
+      "facts": 10,
+      "recordBytes": 26397,
+      "interleaved": 0,
+      "ops": [
+        "sql",
+        "sql",
+        "put-docs",
+        "put-docs",
+        "put-docs",
+        "put-docs"
+      ],
+      "statements": 6,
+      "params": 572,
+      "sqlChars": 4139
+    },
+    {
+      "facts": 10,
+      "recordBytes": 26397,
+      "interleaved": 0,
+      "ops": [
+        "sql",
+        "sql",
+        "put-docs",
+        "put-docs",
+        "put-docs",
+        "put-docs"
+      ],
+      "statements": 6,
+      "params": 572,
+      "sqlChars": 4139
+    },
+    {
+      "facts": 10,
+      "recordBytes": 26397,
+      "interleaved": 0,
+      "ops": [
+        "sql",
+        "sql",
+        "put-docs",
+        "put-docs",
+        "put-docs",
+        "put-docs"
+      ],
+      "statements": 6,
+      "params": 572,
+      "sqlChars": 4139
+    },
+    {
+      "facts": 50,
+      "recordBytes": 85869,
+      "interleaved": 0,
+      "ops": [
+        "sql",
+        "sql",
+        "put-docs",
+        "put-docs",
+        "put-docs",
+        "put-docs"
+      ],
+      "statements": 6,
+      "params": 2412,
+      "sqlChars": 13739
+    }
+  ],
+  "tenFactRecordBytes": 26397,
+  "statements": [
+    {
+      "kind": "assert-cas",
+      "params": 3,
+      "sqlChars": 230
+    },
+    {
+      "kind": "other",
+      "params": 3,
+      "sqlChars": 238
+    },
+    {
+      "kind": "insert-assertions",
+      "params": 552,
+      "sqlChars": 3217
+    },
+    {
+      "kind": "insert-claims",
+      "params": 6,
+      "sqlChars": 168
+    },
+    {
+      "kind": "insert-meta",
+      "params": 3,
+      "sqlChars": 125
+    },
+    {
+      "kind": "insert-attempts",
+      "params": 5,
+      "sqlChars": 161
+    }
+  ],
+  "rowCounts": {
+    "data": 10,
+    "envelope": 4,
+    "change": 10
+  },
+  "changeJsonBytes": [
+    {
+      "valueJson": 267,
+      "valueIdentity": 291
+    },
+    {
+      "valueJson": 267,
+      "valueIdentity": 291
+    },
+    {
+      "valueJson": 267,
+      "valueIdentity": 291
+    },
+    {
+      "valueJson": 267,
+      "valueIdentity": 291
+    },
+    {
+      "valueJson": 267,
+      "valueIdentity": 291
+    },
+    {
+      "valueJson": 267,
+      "valueIdentity": 291
+    },
+    {
+      "valueJson": 267,
+      "valueIdentity": 291
+    },
+    {
+      "valueJson": 267,
+      "valueIdentity": 291
+    },
+    {
+      "valueJson": 267,
+      "valueIdentity": 291
+    },
+    {
+      "valueJson": 267,
+      "valueIdentity": 291
+    }
+  ],
+  "increments": [
+    {
+      "source": "base: record + tx_meta (position counter)",
+      "cumulativeBytes": 1851,
+      "bytes": 1851
+    },
+    {
+      "source": "tx_attempts (operation receipt)",
+      "cumulativeBytes": 3027,
+      "bytes": 1176
+    },
+    {
+      "source": "tx_claims (command claim)",
+      "cumulativeBytes": 4323,
+      "bytes": 1296
+    },
+    {
+      "source": "ASSERT serialization: scope CAS + command not claimed",
+      "cumulativeBytes": 5675,
+      "bytes": 1352
+    },
+    {
+      "source": "ASSERT identity: operation not recorded",
+      "cumulativeBytes": 6395,
+      "bytes": 720
+    },
+    {
+      "source": "data rows (10 tx_assertions)",
+      "cumulativeBytes": 13211,
+      "bytes": 6816
+    },
+    {
+      "source": "guard: data assertion ids",
+      "cumulativeBytes": 13843,
+      "bytes": 632
+    },
+    {
+      "source": "journal envelope rows (position, instant, command-id, changed-entity) + their ids",
+      "cumulativeBytes": 16163,
+      "bytes": 2320
+    },
+    {
+      "source": "journal change rows (10 :_tx/change) + their ids",
+      "cumulativeBytes": 26397,
+      "bytes": 10234
+    }
+  ],
+  "replayedTotal": 26397,
+  "exactReplay": 26397,
+  "closure": {
+    "realVsReplay": 0,
+    "incrementalVsReal": 0,
+    "sumOfIncrements": 26397
+  },
+  "variants": [
+    {
+      "variant": "change rows without value_identity",
+      "recordBytes": 23493,
+      "savedVsFull": 2904
+    },
+    {
+      "variant": "change rows without value_json and value_identity",
+      "recordBytes": 20661,
+      "savedVsFull": 5736
+    },
+    {
+      "variant": "all rows without value_identity",
+      "recordBytes": 22845,
+      "savedVsFull": 3552
+    },
+    {
+      "variant": "all rows with _id = id (no scope copy in the key)",
+      "recordBytes": 24069,
+      "savedVsFull": 2328
+    }
+  ],
+  "rawPath": "/Users/sam/Claude/Projects/triplex-db-2/EXP-J01/xtdb-attribution-compact-20261108T003136Z-cc319d.raw.json",
+  "rawSha256": "2a4cf1ae6548bf064dfc1a8667423e222b9210aaa817d2d4bc4de33153e73472"
+}

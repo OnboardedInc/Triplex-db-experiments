@@ -1,0 +1,62 @@
+{
+  "results": [
+    {
+      "action": "down",
+      "args": [
+        "lab/bin/engine.mjs",
+        "down",
+        "--lane",
+        "datomic",
+        "--slot",
+        "dev",
+        "--holder",
+        "EXP-DA01",
+        "--exp",
+        "EXP-DA01"
+      ],
+      "start": "2026-11-09T00:57:11.057Z",
+      "end": "2026-11-09T00:57:12.880Z",
+      "status": 0,
+      "log": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round4/down-1.log"
+    },
+    {
+      "action": "selftest",
+      "args": [
+        "lab/bin/engine.mjs",
+        "selftest",
+        "--lane",
+        "datomic",
+        "--slot",
+        "dev",
+        "--holder",
+        "EXP-DA01",
+        "--exp",
+        "EXP-DA01"
+      ],
+      "start": "2026-11-09T00:57:12.880Z",
+      "end": "2026-11-09T00:57:19.065Z",
+      "status": 0,
+      "log": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round4/selftest-window-1.log"
+    },
+    {
+      "action": "up",
+      "args": [
+        "lab/bin/engine.mjs",
+        "up",
+        "--lane",
+        "datomic",
+        "--slot",
+        "dev",
+        "--holder",
+        "EXP-DA01",
+        "--exp",
+        "EXP-DA01"
+      ],
+      "start": "2026-11-09T00:57:19.065Z",
+      "end": "2026-11-09T00:57:29.689Z",
+      "status": 0,
+      "log": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01/lab/experiments/EXP-DA01/round4/up-1.log"
+    }
+  ],
+  "restored": true
+}

@@ -1,0 +1,570 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../../../vitest.workspace-aliases" without a file extension (lab/verify/GS12F/round2/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f
+
+(node:88026) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+ ❯ lab/verify/GS12F/round2/independent.test.ts (7 tests | 6 failed) 43ms
+   × all codecs reject a sparse array whose hole is balanced by a non-index numeric property 10ms
+   × xtdb: decorated sparse JSON rejects before callback and claim 10ms
+   × qlever: decorated sparse JSON rejects before callback and claim 4ms
+   × memory: decorated sparse JSON may not silently change 6ms
+   × sqlite: decorated sparse JSON may not silently change 8ms
+   × PostgreSQL admits fractional datetimes only if its physical value column can retain them 0ms
+ ❯ lab/verify/GS12F/round2/original-probes.test.ts (5 tests | 1 failed) 32ms
+   × memory: canonical integer capability rejection must precede callback and preserve typed error 6ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 7 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  lab/verify/GS12F/round2/independent.test.ts > all codecs reject a sparse array whose hole is balanced by a non-index numeric property
+AssertionError: expected [ { profile: 'memory', …(6) }, …(15) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "4294967295",
++     "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
++     "profile": "memory",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "9007199254740993",
++     "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
++     "profile": "memory",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "4294967295",
++     "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
++     "profile": "foundationdb",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "9007199254740993",
++     "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
++     "profile": "foundationdb",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "undefined",
++     "error": "TypeError: Sparse JSON arrays are not supported
++     at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:55:36)
++     at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:73:10)
++     at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:107:7)
++     at row (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:65:6)
++     at xtdb (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:81:54)
++     at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:111:19
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
++     at new Promise (<anonymous>)",
++     "key": "4294967295",
++     "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
++     "profile": "xtdb",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "undefined",
++     "error": "TypeError: Sparse JSON arrays are not supported
++     at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:55:36)
++     at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:73:10)
++     at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:107:7)
++     at row (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:65:6)
++     at xtdb (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:81:54)
++     at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:111:19
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
++     at new Promise (<anonymous>)",
++     "key": "9007199254740993",
++     "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
++     "profile": "xtdb",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "undefined",
++     "error": "TypeError: Sparse JSON arrays are unsupported
++     at go (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:122:36)
++     at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:135:10)
++     at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:166:7)
++     at row (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:65:6)
++     at qlever (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:82:57)
++     at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:111:19
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
++     at new Promise (<anonymous>)",
++     "key": "4294967295",
++     "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
++     "profile": "qlever",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "undefined",
++     "error": "TypeError: Sparse JSON arrays are unsupported
++     at go (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:122:36)
++     at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:135:10)
++     at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:166:7)
++     at row (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:65:6)
++     at qlever (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:82:57)
++     at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/lab/verify/GS12F/round2/independent.test.ts:111:19
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:1632:35
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:2794:26
++     at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/run.Cm2sd7-x.js:3334:20
++     at new Promise (<anonymous>)",
++     "key": "9007199254740993",
++     "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
++     "profile": "qlever",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "4294967295",
++     "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
++     "profile": "sqlite",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "9007199254740993",
++     "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
++     "profile": "sqlite",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "4294967295",
++     "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
++     "profile": "postgres",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "9007199254740993",
++     "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
++     "profile": "postgres",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "4294967295",
++     "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
++     "profile": "cloudflare",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "9007199254740993",
++     "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
++     "profile": "cloudflare",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "4294967295",
++     "original": "{ type: 'json', value: [ <1 empty item>, '4294967295': 7 ] }",
++     "profile": "duckdb",
++     "typed": false,
++   },
++   {
++     "admittedByTable": true,
++     "decoded": "{ type: 'json', value: [ null ] }",
++     "error": "undefined",
++     "key": "9007199254740993",
++     "original": "{ type: 'json', value: [ <1 empty item>, '9007199254740993': 7 ] }",
++     "profile": "duckdb",
++     "typed": false,
++   },
++ ]
+
+ ❯ lab/verify/GS12F/round2/independent.test.ts:127:40
+    125|     }
+    126|   save("decorated-array-codecs", rows);
+    127|   expect(rows.filter((r) => !r.typed)).toEqual([]);
+       |                                        ^
+    128| });
+    129|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/7]⎯
+
+ FAIL  lab/verify/GS12F/round2/independent.test.ts > xtdb: decorated sparse JSON rejects before callback and claim
+AssertionError: expected [ { api: 'assert', …(4) }, …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "after": {
++       "callbacks": 1,
++       "claims": 0,
++     },
++     "api": "assert",
++     "before": {
++       "callbacks": 0,
++       "claims": 0,
++     },
++     "exit": "{
++   _id: 'Exit',
++   _tag: 'Failure',
++   cause: {
++     _id: 'Cause',
++     failures: [
++       {
++         _tag: 'Fail',
++         error: {
++           message: 'Invalid XTDB assertion',
++           cause: TypeError: Sparse JSON arrays are not supported
++               at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:55:36)
++               at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:73:10)
++               at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:107:7)
++               at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:518:16)
++               at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)
++               at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)
++               at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)
++               at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),
++           _tag: 'WriteError'
++         }
++       }
++     ]
++   }
++ }",
++     "typed": false,
++   },
++   {
++     "after": {
++       "callbacks": 2,
++       "claims": 0,
++     },
++     "api": "assertBatch",
++     "before": {
++       "callbacks": 1,
++       "claims": 0,
++     },
++     "exit": "{
++   _id: 'Exit',
++   _tag: 'Failure',
++   cause: {
++     _id: 'Cause',
++     failures: [
++       {
++         _tag: 'Fail',
++         error: {
++           message: 'Invalid XTDB assertion',
++           cause: TypeError: Sparse JSON arrays are not supported
++               at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:55:36)
++               at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:73:10)
++               at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:107:7)
++               at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:518:16)
++               at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)
++               at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)
++               at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)
++               at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),
++           _tag: 'WriteError'
++         }
++       }
++     ]
++   }
++ }",
++     "typed": false,
++   },
++   {
++     "after": {
++       "callbacks": 3,
++       "claims": 1,
++     },
++     "api": "transact",
++     "before": {
++       "callbacks": 2,
++       "claims": 0,
++     },
++     "exit": "{
++   _id: 'Exit',
++   _tag: 'Failure',
++   cause: {
++     _id: 'Cause',
++     failures: [
++       {
++         _tag: 'Fail',
++         error: {
++           message: 'Invalid XTDB assertion',
++           cause: TypeError: Sparse JSON arrays are not supported
++               at encode (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:55:36)
++               at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:73:10)
++               at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/codecs.ts:107:7)
++               at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/xtdb/src/XtdbStorageAdapter.ts:518:16)
++               at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)
++               at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)
++               at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)
++               at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),
++           _tag: 'WriteError'
++         }
++       }
++     ]
++   }
++ }",
++     "typed": false,
++   },
++ ]
+
+ ❯ lab/verify/GS12F/round2/independent.test.ts:208:7
+    206|           r.before.claims !== r.after.claims,
+    207|       ),
+    208|     ).toEqual([]);
+       |       ^
+    209|   });
+    210|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/7]⎯
+
+ FAIL  lab/verify/GS12F/round2/independent.test.ts > qlever: decorated sparse JSON rejects before callback and claim
+AssertionError: expected [ { api: 'assert', …(4) }, …(2) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   {
++     "after": {
++       "callbacks": 1,
++       "claims": 0,
++     },
++     "api": "assert",
++     "before": {
++       "callbacks": 0,
++       "claims": 0,
++     },
++     "exit": "{
++   _id: 'Exit',
++   _tag: 'Failure',
++   cause: {
++     _id: 'Cause',
++     failures: [
++       {
++         _tag: 'Fail',
++         error: {
++           message: 'Invalid QLever assertion',
++           cause: TypeError: Sparse JSON arrays are unsupported
++               at go (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:122:36)
++               at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:135:10)
++               at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:166:7)
++               at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/QleverStorageAdapter.ts:382:16)
++               at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)
++               at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)
++               at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)
++               at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),
++           _tag: 'WriteError'
++         }
++       }
++     ]
++   }
++ }",
++     "typed": false,
++   },
++   {
++     "after": {
++       "callbacks": 2,
++       "claims": 0,
++     },
++     "api": "assertBatch",
++     "before": {
++       "callbacks": 1,
++       "claims": 0,
++     },
++     "exit": "{
++   _id: 'Exit',
++   _tag: 'Failure',
++   cause: {
++     _id: 'Cause',
++     failures: [
++       {
++         _tag: 'Fail',
++         error: {
++           message: 'Invalid QLever assertion',
++           cause: TypeError: Sparse JSON arrays are unsupported
++               at go (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:122:36)
++               at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:135:10)
++               at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:166:7)
++               at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/QleverStorageAdapter.ts:382:16)
++               at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)
++               at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)
++               at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)
++               at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),
++           _tag: 'WriteError'
++         }
++       }
++     ]
++   }
++ }",
++     "typed": false,
++   },
++   {
++     "after": {
++       "callbacks": 3,
++       "claims": 1,
++     },
++     "api": "transact",
++     "before": {
++       "callbacks": 2,
++       "claims": 0,
++     },
++     "exit": "{
++   _id: 'Exit',
++   _tag: 'Failure',
++   cause: {
++     _id: 'Cause',
++     failures: [
++       {
++         _tag: 'Fail',
++         error: {
++           message: 'Invalid QLever assertion',
++           cause: TypeError: Sparse JSON arrays are unsupported
++               at go (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:122:36)
++               at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:135:10)
++               at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:166:7)
++               at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/QleverStorageAdapter.ts:382:16)
++               at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)
++               at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)
++               at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)
++               at AsyncResource.runInAsyncScope (node:async_hooks:214:14)
++               at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),
++           _tag: 'WriteError'
++         }
++       }
++     ]
++   }
++ }",
++     "typed": false,
++   },
++ ]
+
+ ❯ lab/verify/GS12F/round2/independent.test.ts:208:7
+    206|           r.before.claims !== r.after.claims,
+    207|       ),
+    208|     ).toEqual([]);
+       |       ^
+    209|   });
+    210|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/7]⎯
+
+ FAIL  lab/verify/GS12F/round2/independent.test.ts > memory: decorated sparse JSON may not silently change
+ FAIL  lab/verify/GS12F/round2/independent.test.ts > sqlite: decorated sparse JSON may not silently change
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ lab/verify/GS12F/round2/independent.test.ts:241:40
+    239|     }
+    240|     save(name + "-decorated-array", rows);
+    241|     expect(rows.every((r) => r.typed)).toBe(true);
+       |                                        ^
+    242|   });
+    243|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/7]⎯
+
+ FAIL  lab/verify/GS12F/round2/independent.test.ts > PostgreSQL admits fractional datetimes only if its physical value column can retain them
+AssertionError: expected true to be false // Object.is equality
+
+- Expected
++ Received
+
+- false
++ true
+
+ ❯ lab/verify/GS12F/round2/independent.test.ts:301:62
+    299|   };
+    300|   save("postgres-datetime-schema", observation);
+    301|   expect(observation.admittedByTable && column === "BIGINT").toBe(fals…
+       |                                                              ^
+    302| });
+    303|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/7]⎯
+
+ FAIL  lab/verify/GS12F/round2/original-probes.test.ts > memory: canonical integer capability rejection must precede callback and preserve typed error
+{
+  txId: '_tx/01M6Z4TQTQPXNWNDW0KCGNTNQN',
+  position: 1,
+  instant: 1794194104152,
+  triples: [
+    {
+      id: '01M6Z4TQTR9S6ENGY2JXKYE3GZ',
+      entityId: 'review:entity',
+      attribute: ':review/value',
+      value: [Object],
+      recordedAt: 1794194104152,
+      validFrom: 1794194104152,
+      validTo: [Object],
+      createdBy: [Object],
+      retractedAt: [Object],
+      entityType: [Object],
+      schemaVersion: [Object],
+      txId: [Object],
+      retractTxId: [Object]
+    }
+  ],
+  retracted: 0,
+  stacks: []
+}
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/7]⎯
+
+
+ Test Files  2 failed | 1 passed (3)
+      Tests  7 failed | 32 passed (39)
+   Start at  22:14:56
+   Duration  7.35s (tests 86%, import 8%, transform 5%)
+

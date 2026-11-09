@@ -1,0 +1,15 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 30400 "CX-VW02-offline-review", pid 67604 "CX-QG1-phase1-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 4411 "CX-G03-r4-claim-3", pid 70546 "CX-P2Q-R9-retry", pid 30400 "CX-VW02-offline-review", pid 67604 "CX-QG1-phase1-attempt3"
+Scope: all 25 workspace projects
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+╭ Warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Ignored build scripts: cpu-features, foundationdb, protobufjs, ssh2.       │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+│   to run scripts.                                                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Done in 5.5s using pnpm v10.11.0

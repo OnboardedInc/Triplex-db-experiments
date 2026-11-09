@@ -1,0 +1,38 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/gs12f/packages/core
+
+ ❯ test/kv/hexastore/KvTripleStore.test.ts (28 tests | 1 failed) 90ms
+   ❯ assert (4)
+     × round-trips strings larger than 64 KiB 17ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  test/kv/hexastore/KvTripleStore.test.ts > assert > round-trips strings larger than 64 KiB
+InvalidTripleError: Value is outside memory/kv's exact storage domain
+ ❯ invalid src/ValueDomain.ts:100:5
+     98| export const invalidValue = (value: unknown, d: ValueDomain): InvalidT…
+     99|   const invalid = () =>
+    100|     new InvalidTripleError({
+       |     ^
+    101|       field: "value",
+    102|       value,
+ ❯ invalidValue src/ValueDomain.ts:128:43
+ ❯ assertValueInDomain src/ValueDomain.ts:173:17
+ ❯ serializeDatom src/kv/hexastore/KvTripleStore.ts:184:3
+ ❯ KvTripleStore.assert src/kv/hexastore/KvTripleStore.ts:540:44
+ ❯ test/kv/hexastore/KvTripleStore.test.ts:87:21
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 57 passed (58)
+      Tests  1 failed | 849 passed (850)
+   Start at  21:55:58
+   Duration  3.69s (import 64%, tests 30%, transform 5%, worker 1%)
+
+    Isolate  58 workers spawned · ~101ms startup each (spawn + environment, per file)
+             at least ~431ms faster with isolate: false — reuses workers across files instead of one per file
+

@@ -1,0 +1,41 @@
+{
+  "sourceHead": "b5af03398573080e178475952f03e57b8686bf17",
+  "mergedMain": "982350e24c93fd91682f0d083f207a251a79a680",
+  "evaluator": {
+    "tests": 108,
+    "pass": 108,
+    "fail": 0,
+    "skipped": 0,
+    "cancelled": 0,
+    "todo": 0
+  },
+  "baseline": {
+    "tests": 108,
+    "pass": 100,
+    "fail": 8
+  },
+  "attempt1": {
+    "tests": 108,
+    "pass": 107,
+    "fail": 1
+  },
+  "assertionFilesUnchanged": true,
+  "productionOracleWorldImageA0PinsUnchanged": true,
+  "contract": {
+    "runnableMutations": 344,
+    "caught": 344,
+    "missed": 0,
+    "retiredAnchors": 81,
+    "superseded": 1,
+    "contractTestSourceHead": "ab3eafc",
+    "contractInputsUnchangedAfterFixtureOnlyFollowup": true,
+    "q47d": "PASS",
+    "byteIdentical": "PASS",
+    "reviewerRegressionsPassed": 35,
+    "realPayloadsPassed": 5
+  },
+  "pendingAuthority": "none",
+  "pendingRows": 43,
+  "independentDeltaReview": "PENDING",
+  "engineGates": "NOT RUN"
+}

@@ -3,7 +3,8 @@
 Every expected error the oracle reports carries the contract id, `_tag`, `reason` and
 `phase` from this table, so a harness compares observed errors by (`_tag`, `reason`)
 exactly as ACCEPTANCE 4.7 / errorComparison says. The rows are transcribed from
-lab/acceptance/ACCEPTANCE.md section 4.7 (0.3.1, plus the decimal and wire rows of 0.3.3 to 0.3.5; no Triplex
+lab/acceptance/ACCEPTANCE.md section 4.7 (0.3.1, plus the decimal and wire rows of 0.3.3 to 0.3.5
+and the system-side rows of 0.3.8 and 0.3.9; no Triplex
 source was read); the unit
 test tests/test_contract_section4.py checks this table row by row against
 lab/acceptance/obligations.json#errorTable, so a contract change that the oracle has
@@ -64,6 +65,14 @@ ERROR_TABLE = {
     "E-DECIMAL-FRACTION": ("InvalidTripleError", "decimal-fraction", "preflight"),
     "E-DECIMAL-AVG": ("DatalogValidationError", "decimal-avg-requires-divide", "preflight"),
     "E-DECIMAL-NARROWING": ("WriteError", "decimal-narrowing-loses-digits", "preflight"),
+    # rows added by ACC 0.3.8 / 0.3.9 (RULINGS Q50d, Q51a, Q51f, Q55c, Q58a): replica, admission
+    # and commit-path outcomes of the system; the replay oracle has no input for them, so they
+    # are table rows only (not PRODUCED)
+    "E-BASIS-NOT-AVAILABLE": ("BasisNotAvailable", "basis-not-reached", "execution"),
+    "E-BASIS-NOT-RECONSTRUCTIBLE": ("BasisNotReconstructible", "basis-not-reconstructible", "execution"),
+    "E-REPLICA-UNAVAILABLE": ("ReplicaUnavailable", "replica-unreachable", "execution"),
+    "E-OVERLOADED": ("Overloaded", "bound-exceeded", "admission"),
+    "E-DUAL-COMMIT-PATH": ("WriteError", "dual-commit-path", "preflight"),
 }
 
 # Ids the oracle itself can produce as an expected answer. The rest (deadlines, admission,

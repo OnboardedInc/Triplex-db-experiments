@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 94934 "CX-RQ01-round3-a1", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 14177 "CX-O06-round3-initial"
+{"validated":true,"passed":118,"deleted":18,"image":"sha256:cb391925c6f69e55c334f220570765dfdd83902825e2b906b6544dc06ae9ba7e"}

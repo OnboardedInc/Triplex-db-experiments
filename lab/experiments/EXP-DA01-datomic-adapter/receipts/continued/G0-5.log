@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 36511 "CX-P2Q-R5-suites", pid 80196 "CX-G03-r2-regressions", pid 80950 "CX-G03-r2-store", pid 39477 "CX-X02-R4-live"
+[lab] G0-datomic-20261108T231043Z-594b80: raw output runs/G0/G0-datomic-20261108T231043Z-594b80
+error: could not write index
+PASS G0 datomic scope=full executed=1024 pass=1024 fail=0 skip=56
+receipt: lab/runs/G0/G0-datomic-20261108T231043Z-594b80.json

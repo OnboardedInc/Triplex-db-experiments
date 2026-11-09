@@ -1,0 +1,42 @@
+{
+  "at": "2026-11-08T22:09:43.421Z",
+  "scope": "[\"triplex-scope-v1\",\"test\",\"da01\",\"route-probe\",\"635fe40b-18f0-4a24-a420-0ee332bccb36\"]",
+  "receipts": [
+    {
+      "path": "/health",
+      "method": "GET",
+      "status": 200,
+      "body": "{\"datomicVersion\":\"1.0.7745\",\"gatewaySourceHash\":\"0177dcf44530bc32f02b4230a2203ae0c03652b27a4fb61a1b559283d68be1dc\"}"
+    },
+    {
+      "path": "/v1/db/create",
+      "method": "POST",
+      "status": 200,
+      "body": "{\"db\":\"s-17c03f6a80912542294ddf2e9bd7af2d\",\"created\":true,\"schemaHash\":\"f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d\"}"
+    },
+    {
+      "path": "/v1/db/s-17c03f6a80912542294ddf2e9bd7af2d/snapshot",
+      "method": "POST",
+      "status": 404,
+      "body": "{\"code\":\"NotFound\"}"
+    },
+    {
+      "path": "/v1/db/s-17c03f6a80912542294ddf2e9bd7af2d/read",
+      "method": "POST",
+      "status": 404,
+      "body": "{\"code\":\"NotFound\"}"
+    },
+    {
+      "path": "/v1/db/s-17c03f6a80912542294ddf2e9bd7af2d/q",
+      "method": "POST",
+      "status": 404,
+      "body": "{\"code\":\"NotFound\"}"
+    },
+    {
+      "path": "/v1/db/delete",
+      "method": "POST",
+      "status": 200,
+      "body": "{\"db\":\"s-17c03f6a80912542294ddf2e9bd7af2d\",\"deleted\":true}"
+    }
+  ]
+}

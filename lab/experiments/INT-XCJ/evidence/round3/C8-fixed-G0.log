@@ -1,0 +1,9 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 12081 "CX-A01-0312-evaluator-final", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 72800 "CX-A01-0312-ancillary-merged"
+[lab] heavy: waiting for one of 4 slots; held by pid 12081 "CX-A01-0312-evaluator-final", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 72800 "CX-A01-0312-ancillary-merged"
+[lab] G0-xtdb-20261108T235816Z-506037: raw output runs/G0/G0-xtdb-20261108T235816Z-506037
+[lab] heavy: waiting for one of 4 slots; held by pid 12081 "CX-A01-0312-evaluator-final", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 50880 "CX-INT-XCJ-C8-fixed-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 12081 "CX-A01-0312-evaluator-final", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 50880 "CX-INT-XCJ-C8-fixed-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 12081 "CX-A01-0312-evaluator-final", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 50880 "CX-INT-XCJ-C8-fixed-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 49341 "CX-RQ01-bound-gate-r4", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 50880 "CX-INT-XCJ-C8-fixed-G0"
+PASS G0 xtdb scope=full executed=1163 pass=1163 fail=0 skip=134
+receipt: lab/runs/G0/G0-xtdb-20261108T235816Z-506037.json

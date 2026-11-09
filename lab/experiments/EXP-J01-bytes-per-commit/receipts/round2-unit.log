@@ -1,0 +1,10 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 89476 "R25-ckthread-r8", pid 1535 "DA00-measure", pid 1980 "DA00-G0-final", pid 3771 "G0-xtdb-20261108T215107Z-984fc7 vitest-xtdb"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-a673708af43c1e677
+
+
+ Test Files  3 passed (3)
+      Tests  12 passed | 3 skipped (15)
+   Start at  16:51:53
+   Duration  2.32s (transform 55%, import 42%, tests 3%, worker 1%)
+

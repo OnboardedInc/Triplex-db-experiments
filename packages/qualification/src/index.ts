@@ -9,6 +9,13 @@ import type {
   RuntimeDefinition,
   QueryContext,
 } from "@triplex-build/triplex/runtime";
+export {
+  classifyXtdbStatement,
+  startQleverWriteCounter,
+  startXtdbWriteCounter,
+  type EngineWriteCounter,
+  type EngineWriteCounts,
+} from "./engine-write-counter.js";
 interface NativeTaskLibrary {
   readonly supports: (workloadId: string, operation: string) => boolean;
   readonly evaluate: (
@@ -20,8 +27,9 @@ interface NativeTaskLibrary {
   ) => Effect.Effect<unknown[][], unknown>;
 }
 
-export type QualificationBackendName = "duckdb" | "xtdb" | "qlever";
+export type QualificationBackendName = "duckdb" | "xtdb" | "qlever" | "datomic";
 export type QualificationQueryPath =
+  | "datomic-datalog"
   | "duckdb-datalog"
   | "xtdb-datalog"
   | "qlever-datalog"
@@ -29,6 +37,11 @@ export type QualificationQueryPath =
   | "qlever-native";
 
 export const qualificationQueryPaths = {
+  "datomic-datalog": {
+    backend: "datomic",
+    language: "triplex-datalog",
+    foundationStatus: "implemented",
+  },
   "duckdb-datalog": {
     backend: "duckdb",
     language: "triplex-datalog",
@@ -79,6 +92,15 @@ type RuntimeFactory = (options: {
 }) => RuntimeDefinition<unknown, never, unknown>;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
 const registry = {
+  datomic: {
+    package: "@triplex-build/triplex-datomic",
+    directory: "datomic",
+    factory: "makeDatomicRuntime",
+    client: "",
+    temporal: "",
+    native: "",
+    defaultUrl: "http://127.0.0.1:8470",
+  },
   duckdb: {
     package: "@triplex-build/triplex-duckdb",
     directory: "duckdb",
@@ -161,7 +183,9 @@ export const loadQualificationBackend = async (name = qualificationBackendName()
               ? path.join(process.env["TRIPLEX_RUN_DIRECTORY"]!, "scratch/databases")
               : selected.defaultUrl),
         )
-      : (process.env[name === "xtdb" ? "XTDB_URL" : "QLEVER_URL"] ?? selected.defaultUrl);
+      : (process.env[
+          name === "xtdb" ? "XTDB_URL" : name === "datomic" ? "DATOMIC_GATEWAY_URL" : "QLEVER_URL"
+        ] ?? selected.defaultUrl);
   if (name === "duckdb" && !url.startsWith(root + path.sep))
     throw new TypeError(
       "DuckDB qualification databases must remain in the owned bounded workspace",
@@ -202,7 +226,15 @@ export const loadQualificationBackend = async (name = qualificationBackendName()
   // Select one authored task library. Foundation/translated jobs never load
   // unused native libraries, so their exact source closures stay independent.
   let nativeWorkload: NativeTaskLibrary | undefined;
+  // [EXP-X02-R2] Why: Q79d keeps the historical library when unset.
+  // Rejected: a default language change without independent qualification.
+  let nativeLanguage: "xtql" | "xtdb-sql" | undefined;
   if (queryPath === "xtdb-native") {
+    const requested = process.env["TRIPLEX_XTDB_NATIVE_LANGUAGE"];
+    if (requested !== undefined && requested !== "xtql" && requested !== "xtdb-sql")
+      throw new TypeError("TRIPLEX_XTDB_NATIVE_LANGUAGE must be xtql or xtdb-sql");
+    const language = requested;
+    nativeLanguage = language;
     const tasks = await import("./native/xtdb-workloads.js");
     nativeWorkload = {
       supports: tasks.supportsXtdbNativeWorkload,
@@ -213,6 +245,7 @@ export const loadQualificationBackend = async (name = qualificationBackendName()
           entry,
           positions,
           trace,
+          language,
         ),
     };
   } else if (queryPath === "qlever-native") {
@@ -259,16 +292,19 @@ export const loadQualificationBackend = async (name = qualificationBackendName()
     name,
     queryPath,
     nativeWorkload,
+    nativeLanguage,
     url,
     artifact: path.resolve(directory, target),
     makeRuntime: () => runtime,
-    openNative: (scope: DatabaseScope) => {
+    // [EXP-C8] `nativeUrl` lets a caller route native reads through an engine-boundary write
+    // counter (engine-write-counter.ts); the default is the backend's own endpoint.
+    openNative: (scope: DatabaseScope, nativeUrl: string = url) => {
       const makeClient = api[selected.client],
         makeNative = api[selected.native];
       if (typeof makeClient !== "function" || typeof makeNative !== "function")
         throw new Error(`UNSUPPORTED_PUBLIC_API:${queryPath}:native provider is not built`);
       const client = (makeClient as (url: string, options?: { accessToken?: string }) => Client)(
-        url,
+        nativeUrl,
         accessToken ? { accessToken } : {},
       );
       return {
