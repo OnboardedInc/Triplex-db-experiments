@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
 import { Option } from "effect";
 import { expect, it } from "vitest";
 import { sqliteWorker } from "../../../packages/qlever/src/broker/sqlite-worker.js";
-import { h1Rows } from "../../../packages/qlever/src/broker/h1.js";
+import { h1Rows, wholePullTuples } from "../../../packages/qlever/src/broker/h1.js";
 import { openWorker } from "./worker-client.js";
 import { row, base } from "./helpers.js";
 const canonical = (x: any): string => JSON.stringify(normal(x));
@@ -30,13 +30,13 @@ function normal(x: any): any {
 it("G4: 100000 sampled H1w pulls have zero differences against fresh O-REPLAY", async () => {
   const mutant = process.env.QH1_MUTANT;
   let source = sqliteWorker;
-  if (mutant === "real") source = source.replace("printf('%!.17g',f.v)", "f.v");
+  if (mutant === "real") source = source.replace(`ELSE printf('%!.17g',"+x+") END`, `ELSE "+x+" END`);
   if (mutant === "owner")
     source = source.replace("frontier=next.filter(e=>!seen.has(e));", "frontier=[];");
   if (mutant === "retraction")
     source = source.replace(
-      "const cut=table==='history'?' AND f.rpos>?':'';",
-      "const cut=table==='history'?' AND f.rpos>=?':'';",
+      "(t==='history'?' AND rpos>@b':'')",
+      "(t==='history'?' AND rpos>=@b':'')",
     );
   if (mutant === "purge")
     source = source.replace("if(b<m.h)throw Error('H1_SNAPSHOT_EXPIRED');", "");
@@ -220,7 +220,7 @@ it("G4: 100000 sampled H1w pulls have zero differences against fresh O-REPLAY", 
         v = i % 2 ? 100 : 200;
       const answer = await client.call("wholePull", { basis: p * 1024, roots: ["s:" + root] });
       // Owner fetch is a superset: reconstruct reach through the per-hop API semantics.
-      const observed = [...h1Rows(JSON.parse(answer.text), { validAt: v }).values()].flat();
+      const observed = [...h1Rows(wholePullTuples(answer), { validAt: v }).values()].flat();
       const byEntity = new Map<string, any[]>();
       for (const t of observed) {
         const a = byEntity.get(t.entityId) ?? [];

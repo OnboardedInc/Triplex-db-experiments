@@ -535,11 +535,11 @@ export class HostLog {
       ),
     );
   }
-  async wholePull(basis: number, roots: readonly string[]) {
+  async wholePull(basis: number, roots: readonly string[], bytes = false) {
     if (this.closed) throw new BrokerLogError("Broker log is closed");
     return this.pool[this.readerIndex++ % this.pool.length]!.request<import("./h1.js").WholePull>(
       "wholePull",
-      { basis, roots },
+      { basis, roots, bytes },
     );
   }
   async pull(basis: H1Basis, selection: Selection): Promise<PinnedPull> {

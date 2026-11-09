@@ -28,6 +28,16 @@ export interface StorageAdapterService {
     ReadonlyMap<string, readonly import("../Triple.js").Triple[]> | undefined,
     ReadError
   >;
+  // [EXP-QH1-R3] Why: a store that can answer a whole subject pull in one operation skips the per-level kernel round trips.
+  // Rejected: a required method (every other backend would need a fallback); undefined retains the per-level path, including
+  // transactions and record-time cuts.
+  readonly getReachTriples?: (
+    root: string,
+    basis: ResolvedTemporalBasis,
+  ) => Effect.Effect<
+    import("../store/Triples.js").ReachResult | undefined,
+    ReadError
+  >;
   /** Optional exact-snapshot policy, propagated to public repository reads. */
   readonly snapshotReadPolicy?: import("./ReadSurface.js").SnapshotReadPolicy;
   // [CX-A01-0314-R2] Why: missing composition domains must fail compilation. Rejected: optional domains (silently admitted broker values against memory limits).

@@ -148,6 +148,13 @@ export interface EntityTransactionPage {
   readonly nextBeforePosition?: number;
 }
 
+/** The closure of one subject pull: every triple of every entity reachable from the root through `ref` values, at one cut. */
+export interface ReachResult {
+  readonly triples: readonly Triple[];
+  /** Breadth-first levels read (the root is level one). */
+  readonly hops: number;
+}
+
 export interface DependencyState {
   /** Latest assertion or retraction position for the selected attributes. */
   readonly sourcePosition: number;
@@ -244,6 +251,14 @@ export interface TriplesService {
     entityIds: readonly EntityId[],
     basis?: TemporalBasis,
   ) => Effect.Effect<readonly (readonly Triple[])[], ReadError>;
+  /**
+   * Subject pull: the live triples of `root` and of every entity reachable from it through `ref` values, all at one temporal
+   * basis. Equal to reading level by level with `entities`, but a store may answer the whole closure in one operation.
+   */
+  readonly reach: (
+    root: EntityId,
+    basis?: TemporalBasis,
+  ) => Effect.Effect<ReachResult, ReadError>;
   readonly entityPage: (
     request: EntityPageRequest,
   ) => Effect.Effect<EntityPage, ReadError | PaginationCursorError>;

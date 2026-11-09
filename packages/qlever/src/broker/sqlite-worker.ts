@@ -195,47 +195,63 @@ const pull = a => {
  const out=rows('facts',a.selection,'pos<=?',[b]).concat(rows('journal',a.selection,'pos<=?',[b]),rows('history',a.selection,'rpos>? AND pos<=?',[b,b]));
  return {snapshot:publicMarker(m),basis:b,eligible:true,rows:out};
 };
-// [EXP-QH1] Why: one transaction owns the whole reach; SQL emits one text, including exact REAL lexemes.
+// [EXP-QH1] Why: one transaction owns the whole reach; SQL emits tuple text, REAL lexemes stay exact.
 // Rejected: per-hop RPC and json_array(REAL) (R46/Q105b: silent rounding).
+// [EXP-QH1-R3] Why: R46 shape. One statement per owner covers facts, journal and history; a name-to-id cache replaces the
+// per-entity eid probes; integer timestamps and integer values skip printf (only REAL needs %!.17g, Q105b); ref discovery is
+// one statement per fetch. Rejected: three statements per table per owner (round 2 measured 17.7 statements and 304 probes per pull).
+const sn=x=>"CASE WHEN typeof("+x+")='integer' AND "+x+" BETWEEN -9007199254740991 AND 9007199254740991 THEN "+x+" ELSE printf('%!.17g',"+x+") END";
+const safeText=x=>"CASE WHEN typeof("+x+")='blob' THEN NULL ELSE "+x+" END";
+const h1Cols='o,e,id,a,pos,t,v,vf,vto,c,y,sv,x';
+const h1Union=sel=>['facts','journal','history'].map(t=>'SELECT '+h1Cols+' FROM '+t+' WHERE '+sel+(t==='history'?' AND rpos>@b':'')+' AND pos<=@b').join(' UNION ALL ');
+const h1Row="json_array(typeof(f.id)='blob',CASE WHEN typeof(f.id)='blob' THEN hex(f.id) ELSE f.id END,"+safeText('e.name')+","+safeText('a.name')+",f.t,CASE WHEN f.t IN (1,3) THEN "+sn('f.v')+" WHEN f.t=5 THEN "+safeText('ref.name')+" WHEN f.t=7 THEN NULL ELSE f.v END,"+sn('tx.at')+",f.pos,"+sn('(tx.at+f.vf)')+",CASE WHEN f.vto IS NULL THEN NULL ELSE "+sn('f.vto')+" END,"+safeText('c.s')+","+safeText('y.s')+","+sn('coalesce(f.sv,1)')+","+safeText('te.name')+",json(CASE WHEN f.x IS NOT NULL THEN CAST(f.x AS TEXT) WHEN f.t=7 OR (f.t IN (1,3) AND typeof(f.v) NOT IN ('real','integer')) THEN qh_fallback(f.id) ELSE NULL END))";
+const h1Joins=' f JOIN ents e ON e.eid=f.e JOIN attrs a ON a.aid=f.a JOIN txs tx ON tx.pos=f.pos JOIN ents te ON te.eid=tx.tx LEFT JOIN strs c ON c.sid=f.c LEFT JOIN strs y ON y.sid=f.y LEFT JOIN ents ref ON f.t=5 AND ref.eid=f.v';
+const h1Rows=sel=>q('SELECT json_group_array('+h1Row+') FROM ('+h1Union(sel)+')'+h1Joins).pluck();
+// All refs are followed as a superset, even expired refs: valid-time filtering stays in the adapter. Refs from verbatim rows (x) are found by JS.
+const h1Refs=(sel,skip)=>q('SELECT DISTINCT f.v,f.x FROM ('+h1Union(sel)+') f WHERE (f.t=5 AND f.x IS NULL'+skip+') OR f.x IS NOT NULL').raw();
+// Dictionary rows are immutable once committed and a reader sees only committed rows, so positive name lookups never go stale.
+// Misses are never cached (a later commit may add the name). The maps are bounded by clearing.
+const entIds=new Map(),entNames=new Map();
+const entId=s=>{let x=entIds.get(s);if(x===undefined){x=q('SELECT eid FROM ents WHERE name=?').pluck().get(textKey(s));if(x===undefined)return undefined;if(entIds.size>=200000)entIds.clear();entIds.set(s,x);}return x;};
+const entName=id=>{let x=entNames.get(id);if(x===undefined){x=name('ents',id);if(entNames.size>=200000)entNames.clear();entNames.set(id,x);}return x;};
 const wholePull = a => {
  if(a.recordedAt!==undefined)throw Error('H1_RECORD_TIME_UNSUPPORTED');
  const m=marker(),b=a.basis;
  if(!Number.isSafeInteger(b)||b<0)throw Error('Invalid basis');
  if(b<m.h)throw Error('H1_SNAPSHOT_EXPIRED');
  if(b>m.position)throw Error('H1_BASIS_NOT_AVAILABLE');
- const chunks=[],seen=new Set(),owners=new Set();let frontier=a.roots,hops=0,examined=0,bytes=0,statements=0;
- const eid=s=>q('SELECT eid FROM ents WHERE name=?').get(textKey(s))?.eid;
- // All refs are followed as a superset, even expired refs: valid-time filtering stays in the adapter.
- // A visited set bounds cycles; unknown/misnamed/cross-owner refs use the same transaction.
- const fetch=(column,ids)=>{
-  if(!ids.length)return [];
-  const refs=[];
-  for(const table of ['facts','journal','history']){
-   const cut=table==='history'?' AND f.rpos>?':'';
-   const where='f.'+column+' IN (SELECT value FROM json_each(?)) AND f.pos<=?'+cut;
-   const args=[JSON.stringify(ids),b,...(table==='history'?[b]:[])];
-   const joins=' FROM '+table+' f JOIN ents e ON e.eid=f.e JOIN attrs a ON a.aid=f.a JOIN txs tx ON tx.pos=f.pos JOIN ents te ON te.eid=tx.tx LEFT JOIN strs c ON c.sid=f.c LEFT JOIN strs y ON y.sid=f.y LEFT JOIN ents ref ON f.t=5 AND ref.eid=f.v';
-   // Stored fallback envelopes already contain exact lexical numbers and scalar exception tags.
-   const sql="SELECT json_group_array(json_array(typeof(f.id)='blob',CASE WHEN typeof(f.id)='blob' THEN hex(f.id) ELSE f.id END,CASE WHEN typeof(e.name)='blob' THEN NULL ELSE e.name END,CASE WHEN typeof(a.name)='blob' THEN NULL ELSE a.name END,f.t,CASE WHEN f.t IN (1,3) THEN printf('%!.17g',f.v) WHEN f.t=5 THEN CASE WHEN typeof(ref.name)='blob' THEN NULL ELSE ref.name END WHEN f.t=7 THEN NULL ELSE f.v END,printf('%!.17g',tx.at),f.pos,printf('%!.17g',tx.at+f.vf),CASE WHEN f.vto IS NULL THEN NULL ELSE printf('%!.17g',f.vto) END,CASE WHEN typeof(c.s)='blob' THEN NULL ELSE c.s END,CASE WHEN typeof(y.s)='blob' THEN NULL ELSE y.s END,printf('%!.17g',coalesce(f.sv,1)),CASE WHEN typeof(te.name)='blob' THEN NULL ELSE te.name END,json(CASE WHEN f.x IS NOT NULL THEN CAST(f.x AS TEXT) WHEN f.t=7 OR (f.t IN (1,3) AND typeof(f.v) NOT IN ('real','integer')) THEN qh_fallback(f.id) ELSE NULL END))) text,count(*) n"+joins+' WHERE '+where;
-   const part=q(sql).get(...args);statements++;
-   chunks.push(part.text.slice(1,-1));examined+=part.n;bytes+=Buffer.byteLength(part.text);
-   // Exact external ref misses, including refs from verbatim rows, cannot depend on the owner rule.
-   const rr=q('SELECT f.t,f.v,f.x FROM '+table+' f WHERE '+where+" AND (f.t=5 OR f.x IS NOT NULL)").all(...args);statements++;
-   for(const r of rr){const target=r.x!==null?unverb(r.x):null;if(target?.value_type==='ref')refs.push(target.value_string);else if(!target&&r.t===5)refs.push(name('ents',r.v));}
-  }
-  return refs;
+ const parts=[],seen=new Set(),owners=new Set(),ownerNames=[];let frontier=a.roots,hops=0,statements=0;
+ const ownerRows=h1Rows('o=@o'),entityRows=h1Rows('o=@o AND e=@e');
+ const ownerRefs=h1Refs('o=@o'," AND f.v NOT IN (SELECT e FROM facts WHERE o=@o)"),entityRefs=h1Refs('o=@o AND e=@e','');
+ const collect=(rows,refs)=>{
+  const text=rows;if(text.length>2)parts.push(text);
+  const out=[];
+  for(const [v,x] of refs){const target=x!==null?unverb(x):null;if(target){if(target.value_type==='ref')out.push(target.value_string);}else out.push(entName(v));}
+  return out;
  };
+ // The first touch of an owner by a requested root fetches the whole owner (clustering hint); any entity reached by a ref is fetched by exact (owner, entity)
+ // unless its owner is already complete. Refs found from rows are exact misses, so the owner rule never decides reachability.
+ let roots=true;
  while(frontier.length){
   hops++;const next=[];
   for(const entity of frontier){
    if(seen.has(entity))continue;seen.add(entity);
-   const o=eid(owner(entity)),e=eid(entity);
-   if(o!==undefined&&!owners.has(o)){owners.add(o);next.push(...fetch('o',[o]));}
-   else if(o===undefined&&e!==undefined)next.push(...fetch('e',[e]));
+   const on=owner(entity),o=entId(on);
+   if(o===undefined||owners.has(o))continue;
+   if(roots){
+    owners.add(o);ownerNames.push(on);
+    const rows=ownerRows.get({o,b});statements+=2;
+    next.push(...collect(rows,ownerRefs.all({o,b})));
+   }else{
+    const e=entId(entity);if(e===undefined)continue;
+    const rows=entityRows.get({o,b,e});statements+=2;
+    next.push(...collect(rows,entityRefs.all({o,b,e})));
+   }
   }
+  roots=false;
   frontier=next.filter(e=>!seen.has(e));
  }
- return {snapshot:publicMarker(m),basis:b,entities:[...seen],text:'['+chunks.filter(Boolean).join(',')+']',counters:{hops,rows:examined,bytes,statements}};
+ return {snapshot:publicMarker(m),basis:b,entities:[...seen],owners:ownerNames,parts,counters:{hops,rows:0,bytes:a.bytes?parts.reduce((n,p)=>n+Buffer.byteLength(p),0):0,statements}};
 };
 const handle = (op,a) => {
  if(op==='close'){clearInterval(timer);clearInterval(passiveTimer);db?.close();lock?.close();return;}

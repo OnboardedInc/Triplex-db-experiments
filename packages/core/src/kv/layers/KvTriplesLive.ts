@@ -66,6 +66,7 @@ import { TxAttributes } from "../../utils/id.js";
 import { finishPagination, preparePagination, wrapDatalogQuery } from "../../Pagination.js";
 import * as ContentIds from "../../content/ContentId.js";
 import { unsafe } from "../../Branded.js";
+import { reachBy } from "../../store/reach.js";
 import { transactionsForEntity } from "../../store/entityTransactionHistory.js";
 import { encodeEntityPageCursor, prepareEntityPage } from "../../EntityPage.js";
 
@@ -705,6 +706,24 @@ const makeKvTriplesService = Effect.gen(function* () {
           Effect.fail(
             new ReadError({ message: `Batch entity read failed: ${String(e)}`, cause: e }),
           ),
+        ),
+      ),
+
+    reach: (root, basis) =>
+      Effect.gen(function* () {
+        const resolved = resolveTemporalBasis(basis, yield* runtime.now);
+        return yield* reachBy(
+          (ids) =>
+            Effect.forEach(ids, (entityId) =>
+              hexaStore
+                .scanCollectTemporalAsync({ entity: entityId }, resolved)
+                .pipe(Effect.map((datoms) => datoms.map(datomToTriple))),
+            ),
+          root,
+        );
+      }).pipe(
+        Effect.catch((e) =>
+          Effect.fail(new ReadError({ message: `Reach failed: ${String(e)}`, cause: e })),
         ),
       ),
 

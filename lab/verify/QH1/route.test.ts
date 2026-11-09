@@ -19,10 +19,18 @@ import {
 } from "@triplex-build/triplex-testkit/route";
 import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { append, row, fresh } from "./helpers.js";
-import { h1Rows, h1TupleId } from "../../../packages/qlever/src/broker/h1.js";
+import { h1Rows, h1TupleId, wholePullTuples } from "../../../packages/qlever/src/broker/h1.js";
 it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat", async () => {
   const broker = await HostBroker.open({ dir: fresh(), scopeKey: "qh1-rq01", minFreeBytes: 0 });
   const log = (broker as any).log;
+  // [EXP-QH1-R3] Why: the whole-pull adapter operation is a separate H1 route and is registered beside the raw worker route.
+  // Rejected: assuming the worker route's verdict covers the adapter's own decode, cut and cache handling.
+  const adapter = makeQleverBrokerStorageAdapter(
+    { query: async () => { throw new TypeError("offline", { cause: Object.assign(new Error("offline"), { code: "ECONNREFUSED" }) }); } } as any,
+    "qh1-rq01",
+    broker,
+    { currentRoute: "h1", basisWaitMs: 10 },
+  );
   let history: RouteHistory = { seed: 0, now: 0, commits: [] },
     horizon = 0;
   const latest = new Map<string, TripleRow>();
@@ -42,6 +50,9 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
       latest.set(r.id, r);
     }
     await append(log, rs);
+    // The fixture writes frames straight to the log (positions are the route history's own); the adapter route reads through the
+    // broker's resolved prefix, so publish the new durable LSN the way a commit would. Rejected: broker.submit (it assigns positions).
+    (broker as any).durableLsn = log.nextLsn - 1;
   };
   const visible = (rows: readonly TripleRow[], r: RouteRequest) =>
     rows.filter(
@@ -80,11 +91,11 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
         retirement: { horizon, pinned: context!.pinned },
       };
     },
-    routes: ["QH1w", "source"].map((id) => ({
+    routes: ["QH1w", "QH1r", "source"].map((id) => ({
       id,
       contract: "snapshot" as const,
       retention: {
-        kind: id === "QH1w" ? ("position-retired" as const) : ("complete" as const),
+        kind: id !== "source" ? ("position-retired" as const) : ("complete" as const),
         plan: (h, extension) =>
           routeRetentionHorizons(h, extension.position).map((cut, i) => ({
             id: `cut:${i}`,
@@ -95,7 +106,7 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
       },
       eligible: (r, h) =>
         (r.basis.recordedPosition ?? routeHead(h)) <= routeHead(h) &&
-        (id !== "QH1w" ||
+        (id === "source" ||
           (!r.history &&
             r.basis.recordedAt === undefined &&
             (r.basis.recordedPosition ?? routeHead(h)) >= horizon)),
@@ -107,7 +118,65 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
         let rows: readonly TripleRow[];
         if (id === "source")
           rows = log.recent(0, r.entityId === undefined ? {} : { entities: [r.entityId] });
-        else {
+        else if (id === "QH1r") {
+          if (r.history || r.basis.recordedAt !== undefined)
+            throw new RouteRefusal("BasisNotAvailable", "H1 refuses record time/history");
+          const roots =
+            r.entityId === undefined
+              ? [...new Set([...latest.values()].map((x) => x.entity_id))]
+              : [r.entityId];
+          const found = new Map<string, any>();
+          for (const root of roots) {
+            const pulled = await Effect.runPromise(
+              adapter.getReachTriples!(root, {
+                validAt: r.basis.validAt ?? history.now,
+                recordedPosition: b,
+              }),
+            ).catch((e) => {
+              if (e instanceof H1SnapshotExpired || /expired/i.test(String(e?.reason ?? e)))
+                throw new RouteRefusal("SnapshotExpired", "expired");
+              throw e;
+            });
+            if (pulled === undefined) throw new RouteRefusal("SnapshotExpired", "expired");
+            for (const t of pulled.triples)
+              if (r.entityId === undefined || t.entityId === r.entityId) found.set(t.id, t);
+          }
+          rows = [...found.values()].map((t: any) => {
+            const columns: any = {
+              value_string: null,
+              value_number: null,
+              value_boolean: null,
+              value_datetime: null,
+              value_json: null,
+            };
+            columns[
+              t.value.type === "ref" || t.value.type === "integer" ? "value_string" : "value_" + t.value.type
+            ] =
+              t.value.type === "boolean"
+                ? Number(t.value.value)
+                : t.value.type === "json"
+                  ? JSON.stringify(t.value.value)
+                  : t.value.value;
+            return {
+              id: t.id,
+              entity_id: t.entityId,
+              attribute: t.attribute,
+              value_type: t.value.type,
+              ...columns,
+              recorded_position: latest.get(t.id)!.recorded_position,
+              recorded_at: t.recordedAt,
+              valid_from: t.validFrom,
+              valid_to: Option.getOrNull(t.validTo),
+              created_by: Option.getOrNull(t.createdBy),
+              entity_type: Option.getOrNull(t.entityType),
+              schema_version: Option.getOrNull(t.schemaVersion),
+              tx_id: Option.getOrNull(t.txId),
+              retracted_at: Option.getOrNull(t.retractedAt),
+              retracted_position: null,
+              retract_tx_id: Option.getOrNull(t.retractTxId),
+            } as TripleRow;
+          });
+        } else {
           if (r.history || r.basis.recordedAt !== undefined)
             throw new RouteRefusal("BasisNotAvailable", "H1 refuses record time/history");
           try {
@@ -116,7 +185,7 @@ it("RQ01 with H1w registered, typed T/TP/future/expired refusal and Q89i repeat"
                 ? [...new Set([...latest.values()].map((r) => r.entity_id))]
                 : [r.entityId];
             const whole = await log.wholePull(b, roots),
-              tuples = JSON.parse(whole.text);
+              tuples = wholePullTuples(whole);
             const triples = [
               ...h1Rows(tuples, { validAt: r.basis.validAt ?? history.now }).values(),
             ].flat();

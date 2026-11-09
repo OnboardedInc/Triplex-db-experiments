@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import { it, expect } from "vitest";
 import { HostLog } from "../../../packages/qlever/src/broker/log.js";
-import { h1Rows } from "../../../packages/qlever/src/broker/h1.js";
+import { h1Rows, wholePullTuples } from "../../../packages/qlever/src/broker/h1.js";
 import { decodeValueColumns, ValueDomains } from "../../../packages/core/src/ValueDomain.js";
 import { row, append, fresh, base } from "./helpers.js";
 it("G4c: 100000 persisted values preserve exact payloads or the same typed rejection", async () => {
@@ -78,7 +78,7 @@ it("G4c: 100000 persisted values preserve exact payloads or the same typed rejec
     }
     for (let k = 0; k < 400; k++) {
       const answer = await log.wholePull(101798, ["s:" + k]);
-      const tuples = JSON.parse(answer.text);
+      const tuples = wholePullTuples(answer);
       expect(tuples.length).toBe(250);
       for (const t of tuples) {
         const normal = outcome(() => [...h1Rows([t], { validAt: 100 }).values()][0]![0]!.value);

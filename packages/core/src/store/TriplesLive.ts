@@ -27,6 +27,7 @@ import {
 } from "./Triples.js";
 import { createReadConstructor, exactReadService } from "../storage/ReadSurface.js";
 import { StorageAdapter } from "../storage/StorageAdapter.js";
+import { reachBy } from "./reach.js";
 import { QueryExecutor } from "../storage/QueryExecutor.js";
 import type {
   Triple,
@@ -542,13 +543,28 @@ const makeTriplesServices = Effect.gen(function* () {
         return rows.map(rowToTriple);
       });
 
-    const entities: TriplesService["entities"] = (entityIds, basis) =>
+    const entitiesAt = (entityIds: readonly EntityId[], resolved: ResolvedTemporalBasis) =>
       Effect.gen(function* () {
-        const resolved = resolveTemporalBasis(basis, yield* now);
         const decoded = yield* (adapter.getEntityTriples?.(entityIds, resolved) ?? Effect.succeed(undefined));
         if (decoded) return entityIds.map((id) => decoded.get(id) ?? []);
         const rows = yield* adapter.getByEntities(entityIds, resolved);
         return entityIds.map((id) => (rows.get(id) ?? []).map(rowToTriple));
+      });
+
+    const entities: TriplesService["entities"] = (entityIds, basis) =>
+      Effect.gen(function* () {
+        const resolved = resolveTemporalBasis(basis, yield* now);
+        return yield* entitiesAt(entityIds, resolved);
+      });
+
+    // [EXP-QH1-R3] Why: one resolved basis and one Effect run for the whole closure; the adapter may answer it in one operation.
+    // Rejected: resolving the clock per level (a long pull could straddle two valid-time instants).
+    const reach: TriplesService["reach"] = (root, basis) =>
+      Effect.gen(function* () {
+        const resolved = resolveTemporalBasis(basis, yield* now);
+        const direct = yield* (adapter.getReachTriples?.(root, resolved) ?? Effect.succeed(undefined));
+        if (direct) return direct;
+        return yield* reachBy((ids) => entitiesAt(ids as readonly EntityId[], resolved), root);
       });
 
     const entityPage: TriplesService["entityPage"] = (request) =>
@@ -750,6 +766,7 @@ const makeTriplesServices = Effect.gen(function* () {
     get: { run: get, basis: implicit, rawHistory: false },
     entity: { run: entity, basis: implicit, rawHistory: false },
     entities: { run: entities, basis: implicit, rawHistory: false },
+    reach: { run: reach, basis: implicit, rawHistory: false },
     entityPage: { run: entityPage, basis: implicit, rawHistory: false },
     match: { run: match, basis: implicit, rawHistory: false },
     history: { run: history, basis: implicit, rawHistory: true },

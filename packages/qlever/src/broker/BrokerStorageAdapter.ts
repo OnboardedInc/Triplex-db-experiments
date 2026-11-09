@@ -25,7 +25,7 @@ import {
  *    are guarded per subject; any other read escalates the commit to the scope-wide guard.
  */
 import { AsyncLocalStorage } from "node:async_hooks";
-import { h1Rows, type H1Tuple } from "./h1.js";
+import { h1Entity, h1Rows, wholePullTuples, type H1Tuple } from "./h1.js";
 import { H1SnapshotExpired } from "./log.js";
 import { randomUUID } from "node:crypto";
 import { Context, Effect, Exit } from "effect";
@@ -42,6 +42,7 @@ import {
   type StorageAdapterService,
   type TripleRow,
 } from "@triplex-build/triplex/runtime";
+import type { Triple } from "@triplex-build/triplex";
 import type { QleverClient } from "../QleverClient.js";
 import {
   assertionIri,
@@ -240,7 +241,26 @@ export const makeQleverBrokerStorageAdapter = (
 
   // [EXP-QH1] Why: each invocation owns its cache, even overlapping pulls at identical cuts.
   // Rejected: a process/global LRU (can cross scope, basis or pull lifetime).
-  type Prefetch = { readonly rows: Map<string, H1Tuple[]>; readonly known: Set<string> };
+  type Prefetch = {
+    readonly rows: Map<string, H1Tuple[]>;
+    readonly known: Set<string>;
+    readonly owners: Set<string>;
+  };
+  const loadPrefetch = async (b: number, roots: readonly string[]): Promise<Prefetch> => {
+    const answer = await broker.wholePullAt(b, roots, options.onPull !== undefined);
+    const tuples = wholePullTuples(answer);
+    options.onPull?.({ ...answer.counters, rows: tuples.length });
+    const rows = new Map<string, H1Tuple[]>();
+    for (const tuple of tuples) {
+      const entity = tuple[14]?.row.entity_id ?? tuple[2];
+      const bucket = rows.get(entity);
+      if (bucket) bucket.push(tuple);
+      else rows.set(entity, [tuple]);
+    }
+    return { rows, known: new Set(answer.entities), owners: new Set(answer.owners) };
+  };
+  const unresolved = (all: Prefetch, id: string) =>
+    !all.rows.has(id) && !all.known.has(id) && !all.owners.has(id.split("/")[0]!);
   const pullContext = new AsyncLocalStorage<{
     root: string;
     basis?: number;
@@ -729,32 +749,21 @@ export const makeQleverBrokerStorageAdapter = (
             );
             const context = pullContext.getStore();
             const started = performance.now();
-            const load = async (roots: readonly string[]): Promise<Prefetch> => {
-              const answer = await broker.wholePullAt(b, roots);
-              options.onPull?.(answer.counters);
-              const rows = new Map<string, H1Tuple[]>();
-              for (const tuple of JSON.parse(answer.text) as H1Tuple[]) {
-                const entity = tuple[14]?.row.entity_id ?? tuple[2];
-                const bucket = rows.get(entity) ?? [];
-                bucket.push(tuple);
-                rows.set(entity, bucket);
-              }
-              return { rows, known: new Set(answer.entities) };
-            };
             const answer = yield* Effect.tryPromise({
               try: async () => {
                 let pending = context?.cache.get(b);
                 if (!pending) {
-                  pending = load(context ? [context.root] : ids);
+                  pending = loadPrefetch(b, context ? [context.root] : ids);
                   context?.cache.set(b, pending);
                 }
                 const all = await pending;
-                const missing = ids.filter((id) => !all.rows.has(id) && !all.known.has(id));
+                const missing = ids.filter((id) => unresolved(all, id));
                 // Unexpected non-BFS callers still get exact rows, in a new same-cut fetch.
                 if (missing.length) {
-                  const extra = await load(missing);
+                  const extra = await loadPrefetch(b, missing);
                   for (const [id, rows] of extra.rows) all.rows.set(id, rows);
                   for (const id of extra.known) all.known.add(id);
+                  for (const id of extra.owners) all.owners.add(id);
                 }
                 const selected = [...new Set(ids)].flatMap((id) => all.rows.get(id) ?? []);
                 const decoded = h1Rows(selected, basis);
@@ -776,6 +785,77 @@ export const makeQleverBrokerStorageAdapter = (
                 basis: b,
                 replicaPosition: 0,
                 rows: [...answer.values()].reduce((n, a) => n + a.length, 0),
+                ms: performance.now() - started,
+                staged: false,
+              });
+            }
+            return answer;
+          }),
+        basis: explicit,
+        rawHistory: false,
+      },
+      getReachTriples: {
+        // [EXP-QH1-R3] Why: one worker operation, one decode pass and one Effect run answer a whole subject pull; the closure is walked
+        // in plain JS over the prefetched tuples, each entity decoded (valid-time cut, domain check, ordering) exactly when reached.
+        // Rejected: the per-level getEntityTriples loop for whole pulls (every level re-entered the kernel, the mask and the ALS cache).
+        run: (root: string, basis: ResolvedTemporalBasis) =>
+          Effect.gen(function* () {
+            if (options.currentRoute !== "h1" || basis.recordedAt !== undefined || (yield* current))
+              return undefined;
+            const b = yield* storeRead(() =>
+              readBasis(undefined, basis.recordedPosition, "repository"),
+            );
+            const started = performance.now();
+            const answer = yield* Effect.tryPromise({
+              try: async () => {
+                const all = await loadPrefetch(b, [root]);
+                const seen = new Set<string>([root]);
+                const triples: Triple[] = [];
+                let level = [root],
+                  hops = 0;
+                while (level.length > 0) {
+                  hops++;
+                  // An entity the worker neither returned nor covered by a whole owner gets one exact same-cut fetch (rare).
+                  const missing = level.filter((id) => unresolved(all, id));
+                  if (missing.length) {
+                    const extra = await loadPrefetch(b, missing);
+                    for (const [id, rows] of extra.rows) all.rows.set(id, rows);
+                    for (const id of extra.known) all.known.add(id);
+                    for (const id of extra.owners) all.owners.add(id);
+                  }
+                  const next: string[] = [];
+                  for (const id of level) {
+                    const tuples = all.rows.get(id);
+                    if (tuples === undefined) continue;
+                    const body = h1Entity(tuples, basis);
+                    for (const t of body) {
+                      triples.push(t);
+                      if (t.value.type === "ref" && !seen.has(t.value.value)) {
+                        seen.add(t.value.value);
+                        next.push(t.value.value);
+                      }
+                    }
+                  }
+                  level = next;
+                }
+                return { triples, hops };
+              },
+              catch: (cause) =>
+                cause instanceof H1SnapshotExpired
+                  ? cause
+                  : new ReadError({ message: "H1 pull failed", cause }),
+            }).pipe(
+              Effect.catch((error) =>
+                error instanceof H1SnapshotExpired ? Effect.succeed(undefined) : Effect.fail(error),
+              ),
+            );
+            if (answer) {
+              routes.h1++;
+              options.onRead?.({
+                route: "h1",
+                basis: b,
+                replicaPosition: 0,
+                rows: answer.triples.length,
                 ms: performance.now() - started,
                 staged: false,
               });
