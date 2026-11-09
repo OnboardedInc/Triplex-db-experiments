@@ -841,3 +841,195 @@ the manifest contains **3,062 entries**, with SHA256
 again when admitted, before starting its fingerprint/copy. Original evidence remains in place; keys are
 outside bundles and Git. This report/receipt is committed after the snapshot; actual per-attempt source
 preimages remain authoritative, with no retroactive pre-run Git anchor.
+
+## Round 6 — VM-side publication observer (2026-11-09)
+
+**Result: implemented and offline gates PASS; the one VM overhead attempt REFUSED,
+with a partial A/B overhead finding above the 5% limit. No NS/P3 acceptance claim.**
+The VM attempt did not seal because its SQL01 `committed_at` CR stamps violate
+F20. It remains failed evidence. No oracle/ruling/tolerance or candidate erasure,
+broker or consumer code was changed by this implementation.
+
+### Merge and scope
+
+Merged main as observed at task start, `ccaf27e9127f4de0c1f199e9ad3ed8284551c608`,
+into `exp/OBS01-observer`, creating merge `bfae93482279c507a9df0b8f3e638cf76ed3001c`
+(first parent `1a7fc86c4ee90f2f255d4767c1ff9fcc55da308a`). Main subsequently advanced;
+this report does not claim to include later main commits. The sole conflicted
+file was `lab/bin/engine.mjs`, seven hunks: observer/Datomic imports; QLever seed
+and metrics flags; effective config/pins; XTDB log and QLever mounts; Datomic
+health branch; replacement/image guards; and command dispatch. Resolved by
+retaining both features. Syntax and all nine engine regression tests pass.
+Acceptance changes came only from the requested merge; no subsequent edit under
+`lab/acceptance/`. Contract version/pins remain owned by the contract builder.
+
+Read the main-checkout R44 sections 3.1–3.6 and 8, G03 `V-PROBES.md`, Q100q/r,
+and current scope/protocol. G03 V2 establishes post-WAL-sync visibility only for
+its tested image; V5 supports cross-container inotify. The G03 measured 470/703 us
+p50/p99 is historical context, not this observer's precision. Q100q permits
+different namespace inodes with common boot ID and zero time offsets.
+
+### Implementation
+
+- `lab/bin/vm-observer.mjs`, dispatched by `engine.mjs`: evaluator-only up/stop,
+  status, failed-capture cleanup and controlled overhead probe. Uses existing
+  private Docker endpoint, pool admission, immutable local image, fresh per-run
+  key fingerprint, full source IDs/holder/mount bindings. Observer has no network,
+  read-only root/source/code/key mounts, its own CPU, host PID/cgroup visibility,
+  capability drop and private output/control. No exclusive slot is required.
+- `vm_watch.py`: ctypes inotify on both databases' directories, query-only
+  read-only marker/frontier polls, actual poll start/end times, WAL append chunks
+  and final full-byte comparison, stable final main/WAL readbacks. Ready now
+  requires a successful initial query for every source. Requested 250 us is
+  recorded separately; actual periods/query costs bound each interval. Inotify
+  wakes polling; it is not itself publication proof. Idle fallback is 10 ms.
+- `vm_normalizer.py`: standalone pinned literal SQL01/FD01 schemas, BLOB preimages,
+  SQLite WAL checksums/salts/frame structure and each committed snapshot, SQL01
+  frame CRC32C/chain and payload/LSN/epoch/position binding, FD01 transaction
+  checkpoint/frontier/deliveries/effects/affected row deltas. Source commit members
+  map to per-position L/U; consumer affected rows map to transaction visibility.
+  Non-COMMIT frame kinds/payloads remain raw evidence. Rewritten/reset WAL, stale
+  final state and unknown schemas refuse. One WAL generation/stable main only;
+  online checkpoint/generation rollover is explicitly unsupported/refused.
+- Boot ID and `/proc/<pid>/timens_offsets` for observer/source PIDs, actual PID
+  start times and cgroup bindings; zero monotonic/boottime offsets required.
+  Namespace inode is recorded without an equality requirement. Realtime-to-VM
+  monotonic correlation brackets millisecond CR stamps; F20 remains L−1 ms/U+5 ms.
+  VM-local bridge data satisfies legacy bundle integrity only, not a Mac bridge
+  or cross-process ping-p99 qualification.
+- VM noise records: stat/loadavg/meminfo/diskstats, CPU/IO/memory pressure and
+  observer scheduling hiccups. Cgroup-gone requires earlier positive exact-path
+  observation and a still-visible host cgroup tree. Trusted ephemeral helper
+  proves the long-lived observer's own removal with exact ID/path/nonce.
+- `vm_verify.py`: independently verifies the seal/controller pins and invokes
+  O-OBS authentication to rerun the copied normalizer, comparing exact output.
+  This is integrity/parser equality, not a new registered NS semantic protocol.
+  Driver, reader and relay clock-domain records remain G03's integration duty.
+
+SQL01 schema/codec facts were read from merged `packages/qlever/src/broker/`
+(sqlite-worker.ts, frame.ts, frames.ts) and rdf.ts; FD01 facts from the read-only
+FD01 worktree's `packages/host/src/feed/ConsumerStore.ts`. Neither candidate is
+imported/executed by the normalizer. The observer code itself is content pinned
+in each attempt. [VM.md](../../observer/VM.md) gives exact reproduction/integration
+commands, source lifecycle ordering, limitations and deferred runbook.
+
+### Offline gates and retained attempts
+
+All gates run through `heavy.mjs`, with a fresh output and source snapshot per
+attempt and a 5 GiB free-space guard. `offline01` failed on a test harness oracle
+path, retained unchanged. `offline02`–`offline09` pass their then-current gates;
+these are successive development attempts, not independent qualification trials.
+`offline09` is the final executable source: **9 Python tests and 9 engine tests**.
+
+| Gate | Final result / evidence under `offline09/` |
+| --- | --- |
+| Planted 100/249/251/400 ms publication delays | PASS: deterministic intervals bounded by actual synthetic 0.55 ms period/cost; plus real host SQLite writes, independent RO polling and committed WAL snapshots for all four delays |
+| Real host delay bracket widths | Source/consumer widths in us: 100 ms 540.667/425.333; 249 ms 543.542/399.375; 251 ms 574.958/411.167; 400 ms 460.584/424.875. Each is within its measured stream period/cost bound. Raw polls and commit-call intervals are in `host-delay-*.json`; host timing is not VM qualification |
+| F20 early/late CR stamps | PASS: planted stamps outside both tolerance bounds refuse, including SQL01 realtime `committed_at`; no stamp substitution |
+| F11 WAL tamper | PASS: prefix rewrite/reset, checksum corruption, and final WAL differing from captured chunks refuse |
+| O-OBS standalone rerun | PASS: authenticated sealed fixture reruns through current merged O-OBS `authenticate`, exact normalization equality; changed parser negative refuses. Complete fixture/key/context/parser retained in `authenticated-fixture/` |
+| Clock/identity negatives | PASS: nonzero offsets, boot mismatch, wrong run/time/source binding refuse; different time-namespace inodes with zero offsets accepted |
+| Final-state / gone / schema negatives | PASS: final DB behind observed frontier, absent initial cgroup visibility, hidden host tree, and wrong FD01 schema refuse; RO mutation rejected |
+
+No root `pnpm check` was run: this is isolated Python/engine evaluator tooling;
+focused gates exercise its codecs, integrity, publication and lifecycle logic.
+The complete NS consumer/relay integration, physical erasure and lane D were not
+run this round.
+
+### One VM attempt: findings, not promotion
+
+Admission recorded G03/P-TINY idle and host free above 10 GiB. Existing image
+`python@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90`
+was used without pull. One controlled probe `vm01` (nonce `81e0eec92d06`) started
+A then B on new owned fixture volumes; it stopped at B's F20 refusal. It did not
+complete the planned ABBA sequence. Both arms have all 500 raw ten-row transaction
+samples; no outliers were removed.
+
+| Observation | Actual finding |
+| --- | --- |
+| Writer p99 | A 2,361,099 ns; B 5,621,754 ns; **+138.099%**, above Q100r's 5%. Partial A/B is a failed diagnostic, not completed causal/ABBA overhead qualification |
+| Publication capture | 500 SQL01 frames / 500 committed WAL snapshots, 1,407 polls, 40 inotify events; final WAL equals captured chunks |
+| Clock domains | Same boot `7a064e31-8ca0-47a5-926f-d2de8d786302`, both monotonic/boottime offsets zero, differing inodes; realtime correlation envelope spans 791 ns |
+| Actual cadence | Period p50 392,296 ns, p99 12,082,294 ns; max-period-plus-query-cost bound 22,209,585 ns. Publication bracket p99/max 21,882,116 ns; no sub-ms precision claim |
+| CR/F20 | **43** SQL01 `committed_at` intervals entirely more than 1 ms before L, largest early gap 8,253,312 ns. All are early, none late |
+| Bundle outcome | REFUSED, unsealed; copied original parser independently reproduces exit 2 `F20 CR-INCONSISTENT SQL01 committed_at`. Diagnostic analysis checks dense HMAC chain, not seal or semantic admission |
+
+The fixture deliberately follows SQL01's `Date.now()`-inside-transaction behavior:
+`committed_at` is sampled **before** COMMIT/WAL synchronization. A correct common
+clock does not make it a publication timestamp. The measured envelope rules out
+an observer clock-domain mismatch at the scale of these gaps; source stamp
+semantics and actual transaction/scheduling delay explain the inconsistency.
+**Open question for the source/ruling owner:** how should a pre-COMMIT SQL01 stamp
+satisfy Q100e/F20's early tolerance? No candidate code or oracle rule was altered
+to work around it. The standalone normalizer continues to refuse.
+
+`vm01/RESULT.json` and original raw outputs are unchanged. The old outer probe
+returned process exit zero despite its JSON REFUSED; final code now returns 2 for
+non-PASS, and that historical exit is not acceptance. Post-VM fixes add initial
+poll readiness, final-state freshness, WAL version check and cleanup/volume
+ownership guards. Their final offline gates pass, but **the exact final source's
+VM overhead has not been measured**. The single allowed measurement was not
+repeated. Original VM source copies remain authoritative.
+
+### PASS/receipt audit (content, freshness, binding)
+
+These are all new observation-to-verdict/receipt sites; inherited bundle routines
+are included where called. No routine below declares semantic NS PASS.
+
+| Site | Content check | Freshness and binding check |
+| --- | --- | --- |
+| `vm_normalizer.domain/same_domain` | UUID boot and both zero offsets, not inode equality | Records for observer and every configured source PID; common current boot, raw run/case/clock interval bindings |
+| `read_state/schema/snapshot/history/wal_commits` | Exact columns, integrity check, WAL checksum/salts/commit boundary, frame CRC/chain/payload and positions; all committed snapshots replayed | Exact captured source main/WAL bytes/hash; stable current final, final frontier covers last poll; schema/profile/source bound in case |
+| `brackets/bracket_for/crosscheck/normalize` | Monotone fresh RO visibility, L/U from actual poll/query bounds; F20 both sides; no requested-cadence inference | Raw start/end inside live run, matching source/container/run/case SHA; missing begin/end/source/clock or stale final refuses |
+| `WalTail.update`, inotify and final readback | Immutable prefix plus final byte-for-byte equality, queue overflow/refused captures | Same source path/inode/window; reset, checkpoint or missing bytes refuses, never reuses an earlier generation |
+| `vm_watch.run` ready/domain/noise/seen/gone | Every initial query succeeds before ready; zero-offset clock, actual cgroup identity; earlier seen path and self-visible host tree for disappearance | Effective full container ID/PID start time, key/run/case, current read times; incomplete gone-set prevents sealing |
+| `engine` up/reserve/stop and `proveGone` | Exact holder/full ID/mounted volume/image, 32-byte key, verified seal/replay; gone helper exact nonce/path/ID/readback | Fresh name/nonce and one-use key registry, source running/PID inspection, prior cgroup path; foreign/preexisting volumes are not adopted; only owned reserved containers cleaned |
+| `collector.Bundle`, `verify_seal`, `vm_verify.replay` | Content-addressed chunks, dense HMAC chain, seal/index/pins, O-OBS independent parser output equality; tamper negative | Evaluator-only per-attempt key/code/output, exact observed container and run/case/source binding, host-only witness/context; no seal means no admission |
+| `probe` result | Complete raw 500 samples per arm, four arms and sealed/replayed evidence/gone proofs required; either ratio >1.05 FAIL, exception/incomplete REFUSED | Fresh per-arm volume/container and identity, own holder, preflight checks and immutable code/image; final code exits 2 on non-PASS |
+| `test_vm`, `run_vm_offline` PASS | Assertions include positive planted bytes and negative tamper/clock/schema/freshness/visibility controls; subprocess statuses checked | Fresh temp DBs/run IDs, final source preimages before/after equal, new evidence directory, raw receipts; only offline gate PASS |
+| `round6/diagnose.py` | HMAC/raw SHA/sequence, copied parser refusal, WAL equality and recomputed intervals | Actual failed attempt/key/parser/chain only; output explicitly DIAGNOSTIC and unsealed, no PASS |
+| `round6/retain.py`, `finish.py` receipts | Complete file-set and read-back SHA equality, successful cleanup command statuses and empty own-holder inventory | Exact final gate pins versus current source, explicit durable root, private Docker endpoint/holder; retention is not semantic acceptance |
+
+Synthetic fixtures explicitly declare `offline-synthetic`; they cannot assert live
+VM clock qualification. A future G03 driver/relay/reader domain record is not
+inferred from the source process record. Ephemeral gone-proof helpers are removed
+by engine tooling; long-lived writer/observer disappearance has positive readback.
+
+### Cleanup, retention and changed pins
+
+Removed all created containers and both created volumes; no exclusive slot was
+taken, no resident configuration/lifecycle changed. The failed observer's own
+gone proof was recovered with `observer-vm-cleanup` after retaining the failure;
+`vm01/1/observer-gone-recovery.json` and both `writer-gone.json` files retain
+exact path/ID/visibility/nonce proofs. This recovery was not another overhead run.
+Original fstrim exited 0 (data volume 267,583,488 bytes reclaimed); after proof
+helper removal, fstrim again exited 0 (data volume 0 bytes) and `docker context
+use colima` exited 0. Private DOCKER_HOST remains bound to triplex2. Final own
+holder inventory is empty; host free was 14,432,243,712 bytes.
+
+Durable evidence root:
+`/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round6/`.
+[round6/INDEX.json](round6/INDEX.json) and [round6/SHA256SUMS](round6/SHA256SUMS)
+index **665 files**, with complete file-set/read-back verification and 319 prior
+offline manifest entries checked. Manifest SHA256:
+`6685cd0f0c05aa460a2ac929653df9d6b565462d96b876a2fabe9dde45c2edb9`.
+Keys, DBs, WALs and bulky chunks stay outside Git; only short index/manifest and
+reproduction/analysis helpers are committed. `source-changes.json` records every
+final gate pin with pre-merge, merged and new hashes (null means new file).
+
+Existing changed evaluator path (re-pin by contract owner if covered):
+
+| Path | Merged old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/bin/engine.mjs` | `cbfb075fa50bd9c50f8e572fcb7c3b96d909f41b902ada075a9ba8b4d31882f2` | `5cbbfc7e54786a2c1b51b1594146dfb08f98d66f5fa68c849cf8030ea8c1e105` |
+
+Pre-merge engine SHA was
+`e577e343d084e7203713e83f20e9a3b8ef8cc144d0d2d4188d65da5c64923f90`.
+All VM files are newly added; legacy capture/collector/seal files are unchanged.
+For exact VM-to-final differentiation: normalizer moved from
+`bc91e819e27ae1940becf5dd19b5e9c219420c9ef687e0493287961b3ca24808` to
+`10ae1ce19e104f6083c8d94a9aa6f899e27e8f0db23cb7e4730d83d3fdf97d09`;
+watcher from `34f6bc5d6896ff6577bbdc2f5b476d3545e4f39e9334ced058ddbb89d3e09fc3`
+to `ba49db1b705c07c3e1ca3da20b99f284fbb580b6a4f76c0d17f6be6353dbd7bd`.
+All other exact source pins/preimages are retained in the attempt directories.
+No merge into main or push was performed.

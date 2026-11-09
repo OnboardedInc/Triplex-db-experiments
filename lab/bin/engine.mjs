@@ -18,6 +18,7 @@
 // the small read-only config file is bind-mounted.
 // Rejected: docker compose per slot (project labels and a second config source of truth);
 // a daemon (no process to babysit with at most 10 agents).
+import { vmObserverCommand } from './vm-observer.mjs';
 import { residentObserver } from './resident-observer.mjs';
 import { archiveVolume } from './archive-volume.mjs';
 import { observerUp, observerDown, observerWatch, observerWitness, observerImage, observerBridge, observerRetain, observerCommand } from './observer.mjs';
@@ -656,6 +657,7 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   const command = positional[0];
   const config = loadSlots();
   if (command === 'status') return status(config);
+  if (command?.startsWith('observer-vm-')) return vmObserverCommand(config,command,options);
   if (options.lane === 'datomic' && command === 'build') return buildDatomic(config);
   if (options.lane === 'datomic' && command === 'selftest') return selftestDatomic(config, options);
   if (command === 'observer-image') return observerImage(options);

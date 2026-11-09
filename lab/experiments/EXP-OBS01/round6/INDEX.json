@@ -1,0 +1,15 @@
+{
+  "claim": "offline gate PASS; VM REFUSED; retention hashes checked, not semantic acceptance",
+  "cleanup": {
+    "containers": [],
+    "diskFreeBytes": 14432243712,
+    "holder": "CX-OBS01-R6",
+    "scope": "private triplex2 Docker; own holder only",
+    "volumes": []
+  },
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round6",
+  "files": 665,
+  "manifestSha256": "6685cd0f0c05aa460a2ac929653df9d6b565462d96b876a2fabe9dde45c2edb9",
+  "offlineEntriesChecked": 319,
+  "sourceChanges": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round6/source-changes.json"
+}

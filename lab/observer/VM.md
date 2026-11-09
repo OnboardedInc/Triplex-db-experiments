@@ -1,0 +1,129 @@
+# VM publication observer (OBS01 round 6)
+
+Evaluator tooling only. `engine.mjs` provisions the observer, fresh key, read-only
+source mounts and private evidence directory. Candidate code cannot write them.
+The standalone `vm_normalizer.py` has literal SQL01/FD01 schema profiles and no
+candidate imports. It reconstructs every SQLite WAL commit, including consumer
+frontier/effects/affected deltas, and maps source member positions to observed
+publication intervals. Its output is evidence, not an NS verdict.
+
+## Offline reproduction
+
+Use a new durable output directory for every attempt:
+
+```sh
+node lab/bin/heavy.mjs --label CX-OBS01-R6-offline -- \
+  python3 -B lab/observer/run_vm_offline.py \
+  /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round6/offline-next
+```
+
+`RESULT.json` pins the actual tested files; `SHA256SUMS` covers retained outputs.
+The authenticated fixture retains raw chunks, copied parser, key, context and seal
+for independent O-OBS authentication/re-execution. This tests the authentication
+API, not a registered NS semantic protocol or contract selection.
+
+## Controlled VM admission and overhead run
+
+Check G03 ownership and host free space before admission. The probe checks again
+before each round, requires more than 10 GiB free, and stops if G03/NSR/P-TINY
+containers are running. Coordinate with G03; absence of a matching process name
+alone is not a scheduling reservation. Never run beside its P-TINY smoke.
+
+```sh
+node lab/bin/engine.mjs observer-vm-status --holder CX-OBS01-R6
+node lab/bin/heavy.mjs --label CX-OBS01-R6-vm -- \
+  node lab/bin/engine.mjs observer-vm-probe --holder CX-OBS01-R6 \
+  --image python@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 \
+  --out /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-OBS01/OBS01-round6/vm-next
+```
+
+The image must already exist; no mutable pull. This is a broker-shaped fixture,
+500 commits per arm, ten scratch writes plus frame/marker, FULL synchronous,
+writer CPU 4, observer CPU 5. It plans A/B/B/A on fresh volumes and computes
+nearest-rank p99 from every sample. Either observed/baseline ratio above 1.05
+fails; incomplete samples, missing seal/proofs or parser refusal refuse the run.
+A successful fixture test still does not qualify the full NS workload, other
+images, host power loss, clock ping-p99 or relay/reader/driver domains.
+
+The one round-6 VM attempt has already been used. It refused on F20 after A/B;
+its partial writer p99 increased 138.10%. Do not rerun it to replace this failure.
+SQL01's `committed_at` is sampled before COMMIT; 43 stamps in that attempt were
+more than 1 ms before the independently bracketed publication. A source/ruling
+owner must resolve this conflict with the CR cross-check. Do not widen F20.
+
+## Joining a future G03 run
+
+Bootstrap/checkpoint databases before the observer window. Disable automatic WAL
+checkpointing in the trusted test setup, and retain one WAL generation until
+capture ends. The observer never changes pragmas on the source. SQL01 files must
+have the marker/frames schema in `vm_normalizer.py`; FD01 must have its exact
+checkpoints/frontier/deliveries/effects/affected columns, and specify `consumer`.
+The source container and named volume must belong to the same holder.
+
+Create a private JSON spec, replacing every placeholder with inspected identities:
+
+```json
+{
+  "runId": "g03-unique-attempt",
+  "durationSeconds": 120,
+  "sources": [
+    {"id":"broker","profile":"sql01","file":"broker.db","container":"OWN_BROKER","engineContainerId":"FULL_CONTAINER_ID","volume":"OWN_BROKER_VOLUME"},
+    {"id":"consumer","profile":"fd01","consumer":"CONSUMER_ID","file":"consumer.db","container":"OWN_CONSUMER","engineContainerId":"FULL_CONTAINER_ID","volume":"OWN_CONSUMER_VOLUME"}
+  ]
+}
+```
+
+Supply an evaluator-generated fresh 32-byte key file outside candidate mounts.
+The controller rejects key reuse, inspects source PIDs/container IDs, freezes code
+and uses host PID/cgroup visibility with read-only mounts and no network.
+
+```sh
+node lab/bin/engine.mjs observer-vm-up --holder CX-G03 \
+  --run-id g03-unique-attempt --spec /PRIVATE/spec.json --key-file /PRIVATE/key \
+  --image python@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 \
+  --observer-cpus 5
+```
+
+Only start workload after this command reports ready: every store has completed
+its first read-only poll. Capture the driver, reader and relay clock-domain
+records separately, with their exact PID/attempt bindings; this command records
+only observer and source PIDs. Each domain requires the same VM boot ID and zero
+monotonic/boottime offsets; namespace inode equality is not required. Publication
+brackets use actual last-old poll start/first-new poll end, with measured query
+cost and poll period, never the requested 250 us as a precision claim.
+
+End workload, then use the source owner's engine lifecycle to SIGKILL only its
+own source containers, retaining their volumes and WAL. Graceful SQLite close can
+checkpoint away evidence and will refuse capture. Allow the observer to record
+cgroup disappearance before stopping. Do not stop shared residents.
+
+```sh
+node lab/bin/engine.mjs observer-vm-stop --holder CX-G03 --run-id g03-unique-attempt
+node lab/bin/engine.mjs observer-vm-cleanup --holder CX-G03 --run-id g03-unique-attempt \
+  --out /PRIVATE/observer-gone.json
+```
+
+Stop verifies seal/HMAC/controller pins and reruns the pinned parser through
+O-OBS. Cleanup obtains the observer's own cgroup-gone readback, also after stop
+has removed it; it requires the earlier exact path/container binding and a
+helper's visible host cgroup tree. On failure retain evidence first, then use
+cleanup. No repair, resume or reuse of the attempt. The ephemeral proof helper
+is removed by the controller and is not itself a long-lived workload container.
+
+Archive output, code, effective config, external evaluator key, witness/context,
+exit/cleanup proofs and raw database/WAL files in evaluator-only durable storage;
+verify complete SHA256 manifests before removing owned volumes through the
+engine workflow. Finish VM work with `colima ssh -p triplex2 -- sudo fstrim -av`
+and `docker context use colima`; retain their actual outputs. Keep DOCKER_HOST
+bound to the private triplex2 socket throughout.
+
+## Fail-closed boundaries
+
+Rewritten WAL prefixes, WAL resets/checkpoints, incomplete/checksum-invalid frames,
+unexpected schema, stale final readback, clock steps, missing initial poll,
+inotify overflow and missing cgroup-gone proof refuse evidence. Current support
+is one WAL generation and a stable main file, not arbitrary online checkpoints.
+Inotify is a wake-up/corroboration source; only fresh read-only queries establish
+visibility. An idle 10 ms fallback and scheduler noise may widen brackets; actual
+periods and query costs remain in the evidence. Unsealed failure chunks may be
+examined diagnostically but cannot become a sealed bundle or semantic PASS.
