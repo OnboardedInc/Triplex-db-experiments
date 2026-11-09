@@ -1,0 +1,23 @@
+.................................................................................................................................................................................................................................................................................EE.................................................................................................................................
+======================================================================
+ERROR: test_Q70K_scope_on_every_scope_surface (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface) (kind='cutCatalog', defaultErasure=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_q70_coverage.py", line 79, in test_Q70K_scope_on_every_scope_surface
+    self.assertEqual(node['scope'],'t')
+                     ~~~~^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+
+======================================================================
+ERROR: test_Q70K_scope_on_every_scope_surface (lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70K_scope_on_every_scope_surface) (kind='cutCatalog', defaultErasure=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/oracles/replay/tests/test_q70_coverage.py", line 79, in test_Q70K_scope_on_every_scope_surface
+    self.assertEqual(node['scope'],'t')
+                     ~~~~^^^^^^^^^
+TypeError: list indices must be integers or slices, not str
+
+----------------------------------------------------------------------
+Ran 403 tests in 17.424s
+
+FAILED (errors=2)

@@ -1,0 +1,211 @@
+[
+  {
+    "label": "unit",
+    "command": [
+      "python3",
+      "-I",
+      "lab/oracles/replay/cli.py",
+      "--test"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:03:29.511736+00:00",
+    "end": "2026-11-09T01:03:47.869060+00:00",
+    "logSha256": "4cc4fb637be289080a164660ba3fb3014d802fc8fa2e175198ae598e35b59104"
+  },
+  {
+    "label": "selfcheck",
+    "command": [
+      "python3",
+      "-I",
+      "lab/oracles/replay/cli.py",
+      "--self-check"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:03:47.869794+00:00",
+    "end": "2026-11-09T01:03:48.043761+00:00",
+    "logSha256": "9242389c0cc611decc5c7aae28bd835531cdc9e30af9ed0e47e0862e5d8de1d0"
+  },
+  {
+    "label": "fixtures",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/fixture_runner.py"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:03:48.044160+00:00",
+    "end": "2026-11-09T01:03:48.102512+00:00",
+    "logSha256": "41a370ed9a6dfd55ed775778f083e911923ef21295a7d2555e441df582e71ffa"
+  },
+  {
+    "label": "review-probes",
+    "command": [
+      "python3",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round2/probes.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/evidence-attempt2"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:03:48.102907+00:00",
+    "end": "2026-11-09T01:03:48.175247+00:00",
+    "logSha256": "f5461c6609ac07a08c46655d8f32a144e3826584e672921138f6c723d3646381"
+  },
+  {
+    "label": "core-legacy",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/evidence-attempt2/core-legacy"
+    ],
+    "env": {
+      "O02_LANE": "core"
+    },
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:03:48.175770+00:00",
+    "end": "2026-11-09T01:03:54.350160+00:00",
+    "logSha256": "cdae91c510237def25978c58ac1750828217526ec02bf2746097905b843b6bf2"
+  },
+  {
+    "label": "core-updated",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/evidence-attempt2/core-updated"
+    ],
+    "env": {
+      "O02_LANE": "core",
+      "O06_GOLD": "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/acceptance/golden"
+    },
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:03:54.350567+00:00",
+    "end": "2026-11-09T01:04:00.717043+00:00",
+    "logSha256": "cdae91c510237def25978c58ac1750828217526ec02bf2746097905b843b6bf2"
+  },
+  {
+    "label": "qlever-legacy",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/evidence-attempt2/qlever-legacy"
+    ],
+    "env": {
+      "O02_LANE": "qlever"
+    },
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:04:00.717660+00:00",
+    "end": "2026-11-09T01:04:06.965397+00:00",
+    "logSha256": "af492bda3f2879baa6635989762bf5fb9dcc452fc73d77f623569aef83f5b332"
+  },
+  {
+    "label": "qlever-updated",
+    "command": [
+      "python3",
+      "-I",
+      "lab/experiments/EXP-O06/golden_runner.py",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/evidence-attempt2/qlever-updated"
+    ],
+    "env": {
+      "O02_LANE": "qlever",
+      "O06_GOLD": "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/acceptance/golden"
+    },
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:04:06.966009+00:00",
+    "end": "2026-11-09T01:04:12.477846+00:00",
+    "logSha256": "af492bda3f2879baa6635989762bf5fb9dcc452fc73d77f623569aef83f5b332"
+  },
+  {
+    "label": "Q70E-unfiltered-prefixes",
+    "command": [
+      "python3",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/mutations.py",
+      "Q70E-unfiltered-prefixes",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/evidence-attempt2/mutations/Q70E-unfiltered-prefixes"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:04:12.478362+00:00",
+    "end": "2026-11-09T01:04:29.649027+00:00",
+    "logSha256": "6871fe4b808d7af2bd3a44874bd7d8e6df603b8c2d72c33205b52bc5b08f08d8"
+  },
+  {
+    "label": "Q70H-compare-page-bodies",
+    "command": [
+      "python3",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/mutations.py",
+      "Q70H-compare-page-bodies",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/evidence-attempt2/mutations/Q70H-compare-page-bodies"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:04:29.649823+00:00",
+    "end": "2026-11-09T01:04:46.523298+00:00",
+    "logSha256": "3ea40f757b28386f8f55948dabad2eec97909ab34ebbb1c57d86c9bea100966c"
+  },
+  {
+    "label": "Q70I-choose-ambiguous-journal",
+    "command": [
+      "python3",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/mutations.py",
+      "Q70I-choose-ambiguous-journal",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/evidence-attempt2/mutations/Q70I-choose-ambiguous-journal"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:04:46.524110+00:00",
+    "end": "2026-11-09T01:05:03.623773+00:00",
+    "logSha256": "e7d275dac00528d4df07fcd1d8e62601c39ee7ba5b079924184cc95e878a06d7"
+  },
+  {
+    "label": "Q70I-ignore-journal-scope",
+    "command": [
+      "python3",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/mutations.py",
+      "Q70I-ignore-journal-scope",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/evidence-attempt2/mutations/Q70I-ignore-journal-scope"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:05:03.624702+00:00",
+    "end": "2026-11-09T01:05:20.477872+00:00",
+    "logSha256": "216f73ed0b5b43834441c59ed9b7c788f9c1545572fed9ec64268eef8cdd30d3"
+  },
+  {
+    "label": "Q70K-default-nonjournal-scope",
+    "command": [
+      "python3",
+      "-I",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/mutations.py",
+      "Q70K-default-nonjournal-scope",
+      "/Users/sam/projects/triplex-db-2/.claude/worktrees/o06/lab/experiments/EXP-O06/round3/evidence-attempt2/mutations/Q70K-default-nonjournal-scope"
+    ],
+    "env": {},
+    "expectedExit": 0,
+    "exit": 0,
+    "start": "2026-11-09T01:05:20.478677+00:00",
+    "end": "2026-11-09T01:05:37.586127+00:00",
+    "logSha256": "278986277037304828ffbc69dedb639dbe3ac6454dc03711cdfcfa2430855fc3"
+  }
+]

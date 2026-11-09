@@ -1,0 +1,177 @@
+{
+  "format": "triplex-db-2/o-replay-case/1",
+  "caseId": "round3",
+  "defaultScope": "s",
+  "commands": [
+    {
+      "scope": "t",
+      "clock": 100,
+      "meta": {
+        "commandId": "t0"
+      },
+      "operations": [
+        {
+          "op": "assert",
+          "ref": "t1",
+          "entityId": "p1",
+          "attribute": ":w/pay",
+          "value": {
+            "type": "integer",
+            "value": "1"
+          },
+          "validFrom": 0
+        }
+      ]
+    },
+    {
+      "scope": "t",
+      "clock": 110,
+      "meta": {
+        "commandId": "t1"
+      },
+      "operations": [
+        {
+          "op": "assert",
+          "ref": "t2",
+          "entityId": "p1",
+          "attribute": ":w/pay",
+          "value": {
+            "type": "integer",
+            "value": "2"
+          },
+          "validFrom": 0
+        }
+      ]
+    },
+    {
+      "scope": "t",
+      "clock": 200,
+      "operations": [
+        {
+          "op": "erase",
+          "entityId": "p1"
+        }
+      ]
+    },
+    {
+      "scope": "s",
+      "clock": 100,
+      "meta": {
+        "commandId": "s0"
+      },
+      "operations": [
+        {
+          "op": "assert",
+          "ref": "s1",
+          "entityId": "p1",
+          "attribute": ":w/pay",
+          "value": {
+            "type": "integer",
+            "value": "1"
+          },
+          "validFrom": 0
+        }
+      ]
+    },
+    {
+      "scope": "s",
+      "clock": 110,
+      "meta": {
+        "commandId": "s1"
+      },
+      "operations": [
+        {
+          "op": "assert",
+          "ref": "s2",
+          "entityId": "p1",
+          "attribute": ":w/pay",
+          "value": {
+            "type": "integer",
+            "value": "2"
+          },
+          "validFrom": 0
+        }
+      ]
+    },
+    {
+      "scope": "s",
+      "clock": 200,
+      "operations": [
+        {
+          "op": "erase",
+          "entityId": "p1"
+        }
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "transactions",
+      "kind": "transactions",
+      "scope": "t",
+      "readStart": {
+        "afterCommand": 1
+      }
+    },
+    {
+      "id": "transaction",
+      "kind": "transaction",
+      "scope": "t",
+      "readStart": {
+        "afterCommand": 1
+      },
+      "txId": "tx:0"
+    },
+    {
+      "id": "transactionByCommand",
+      "kind": "transactionByCommand",
+      "scope": "t",
+      "readStart": {
+        "afterCommand": 1
+      },
+      "commandId": "t0"
+    },
+    {
+      "id": "transactionsForEntity",
+      "kind": "transactionsForEntity",
+      "scope": "t",
+      "readStart": {
+        "afterCommand": 1
+      },
+      "entityId": "p1"
+    },
+    {
+      "id": "journalFacts",
+      "kind": "journalFacts",
+      "scope": "t",
+      "readStart": {
+        "afterCommand": 1
+      }
+    },
+    {
+      "id": "assertions",
+      "kind": "assertions",
+      "scope": "t",
+      "readStart": {
+        "afterCommand": 1
+      }
+    },
+    {
+      "id": "cutCatalog",
+      "kind": "cutCatalog",
+      "scope": "t",
+      "readStart": {
+        "afterCommand": 1
+      }
+    },
+    {
+      "id": "history",
+      "kind": "history",
+      "scope": "t",
+      "readStart": {
+        "afterCommand": 1
+      },
+      "entityId": "p1"
+    }
+  ]
+}

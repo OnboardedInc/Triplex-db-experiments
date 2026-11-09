@@ -1,0 +1,19 @@
+{
+  "token": "token",
+  "answers": [
+    {
+      "nextCursor": "token"
+    },
+    {
+      "nextCursor": null
+    },
+    {
+      "error": "X-NOT-MODELED"
+    }
+  ],
+  "expectedIssuing": [
+    true,
+    false,
+    false
+  ]
+}

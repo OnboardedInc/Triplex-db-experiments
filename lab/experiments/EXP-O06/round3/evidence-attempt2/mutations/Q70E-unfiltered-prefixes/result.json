@@ -1,0 +1,10 @@
+{
+  "variant": "Q70E-unfiltered-prefixes",
+  "scope": "in-memory diagnostic; runtime source hashes alone do not identify substituted behavior",
+  "variantSourceSha256": "c23a1cb522232a082bac099c0d0496038ce915c55a1f7dc03852e35cfc13b893",
+  "testsRun": 403,
+  "failures": [
+    "lab.oracles.replay.tests.test_q70_coverage.Q70Coverage.test_Q70E_only_issuing_prefixes"
+  ],
+  "errors": []
+}

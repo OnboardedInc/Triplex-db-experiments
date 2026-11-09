@@ -1,0 +1,20 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 4587 "CX-RQ01-round3-a3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 4587 "CX-RQ01-round3-a3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 70032 "DA01-r4-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 70032 "DA01-r4-G1"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 70032 "DA01-r4-G1"
+unit 0
+selfcheck 0
+fixtures 0
+review-probes 0
+core-legacy 0
+core-updated 0
+qlever-legacy 0
+qlever-updated 0
+Q70E-unfiltered-prefixes caught 1
+Q70H-compare-page-bodies caught 1
+Q70I-choose-ambiguous-journal caught 1
+Q70I-ignore-journal-scope caught 1
+Q70K-default-nonjournal-scope caught 8
+Q70L-ignore-entity-scope-key caught 1
+audit PASS: 403 tests, 22 probes, 348 bound golden outputs
