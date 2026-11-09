@@ -2043,3 +2043,8 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Single arm (Q100l):** one arm needs 6 CPUs and about 7 GiB, so a 256-reader duet does not fit; NS runs are single-arm and park two dev residents.
 - **Dispatched:** CX-CRNS (claim.mjs recompute, B5), CX-NSR (bench split plus FD01 clock and durable-flush fixes, B1+B7), CX-VM01R (M01 rebase review), CX-VA01-0314 round 2 (0.3.14 fixed F1/F2; value domains now mandatory). Q100a-p pending; Q100-S1 restates Q60's host half for Sam. Next: V1-V7 VM probes (one slot hour), then G03 round 5 once NSR lands.
 - **Lesson:** a design question deferred long enough (R28 open decision 2, driver placement) silently decides how every earlier measurement will be read. P2 work tuned on the Mac now needs a VM rerun.
+
+## 2026-11-09: P3M accepted offline; lane D resumes with EXP-DF01
+
+- **verify/P3M 9df9aaf9 ACCEPT-OFFLINE:** independent G0 1,246 passed, 0 failed; fresh probes passed. Native timing waits for R44's trusted publication instants (the observer bracket) and native prefix enumeration needs its own qualification. CX-NSR builds on P3M.
+- **Lane D:** no Datomic agent had run since DA01 merged, against Sam's goal of three lanes in parallel. CX-DF01 builds lane D's feed route offline (brief lab/experiments/EXP-DF01/BRIEF.md), with FD01's conformance suite on a Datomic adapter.
