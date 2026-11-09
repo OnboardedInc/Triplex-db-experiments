@@ -496,3 +496,79 @@ This list was written before committing the changed verdict-producing code.
    evidence, helper/oracle sources, image/build context and retained proof bodies;
    `FILES.json` checks every retained artifact's path, length and SHA. These checks
    qualify the exercised regression slice only, not production or durability.
+
+Final round-4 implementation head: `b76b9c962a2f47e0d0ae5e3ef4ea57e2d58988b5`.
+The exact final-source live validation passes **118/118**, zero skips/failures,
+with **18/18 matching actual database deletes**. The matrix contributes **936
+observations = 39 paths × 12 bases × 2 phases**, including **404 required typed
+refusals** and 532 exact-ID answers. This includes conservative refusals for a
+variable bound to the history attribute; it does not imply that every ineligible
+native spelling has been individually enumerated. The grammar proof and fixed
+input bindings cover the remaining indirect attribute bindings.
+
+Final local image: `sha256:cb391925c6f69e55c334f220570765dfdd83902825e2b906b6544dc06ae9ba7e`.
+Gateway source hash: `4174f6ab33800f45aacc3f39e30620c4d8faedda445f4fd4905f1769efb950ab`.
+Build inputs: `4dc24af96e40e89226731edf1f116f540543742f2ef7080f4db10b50e8a46d7a`;
+source inputs: `182843ca578049e86d4e55f0553c6d2f691e6ec16c8c5fe0609505bf1eaade1c`.
+Both images were built from fresh verified contexts, pinned by image ID, and each
+restart restored the same retained dev volume. The final live validation binds
+705 source/built files plus unchanged owner, image, container ID/start time and
+health before/after. `round4/live-prejournal*` retains the preceding successful
+run before correcting undefined future expectations to JSON null and adding the
+explicit seeded-ID controls; only `live-final.*` / `live-receipt.json` qualify the
+final matrix source.
+
+Evidence-binding clarification for audit items 4/6: the later G1 build re-emits
+five core declaration/declaration-map files with different bytes from the live
+run's captured hashes. All source and runtime JavaScript remain byte-identical.
+The live validation proves stability during its invocation; each gate separately
+binds its freshly emitted declarations before/after. The collector permits only
+this declaration-file class to differ after those subsequent builds, records both
+hashes and copies the rebuilt bytes under `rebuilt-declarations/`; it refuses any
+source or runtime drift. Original live declaration hashes remain in the receipt;
+this packet does not claim to reconstruct their earlier bytes or qualify a fresh
+package consumer. No historical live PASS is substituted for the fresh G1 fixture.
+
+| Fresh gate | Result | Previous receipt |
+| --- | --- | --- |
+| `G0-datomic-20261109T011153Z-d9516d` | PASS, 1095/1095 executed; 62 expected skips, zero unexpected | `G0-datomic-20261109T001802Z-f61e8a` |
+| `G1-datomic-20261109T010729Z-f49dcd` | PASS, unchanged complete suite + 44 current / 44 reopen; required route fixture passes | `G1-datomic-20261109T002002Z-e3adf2` |
+| `G1-datomic-20261109T011231Z-5c906f` | PASS, same full coverage, fresh UUID scopes/oracle runs/matrix | `G1-datomic-20261109T010729Z-f49dcd` |
+
+Both G1 attempts include the independent O-REPLAY fixture's original 88 route
+observations plus the new 936-observation query matrix, with six hashed evidence
+files apiece. Each deletes all 89 conformance databases plus the route fixture's
+one database. Every gate binds implementation `b76b9c96`, zero executed-source
+diff bytes, and no modified/untracked executed source. The optional Git stash
+snapshot logged `could not write index` in G0 and the repeat G1; no stash proof is
+claimed. This does not replace or weaken the source/diff/build identity checks.
+
+Full round-4 evidence is under [`round4/`](round4/): original reviewer reproduction
+and semantic regression source, fresh characterization, both image build/context
+receipts, both restart/selftest logs, first live failure, intermediate and final
+live validation, complete copied gate raw directories, matrix journals, retained
+DA00 proof readbacks, final resident state, `SUMMARY.json`, and `FILES.json`.
+The collector checks content, freshness and binding as enumerated in the audit.
+
+Open action: an independent reviewer reruns F1's indirect forms and the broader
+matrix against this revision. This is builder evidence, not independent review
+or merge authorization. No root `pnpm check`, new pack/fresh-consumer check,
+production storage or durability qualification, crash/process-stop experiment,
+scale/performance benchmark, authentication/isolation/erasure qualification,
+Q89a/Q90 record-time redesign, deployment outside the lane D dev resident, merge,
+push or publication was performed. Q88a's dev-storage DIAGNOSTIC classification
+and the existing default-off acceptance boundary remain. Unknown native attribute
+selection at T/TP or an interior cut deliberately refuses; it does not fall back
+automatically. Literal history queries and compiled paths remain available.
+
+Collection and final index validation succeeded: **136 indexed files,
+26,427,140 bytes, zero missing files or SHA/length mismatches** (the index itself
+and active collector/manifest stdout are excluded). Both retained DA00 databases
+return their exact original position-zero / t=1001 / schema-hash basis receipts.
+The resident is READY on the pinned final image, holder EXP-DA01, retained volume
+`tx2-datomic-dev-data`. No exclusive slot was acquired and no other resident was
+stopped or recreated. Host free disk at collection was 10,821,140,480 bytes.
+After both gates finish, three declaration files still differ from the live-run
+hashes; two of the initially observed five return to their earlier bytes during
+subsequent builds. The final three differences and rebuilt bytes are recorded in
+`SUMMARY.json` and `rebuilt-declarations/`, under the declaration-only audit rule.

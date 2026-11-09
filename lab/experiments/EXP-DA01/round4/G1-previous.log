@@ -1,0 +1,11 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 65856 "CX-O06-round3-final-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 65856 "CX-O06-round3-final-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 65856 "CX-O06-round3-final-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 65856 "CX-O06-round3-final-attempt3"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 56233 "CX-OBS01-R5-remaining"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 70042 "DA01-r4-G0"
+[lab] G1-datomic-20261109T011231Z-5c906f: raw output runs/G1/G1-datomic-20261109T011231Z-5c906f
+error: could not write index
+PASS G1 datomic/dev scope=full executed=88 pass=88 fail=0 skip=0
+profile: default; planner budget: null
+receipt: lab/runs/G1/G1-datomic-20261109T011231Z-5c906f.json

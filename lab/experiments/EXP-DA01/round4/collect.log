@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 85668 "CX-OBS01-R5-cancel-retry", pid 93533 "CX-OBS01-R5-gate", pid 7473 "CX-G03-r3-claim-suites4", pid 16831 "CX-OBS01-R5-native"
+{"validated":true,"head":"b76b9c962a2f47e0d0ae5e3ef4ea57e2d58988b5","image":"sha256:cb391925c6f69e55c334f220570765dfdd83902825e2b906b6544dc06ae9ba7e","gates":["G0-datomic-20261109T011153Z-d9516d","G1-datomic-20261109T010729Z-f49dcd","G1-datomic-20261109T011231Z-5c906f"]}

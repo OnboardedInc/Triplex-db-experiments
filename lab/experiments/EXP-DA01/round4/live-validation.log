@@ -1,0 +1,11 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 37000 "CX-O06-round3-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 37000 "CX-O06-round3-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 68578 "CX-OBS01-R4-archive"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 37552 "CX-RQ01-round3-a2"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 37552 "CX-RQ01-round3-a2"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 91529 "CX-O06-round3-final-rerun"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 91529 "CX-O06-round3-final-rerun"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 91529 "CX-O06-round3-final-rerun"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 91529 "CX-O06-round3-final-rerun"
+[lab] heavy: waiting for one of 4 slots; held by pid 21467 "CX-P5A-A0-10k", pid 10108 "CX-P2Q-R8-final", pid 7473 "CX-G03-r3-claim-suites4", pid 91529 "CX-O06-round3-final-rerun"
+{"validated":true,"passed":118,"deleted":18,"image":"sha256:cb391925c6f69e55c334f220570765dfdd83902825e2b906b6544dc06ae9ba7e"}
