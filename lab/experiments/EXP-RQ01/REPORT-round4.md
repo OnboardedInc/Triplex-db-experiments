@@ -43,14 +43,21 @@ The complete `lab/acceptance` tree is identical to merged main.
   main did not match pre-merge HEAD `d5cd32e6` (`EVALUATOR-TAMPERED`). Its aggregate
   receipt is **false**, not a PASS. Contract verification and main byte comparison
   passed. The controller now takes the exact merged-main commit and checks it is
-  an ancestor of committed HEAD; the evaluator will be rerun after this merge
-  commit, without changing its integrity guard. Final evidence follows in the
-  report update.
+  an ancestor of committed HEAD; the evaluator was rerun after the merge
+  commit, without changing its integrity guard.
+- **Final contract/evaluator PASS:** `evidence/round4-contract-02/receipt.json`
+  binds committed merge `9ec22e8ecdb5146b4715418f40e603c432b687f3` to merged
+  main `d2390dab`. The evaluator passed **108/108**, zero failures, skipped,
+  cancelled or todo tests (`evaluator.log`); contract verification again passed
+  byte-identically (`contract.log`). Both command content checks, main byte
+  comparison, source stability and actual heavy-slot binding are true.
+  This final report/receipt commit changes evidence only.
 - Formatting passed on ten edited source/config/controller files; lint passed
   with zero warnings/errors on nine source/test/controller files.
 
 Commands ran through `heavy.mjs` with CX-RQ01 holders; pre-admission disk free
-was 7.3 GiB for the harness gate and 6.0 GiB for package smoke. The contract run
+was 7.3 GiB for the harness gate, 6.0 GiB for package smoke and 5.8 GiB
+for the committed-tree contract/evaluator run. The contract run
 was queued while shared slots were occupied. No engine slot was acquired.
 
 ## PASS audit (completed before commit)
