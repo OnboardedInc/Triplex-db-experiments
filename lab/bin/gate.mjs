@@ -45,6 +45,10 @@ const PACKAGES = {
 };
 // [CX-A01-040] Why: NS/PAIR need W0 and FD01 needs host in every lane. Rejected: discarding either accepted dependency binding.
 const lanePackages = (lane, gate) => ['core', 'host', 'testkit', lane, 'qualification', ...(['NS', 'PAIR', 'GS'].includes(gate) ? ['w0'] : [])];
+// [CX-A01-040-R2] Why: G0's CHECKJS step type-checks lab/bench imports of packages/w0/dist, so G0 builds W0 and hashes its dist into the build manifest like
+// the other packages (a fresh checkout has no W0 dist; VERIFY-0.4.0 F2). W0 stays out of G0's typecheck/vitest list: lanePackages is unchanged.
+// Rejected: a manual W0 prerequisite build (not bound by the receipt), and adding W0's tests to G0 (changes the expected-skip scope).
+const buildPackages = (lane, gate) => { const packages = lanePackages(lane, gate); return gate === 'G0' && !packages.includes('w0') ? [...packages, 'w0'] : packages; };
 // [EXP-A01-0313-R2] Why: dry-run and execution share W02's GS policy and DA01's G0/G1 admission. Rejected: admitting Datomic for unimplemented G2/G4/NS routes or losing its GS lane.
 const gateLanes = gate => gate === 'GS' ? GS_LANES : ['xtdb', 'qlever', ...(['G0', 'G1'].includes(gate) ? ['datomic'] : [])];
 const EXPECTED_SKIPS = path.join(REPO, 'lab/config/g0-expected-skips.json');
@@ -112,7 +116,7 @@ class Run {
 // ---------------------------------------------------------------- build and identity
 
 async function build(run) {
-  const filters = lanePackages(run.lane, run.gate).flatMap(name => ['--filter', PACKAGES[name].filter]);
+  const filters = buildPackages(run.lane, run.gate).flatMap(name => ['--filter', PACKAGES[name].filter]);
   const step = await run.step('build', 'pnpm', [`--config.store-dir=${path.join(MAIN, '.pnpm-store')}`, ...filters, 'build'], { heavy: true, env: cleanEnv() });
   if (step.code !== 0) { run.reason(`build failed (exit ${step.code})`); run.failure({ step: 'build', tail: step.tail }); }
   return hashDist(run, 'build-manifest.json');
@@ -120,7 +124,7 @@ async function build(run) {
 
 function hashDist(run, name) {
   const packages = {};
-  for (const pkg of lanePackages(run.lane, run.gate)) {
+  for (const pkg of buildPackages(run.lane, run.gate)) {
     const files = treeFiles(path.join(REPO, PACKAGES[pkg].dir, 'dist'));
     if (files.length === 0) run.reason(`no built files in ${PACKAGES[pkg].dir}/dist`);
     packages[pkg] = { files: files.length, bytes: files.reduce((s, f) => s + f.bytes, 0), sha256: sha256(files.map(f => `${f.sha256}  ${f.path}\n`).join('')), list: files };
@@ -939,7 +943,7 @@ main(async () => {
   if (options['dry-run']) {
     if (!['G0', 'G1', 'G2', 'G4', 'NS', 'PAIR', 'GS', 'OBL'].includes(gate) || !gateLanes(gate).includes(options.lane)) fail('USAGE', 'usage: gate.mjs G0|G1|G2|G4|NS|PAIR|GS|OBL --lane xtdb|qlever|datomic --slot S --dry-run [--plan FILE]');
     const info = slotInfo(loadSlots(), options.lane, options.slot ?? 'dev');
-    console.log(JSON.stringify({ dryRun: true, gate, lane: options.lane, slot: info.slot, endpoint: info.endpoint, container: info.container, mode: info.mode ?? null,
+    console.log(JSON.stringify({ dryRun: true, gate, lane: options.lane, buildPackages: buildPackages(options.lane, gate), slot: info.slot, endpoint: info.endpoint, container: info.container, mode: info.mode ?? null,
       plan: options.plan ? readJson(path.resolve(options.plan)) : null, executes: gate !== 'OBL', missing: gate === 'OBL' ? 'the OBL gate (run pinned case manifests on a slot) is not implemented' : null }));
     return;
   }

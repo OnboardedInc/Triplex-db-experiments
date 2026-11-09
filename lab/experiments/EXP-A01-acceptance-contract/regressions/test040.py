@@ -20,7 +20,7 @@ def git(*args):
 class Contract040(unittest.TestCase):
     def test_version_and_all_generator_checks(self):
         self.assertEqual(D['version'], '0.4.0')
-        for name in ['validate', 'checks_0311', 'checks_0312', 'checks_0312_round3', 'checks_0313', 'checks_0314', 'checks_040', 'checks_pin_QNODELAY', 'checks_pin_M01', 'checks_pin_CHECKJS']:
+        for name in ['validate', 'checks_0311', 'checks_0312', 'checks_0312_round3', 'checks_0313', 'checks_0314', 'checks_040', 'checks_pin_QNODELAY', 'checks_pin_OCONTRACT', 'checks_pin_M01', 'checks_pin_CHECKJS']:
             self.assertEqual(C[name](), [], name)
 
     def test_exact_eleven_authority_rows(self):
@@ -111,5 +111,48 @@ class Contract040(unittest.TestCase):
         self.assertTrue(D['qualificationRun']['blockers'])
         self.assertIn('blocked',D['feedPolicy']['qualification'])
         self.assertEqual(D['pendingRulings']['authority'],'none')
+
+    # [CX-A01-040-R2] Why: VERIFY-0.4.0 F1. The generated runner map must hash the bytes production reads, not a value computed before a later image assignment.
+    # Rejected: checking artifacts["oracle-contract.json"] only (it was correct while oracleRunners was stale).
+    def test_every_runner_pin_matches_actual_bytes(self):
+        checked=0
+        for name,runner in D['oracleRunners'].items():
+            for path,expected in (runner.get('sha256') or {}).items():
+                self.assertEqual(sha((R/path).read_bytes()),expected,name+' '+path);checked+=1
+        self.assertGreaterEqual(checked,2)
+        pin=D['oracleRunners']['O-CONTRACT']['sha256']
+        self.assertEqual(set(pin),set(D['oracleRunners']['O-CONTRACT']['files']))
+        self.assertEqual(pin['lab/acceptance/oracle-contract.json'],D['artifacts']['oracle-contract.json'])
+        self.assertEqual(pin['lab/acceptance/build_contract.py'],D['inputs']['lab/acceptance/build_contract.py'])
+        self.assertEqual(sha(C['projection_text']().encode()),pin['lab/acceptance/oracle-contract.json'])
+
+    def test_production_o_contract_runner_answers_with_the_pinned_image(self):
+        runner=D['oracleRunners']['O-CONTRACT']
+        comp={k:{'engine':'datomic','imageDigest':D['imagePins']['datomic']['imageId'],'configSha256':'bb','slot':'dev'} for k in D['composition']['assignments']}
+        comp['source']['variant']='engine-source'
+        for digest,pinned in ((D['imagePins']['datomic']['imageId'],True),('sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf',False)):
+            for v in comp.values():v['imageDigest']=digest
+            import tempfile
+            with tempfile.TemporaryDirectory() as t:
+                f=pathlib.Path(t)/'case.json';f.write_text(json.dumps({'composition':comp}))
+                argv=[a.replace('{case}',str(f)) for a in runner['argv']]
+                out=json.loads(subprocess.check_output(argv,cwd=R))
+            self.assertEqual((out['bound'],out['imagesPinned']),(True,pinned),digest)
+
+    def test_o_contract_stage_review_history(self):
+        review=json.loads((E/'OCONTRACT-repin-review.json').read_text())
+        self.assertEqual(review['stage'],C['PIN_STAGE_OCONTRACT'])
+        for p in review['stage']:
+            self.assertEqual(sha(git('show',p['baseCommit']+'^1:'+p['path'])),p['previousSha256'])
+            self.assertEqual(sha((R/p['path']).read_bytes()),p['sha256'])
+            diff=(R/p['diff']).read_bytes();self.assertEqual(sha(diff),p['diffSha256'])
+            self.assertEqual(git('diff',p['baseCommit']+'^1',p['baseCommit'],'--',p['path']),diff)
+            self.assertEqual([h['header'] for h in p['hunks']],re.findall(r'^@@.*$',diff.decode(),re.M))
+            self.assertTrue(all(h['changesMeasuredWorkload'] is False and h['reason'] for h in p['hunks']))
+        bc=review['buildContractPy']
+        self.assertEqual(sha(git('show',bc['diffBase']+':'+bc['path'])),bc['previousRunnerSha256'])
+        hunks=re.findall(r'^@@.*?@@',git('diff','-U0',bc['diffBase'],'--',bc['path']).decode(),re.M)
+        self.assertEqual([h['header'] for h in bc['hunks']],hunks)
+        self.assertTrue(all(h['changesMeasuredWorkload'] is False and h['reason'] for h in bc['hunks']))
 
 if __name__=='__main__':unittest.main(verbosity=2)

@@ -322,3 +322,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 P2B ACCEPT-OFFLINE (verify/P2B 986e11d1; exp/P2B-xtdb-behind-broker e9f0014b): duplicates gated on publication, bounded reader
   snapshots (WAL bounded with typed refusal and recovery). Joins contract 0.4.0's next round together with HS01 (after its round 2/3) and
   CRNS. P2 latency is measured next in the VM through G03's NS runner with the R48 sync witness (Q108b: ACK >= D).
+- 2026-11-09 contract 0.4.0 review FIX-FIRST (verify/A01-040 4d487ce5; evaluator 108/108 on head and on the Q87 merge): stale O-CONTRACT
+  runner pin after DF01; G0 does not bind W0's build. Round 2 (Sonnet) is fixes only plus a main merge. **Next contract (0.4.1) queue:**
+  P2B (verify/P2B 986e11d1), CR-NS (both reviewers ACCEPT; 40589336), DF01 round 4 (if accepted), HS01 rounds 2-3, RT01 (after G6),
+  G03 rounds 5-7, OBS01 rounds 6-9, plus R43-a's qualification pins and the Sam-approved rulings Q106a-g.

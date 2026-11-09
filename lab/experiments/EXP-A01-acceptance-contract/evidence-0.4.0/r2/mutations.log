@@ -1,0 +1,42 @@
+CAUGHT Q98a literal: 0.4.0: eleven exact authorized literal rulings required
+CAUGHT Q98a consumer: Q98a: literal rule and generated consumer required
+CAUGHT Q98b literal: 0.4.0: eleven exact authorized literal rulings required
+CAUGHT Q98b consumer: Q98b: literal rule and generated consumer required
+CAUGHT Q98c literal: 0.4.0: eleven exact authorized literal rulings required
+CAUGHT Q98c consumer: Q98c: literal rule and generated consumer required
+CAUGHT Q98d literal: 0.4.0: eleven exact authorized literal rulings required
+CAUGHT Q98d consumer: Q98d: literal rule and generated consumer required
+CAUGHT Q98e literal: 0.4.0: eleven exact authorized literal rulings required
+CAUGHT Q98e consumer: Q98e: literal rule and generated consumer required
+CAUGHT Q98f literal: 0.4.0: eleven exact authorized literal rulings required
+CAUGHT Q98f consumer: Q98f: literal rule and generated consumer required
+CAUGHT Q98g literal: 0.4.0: eleven exact authorized literal rulings required
+CAUGHT Q98g consumer: Q98g: literal rule and generated consumer required
+CAUGHT Q98h literal: 0.4.0: eleven exact authorized literal rulings required
+CAUGHT Q98h consumer: Q98h: literal rule and generated consumer required
+CAUGHT Q98i literal: 0.4.0: eleven exact authorized literal rulings required
+CAUGHT Q98i consumer: Q98i: literal rule and generated consumer required
+CAUGHT Q101a literal: 0.4.0: eleven exact authorized literal rulings required | Q101a: seed map and receipt binding required
+CAUGHT Q101a consumer: Q101a: literal rule and generated consumer required
+CAUGHT Q104a literal: 0.4.0: eleven exact authorized literal rulings required
+CAUGHT Q104a consumer: Q104a: literal rule and generated consumer required
+CAUGHT repin packages/qlever/experiments/native-entry.ts: Q45a: QNODELAY accepted source/diff pin drift: packages/qlever/experiments/native-entry.ts | Q45a: accepted source/diff drift: QNODELAY
+CAUGHT repin lab/bin/test/claim-round2.test.mjs: Q45a: CHECKJS accepted source/diff pin drift: lab/bin/test/claim-round2.test.mjs | Q45a: accepted source/diff drift: CHECKJS
+CAUGHT repin lab/bin/test/claim.test.mjs: Q45a: CHECKJS accepted source/diff pin drift: lab/bin/test/claim.test.mjs | Q45a: accepted source/diff drift: CHECKJS
+CAUGHT repin qualification/capacity/configured-entities-v1/oracle.mjs: Q45a: CHECKJS accepted source/diff pin drift: qualification/capacity/configured-entities-v1/oracle.mjs | Q45a: accepted source/diff drift: CHECKJS
+CAUGHT repin qualification/capacity/historical-assertion-metadata-v1/oracle.mjs: Q45a: CHECKJS accepted source/diff pin drift: qualification/capacity/historical-assertion-metadata-v1/oracle.mjs | Q45a: accepted source/diff drift: CHECKJS
+CAUGHT repin qualification/capacity/historical-assertion-metadata-v2/oracle.mjs: Q45a: CHECKJS accepted source/diff pin drift: qualification/capacity/historical-assertion-metadata-v2/oracle.mjs | Q45a: accepted source/diff drift: CHECKJS
+CAUGHT repin lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs: Q45a: accepted source/diff drift: CHECKJS_FINAL | Q45a: immutable per-stage pin review differs: CHECKJS_FINAL
+CAUGHT repin Datomic image: Q45a: DF01 image pin must follow reviewed identity chain | Q45a: O-CONTRACT projection pin, diff or per-hunk workload note drift: lab/acceptance/oracle-contract.json
+CAUGHT Q98 identity-only policy: 0.4.0: FEED_POLICY policy drift | Q98: complete feed measurement policy required
+CAUGHT Q101 mapping consumers: 0.4.0: POSITION_MAPPING_POLICY policy drift
+CAUGHT Q104 bootstrap test: 0.4.0: NO_REGRESSION_POLICY policy drift
+CAUGHT Q104 insufficient AA: 0.4.0: NO_REGRESSION_POLICY policy drift | Q104a: predeclared multi-round noise and tail-sample rule required
+CAUGHT O-CONTRACT stale: image assigned after the pin (the F1 order): Q45a/Q61i: reviewed Datomic image repin required | Q45a: O-CONTRACT projection pin, diff or per-hunk workload note drift: lab/acceptance/oracle-contract.json
+CAUGHT O-CONTRACT stale: projection field added after the pin: Q45a: O-CONTRACT projection pin, diff or per-hunk workload note drift: lab/acceptance/oracle-contract.json | Q45a: O-CONTRACT runner pin is stale; it must equal the hashes of build_contract.py and the rendered oracle-contract.json
+CAUGHT O-CONTRACT stale: runner projection hash tampered: Q45a: O-CONTRACT runner pin is stale; it must equal the hashes of build_contract.py and the rendered oracle-contract.json | Q45a: oracleRunners.O-CONTRACT.sha256 disagrees with artifacts.oracle-contract.json
+CAUGHT O-CONTRACT stale: runner source hash tampered: Q45a: O-CONTRACT runner pin is stale; it must equal the hashes of build_contract.py and the rendered oracle-contract.json
+CAUGHT O-CONTRACT stale: runner map dropped: Q45a: O-CONTRACT runner pin is stale; it must equal the hashes of build_contract.py and the rendered oracle-contract.json | Q45a: oracleRunners.O-CONTRACT.sha256 disagrees with artifacts.oracle-contract.json
+CAUGHT O-CONTRACT stage: recorded projection hash wrong: Q45a: O-CONTRACT projection pin, diff or per-hunk workload note drift: lab/acceptance/oracle-contract.json
+CAUGHT O-CONTRACT stage: workload note flipped: Q45a: O-CONTRACT projection pin, diff or per-hunk workload note drift: lab/acceptance/oracle-contract.json
+{"run": 41, "caught": 41, "missed": [], "canonicalOutputsUnchanged": true}
