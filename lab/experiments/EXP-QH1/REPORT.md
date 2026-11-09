@@ -309,3 +309,70 @@ No 100k rung, no writer-on window, no history-growth (depth 3 and 10) or 20%-exp
 11. `manifest.mjs`: hashes each evidence file from its bytes at manifest time and excludes stores and dist trees (bound by `arm.json`); the manifest is written after the last run.
 12. `pin-audit.mjs`: compares against the base commit and records old and new hashes; it grants no authority and `lab/acceptance/` is unchanged.
 13. Gate scripts (`gates_final.sh`, `run_cmp.sh`): record exit codes only; the semantic verdicts above are read from the test logs, not from exit alone.
+
+---
+
+# Round 4: correctness fix for CX-VQH1 F1 (a pull reads one record position)
+
+**Result: F1 fixed; every gate below passes on the committed tree. No acceptance, promotion or P4 claim; P4 (677 against 1,100 pulls per CPU-second) and application P2 are unchanged and still open.** Builder Claude Sonnet 5.5 (high), branch `exp/QH1-h1-pulls`, base `7965540b`. Product commit `365fe188`; later commits change only harness paths and this report. Raw evidence (out of git): `/Users/sam/Claude/Projects/triplex-db-2/evidence/QH1-R4/`, manifest `R4-SHA256SUMS`, index `R4-evidence-index.json`. The host crashed at 10:34 after the fix was committed; no gate receipt from before the crash is used. Every gate below was re-run afterwards on `365fe188` (one at a time, through `heavy.mjs`).
+
+## The defect and the fix
+
+F1: when the public `Triples.reach` declined the fast route (record-time cut, transaction, expired cut, H1 off), `reachBy` called `entitiesAt` per level with a basis that named no record position, and the QLever row route resolved `broker.head()` again on every call, so a commit between levels gave a graph no commit contains. A timestamp cannot fix this: two commits can share one `recordedAt`.
+
+Fix (no lock; writers are never blocked):
+
+1. `StorageAdapter.pullPosition?()` (new optional hook, `packages/core/src/storage/StorageAdapter.ts`). `TriplesLive.reach` calls it once, before the direct attempt, and adds the result as `recordedPosition` to the resolved basis. That basis goes to the direct attempt (`getReachTriples`) and to every fallback level (`entitiesAt`). An adapter without the hook, or a hook returning `undefined`, leaves the read unpinned, as before.
+2. QLever broker adapter (`BrokerStorageAdapter.ts`): `pullPosition` returns `undefined` inside a transaction, the context's own cut inside a `withCurrentPull` context (the first read pins it, as `readBasis` does, so an explicit caller pin is not overridden), and `broker.head()` otherwise. `readBasis` already honored an explicit position (`requested ?? sourceK ?? context.basis ?? head`), so the basis selection did not change.
+3. KV (`KvTriplesLive.ts`): `reach` and the multi-entity `entities` capture `currentKvCommitPosition` once and scan every level and entity at it. The commit counter and a commit's datoms are written in one backend transaction, and `visibleAt` compares record and retraction positions, so a scan at position P never sees part of a later commit, including a commit that lands between the index scan and the meta fetch of one entity (the pre-fix KV test shows that case).
+
+**Why not `currentCommitPosition`:** inside a QLever transaction it names the pre-transaction snapshot and `visibleA0` hides the transaction's staged rows when an explicit committed position is given. A test covers it (staged writes stay visible to `T.reach` in a transaction, H1 on and off). Postgres and SQLite also put their own commit position inside the transaction; this was not relied on.
+
+`T.entities` on the QLever and core path is one `getEntityTriples` or `getByEntities` call per request; a declined H1 attempt discards its answer, so it never mixes cuts and is unchanged. The KV `entities` loop did mix scans across entities and is fixed.
+
+## Tests
+
+- `lab/verify/QH1/reach-cut.test.ts` (11 tests): the reviewer's public-commit reproduction ported with the corrected expectation (whole old graph; a later pull sees the whole new graph), as a three-level chain with the commit landing after the read of the root and after the read of `a`, H1 off and H1 on with a record-time cut (the record-time fallback) where both commits carry `recordedAt` 1000; H1-on direct route before and after a commit; an explicit `withCurrentPull` pin is kept; staged writes in a transaction stay visible (H1 off and on); and the reviewer's three direct-log boundary cases (off, recordedAt, pinned control) with target value 1.
+- `packages/core/test/kv/layers/KvTriples.reach-cut.test.ts` (5 tests): reach with the commit after scan 1 and after scan 2, each with and without a record-time cut at the shared instant, and a multi-entity `entities` call.
+- **Pre-fix check:** with the product source of `7965540b` restored, 6 of the 11 lab tests and all 5 KV tests fail (`gates/prefix-lab.log`, `gates/prefix-kv.log`); with the fix all pass. The 5 that pass pre-fix are controls (the H1 direct route, the pin control, the two staged-write tests, and the pinned direct-log case).
+
+## Gates (on `365fe188`, product source identical at the later commits)
+
+| Gate | Result |
+| --- | --- |
+| core suite | **859 passed** (854 plus the 5 KV tests), 60 files |
+| qlever suite (`QLEVER_INTEGRATION=0`) | **257 passed, 29 expected skips** (unchanged) |
+| QH1 semantic suite (`oreplay`, `codec`, `domain`, `route` (RQ01, QH1w and QH1r routes), `public`, `real`, `h1decode`, `workercache`, `reach-cut`) | **24 passed, 9 files** |
+| INT-Q `h1-read-routes` | 1 passed |
+| 4 mutants (`mutants.mjs`) | all four exit 1 with a semantic rejection and no timing output |
+| O-REPLAY equality, 100,000 pulls, retained 10k W0 store | **0 mismatches** against today's HS01 row-route reference `QH1-R3/replay/ref-baseline.txt` (100,000 lines compared, full-field digests, rows and hops). Run: `replay/r4.txt`, 428 s, 80,000 pulls on the H1 route and the record-time pulls on the (now position-pinned) fallback. Store: an APFS clone, decompressed from `broker.db.zst` (sha256 `52541d59...6e6`, equal to `ORIGINAL-SHA256SUMS.txt`); the retained store was not opened |
+| Typecheck | core (three projects), qlever, http, host, testkit, xtdb, datomic, foundationdb, w0, sql, cloudflare, sqlite, postgres, duckdb all pass (the first cloudflare, sqlite, postgres and duckdb runs failed with `Cannot find module '@triplex-build/triplex-sql'`, since `packages/sql/dist` had not been built in the fresh worktree; after `pnpm run build` there they pass, `typecheck2-*`) |
+| `python3 lab/acceptance/build_contract.py --verify` (own step) | PASS, second regeneration byte-identical; `lab/acceptance/` unchanged |
+| evaluator `claim.test.mjs` + `claim-round2.test.mjs` | **108 passed, 0 failed** |
+| static | `oxlint --deny-warnings` clean on the touched paths (`TriplesLive.ts` is not oxfmt-conforming at the base and was left as it was); `git diff --check` clean |
+
+**CPU per pull (round 3 harness, `abab3.mjs`, c=1, 8 rounds, 3 x 500 pulls, round 3 `final` against `r4`, same store clone).** The fix adds one `pullPosition` call per pull (an Effect step and an `AsyncLocalStorage` lookup) before the direct attempt. Paired CPU ratio `r4/final`: **median 0.999 (n=8, range 0.898 to 1.101, mean 1.002)**; per-arm medians 1,530 us (`final`) and 1,528 us (`r4`) per pull; p50 0.85 and 0.86 ms; answers of both arms equal on 1,600 of 1,600 pulls by full-field digest. No measurable CPU change; the host load average was 23 to 25 (another builder was running), so only the paired ratios mean anything. c=4 was not re-run.
+
+## Divergences from the brief
+
+- **New optional adapter method `pullPosition`** instead of reading `currentCommitPosition` in core. The brief said to thread one position through the direct attempt and every fallback level and to preserve transaction and staged-read semantics; `currentCommitPosition` cannot do the second on the QLever adapter (staged rows are hidden by an explicit committed position). The brief named `BrokerStorageAdapter.ts` basis selection (`readBasis`); it did not need to change, and the broker adapter gained the hook. Backends without the hook keep their previous, unpinned per-level reads (see "what did not run").
+- **`T.entities` was not changed on the core path** (one adapter call, no mixing); the KV multi-entity `entities` was.
+- **The 100,000-pull gate uses a new harness path:** `arms3.mjs`, `replay.ts` and `arm3.ts` take `QH1_ARMS_ROOT` and `QH1_STORE` (defaults unchanged), so round 4 retains its build and uses its own store clone. The retained R3 store is stored compressed now and was decompressed only in the clone.
+- `pin-changes.json` re-run: the only changed path referenced by `lab/acceptance` is still `packages/core/src/store/Triples.ts` (round 3). This round adds the paths listed there with no acceptance reference.
+
+## What did not run
+
+No H1-on/off P2 writer guard, no c=4 CPU re-run, no engine-attached or live-QLever run, no VM, no writer-on window. The unpinned fallback remains for adapters that do not implement `pullPosition`: SQLite, Postgres, DuckDB, XTDB, Datomic, Cloudflare and the non-broker QLever adapter, so a commit between levels on those backends can still mix cuts on the `reach` fallback. None of them was reproduced or tested; Postgres, Datomic and DuckDB honor an explicit position, so adding the hook there is small, but not verified here. No full root `pnpm check`. The pre-crash test runs (the first lab and KV runs, 11 and pre-fix failures) were not used as receipts except the pre-fix failure logs, which were produced before the crash and bind to the saved `fix.patch`.
+
+## Pins moved
+
+None this round. Paths changed (none referenced by `lab/acceptance`): `packages/core/src/storage/StorageAdapter.ts`, `packages/core/src/store/TriplesLive.ts`, `packages/core/src/kv/layers/KvTriplesLive.ts`, `packages/qlever/src/broker/BrokerStorageAdapter.ts`, plus the two new test files and three harness files; hashes are in `pin-changes.json`. `packages/core/src/store/Triples.ts` is unchanged since round 3 (old `7e5bd8c3...`, new `da3515b5...`; the contract builder still has to re-pin it).
+
+## PASS / verdict / receipt audit (rule 9a) for round 4
+
+1. `reach-cut.test.ts` (lab) and `KvTriples.reach-cut.test.ts`: content = exact returned closure (entity and value per triple, in order) and hop count against the old graph, and the post-commit pull against the empty new graph; freshness = new broker and store per test, commit injected during that pull through the public `T.transact`; binding = source loaded from the worktree (aliases to `src`), pre-fix run binds to `fix.patch` (the 6 and 5 failures show the tests reject the defect, observed). Staged-write tests assert the five exact triples.
+2. O-REPLAY 100,000 (`replay.ts`, `replay-compare.mjs`): content = sha256 of every Triple field per pull, rows and hops, compared line by line to the HS01 reference; freshness = `r4.txt` written by the run that precedes the comparison (428 s, `r4.log`); binding = `arm.json` dist tree hashes equal the worktree's (`arms3.mjs` throws otherwise), store clone hash equals the original manifest. The reference is the row route on the HS01 store, not an independent oracle.
+3. Mutants: unchanged logic, each child exits 1 with the semantic assertion text and no timing.
+4. `--verify` regenerates the contract; it is not a semantic verdict. The evaluator count comes from the `node --test` summary (108 of 108).
+5. ABAB: emits medians and ratios only; answers of both arms compared by full-field digest on the fixed warm-up roots of each process.
+6. `R4-SHA256SUMS` is computed from the retained files after the last run; the store clone and the dist trees are excluded (bound by hash above).
