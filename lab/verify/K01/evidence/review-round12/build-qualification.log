@@ -1,0 +1,16 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/packages/qualification/tsdown.config.ts 
+ℹ entry: src/index.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/index.js                         8.33 kB │ gzip:  2.57 kB
+ℹ dist/native/xtdb-workloads.js.map    51.22 kB │ gzip: 11.77 kB
+ℹ dist/native/qlever-workloads.js.map  43.03 kB │ gzip: 11.24 kB
+ℹ dist/native/xtdb-workloads.js        27.59 kB │ gzip:  6.78 kB
+ℹ dist/native/qlever-recursion.js.map  22.25 kB │ gzip:  6.24 kB
+ℹ dist/native/qlever-workloads.js      20.30 kB │ gzip:  5.85 kB
+ℹ dist/index.js.map                    17.27 kB │ gzip:  5.08 kB
+ℹ dist/native/qlever-recursion.js      10.12 kB │ gzip:  3.30 kB
+ℹ 8 files, total: 200.11 kB
+✔ Build complete in 30ms

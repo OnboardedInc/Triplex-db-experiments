@@ -1,0 +1,46 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/packages/xtdb/tsdown.config.ts 
+ℹ entry: src/ConstraintValidation.ts, src/MaintainedQueries.ts, src/Operations.ts, src/TemporalQueries.ts, src/TransactionContext.ts, src/XtdbClient.ts, src/XtdbQueryExecutor.ts, src/XtdbStorageAdapter.ts, src/codecs.ts, src/index.ts, src/native/NativeQueries.ts, src/native/Reachability.ts, src/native/ReadOnlySql.ts, src/native/Sources.ts, src/query/compiler.ts, src/query/domains.ts, src/query/grouping.ts, src/query/overlay.ts, src/query/recursion.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/XtdbStorageAdapter.js        19.15 kB │ gzip: 5.38 kB
+ℹ dist/ConstraintValidation.js      12.62 kB │ gzip: 3.77 kB
+ℹ dist/native/Reachability.js        8.99 kB │ gzip: 2.90 kB
+ℹ dist/XtdbQueryExecutor.js          8.14 kB │ gzip: 2.67 kB
+ℹ dist/MaintainedQueries.js          7.97 kB │ gzip: 2.80 kB
+ℹ dist/TemporalQueries.js            7.84 kB │ gzip: 2.85 kB
+ℹ dist/codecs.js                     7.56 kB │ gzip: 2.15 kB
+ℹ dist/XtdbClient.js                 6.72 kB │ gzip: 2.34 kB
+ℹ dist/query/domains.js              6.41 kB │ gzip: 2.13 kB
+ℹ dist/query/recursion.js            6.03 kB │ gzip: 2.09 kB
+ℹ dist/query/compiler.js             5.35 kB │ gzip: 2.20 kB
+ℹ dist/native/NativeQueries.js       5.14 kB │ gzip: 1.88 kB
+ℹ dist/query/grouping.js             4.61 kB │ gzip: 1.72 kB
+ℹ dist/native/Sources.js             4.55 kB │ gzip: 1.60 kB
+ℹ dist/native/ReadOnlySql.js         3.03 kB │ gzip: 1.29 kB
+ℹ dist/index.js                      2.42 kB │ gzip: 0.88 kB
+ℹ dist/query/overlay.js              2.28 kB │ gzip: 1.03 kB
+ℹ dist/Operations.js                 1.37 kB │ gzip: 0.74 kB
+ℹ dist/TransactionContext.js         0.29 kB │ gzip: 0.21 kB
+ℹ dist/XtdbStorageAdapter.js.map    37.48 kB │ gzip: 9.93 kB
+ℹ dist/ConstraintValidation.js.map  22.47 kB │ gzip: 6.55 kB
+ℹ dist/MaintainedQueries.js.map     15.63 kB │ gzip: 4.84 kB
+ℹ dist/XtdbQueryExecutor.js.map     15.62 kB │ gzip: 4.83 kB
+ℹ dist/XtdbClient.js.map            15.12 kB │ gzip: 4.90 kB
+ℹ dist/native/Reachability.js.map   14.75 kB │ gzip: 4.73 kB
+ℹ dist/TemporalQueries.js.map       14.41 kB │ gzip: 4.73 kB
+ℹ dist/codecs.js.map                14.09 kB │ gzip: 3.93 kB
+ℹ dist/query/domains.js.map         13.24 kB │ gzip: 4.31 kB
+ℹ dist/query/recursion.js.map       11.39 kB │ gzip: 3.80 kB
+ℹ dist/query/compiler.js.map        10.99 kB │ gzip: 4.11 kB
+ℹ dist/native/NativeQueries.js.map  10.47 kB │ gzip: 3.37 kB
+ℹ dist/native/Sources.js.map         9.21 kB │ gzip: 3.25 kB
+ℹ dist/query/grouping.js.map         8.05 kB │ gzip: 2.77 kB
+ℹ dist/native/ReadOnlySql.js.map     5.69 kB │ gzip: 2.12 kB
+ℹ dist/index.js.map                  4.90 kB │ gzip: 1.67 kB
+ℹ dist/query/overlay.js.map          4.18 kB │ gzip: 1.73 kB
+ℹ dist/Operations.js.map             2.55 kB │ gzip: 1.16 kB
+ℹ dist/TransactionContext.js.map     0.90 kB │ gzip: 0.47 kB
+ℹ 38 files, total: 351.60 kB
+✔ Build complete in 51ms

@@ -1,0 +1,298 @@
+TAP version 13
+# Subtest: public journal formula optional metadata subset 0
+ok 1 - public journal formula optional metadata subset 0
+  ---
+  duration_ms: 5.077583
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 1
+ok 2 - public journal formula optional metadata subset 1
+  ---
+  duration_ms: 0.778791
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 2
+ok 3 - public journal formula optional metadata subset 2
+  ---
+  duration_ms: 0.939292
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 3
+ok 4 - public journal formula optional metadata subset 3
+  ---
+  duration_ms: 0.500583
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 4
+ok 5 - public journal formula optional metadata subset 4
+  ---
+  duration_ms: 0.531791
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 5
+ok 6 - public journal formula optional metadata subset 5
+  ---
+  duration_ms: 0.471375
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 6
+ok 7 - public journal formula optional metadata subset 6
+  ---
+  duration_ms: 0.477959
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 7
+ok 8 - public journal formula optional metadata subset 7
+  ---
+  duration_ms: 0.3205
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 8
+ok 9 - public journal formula optional metadata subset 8
+  ---
+  duration_ms: 0.924708
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 9
+ok 10 - public journal formula optional metadata subset 9
+  ---
+  duration_ms: 0.543
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 10
+ok 11 - public journal formula optional metadata subset 10
+  ---
+  duration_ms: 0.332041
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 11
+ok 12 - public journal formula optional metadata subset 11
+  ---
+  duration_ms: 0.284417
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 12
+ok 13 - public journal formula optional metadata subset 12
+  ---
+  duration_ms: 0.256459
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 13
+ok 14 - public journal formula optional metadata subset 13
+  ---
+  duration_ms: 0.238583
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 14
+ok 15 - public journal formula optional metadata subset 14
+  ---
+  duration_ms: 0.242125
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 15
+ok 16 - public journal formula optional metadata subset 15
+  ---
+  duration_ms: 0.239541
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 16
+ok 17 - public journal formula optional metadata subset 16
+  ---
+  duration_ms: 0.237541
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 17
+ok 18 - public journal formula optional metadata subset 17
+  ---
+  duration_ms: 0.237459
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 18
+ok 19 - public journal formula optional metadata subset 18
+  ---
+  duration_ms: 0.305542
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 19
+ok 20 - public journal formula optional metadata subset 19
+  ---
+  duration_ms: 0.335083
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 20
+ok 21 - public journal formula optional metadata subset 20
+  ---
+  duration_ms: 1.757125
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 21
+ok 22 - public journal formula optional metadata subset 21
+  ---
+  duration_ms: 0.353291
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 22
+ok 23 - public journal formula optional metadata subset 22
+  ---
+  duration_ms: 0.27525
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 23
+ok 24 - public journal formula optional metadata subset 23
+  ---
+  duration_ms: 0.234583
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 24
+ok 25 - public journal formula optional metadata subset 24
+  ---
+  duration_ms: 0.237333
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 25
+ok 26 - public journal formula optional metadata subset 25
+  ---
+  duration_ms: 0.213958
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 26
+ok 27 - public journal formula optional metadata subset 26
+  ---
+  duration_ms: 0.211875
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 27
+ok 28 - public journal formula optional metadata subset 27
+  ---
+  duration_ms: 0.226125
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 28
+ok 29 - public journal formula optional metadata subset 28
+  ---
+  duration_ms: 0.215792
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 29
+ok 30 - public journal formula optional metadata subset 29
+  ---
+  duration_ms: 0.231167
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 30
+ok 31 - public journal formula optional metadata subset 30
+  ---
+  duration_ms: 0.239208
+  type: 'test'
+  ...
+# Subtest: public journal formula optional metadata subset 31
+ok 32 - public journal formula optional metadata subset 31
+  ---
+  duration_ms: 0.212833
+  type: 'test'
+  ...
+# Subtest: empty optional metadata contributes no rows; duplicate retract is one actual change
+ok 33 - empty optional metadata contributes no rows; duplicate retract is one actual change
+  ---
+  duration_ms: 0.467333
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 1
+ok 34 - actual seeder partition, 21 subjects, batch 1
+  ---
+  duration_ms: 32.447208
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 7
+ok 35 - actual seeder partition, 21 subjects, batch 7
+  ---
+  duration_ms: 6.104334
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 27
+ok 36 - actual seeder partition, 21 subjects, batch 27
+  ---
+  duration_ms: 3.490041
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 28
+ok 37 - actual seeder partition, 21 subjects, batch 28
+  ---
+  duration_ms: 4.499917
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 29
+ok 38 - actual seeder partition, 21 subjects, batch 29
+  ---
+  duration_ms: 5.514458
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 55
+ok 39 - actual seeder partition, 21 subjects, batch 55
+  ---
+  duration_ms: 10.178834
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 56
+ok 40 - actual seeder partition, 21 subjects, batch 56
+  ---
+  duration_ms: 2.623875
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 57
+ok 41 - actual seeder partition, 21 subjects, batch 57
+  ---
+  duration_ms: 2.444042
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 224
+ok 42 - actual seeder partition, 21 subjects, batch 224
+  ---
+  duration_ms: 3.542
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 399
+ok 43 - actual seeder partition, 21 subjects, batch 399
+  ---
+  duration_ms: 1.925667
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 401
+ok 44 - actual seeder partition, 21 subjects, batch 401
+  ---
+  duration_ms: 1.996917
+  type: 'test'
+  ...
+# Subtest: actual seeder partition, 21 subjects, batch 2000
+ok 45 - actual seeder partition, 21 subjects, batch 2000
+  ---
+  duration_ms: 3.156833
+  type: 'test'
+  ...
+# Subtest: 500-subject independent command partition reproduces 61384 without any engine read
+ok 46 - 500-subject independent command partition reproduces 61384 without any engine read
+  ---
+  duration_ms: 8.214125
+  type: 'test'
+  ...
+# Subtest: count expectation ignores observed-count-shaped fields; stale pre-fix binding refuses before reads
+ok 47 - count expectation ignores observed-count-shaped fields; stale pre-fix binding refuses before reads
+  ---
+  duration_ms: 4.596417
+  type: 'test'
+  ...
+# Subtest: extra/missing business or journal rows refuse; same-count class substitutions refuse full digest
+ok 48 - extra/missing business or journal rows refuse; same-count class substitutions refuse full digest
+  ---
+  duration_ms: 1623.10875
+  type: 'test'
+  ...
+1..48
+# tests 48
+# suites 0
+# pass 48
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2243.786042

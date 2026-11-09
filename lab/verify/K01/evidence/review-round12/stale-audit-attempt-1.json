@@ -1,0 +1,7 @@
+{
+  "status": "reviewer assertion failed",
+  "file": "stale-audit-round12.mjs",
+  "assertion": "expectedN01 must refuse every historical manifest",
+  "observed": "expectedN01 returned a valid new plan for a historical manifest; source hash check had refused it",
+  "correction": "A pure expectation calculation is not admission. Require the source-hash refusal and the actual missing-pin admission refusal."
+}

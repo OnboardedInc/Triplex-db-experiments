@@ -1,0 +1,104 @@
+{
+  "at": "2026-11-09T05:44:32Z",
+  "reviewHead": "5625e46f2600fc81fed3d4624d0196c5eba164aa",
+  "builder": "aec5a715",
+  "changedRuntimePaths": [
+    {
+      "path": "lab/bench/lib/g0-xtdb.ts",
+      "oldSha256": "21560713bea2d4b9eb74a4b75e29f0a022249b3d6a21ef0e865cb60eb35aca67",
+      "newSha256": "ccd6add7e50b3ce8da3cbe0acc46a2f73b289b8db2ac6bdbfa3e418c36969ca4"
+    },
+    {
+      "path": "lab/bench/lib/g0.ts",
+      "oldSha256": "d2995b912bbe0460b3eb1c53a728f2242046676de73f43a401f26d6b4ad6f195",
+      "newSha256": "1f98f70db84383b8c3ea489fa9b11f8fab9bbfc0b60193569f778fc34850b1eb"
+    },
+    {
+      "path": "lab/bench/lib/n01-counts.ts",
+      "oldSha256": null,
+      "newSha256": "a2a9a613ad6a40108cc200ce7050ffd855f48947945559f0f440d4c6d2971601"
+    },
+    {
+      "path": "lab/bench/xtdb-seed.ts",
+      "oldSha256": "82ac7eb63a49c4be16d0543baac362d7bba1a3c1aed298d9578f2365aa61e0a3",
+      "newSha256": "b3f48c0c9caba9bf0751c4663ad0086f09d6533e87f6523a4579d6dc5d0fa99a"
+    }
+  ],
+  "acceptanceTextReferences": [],
+  "acceptanceBefore": {
+    "lab/acceptance/load-contract.json": "e90e97d6f1a6462fb87a05f8b9af924b4a44aa82c8e3f0adc357b8698c80e354",
+    "lab/acceptance/RULINGS.md": "b3e059a2408d45035225b4e04a0ed287826cfa70b83bce56e77af4f819c2e0df",
+    "lab/acceptance/capability-matrix.md": "da543292952ff01ba139c57e868bf576d4cf49c4a49d408275709d6aae8b2e5b",
+    "lab/acceptance/RULINGS-PENDING.md": "746bde5464ba19db0a612ecddc48faf5921f9ff09cc80c0afcd3fac182296ef8",
+    "lab/acceptance/budgets.json": "3c567035c89161a61f0edc67836962d79073d82bf404a0506f31771ca9e38bfe",
+    "lab/acceptance/obligations.json": "d5bb64f2b42a13e5be0e71fc71690687f4cf1153bab31ea5b743dbe4f0f7fa20",
+    "lab/acceptance/build_contract.py": "685b48066f7094d8e9c3cfc9c27840a9f3d2fb29fd4ae315da707e8346860a11",
+    "lab/acceptance/ACCEPTANCE.md": "c159bc5e5432438c133e7a29451b742f777fbe33e86aa8bade43560866e4cef1",
+    "lab/acceptance/golden/g1-int64.json": "b44917652ea97eea6de53c1e32870a3f60bdafa4df403a97f4f7671d085247ff",
+    "lab/acceptance/golden/g9-half-open.json": "35c64ae17756c8e9baf2e2fd233e28203bd449048aecfa67da29c57f073db91f",
+    "lab/acceptance/golden/c6-journal.json": "f3bc068743ddc4926d97aa6a5fc3df1633ecc66e31259a9a1554023bee930439",
+    "lab/acceptance/golden/g9-history-cuts.json": "4338a42e408cd5bc1c731f24eafaa6e90819b34595b53fbfe6a751b46a3f054d",
+    "lab/acceptance/golden/c5-duplicates-conflicts.json": "8472fd3131aa8cb55359d607bd9eb9af98c18cb3375dfe48e236a3733e40c87f",
+    "lab/acceptance/golden/README.md": "e1d751a0e5484a77f3c8fc9dfefa492718955aefdadcac9e151ba44f763e18a9",
+    "lab/acceptance/golden/g9-tiny-v4-retirement.json": "4f48e41d8b87273cded968fc869be3c36b596e1976c76c779a17db2eae9f30fa",
+    "lab/acceptance/golden/g10-cursor.json": "43baef315805a34dfdda207e8b7b5821f6932f33f2f12850536086db84ba60e5",
+    "lab/acceptance/golden/g5-sum-overflow.json": "0346c55216c85f36bb843062ad405268d0ad3432d28a1e66556a4007b6a60b1c",
+    "lab/acceptance/golden/q8f-card-many.json": "2d8988494b529f6d165f27b37a569b72ca7c2b003aa7adfe8dfcea1cd03ede70"
+  },
+  "searchedRoots": [
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/runs",
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/k01/runs",
+    "/Users/sam/projects/triplex-db-2/runs"
+  ],
+  "xtdbRecords": [
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/k01/runs/xtdb-seed/k01-r2-singlecut/manifest.json",
+      "sha256": "2778a191fc34387907eb4de3b700aa6a63e501f8febb265a58c4c99d34771065",
+      "format": "tx2-xtdb-seed/1",
+      "g0counts": null,
+      "generator": {
+        "lab/bench/xtdb-seed.ts": "20db18397d78d69d22c84f48a2e5a764f1d04ce2fdc53f6337f56785aab6972b",
+        "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+        "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+        "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+        "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+        "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+        "lab/bench/lib/composition.ts": "6776d3a1573c49f9b231e1eae42ad82fa176539dc58dccb24d3cb847beb7e826",
+        "lab/bench/lib/triplex.ts": "4544a41dc3cf7e304bf37cfc7c07c944d0225a85f004a19d6e9b59b1ac372a60"
+      }
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/k01/runs/xtdb-seed/CX-K01-500/manifest.json",
+      "sha256": "8f77929e04a1ccd0ffb3d4fa6bff66dbd9f8d16cf761c989c660ac1ff036faef",
+      "format": "tx2-xtdb-seed/1",
+      "g0counts": null,
+      "generator": {
+        "lab/bench/xtdb-seed.ts": "20db18397d78d69d22c84f48a2e5a764f1d04ce2fdc53f6337f56785aab6972b",
+        "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+        "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+        "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+        "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+        "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+        "lab/bench/lib/composition.ts": "6776d3a1573c49f9b231e1eae42ad82fa176539dc58dccb24d3cb847beb7e826",
+        "lab/bench/lib/triplex.ts": "4544a41dc3cf7e304bf37cfc7c07c944d0225a85f004a19d6e9b59b1ac372a60"
+      }
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/k01/runs/xtdb-seed/CX-K01-500-retry/manifest.json",
+      "sha256": "3d067100e3b12a43e220c02de31051a0b59fcdf177d945bad7297221d1e22e62",
+      "format": "tx2-xtdb-seed/1",
+      "g0counts": null,
+      "generator": {
+        "lab/bench/xtdb-seed.ts": "20db18397d78d69d22c84f48a2e5a764f1d04ce2fdc53f6337f56785aab6972b",
+        "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+        "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+        "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+        "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+        "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+        "lab/bench/lib/composition.ts": "6776d3a1573c49f9b231e1eae42ad82fa176539dc58dccb24d3cb847beb7e826",
+        "lab/bench/lib/triplex.ts": "4544a41dc3cf7e304bf37cfc7c07c944d0225a85f004a19d6e9b59b1ac372a60"
+      }
+    }
+  ],
+  "note": "Read-only filesystem inventory; no Docker, volume listing or engine state inspection."
+}

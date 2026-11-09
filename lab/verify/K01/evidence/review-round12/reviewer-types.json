@@ -1,0 +1,21 @@
+{
+  "at": "2026-11-09T05:48:52.204Z",
+  "args": [
+    "node_modules/typescript/bin/tsc",
+    "--noEmit",
+    "--strict",
+    "--allowImportingTsExtensions",
+    "--module",
+    "NodeNext",
+    "--target",
+    "ES2022",
+    "--moduleResolution",
+    "NodeNext",
+    "--skipLibCheck",
+    "--types",
+    "node",
+    "lab/verify/K01/counts-review.test.ts"
+  ],
+  "status": 0,
+  "signal": null
+}

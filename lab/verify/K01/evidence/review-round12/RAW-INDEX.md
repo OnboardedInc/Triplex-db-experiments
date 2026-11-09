@@ -1,0 +1,1 @@
+Durable raw reviewer cases: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VK01/round12/attempt-2`. Verify using `SHA256SUMS-RAW`. These are offline writer/reader fixtures, not live engine receipts. Setup attempt 1 and the first build/stale-audit assertions are retained separately; the completed suite used attempt 2.

@@ -1,0 +1,6 @@
+{
+  "status": "setup-failed-before-tests",
+  "reason": "packages/core/dist/store/transactionMetadata.js missing in reviewer worktree",
+  "testsRun": 0,
+  "nextAttemptReason": "Build reviewed public exports locally, then rerun against their exact hashes."
+}

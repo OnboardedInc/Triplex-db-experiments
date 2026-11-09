@@ -1,0 +1,102 @@
+{
+  "at": "2026-11-09T05:45:21.621Z",
+  "sourceSha256": "2aa24a52a0ec37537f1c738fd75295427cbb42f46b416299b7f0bff13511b17e",
+  "results": [
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/k01/runs/xtdb-seed/k01-r2-singlecut/manifest.json",
+      "sha256": "2778a191fc34387907eb4de3b700aa6a63e501f8febb265a58c4c99d34771065",
+      "format": "tx2-xtdb-seed/1",
+      "g0counts": null,
+      "generator": {
+        "lab/bench/xtdb-seed.ts": "20db18397d78d69d22c84f48a2e5a764f1d04ce2fdc53f6337f56785aab6972b",
+        "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+        "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+        "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+        "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+        "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+        "lab/bench/lib/composition.ts": "6776d3a1573c49f9b231e1eae42ad82fa176539dc58dccb24d3cb847beb7e826",
+        "lab/bench/lib/triplex.ts": "4544a41dc3cf7e304bf37cfc7c07c944d0225a85f004a19d6e9b59b1ac372a60"
+      },
+      "sourceRefusal": "Q74a: stale seed generator lab/bench/xtdb-seed.ts",
+      "expected": {
+        "scope": "ns-xtdb-dev500-seed-ns-v2-0604cd31",
+        "position": 81,
+        "world": "N01",
+        "counts": {
+          "tx_assertions": 61384,
+          "tx_claims": 81,
+          "tx_attempts": 81,
+          "tx_meta": 1
+        }
+      },
+      "admissionRefusal": "G0 pin binding differs from manifest",
+      "reads": 0,
+      "g0PinPresent": false,
+      "admitted": false
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/k01/runs/xtdb-seed/CX-K01-500/manifest.json",
+      "sha256": "8f77929e04a1ccd0ffb3d4fa6bff66dbd9f8d16cf761c989c660ac1ff036faef",
+      "format": "tx2-xtdb-seed/1",
+      "g0counts": null,
+      "generator": {
+        "lab/bench/xtdb-seed.ts": "20db18397d78d69d22c84f48a2e5a764f1d04ce2fdc53f6337f56785aab6972b",
+        "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+        "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+        "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+        "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+        "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+        "lab/bench/lib/composition.ts": "6776d3a1573c49f9b231e1eae42ad82fa176539dc58dccb24d3cb847beb7e826",
+        "lab/bench/lib/triplex.ts": "4544a41dc3cf7e304bf37cfc7c07c944d0225a85f004a19d6e9b59b1ac372a60"
+      },
+      "sourceRefusal": "Q74a: stale seed generator lab/bench/xtdb-seed.ts",
+      "expected": {
+        "scope": "ns-xtdb-dev500-seed-ns-v2-0604cd31",
+        "position": 81,
+        "world": "N01",
+        "counts": {
+          "tx_assertions": 61384,
+          "tx_claims": 81,
+          "tx_attempts": 81,
+          "tx_meta": 1
+        }
+      },
+      "admissionRefusal": "G0 pin binding differs from manifest",
+      "reads": 0,
+      "g0PinPresent": false,
+      "admitted": false
+    },
+    {
+      "path": "/Users/sam/projects/triplex-db-2/.claude/worktrees/k01/runs/xtdb-seed/CX-K01-500-retry/manifest.json",
+      "sha256": "3d067100e3b12a43e220c02de31051a0b59fcdf177d945bad7297221d1e22e62",
+      "format": "tx2-xtdb-seed/1",
+      "g0counts": null,
+      "generator": {
+        "lab/bench/xtdb-seed.ts": "20db18397d78d69d22c84f48a2e5a764f1d04ce2fdc53f6337f56785aab6972b",
+        "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+        "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+        "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+        "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+        "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+        "lab/bench/lib/composition.ts": "6776d3a1573c49f9b231e1eae42ad82fa176539dc58dccb24d3cb847beb7e826",
+        "lab/bench/lib/triplex.ts": "4544a41dc3cf7e304bf37cfc7c07c944d0225a85f004a19d6e9b59b1ac372a60"
+      },
+      "sourceRefusal": "Q74a: stale seed generator lab/bench/xtdb-seed.ts",
+      "expected": {
+        "scope": "ns-xtdb-dev500-seed-ns-v2-0604cd31",
+        "position": 81,
+        "world": "N01",
+        "counts": {
+          "tx_assertions": 61384,
+          "tx_claims": 81,
+          "tx_attempts": 81,
+          "tx_meta": 1
+        }
+      },
+      "admissionRefusal": "G0 pin binding differs from manifest",
+      "reads": 0,
+      "g0PinPresent": false,
+      "admitted": false
+    }
+  ]
+}

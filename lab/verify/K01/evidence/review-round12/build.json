@@ -1,0 +1,61 @@
+[
+  {
+    "pkg": "core",
+    "args": [
+      "../../node_modules/.bin/tsdown"
+    ],
+    "cwd": "packages/core",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "pkg": "xtdb",
+    "args": [
+      "../../node_modules/.bin/tsdown"
+    ],
+    "cwd": "packages/xtdb",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "pkg": "xtdb-types",
+    "args": [
+      "node",
+      "../../node_modules/typescript/bin/tsc",
+      "--declaration",
+      "--emitDeclarationOnly",
+      "--rootDir",
+      "src",
+      "--outDir",
+      "dist"
+    ],
+    "cwd": "packages/xtdb",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "pkg": "qualification",
+    "args": [
+      "../../node_modules/.bin/tsdown"
+    ],
+    "cwd": "packages/qualification",
+    "status": 0,
+    "signal": null
+  },
+  {
+    "pkg": "qualification-types",
+    "args": [
+      "node",
+      "../../node_modules/typescript/bin/tsc",
+      "--declaration",
+      "--emitDeclarationOnly",
+      "--rootDir",
+      "src",
+      "--outDir",
+      "dist"
+    ],
+    "cwd": "packages/qualification",
+    "status": 0,
+    "signal": null
+  }
+]
