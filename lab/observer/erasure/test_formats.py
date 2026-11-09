@@ -107,6 +107,27 @@ class Formats(unittest.TestCase):
         self.assertIn(value,blobs);self.assertEqual(coverage['unparsedBytes'],0)
         self.assertTrue(any(needle in blob for blob in blobs))
 
+    def test_json_scalar_surrogate_pair_and_escape_closure(self):
+        from formats import supplemental_views
+        marker = 'secret-😀'.encode()
+        for raw in (b'{"value":"secret-\\ud83d\\ude00"}',
+                    b'"secret-\\ud83d\\ude00"',
+                    b'%73%65%63%72%65%74%2D%F0%9F%98%80',
+                    b'secret-\\U0001f600', b'=73=65=63=72=65=74=2D=F0=9F=98=80'):
+            views, _, errors = supplemental_views(raw)
+            self.assertFalse(errors, errors)
+            self.assertTrue(any(marker in view for view in views), raw)
+        for codec in ('utf-16le','utf-16be','utf-32le','utf-32be'):
+            views, _, errors = supplemental_views('"secret-\\ud83d\\ude00"'.encode(codec))
+            self.assertFalse(errors,errors)
+            self.assertIn(marker,views)
+        _, _, errors = supplemental_views(b'"\\ud800"')
+        self.assertTrue(errors)
+        value=b'secret'
+        for _ in range(34): value=value.replace(b'%',b'%25') if b'%' in value else b'%73ecret'
+        _, _, errors=supplemental_views(value)
+        self.assertTrue(any('budget' in error for error in errors))
+
     def test_fixture_record_tail_is_unparsed(self):
         from fixtures import fixture_record_file
         _,_,report=fixture_records(fixture_record_file([b'control'])+b'compressed-or-other-record')
