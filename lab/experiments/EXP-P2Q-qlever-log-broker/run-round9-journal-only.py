@@ -34,6 +34,7 @@ env.update(V_P2Q_RUNS=str(root/'runs/broker'/('CX-P2Q-R9-'+name+'-'+attempt_id))
 verify = ['node_modules/.bin/vitest','run','--config','lab/verify/P2Q/vitest.config.ts']
 tasks = [
  ('fresh-journal-live', verify+['tests/round8-history.test.ts','-t','fresh journal at an old cut'], 1),
+ ('nonzero-rewinds-live', verify+['tests/live/round9-reviewer-rewinds.test.ts','-t','round3 live nonzero rewinds'], 3),
 ]
 
 results=[]
@@ -71,7 +72,7 @@ for gate, command, expected in tasks:
         content=content and all(case['status'] in ['passed','pending','skipped','todo'] for case in cases)
         if gate in ['foundation','core-focused']:
             content=content and all(case['status']=='passed' for case in cases)
-        expected_total={'earlier-offline':816,'new-offline':23,'foundation':42,'package':250,'core-focused':28,'new-live':14,'earlier-live':54,'fresh-journal-live':4}[gate]
+        expected_total={'earlier-offline':816,'new-offline':23,'foundation':42,'package':250,'core-focused':28,'new-live':14,'earlier-live':54,'fresh-journal-live':4,'nonzero-rewinds-live':8}[gate]
         content=content and len(cases)==expected_total
         fresh=started <= data['startTime']/1000 <= finished and started <= report.stat().st_mtime <= finished
         record.update(vitestPassed=passed, vitestTotal=len(cases), expectedPassed=expected,

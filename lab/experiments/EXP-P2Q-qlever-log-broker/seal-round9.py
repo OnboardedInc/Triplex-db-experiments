@@ -6,7 +6,7 @@ base=pathlib.Path('/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P2Q-R3/ro
 self_path=root/'lab/experiments/EXP-P2Q-qlever-log-broker/seal-round9.py'
 def sha(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 self_before=sha(self_path)
-def read_receipt(attempt,gate,passed,total,failed=0):
+def read_receipt(attempt,gate,passed,total,failed=0,count_mismatch=False):
  out=base/attempt;r=json.loads((out/(gate+'.json')).read_text())
  assert r['sourceStillMatches'] and r['heavySlotStillMatches'] and r['resultFresh']
  assert all(sha(root/name)==digest for name,digest in r['sourceHashes'].items())
@@ -20,13 +20,18 @@ def read_receipt(attempt,gate,passed,total,failed=0):
  assert d['numPassedTests']==passed and d['numFailedTests']==failed
  assert r['startedAt']<=d['startTime']/1000<=r['finishedAt'] and r['startedAt']<=report.stat().st_mtime<=r['finishedAt']
  if failed:assert r['accepted'] is False and r['exitCode']==1 and d['success'] is False
+ elif count_mismatch:assert r['accepted'] is False and r['contentMatches'] is False and r['expectedPassed']==54 and r['exitCode']==0 and d['success']
  else:assert r['accepted'] and r['contentMatches'] and r['exitCode']==0 and d['success']
  return r,cases
 specs=[('earlier-offline',802,816),('new-offline',17,23),('foundation',42,42),('package',224,250),('core-focused',28,28),('qlever-typecheck',None,None),('core-typecheck',None,None)]
 receipts=[read_receipt('retry',*s)[0] for s in specs]
 partial,partial_cases=read_receipt('retry','new-live',6,14,1)
 focused,focused_cases=read_receipt('journal-retry','fresh-journal-live',1,4)
-earlier,earlier_cases=read_receipt('live-retry','earlier-live',54,54)
+earlier,earlier_cases=read_receipt('live-retry','earlier-live',51,51,count_mismatch=True)
+rewinds,rewind_cases=read_receipt('journal-retry','nonzero-rewinds-live',3,8)
+assert focused['heavySlot']==rewinds['heavySlot'] and focused['attemptId']==rewinds['attemptId']
+assert {c['fullName'] for c in rewind_cases if c['status']=='passed'}=={f'round3 live nonzero rewinds N2 {name}' for name in ['native-before-answer','native-after-answer','dependency-in-request']}
+assert len({c['fullName'] for c in earlier_cases if c['status']=='passed'} | {c['fullName'] for c in rewind_cases if c['status']=='passed'})==54
 failed=[c for c in partial_cases if c['status']=='failed']; passed_retry=[c for c in focused_cases if c['status']=='passed']
 assert len(failed)==1 and failed[0]['fullName']==passed_retry[0]['fullName']
 assert 'fresh journal at an old cut' in failed[0]['fullName']
@@ -36,7 +41,7 @@ assert len({r['attemptId'] for r in receipts+[partial]})==1
 assert len({focused['attemptId'],earlier['attemptId'],partial['attemptId']})==3
 assert all(r['heavySlot']==receipts[0]['heavySlot'] for r in receipts+[partial])
 assert focused['heavySlot']!=earlier['heavySlot']
-for r in receipts+[partial,focused,earlier]:
+for r in receipts+[partial,focused,earlier,rewinds]:
  for name,digest in receipts[0]['sourceHashes'].items():assert r['sourceHashes'].get(name)==digest
 # Recheck the new guard's actual observations and original cut coverage.
 new=base/'retry/new-offline'
@@ -77,12 +82,12 @@ compare(base/'journal-retry/fresh-journal-live/round8-fresh-journal-immutable.js
 for attempt,gate,r in [('retry','new-offline',receipts[1]),('retry','new-live',partial),('journal-retry','fresh-journal-live',focused)]:
  for file in (base/attempt/gate).glob('*.json'):assert r['startedAt']<=file.stat().st_mtime<=r['finishedAt']
 summary={'format':'p2q-round9-final-readback/1','createdAt':time.time(),'productSourceHead':receipts[0]['head'],
- 'offlinePassed':1113,'typechecks':2,'liveCaseCoverage':7,'earlierLiveEnabledPassed':54,'earlierLiveCases':22,'earlierOfflineControlsRerun':32,
+ 'offlinePassed':1113,'typechecks':2,'liveCaseCoverage':7,'earlierLiveEnabledPassed':54,'earlierProducerCountMismatchRetained':True,'earlierLiveCases':22,'earlierOfflineControlsRerun':32,
  'partialLiveAttempt':{'accepted':False,'passed':6,'failed':1,'failedCase':failed[0]['fullName'],'receiptSha256':sha(base/'retry/new-live.json')},
  'focusedRetry':{'passed':1,'sameCase':passed_retry[0]['fullName'],'head':focused['head']},
  'runtimeRejectedAdditions':8,'typeVariants':['baseline','direct','inherited','merged'],'existingPolicyRoutes':48,
  'fullByteComparisons':comparisons,'sharedSourcePreimagesMatch':True,'selfSha256':self_before,
- 'receipts':{str(p.relative_to(base)):sha(p) for p in [*(base/'retry'/(s[0]+'.json') for s in specs),base/'retry/new-live.json',base/'journal-retry/fresh-journal-live.json',base/'live-retry/earlier-live.json']},
+ 'receipts':{str(p.relative_to(base)):sha(p) for p in [*(base/'retry'/(s[0]+'.json') for s in specs),base/'retry/new-live.json',base/'journal-retry/fresh-journal-live.json',base/'live-retry/earlier-live.json',base/'journal-retry/nonzero-rewinds-live.json']},
  'scope':'Builder slice evidence only; independent review and performance acceptance remain open'}
 assert sha(self_path)==self_before
 with (base/'SUMMARY.json').open('x') as stream:json.dump(summary,stream,indent=2);stream.write('\n')
