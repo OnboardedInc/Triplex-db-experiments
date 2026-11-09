@@ -65,6 +65,17 @@ export interface EpochBeginPayload {
   readonly tornBytes: number;
   readonly at: number;
 }
+/**
+ * [EXP-HS01] Why: R2 retains frames by bytes, the quantity P5 pays for; a frame count means 140 B per fact at 10k (1,024 frames).
+ * Retention keeps AT LEAST the newest `tailFrames` frames and AT LEAST the newest `tailBytes` bytes of frames (both when both are
+ * given; a missing one counts as 0 when the other is given). Neither given keeps every frame, the default, so frame-replay oracles
+ * keep working. Holders, the last frame and the ACKED frame are always kept.
+ * Rejected: a single mixed unit (callers then guess which frames survive).
+ */
+export interface FrameRetention {
+  readonly tailFrames?: number;
+  readonly tailBytes?: number;
+}
 export interface OpenedLog {
   readonly log: HostLog;
   readonly frames: readonly LogFrame[];
@@ -243,7 +254,10 @@ export class HostLog {
     public epoch: number,
     public nextLsn: number,
     private prevCrc: number,
-    private readonly tailFrames = Infinity,
+    private readonly retention: { readonly frames: number; readonly bytes: number } = {
+      frames: Infinity,
+      bytes: Infinity,
+    },
   ) {}
   static async open(
     dir: string,
@@ -251,12 +265,18 @@ export class HostLog {
       readonly minFreeBytes?: number;
       readonly requireFullFsync?: boolean;
       readonly takeover?: boolean;
-      readonly frameRetention?: { readonly tailFrames: number };
+      readonly frameRetention?: FrameRetention;
     } = {},
   ): Promise<OpenedLog> {
-    const tailFrames = options.frameRetention?.tailFrames ?? Infinity;
-    if (tailFrames !== Infinity && (!Number.isSafeInteger(tailFrames) || tailFrames < 0))
-      throw new BrokerLogError("Invalid frame retention tail");
+    const requested = options.frameRetention ?? {};
+    const limited = requested.tailFrames !== undefined || requested.tailBytes !== undefined;
+    const retention = {
+      frames: requested.tailFrames ?? (limited ? 0 : Infinity),
+      bytes: requested.tailBytes ?? (limited ? 0 : Infinity),
+    };
+    for (const n of [retention.frames, retention.bytes])
+      if (n !== Infinity && (!Number.isSafeInteger(n) || n < 0))
+        throw new BrokerLogError("Invalid frame retention tail");
     fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
     dir = fs.realpathSync(dir);
     const prior = streams.get(dir);
@@ -370,7 +390,7 @@ export class HostLog {
         epoch,
         init.marker.lsn + 2,
         encoded.crc,
-        tailFrames,
+        retention,
       );
       hostStores.set(log, writer);
       Object.assign(log.openVerification, verified);
@@ -552,7 +572,10 @@ export class HostLog {
     this.lookup("release", holder);
   }
   purgeFrames() {
-    return this.lookup<{ removed: number; anchor: number }>("purgeFrames", this.tailFrames);
+    return this.lookup<{ removed: number; anchor: number; bytes: number }>(
+      "purgeFrames",
+      this.retention,
+    );
   }
   purge(horizon: number) {
     return this.lookup<{ h: number; removed: number }>("purge", horizon);

@@ -219,6 +219,7 @@ export {
   readWatermark,
   readFramesFrom,
   segmentStart,
+  type FrameRetention,
   type LogFrame,
   type Watermark,
 } from "./broker/log.js";

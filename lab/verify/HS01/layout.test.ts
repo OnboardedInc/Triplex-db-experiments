@@ -31,10 +31,35 @@ const fresh = () => {
   fs.mkdirSync(dir, { recursive: true });
   return dir;
 };
+// [EXP-HS01] Why: R2 id codec. Generated ids mix canonical Crockford, core's deterministic <8 head><18 counter> base-36 shape
+// (with I/L/O/U digits), another tail length and noncanonical text, so G6/G7 exercise every id storage class.
+// Rejected: hex-only ids (every id would be a canonical ULID and the structured integer form would never run).
+const idHeads = ["0118TDQD", "ZZZZ0000", "LIOU1234", "00000000", "7ABCDEFG"];
+const crockford = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+// A canonical ULID-shaped id: 21 pseudo-random characters, then i in base 32 (injective for i < 32^5).
+const ulidLike = (i: number): string => {
+  let x = Math.imul(i + 1, 2654435761) >>> 0,
+    out = String(x % 8);
+  for (let k = 0; k < 20; k++) {
+    x = (Math.imul(x, 1664525) + 1013904223) >>> 0;
+    out += crockford[x >>> 27];
+  }
+  let tail = "";
+  for (let n = i; tail.length < 5; n = Math.floor(n / 32)) tail = crockford[n % 32] + tail;
+  return out + tail;
+};
+const rowId = (i: number): string =>
+  i % 6 === 0 || i % 6 === 3
+    ? ulidLike(i)
+    : i % 6 === 1 || i % 6 === 4
+      ? idHeads[i % idHeads.length] + i.toString(36).toUpperCase().padStart(18, "0")
+      : i % 12 === 2
+        ? "id/" + i
+        : idHeads[(i >> 3) % idHeads.length] + i.toString(36).toUpperCase().padStart(7, "0");
 const row = (i: number, pos = 2048): TripleRow =>
   ({
     ...Object.fromEntries(columns.map((c) => [c, null])),
-    id: i.toString(16).toUpperCase().padStart(26, "0"),
+    id: rowId(i),
     entity_id: "s:" + (i % 19),
     attribute: ":value",
     value_type: "string",
@@ -122,11 +147,21 @@ describe("EXP-HS01", () => {
       select = storage.prepare("SELECT * FROM codec");
     let fallback = 0,
       derived = 0;
+    const idClasses = { integer: 0, blob: 0, text: 0 };
     const dicts = new Map<string, Map<any, number>>(),
       names = new Map<string, any>(),
       txs = new Map(),
       refs = new Map();
+    const heads = new Map<string, number>();
     const c = {
+      hid: (key: string) => {
+        let h = heads.get(key);
+        if (h === undefined && heads.size < 63) {
+          heads.set(key, (h = heads.size + 1));
+          names.set("hds:" + h, key);
+        }
+        return h;
+      },
       intern: (t: string, s: any) => {
         let m = dicts.get(t);
         if (!m) dicts.set(t, (m = new Map()));
@@ -178,14 +213,19 @@ describe("EXP-HS01", () => {
       const s = codec.encodeRow(r, c);
       storage.exec("DELETE FROM codec");
       insert.run(...fields.map((k) => s[k]));
-      const out = codec.decodeRow(select.get(), c);
+      const stored = select.get();
+      idClasses[typeof stored.id === "number" ? "integer" : Buffer.isBuffer(stored.id) ? "blob" : "text"]++;
+      const out = codec.decodeRow(stored, c);
       if (s.x) fallback++;
       if (s.t === 7 && !s.x) derived++;
       expect(Object.keys(out).sort()).toEqual(Object.keys(r).sort());
       for (const key of Object.keys(r)) expect(Object.is(r[key], out[key]), key).toBe(true);
     }
     storage.close();
-    stats.codec = { rows: 100000, fallback, fallbackRate: fallback / 100000, derived };
+    expect(idClasses.integer).toBeGreaterThan(10000);
+    expect(idClasses.blob).toBeGreaterThan(10000);
+    expect(idClasses.text).toBeGreaterThan(1000);
+    stats.codec = { rows: 100000, fallback, fallbackRate: fallback / 100000, derived, idClasses };
     writeStats();
   });
   it("G6: 50000 generated worker reads match the v1 reference", async () => {

@@ -57,6 +57,10 @@ const artifactHashes = () =>
     }),
   );
 const builds = artifactHashes();
+// [EXP-HS01] Why: round 2 stated seed budget. R45 5.4 forecast a 64 MB frame tail; round 1 kept 1,024 frames (625 MB at 10k).
+// This is a lab setting for the G9 seed, not a product default (the product default keeps every frame).
+// Rejected: tailFrames (the byte count depends on frame size) and an unbounded tail (frames were 140 B/fact at 10k).
+const TAIL_BYTES = 64 * 1024 * 1024;
 const out = process.argv[2]!,
   N = Number(process.argv[3]);
 if (!out || ![1000, 10000].includes(N)) throw Error("out N=1000|10000");
@@ -73,7 +77,7 @@ const scope = "hs01:" + randomUUID(),
     dir: path.join(out, "store"),
     scopeKey: scope,
     minFreeBytes: floor,
-    frameRetention: { tailFrames: 1024 },
+    frameRetention: { tailBytes: TAIL_BYTES },
   });
 const log = (broker as any).log,
   detached: any = {
@@ -310,6 +314,18 @@ try {
         "SELECT name,sum(pgsize) bytes,sum(payload) payload FROM dbstat GROUP BY name ORDER BY bytes DESC",
       )
       .all(),
+    idClasses = Object.fromEntries(
+      ["facts", "history", "journal"].map((t) => [
+        t,
+        db.prepare(`SELECT typeof(id) kind,count(*) n FROM ${t} GROUP BY kind`).all(),
+      ]),
+    ),
+    journalRefClasses = db
+      .prepare("SELECT typeof(v) kind,count(*) n FROM journal WHERE t=7 GROUP BY kind")
+      .all(),
+    headSlots = db.prepare("SELECT hid,name FROM hds ORDER BY hid").all(),
+    framesKept = db.prepare("SELECT count(*) n,coalesce(sum(end-offset),0) bytes FROM frames").get(),
+    freelist = db.pragma("freelist_count", { simple: true }),
     fallback = db
       .prepare(
         "SELECT sum(n) n FROM (SELECT count(*) n FROM facts WHERE x IS NOT NULL UNION ALL SELECT count(*) FROM history WHERE x IS NOT NULL UNION ALL SELECT count(*) FROM journal WHERE x IS NOT NULL)",
@@ -349,7 +365,16 @@ try {
     freeEnd: free(),
     logicalBytes: logical,
     bytesPerAssertion: logical / assertions,
-    prediction: { bytesPerAssertion: 259, logical10k: 1200000000 },
+    // R45 5.4 forecast, plus the round 2 prediction written before any round 2 measurement (R2-PREDICTIONS.md).
+    prediction: {
+      bytesPerAssertion: 259,
+      logical10k: 1200000000,
+      round2: { bytesPerAssertion: 235, range: [220, 250], logical10k: 1050000000 },
+    },
+    retention: { tailBytes: TAIL_BYTES, framesKept, freelist },
+    idClasses,
+    journalRefClasses,
+    headSlots,
     bar: { bytesPerAssertion: 300, logical10k: 1400000000 },
     dbstat,
     fallback,

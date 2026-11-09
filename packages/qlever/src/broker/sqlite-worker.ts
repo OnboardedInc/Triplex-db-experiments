@@ -60,6 +60,9 @@ try {
  if(role==='writer') {
   // [EXP-HS01] Why: v1 has different semantics; reject rather than silently adopt or migrate. Rejected: CREATE IF NOT EXISTS over legacy tables.
   if(q("SELECT 1 FROM sqlite_master WHERE name='live_rows'").get())throw Error('Legacy broker layout v1 requires explicit migration');
+  // [EXP-HS01] Why: round 1 stored ids without the hds head dictionary; reading them with the round 2 id codec could miss rows.
+  // Rejected: silently adopting them (a later head allocation would hide an old structured id stored as TEXT or blob).
+  if(q("SELECT 1 FROM sqlite_master WHERE name='ents'").get()&&!q("SELECT 1 FROM sqlite_master WHERE name='hds'").get())throw Error('Legacy broker layout v2 round 1 requires explicit migration');
   db.exec('CREATE TABLE IF NOT EXISTS frames(lsn INTEGER PRIMARY KEY,epoch INT NOT NULL,kind INT NOT NULL,offset INT NOT NULL,end INT NOT NULL,prev_crc INT NOT NULL,crc INT NOT NULL,payload BLOB NOT NULL,committed_at INT NOT NULL);'+
   'CREATE INDEX IF NOT EXISTS frames_commits ON frames(lsn) WHERE kind=1;'+
   'CREATE TABLE IF NOT EXISTS marker(id INTEGER PRIMARY KEY CHECK(id=1),lsn INT NOT NULL,epoch INT NOT NULL,h INT NOT NULL,position INT NOT NULL,crc INT NOT NULL,size INT NOT NULL,base_lsn INT NOT NULL,base_crc INT NOT NULL,base_end INT NOT NULL);'+
@@ -69,6 +72,7 @@ try {
   'CREATE TABLE IF NOT EXISTS ents(eid INTEGER PRIMARY KEY,name TEXT NOT NULL UNIQUE);'+
   'CREATE TABLE IF NOT EXISTS attrs(aid INTEGER PRIMARY KEY,name TEXT NOT NULL UNIQUE);'+
   'CREATE TABLE IF NOT EXISTS strs(sid INTEGER PRIMARY KEY,s TEXT NOT NULL UNIQUE);'+
+  'CREATE TABLE IF NOT EXISTS hds(hid INTEGER PRIMARY KEY CHECK(hid BETWEEN 1 AND 63),name TEXT NOT NULL UNIQUE);'+
   'CREATE TABLE IF NOT EXISTS txs(pos INTEGER PRIMARY KEY,tx INT NOT NULL,at INT NOT NULL);'+
   ['facts','history','journal'].map(t=>'CREATE TABLE IF NOT EXISTS '+t+'(e INT NOT NULL,'+(t==='history'?'rpos INT NOT NULL,':'')+'id BLOB NOT NULL,a INT NOT NULL,pos INT NOT NULL,t INT NOT NULL,v,vf INT,vto INT,c INT,y INT,sv INT,x BLOB,PRIMARY KEY(e,'+(t==='history'?'rpos,':'')+'id)) WITHOUT ROWID;CREATE '+(t==='history'?'':'UNIQUE ')+'INDEX IF NOT EXISTS '+t+'_id ON '+t+'(id);').join('')+
   'CREATE TABLE IF NOT EXISTS retention(holder TEXT PRIMARY KEY,lsn INT NOT NULL,expires INT) WITHOUT ROWID;'+
@@ -124,17 +128,21 @@ const checkpoint = restart => {
 // Rejected: SQLite TEXT replacement of invalid UTF-8 (aliases distinct names).
 const textKey=s=>Buffer.from(s,'utf8').toString('utf8')===s?s:Buffer.from(JSON.stringify(s));
 const dictCol=t=>t==='strs'?'s':'name';
-const dictId=t=>t==='ents'?'eid':t==='attrs'?'aid':'sid';
-const names=new Map(), writerIds=new Map();
+const dictId=t=>t==='ents'?'eid':t==='attrs'?'aid':t==='hds'?'hid':'sid';
+const names=new Map(), writerIds=new Map(), readerHeads=new Map();
+// [EXP-HS01] Why: the hds table has at most 63 rows, so the writer holds all of it and never queries it again.
+if(role==='writer'&&!fatal)for(const r of q('SELECT hid,name FROM hds').all())writerIds.set('hds:'+JSON.stringify(r.name),r.hid);
+// Readers cache only positive head lookups: a head absent now may be allocated later.
+const readHid=k=>{let h=readerHeads.get(k);if(h===undefined){h=q('SELECT hid FROM hds WHERE name=?').get(k)?.hid;if(h!==undefined)readerHeads.set(k,h);}return h;};
 const name=(t,id)=>{const key=t+':'+id;if(names.has(key))return names.get(key);let v=q('SELECT '+dictCol(t)+' v FROM '+t+' WHERE '+dictId(t)+'=?').get(id)?.v;if(Buffer.isBuffer(v))v=JSON.parse(v.toString());if(v===undefined)throw Error('Missing dictionary entry');names.set(key,v);return v;};
-const storedRow=id=>{for(const t of ['facts','history','journal']){const s=q('SELECT * FROM '+t+' WHERE id=?').get(packId(id));if(s)return decodeRow(s,readCodec);}return undefined;};
-const readCodec={name,tx:pos=>q('SELECT tx,at FROM txs WHERE pos=?').get(pos),row:storedRow};
+const storedRow=id=>{for(const t of ['facts','history','journal']){const s=q('SELECT * FROM '+t+' WHERE id=?').get(packId(id,readCodec));if(s)return decodeRow(s,readCodec);}return undefined;};
+const readCodec={name,tx:pos=>q('SELECT tx,at FROM txs WHERE pos=?').get(pos),row:storedRow,hid:readHid};
 const prepare=a=>{
  const additions=[],local=new Map(),pendingNames=new Map(),next={},transactions=new Map(),inputRows=new Map();
- for(const t of ['ents','attrs','strs'])next[t]=q('SELECT coalesce(max('+dictId(t)+'),0)+1 n FROM '+t).get().n;
- const intern=(t,v)=>{const key=t+':'+JSON.stringify(v);if(local.has(key))return local.get(key);if(writerIds.has(key))return writerIds.get(key);const old=q('SELECT '+dictId(t)+' id FROM '+t+' WHERE '+dictCol(t)+'=?').get(textKey(v));const id=old?.id??next[t]++;local.set(key,id);pendingNames.set(t+':'+id,v);if(!old)additions.push([t,id,v]);return id;};
+ for(const t of ['ents','attrs','strs','hds'])next[t]=q('SELECT coalesce(max('+dictId(t)+'),0)+1 n FROM '+t).get().n;
+ const intern=(t,v,max)=>{const key=t+':'+JSON.stringify(v);if(local.has(key))return local.get(key);if(writerIds.has(key))return writerIds.get(key);const old=t==='hds'?undefined:q('SELECT '+dictId(t)+' id FROM '+t+' WHERE '+dictCol(t)+'=?').get(textKey(v));if(!old&&max!==undefined&&next[t]>max){local.set(key,undefined);return undefined;}const id=old?.id??next[t]++;local.set(key,id);pendingNames.set(t+':'+id,v);if(!old)additions.push([t,id,v]);return id;};
  for(const member of a.members)for(const r of member.rows){inputRows.set(r.id,r);if(!transactions.has(r.recorded_position)&&!readCodec.tx(r.recorded_position))transactions.set(r.recorded_position,{tx:intern('ents',r.tx_id??''),at:r.recorded_at});if(r.retracted_position!=null&&!transactions.has(r.retracted_position)&&!readCodec.tx(r.retracted_position))transactions.set(r.retracted_position,{tx:intern('ents',r.retract_tx_id??''),at:r.retracted_at});}
- const c={intern,name:(t,id)=>pendingNames.get(t+':'+id)??name(t,id),tx:pos=>transactions.get(pos)??readCodec.tx(pos),row:id=>inputRows.get(id)??storedRow(id)};
+ const c={intern,hid:k=>intern('hds',k,63),name:(t,id)=>pendingNames.get(t+':'+id)??name(t,id),tx:pos=>transactions.get(pos)??readCodec.tx(pos),row:id=>inputRows.get(id)??storedRow(id)};
  return {additions,transactions,rows:a.members.map(member=>member.rows.map(r=>({r,s:encodeRow(r,c)})))};
 };
 const append = a => {
@@ -175,7 +183,7 @@ const append = a => {
 };
 const rows = (table,selection,extra='',args=[]) => {
  const where=[], vals=[];
- if(selection.id!==undefined){where.push('id=?');vals.push(packId(selection.id));}
+ if(selection.id!==undefined){where.push('id=?');vals.push(packId(selection.id,readCodec));}
  if(selection.entities!==undefined){if(!selection.entities.length)return [];where.push('e IN (SELECT eid FROM ents WHERE name IN ('+selection.entities.map(()=>'?').join(',')+'))');vals.push(...selection.entities.map(textKey));}
  if(extra){where.push(extra);vals.push(...args);}
  return q('SELECT * FROM '+table+(where.length?' WHERE '+where.join(' AND '):'')).all(...vals).map(r=>decodeRow(r,readCodec));
@@ -212,18 +220,28 @@ const handle = (op,a) => {
  if(op==='frameHeaders')return q('SELECT lsn,kind FROM frames ORDER BY lsn').all();
  if(op==='epochs')return q('SELECT * FROM epochs ORDER BY epoch').all();
  if(op==='purgeFrames')return db.transaction(()=>{
-  const m=marker();if(a===Infinity)return {removed:0,anchor:m.base_lsn};
-  if(!Number.isSafeInteger(a)||a<0)throw Error('Invalid frame tail');
+  const m=marker();
+  // A bare number is the frame tail (older callers); an object names frames and/or bytes. Retention keeps AT LEAST both.
+  const keep=typeof a==='number'?{frames:a,bytes:Infinity}:a;
+  if(keep.frames===Infinity&&keep.bytes===Infinity)return {removed:0,anchor:m.base_lsn,bytes:0};
+  if(keep.frames!==Infinity&&(!Number.isSafeInteger(keep.frames)||keep.frames<0)||keep.bytes!==Infinity&&(!Number.isSafeInteger(keep.bytes)||keep.bytes<0))throw Error('Invalid frame tail');
   const held=q('SELECT min(lsn) n FROM retention WHERE expires IS NULL OR expires>?').get(Date.now()).n;
   const ack=fs.existsSync(ackPath)?Number(fs.readFileSync(ackPath).readBigUInt64LE(0)):m.lsn;
-  const floor=Math.min(held??m.lsn,m.lsn-a,m.lsn-1,ack-1);
+  const floor=Math.min(held??m.lsn,m.lsn-keep.frames,m.lsn-1,ack-1);
   let bytes=0,last,removed=0;
   for(const f of q('SELECT lsn,crc,end,offset FROM frames WHERE lsn<=? ORDER BY lsn LIMIT 16').all(floor)){
-   if(bytes+f.end-f.offset>16*1024*1024)break;bytes+=f.end-f.offset;last=f;removed++;
+   // The newest keep.bytes bytes stay: purging through f leaves m.size-f.end bytes (m.size is the end offset of the last frame).
+   if(m.size-f.end<keep.bytes)break;
+   // [EXP-HS01] Why: the first eligible frame is always taken, so a legal frame larger than the 16 MiB work budget cannot become
+   // an immovable prefix (CX-VHS01 finding 1). Work per call is 16 MiB plus at most one frame (<= 256 MiB payload + 36 bytes).
+   // Rejected: capping frames at write (would refuse values the format and the 1 MiB value limit admit) and a skip-and-resume
+   // scheme (the anchor is one contiguous prefix; a frame cannot be partly purged).
+   if(removed&&bytes+f.end-f.offset>16*1024*1024)break;
+   bytes+=f.end-f.offset;last=f;removed++;
   }
   // [EXP-HS01] Why: deletion and anchor publish atomically. Rejected: anchoring in a later transaction (restart loses its chain).
   if(last){q('DELETE FROM frames WHERE lsn<=?').run(last.lsn);q('UPDATE marker SET base_lsn=?,base_crc=?,base_end=? WHERE id=1').run(last.lsn,last.crc,last.end);}
-  return {removed,anchor:last?.lsn??m.base_lsn};
+  return {removed,anchor:last?.lsn??m.base_lsn,bytes};
  }).immediate();
  // [EXP-HS01] Why: anchors are internal recovery metadata; preserve existing marker/pull result shapes. Rejected: stripping extra fields only in equivalence tests.
  if(op==='anchor')return marker();

@@ -31,7 +31,7 @@ import {
   type FrameMember,
   type MemberClaim,
 } from "./frames.js";
-import { HostLog, hostLogRecovery, type LogFrame } from "./log.js";
+import { HostLog, hostLogRecovery, type FrameRetention, type LogFrame } from "./log.js";
 import { ORDINALS, lastPositionOf, lsnOf, packPosition } from "./position.js";
 import { buildFence, buildPublication, markerQuery, type ReplicaMarker } from "./sparql.js";
 import { BasisNotAvailable, ReplicaUnavailable, type BasisSurface } from "./errors.js";
@@ -141,7 +141,7 @@ export interface HostBrokerOptions {
   readonly rebuildAtDeltaTriples?: number;
   readonly applyTimeoutMs?: number;
   readonly minFreeBytes?: number;
-  readonly frameRetention?: { readonly tailFrames: number };
+  readonly frameRetention?: FrameRetention;
   readonly requireFullFsync?: boolean;
   /** Start the applier on open (default true when a replica is given). */
   readonly autoApply?: boolean;
