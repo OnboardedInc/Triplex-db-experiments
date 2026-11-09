@@ -256,3 +256,5 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 CHECKJS ACCEPT (verify/CHECKJS d4b0caa9; coverage inverted; 78 exclusions audited). Joins the 0.4.0 queue with its
   comment-only oracle re-pins. CX-PACK started: a lab-owned pack gate that reports the out-of-scope DuckDB package separately, and the cause
   of the unbuilt-CLI pack failure seen by NSR and DF01.
+- 2026-11-09 contract 0.3.14 on main (1de3e640). EXP-QH1 is unblocked but waits for R45 (host store layout), because QH1 reads H1's
+  live_rows, which R45 may change; QH1 starts on the new layout. RT01 live G6 waits for host disk above 10 GiB (7.8 GiB now).
