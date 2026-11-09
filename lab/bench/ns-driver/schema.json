@@ -1,0 +1,14 @@
+{
+  "schema": "ns-sut/1",
+  "transport": "TCP; exactly one UTF-8 JSON request and response per connection; LF terminated",
+  "requestCapBytes": 1048576,
+  "responseCapBytes": 16777216,
+  "maxDepth": 64,
+  "request": ["schema", "runId", "id", "method", "params"],
+  "success": ["schema", "runId", "id", "ok=true", "result"],
+  "failure": ["schema", "runId", "id", "ok=false", "error={code:SUT-ERROR,message}"],
+  "broker": { "commit": ["command"], "feedPage": ["cursor"] },
+  "readers": { "read": ["request"], "pull": ["request"] },
+  "consumer": { "consumerControl": ["action=start|step|stop|status|hook|release", "data"] },
+  "rules": "Unknown keys/methods/actions, unsafe integers, nonfinite numbers, forbidden prototype keys, invalid UTF-8, extra lines, missing newline, depth/byte caps, timeout, foreign run/id all fail closed. Payloads are application JSON; answers stay untrusted."
+}
