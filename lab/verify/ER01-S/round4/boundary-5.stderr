@@ -1,0 +1,12 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 54588 "CX-P2X2-F7-r3", pid 56603 "CX-RT01-r3-packages", pid 37006 "CX-VP2Q-11-R11", pid 56417 "CX-VER01S-5-R4-matrix"
+[lab] heavy: waiting for one of 4 slots; held by pid 54588 "CX-P2X2-F7-r3", pid 56603 "CX-RT01-r3-packages", pid 37006 "CX-VP2Q-11-R11", pid 56417 "CX-VER01S-5-R4-matrix"
+[lab] heavy: waiting for one of 4 slots; held by pid 54588 "CX-P2X2-F7-r3", pid 56603 "CX-RT01-r3-packages", pid 37006 "CX-VP2Q-11-R11", pid 56417 "CX-VER01S-5-R4-matrix"
+[lab] heavy: waiting for one of 4 slots; held by pid 54588 "CX-P2X2-F7-r3", pid 56603 "CX-RT01-r3-packages", pid 37006 "CX-VP2Q-11-R11", pid 56417 "CX-VER01S-5-R4-matrix"
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round4/boundary.py", line 111, in <module>
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round4/boundary.py", line 71, in main
+    parser = compile_normalizer(spec)
+                       ~~~~~~~~^^^^^^
+  File "<string>", line 623, in supplemental_views
+  File "<string>", line 624, in <genexpr>
+KeyboardInterrupt

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Independent Unicode combinations, full-parser representatives and evidence readback."""
+import argparse
 import base64
 import copy
 import hashlib
@@ -7,6 +8,7 @@ import itertools
 import json
 from pathlib import Path
 import quopri
+import re
 import shutil
 import sqlite3
 import subprocess
@@ -19,7 +21,7 @@ ROOT = Path('/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VER01S/round4')
 sys.path.insert(0, str(REPO / 'lab/observer/erasure'))
 from compile import compile_normalizer
 from fixtures import make_frames, packed
-from matrix import sqlite_pack
+from matrix import sqlite_pack, variable, varint_inverse
 
 
 def sha(data):
@@ -49,13 +51,20 @@ def readback(directory, expected=None):
 
 
 def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('--root', type=Path, default=ROOT)
+    ap.add_argument('--attempt', default='validation-02')
+    ap.add_argument('--boundary', default='boundary-02')
+    args = ap.parse_args()
+    root = args.root.resolve()
     if shutil.disk_usage(REPO).free < 5 * 1024 ** 3:
         raise RuntimeError('below 5 GiB disk floor')
-    output = ROOT / 'validation-01'
+    assert Path(args.attempt).name == args.attempt and Path(args.boundary).name == args.boundary
+    output = root / args.attempt
     output.mkdir(parents=True, exist_ok=False)
     own_sha = sha(Path(__file__).read_bytes())
     shutil.copyfile(__file__, output / 'finish-executed.py')
-    matrix = ROOT / 'matrix-01'
+    matrix = root / 'matrix-01'
     pins = json.loads((matrix / 'source-pins.json').read_bytes())
     for relative, digest in pins['observerSources'].items():
         assert sha((REPO / relative).read_bytes()) == digest
@@ -88,14 +97,23 @@ def main():
         'base64url': (lambda b: base64.urlsafe_b64encode(b).rstrip(b'='), lambda b: base64.urlsafe_b64decode(b + b'=' * (-len(b) % 4))),
         'folded-base64': (lambda b: b'\r\n'.join(base64.b64encode(b)[i:i + 16] for i in range(0, len(base64.b64encode(b)), 16)), base64.b64decode),
         'hex': (lambda b: b.hex().encode(), lambda b: bytes.fromhex(b.decode())),
+        # [CX-VER01S-5] Why: ASCII byte-varints are an identity; UTF-8 octets exercise real varint decoding.
+        # Rejected: counting the ASCII framing matrix as evidence for high-bit varints (no transformation).
+        'byte-varints': (lambda b: b''.join(variable(v) for v in b), varint_inverse),
     }
-    unicode_counts = {'pairs': 0, 'triples': 0, 'found': 0, 'foundWithIssues': 0, 'misses': 0}
+    unicode_counts = {'pairs': 0, 'triples': 0, 'found': 0, 'foundWithIssues': 0, 'misses': 0, 'outOfDomain': 0}
     with (output / 'unicode-matrix.jsonl').open('wb') as log:
         for size in (2, 3):
             for names in itertools.product(unicode_layers, repeat=size):
                 raw = marker
-                for name in names:
-                    raw = unicode_layers[name][0](raw)
+                try:
+                    for name in names:
+                        raw = unicode_layers[name][0](raw)
+                except UnicodeError:
+                    unicode_counts['outOfDomain'] += 1
+                    log.write(packed({'layers': names, 'status': 'OUT-OF-DOMAIN',
+                        'reason': 'text encoder requires valid UTF-8'}) + b'\n')
+                    continue
                 expected = raw
                 for name in reversed(names):
                     expected = unicode_layers[name][1](expected)
@@ -164,6 +182,26 @@ def main():
         assert sha((REPO / relative).read_bytes()) == digest
     assert sha(Path(__file__).read_bytes()) == own_sha
     assert sha((HERE / 'matrix.py').read_bytes()) == pins['verifierSha256']
+    # [CX-VER01S-5] Why: publish a verdict only after complete evidence and baseline readback.
+    # Rejected: writing ACCEPT before checking the historical regression gate (could leave a partial verdict).
+    builder = json.loads((REPO / 'lab/experiments/EXP-ER01-S/round4/INDEX.json').read_bytes())
+    readbacks = [readback(Path(builder['finalRun']), builder['manifestSha256'])]
+    readbacks += [readback(root / name) for name in ('baseline-01', 'matrix-01', args.boundary)]
+    baseline = json.loads((root / 'baseline-01/RESULT.json').read_bytes())
+    assert baseline['status'] == 'PASS' and baseline['qaScenarioCount'] == 61 and baseline['secondBlockFsstControl'] is True
+    assert {'lab/observer/erasure/' + rel: digest for rel, digest in baseline['sourceSha256'].items()} == pins['observerSources']
+    for suite, count in (('test_formats.py', 11), ('test_scanners.py', 28)):
+        log = (root / 'baseline-01' / (suite + '.stderr')).read_text()
+        assert re.search(r'Ran ' + str(count) + r' tests in [0-9.]+s\s+OK', log), log
+    boundary = json.loads((root / args.boundary / 'summary.json').read_bytes())
+    assert boundary['candidate'] == pins['candidate'] and boundary['runId'] == spec['runId']
+    assert boundary['qualified'] and len(boundary['results']) == 2
+    assert sha((HERE / 'boundary.py').read_bytes()) == boundary['verifierSha256']
+    assert unicode_counts['pairs'] + unicode_counts['triples'] + unicode_counts['outOfDomain'] == len(unicode_layers) ** 2 + len(unicode_layers) ** 3
+    assert observations['counts']['pairs'] + observations['counts']['triples'] + observations['counts']['outOfDomain'] == len(wanted) ** 2 + len(wanted) ** 3
+    for relative, digest in pins['observerSources'].items():
+        assert sha((REPO / relative).read_bytes()) == digest
+    assert sha(Path(__file__).read_bytes()) == own_sha
     depth33 = next(v for v in observations['depthResults'] if v['depth'] == 33)
     accepted = (observations['problemCount'] == 0 and unicode_counts['misses'] == 0 and
         depth33['fullStatus'] == 'REFUSED' and depth33['unparsedBytes'] > 0 and
@@ -174,14 +212,11 @@ def main():
         'claim': 'offline decoder/scanner QA only; no live erasure acceptance or obligation promotion'}
     save(output / 'summary.json', summary)
     (output / 'SHA256SUMS').write_text('\n'.join(sha(p.read_bytes()) + '  ' + str(p.relative_to(output)) for p in sorted(output.rglob('*')) if p.is_file()) + '\n')
-    builder = json.loads((REPO / 'lab/experiments/EXP-ER01-S/round4/INDEX.json').read_bytes())
-    readbacks = [readback(Path(builder['finalRun']), builder['manifestSha256'])]
-    readbacks += [readback(ROOT / name) for name in ('baseline-01', 'matrix-01', 'validation-01')]
-    baseline = json.loads((ROOT / 'baseline-01/RESULT.json').read_bytes())
-    assert baseline['status'] == 'PASS' and baseline['qaScenarioCount'] == 61 and baseline['secondBlockFsstControl'] is True
+    readbacks.append(readback(output))
     index = {'format': 'cx-ver01s-round4-index/1', 'candidate': pins['candidate'], 'verdict': summary['verdict'],
         'runId': spec['runId'], 'historicalScenarios': 61, 'unitTests': 39, 'secondBlockFsstControl': True,
         'asciiCounts': observations['counts'], 'unicodeCounts': unicode_counts, 'depthResults': observations['depthResults'],
+        'additionalBoundaryResults': boundary['results'],
         'fullNormalizerOuterLayers': len(full_results), 'readbacks': readbacks, 'claim': summary['claim']}
     save(HERE / 'INDEX.json', index)
     lines = [v['manifestSha256'] + '  ' + str(Path(v['path']) / 'SHA256SUMS') for v in readbacks]

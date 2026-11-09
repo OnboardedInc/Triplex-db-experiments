@@ -1,0 +1,18 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 61146 "CX-RT01-r3-packages2", pid 59189 "CX-VER01S-5-R4-boundary", pid 62769 "CX-FD01-offline-r2", pid 63132 "CX-P2X2-F7-r4"
+[lab] heavy: waiting for one of 4 slots; held by pid 61146 "CX-RT01-r3-packages2", pid 59189 "CX-VER01S-5-R4-boundary", pid 62769 "CX-FD01-offline-r2", pid 63132 "CX-P2X2-F7-r4"
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round4/finish.py", line 228, in <module>
+    main()
+    ~~~~^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round4/finish.py", line 186, in main
+    readbacks += [readback(root / name) for name in ('baseline-01', 'matrix-01', 'boundary-01')]
+                  ~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-er01s/lab/verify/ER01-S/round4/finish.py", line 37, in readback
+    raw = manifest.read_bytes()
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 777, in read_bytes
+    with self.open(mode='rb', buffering=0) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VER01S-5/round4/boundary-01/SHA256SUMS'
