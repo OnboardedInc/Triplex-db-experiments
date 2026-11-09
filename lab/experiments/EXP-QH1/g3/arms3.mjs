@@ -7,7 +7,11 @@ import { createHash } from "node:crypto";
 const wt = path.resolve(import.meta.dirname, "../../../..");
 const name = process.argv[2];
 if (!/^[A-Za-z0-9_-]+$/.test(name ?? "")) throw Error("usage: arms3.mjs <name>");
-const root = path.join("/Users/sam/Claude/Projects/triplex-db-2/evidence/QH1-R3/arms", name);
+// [EXP-QH1-R4] Why: round 4 retains its build under its own evidence directory (QH1_ARMS_ROOT). Rejected: adding round 4 arms to R3's tree.
+const root = path.join(
+  process.env.QH1_ARMS_ROOT ?? "/Users/sam/Claude/Projects/triplex-db-2/evidence/QH1-R3/arms",
+  name,
+);
 if (fs.existsSync(root)) throw Error("arm already retained: " + root);
 const sha = (f) => createHash("sha256").update(fs.readFileSync(f)).digest("hex");
 const treeHash = (dir) => {

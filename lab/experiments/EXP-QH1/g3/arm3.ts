@@ -22,8 +22,14 @@ const root =
     ? path.join(E, "QH1-R2/arms/baseline")
     : armName === "h1"
       ? path.join(E, "QH1-R2/arms/candidate")
-      : path.join(E, "QH1-R3/arms", armName);
-const store = path.join(E, "QH1-R3", armName === "baseline" ? "store-baseline" : "store-candidate");
+      : fs.existsSync(path.join(process.env.QH1_ARMS_ROOT ?? "/nonexistent", armName))
+        ? path.join(process.env.QH1_ARMS_ROOT!, armName)
+        : path.join(E, "QH1-R3/arms", armName);
+// [EXP-QH1-R4] Why: round 4 measures its build against round 3's retained `final` build on its own clone of the store (QH1_STORE) and
+// finds its own retained arm under QH1_ARMS_ROOT. Rejected: writing round 4 arms and store opens into round 3's evidence.
+const store =
+  process.env.QH1_STORE ??
+  path.join(E, "QH1-R3", armName === "baseline" ? "store-baseline" : "store-candidate");
 const wt = path.resolve(import.meta.dirname, "../../../..");
 const SEGMENTS = Number(segs),
   PER = Number(per),

@@ -19,8 +19,12 @@ const root =
     ? path.join(E, "QH1-R2/arms/baseline")
     : armName === "h1"
       ? path.join(E, "QH1-R2/arms/candidate")
-      : path.join(E, "QH1-R3/arms", armName);
-const store = path.join(E, "QH1-R3", armName === "baseline" ? "store-baseline" : "store-candidate");
+      : path.join(process.env.QH1_ARMS_ROOT ?? path.join(E, "QH1-R3/arms"), armName);
+// [EXP-QH1-R4] Why: round 4 replays on its own APFS clone of the retained candidate store (QH1_STORE), so the retained store is never
+// opened read-write. Rejected: opening the retained R3 store (a broker open appends an epoch frame).
+const store =
+  process.env.QH1_STORE ??
+  path.join(E, "QH1-R3", armName === "baseline" ? "store-baseline" : "store-candidate");
 const imp = (p: string) => import(path.join(root, p));
 const core = await imp("packages/core/dist/index.js");
 const rt = await imp("packages/core/dist/runtime/index.js");

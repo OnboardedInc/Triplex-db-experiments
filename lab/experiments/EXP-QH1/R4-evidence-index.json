@@ -1,0 +1,41 @@
+{
+  "round": 4,
+  "branch": "exp/QH1-h1-pulls",
+  "base": "7965540b",
+  "commits": {
+    "fix": "365fe188",
+    "harnessPaths": "see git log"
+  },
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/QH1-R4",
+  "arm": {
+    "r4": {
+      "coreDist": "ae14753474ac61c99324571d5f56fac0c2d656974815bbc2781e117b77844b0a",
+      "qleverDist": "2f9589b8e1d8815599c64751929cb252e63215e03a23cabe2c7819019122cddc",
+      "builtFromHead": "365fe188 (product source unchanged by later commits)"
+    }
+  },
+  "gates": {
+    "dir": "gates-final",
+    "index": "gates-final/index.txt",
+    "head": "gates-final/head.txt"
+  },
+  "preFixRegressionRun": {
+    "lab": "gates/prefix-lab.log (6 of 11 fail)",
+    "kv": "gates/prefix-kv.log (5 of 5 fail)",
+    "patch": "gates/fix.patch"
+  },
+  "replay": {
+    "candidate": "replay/r4.txt",
+    "compare": "replay/r4-compare.json",
+    "reference": "QH1-R3/replay/ref-baseline.txt (unchanged, R3 manifest)",
+    "store": "APFS clone of QH1-R3/store-candidate decompressed from broker.db.zst; sha256 52541d59... equals ORIGINAL-SHA256SUMS.txt"
+  },
+  "abab": {
+    "dir": "abab/c1",
+    "summary": "abab/c1-summary.json"
+  },
+  "excluded": [
+    "store-candidate (2.6 GB clone)",
+    "arms/r4/packages (bound by arm.json)"
+  ]
+}

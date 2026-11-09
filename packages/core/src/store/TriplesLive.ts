@@ -559,9 +559,19 @@ const makeTriplesServices = Effect.gen(function* () {
 
     // [EXP-QH1-R3] Why: one resolved basis and one Effect run for the whole closure; the adapter may answer it in one operation.
     // Rejected: resolving the clock per level (a long pull could straddle two valid-time instants).
+    // [EXP-QH1-R4] Why: the exact record position is captured once, before the direct attempt, and rides in the resolved basis through
+    // the direct attempt and every fallback level, so a commit between levels yields the whole old or the whole new graph (a
+    // commit-cut pull). The adapter decides whether it has a position to offer (none inside a transaction, whose reads already use
+    // the transaction's snapshot and must see its staged writes); without one the read is unpinned, as before.
+    // Rejected: a per-pull lock (blocks writers, P1); pinning only in the fallback (the direct attempt can decline after reading, and
+    // the fallback would then start from a later head than the one the caller's call began at); pinning by recordedAt (two commits
+    // can share one timestamp, so a timestamp does not name one cut); pinning by currentCommitPosition (hides staged rows).
     const reach: TriplesService["reach"] = (root, basis) =>
       Effect.gen(function* () {
-        const resolved = resolveTemporalBasis(basis, yield* now);
+        const resolvedNow = resolveTemporalBasis(basis, yield* now);
+        const pinned = yield* (adapter.pullPosition?.() ?? Effect.succeed(undefined));
+        const resolved: ResolvedTemporalBasis =
+          pinned === undefined ? resolvedNow : { ...resolvedNow, recordedPosition: pinned };
         const direct = yield* (adapter.getReachTriples?.(root, resolved) ?? Effect.succeed(undefined));
         if (direct) return direct;
         return yield* reachBy((ids) => entitiesAt(ids as readonly EntityId[], resolved), root);
