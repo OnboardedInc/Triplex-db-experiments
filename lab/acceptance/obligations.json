@@ -54,7 +54,9 @@
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/DF01-image-review.json": "c9e2880c211893e59b8847ddf423e730677d179f4318ffbc839cd686147b4866",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS_FINAL-repin-review.json": "861c19433507e91abe52e78007d9649890166faadd99e91d54e5eb2dd462c58b",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-FINAL-freeze-ham-reference.mjs.diff": "030e63d57c5e74fdef57c0a25bc67b5a0f20f1dc59495239ecf7c28a39f4dc96",
-    "lab/acceptance/build_contract.py": "653cec719e6f7f8964b00aca1f8ba1b40325e7b645153743059b0df3674a87db"
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/OCONTRACT-repin-review.json": "2ce4af34fa745b198e6dcec0134853bfa0c2a45e613113025becf66965ecd726",
+    "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/OCONTRACT-oracle-contract.json.diff": "d97a0c4d91bfc0119e6094a68934b9ca8a622aff66c0552f52668f5ac3e98441",
+    "lab/acceptance/build_contract.py": "05a8bffe27edf6a669fa405120a2ebad401ea241ef88f1f4b935befb2d6d19f5"
   },
   "artifacts": {
     "oracle-contract.json": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266",
@@ -4077,8 +4079,8 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "653cec719e6f7f8964b00aca1f8ba1b40325e7b645153743059b0df3674a87db",
-        "lab/acceptance/oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9"
+        "lab/acceptance/build_contract.py": "05a8bffe27edf6a669fa405120a2ebad401ea241ef88f1f4b935befb2d6d19f5",
+        "lab/acceptance/oracle-contract.json": "6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266"
       }
     },
     "O-OBS": {
@@ -31579,5 +31581,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "d3c716caecbf13c992147d86529b877ec77f616e841506355493a546845fbbb8"
+  "transitiveContractSha256": "5afa11e8a04cc8daa965024a511f66ec705e159f0edba690a55aad25ac8af800"
 }

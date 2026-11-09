@@ -5842,8 +5842,7 @@ def checks_0311():
 
 for x in ("O-REPLAY", "O-DOMAIN"):
     ORACLE_RUNNERS[x]["files"] = list(ORACLE_PINS[x]["sha256"])
-if "O-CONTRACT" in ORACLE_RUNNERS:
-    ORACLE_RUNNERS["O-CONTRACT"]["sha256"] = {"lab/acceptance/build_contract.py": sha_file("lab/acceptance/build_contract.py"), "lab/acceptance/oracle-contract.json": sha_text(projection_text())}
+# [CX-A01-040-R2] Why: the O-CONTRACT runner hashes are assigned once, after the last module-level change to the projection (see o_contract_runner_hashes below). Rejected: pinning here, before the late DATOMIC_IMAGE_040 assignment (VERIFY-0.4.0 F1).
 
 
 # [EXP-A01-0312] Why: freeze authorized literals, consumer destinations and selected regressions. Rejected: compiling whatever happens to be pending.
@@ -6458,12 +6457,39 @@ def checks_040():
 PIN_STAGE_CHECKJS_FINAL = [{'path': 'lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs', 'previousSha256': 'c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206', 'sha256': '752aaa5c706c514ec265ed6865458fd6bd78795486764e200c088c3f52f53f28', 'baseCommit': '3b34d5c3ca0a8e110d9130a95074a027d697c52f', 'diff': 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-FINAL-freeze-ham-reference.mjs.diff', 'diffSha256': '030e63d57c5e74fdef57c0a25bc67b5a0f20f1dc59495239ecf7c28a39f4dc96', 'hunks': [{'header': '@@ -1,3 +1,4 @@', 'changesMeasuredWorkload': False, 'reason': 'Comment-only checkJs directive; executable statements unchanged.'}]}]
 SCOPE_SOURCES += ['lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS_FINAL-repin-review.json', 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-FINAL-freeze-ham-reference.mjs.diff']
 
+
+# [CX-A01-040-R2] Why: the runner pin must hash the exact projection bytes this generator renders; it was frozen before DATOMIC_IMAGE_040 changed the image map, so --verify reproduced a stale
+# pin (VERIFY-0.4.0 F1, Q45a). The pin is computed here, after every module-level assignment, and checks_pin_OCONTRACT recomputes it at generation time so any later change fails closed.
+# Rejected: hashing earlier and trusting artifacts["oracle-contract.json"] (a separate, correct hash), and pinning a literal (the build_contract.py hash cannot be a literal inside itself).
+def o_contract_runner_hashes():
+    return {"lab/acceptance/build_contract.py": sha_file("lab/acceptance/build_contract.py"), "lab/acceptance/oracle-contract.json": sha_text(projection_text())}
+
+
+if "O-CONTRACT" in ORACLE_RUNNERS:
+    ORACLE_RUNNERS["O-CONTRACT"]["sha256"] = o_contract_runner_hashes()
+
+PIN_STAGE_OCONTRACT = [{'path': 'lab/acceptance/oracle-contract.json', 'previousSha256': '82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9', 'sha256': '6fae9baacf3c36902fed3704526d50ec3788b05d1eddf6287b3989fc5438b266', 'baseCommit': 'f3ed62112028440389710a86fbf5c82c2f91afda', 'diff': 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/OCONTRACT-oracle-contract.json.diff', 'diffSha256': 'd97a0c4d91bfc0119e6094a68934b9ca8a622aff66c0552f52668f5ac3e98441', 'hunks': [{'header': '@@ -58,7 +58,7 @@', 'changesMeasuredWorkload': False, 'reason': 'Datomic image identity in the composition-identity projection only (DF01 gateway image); no query, data, writer schedule or threshold change. It changes the expected O-CONTRACT answer of cases that compare the Datomic image digest, and new measurements are needed on the new image (DF01-image-review.json).'}]}]
+SCOPE_SOURCES += ['lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/OCONTRACT-repin-review.json', 'lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/OCONTRACT-oracle-contract.json.diff']
+def checks_pin_OCONTRACT():
+    errors = []
+    runner = ORACLE_RUNNERS.get("O-CONTRACT", {})
+    fresh = o_contract_runner_hashes()
+    if runner.get("sha256") != fresh:
+        errors.append("Q45a: O-CONTRACT runner pin is stale; it must equal the hashes of build_contract.py and the rendered oracle-contract.json")
+    for pin in PIN_STAGE_OCONTRACT:
+        headers = re.findall(r"^@@ .*?@@", (REPO / pin["diff"]).read_text(), flags=re.M)
+        if pin["sha256"] != sha_text(projection_text()) or pin["sha256"] != fresh.get(pin["path"]) or sha_file(pin["diff"]) != pin["diffSha256"] or [h["header"] for h in pin["hunks"]] != headers or any(h["changesMeasuredWorkload"] is not False for h in pin["hunks"]):
+            errors.append("Q45a: O-CONTRACT projection pin, diff or per-hunk workload note drift: " + pin["path"])
+    return errors
+
+
 def main():
     errs = validate()
     errs += checks_040()
     errs += checks_pin_CHECKJS()
     errs += checks_pin_M01()
     errs += checks_pin_QNODELAY()
+    errs += checks_pin_OCONTRACT()
     errs += checks_0311()
     errs += checks_0312()
     errs += checks_0312_round3()
@@ -6513,6 +6539,8 @@ def main():
         "loadContractRef": {"path": "lab/acceptance/load-contract.json", "sha256": sha_text(load_text)},
         "obligations": OBL,
     }
+    if doc["artifacts"]["oracle-contract.json"] != (ORACLE_RUNNERS["O-CONTRACT"].get("sha256") or {}).get("lab/acceptance/oracle-contract.json"):
+        errs.append("Q45a: oracleRunners.O-CONTRACT.sha256 disagrees with artifacts.oracle-contract.json")
     doc["transitiveContractSha256"] = sha_text(json.dumps(doc, sort_keys=True, ensure_ascii=False))
     counts = counts_table()
     acc_text = render_acceptance(doc, cells, counts)

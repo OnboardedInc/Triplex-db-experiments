@@ -25,6 +25,20 @@ tests['Q98 identity-only policy']='FEED_POLICY["identityOnly"] = False'
 tests['Q101 mapping consumers']='POSITION_MAPPING_POLICY["consumers"] = []'
 tests['Q104 bootstrap test']='NO_REGRESSION_POLICY["p99Alternative"] = "any percentile"'
 tests['Q104 insufficient AA']='NO_REGRESSION_POLICY["minAaRounds"] = 1'
+# [CX-A01-040-R2] Why: VERIFY-0.4.0 F1 stale O-CONTRACT runner pin. Each case must be rejected with the runner-pin message, not by an unrelated check.
+# Rejected: replaying only the pre-DF01 hash (a later image assignment after the pin is the actual defect).
+STALE='Q45a: O-CONTRACT runner pin is stale'
+expect={}
+tests['O-CONTRACT stale: image assigned after the pin (the F1 order)']='IMAGE_PINS["datomic"] = {"image": "tx2-datomic:1.0.7745-da00", "imageId": "sha256:" + "1" * 64}'
+tests['O-CONTRACT stale: projection field added after the pin']='LOG_FIELDS["lateField"] = "str"'
+tests['O-CONTRACT stale: runner projection hash tampered']='ORACLE_RUNNERS["O-CONTRACT"]["sha256"]["lab/acceptance/oracle-contract.json"] = "0" * 64'
+tests['O-CONTRACT stale: runner source hash tampered']='ORACLE_RUNNERS["O-CONTRACT"]["sha256"]["lab/acceptance/build_contract.py"] = "0" * 64'
+tests['O-CONTRACT stale: runner map dropped']='ORACLE_RUNNERS["O-CONTRACT"].pop("sha256")'
+for k in list(tests):
+    if k.startswith('O-CONTRACT stale'):expect[k]=STALE
+tests['O-CONTRACT stage: recorded projection hash wrong']='PIN_STAGE_OCONTRACT[0]["sha256"] = "0" * 64'
+tests['O-CONTRACT stage: workload note flipped']='PIN_STAGE_OCONTRACT[0]["hunks"][0]["changesMeasuredWorkload"] = True'
+expect['O-CONTRACT stage: recorded projection hash wrong']=expect['O-CONTRACT stage: workload note flipped']='Q45a: O-CONTRACT projection pin, diff or per-hunk workload note drift'
 mut=G.with_name('_negtest040_tmp.py')
 failed=[]
 try:
@@ -34,7 +48,7 @@ try:
         mut.write_text(candidate)
         result=subprocess.run([sys.executable,'-I','-B',str(mut)],cwd=R,text=True,capture_output=True)
         lines=(result.stdout+result.stderr).strip().splitlines()
-        caught=result.returncode!=0 and bool(lines) and lines[0]=='CONTRACT INVALID:'
+        caught=result.returncode!=0 and bool(lines) and lines[0]=='CONTRACT INVALID:' and expect.get(name,'') in '\n'.join(lines)
         print(('CAUGHT ' if caught else 'MISSED ')+name+': '+(' | '.join(lines[1:3])),flush=True)
         if not caught:failed.append(name)
 finally:
