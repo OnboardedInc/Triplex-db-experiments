@@ -107,3 +107,49 @@ it("uses every accepted row-compatible codec vector and rejects invalid domains"
     }),
   ).toThrow();
 });
+
+// [EXP-DX1] Why: every stored value family must retain the tagged decoder's validation and exact bytes.
+// Rejected: fuzzing only primitive families and assuming blob/JSON metadata follows them.
+it("round trips every value family and preserves decoder rejection", () => {
+  const values = [
+    { type: "string", value: 'quotes"\\\n\u0001😀-0' },
+    { type: "ref", value: "entity:😀" },
+    { type: "integer", value: "-9223372036854775808" },
+    { type: "integer", value: "9223372036854775807" },
+    { type: "boolean", value: false },
+    { type: "boolean", value: true },
+    { type: "datetime", value: -8640000000000000 },
+    { type: "datetime", value: 8640000000000000 },
+    { type: "json", value: { nested: [null, true, "-0", 1.25, { quote: '"\\😀' }] } },
+    {
+      type: "blob",
+      value: "sha256:example",
+      mimeType: "application/octet-stream",
+      size: Number.MAX_SAFE_INTEGER,
+      filename: 'file"\\😀',
+    },
+  ] as const;
+  for (const value of values) {
+    const row = { ...base(), ...packValue(value as Parameters<typeof packValue>[0]) };
+    expect(decodeRowText(encodeRowText(row))).toEqual(decodeRow(encodeRow(row)));
+  }
+  for (const patch of [
+    { value_type: "number", value_number: -0 },
+    { value_type: "string", value_number: null, value_string: "nul\0" },
+    { value_type: "ref", value_number: null, value_string: "" },
+    { value_type: "integer", value_number: null, value_string: "01" },
+    { value_type: "datetime", value_number: null, value_datetime: Infinity },
+    { value_type: "boolean", value_number: null, value_boolean: 2 },
+    { value_type: "json", value_number: null, value_json: "[" },
+    {
+      value_type: "blob",
+      value_number: null,
+      value_string: "blob",
+      value_json: '{"mimeType":"x","size":-1}',
+    },
+  ]) {
+    const row = { ...base(), ...patch } as TripleRow;
+    expect(() => decodeRow(encodeRow(row))).toThrow();
+    expect(() => encodeRowText(row)).toThrow();
+  }
+});

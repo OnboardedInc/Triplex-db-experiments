@@ -82,7 +82,7 @@ No lab/acceptance file or contract pin was edited. The table is a conservative i
 | `packages/datomic/test/client.test.ts` | `86280df65376e2ef857b5d3424d438afae401da790bb811f9549df7a0efcb28e` | `47db8b5ddb6429a71a18b46df9361f85120c27d35d014bb0482fd2e803c4d33d` |
 | `packages/datomic/test/commit-fast.test.ts` | `absent` | `0546d7d5fbfb5140c37eddf05e1be10f91ccb07c40a85411cef5ebfb08918b57` |
 | `packages/datomic/test/reach.test.ts` | `absent` | `eea7ddfc3308fb1e913ddb272293181867c1557124f43da8aeb018f9e0ca1f49` |
-| `packages/datomic/test/rowText.test.ts` | `absent` | `04b5da9f988c01f930852969c897b2fe4b46aca8e56ad5ef88e09b978df9b088` |
+| `packages/datomic/test/rowText.test.ts` | `absent` | `2e7386d159f932880b98c50552cabfa97b08f5632583b2b150ff68734bf0ceb4` |
 | `packages/datomic/test/value-domain.test.ts` | `547d16ce6f3b965ef69e620500affffb693892bfac0eb97983d432917527dc02` | `692aaa17d602710890fac592e1d72062a8d17013dc36dc93beb2d9a2b7489060` |
 
 ## M2 stopped-transactor proof completed
@@ -104,3 +104,42 @@ SQLite, PostgreSQL, Cloudflare, FoundationDB, XTDB and QLever typechecks passed 
 The existing route-equivalence suite generated two raw oracle directories above 5 MB. After their test processes completed, they were moved to durable evidence and every file hash was verified before/after: generated-oracle/seed-29-36dab7ee-8bd4-46bc-9aac-799d81d81641 (6 files, 5,834,805 bytes) and generated-oracle/seed-29-fbc03a39-ce4f-4173-9238-de2cab6dfb4c (6 files, 5,835,153 bytes). generated-oracle-index.json binds original paths, durable paths, byte counts and SHA-256 values. None of the raw oracle output is committed.
 
 M4 driver is complete and queued for the measurement lock. It reuses world.ts/commands.ts and built public packages, uses accounts 22/470 with 15/90 requirements, samples the same roots for both arms, and retains attempt-specific runners, raw arms and commit progress. No M4 numbers are claimed at this checkpoint.
+
+## M4 diagnostic numbers (completed)
+
+One client, dev storage, CPUs 6/7, 200 subjects. The unchanged world generator selected accounts 22 and 470 with 15 and 90 requirements. Both arms used the identical 3,500-root sequence (500 warm-up, 3,000 measured), one fixed valid-time basis and no concurrent writes. Worlds averaged 310.97 rows and 67.62 visited entities. This is smaller than the target's approximately 450-row/95-entity world and is not a qualification at that workload.
+
+| Operation | Samples | p50 ms | p99 ms | HTTP calls/op | CPU ms/pull | Pulls/CPU-second |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Fast reach | 3000 | 5.993 | 15.449 | 1.000 | 1.921 | 520.67 |
+| Fallback reach | 3000 | 17.791 | 41.721 | 6.072 | 9.232 | 108.31 |
+| Benchmark-shaped commit | 500 | 12.921 | 40.605 | 2.000 | — | — |
+
+Commits averaged **276.018 datoms**; every one of the 500 measured commands used exactly two HTTP calls. Fast pulls used exactly one call; the fallback averaged 6.072. The benchmark observed zero declines and zero fast-path faults. Fast pull median latency improved 2.97x and idle-adjusted CPU efficiency improved 4.81x versus fallback.
+
+CPU method requested by the task: container cgroup usage_usec delta minus the separately observed idle CPU rate (fast 17.309 µs/ms, fallback 16.893 µs/ms). The container includes both gateway and transactor JVMs, so this is an idle-adjusted container proxy for gateway CPU, not a per-process profiler. The CPU raw deltas and all per-operation latency/row/entity samples are retained.
+
+**Targets are not met in this diagnostic:** 520.67 pulls/CPU-second is below 1,100; fast pull p50 5.993 ms exceeds 5 ms; commit p50 12.921 ms exceeds 10 ms. Round-trip goals and tested exactness are met; these numbers do not promote the lane or establish P1–P5 readiness.
+
+Evidence: bench.json and bench.log; immutable attempt directory `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-B1/bench-attempts/1794258392355-c623dee3-75bf-4562-90ba-8fb5a6dbd073` contains runner.mjs, fast-raw.json, fallback-raw.json, commits-progress.json and result.json. The run binds head `6c9a5ec5a7f15f182a2c2b27be6f822d5b14b769`, exact generator/gateway/adapter/build hashes and container identity. It completed with exit 0 under the shared measurement lock and heavy wrapper.
+
+### Observation-to-verdict audit (M4)
+
+- bench.mjs requires all measured pulls to return nonempty representative worlds; raw arms bind the generated fresh scope and fixed basis. M1's independent fallback equivalence is the correctness gate; benchmark completion alone is not a semantic PASS.
+- All 500 commit request counts must equal 2; the returned stamp becomes the next command's TripleLive precondition. Each command has a distinct generator command id; datom counts come from actual ACKs, not estimates.
+- Each arm has exactly 3,000 fresh latency observations and one enclosing CPU delta after warm-up; the raw CPU delta and idle subtraction are retained. Source/build/container identities bind the attempt. No historical timing or earlier output is adopted.
+- Added a supplemental row-text unit test over every value family (including boolean, datetime, JSON and blob metadata) and decoder-rejected values. All 3 codec tests passed, including the 10,000-row fuzz; codec-all-families.log. This test-only addition follows the 140/141 full-suite run and does not change the measured runtime.
+
+## Cleanup and what remains
+
+All test/measurement processes completed. The owned container was stopped (observed Running=false, OOMKilled=false, native entrypoint ExitCode=1), then tx2-dxb1-dev and its transient tx2-dxb1-data volume were removed successfully. No other container, volume, Docker context or engine was changed. container-final.json, container.log and cleanup.json retain the exact identity, configuration and observed removal results. Staged gateway, source snapshots, first failures, raw oracle output and all successful diagnostic samples remain in durable evidence. SHA256SUMS is the committed index.
+
+Not done or not verified:
+
+- M5 reach-many was not implemented.
+- The 1,100 CPU-goodput, 5 ms pull and 10 ms commit bars are unmet; further gateway/commit CPU and latency work is required.
+- No production/Postgres-storage measurement, 256-reader/writer coexistence run, 100k sweep, year-one scale run, or growth-of-read-cost-with-history measurement.
+- No acceptance-contract change, scorecard promotion, independent review, package publish, merge, push or deployment.
+- The baseline signed-zero/domain test remains failed; it was not chased or relabeled as passed.
+- Overflow/budget/legacy-version decline branches are implemented but not exhaustively stress-qualified by these small-scenario gates. Header strings over 65,535 UTF-16 code units are rejected rather than truncated.
+- No new image/package/Maven downloads. All dependency installation was offline from the specified store.
