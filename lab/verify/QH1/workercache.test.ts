@@ -17,7 +17,8 @@ const pull = async (log: HostLog, root: string) => {
   const answers: string[][] = [];
   for (let i = 0; i < 8; i++) {
     const answer = await log.wholePull(2048, [root]);
-    answers.push([...h1Rows(wholePullTuples(answer), { validAt: 1000 }).keys()].sort());
+    const w = wholePullTuples(answer);
+    answers.push([...h1Rows(w.tuples, { validAt: 1000 }, w.dict).keys()].sort());
   }
   for (const a of answers) expect(a).toEqual(answers[0]);
   return answers[0]!;
