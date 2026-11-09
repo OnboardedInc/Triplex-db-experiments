@@ -1,3 +1,4 @@
+import { performance } from "node:perf_hooks";
 import { createHash } from "node:crypto";
 import { W0, canonical, worldOf, reachableRows, w0Basis, type PositionBasis } from "./w0-world.ts";
 import type { CompositionHandle } from "./composition.ts";
@@ -31,7 +32,13 @@ export async function readW0Fingerprint(
   basis: PositionBasis,
   signal: AbortSignal,
   observePage?: (records: readonly any[], page: number) => void,
+  deadline = Infinity,
 ): Promise<W0Fingerprint> {
+  const check = () => {
+    signal.throwIfAborted();
+    if (performance.now() >= deadline) throw new FingerprintRefusal("read deadline");
+  };
+  check();
   W0.rung(N);
   await loadW0Pins();
   const worlds = createHash("sha256"),
@@ -41,7 +48,7 @@ export async function readW0Fingerprint(
   let count = 0,
     facts = 0;
   for (let offset = 0; offset < N; offset += 64) {
-    signal.throwIfAborted();
+    check();
     const subjects = Array.from({ length: Math.min(64, N - offset) }, (_, k) =>
       W0.placementId(offset + k),
     );
@@ -56,6 +63,7 @@ export async function readW0Fingerprint(
     }
     const records = [];
     for (const subject of subjects) {
+      check();
       const world = worldOf(subject, reachableRows([subject], page.rows, index));
       const result = W0.sweepSubject(world, W0.R2, w0Basis(basis));
       if ("error" in result) throw new FingerprintRefusal("kernel: " + result.error);
@@ -67,9 +75,12 @@ export async function readW0Fingerprint(
       count++;
       records.push({ subject, world, output: result.output, record: result.record });
     }
+    // [EXP-P5-R2] Why: a CPU-only page may starve a timer signal; yield and also check elapsed monotonic time. Rejected: timer-only Promise.race (can grant after its deadline).
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    check();
     observePage?.(records, offset / 64);
   }
-  signal.throwIfAborted();
+  check();
   if (count !== N) throw new FingerprintRefusal("incomplete coverage");
   worlds.update("]");
   outputs.update("]");
@@ -117,6 +128,7 @@ export async function fingerprintSweep(
     throw new FingerprintRefusal("invalid pre-pinned expectation");
   const controller = new AbortController(),
     signal = input.signal ? AbortSignal.any([controller.signal, input.signal]) : controller.signal;
+  const deadline = performance.now() + ms;
   let timer: ReturnType<typeof setTimeout>;
   let reader: FingerprintReader | undefined;
   const work = async () => {
@@ -135,11 +147,13 @@ export async function fingerprintSweep(
       input.basis,
       signal,
       reader.observePage,
+      deadline,
     );
     await counts();
     for (const k of ["basisTx", "facts", "worlds", "R2"] as const)
       if (observed[k] !== input.expected[k]) throw new FingerprintRefusal("content mismatch: " + k);
     signal.throwIfAborted();
+    if (performance.now() >= deadline) throw new FingerprintRefusal("read deadline");
     // [EXP-P5-R2] Why: only this complete fresh content comparison grants; process/readiness diagnostics are never inputs. Rejected: accepting an old PASS or matching copy hash (Q93a).
     return {
       status: "complete-and-matching" as const,

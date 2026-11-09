@@ -34,6 +34,19 @@ fs.writeFileSync(
 fs.mkdirSync(path.join(dir, "node_modules/@triplex-build"), { recursive: true });
 const link = path.join(dir, "node_modules/@triplex-build/triplex");
 if (!fs.existsSync(link)) fs.symlinkSync(path.resolve("packages/core"), link, "dir");
+const digestFile = (p) => createHash("sha256").update(fs.readFileSync(p)).digest("hex");
+const routeSources = Object.fromEntries(
+  [
+    "lab/bench/test/p5-g6.stacked.ts",
+    "lab/bench/lib/memory.ts",
+    "lab/bench/lib/w0-world.ts",
+    "pnpm-lock.yaml",
+    ...fs
+      .readdirSync("packages/w0/dist")
+      .filter((f) => f.endsWith(".js"))
+      .map((f) => "packages/w0/dist/" + f),
+  ].map((f) => [f, digestFile(f)]),
+);
 const test = spawnSync(
   process.execPath,
   ["--experimental-strip-types", "--test", "lab/bench/test/p5-g6.stacked.ts"],
@@ -43,6 +56,7 @@ const test = spawnSync(
     maxBuffer: 16 << 20,
   },
 );
+const sourceStable = Object.entries(routeSources).every(([f, h]) => digestFile(f) === h);
 fs.writeFileSync(path.join(dir, "test.tap"), test.stdout + test.stderr);
 fs.writeFileSync(
   path.join(dir, "stack.json"),
@@ -50,6 +64,9 @@ fs.writeFileSync(
     {
       head,
       sources,
+      routeSources,
+      sourceStable,
+      node: process.version,
       testSourceSha256: createHash("sha256")
         .update(fs.readFileSync("lab/bench/test/p5-g6.stacked.ts"))
         .digest("hex"),
@@ -73,4 +90,4 @@ fs.writeFileSync(
   ),
 );
 process.stdout.write(test.stdout + test.stderr);
-process.exitCode = test.status ?? 1;
+process.exitCode = sourceStable ? (test.status ?? 1) : 1;
