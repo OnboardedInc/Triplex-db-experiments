@@ -1,0 +1,138 @@
+{
+  "checkedAtEpoch": 1794205523.770208,
+  "testedHead": "549cb5c94644a1dc4b8075d711242cc18f8ae80f",
+  "mergedMain": "6ce5adb1f2228cae24d4bb20b5c681dd954d2c8f",
+  "verdict": "FIX-FIRST",
+  "findings": [
+    "F1: merged broker loses GS12F typed QLever range refusal",
+    "F2: merged broker rejects valid maximum-depth JSON while packing its journal envelope"
+  ],
+  "executions": {
+    "verify-frozen": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/verify-frozen-c248c0c6-95db-4bd3-af3f-4030678bb186",
+      "executionSha256": "2b3d6389a6e953137c67ce83ff9875c145e66cdbaf2bdd5b3fca60fd37cdda87",
+      "logSha256": "82f8f6aa113ad4669892ea67a9b26187b6dba42cba2e6aae70fedbcd5d63870d",
+      "exitCode": 0,
+      "head": "549cb5c94644a1dc4b8075d711242cc18f8ae80f",
+      "startEpoch": 1794205005.223258,
+      "endEpoch": 1794205005.7899399
+    },
+    "contract-tests-frozen": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/contract-tests-frozen-90b8c61d-1d6b-423e-a8e5-90de5db0a8e8",
+      "executionSha256": "5b0722a61882fc24f3e27efaf0240802de82304e205634795da64a62774706a3",
+      "logSha256": "f4a89f06e7d88c68560cb59814f4e58050e199cda816d0e8b3b88edf18e9096a",
+      "exitCode": 0,
+      "head": "549cb5c94644a1dc4b8075d711242cc18f8ae80f",
+      "startEpoch": 1794205020.9338932,
+      "endEpoch": 1794205023.615979
+    },
+    "mutations-frozen": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/mutations-frozen-bbe89922-4a19-4fbb-9943-3cc003855bd7",
+      "executionSha256": "38a01626e4b8a39a385ec6809fbe056005ea6084b9364640befcbdc31ca897d0",
+      "logSha256": "c6444a8e691622d79df2b8be32a1575b1b1b03379ce337aa20a5c0fd0cdc6b60",
+      "exitCode": 0,
+      "head": "549cb5c94644a1dc4b8075d711242cc18f8ae80f",
+      "startEpoch": 1794205196.8915389,
+      "endEpoch": 1794205485.333472
+    },
+    "evaluator": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/evaluator-2db6e7db-4c83-4494-aca6-18cc3a4f683c",
+      "executionSha256": "7f917155956b6a5cecbc55a67c9d76c4d05091b792dab955a123ceb0e668a41e",
+      "logSha256": "4eb747a1be5d345485ce81f8c869bc8575dd8c31b742e8a330c9511baa821291",
+      "exitCode": 0,
+      "head": "549cb5c94644a1dc4b8075d711242cc18f8ae80f",
+      "startEpoch": 1794205012.043067,
+      "endEpoch": 1794205189.3711119
+    },
+    "g0-xtdb": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/g0-xtdb-ad40e899-c8de-4a59-a764-655230e34615",
+      "executionSha256": "b355aaea0b659a9acd73b02e27a35681c4f3c2ce10e6400e693446a62daa46b7",
+      "logSha256": "ecfeaa0f613e30c840750c58d848094024c2d3644975a38b4ba41a84b9d49be5",
+      "exitCode": 0,
+      "head": "549cb5c94644a1dc4b8075d711242cc18f8ae80f",
+      "startEpoch": 1794205012.0431092,
+      "endEpoch": 1794205092.944191,
+      "g0": {
+        "runId": "G0-xtdb-20261109T061652Z-1883ce",
+        "counts": {
+          "executed": 1223,
+          "pass": 1223,
+          "fail": 0,
+          "skip": 140,
+          "expectedSkip": 140,
+          "unexpectedSkip": 0
+        },
+        "slot": null
+      }
+    },
+    "g0-datomic": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/g0-datomic-b7d99f81-663f-4d9b-b137-3db19eb0abe0",
+      "executionSha256": "8550176d28e484a04e46509788c00c6f3399ee418c2b78eb307227e7ad47b75e",
+      "logSha256": "c266bb3a0d5f35214c3fc8afd033c0914b0c72eeb132c5dad0ed7508b21c1cd4",
+      "exitCode": 0,
+      "head": "549cb5c94644a1dc4b8075d711242cc18f8ae80f",
+      "startEpoch": 1794205128.1802619,
+      "endEpoch": 1794205202.616048,
+      "g0": {
+        "runId": "G0-datomic-20261109T061848Z-d271d6",
+        "counts": {
+          "executed": 1258,
+          "pass": 1258,
+          "fail": 0,
+          "skip": 66,
+          "expectedSkip": 66,
+          "unexpectedSkip": 0
+        },
+        "slot": null
+      }
+    },
+    "g0-qlever": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/g0-qlever-d4806d58-1c14-430c-80ff-95f5e2222d71",
+      "executionSha256": "4bfffaf4bc2b07f4d12b153938317345bf02f6f856ff4b57a8740f4e533f4b8e",
+      "logSha256": "93180d0da279d7d2c8d9d1018bc2898bef5bc9410324f923d37a56a4583cf6e8",
+      "exitCode": 0,
+      "head": "549cb5c94644a1dc4b8075d711242cc18f8ae80f",
+      "startEpoch": 1794205270.627051,
+      "endEpoch": 1794205378.884311,
+      "g0": {
+        "runId": "G0-qlever-20261109T062110Z-3322b6",
+        "counts": {
+          "executed": 1396,
+          "pass": 1396,
+          "fail": 0,
+          "skip": 79,
+          "expectedSkip": 79,
+          "unexpectedSkip": 0
+        },
+        "slot": null
+      }
+    },
+    "audit-frozen": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/audit-frozen-14670336-637f-48aa-a1de-3f6471537bfd",
+      "executionSha256": "cd613cfa5bac39e59a0cb1bff15e98c8e8519b07c7a2ffa5a678be527a0036d2",
+      "logSha256": "0e98dea97898cc8ddbbd95fd7eec886a7bb930b366fed6f378ddbdfc0c6531d4",
+      "exitCode": 0,
+      "head": "549cb5c94644a1dc4b8075d711242cc18f8ae80f",
+      "startEpoch": 1794205020.934191,
+      "endEpoch": 1794205029.404522
+    },
+    "value-domain-frozen": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/value-domain-frozen-753d1d96-a3ae-48a1-9b89-da8396f4afb0",
+      "executionSha256": "3084fa3be55f748ee676286d499756a9d3275dfa664a52cb887f936b868b51cb",
+      "logSha256": "87f8205e166aab4af805f9858121f9e94479f05866ca1bdd2c8ac2eddede07b6",
+      "exitCode": 1,
+      "head": "549cb5c94644a1dc4b8075d711242cc18f8ae80f",
+      "startEpoch": 1794205020.932987,
+      "endEpoch": 1794205022.311153
+    },
+    "envelope-probe": {
+      "directory": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VA01-0314/envelope-probe-7f23613b-76a2-49ec-a255-47563cc684da",
+      "executionSha256": "d5d72b7041924a8ac322941c20603fb17ee2d0f8f2aba04edb7a72d72a960dea",
+      "logSha256": "7b379871427ee59cc482b146222137f493710cddb5301fac02aa5493b7c651e1",
+      "exitCode": 1,
+      "head": "549cb5c94644a1dc4b8075d711242cc18f8ae80f",
+      "startEpoch": 1794205324.303993,
+      "endEpoch": 1794205333.522613
+    }
+  }
+}
