@@ -60,12 +60,16 @@ interface SnapshotOperation {
   readonly rawHistory: boolean;
 }
 
+type PolicyRead<F extends SnapshotOperation["run"]> = (...args: Parameters<F>) => Effect.Effect<
+  Effect.Success<ReturnType<F>>, Effect.Error<ReturnType<F>> | ReadError, Effect.Services<ReturnType<F>>
+>;
+
 // [EXP-P2Q] Why: new repository operations must declare their cut and history semantics in the same table as execution.
 // Rejected: a second list of basis selectors (new operations could silently default to the current cut).
 export const constructSnapshotReads = <const T extends Record<string, SnapshotOperation>>(
   operations: T,
   policy: SnapshotReadPolicy,
-): { readonly [K in keyof T]: T[K]["run"] } => {
+): { readonly [K in keyof T]: PolicyRead<T[K]["run"]> } => {
   const dispatch = Object.fromEntries(
     Object.entries(operations).map(([name, operation]) => [
       name,
@@ -78,6 +82,6 @@ export const constructSnapshotReads = <const T extends Record<string, SnapshotOp
     ]),
   );
   return constructReadSurface(dispatch, (operation, args) => operation(...args)) as {
-    readonly [K in keyof T]: T[K]["run"];
+    readonly [K in keyof T]: PolicyRead<T[K]["run"]>;
   };
 };

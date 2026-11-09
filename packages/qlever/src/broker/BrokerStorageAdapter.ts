@@ -654,7 +654,8 @@ export const makeQleverBrokerStorageAdapter = (
     history: { run: (entityId: string) => queryRows({ entityId }, undefined, true), basis: implicit, rawHistory: true },
     dependencyState: { run: dependencyState, basis: explicit, rawHistory: false },
   }, snapshotReadPolicy);
-  reads satisfies Omit<StorageAdapterService,
+  reads satisfies Omit<QleverBrokerStorageAdapterService,
+    "broker" | "routes" | "resolveQueryBasis" | "sourceView" |
     "supportedValueTypes" | "snapshotReadPolicy" | "validateConstraints" | "withTransaction" |
     "nextCommitPosition" | "currentCommitPosition" | "claimCommand" | "insert" | "batchInsert" |
     "retract" | "initialize" | "close">;
