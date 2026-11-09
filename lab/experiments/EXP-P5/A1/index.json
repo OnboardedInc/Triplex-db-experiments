@@ -1,0 +1,62 @@
+{
+  "format": "triplex-db-2/p5-a1-evidence-index/1",
+  "status": "RESOURCE-ABORT-BEFORE-G0",
+  "classification": "DIAGNOSTIC",
+  "acceptance": false,
+  "executedHead": "242ec5462269df6452dbcc64e4904837bf416eb0",
+  "attempt": "99ecde69-bf22-4292-be06-c0f094fca408",
+  "scope": "p5-99ecde69-bf22-4292-be06-c0f094fca408",
+  "slot": "xtdb-s1",
+  "holder": "CX-P5A",
+  "G0": "NOT-RUN",
+  "reason": "Stopped partial seeding for declining host free disk below 5 GiB; no workload/gate failure before resource abort.",
+  "rawReceiptStatus": "RUNNING, preserved unchanged; outer receipt records terminal resource abort",
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-P5A/a1/attempt-01",
+  "files": 55,
+  "bytes": 40301293,
+  "manifestSha256": "12ced3d5eeb121399cc715733d0a310850ecfb5821d67422e23dbdb7d1c5bb7f",
+  "evidence": {
+    "receipt.json": "5cd9bcfe6beec109880f1073d3988a015bcc4a42b362c3f0e9279bc03182c5fb",
+    "resource-abort.json": "8142ae760585143026e45a2352d70d95e2efcfc50c3077cc7ff7f61336d1fd44",
+    "resource-abort-signal.json": "82d294b09df006b3cafa8cc212b0096c8fd871b607ffd0d2b0a45396a476c766",
+    "06-g0.json": "5afba9d29377642cbd7db508b19f62cd8aa59a196f6f2b07b776b357f381a0c4",
+    "end-counts.stdout": "687be2b9832d944133aead253a1cdb9c59bbc3e8f5f89b2af0fc6b2da36dad14",
+    "cleanup-result.json": "2335854e589060e1174b62df28ec4c40cb3a96a56745dc59bdbbef75154c6852",
+    "resident-comparison.json": "fd49541036260a5c73c8d1fc1cc53cd4d33d49941980c9f584878c4a4203bcc4",
+    "driver-retention.json": "20dca96878aab4bc95714e5aeec1246e6e7afda1e8a7d1d3aa15156f7ba03ae5",
+    "source-before.json": "a2865a212e2ec990ca3549dc961a40a4fc5936994253f09a3463648d272792e3",
+    "source-after.json": "ecb7c4fd50ee2e101cb51ae079125bf7736343b9ea856414445df254b20c2f60",
+    "build-preimages.json": "d88d16b1addab923c6b6c63ded29b47af78003c5317e9bb75d8d00470cb4dc05",
+    "build-after-check.json": "fa793daf882d5278aa2d4d305d42a814ff7dd4465280310f33d823037a8a1fad",
+    "driver-output/receipt.json": "e00d13582856d0122d46a3ff5e12bfb61cd5cbf4f7f3309b1ba468fa8349f11c",
+    "driver-output/seed.ndjson": "4a68161e453291affd1eb9856143ae7f639ea504924b12bb9bd52daac12d876b"
+  },
+  "storeCounts": {
+    "start": null,
+    "startReason": "Not retained as an independent engine count query before seeding; blank volume and fresh-scope checks are not a substitute.",
+    "end": {
+      "position": 7482,
+      "assertions": 217807,
+      "retired": 39
+    },
+    "endClass": "post-termination diagnostic; not the start/end pair of a completed 1k run",
+    "rawFile": "end-counts.stdout"
+  },
+  "qualifiedBytesPerFactAt1k": null,
+  "cleanup": {
+    "containerRemoved": true,
+    "volumeRemoved": true,
+    "reservationReleased": true,
+    "slotLockAbsent": true,
+    "residentsUnchanged": true,
+    "file": "cleanup-result.json",
+    "sha256": "2335854e589060e1174b62df28ec4c40cb3a96a56745dc59bdbbef75154c6852"
+  },
+  "changedPinnedPaths": [],
+  "limits": [
+    "No G0 result or K01 count-mismatch reproduction",
+    "Incomplete population and one-position unacknowledged tail",
+    "No full start/end count pair, qualified 1k bytes/fact, per-pipeline-phase CPU or screening",
+    "A new run requires disk capacity and completed native G0 handoff; this evidence grants no admission"
+  ]
+}
