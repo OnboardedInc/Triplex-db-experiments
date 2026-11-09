@@ -1942,3 +1942,8 @@ Where each priority stands, from evidence so far (research probes and baselines;
 ## 2026-11-09: K01 G0 count fix accepted offline
 
 - **verify/K01 12a30d8 ACCEPT-OFFLINE:** the reviewer independently recomputed 61,384 expected rows; 468 tests and both TypeScript checks pass. The K01 live rerun (LIVE-round12) is next in the scale window after P5 A1.
+
+## 2026-11-09: RT01 round 4 (F7 fix) in review; disk housekeeping
+
+- **RT01 472c2c24:** journal reads use all valid time at the committed position cut; 1,096 tests pass; A0 and compact clock regressions pass. CX-VRT01 reviews round 4, including the pack verification the builder deferred for disk.
+- **Disk:** 4.8 GiB free before cleanup, 9.9 GiB after removing five finished worktrees.
