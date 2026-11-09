@@ -1,0 +1,41 @@
+[
+  {
+    "api": "assert",
+    "before": {
+      "callbacks": 0,
+      "claims": 0
+    },
+    "after": {
+      "callbacks": 1,
+      "claims": 0
+    },
+    "typed": false,
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid QLever assertion',\n          cause: TypeError: Sparse JSON arrays are unsupported\n              at go (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:122:36)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:135:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:166:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/QleverStorageAdapter.ts:382:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}"
+  },
+  {
+    "api": "assertBatch",
+    "before": {
+      "callbacks": 1,
+      "claims": 0
+    },
+    "after": {
+      "callbacks": 2,
+      "claims": 0
+    },
+    "typed": false,
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid QLever assertion',\n          cause: TypeError: Sparse JSON arrays are unsupported\n              at go (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:122:36)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:135:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:166:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/QleverStorageAdapter.ts:382:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}"
+  },
+  {
+    "api": "transact",
+    "before": {
+      "callbacks": 2,
+      "claims": 0
+    },
+    "after": {
+      "callbacks": 3,
+      "claims": 1
+    },
+    "typed": false,
+    "exit": "{\n  _id: 'Exit',\n  _tag: 'Failure',\n  cause: {\n    _id: 'Cause',\n    failures: [\n      {\n        _tag: 'Fail',\n        error: {\n          message: 'Invalid QLever assertion',\n          cause: TypeError: Sparse JSON arrays are unsupported\n              at go (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:122:36)\n              at canonicalJson (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:135:10)\n              at packValue (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/rdf.ts:166:7)\n              at try (/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/packages/qlever/src/QleverStorageAdapter.ts:382:16)\n              at PrimitiveImpl.~effect/Effect/args (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:757:22)\n              at PrimitiveImpl.~effect/Effect/evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:707:22)\n              at FiberImpl.runLoop (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:451:97)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:400:23)\n              at AsyncResource.runInAsyncScope (node:async_hooks:214:14)\n              at FiberImpl.evaluate (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-gs12f/node_modules/.pnpm/effect@4.0.3/node_modules/effect/dist/internal/effect.js:394:27),\n          _tag: 'WriteError'\n        }\n      }\n    ]\n  }\n}"
+  }
+]

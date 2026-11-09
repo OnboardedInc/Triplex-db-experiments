@@ -1,0 +1,16 @@
+{
+  "value": {
+    "type": "datetime",
+    "value": 0.5
+  },
+  "admittedByTable": true,
+  "packed": {
+    "value_string": null,
+    "value_number": null,
+    "value_boolean": null,
+    "value_datetime": 0.5,
+    "value_json": null,
+    "value_type": "datetime"
+  },
+  "physicalColumn": "BIGINT"
+}
