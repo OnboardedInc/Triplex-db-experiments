@@ -1,0 +1,314 @@
+{
+  "started": "2026-11-09T00:46:31.697Z",
+  "head": "99d02e8bbe9ff0504a382baacb9d529ac6f898dd",
+  "slot": "offline/no engine; heavy label CX-VRQ01-round2-probe-a3",
+  "before": {
+    "packages/testkit/src/route-equivalence.ts": "713c7e4b5b90b8f1a3d870107dbeee272c001a9331b3e9e247638cdf0cdc8632",
+    "packages/testkit/src/route-coverage.ts": "4af9e2244a6f0e2e9c37717f88238fac9f7eb60b3969a6f7ac0a1754149a7faa",
+    "packages/testkit/src/offline-route-fixtures.ts": "5d66a812b94b15b108046440bfa20034aec4cdb376dab4e8cd3a625286a24691",
+    "packages/testkit/test/route-equivalence.test.ts": "f7e2f7ee0e6f1dd67d51536c61eb8d87f1ec21fbb30e90cbaf0d61bf481ef775",
+    "lab/verify/RQ01/round2/probe.mjs": "6cd9ed0963d1dddaf2b23d10dce5d66aebc65b73123750c2f94b15f97b573933",
+    "lab/verify/RQ01/source-loader.mjs": "768f9dd918dcd32f2c8be71860f79ab966f10b26788df02f34c346c9b0cd8dd7",
+    "lab/verify/RQ01/content-shim.mjs": "113b0d33f80835e501b3db9d61758bcdf44e2b3a3af1ef903002226c81af7f4d",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+  },
+  "results": [
+    {
+      "test": "drop-retraction",
+      "caught": true,
+      "cleanViolations": 0,
+      "violations": 20,
+      "rules": [
+        "HE-1",
+        "HE-2"
+      ]
+    },
+    {
+      "test": "drop-same-ms-tie",
+      "caught": true,
+      "cleanViolations": 0,
+      "violations": 20,
+      "rules": [
+        "HE-1",
+        "HE-2"
+      ]
+    },
+    {
+      "test": "future-old-data",
+      "caught": true,
+      "cleanViolations": 0,
+      "violations": 29,
+      "rules": [
+        "HE-3",
+        "HE-1",
+        "HE-5"
+      ]
+    },
+    {
+      "test": "empty-ineligible",
+      "caught": true,
+      "cleanViolations": 0,
+      "violations": 30,
+      "rules": [
+        "HE-6",
+        "HE-3",
+        "HE-1"
+      ]
+    },
+    {
+      "test": "ignore-correction",
+      "caught": true,
+      "cleanViolations": 0,
+      "violations": 20,
+      "rules": [
+        "HE-1",
+        "HE-2"
+      ]
+    },
+    {
+      "test": "coverage",
+      "seeds": [
+        {
+          "seed": 1,
+          "replacements": 6,
+          "corrections": 3,
+          "nested": [
+            {
+              "callback": "callback:0",
+              "positions": [
+                9216,
+                10241
+              ],
+              "declaredOrdinals": [
+                1,
+                2
+              ],
+              "consecutiveIntegerPositions": false
+            },
+            {
+              "callback": "callback:1",
+              "positions": [
+                25600,
+                26625
+              ],
+              "declaredOrdinals": [
+                1,
+                2
+              ],
+              "consecutiveIntegerPositions": false
+            }
+          ],
+          "shapeCounts": {
+            "L": 1,
+            "V": 25,
+            "P": 88,
+            "T": 40,
+            "TP": 600,
+            "H": 528
+          }
+        },
+        {
+          "seed": 42,
+          "replacements": 6,
+          "corrections": 3,
+          "nested": [
+            {
+              "callback": "callback:0",
+              "positions": [
+                9216,
+                10241
+              ],
+              "declaredOrdinals": [
+                1,
+                2
+              ],
+              "consecutiveIntegerPositions": false
+            },
+            {
+              "callback": "callback:1",
+              "positions": [
+                25600,
+                26625
+              ],
+              "declaredOrdinals": [
+                1,
+                2
+              ],
+              "consecutiveIntegerPositions": false
+            }
+          ],
+          "shapeCounts": {
+            "L": 1,
+            "V": 25,
+            "P": 88,
+            "T": 40,
+            "TP": 600,
+            "H": 528
+          }
+        },
+        {
+          "seed": 890,
+          "replacements": 6,
+          "corrections": 3,
+          "nested": [
+            {
+              "callback": "callback:0",
+              "positions": [
+                9216,
+                10241
+              ],
+              "declaredOrdinals": [
+                1,
+                2
+              ],
+              "consecutiveIntegerPositions": false
+            },
+            {
+              "callback": "callback:1",
+              "positions": [
+                25600,
+                26625
+              ],
+              "declaredOrdinals": [
+                1,
+                2
+              ],
+              "consecutiveIntegerPositions": false
+            }
+          ],
+          "shapeCounts": {
+            "L": 1,
+            "V": 22,
+            "P": 88,
+            "T": 40,
+            "TP": 600,
+            "H": 528
+          }
+        },
+        {
+          "seed": 89,
+          "replacements": 6,
+          "corrections": 3,
+          "nested": [
+            {
+              "callback": "callback:0",
+              "positions": [
+                9216,
+                10241
+              ],
+              "declaredOrdinals": [
+                1,
+                2
+              ],
+              "consecutiveIntegerPositions": false
+            },
+            {
+              "callback": "callback:1",
+              "positions": [
+                25600,
+                26625
+              ],
+              "declaredOrdinals": [
+                1,
+                2
+              ],
+              "consecutiveIntegerPositions": false
+            }
+          ],
+          "shapeCounts": {
+            "L": 1,
+            "V": 23,
+            "P": 88,
+            "T": 40,
+            "TP": 600,
+            "H": 528
+          }
+        },
+        {
+          "seed": 891,
+          "replacements": 6,
+          "corrections": 3,
+          "nested": [
+            {
+              "callback": "callback:0",
+              "positions": [
+                9216,
+                10241
+              ],
+              "declaredOrdinals": [
+                1,
+                2
+              ],
+              "consecutiveIntegerPositions": false
+            },
+            {
+              "callback": "callback:1",
+              "positions": [
+                25600,
+                26625
+              ],
+              "declaredOrdinals": [
+                1,
+                2
+              ],
+              "consecutiveIntegerPositions": false
+            }
+          ],
+          "shapeCounts": {
+            "L": 1,
+            "V": 24,
+            "P": 88,
+            "T": 40,
+            "TP": 600,
+            "H": 528
+          }
+        }
+      ]
+    },
+    {
+      "test": "custom-horizon",
+      "unexpectedlyPassed": true,
+      "missingActualCuts": [
+        45056,
+        45055
+      ]
+    },
+    {
+      "test": "retirement-snapshot",
+      "violations": 0,
+      "observations": 80
+    },
+    {
+      "test": "retirement-raw-lifetime",
+      "violations": 0,
+      "observations": 80
+    },
+    {
+      "test": "empty-and-filtered-empty",
+      "rejected": true,
+      "resets": 0,
+      "reads": 0
+    },
+    {
+      "test": "D-C1-Q89a",
+      "rules": [
+        "HE-5"
+      ],
+      "violations": 30,
+      "positiveWrapperRejected": true
+    }
+  ],
+  "after": {
+    "packages/testkit/src/route-equivalence.ts": "713c7e4b5b90b8f1a3d870107dbeee272c001a9331b3e9e247638cdf0cdc8632",
+    "packages/testkit/src/route-coverage.ts": "4af9e2244a6f0e2e9c37717f88238fac9f7eb60b3969a6f7ac0a1754149a7faa",
+    "packages/testkit/src/offline-route-fixtures.ts": "5d66a812b94b15b108046440bfa20034aec4cdb376dab4e8cd3a625286a24691",
+    "packages/testkit/test/route-equivalence.test.ts": "f7e2f7ee0e6f1dd67d51536c61eb8d87f1ec21fbb30e90cbaf0d61bf481ef775",
+    "lab/verify/RQ01/round2/probe.mjs": "6cd9ed0963d1dddaf2b23d10dce5d66aebc65b73123750c2f94b15f97b573933",
+    "lab/verify/RQ01/source-loader.mjs": "768f9dd918dcd32f2c8be71860f79ab966f10b26788df02f34c346c9b0cd8dd7",
+    "lab/verify/RQ01/content-shim.mjs": "113b0d33f80835e501b3db9d61758bcdf44e2b3a3af1ef903002226c81af7f4d",
+    "pnpm-lock.yaml": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+  },
+  "sourceStillMatches": true,
+  "completed": "2026-11-09T00:47:03.464Z",
+  "probesCompleted": true
+}

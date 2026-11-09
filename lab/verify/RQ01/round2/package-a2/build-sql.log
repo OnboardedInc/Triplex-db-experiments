@@ -1,0 +1,25 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rq01/lab/verify/RQ01/round2/package-a2/workspace/packages/sql/tsdown.config.ts 
+ℹ entry: src/DatabaseManagerLayer.ts, src/DatabaseRegistryLayer.ts, src/SqlQueryExecutor.ts, src/SqlSnapshots.ts, src/StorageBackend.ts, src/index.ts, src/migrations.ts, src/queries.ts, src/schema.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/DatabaseManagerLayer.js       10.20 kB │ gzip: 2.66 kB
+ℹ dist/SqlQueryExecutor.js            8.86 kB │ gzip: 2.38 kB
+ℹ dist/schema.js                      7.07 kB │ gzip: 2.24 kB
+ℹ dist/DatabaseRegistryLayer.js       6.92 kB │ gzip: 1.87 kB
+ℹ dist/migrations.js                  2.07 kB │ gzip: 0.94 kB
+ℹ dist/queries.js                     1.36 kB │ gzip: 0.50 kB
+ℹ dist/index.js                       1.20 kB │ gzip: 0.38 kB
+ℹ dist/SqlSnapshots.js                0.41 kB │ gzip: 0.25 kB
+ℹ dist/StorageBackend.js              0.39 kB │ gzip: 0.26 kB
+ℹ dist/DatabaseManagerLayer.js.map   22.98 kB │ gzip: 5.45 kB
+ℹ dist/SqlQueryExecutor.js.map       20.56 kB │ gzip: 5.45 kB
+ℹ dist/DatabaseRegistryLayer.js.map  14.68 kB │ gzip: 3.53 kB
+ℹ dist/schema.js.map                  8.41 kB │ gzip: 2.44 kB
+ℹ dist/migrations.js.map              3.41 kB │ gzip: 1.41 kB
+ℹ dist/StorageBackend.js.map          3.37 kB │ gzip: 1.11 kB
+ℹ dist/queries.js.map                 2.63 kB │ gzip: 0.86 kB
+ℹ dist/SqlSnapshots.js.map            0.48 kB │ gzip: 0.30 kB
+ℹ 17 files, total: 115.00 kB
+✔ Build complete in 16ms

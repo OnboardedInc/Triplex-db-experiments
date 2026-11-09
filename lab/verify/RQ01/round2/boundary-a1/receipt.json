@@ -1,0 +1,325 @@
+{
+  "started": "2026-11-09T00:45:28.254Z",
+  "completed": "2026-11-09T00:45:42.668Z",
+  "head": "99d02e8bbe9ff0504a382baacb9d529ac6f898dd",
+  "slot": "offline/no engine; CX-VRQ01-round2-boundary-a1",
+  "before": {
+    "packages/testkit/src/route-equivalence.ts": "713c7e4b5b90b8f1a3d870107dbeee272c001a9331b3e9e247638cdf0cdc8632",
+    "packages/testkit/src/route-coverage.ts": "4af9e2244a6f0e2e9c37717f88238fac9f7eb60b3969a6f7ac0a1754149a7faa",
+    "packages/testkit/src/offline-route-fixtures.ts": "5d66a812b94b15b108046440bfa20034aec4cdb376dab4e8cd3a625286a24691",
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rq01/lab/verify/RQ01/round2/boundary.mjs": "86593aeb4f71d9d89bc3ed8071ca5d293c80c5b4552ca00453d07aeb532567b1"
+  },
+  "after": {
+    "packages/testkit/src/route-equivalence.ts": "713c7e4b5b90b8f1a3d870107dbeee272c001a9331b3e9e247638cdf0cdc8632",
+    "packages/testkit/src/route-coverage.ts": "4af9e2244a6f0e2e9c37717f88238fac9f7eb60b3969a6f7ac0a1754149a7faa",
+    "packages/testkit/src/offline-route-fixtures.ts": "5d66a812b94b15b108046440bfa20034aec4cdb376dab4e8cd3a625286a24691",
+    "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rq01/lab/verify/RQ01/round2/boundary.mjs": "86593aeb4f71d9d89bc3ed8071ca5d293c80c5b4552ca00453d07aeb532567b1"
+  },
+  "binding": true,
+  "horizon": 45056,
+  "wrongRouteAcceptedByQualification": true,
+  "qualifiedObservations": 26922,
+  "actualPurge": {
+    "event": "purge",
+    "context": {
+      "horizon": 45056,
+      "pinned": false
+    },
+    "outcome": {
+      "status": "model-applied",
+      "reason": "Offline semantic event only; not engine qualification"
+    }
+  },
+  "cleanCompleteViolations": 0,
+  "caughtViolations": [
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "append"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "append",
+      "detail": "Routes disagree"
+    },
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "append"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "append",
+      "detail": "Routes disagree"
+    },
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "purge-pinned"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "purge-pinned",
+      "detail": "Routes disagree"
+    },
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "purge-pinned"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "purge-pinned",
+      "detail": "Routes disagree"
+    },
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "purge"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "purge",
+      "detail": "Routes disagree"
+    },
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "purge"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "purge",
+      "detail": "Routes disagree"
+    },
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "evict-overlay"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "evict-overlay",
+      "detail": "Routes disagree"
+    },
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "evict-overlay"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "evict-overlay",
+      "detail": "Routes disagree"
+    },
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "catch-up"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "catch-up",
+      "detail": "Routes disagree"
+    },
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "catch-up"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "catch-up",
+      "detail": "Routes disagree"
+    },
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "cold-cache"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45056
+        }
+      },
+      "phase": "cold-cache",
+      "detail": "Routes disagree"
+    },
+    {
+      "rule": "HE-1",
+      "detail": "Answer differs from offline replay",
+      "route": "X1-all-valid-time",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "cold-cache"
+    },
+    {
+      "rule": "HE-2",
+      "route": "*",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 45055
+        }
+      },
+      "phase": "cold-cache",
+      "detail": "Routes disagree"
+    }
+  ],
+  "sourceStable": true
+}

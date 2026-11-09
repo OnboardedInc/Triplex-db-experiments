@@ -1,0 +1,28 @@
+Package verification artifacts retained at /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rq01/lab/verify/RQ01/round2/package-a2/root-artifacts/triplex-pack-08JkHx
+node:internal/errors:983
+  const err = new Error(message);
+              ^
+
+Error: Command failed: pnpm --filter @triplex-build/triplex-sql pack --pack-destination /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rq01/lab/verify/RQ01/round2/package-a2/root-artifacts/triplex-pack-08JkHx/tarballs
+    at genericNodeError (node:internal/errors:983:15)
+    at wrappedFn (node:internal/errors:537:14)
+    at checkExecSyncError (node:child_process:916:11)
+    at execFileSync (node:child_process:952:15)
+    at run (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rq01/scripts/check-packages.mjs:53:3)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rq01/scripts/check-packages.mjs:57:5
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    ' ERR_PNPM_CANNOT_RESOLVE_WORKSPACE_PROTOCOL  Cannot resolve workspace protocol of dependency "@triplex-build/triplex" because this dependency is not installed. Try running "pnpm install".\n',
+    ''
+  ],
+  pid: 87159,
+  stdout: ' ERR_PNPM_CANNOT_RESOLVE_WORKSPACE_PROTOCOL  Cannot resolve workspace protocol of dependency "@triplex-build/triplex" because this dependency is not installed. Try running "pnpm install".\n',
+  stderr: ''
+}
+
+Node.js v22.23.2

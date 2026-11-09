@@ -1,0 +1,24 @@
+ℹ tsdown v0.21.7 powered by rolldown v1.0.0-rc.12
+ℹ config file: /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rq01/lab/verify/RQ01/round2/package-a1/workspace/packages/testkit/tsdown.config.ts 
+ℹ entry: src/index.ts, src/offline-route-fixtures.ts, src/route-coverage.ts, src/route-equivalence.ts
+ℹ target: esnext
+ℹ tsconfig: tsconfig.json
+ℹ Build start
+ℹ dist/index.js                          88.22 kB │ gzip: 16.41 kB
+ℹ dist/route-equivalence.js              16.80 kB │ gzip:  5.14 kB
+ℹ dist/route-coverage.js                  7.55 kB │ gzip:  2.28 kB
+ℹ dist/offline-route-fixtures.js          4.53 kB │ gzip:  1.81 kB
+ℹ dist/index.js.map                     157.45 kB │ gzip: 27.49 kB
+ℹ dist/route-equivalence.js.map          37.41 kB │ gzip: 10.39 kB
+ℹ dist/route-coverage.js.map             14.78 kB │ gzip:  4.24 kB
+ℹ dist/offline-route-fixtures.js.map      8.11 kB │ gzip:  3.01 kB
+ℹ dist/route-equivalence.d.ts.map         3.27 kB │ gzip:  0.93 kB
+ℹ dist/index.d.ts.map                     0.83 kB │ gzip:  0.34 kB
+ℹ dist/route-coverage.d.ts.map            0.27 kB │ gzip:  0.17 kB
+ℹ dist/offline-route-fixtures.d.ts.map    0.21 kB │ gzip:  0.17 kB
+ℹ dist/route-equivalence.d.ts             6.89 kB │ gzip:  1.97 kB
+ℹ dist/index.d.ts                         3.67 kB │ gzip:  1.16 kB
+ℹ dist/route-coverage.d.ts                3.16 kB │ gzip:  0.74 kB
+ℹ dist/offline-route-fixtures.d.ts        1.21 kB │ gzip:  0.63 kB
+ℹ 16 files, total: 354.35 kB
+✔ Build complete in 1172ms

@@ -1,0 +1,593 @@
+{
+  "actualEvent": {
+    "event": "purge",
+    "context": {
+      "horizon": 45056,
+      "pinned": false
+    },
+    "outcome": {
+      "status": "model-applied",
+      "reason": "Independent in-memory event; no engine assertion"
+    }
+  },
+  "missingActualCuts": [
+    45056,
+    45055
+  ],
+  "observedShapes": {
+    "requiredShapes": [
+      "L",
+      "V",
+      "P",
+      "T",
+      "TP",
+      "H"
+    ],
+    "minimumPerShape": 1,
+    "shapes": {
+      "L": 1,
+      "V": 25,
+      "P": 88,
+      "T": 40,
+      "TP": 600,
+      "H": 528
+    }
+  },
+  "observations": 25640,
+  "violations": [],
+  "defaultManifest": {
+    "seed": 42,
+    "commits": 40,
+    "kinds": {
+      "singleAssert": 18,
+      "groupAssert": 3,
+      "singleRetract": 9,
+      "groupRetract": 3,
+      "manyThenRetract": 6,
+      "replacement": 6,
+      "selfRetraction": 3,
+      "boundedCorrection": 3,
+      "futureValid": 3,
+      "nestedOrdinal": 2,
+      "claimsOnly": 2,
+      "positionOnly": 2,
+      "casAbort": 2,
+      "stageInversion": 2,
+      "sameMillisecond": 18,
+      "clockRollback": 4
+    },
+    "cuts": {
+      "everyPosition": true,
+      "nestedReceipts": true,
+      "abortGaps": true,
+      "pinnedHorizon": true,
+      "unpinnedHorizon": true,
+      "everyRecordBoundary": true,
+      "everyValidBoundary": true,
+      "omittedValidAt": true,
+      "now": true,
+      "futurePosition": true,
+      "futureRecordTime": true,
+      "earlierTThanP": true,
+      "laterTThanP": true,
+      "entityHistoryAtEveryPosition": true
+    },
+    "shapes": {
+      "L": 1,
+      "V": 25,
+      "P": 88,
+      "T": 40,
+      "TP": 600,
+      "H": 528
+    },
+    "missing": [],
+    "receiptIdentities": [
+      {
+        "attemptId": "attempt:0",
+        "position": 1024,
+        "instant": 1000
+      },
+      {
+        "attemptId": "attempt:1",
+        "position": 2048,
+        "instant": 1000
+      },
+      {
+        "attemptId": "attempt:2",
+        "position": 3072,
+        "instant": 1001
+      },
+      {
+        "attemptId": "attempt:3",
+        "position": 4096,
+        "instant": 1001
+      },
+      {
+        "attemptId": "attempt:4",
+        "position": 5120,
+        "instant": 1002
+      },
+      {
+        "attemptId": "attempt:5",
+        "position": 6144,
+        "instant": 1002
+      },
+      {
+        "attemptId": "attempt:6",
+        "position": 7168,
+        "instant": 1003
+      },
+      {
+        "attemptId": "attempt:7",
+        "position": 8192,
+        "instant": 1003
+      },
+      {
+        "attemptId": "attempt:8",
+        "position": 9216,
+        "instant": 1004
+      },
+      {
+        "attemptId": "attempt:9",
+        "position": 10241,
+        "instant": 1004
+      },
+      {
+        "attemptId": "attempt:10",
+        "position": 11264,
+        "instant": 1005
+      },
+      {
+        "attemptId": "attempt:11",
+        "position": 12288,
+        "instant": 1005
+      },
+      {
+        "attemptId": "attempt:12",
+        "position": 13312,
+        "instant": 1006
+      },
+      {
+        "attemptId": "attempt:13",
+        "position": 14336,
+        "instant": 1006
+      },
+      {
+        "attemptId": "attempt:14",
+        "position": 15360,
+        "instant": 1005
+      },
+      {
+        "attemptId": "attempt:15",
+        "position": 16384,
+        "instant": 1004
+      },
+      {
+        "attemptId": "attempt:16",
+        "position": 17408,
+        "instant": 1008
+      },
+      {
+        "attemptId": "attempt:17",
+        "position": 18432,
+        "instant": 1008
+      },
+      {
+        "attemptId": "attempt:18",
+        "position": 19456,
+        "instant": 1009
+      },
+      {
+        "attemptId": "attempt:19",
+        "position": 20480,
+        "instant": 1009
+      },
+      {
+        "attemptId": "attempt:20",
+        "position": 21504,
+        "instant": 1010
+      },
+      {
+        "attemptId": "attempt:21",
+        "position": 22528,
+        "instant": 1010
+      },
+      {
+        "attemptId": "attempt:22",
+        "position": 23552,
+        "instant": 1011
+      },
+      {
+        "attemptId": "attempt:23",
+        "position": 24576,
+        "instant": 1011
+      },
+      {
+        "attemptId": "attempt:24",
+        "position": 25600,
+        "instant": 1012
+      },
+      {
+        "attemptId": "attempt:25",
+        "position": 26625,
+        "instant": 1012
+      },
+      {
+        "attemptId": "attempt:26",
+        "position": 27648,
+        "instant": 1013
+      },
+      {
+        "attemptId": "attempt:27",
+        "position": 28672,
+        "instant": 1013
+      },
+      {
+        "attemptId": "attempt:28",
+        "position": 29696,
+        "instant": 1014
+      },
+      {
+        "attemptId": "attempt:29",
+        "position": 30720,
+        "instant": 1014
+      },
+      {
+        "attemptId": "attempt:30",
+        "position": 31744,
+        "instant": 1013
+      },
+      {
+        "attemptId": "attempt:31",
+        "position": 32768,
+        "instant": 1012
+      },
+      {
+        "attemptId": "attempt:32",
+        "position": 33792,
+        "instant": 1016
+      },
+      {
+        "attemptId": "attempt:33",
+        "position": 34816,
+        "instant": 1016
+      },
+      {
+        "attemptId": "attempt:34",
+        "position": 35840,
+        "instant": 1017
+      },
+      {
+        "attemptId": "attempt:35",
+        "position": 36864,
+        "instant": 1017
+      },
+      {
+        "attemptId": "attempt:36",
+        "position": 37888,
+        "instant": 1018
+      },
+      {
+        "attemptId": "attempt:37",
+        "position": 38912,
+        "instant": 1018
+      },
+      {
+        "attemptId": "attempt:38",
+        "position": 39936,
+        "instant": 1019
+      },
+      {
+        "attemptId": "attempt:39",
+        "position": 40960,
+        "instant": 1019
+      }
+    ],
+    "stagingClock": [
+      {
+        "attemptId": "attempt:0",
+        "stagedOrder": 0,
+        "instant": 1000
+      },
+      {
+        "attemptId": "attempt:1",
+        "stagedOrder": 1,
+        "instant": 1000
+      },
+      {
+        "attemptId": "attempt:2",
+        "stagedOrder": 2,
+        "instant": 1001
+      },
+      {
+        "attemptId": "attempt:3",
+        "stagedOrder": 3,
+        "instant": 1001
+      },
+      {
+        "attemptId": "attempt:4",
+        "stagedOrder": 4,
+        "instant": 1002
+      },
+      {
+        "attemptId": "attempt:5",
+        "stagedOrder": 5,
+        "instant": 1002
+      },
+      {
+        "attemptId": "attempt:6",
+        "stagedOrder": 6,
+        "instant": 1003
+      },
+      {
+        "attemptId": "attempt:7",
+        "stagedOrder": 7,
+        "instant": 1003
+      },
+      {
+        "attemptId": "attempt:8",
+        "stagedOrder": 8,
+        "instant": 1004
+      },
+      {
+        "attemptId": "attempt:9",
+        "stagedOrder": 9,
+        "instant": 1004
+      },
+      {
+        "attemptId": "attempt:10",
+        "stagedOrder": 10,
+        "instant": 1005
+      },
+      {
+        "attemptId": "attempt:11",
+        "stagedOrder": 11,
+        "instant": 1005
+      },
+      {
+        "attemptId": "abort:12",
+        "stagedOrder": 11.5,
+        "instant": 1006
+      },
+      {
+        "attemptId": "attempt:12",
+        "stagedOrder": 12,
+        "instant": 1006
+      },
+      {
+        "attemptId": "attempt:14",
+        "stagedOrder": 13,
+        "instant": 1005
+      },
+      {
+        "attemptId": "attempt:13",
+        "stagedOrder": 14,
+        "instant": 1006
+      },
+      {
+        "attemptId": "attempt:15",
+        "stagedOrder": 15,
+        "instant": 1004
+      },
+      {
+        "attemptId": "attempt:16",
+        "stagedOrder": 16,
+        "instant": 1008
+      },
+      {
+        "attemptId": "attempt:17",
+        "stagedOrder": 17,
+        "instant": 1008
+      },
+      {
+        "attemptId": "attempt:18",
+        "stagedOrder": 18,
+        "instant": 1009
+      },
+      {
+        "attemptId": "attempt:19",
+        "stagedOrder": 19,
+        "instant": 1009
+      },
+      {
+        "attemptId": "attempt:20",
+        "stagedOrder": 20,
+        "instant": 1010
+      },
+      {
+        "attemptId": "attempt:21",
+        "stagedOrder": 21,
+        "instant": 1010
+      },
+      {
+        "attemptId": "attempt:22",
+        "stagedOrder": 22,
+        "instant": 1011
+      },
+      {
+        "attemptId": "attempt:23",
+        "stagedOrder": 23,
+        "instant": 1011
+      },
+      {
+        "attemptId": "attempt:24",
+        "stagedOrder": 24,
+        "instant": 1012
+      },
+      {
+        "attemptId": "attempt:25",
+        "stagedOrder": 25,
+        "instant": 1012
+      },
+      {
+        "attemptId": "attempt:26",
+        "stagedOrder": 26,
+        "instant": 1013
+      },
+      {
+        "attemptId": "attempt:27",
+        "stagedOrder": 27,
+        "instant": 1013
+      },
+      {
+        "attemptId": "abort:28",
+        "stagedOrder": 27.5,
+        "instant": 1014
+      },
+      {
+        "attemptId": "attempt:28",
+        "stagedOrder": 28,
+        "instant": 1014
+      },
+      {
+        "attemptId": "attempt:30",
+        "stagedOrder": 29,
+        "instant": 1013
+      },
+      {
+        "attemptId": "attempt:29",
+        "stagedOrder": 30,
+        "instant": 1014
+      },
+      {
+        "attemptId": "attempt:31",
+        "stagedOrder": 31,
+        "instant": 1012
+      },
+      {
+        "attemptId": "attempt:32",
+        "stagedOrder": 32,
+        "instant": 1016
+      },
+      {
+        "attemptId": "attempt:33",
+        "stagedOrder": 33,
+        "instant": 1016
+      },
+      {
+        "attemptId": "attempt:34",
+        "stagedOrder": 34,
+        "instant": 1017
+      },
+      {
+        "attemptId": "attempt:35",
+        "stagedOrder": 35,
+        "instant": 1017
+      },
+      {
+        "attemptId": "attempt:36",
+        "stagedOrder": 36,
+        "instant": 1018
+      },
+      {
+        "attemptId": "attempt:37",
+        "stagedOrder": 37,
+        "instant": 1018
+      },
+      {
+        "attemptId": "attempt:38",
+        "stagedOrder": 38,
+        "instant": 1019
+      },
+      {
+        "attemptId": "attempt:39",
+        "stagedOrder": 39,
+        "instant": 1019
+      }
+    ],
+    "abortedAttempts": [
+      {
+        "id": "abort:12",
+        "status": "aborted",
+        "reason": "CAS-conflict",
+        "writes": [
+          {
+            "op": "assert",
+            "row": {
+              "id": "aborted:12",
+              "entity_id": "subject:2",
+              "attribute": ":route/value",
+              "value_type": "string",
+              "value_string": "must-not-appear",
+              "value_number": null,
+              "value_boolean": null,
+              "value_datetime": null,
+              "value_json": null,
+              "recorded_at": 0,
+              "recorded_position": 0,
+              "valid_from": 0,
+              "valid_to": null,
+              "created_by": "route-fixture",
+              "retracted_at": null,
+              "retracted_position": null,
+              "retract_tx_id": null,
+              "entity_type": "RouteSubject",
+              "schema_version": 1,
+              "tx_id": "tx:aborted:12"
+            }
+          }
+        ],
+        "conflict": {
+          "id": "row:2",
+          "expected": "live",
+          "observed": "retracted"
+        },
+        "position": 12416,
+        "stagedAt": 1006,
+        "stagedOrder": 11.5,
+        "decidedOrder": 11.5
+      },
+      {
+        "id": "abort:28",
+        "status": "aborted",
+        "reason": "CAS-conflict",
+        "writes": [
+          {
+            "op": "assert",
+            "row": {
+              "id": "aborted:28",
+              "entity_id": "subject:1",
+              "attribute": ":route/value",
+              "value_type": "string",
+              "value_string": "must-not-appear",
+              "value_number": null,
+              "value_boolean": null,
+              "value_datetime": null,
+              "value_json": null,
+              "recorded_at": 0,
+              "recorded_position": 0,
+              "valid_from": 0,
+              "valid_to": null,
+              "created_by": "route-fixture",
+              "retracted_at": null,
+              "retracted_position": null,
+              "retract_tx_id": null,
+              "entity_type": "RouteSubject",
+              "schema_version": 1,
+              "tx_id": "tx:aborted:28"
+            }
+          }
+        ],
+        "conflict": {
+          "id": "row:18",
+          "expected": "live",
+          "observed": "retracted"
+        },
+        "position": 28800,
+        "stagedAt": 1014,
+        "stagedOrder": 27.5,
+        "decidedOrder": 27.5
+      }
+    ],
+    "retentionHorizons": [
+      21504,
+      43008
+    ],
+    "pendingEngineEvents": [
+      "index-job",
+      "flush",
+      "compaction"
+    ],
+    "complete": true
+  }
+}

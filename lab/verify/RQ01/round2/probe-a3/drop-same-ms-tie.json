@@ -1,0 +1,947 @@
+{
+  "clean": {
+    "seed": 89001,
+    "lane": "CX-VRQ01-independent-model",
+    "reference": "offline-fold-not-independent",
+    "observations": [
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "initial",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "initial",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "append",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "append",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge-pinned",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge-pinned",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "evict-overlay",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "evict-overlay",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "catch-up",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "catch-up",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "cold-cache",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "cold-cache",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "index-job",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "index-job",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "flush",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "flush",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "compaction",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "compaction",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      }
+    ],
+    "coverage": {
+      "requiredShapes": [
+        "T"
+      ],
+      "minimumPerShape": 1,
+      "shapes": {
+        "L": 0,
+        "V": 0,
+        "P": 0,
+        "T": 1,
+        "TP": 0,
+        "H": 0
+      }
+    },
+    "events": [
+      {
+        "event": "purge-pinned",
+        "context": {
+          "horizon": 2048,
+          "pinned": true
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "purge",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "evict-overlay",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "catch-up",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "cold-cache",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "index-job",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "flush",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "compaction",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      }
+    ],
+    "violations": []
+  },
+  "broken": {
+    "seed": 89001,
+    "lane": "CX-VRQ01-independent-model",
+    "reference": "offline-fold-not-independent",
+    "observations": [
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "initial",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "initial",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:5f123e190bdf36b049f0f90a308ea5cd45fa27e5b0d726902c3757d8303865eb:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "append",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "append",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:5f123e190bdf36b049f0f90a308ea5cd45fa27e5b0d726902c3757d8303865eb:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge-pinned",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge-pinned",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:5f123e190bdf36b049f0f90a308ea5cd45fa27e5b0d726902c3757d8303865eb:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:5f123e190bdf36b049f0f90a308ea5cd45fa27e5b0d726902c3757d8303865eb:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "evict-overlay",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "evict-overlay",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:5f123e190bdf36b049f0f90a308ea5cd45fa27e5b0d726902c3757d8303865eb:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "catch-up",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "catch-up",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:5f123e190bdf36b049f0f90a308ea5cd45fa27e5b0d726902c3757d8303865eb:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "cold-cache",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "cold-cache",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:5f123e190bdf36b049f0f90a308ea5cd45fa27e5b0d726902c3757d8303865eb:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "index-job",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "index-job",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:5f123e190bdf36b049f0f90a308ea5cd45fa27e5b0d726902c3757d8303865eb:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "flush",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "flush",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:5f123e190bdf36b049f0f90a308ea5cd45fa27e5b0d726902c3757d8303865eb:count:1"
+      },
+      {
+        "route": "control",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "compaction",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:89feb719a63af967443306ad4dda33026056df0bc261e55b56a65987af13a484:count:2"
+      },
+      {
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "compaction",
+        "contract": "snapshot",
+        "outcome": "answer:sha256:5f123e190bdf36b049f0f90a308ea5cd45fa27e5b0d726902c3757d8303865eb:count:1"
+      }
+    ],
+    "coverage": {
+      "requiredShapes": [
+        "T"
+      ],
+      "minimumPerShape": 1,
+      "shapes": {
+        "L": 0,
+        "V": 0,
+        "P": 0,
+        "T": 1,
+        "TP": 0,
+        "H": 0
+      }
+    },
+    "events": [
+      {
+        "event": "purge-pinned",
+        "context": {
+          "horizon": 2048,
+          "pinned": true
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "purge",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "evict-overlay",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "catch-up",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "cold-cache",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "index-job",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "flush",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      },
+      {
+        "event": "compaction",
+        "context": {
+          "horizon": 4096,
+          "pinned": false
+        },
+        "outcome": {
+          "status": "model-applied",
+          "reason": "Independent in-memory event; no engine assertion"
+        }
+      }
+    ],
+    "violations": [
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "initial"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "initial",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "append"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "append",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge-pinned"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge-pinned",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "purge",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "evict-overlay"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "evict-overlay",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "catch-up"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "catch-up",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "cold-cache"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "cold-cache",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "index-job"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "index-job",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "flush"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "flush",
+        "detail": "Routes disagree"
+      },
+      {
+        "rule": "HE-1",
+        "detail": "Answer differs from offline replay",
+        "route": "injected",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "compaction"
+      },
+      {
+        "rule": "HE-2",
+        "route": "*",
+        "request": {
+          "basis": {
+            "validAt": 2000,
+            "recordedAt": 1000
+          }
+        },
+        "phase": "compaction",
+        "detail": "Routes disagree"
+      }
+    ]
+  }
+}

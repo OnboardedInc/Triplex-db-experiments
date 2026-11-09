@@ -1,0 +1,958 @@
+{
+  "seed": 89001,
+  "lane": "qlever-offline-model",
+  "reference": "offline-fold-not-independent",
+  "observations": [
+    {
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "initial",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+    },
+    {
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "initial",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+    },
+    {
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "initial",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+    },
+    {
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "initial",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+    },
+    {
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "initial",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945:count:0"
+    },
+    {
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "append",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "append",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "append",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "append",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "append",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "catch-up",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "catch-up",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "catch-up",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "catch-up",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "catch-up",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    },
+    {
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "snapshot",
+      "outcome": "answer:sha256:882ace33bd892c76598f45ee8d6efcfc42c6a4db4077275a35017fb6fb0009fd:count:1"
+    }
+  ],
+  "coverage": {
+    "requiredShapes": [
+      "T"
+    ],
+    "minimumPerShape": 1,
+    "shapes": {
+      "L": 0,
+      "V": 0,
+      "P": 0,
+      "T": 1,
+      "TP": 0,
+      "H": 0
+    }
+  },
+  "events": [
+    {
+      "event": "purge-pinned",
+      "context": {
+        "horizon": 1024,
+        "pinned": true
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Offline semantic event only; not engine qualification"
+      }
+    },
+    {
+      "event": "purge",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Offline semantic event only; not engine qualification"
+      }
+    },
+    {
+      "event": "evict-overlay",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Offline semantic event only; not engine qualification"
+      }
+    },
+    {
+      "event": "catch-up",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Offline semantic event only; not engine qualification"
+      }
+    },
+    {
+      "event": "cold-cache",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Offline semantic event only; not engine qualification"
+      }
+    },
+    {
+      "event": "index-job",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "pending",
+        "reason": "Requires live engine qualification"
+      }
+    },
+    {
+      "event": "flush",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "pending",
+        "reason": "Requires live engine qualification"
+      }
+    },
+    {
+      "event": "compaction",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "pending",
+        "reason": "Requires live engine qualification"
+      }
+    }
+  ],
+  "violations": [
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "append"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "append"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "append"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "append"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "append"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge-pinned"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge-pinned"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge-pinned"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge-pinned"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge-pinned"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "purge"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "evict-overlay"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "evict-overlay"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "evict-overlay"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "evict-overlay"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "evict-overlay"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "catch-up"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "catch-up"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "catch-up"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "catch-up"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "catch-up"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q1-replica",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "cold-cache"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q2-overlay",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "cold-cache"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q3-source-after-eviction",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "cold-cache"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-outage-source",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "cold-cache"
+    },
+    {
+      "rule": "HE-5",
+      "detail": "Identical pinned request changed after maintenance/commit",
+      "route": "Q5-h1-disabled",
+      "request": {
+        "entityId": "X",
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1001
+        }
+      },
+      "phase": "cold-cache"
+    }
+  ]
+}

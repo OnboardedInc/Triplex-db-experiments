@@ -1,0 +1,1095 @@
+{
+  "seed": 89001,
+  "lane": "CX-VRQ01-independent-model",
+  "reference": "offline-fold-not-independent",
+  "observations": [
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "initial",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:2b34770624b1fa652ed9bcdbb945f8c9a6d8a51d42e34c38f4b14f0133da0ef5:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "append",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge-pinned",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "purge",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "purge",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "purge",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "evict-overlay",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "catch-up",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "cold-cache",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "index-job",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "index-job",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "index-job",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "index-job",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "index-job",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "index-job",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "index-job",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "index-job",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "flush",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "flush",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "flush",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "flush",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "flush",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "flush",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "flush",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "flush",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "compaction",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "compaction",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "compaction",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000
+        }
+      },
+      "phase": "compaction",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "compaction",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "basis": {
+          "validAt": 2000,
+          "recordedAt": 1000,
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "compaction",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "control",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "compaction",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    },
+    {
+      "route": "injected",
+      "request": {
+        "history": true,
+        "basis": {
+          "recordedPosition": 1024
+        }
+      },
+      "phase": "compaction",
+      "contract": "raw-lifetime",
+      "outcome": "answer:sha256:7efa1aebbd46e0b21022a2076fc2b84149de8d794b664a6fd344a97c99b9cbcb:count:1"
+    }
+  ],
+  "coverage": {
+    "requiredShapes": [
+      "P",
+      "T",
+      "TP",
+      "H"
+    ],
+    "minimumPerShape": 1,
+    "shapes": {
+      "L": 0,
+      "V": 0,
+      "P": 1,
+      "T": 1,
+      "TP": 1,
+      "H": 1
+    }
+  },
+  "events": [
+    {
+      "event": "purge-pinned",
+      "context": {
+        "horizon": 1024,
+        "pinned": true
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Independent in-memory event; no engine assertion"
+      }
+    },
+    {
+      "event": "purge",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Independent in-memory event; no engine assertion"
+      }
+    },
+    {
+      "event": "evict-overlay",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Independent in-memory event; no engine assertion"
+      }
+    },
+    {
+      "event": "catch-up",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Independent in-memory event; no engine assertion"
+      }
+    },
+    {
+      "event": "cold-cache",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Independent in-memory event; no engine assertion"
+      }
+    },
+    {
+      "event": "index-job",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Independent in-memory event; no engine assertion"
+      }
+    },
+    {
+      "event": "flush",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Independent in-memory event; no engine assertion"
+      }
+    },
+    {
+      "event": "compaction",
+      "context": {
+        "horizon": 2048,
+        "pinned": false
+      },
+      "outcome": {
+        "status": "model-applied",
+        "reason": "Independent in-memory event; no engine assertion"
+      }
+    }
+  ],
+  "violations": []
+}

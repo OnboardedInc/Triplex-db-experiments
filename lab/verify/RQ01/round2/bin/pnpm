@@ -1,0 +1,4 @@
+#!/bin/sh
+# [EXP-RQ01-QA2] Why: pin the project store and prevent registry access during the original package controller.
+# Rejected: global pnpm settings or an unbounded online consumer install.
+exec /opt/homebrew/bin/pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store --config.offline=true "$@"
