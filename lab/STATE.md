@@ -319,3 +319,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   feed excludes journal facts) pending. **HS01 round 3** (after the running round 2) builds Q107a and must derive both the current and
   RT01's v2 change formats. **DF01 round 4** (Sonnet, running) fixes the lane D feed emitting journal facts; contract 0.4.0's next round
   picks it up. **Q107-S waits for Sam:** stop storing :_tx/change and :_tx/changed-entity as queryable triples on every lane (R47 option A).
+- 2026-11-09 P2B ACCEPT-OFFLINE (verify/P2B 986e11d1; exp/P2B-xtdb-behind-broker e9f0014b): duplicates gated on publication, bounded reader
+  snapshots (WAL bounded with typed refusal and recovery). Joins contract 0.4.0's next round together with HS01 (after its round 2/3) and
+  CRNS. P2 latency is measured next in the VM through G03's NS runner with the R48 sync witness (Q108b: ACK >= D).
