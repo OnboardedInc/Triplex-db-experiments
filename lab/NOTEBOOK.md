@@ -2315,3 +2315,6 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **2026-11-09 OBS01 round 11 lesson:** a proof that counts the evidence it recognizes is not a proof that nothing else is there. The
   clock check now accounts for every call site in one complete section against an allow-list, and takes helper ids from the kernel it
   runs on rather than from memory.
+- **2026-11-09 OBS01 rounds 9-12 lesson:** four review rounds hardened a parser for an output format nobody had observed, against an
+  adversary who cannot write that output. The threat model decides which checks gate. Here the producer is lab-trusted, so the gate is
+  the pinned source and toolchain; the parser waits for a real golden dump.

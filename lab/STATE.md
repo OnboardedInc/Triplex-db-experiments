@@ -425,3 +425,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   DependencyIndex.prepare (DependencyIndex.ts:186, row later than the reported basis). State unchanged on refusal. Round 3 (same Sonnet
   builder) adds a tagged refusal at a public package boundary. G03 round 7c builder is waiting on its own suites, then finishes
   (rule 10 fix in exclusive.mjs, report, evidence).
+- 2026-11-09 OBS01 round 12 review FIX-FIRST (CX-VOBS7, 2741ea3b): three more Class A parser gaps (unparsed forbidden call outside a
+  section, truncated section accepted after an early exit, ambiguous BTF ids). Orchestrator decision (pending Q109a): stop hardening the
+  dump parser against adversarial dumps the candidate cannot produce; the clock step gates on the source check, pinned hash and version,
+  and a forbidden-name scan; the structured parser is diagnostic until a real W0 golden exists. Round 13 (Sonnet) implements this and
+  fixes the BTF strictness.
