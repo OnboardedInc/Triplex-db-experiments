@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { performance } from "node:perf_hooks";
 import { Worker } from "node:worker_threads";
 import type { CompositionHandle } from "./composition.ts";
 import { canonical, sha256, W0, type PositionBasis } from "./w0-world.ts";
@@ -186,7 +187,9 @@ export async function runW0Sweep(o: SweepOptions) {
           if (epoch !== undefined && page.epoch !== epoch)
             throw new Error("G7 epoch changed; resume requires fresh read");
           epoch = page.epoch;
+          const resultAt = performance.timeOrigin + performance.now();
           const records = JSON.parse(new TextDecoder().decode(page.bytes));
+          const parsedAt = performance.timeOrigin + performance.now();
           if (
             canonical(records.map((r: any) => r.subject)) !== canonical(subjects) ||
             records.some(
@@ -198,7 +201,9 @@ export async function runW0Sweep(o: SweepOptions) {
           )
             throw new Error("G4/G7 worker coverage or basis mismatch");
           await o.beforePublish?.();
+          const pubStart = performance.timeOrigin + performance.now();
           await o.onPage(records, pageIndex);
+          const pubEnd = performance.timeOrigin + performance.now();
           // [EXP-P5] Why: only an ACKed publication advances the cursor. Rejected: advancing at evaluation (drops results on process stop).
           published.push(pageIndex);
           published.sort((a, b) => a - b);
@@ -213,6 +218,8 @@ export async function runW0Sweep(o: SweepOptions) {
             elu: page.elu,
             position: page.position,
             epoch: page.epoch,
+            // [EXP-P5N] Why: per-page timeline (absolute ms) for the step 1 baseline: worker start, read end, kernel end, encode end, result received, parsed, publish start and end.
+            tl: { ...page.tl, resultAt, parsedAt, pubStart, pubEnd },
           });
           completed++;
         }

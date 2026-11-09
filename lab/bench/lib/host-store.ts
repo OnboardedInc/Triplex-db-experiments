@@ -185,9 +185,12 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
     position: map.reference(r.position),
     positionBinding: map.binding,
   });
+  // [EXP-P5N] Why: step 1 splits the harness's own work inside each commit (core transact, readback, map append) from the broker's commit. Rejected: inferring it from the residual.
+  const hstats = { transacts: 0, coreMs: 0, readbackMs: 0, mapAppendMs: 0, verifyMs: 0 };
   async function verifyGroup(
     items: readonly { operations: any[]; meta: any; receipt: any; reference: number }[],
   ) {
+    const tv0 = performance.now();
     const ids = items.flatMap((x) => [
       ...x.receipt.triples.map((t: any) => t.id),
       ...x.operations.filter((o) => o.op === "retract").map((o) => o.id),
@@ -196,6 +199,7 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
       byId = new Map(rows.map((r) => [r.id, r]));
     const claims = await broker.readbackClaims(items.map((x) => x.meta.commandId));
     const byClaim = new Map(claims.map((c) => [c.command, c]));
+    hstats.readbackMs += performance.now() - tv0;
     const bound = [];
     for (const item of items) {
       const r = item.receipt,
@@ -225,12 +229,15 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
           txId: row.retract_tx_id,
         };
       });
+      const tm = performance.now();
       const binding = map.append(item.reference, native, submitted, {
         rows: observed,
         claim: byClaim.get(item.meta.commandId),
       });
+      hstats.mapAppendMs += performance.now() - tm;
       bound.push({ ...item, receipt: { ...receipt(r), positionBinding: binding } });
     }
+    hstats.verifyMs += performance.now() - tv0;
     return bound;
   }
   const counts = async () => {
@@ -350,7 +357,10 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
         try {
           if (typeof meta.commandId !== "string" || !meta.commandId.length)
             throw Error("mapped host commands require commandId");
+          const tc = performance.now();
           const r: any = await managed.runPromise(T.transact(operations, meta));
+          hstats.coreMs += performance.now() - tc;
+          hstats.transacts++;
           const bound = (
             await verifyGroup([
               { operations: [...operations], meta, receipt: r, reference: map.size + 1 },
@@ -629,6 +639,7 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
     comp,
     broker,
     map,
+    hstats,
     livePage,
     seed,
     get seeded() {

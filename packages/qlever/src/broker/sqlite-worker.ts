@@ -146,35 +146,57 @@ const prepare=a=>{
  const c={intern,hid:k=>intern('hds',k,63),name:(t,id)=>pendingNames.get(t+':'+id)??name(t,id),tx:pos=>transactions.get(pos)??readCodec.tx(pos),row:id=>inputRows.get(id)??storedRow(id)};
  return {additions,transactions,rows:a.members.map(member=>member.rows.map(r=>({r,s:encodeRow(r,c)})))};
 };
+// [EXP-P5N] Why: R1 step 1 must split an activation commit (prepare, BEGIN wait, frame, member, fact rows, journal rows, marker, COMMIT plus fsync) without changing behavior.
+// Rejected: sampling a profiler (cannot separate the journal rows from the fact rows). The per-append list is capped so a long run cannot grow it without bound.
+const appendStats={appends:0,prepareMs:0,beginMs:0,frameMs:0,dictMs:0,memberMs:0,factRows:0,factMs:0,journalRows:0,journalMs:0,markerMs:0,commitMs:0,totalMs:0,per:[]};
+const takeAppendStats=reset=>{const out=JSON.parse(JSON.stringify(appendStats));if(reset){for(const k of Object.keys(appendStats))appendStats[k]=k==='per'?[]:0;}return out;};
 const append = a => {
  try {
+ const tStart=performance.now();
  const prepared=prepare(a);
+ const tPrepared=performance.now();
+ let tIn=0,tFnEnd=0,frameMs=0,dictMs=0,memberMs=0,factRows=0,factMs=0,journalRows=0,journalMs=0,markerMs=0;
  // [EXP-SQL01] Why: acquire the writer lock before the marker read; maintenance may concurrently RESTART.
  // Rejected: deferred read-to-write upgrade (SQLITE_BUSY can bypass busy_timeout and fail-stop commits).
  const result=db.transaction(()=>{
+  tIn=performance.now();
   const m=marker(); if(a.lsn!==m.lsn+1 || a.prev!==m.crc)throw Error('Append chain mismatch');
+  const tF0=performance.now();
   q('INSERT INTO frames VALUES(?,?,?,?,?,?,?,?,?)').run(a.lsn,a.epoch,a.kind,m.size,m.size+a.length,a.prev,a.crc,Buffer.from(a.payload),Date.now());
   if(a.kind===2){const e=JSON.parse(Buffer.from(a.payload).toString());q('INSERT INTO epochs VALUES(?,?,?,?)').run(e.epoch,a.lsn,e.previousEpoch,JSON.stringify(e.abortedLsns));}
+  const tF1=performance.now();frameMs+=tF1-tF0;
   for(const [t,id,v]of prepared.additions)q('INSERT OR IGNORE INTO '+t+' VALUES(?,?)').run(id,textKey(v));
   for(const [pos,tx]of prepared.transactions)q('INSERT OR IGNORE INTO txs VALUES(?,?,?)').run(pos,tx.tx,tx.at);
+  dictMs+=performance.now()-tF1;
   let position=m.position,mi=0;
   for(const member of a.members) {
+   const tM0=performance.now();
    const last=member.positions[member.positions.length-1];position=Math.max(position,last);
    q('INSERT INTO operations VALUES(?,?)').run(member.operationId,JSON.stringify({lsn:a.lsn,epoch:a.epoch,positions:member.positions}));
    // [EXP-P5B-R2] Why: each nested command claim must resolve its own receipt position. Rejected: binding every claim to the group's final ordinal (the member's last ordinal).
    for(const c of member.claims){const own=member.rows.find(r=>r.tx_id===c.txId);q('INSERT INTO claims VALUES(?,?,?)').run(c.commandId,c.txId,own?.recorded_position??last);}
    for(const s of member.subjects)q('INSERT INTO heads VALUES(?,?) ON CONFLICT(subject) DO UPDATE SET pos=excluded.pos').run(s,last);
+   memberMs+=performance.now()-tM0;
    for(const {r,s} of prepared.rows[mi++]) {
-    const retired=r.retracted_position!=null,t=retired?'history':isJournalRow(r)?'journal':'facts';
+    const tR=performance.now();
+    const retired=r.retracted_position!=null,journal=isJournalRow(r),t=retired?'history':journal?'journal':'facts';
     // [EXP-HS01] Why: preserve one latest version per id, including journal retirements. Rejected: a second recent_rows copy.
     for(const other of ['facts','history','journal'])q('DELETE FROM '+other+' WHERE id=?').run(s.id);
     const keys=['e',...(retired?['rpos']:[]),'id','a','pos','t','v','vf','vto','c','y','sv','x'];
     q('INSERT INTO '+t+'('+keys.join(',')+') VALUES('+keys.map(()=>'?').join(',')+')').run(...keys.map(k=>s[k]));
+    if(journal){journalRows++;journalMs+=performance.now()-tR;}else{factRows++;factMs+=performance.now()-tR;}
    }
   }
+  const tK=performance.now();
   q('UPDATE marker SET lsn=?,epoch=?,position=?,crc=?,size=? WHERE id=1').run(a.lsn,a.epoch,position,a.crc,m.size+a.length);
+  markerMs=performance.now()-tK;
+  tFnEnd=performance.now();
   return {lsn:a.lsn,epoch:a.epoch,kind:a.kind,offset:m.size,end:m.size+a.length,crc:a.crc,payload:Buffer.from(a.payload)};
  }).immediate();
+ const tEnd=performance.now();
+ {const s=appendStats,beginMs=tIn-tPrepared,commitMs=tEnd-tFnEnd;
+  s.appends++;s.prepareMs+=tPrepared-tStart;s.beginMs+=beginMs;s.frameMs+=frameMs;s.dictMs+=dictMs;s.memberMs+=memberMs;s.factRows+=factRows;s.factMs+=factMs;s.journalRows+=journalRows;s.journalMs+=journalMs;s.markerMs+=markerMs;s.commitMs+=commitMs;s.totalMs+=tEnd-tStart;
+  if(s.per.length<20000)s.per.push([a.lsn,tPrepared-tStart,beginMs,frameMs+dictMs,memberMs,factRows,factMs,journalRows,journalMs,markerMs,commitMs,tEnd-tStart]);}
  // [EXP-HS01] Why: publish writer dictionary cache only after SQLite commits. Rejected: keeping provisional ids from failed transactions.
  for(const [t,id,v]of prepared.additions)writerIds.set(t+':'+JSON.stringify(v),id);
  // [EXP-SQL01] Why: ACK only signals maintenance; it never waits for readers or runs a checkpoint.
@@ -208,6 +230,7 @@ const handle = (op,a) => {
  }
  if(op==='init')return {marker:marker(),calibrationMs};
  if(op==='append')return append(a);
+ if(op==='appendStats')return takeAppendStats(a);
  if(op==='ack'){
   const m=marker();if(a.lsn!==m.lsn||a.epoch!==m.epoch||a.position!==m.position)throw Error('Publication marker mismatch');
   const b=Buffer.alloc(32);b.writeBigUInt64LE(BigInt(m.lsn),0);b.writeBigUInt64LE(BigInt(m.epoch),8);b.writeBigUInt64LE(BigInt(m.position),16);b.writeUInt32LE(m.crc,24);b.writeUInt32LE(crc32(b.subarray(0,28)),28);

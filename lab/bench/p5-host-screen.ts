@@ -62,7 +62,10 @@ const sourceFiles = [
   "lab/bench/lib/sweep-worker.ts",
   "lab/bench/lib/w0-traffic.ts",
   "lab/bench/lib/w0-outbox.ts",
+  "lab/bench/lib/w0-world.ts",
+  "lab/bench/lib/position-map.ts",
   "lab/bench/lib/evaluate.ts",
+  "lab/experiments/EXP-P5N/PREDICTIONS.json",
   "packages/qlever/dist/broker/log.js",
   "packages/qlever/dist/broker/sqlite-worker.js",
   "packages/w0/dist/index.js",
@@ -74,7 +77,11 @@ const free = () => {
   return s.bavail * s.bsize;
 };
 const report: any = {
-  format: "EXP-P5B-round3-B1/1",
+  format: "EXP-P5N-round1-B1/1",
+  tag: opt("tag", ""),
+  predictionsSha256: sha256(fs.readFileSync("lab/experiments/EXP-P5N/PREDICTIONS.json")),
+  git: spawnSync("git", ["rev-parse", "HEAD"]).stdout.toString().trim(),
+  gitDirty: spawnSync("git", ["status", "--short", "--", "lab/bench", "packages"]).stdout.toString().trim().length > 0,
   attempt: randomUUID(),
   startedAt: new Date().toISOString(),
   classification: "DIAGNOSTIC",
@@ -185,6 +192,10 @@ async function activationArm(name: string, W: number) {
         }
       },
     } as typeof comp;
+    // [EXP-P5N] Why: step 1 baseline. Reset the writer's time split and read the harness counters at the sweep start so the activation commit and the sweep are measured alone.
+    await h.broker.appendStats(true);
+    const hs0 = { ...h.hstats },
+      elu0 = performance.eventLoopUtilization();
     const walTimer = setInterval(() => (walMax = Math.max(walMax, walBytes(dst))), 100);
     const started = performance.now();
     const sweep = await runW0Sweep({
@@ -213,6 +224,9 @@ async function activationArm(name: string, W: number) {
       },
     });
     const wallMs = performance.now() - started;
+    const eluMain = performance.eventLoopUtilization(elu0).utilization;
+    const writerSplit: any = await h.broker.appendStats(false);
+    const hostSplit = Object.fromEntries(Object.entries(h.hstats).map(([k, v]) => [k, (v as number) - (hs0 as any)[k]]));
     clearInterval(walTimer);
     if (coverage.size !== N || !sweep.complete) throw Error("G4 incomplete coverage");
     const rssGrowth = process.memoryUsage().rss - rss0;
@@ -237,7 +251,35 @@ async function activationArm(name: string, W: number) {
       sum = (f: (x: any) => number) => m.reduce((a: number, x: any) => a + f(x), 0),
       tx = m.map((x: any) => x.store.transactionMs as number).sort((a: number, b: number) => a - b);
     const endCounts = await comp.storeCounts();
+    const per: number[][] = writerSplit.per,
+      col = (i: number) => per.map((x) => x[i]!).sort((a, b) => a - b),
+      pct = (xs: number[], q: number) => xs[Math.min(xs.length - 1, Math.ceil(xs.length * q) - 1)]!,
+      sumW = (k: string) => writerSplit[k] as number;
+    const unattributedS =
+      (wallMs - m.reduce((a: number, x: any) => a + x.store.transactionMs, 0) -
+        sum((x) => x.cpu.decode) * 1000 - sum((x) => x.cpu.kernel) * 1000 - sum((x) => x.cpu.read) * 1000 - publishMs) / 1000;
+    const timeline = m.map((x: any) => ({ page: x.page, ...x.tl }));
+    fs.writeFileSync(path.join(outDir, `timeline-${name}.json`), JSON.stringify(timeline));
     return {
+      instrument: {
+        // Per-commit time split from the writer thread (ms, summed over the sweep's commits) and per-commit percentiles. Columns of `per`: lsn, prepare, beginWait, frame+dict, member, factRows, factMs, journalRows, journalMs, marker, commit(COMMIT+fsync), total.
+        writer: {
+          appends: writerSplit.appends,
+          sumMs: Object.fromEntries(["prepareMs", "beginMs", "frameMs", "dictMs", "memberMs", "factMs", "journalMs", "markerMs", "commitMs", "totalMs"].map((k) => [k, sumW(k)])),
+          rows: { fact: writerSplit.factRows, journal: writerSplit.journalRows, journalPerCommit: writerSplit.journalRows / writerSplit.appends, factPerCommit: writerSplit.factRows / writerSplit.appends },
+          perCommitMs: Object.fromEntries(
+            [["prepare", 1], ["beginWait", 2], ["frameDict", 3], ["member", 4], ["factRows", 6], ["journalRows", 8], ["marker", 9], ["commitFsync", 10], ["total", 11]].map(([k, i]) => [k, { p50: pct(col(i as number), 0.5), p99: pct(col(i as number), 0.99), max: pct(col(i as number), 1), mean: col(i as number).reduce((a, b) => a + b, 0) / per.length }]),
+          ),
+          journalShareOfWriterTotal: sumW("journalMs") / sumW("totalMs"),
+          journalShareOfWall: sumW("journalMs") / wallMs,
+          perCommitJournalRows: [...new Set(per.map((x) => x[7]))],
+        },
+        host: { ...hostSplit, perCommitMs: Object.fromEntries(Object.entries(hostSplit).map(([k, v]) => [k, (v as number) / writerSplit.appends])) },
+        eluMainThread: eluMain,
+        unattributedS,
+        parseMsTotal: m.reduce((a: number, x: any) => a + (x.tl.parsedAt - x.tl.resultAt), 0),
+        timelineFile: `timeline-${name}.json`,
+      },
       name,
       workers: W,
       N,

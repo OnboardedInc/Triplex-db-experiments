@@ -521,6 +521,11 @@ export class HostLog {
   readback(ids: readonly string[]) {
     return this.pool[0]!.request<TripleRow[]>("readback", ids);
   }
+  // [EXP-P5N] Why: expose the writer's per-commit time split (prepare, BEGIN wait, frame, fact rows, journal rows, COMMIT plus fsync) to the bench; diagnostic only.
+  // Rejected: a profiler (cannot separate journal rows from fact rows).
+  appendStats(reset = false) {
+    return this.writer.request<Record<string, any>>("appendStats", reset);
+  }
   readbackClaims(ids: readonly string[]) {
     return this.pool[0]!.request<{ command: string; txId: string; position: number }[]>(
       "readbackClaims",

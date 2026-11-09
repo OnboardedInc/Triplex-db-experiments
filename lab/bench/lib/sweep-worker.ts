@@ -21,6 +21,8 @@ port.on("message", async (msg) => {
     const start = performance.eventLoopUtilization();
     const cpu = () => (process as any).threadCpuUsage?.() ?? process.cpuUsage();
     const diff = (a: any, b: any) => (b.user - a.user + b.system - a.system) / 1e6;
+    const abs = () => performance.timeOrigin + performance.now();
+    const tl: any = { start: abs() };
     let c = cpu();
     const page = comp
       ? await comp.sweepPage(msg.subjects, msg.basis)
@@ -30,6 +32,7 @@ port.on("message", async (msg) => {
         });
     if (page.error) throw new Error(page.error);
     const readCpu = diff(c, cpu());
+    tl.readEnd = abs();
     let decodeCpu = 0,
       kernelCpu = 0;
     const result: any[] = [];
@@ -49,7 +52,9 @@ port.on("message", async (msg) => {
       if ("error" in r) throw new Error(subject + ": " + r.error);
       result.push({ subject, world, output: r.output, record: r.record });
     }
+    tl.kernelEnd = abs();
     const bytes = new TextEncoder().encode(canonical(result));
+    tl.encodeEnd = abs();
     port.postMessage(
       {
         type: "result",
@@ -61,6 +66,7 @@ port.on("message", async (msg) => {
         store: page.store,
         cpuScope: (process as any).threadCpuUsage ? "thread" : "process-overlapping",
         elu: performance.eventLoopUtilization(start),
+        tl,
       },
       [bytes.buffer],
     );
