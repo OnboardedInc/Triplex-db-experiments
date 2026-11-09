@@ -130,6 +130,7 @@ async function main() {
     execFileSync("docker", ["--host", "unix:///Users/sam/.colima/triplex2/docker.sock", ...args], {
       encoding: "utf8",
       maxBuffer: 16 * 1024 ** 2,
+      timeout: 30000,
     });
   const names = ["pg", "tx", "gw-w", "gw-r"].map((r) => `${prefix}-${r}`);
   const cpu = () =>
@@ -207,6 +208,7 @@ async function main() {
     fs.writeFileSync(`${root}/bench-latest.json`, JSON.stringify({ dir }));
   };
   const raw = (label, data) => fs.writeFileSync(`${dir}/${label}-raw.json`, JSON.stringify(data));
+  save();
   try {
     report.head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
     const paths = [
@@ -614,25 +616,30 @@ async function main() {
           let pending = 0,
             maxQueue = 0;
           const readerRun = readers ? runReaders(readers, 60000) : null;
+          // [DX-B2-N4] Why: timers may round down; never offer before the intended Poisson instant.
+          // Rejected: measuring a request that was released up to one millisecond early.
           const jobs = arrivals.map(
             ({ at, subject }) =>
-              new Promise((resolve, reject) =>
-                setTimeout(
-                  () => {
-                    pending++;
-                    maxQueue = Math.max(maxQueue, pending - 1);
-                    const work = (chains.get(subject) ?? Promise.resolve()).then(() =>
-                      commitOne(subject, start + at),
-                    );
-                    chains.set(
-                      subject,
-                      work.catch(() => {}),
-                    );
-                    work.then(resolve, reject).finally(() => pending--);
-                  },
-                  Math.max(0, start + at - performance.now()),
-                ),
-              ),
+              new Promise((resolve, reject) => {
+                const offer = () => {
+                  const remaining = start + at - performance.now();
+                  if (remaining > 0) {
+                    setTimeout(offer, Math.max(1, Math.ceil(remaining)));
+                    return;
+                  }
+                  pending++;
+                  maxQueue = Math.max(maxQueue, pending - 1);
+                  const work = (chains.get(subject) ?? Promise.resolve()).then(() =>
+                    commitOne(subject, start + at),
+                  );
+                  chains.set(
+                    subject,
+                    work.catch(() => {}),
+                  );
+                  work.then(resolve, reject).finally(() => pending--);
+                };
+                setTimeout(offer, Math.max(0, Math.ceil(start + at - performance.now())));
+              }),
           );
           const observations = await Promise.all(jobs);
           await sleep(Math.max(0, start + 60000 - performance.now()));
