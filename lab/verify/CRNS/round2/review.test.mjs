@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { canonText, nsP5Traffic } from '../../../bin/claim.mjs';
 import { run, sealed } from '../fixture.mjs';
-import { regressions, fixture, positiveP5, traffic, firstSecondOnly, sweepPlan, h } from './fixtures.mjs';
+import { regressions, fixture, positiveP5, traffic, firstSecondOnly, sweepPlan, h, trafficCalibration } from './fixtures.mjs';
 
 for (const [id, make, mutate, code] of regressions) test(`CX-VCRNS-R2-${id}: refusal is content-specific after a valid control`, () => {
   const f = make();
@@ -40,7 +40,7 @@ test('CX-VCRNS-R2-C02: full P5 live interval meets the arithmetic control', () =
 
 test('CX-VCRNS-R2-C03: missing 99 seconds is detected when the full interval is used', () => {
   const s = traffic(); firstSecondOnly(s.sweep); s.sweep.endNs = sweepPlan.endNs;
-  const r = nsP5Traffic(s, sweepPlan, () => h('correct'), [], calibration(1,'P5',{traceSegment:'frozen-traffic',offerScheduleSha256:h('frozen-traffic-schedule')}));
+  const r = nsP5Traffic(s, sweepPlan, () => h('correct'), [], trafficCalibration());
   assert.equal(r.met, false);
   assert.equal(r.reason, 'READER-LEVEL-MISMATCH');
 });
@@ -48,7 +48,7 @@ test('CX-VCRNS-R2-C03: missing 99 seconds is detected when the full interval is 
 test('CX-VCRNS-R2-C04: fully empty P5 live read/writer streams cannot meet the floor', () => {
   for (const field of ['reads', 'offers', 'readers']) {
     const s = traffic(); s.sweep[field] = [];
-    assert.equal(nsP5Traffic(s, sweepPlan, () => h('correct'), [], calibration(1,'P5',{traceSegment:'frozen-traffic',offerScheduleSha256:h('frozen-traffic-schedule')})).met, false, field);
+    assert.equal(nsP5Traffic(s, sweepPlan, () => h('correct'), [], trafficCalibration()).met, false, field);
   }
 });
 

@@ -243,7 +243,7 @@ Codex input: `verify/CRNS` `0d298c89`, VERIFY-round2.md (R01–R06 fixed, N01 st
 
 | Re-review finding | Fix | Required regression |
 | --- | --- | --- |
-| Codex N01, P5 missing 99 seconds | Denominator is the full verified sweep; exact interval, pinned 1-second sampling, each period has 64 correct readers and writers | copied round2 N01/C02/C03 controls; new round3 N01 includes a missing final second and missing writer period |
+| Codex N01, P5 missing 99 seconds | Denominator is the full verified sweep; exact interval, pinned 1-second sampling, each period has 64 correct readers and writer offers match the frozen full-sweep schedule | copied round2 N01/C02/C03 controls; new round3 N01 includes a missing final second and missing writer period |
 | High 1 / V-O6: garbage readers count as P3/P2 load | Always oracle-check every counted main read and echoed basis for all priority sets | required V-O6; new NF1 |
 | High 2 / V-O7: crashes before traffic/unrelated resume range | Unique planned injection/time; crash inside traffic; before-U <= crash < recovery-L; decoded point snapshot and exact WAL/source range | required V-O7; NF2 time/id/bracket/snapshot variants |
 | High 3 / V-O2b: source published before offer | Refuse PUBLISHED-BEFORE-OFFER against the first attempt; no queue clamp for pre-applied commands | required V-O2b; NF3 |
@@ -295,7 +295,7 @@ current tests, not its former stale fixture copy. Its original pre-edit form is 
 5. `nsCalibration`, P4 history calibration and P5 traffic: actual content-addressed prior raw samples match expected authority
    binding and GREEN record. Current workloads/phases/sample subjects match; current baselines cannot inflate past that budget.
    Records are trusted prior authority inputs, explicitly distinct from fresh run measurements; they are never relabelled fresh.
-   Current timing/counts remain from this attempt. P5's full interval and all reader/writer sampling periods are checked.
+   Current timing/counts remain from this attempt. P5's full interval, every reader sampling period and exact planned writer schedule are checked.
 6. Test fixture and assertion sites: expected trace/identity/content/schedule/calibration objects are authored independently of
    judged source/rows. The separate crash trace has its own events and scoped witnesses; context snapshots retain no shared mutable
    pin objects. Every forgery test is required and the five named older tests assert their exact code. Fresh test output is builder
@@ -319,3 +319,23 @@ old exact source; it is not claimed as verification of these added bytes. The 14
 suites will be rerun after this source is committed.
 
 Final round 3 evaluator hash after the checkpoint follow-up: `fb9af98bc6b96888f1e64206cf9315dfac419893986b23dfea9a7512d26560d9` (old pre-round-3 hash `0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892`). No acceptance pins were edited.
+
+
+Additional interpretation limits: PUBLISHED-BEFORE-OFFER deliberately uses the review's conservative L < first-send refusal.
+A legitimate publication bracket straddling the offer can therefore be refused as insufficient timing proof; this is not a claim
+that L alone proves an early actual publication. Observer/driver planning must provide usable brackets, or the amended ruling
+must specify a stronger independent publication proof. Calibration records must be registry/authority-pinned prior inputs;
+self-hashing a record supplied by a candidate does not make it trusted. Pure helpers cannot establish that provenance by themselves.
+R44 now carries an explicitly proposed round 3 amendment note; acceptance files remain untouched.
+
+
+Frozen-writer-schedule reconciliation, audited before the final source commit: TARGETS section 2.1 specifies Poisson arrivals,
+so valid empty writer seconds must not be rejected. P5 now matches actual writer offers against the independently pinned complete
+relative-offset schedule in its calibration/plan record, rather than requiring a write in every second. Reader evidence still
+covers every one-second sampling period throughout the verified sweep. The new N01 control includes 98 empty writer periods,
+passes when its two planned offers are present, and refuses P5-WRITER-COVERAGE-SHORT after one is removed. This is content checked
+against an immutable prior input pin under the same run binding; it introduces no writer throughput target. The run at 1b9fefbd
+passed 256/256 (exit 0, final-attempt2.tap) before this correction; those bytes are not claimed as the final new source. The
+149-test focused suite passes; fresh source-bound final verification follows after commit.
+
+Final scheduled-writer correction hash: `lab/bin/claim.mjs`, old pre-round-3 `0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892`, new `e689373eff850daf511b95423c9b88f545979595b4445abcad7d6a52de178c46`. Acceptance remains unchanged.

@@ -207,8 +207,10 @@ absolute bar. Absolute guards and ratios remain alongside this check; no numeric
 
 P5 during-sweep start/end equal the complete evaluator-verified sweep start/end. Its calibration record pins samplingPeriodNs;
 the supported E8 representation is one-second periods. Every period of the whole sweep must contain measured 64-loop correct
-completions **and** writer offers. Missing even one period refuses; a self-selected one-second segment cannot stand for a
-100-second sweep. Baseline remains outside the sweep and must match the independently pinned calibration/workload.
+completions. Writer offers must exactly cover the independently frozen full-sweep schedule in the authority record
+(`payload.sweepOfferOffsetsNs`, relative to sweep start), including legitimate empty Poisson periods. There is no invented
+one-write-per-second minimum. Missing a reader period or a planned writer offer refuses; a self-selected one-second segment
+cannot stand for a 100-second sweep. Baseline remains outside the sweep and must match the independently pinned calibration/workload.
 
 Crash checkpoint consistency also requires maximality: no later source position may have a consumer bracket U <= crash time
 than the declared before-crash checkpoint. The crash lies between observed reader activity on both sides, and writer offers on

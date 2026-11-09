@@ -67,3 +67,12 @@ test('NF2 crash checkpoint is latest visible and lies within actual reader/write
  const f=fixture();mutantCrash(f,e=>{const f=e.faults[1];f.beforeTransaction=0;f.checkpointOffset='1';f.replay=e.consumer.transactions.slice(1,3).flatMap(t=>t.deliveries);const s=JSON.parse(Buffer.from(f.snapshotHex,'hex').toString());s.checkpoint='1';f.snapshotHex=Buffer.from(canonText(s)).toString('hex');});let c=f.trusted.crashRun;let r=recomputeNS(c.bundle,c.trusted);assert.ok(r.reasons.some(x=>x.code==='FAULT-WITNESS-INVALID'&&/stale/.test(x.detail)),canonText(r));
  const g=fixture();mutantCrash(g,e=>{e.reads=e.reads.filter(r=>!r.readId.endsWith('-tail'));});c=g.trusted.crashRun;r=recomputeNS(c.bundle,c.trusted);assert.ok(r.reasons.some(x=>x.code==='FAULT-WITNESS-INVALID'&&/active reader/.test(x.detail)),canonText(r));
 });
+
+test('N01 writer coverage follows the frozen Poisson schedule, including legitimate empty periods',()=>{
+ const f=positiveP5(),s=f.raw.events.sweepTraffic;
+ // Independent predetermined plan: writes at offsets 0 and 99s; 64 real readers still cover all 100 seconds.
+ const cal=calibration(1,'P5',{traceSegment:'frozen-traffic',offerScheduleSha256:h('frozen-traffic-schedule'),sweepOfferOffsetsNs:['0','99000000000']});
+ s.sweep.offers=s.sweep.offers.filter((_,i)=>i===0||i===99);
+ assert.equal(nsP5Traffic(s,f.raw.events.sweep,()=>h('correct'),f.raw.events.source.entries,cal).met,true);
+ s.sweep.offers.pop();const r=nsP5Traffic(s,f.raw.events.sweep,()=>h('correct'),f.raw.events.source.entries,cal);assert.equal(r.met,false);assert.equal(r.reason,'P5-WRITER-COVERAGE-SHORT');
+});

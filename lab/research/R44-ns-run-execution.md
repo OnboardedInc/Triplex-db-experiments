@@ -315,6 +315,15 @@ moves into EXP-NSR (section 8).
 > [normalized schema](../experiments/EXP-CRNS/SCHEMA.md#round-2-mandatory-evidence-floors-supersedes-conflicting-round-1-text-above).
 
 
+> **B5 round 3 proposed amendment (CX-CRNS, 2026-11-09; no acceptance authority):** lag's population is now the frozen
+> valid-command offer schedule, with out-of-window publication retained as infinity. P5 live evidence covers its complete
+> verified sweep at the pinned sampling rate. Main load readers are oracle-checked for every priority. Resume requires a pinned,
+> settings-identical separate crash attempt, distinct in-traffic injections, latest checkpoint/time/range consistency and decoded
+> point snapshots. Crash-only arithmetic has a distinct status; it cannot imply a whole-P3 grant. Ratio baselines require pinned
+> prior/A0 calibration records. Per-subject concurrent offer ordering is conservatively refused on reversal pending an amended
+> ruling. See [round 3 findings and audit](../experiments/EXP-CRNS/REPORT.md#round-3-re-review-fixes-cx-crns); these proposals do not
+> change any acceptance target or enable admission.
+
 ### 4.1 Retained raw events (every one written by a trusted process)
 
 | Id | Event stream | Writer and kind | Fields |

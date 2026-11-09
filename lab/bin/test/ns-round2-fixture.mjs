@@ -67,8 +67,9 @@ export function frozenFixtureTrace(profile='builder', options={}) {
 }
 export function calibration(writerMs=1,kind='P1',overrides={}) {
   const binding={attemptId:'prior-calibration',sourceSha256:h('source'),slot:'offline',inputsSha256:h('inputs')};
-  const segment={id:'calibration',level:0,phase:'steady',traceSegment:'segment-1',offerScheduleSha256:h('same schedule'),startNs:'0',endNs:'1000000000',reads:[],offers:[{eventId:'cal-offer',scheduledAtNs:'0',ackAtNs:String(writerMs*1000000)}],...overrides};
-  const payload={binding,kind,grade:'GREEN',segments:[segment]};return {format:'ns-calibration/1',payload,pinSha256:h(canonText(payload)),expectedBinding:binding,samplingPeriodNs:'1000000000'};
+  const {sweepOfferOffsetsNs=['0'],...segmentOverrides}=overrides;
+  const segment={id:'calibration',level:0,phase:'steady',traceSegment:'segment-1',offerScheduleSha256:h('same schedule'),startNs:'0',endNs:'1000000000',reads:[],offers:[{eventId:'cal-offer',scheduledAtNs:'0',ackAtNs:String(writerMs*1000000)}],...segmentOverrides};
+  const payload={binding,kind,grade:'GREEN',segments:[segment],sweepOfferOffsetsNs};return {format:'ns-calibration/1',payload,pinSha256:h(canonText(payload)),expectedBinding:binding,samplingPeriodNs:'1000000000'};
 }
 export function attachIndependentCrash(f) {
   const tr=f.trusted, trace=tr.frozenTrace, plan=trace.attempts[tr.binding.crashAttemptId], epoch=trace.epoch;

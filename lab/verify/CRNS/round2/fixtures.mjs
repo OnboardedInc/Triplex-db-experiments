@@ -94,6 +94,8 @@ export function positiveP5() {
   const inputsSha256 = h(canonText({ sweepPlan, subjectListSha256: t.subjectListSha256, minimumSamples: t.minimumSamples }));
   e.window.drainEndNs = '103000000000';
   f.raw.binding.inputsSha256 = inputsSha256; f.raw.binding.attemptId = 'CX-VCRNS-R2-P5'; t.binding = clone(f.raw.binding);
-  t.calibrationP5=calibration(1,'P5',{traceSegment:'frozen-traffic',offerScheduleSha256:h('frozen-traffic-schedule')});
+  t.calibrationP5=trafficCalibration();
   return attachIndependentCrash(f);
 }
+
+export function trafficCalibration(){return calibration(1,'P5',{traceSegment:'frozen-traffic',offerScheduleSha256:h('frozen-traffic-schedule'),sweepOfferOffsetsNs:Array.from({length:100},(_,i)=>String(i*1000000000))});}

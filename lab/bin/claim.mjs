@@ -2261,9 +2261,8 @@ export function nsP5Traffic(segments, sweep, replayRead, prefix, calibration) {
       nsAssert(nsReaderEvidence(s.reads, s.readers, s, 64) === 1, 'READER-LEVEL-MISMATCH');
       nsAssert(nsReadSample(s.reads, s, replayRead, prefix).violations === 0, 'NS-P1-VIOLATIONS-MAX');
     }
-    const periods=Number((nsTime(sweep.endNs)-nsTime(sweep.startNs)+999999999n)/1000000000n);
-    const writerPeriods=new Set(segments.sweep.offers.map(o=>String((nsTime(o.scheduledAtNs)-nsTime(sweep.startNs))/1000000000n)));
-    nsAssert(writerPeriods.size===periods, 'P5-WRITER-COVERAGE-SHORT');
+    const expectedOffers=calibration.payload.sweepOfferOffsetsNs;
+    nsAssert(Array.isArray(expectedOffers) && expectedOffers.every(nsUint) && same(segments.sweep.offers.map(o=>String(nsTime(o.scheduledAtNs)-nsTime(sweep.startNs))),expectedOffers), 'P5-WRITER-COVERAGE-SHORT');
     const valid = m => m.reads.length > 0 && Number.isFinite(m.readP99Ms) && m.readP99Ms !== null && Number.isFinite(m.writerP99Ms) && m.writerP99Ms !== null;
     return { met: valid(baseline) && valid(during) && baseline.readP99Ms <= 100 && baseline.writerP99Ms <= 50 && during.readP99Ms <= baseline.readP99Ms * 1.5 && during.writerP99Ms <= baseline.writerP99Ms * 1.5, baseline: { readP99Ms: baseline.readP99Ms, writerP99Ms: baseline.writerP99Ms }, sweep: { readP99Ms: during.readP99Ms, writerP99Ms: during.writerP99Ms } };
   } catch (error) { return { met: false, reason: error.code ?? 'P5-LIVE-TRAFFIC-NOT-VERIFIED' }; }
