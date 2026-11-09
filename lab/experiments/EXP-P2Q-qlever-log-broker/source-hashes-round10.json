@@ -43,5 +43,8 @@
       "newSha256": "dbd744e87f541efdea3b0b9da4b787e1cf2c99192b35e928039676676342438d",
       "acceptanceReferences": []
     }
-  ]
+  ],
+  "head": "561410d2acc18179065464738f597bf625e8bb3f",
+  "capturedAt": 1794198588.311678,
+  "acceptanceReferenceReadbackAt": 1794198644.001025
 }
