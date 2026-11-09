@@ -373,7 +373,11 @@ export class DatomicClient {
   async transact(
     db: string,
     input: {
-      sourceK: number;
+      sourceK: number | null;
+      span?: number;
+      entities?: readonly string[];
+      live?: readonly string[];
+      scopeWide?: boolean;
       position: number;
       operationId: string;
       attemptId: string;
@@ -417,7 +421,10 @@ export class DatomicClient {
     }
     return response;
   }
-  operation(db: string, operationId: string): Promise<{ status: "committed" | "absent" }> {
+  operation(
+    db: string,
+    operationId: string,
+  ): Promise<{ status: "committed" | "absent"; position?: TaggedValue; t?: TaggedValue }> {
     return this.request("GET", `/v1/db/${db}/operation/${encodeURIComponent(operationId)}`);
   }
   async claim(db: string, commandId: string, position: number): Promise<string | null> {

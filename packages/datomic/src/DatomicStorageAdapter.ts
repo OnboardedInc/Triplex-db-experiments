@@ -41,6 +41,7 @@ export const makeDatomicStorageAdapter = (
   const db = databaseName(scopeKey);
   const maxRetries = options.maxRetries ?? 12;
   const resolutionTimeoutMs = options.resolutionTimeoutMs ?? 30_000;
+  const finalPositions = new Map<string, number>();
   const admission = Semaphore.makeUnsafe(1);
   const current = Effect.map(CurrentTransactions, (transactions) => transactions.get(key));
   const read = <A>(thunk: (signal: AbortSignal) => Promise<A>): Effect.Effect<A, ReadError> =>
@@ -70,6 +71,14 @@ export const makeDatomicStorageAdapter = (
   ): Effect.Effect<readonly TripleRow[], ReadError> =>
     Effect.gen(function* () {
       const state = yield* current;
+      if (state) {
+        if (history || (id === undefined && entityIds === undefined && !pattern.entityId))
+          state.scopeWide = true;
+        if (typeof pattern.entityId === "string" && !pattern.entityId.startsWith("?"))
+          state.entities.add(pattern.entityId);
+        else if (pattern.entityId) state.scopeWide = true;
+        for (const entity of entityIds ?? []) state.entities.add(entity);
+      }
       // [EXP-DX1] Why: staged rows override prefetched rows; known absence also saves a read.
       // Rejected: re-reading a prefetched retract target or hiding nested staged writes.
       if (
@@ -79,6 +88,7 @@ export const makeDatomicStorageAdapter = (
         (state.rows.has(id) || state.prefetch?.rows.has(id))
       ) {
         const row = state.rows.get(id) ?? state.prefetch?.rows.get(id);
+        if (row && state) state.entities.add(row.entity_id);
         return row && (history || visibleAt(row)) && matchesPattern(row, pattern) ? [row] : [];
       }
       const rows = yield* read(() =>
@@ -98,6 +108,7 @@ export const makeDatomicStorageAdapter = (
               }),
         }),
       );
+      if (state) for (const row of rows) state.entities.add(row.entity_id);
       return rows
         .filter((row) => matchesPattern(row, pattern))
         .sort(
@@ -136,6 +147,10 @@ export const makeDatomicStorageAdapter = (
             client.transact(db, {
               sourceK: state.sourceK,
               position: state.position,
+              span: state.position - state.sourceK,
+              entities: [...state.entities],
+              live: [...state.live],
+              scopeWide: state.scopeWide,
               operationId,
               attemptId,
               rows: [...state.rows.values()],
@@ -162,11 +177,21 @@ export const makeDatomicStorageAdapter = (
               t = validateTagged(ack.t);
             if (
               p.t === "long" &&
-              Number(p.v) === state.position &&
+              Number.isSafeInteger(Number(p.v)) &&
+              Number(p.v) >= state.position - state.sourceK &&
               t.t === "long" &&
               BigInt(t.v) >= 0n
-            )
+            ) {
+              for (const claim of state.claims.values())
+                finalPositions.set(claim.txId, Number(p.v));
+              for (const row of state.rows.values())
+                if (state.newIds.has(row.id) && row.tx_id)
+                  finalPositions.set(
+                    row.tx_id,
+                    Number(p.v) - state.position + row.recorded_position,
+                  );
               return;
+            }
           }
         } catch (error) {
           if (
@@ -187,7 +212,16 @@ export const makeDatomicStorageAdapter = (
         do {
           try {
             const receipt = await bounded(client.operation(db, operationId));
-            if (receipt.status === "committed") return;
+            if (receipt.status === "committed") {
+              const p = Number(validateTagged(receipt.position).v);
+              if (!Number.isSafeInteger(p) || p < state.position - state.sourceK)
+                throw new Error("Invalid operation receipt position");
+              for (const claim of state.claims.values()) finalPositions.set(claim.txId, p);
+              for (const row of state.rows.values())
+                if (state.newIds.has(row.id) && row.tx_id)
+                  finalPositions.set(row.tx_id, p - state.position + row.recorded_position);
+              return;
+            }
           } catch (error) {
             submitError = error;
           }
@@ -234,6 +268,9 @@ export const makeDatomicStorageAdapter = (
               sourceK: parent.sourceK,
               handle: parent.handle,
               ...(parent.prefetch === undefined ? {} : { prefetch: parent.prefetch }),
+              entities: new Set(parent.entities),
+              live: new Set(parent.live),
+              scopeWide: parent.scopeWide,
               ...baseline,
               rows: new Map(baseline.rows),
               claims: new Map(baseline.claims),
@@ -260,6 +297,9 @@ export const makeDatomicStorageAdapter = (
                 }),
               );
             }
+            for (const entity of child.entities) parent.entities.add(entity);
+            for (const id of child.live) parent.live.add(id);
+            parent.scopeWide ||= child.scopeWide;
             parent.position = child.position;
             parent.rows = child.rows;
             parent.claims = child.claims;
@@ -290,7 +330,12 @@ export const makeDatomicStorageAdapter = (
             rows: new Map(),
             claims: new Map(),
             newIds: new Set(),
+            entities: new Set(),
+            live: new Set(),
+            scopeWide: false,
           };
+          for (const row of state.prefetch?.rows.values() ?? [])
+            if (row) state.entities.add(row.entity_id);
           const context = new Map(transactions);
           context.set(key, state);
           return yield* Effect.gen(function* () {
@@ -355,6 +400,7 @@ export const makeDatomicStorageAdapter = (
             tx_id: txId,
           };
           if (state.rows.has(id)) throw new Error(`Duplicate assertion identity ${id}`);
+          state.entities.add(row.entity_id);
           state.rows.set(id, row);
           state.newIds.add(id);
           return row;
@@ -367,6 +413,11 @@ export const makeDatomicStorageAdapter = (
     });
 
   const adapter: StorageAdapterService = {
+    committedPosition: (txId) => {
+      const p = finalPositions.get(txId);
+      finalPositions.delete(txId);
+      return p;
+    },
     valueDomain: ValueDomains.datomic,
     supportedValueTypes: [
       "string",
@@ -466,6 +517,8 @@ export const makeDatomicStorageAdapter = (
           ),
         ))[0];
         if (row === undefined) return false;
+        state.entities.add(row.entity_id);
+        if (!state.newIds.has(id)) state.live.add(id);
         state.rows.set(id, {
           ...row,
           retracted_at: timestamp,

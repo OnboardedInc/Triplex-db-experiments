@@ -47,6 +47,10 @@ export function decodeRow(row: WireRow): TripleRow {
 
 export const stagedInput = (state: TransactionState) => ({
   sourceK: state.sourceK,
+  span: state.position - state.sourceK,
+  entities: [...state.entities],
+  live: [...state.live],
+  scopeWide: state.scopeWide,
   position: state.position,
   operationId: randomUUID(),
   attemptId: randomUUID(),

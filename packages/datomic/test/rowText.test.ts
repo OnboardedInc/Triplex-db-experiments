@@ -94,7 +94,7 @@ it("uses every accepted row-compatible codec vector and rejects invalid domains"
         ),
       };
       for (const version of ["1", "2"] as const)
-      expect(decodeRowText(encodeRowText(row, version))).toEqual(decodeRow(encodeRow(row)));
+        expect(decodeRowText(encodeRowText(row, version))).toEqual(decodeRow(encodeRow(row)));
     }
   }
   for (const value of [Infinity, NaN])
@@ -165,8 +165,15 @@ it("patches the position digits without changing the row body", () => {
     const text = encodeRowText(row);
     const offset = text.indexOf('["') + 2;
     expect(text.slice(offset, offset + 16)).toBe("0000000000000001");
-    const decoded = decodeRowText(text.slice(0, offset) + "0000000000000123" + text.slice(offset + 16));
+    const decoded = decodeRowText(
+      text.slice(0, offset) + "0000000000000123" + text.slice(offset + 16),
+    );
     expect(decoded.recorded_position).toBe(123);
     expect(decoded.value_number).toBe(attribute === ":_tx/position" ? 123 : 1);
   }
+});
+
+it("keeps a sixteen-digit version 1 id distinct from the version 2 position", () => {
+  const row = { ...base(), id: "0000000000000123" };
+  expect(decodeRowText(encodeRowText(row, "1"))).toEqual(row);
 });

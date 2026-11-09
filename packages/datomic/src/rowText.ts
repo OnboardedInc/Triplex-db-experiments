@@ -11,7 +11,10 @@ import { assertionColumns } from "./rows.js";
 const legacyColumns = assertionColumns.filter(
   (c) => c !== "retracted_at" && c !== "retracted_position" && c !== "retract_tx_id",
 );
-export const rowTextColumns = ["recorded_position", ...legacyColumns.filter(c => c !== "recorded_position")];
+export const rowTextColumns = [
+  "recorded_position" as const,
+  ...legacyColumns.filter((c) => c !== "recorded_position"),
+];
 const numeric = new Set([
   "value_number",
   "value_boolean",
@@ -63,16 +66,25 @@ export function encodeRowText(row: TripleRow, version: "1" | "2" = "2"): string 
     hex4(ref.length) +
     ref +
     (version === "2" && row.attribute === ":_tx/position" ? "P" : version === "2" ? "-" : "") +
-    JSON.stringify((version === "1" ? legacyColumns : rowTextColumns).map((c) =>
-      version === "2" && c === "recorded_position" ? String(row[c]).padStart(16, "0") :
-      version === "2" && row.attribute === ":_tx/position" && c === "value_number" ? null :
-      Object.is(row[c], -0) ? "-0" : row[c]))
+    JSON.stringify(
+      (version === "1" ? legacyColumns : rowTextColumns).map((c) =>
+        version === "2" && c === "recorded_position"
+          ? String(row[c]).padStart(16, "0")
+          : version === "2" && row.attribute === ":_tx/position" && c === "value_number"
+            ? null
+            : Object.is(row[c], -0)
+              ? "-0"
+              : row[c],
+      ),
+    )
   );
 }
-export function decodeRowTextColumns(values: unknown): TripleRow {
+export function decodeRowTextColumns(values: unknown, version?: "1" | "2"): TripleRow {
   if (!Array.isArray(values) || values.length !== rowTextColumns.length)
     throw new TypeError("Invalid row text columns");
-  const modern = typeof values[0] === "string" && /^\d{16}$/.test(values[0]);
+  const modern =
+    version === "2" ||
+    (version === undefined && typeof values[0] === "string" && /^\d{16}$/.test(values[0]));
   const columns = modern ? rowTextColumns : legacyColumns;
   const row: Record<string, unknown> = {
     retracted_at: null,
@@ -90,7 +102,8 @@ export function decodeRowTextColumns(values: unknown): TripleRow {
       row[c] = v;
     }
   });
-  if (modern && row.attribute === ":_tx/position") row.value_number = row.recorded_position;
+  if (modern && row["attribute"] === ":_tx/position")
+    row["value_number"] = row["recorded_position"];
   for (const c of ["recorded_position", "schema_version"])
     if (!Number.isSafeInteger(row[c])) throw new RangeError(`Unsafe ${c}`);
   for (const c of ["id", "entity_id", "attribute", "value_type"])
@@ -99,8 +112,8 @@ export function decodeRowTextColumns(values: unknown): TripleRow {
     if (typeof row[c] !== "number") throw new TypeError(`Missing ${c}`);
   return row as unknown as TripleRow;
 }
-export function decodeRowTextArray(values: unknown): TripleRow {
-  const row = decodeRowTextColumns(values);
+export function decodeRowTextArray(values: unknown, version?: "1" | "2"): TripleRow {
+  const row = decodeRowTextColumns(values, version);
   decodeValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute));
   return row;
 }
@@ -109,7 +122,10 @@ export function decodeRowText(text: string): TripleRow {
   const length = Number.parseInt(text.slice(1, 5), 16);
   const start = 5 + length;
   const refLength = Number.parseInt(text.slice(start + 32, start + 36), 16);
-  const row = decodeRowTextArray(JSON.parse(text.slice(start + 36 + refLength + (text[0] === "2" ? 1 : 0))));
+  const row = decodeRowTextArray(
+    JSON.parse(text.slice(start + 36 + refLength + (text[0] === "2" ? 1 : 0))),
+    text[0],
+  );
   if (encodeRowText(row, text[0]) !== text) throw new TypeError("Noncanonical row text header");
   return row;
 }

@@ -19,6 +19,7 @@
    (attr :triplex.scope/bootstrap :db.type/string :db.unique/value)
    (attr :triplex.scope/key :db.type/string :db.unique/identity)
    (attr :triplex.scope/position :db.type/long)
+   (attr :triplex.scope/commit-fn-hash :db.type/string)
    (attr :triplex.scope/schema-hash :db.type/string)
    (attr :triplex.entity/id :db.type/string :db.unique/identity)
    (attr :triplex.attr/key :db.type/string :db.unique/identity)

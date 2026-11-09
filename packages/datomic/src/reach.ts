@@ -10,7 +10,7 @@ import {
   storedValueDomain,
   ValueDomains,
 } from "@triplex-build/triplex/runtime";
-import { decodeRowTextColumns } from "./rowText.js";
+import { decodeRowText, decodeRowTextColumns } from "./rowText.js";
 
 export interface CachedEntity {
   readonly rev: number;
@@ -35,7 +35,8 @@ const freeze = <T>(value: T): T => {
 };
 export function decodeEntity(id: string, rev: number, wire: unknown[]): CachedEntity {
   const rows = wire.map((values) => {
-    const row = decodeRowTextColumns(values);
+    const row =
+      typeof values === "string" ? decodeRowText(values) : decodeRowTextColumns(values, "2");
     if (row.entity_id !== id) throw new TypeError("Reach entity binding mismatch");
     // Validate the value domain exactly once; retain the decoded value in the cached Triple.
     const value = decodeValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute));

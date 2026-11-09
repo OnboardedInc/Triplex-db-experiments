@@ -45,6 +45,7 @@ export function makeDatomicQueryExecutor(
             : new ReadError({ message: "Invalid Datomic query", cause }),
       });
       const state = yield* source;
+      if (state) state.scopeWide = true;
       const requested = basis ?? { validAt: Date.now() };
       const started = Date.now();
       return yield* Effect.tryPromise({

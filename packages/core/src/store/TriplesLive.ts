@@ -497,7 +497,10 @@ const makeTriplesServices = Effect.gen(function* () {
               },
             },
           ),
-      ).pipe((effect) => withValidAssertValues(operations, effect, valueDomain));
+      ).pipe(
+        Effect.map((result) => ({ ...result, position: adapter.committedPosition?.(result.txId) ?? result.position })),
+        (effect) => withValidAssertValues(operations, effect, valueDomain),
+      );
 
     const retract = (id: TripleId): Effect.Effect<void, WriteError> =>
       transact([{ op: "retract", id }]).pipe(

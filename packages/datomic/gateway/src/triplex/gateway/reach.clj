@@ -157,7 +157,8 @@
                     (let [^String text (.next rows) start (+ 5 (Integer/parseInt text 1 5 16))
                           ref-start (+ start 36) ref-size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)]
                       (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
-                      (.append out text (int (+ ref-start ref-size (if (= \2 (.charAt text 0)) 1 0))) (.length text)))))
+                      (if (= \1 (.charAt text 0)) (append-string! out text)
+                        (.append out text (int (+ ref-start ref-size 1)) (.length text))))))
                 (.append out \])
                 ;; Overflow pages are entirely inline and leave the bounded map empty.
                 (when (and remembered eid (<= (.size entities) session-entry-limit)) (.put remembered eid rev)))

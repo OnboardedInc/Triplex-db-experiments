@@ -18,6 +18,9 @@ export interface TransactionState {
     readonly claim: string | null;
     readonly rows: ReadonlyMap<string, TripleRow | null>;
   };
+  entities: Set<string>;
+  live: Set<string>;
+  scopeWide: boolean;
   submitted?: boolean;
   position: number;
   rows: Map<string, TripleRow>;
