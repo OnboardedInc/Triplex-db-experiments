@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-built or optional package modules absent from this standalone project; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Current installed bytes are checked before/after the public SDK entry.
  * Reuses the independently reviewed recursive collector; no install, native
  * selector, second runtime or broad query wrapper is introduced here.

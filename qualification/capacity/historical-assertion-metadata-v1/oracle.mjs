@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters; unannotated destructured parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Source-only independent event oracle. No SDK/backend import or execution. */
 import assert from 'node:assert/strict';
 

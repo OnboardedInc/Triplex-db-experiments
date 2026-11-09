@@ -9,6 +9,8 @@ import {
   type TripleInput,
   type QueryPattern,
   ValueDomains,
+  storedValueDomain,
+  InvalidTripleError,
   WriteError,
   ReadError,
   MigrationError,
@@ -285,7 +287,7 @@ export const makeDatomicStorageAdapter = (
             id,
             entity_id: input.entityId,
             attribute: input.attribute,
-            ...packValue(input.value),
+            ...packValue(input.value, storedValueDomain(ValueDomains.datomic, input.attribute)),
             recorded_at: timestamp,
             recorded_position: position,
             valid_from: input.validFrom ?? timestamp,
@@ -303,7 +305,10 @@ export const makeDatomicStorageAdapter = (
           state.newIds.add(id);
           return row;
         },
-        catch: (cause) => new WriteError({ message: "Invalid Datomic assertion", cause }),
+        catch: (cause) =>
+          cause instanceof InvalidTripleError
+            ? cause
+            : new WriteError({ message: "Invalid Datomic assertion", cause }),
       });
     });
 

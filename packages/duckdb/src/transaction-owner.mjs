@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Abstract acknowledged-driver protocol only. No external runtime/SQL imports.
 export class TransactionOwnerError extends Error {
   constructor(code, message, details = {}) {

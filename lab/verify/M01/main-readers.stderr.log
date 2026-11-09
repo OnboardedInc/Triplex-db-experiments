@@ -1,0 +1,15 @@
+[ns 07:19:17] seed: rung dev:21, 8567 live facts planned (20 accounts, mean world 129 facts)
+[ns 07:19:17] seed: 20 shared account worlds in 0.0 s
+[ns 07:19:17] seed: 21 subjects in 0.0 s
+[ns 07:19:17] trace: 8091 events over 7200s, digest fc2ede2723f91fbb, active-set share 0.952
+[ns 07:19:17] readers: 1 worker threads ready
+[ns 07:19:18] phase warmup: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase baseline: 0 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L1: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L4: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L16: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L64: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L256: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L1024: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase recovery: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase p4mix: 1 readers at trace 0s; writer pending 0

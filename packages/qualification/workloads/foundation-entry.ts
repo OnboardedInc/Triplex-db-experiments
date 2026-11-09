@@ -1,3 +1,4 @@
+import { latencyReceipt, connectionModeForBackend } from "../../../lab/receipts/latency.mjs";
 /** Fresh unchanged44-case foundation acceptance, independent of native task APIs. */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -23,7 +24,8 @@ assert.ok(
   backend.queryPath.endsWith("-datalog"),
   "Foundation acceptance uses the complete Triplex query contract",
 );
-const report: Record<string, any> = {
+const report: Record<string, any> = latencyReceipt({
+  qleverConnectionMode: connectionModeForBackend(backend.name),
   format: "triplex-public-foundation/1",
   backend: backend.name,
   queryPath: backend.queryPath,
@@ -34,7 +36,7 @@ const report: Record<string, any> = {
   limitations: [
     "Fresh complete unchanged upstream44 acceptance only; no native language, scale, latency, or ten-goal completion claim",
   ],
-};
+});
 writeFileSync(output, JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
 const started = performance.now();
 try {
@@ -87,11 +89,14 @@ writeFileSync(
   { flag: "wx" },
 );
 console.log(
-  JSON.stringify({
-    status: report["status"],
-    backend: backend.name,
-    cases: triplesConformanceCases.length,
-    output,
-  }),
+  JSON.stringify(
+    latencyReceipt({
+      status: report["status"],
+      backend: backend.name,
+      cases: triplesConformanceCases.length,
+      output,
+      qleverConnectionMode: connectionModeForBackend(backend.name),
+    }),
+  ),
 );
 if (report["status"] !== "PASS_COMPLETE_UNCHANGED_SUITE") process.exitCode = 1;

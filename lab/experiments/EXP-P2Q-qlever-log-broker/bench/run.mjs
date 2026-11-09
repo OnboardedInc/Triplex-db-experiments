@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // EXP-P2Q driver. Every mode writes a receipt under ../receipts and raw samples under RAW_DIR.
 //   probe                                         keep-alive vs fresh connection; update response shape
 //   service --arm A0|A0f|C [--n 150] [--facts 10] [--label L]   closed loop, 1 writer: ACK latency + RYOW per command

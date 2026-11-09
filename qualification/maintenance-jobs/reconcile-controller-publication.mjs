@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** One-time, explicitly authorized disposition of the two retained publication
  * failures. Inspiration: wiki/problems/controller-state-growth.md. A dead
  * executor alone never releases work; fresh empty groups plus unchanged healthy

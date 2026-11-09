@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-X02-R4] Why: derive token boundaries from the pinned ANTLR lexer, including
 // longest-match identifiers and string escapes. Rejected: adding spelling exceptions per review.
 import fs from "node:fs";

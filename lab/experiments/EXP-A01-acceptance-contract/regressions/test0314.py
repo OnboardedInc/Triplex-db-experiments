@@ -18,6 +18,15 @@ class Contract0314(old.Contract0313):
             m=re.match(r'^\| (Q\d+[a-z]?(?:-S)?)\b',l)
             if m and m[1] not in A['rules']:self.assertIn(l,after)
         self.assertFalse(set(A['rules']) & set(D['pendingRulings']['ids']))
+    def test_round3_new_rulings_remain_pending(self):
+        expected={'Q99'+c for c in 'abcde'}|{'Q99-S1'}|{'Q100'+c for c in 'abcdefghijklmnop'}|{'Q100-S1'}
+        authority=(R/'lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14-round3/main-pending-authority.md').read_text().splitlines()
+        after=(R/'lab/acceptance/RULINGS-PENDING.md').read_text().splitlines()
+        for rid in expected:
+            rows=[l for l in authority if re.match(r'^\| '+re.escape(rid)+r'(?: | \|)',l)]
+            self.assertEqual(len(rows),1,rid);self.assertIn(rows[0],after)
+        self.assertTrue(expected <= set(D['pendingRulings']['ids']))
+        self.assertFalse(expected & {r['id'] for r in D['rulings']})
     def test_0314_authority(self):
         self.assertEqual(set(A['rules']),{'Q96'+c for c in 'abcd'}|{'Q97'+c for c in 'abc'})
         for rid,v in A['rules'].items():

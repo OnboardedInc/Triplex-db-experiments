@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { promises as fs } from 'node:fs';
 import { join, relative } from 'node:path';
 import { randomUUID } from 'node:crypto';

@@ -32,6 +32,9 @@ const contracts = {
     introspection: ["currentCommitPosition"],
     mutation: [
       "supportedValueTypes",
+      // [EXP-HS01] Why: 0.3.14 added mandatory write-domain metadata; it is not a row/value read.
+      // Rejected: excluding the inventory test (would stop detecting new unclassified read methods).
+      "valueDomain",
       "snapshotReadPolicy",
       "validateConstraints",
       "withTransaction",

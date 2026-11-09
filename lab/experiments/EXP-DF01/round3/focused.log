@@ -1,0 +1,6 @@
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - import "../../vitest.workspace-aliases" without a file extension (packages/host/vitest.config.ts:2:34). Add the file extension
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+(node:47320) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/df01/lab/experiments/EXP-DF01/round3/focused-tests.json

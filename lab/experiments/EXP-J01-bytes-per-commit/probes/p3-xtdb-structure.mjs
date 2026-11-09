@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 probe 3: which structural costs dominate an A0 XTDB record beyond the journal payload?
 // Captures one real 10-fact A0 commit, then replays variants (each in a fresh scope of equal key length):
 // parameters versus SQL literals in the ASSERTs, one merged ASSERT, no ASSERTs, no bookkeeping inserts,

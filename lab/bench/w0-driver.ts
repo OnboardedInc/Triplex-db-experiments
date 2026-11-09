@@ -1,3 +1,4 @@
+import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
@@ -37,8 +38,9 @@ export async function runW0Driver(argv: string[]) {
   const attempt = randomUUID(),
     scope = "p5-" + attempt;
   const startedAt = new Date().toISOString();
-  const report: any = {
+  const report: any = latencyReceipt({
     format: "triplex-db-2/p5-screening/1",
+    qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
     attempt,
     scope,
     startedAt,
@@ -51,7 +53,7 @@ export async function runW0Driver(argv: string[]) {
     gates: {},
     limitations: [],
     sources: {},
-  };
+  });
   for (const f of [
     "lab/bench/w0-driver.ts",
     "lab/bench/lib/evaluate.ts",

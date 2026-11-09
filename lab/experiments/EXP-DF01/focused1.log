@@ -1,0 +1,15 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 11722 "CX-VA01-0314-g0-qlever", pid 20247 "CX-DI01-final-r5", pid 14583 "G0-qlever-20261109T072541Z-667fa9 vitest-testkit", pid 40097 "CX-CRNS-final-retry"
+[lab] heavy: waiting for one of 4 slots; held by pid 11722 "CX-VA01-0314-g0-qlever", pid 20247 "CX-DI01-final-r5", pid 14583 "G0-qlever-20261109T072541Z-667fa9 vitest-qlever", pid 40097 "CX-CRNS-final-retry"
+[lab] heavy: waiting for one of 4 slots; held by pid 11722 "CX-VA01-0314-g0-qlever", pid 20247 "CX-DI01-final-r5", pid 14583 "G0-qlever-20261109T072541Z-667fa9 vitest-qlever", pid 40097 "CX-CRNS-final-retry"
+[lab] heavy: waiting for one of 4 slots; held by pid 53454 "CX-P2B-R3-frozen-rebuild2", pid 20247 "CX-DI01-final-r5", pid 54282 "CX-P2B-R3-build5c", pid 40097 "CX-CRNS-final-retry"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/df01
+
+(node:65195) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+ Test Files  2 passed (2)
+      Tests  4 passed (4)
+   Start at  02:29:58
+   Duration  278ms (transform 56%, tests 25%, import 17%, worker 2%)
+

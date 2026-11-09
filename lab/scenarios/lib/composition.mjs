@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; runtime callback/availability guards not inferred. Binding errors remain checked by lab/bin/checkjs.mjs.
 // lab/scenarios/lib/composition.mjs: the adapter seam between the GS scenarios and the NS driver (EXP-N01).
 //
 // [EXP-W01] Why: EXP-N01 (another agent, in parallel) owns lab/bench/ and its `Composition` object (writer,

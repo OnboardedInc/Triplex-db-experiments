@@ -1,3 +1,5 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 /** Unchanged public testkit cases over compiled public QLever/core exports. */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -22,7 +24,8 @@ const runtime = makeQleverRuntime({
   accessToken,
   queryLimits: { aggregateAnswerPlan: answerPlan },
 });
-const report: Record<string, any> = {
+const report: Record<string, any> = qleverLatencyReceipt({
+  qleverConnectionMode: qleverConnectionModeOf(),
   format: "triplex-public-upstream44/1",
   backend: "qlever",
   runId,
@@ -35,7 +38,7 @@ const report: Record<string, any> = {
     "Small upstream conformance corpus, not256clients, scale, native crash durability or all ten goals.",
     "Unchanged case programs execute through compiled public exports; this runner only records outcomes.",
   ],
-};
+});
 const save = () =>
   writeFileSync(
     path.join(artifacts, "upstream44-report.json"),
@@ -69,7 +72,7 @@ for (const entry of triplesConformanceCases) {
     });
   }
   save();
-  console.log(JSON.stringify(report.cases.at(-1)));
+  console.log(JSON.stringify(qleverLatencyReceipt({ ...report.cases.at(-1), qleverConnectionMode: qleverConnectionModeOf() })));
 }
 const passed = report.cases.filter((entry: any) => entry.status === "PASS").length;
 report.status = passed === 44 ? "PASS_UPSTREAM44_ONLY" : "FAIL_RETAINED";

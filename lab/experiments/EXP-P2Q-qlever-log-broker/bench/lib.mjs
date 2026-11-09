@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // EXP-P2Q harness library: arms, a counting QLever client, statistics, identity and receipts.
 // Imports the built dist (the bytes a gate would hash), never package sources. Pattern from EXP-P2X bench/lib.mjs.
 import { execFileSync } from 'node:child_process';

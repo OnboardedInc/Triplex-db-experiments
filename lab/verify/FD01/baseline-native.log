@@ -1,0 +1,8 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 55678 "G0-qlever-20261109T051506Z-ddbc5c vitest-testkit", pid 73008 "CX-INT-Q-qlever-live", pid 55679 "CX-INT-Q-evaluator-final", pid 55677 "CX-INT-Q-p2q-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 55678 "G0-qlever-20261109T051506Z-ddbc5c vitest-qlever", pid 73008 "CX-INT-Q-qlever-live", pid 55679 "CX-INT-Q-evaluator-final", pid 55677 "CX-INT-Q-p2q-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 55678 "G0-qlever-20261109T051506Z-ddbc5c vitest-qlever", pid 73008 "CX-INT-Q-qlever-live", pid 55679 "CX-INT-Q-evaluator-final", pid 55677 "CX-INT-Q-p2q-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 82677 "CX-VRT01-R3-reproductions", pid 73008 "CX-INT-Q-qlever-live", pid 55679 "CX-INT-Q-evaluator-final", pid 55677 "CX-INT-Q-p2q-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 82677 "CX-VRT01-R3-reproductions", pid 78846 "CX-INT-Q-route", pid 79510 "CX-VFD01-probes", pid 82954 "CX-VRT01-R3-model-property"
+(node:96798) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-fd01/lab/verify/FD01/baseline-native.json

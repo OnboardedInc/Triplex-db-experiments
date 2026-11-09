@@ -1,0 +1,59 @@
+{
+  "label": "DIAGNOSTIC",
+  "outcomes": {
+    "label": "DIAGNOSTIC",
+    "result": "DIAGNOSTIC-PASS",
+    "observedCommandExitCodes": {
+      "offlineFixture": 0,
+      "up": 0,
+      "conformance": 0,
+      "excision": 0,
+      "queuePreparation": 143,
+      "intentionalPeerStop": 0,
+      "resume": 0,
+      "deadlines": 0,
+      "regressions": 0,
+      "G1": 0,
+      "down": 0,
+      "fstrim": 0,
+      "dockerContext": 0
+    },
+    "queuePreparationExitExplanation": "Intentional SIGTERM to its identified diagnostic Peer after a real report was left queued; restart fault action, not a failed assertion.",
+    "regressionSignalEvent": "A SIGTERM intended to cancel the still-unadmitted wrapper raced with admission. No requeue/retry occurred; pnpm/Vitest continued, all 117 tests passed and command exited 0.",
+    "G1RunId": "G1-datomic-20261109T095731Z-d254a0",
+    "semanticFirstFailure": null
+  },
+  "sourceHead": "1b110023f1a647381e0a288bd3652a263b54b407",
+  "imageId": "sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf",
+  "containerId": "820da568d13a2c5ba44a25bb0f2bc9d14ea59070e503177af69d977093ff061f",
+  "gatewaySourceSha256": "60f7138040043a1cffb2ee79764775560a71bf4f49fccdb82469d1df99f9ca16",
+  "holder": "CX-DF01-live-002",
+  "volume": "tx2-datomic-dev-data",
+  "inputsStable": true,
+  "G1RunId": "G1-datomic-20261109T095731Z-d254a0",
+  "G1Counts": {
+    "executed": 88,
+    "expected": 88,
+    "pass": 88,
+    "fail": 0,
+    "skip": 0,
+    "suite": "PASS",
+    "byPhase": {
+      "current": {
+        "pass": 44,
+        "total": 44
+      },
+      "reopen": {
+        "pass": 44,
+        "total": 44
+      }
+    }
+  },
+  "durable": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-DF01/live-attempt-002",
+  "indexedAt": "2026-11-09T10:01:50.798165+00:00",
+  "limits": [
+    "Exact deadline tests use a synthetic monotonic clock with real Peer cuts, tx-range and queue.",
+    "External stdin probes were authored during this attempt; their retained preimages are indexed after execution, not in the initial preflight manifest.",
+    "Dev storage is diagnostic only; no production or contract acceptance."
+  ]
+}

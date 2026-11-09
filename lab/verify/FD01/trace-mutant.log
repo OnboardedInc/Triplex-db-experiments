@@ -1,0 +1,12 @@
+{
+  "mode": "mutant",
+  "dir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VFD01/trace-mutant-a6569bb7-3f90-4692-8502-78e2f9363269",
+  "statements": [
+    "BEGIN IMMEDIATE",
+    "COMMIT; BEGIN IMMEDIATE",
+    "COMMIT"
+  ],
+  "applyFunctionSha256": "cfa359354798892c56bcd9882346ceca0bd73656966fd1015e90c337c940d70d"
+}
+(node:3760) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

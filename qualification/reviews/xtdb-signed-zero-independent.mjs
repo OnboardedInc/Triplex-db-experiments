@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-built or optional package modules absent from this standalone project; runtime-populated records, optional option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Read-only independent bit/result/source review. Old failed evidence is kept;
  * copied preimages let this compare the real v1/v2 code without guessing old
  * working-tree bytes. No assertion store, engine or performance is qualified.

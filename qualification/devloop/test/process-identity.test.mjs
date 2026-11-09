@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-validated nullable values; unannotated local values; unannotated dynamic parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from 'node:assert/strict';
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-W02] Why: an oracle process computes expectations; only fresh, source-bound observed
 // bytes can satisfy a named claim. Rejected: an oracle exit code or a prose description as evidence.
 import { spawnSync } from 'node:child_process';

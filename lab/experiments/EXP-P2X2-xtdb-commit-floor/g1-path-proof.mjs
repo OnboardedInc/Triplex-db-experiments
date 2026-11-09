@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: prove the enabled and disabled G1 suites actually used different commit paths.
 // Rejected: inferring the path solely from a launcher environment variable.
 import fs from "node:fs";

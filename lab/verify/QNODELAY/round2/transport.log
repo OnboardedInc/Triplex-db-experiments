@@ -1,0 +1,495 @@
+(node:4569) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:4569) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+{
+  "checks": [
+    {
+      "id": "keep-alive/10000-contents",
+      "ok": true,
+      "detail": {
+        "requests": 10000
+      }
+    },
+    {
+      "id": "keep-alive/connection-count",
+      "ok": true,
+      "detail": {
+        "accepted": 2
+      }
+    },
+    {
+      "id": "keep-alive/bounded-descriptors",
+      "ok": true,
+      "detail": [
+        {
+          "n": 1000,
+          "accepted": 2,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 2000,
+          "accepted": 2,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 3000,
+          "accepted": 2,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 4000,
+          "accepted": 2,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 5000,
+          "accepted": 2,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 6000,
+          "accepted": 2,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 7000,
+          "accepted": 2,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 8000,
+          "accepted": 2,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 9000,
+          "accepted": 2,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        },
+        {
+          "n": 10000,
+          "accepted": 2,
+          "open": 2,
+          "numericDescriptors": 25,
+          "tcp": 5
+        }
+      ]
+    },
+    {
+      "id": "keep-alive/socket-lifecycle",
+      "ok": true,
+      "detail": {
+        "open": 2
+      }
+    },
+    {
+      "id": "per-request/10000-contents",
+      "ok": true,
+      "detail": {
+        "requests": 10000
+      }
+    },
+    {
+      "id": "per-request/connection-count",
+      "ok": true,
+      "detail": {
+        "accepted": 10000
+      }
+    },
+    {
+      "id": "per-request/bounded-descriptors",
+      "ok": true,
+      "detail": [
+        {
+          "n": 1000,
+          "accepted": 1000,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 2000,
+          "accepted": 2000,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 3000,
+          "accepted": 3000,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 4000,
+          "accepted": 4000,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 5000,
+          "accepted": 5000,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 6000,
+          "accepted": 6000,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 7000,
+          "accepted": 7000,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 8000,
+          "accepted": 8000,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 9000,
+          "accepted": 9000,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        },
+        {
+          "n": 10000,
+          "accepted": 10000,
+          "open": 0,
+          "numericDescriptors": 21,
+          "tcp": 1
+        }
+      ]
+    },
+    {
+      "id": "per-request/socket-lifecycle",
+      "ok": true,
+      "detail": {
+        "open": 0
+      }
+    },
+    {
+      "id": "absent-default",
+      "ok": true
+    },
+    {
+      "id": "explicit-selection-over-env",
+      "ok": true
+    },
+    {
+      "id": "http400/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": false
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": false
+        }
+      ]
+    },
+    {
+      "id": "http403/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": false
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": false
+        }
+      ]
+    },
+    {
+      "id": "http500/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": true
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": true
+        }
+      ]
+    },
+    {
+      "id": "empty204/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": false
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": false
+        }
+      ]
+    },
+    {
+      "id": "bad-json/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": false
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": false
+        }
+      ]
+    },
+    {
+      "id": "byte-limit/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": false
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": false
+        }
+      ]
+    },
+    {
+      "id": "reset-before/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": true
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": true
+        }
+      ]
+    },
+    {
+      "id": "truncated-body/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": true
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": true
+        }
+      ]
+    },
+    {
+      "id": "timeout-headers/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": true
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": true
+        }
+      ]
+    },
+    {
+      "id": "timeout-body/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": true
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": true
+        }
+      ]
+    },
+    {
+      "id": "abort-default/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": true
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": true
+        }
+      ]
+    },
+    {
+      "id": "abort-error/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": false
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": false
+        }
+      ]
+    },
+    {
+      "id": "abort-string/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": false
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": false
+        }
+      ]
+    },
+    {
+      "id": "preabort-error/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "rejected",
+          "unreachable": false
+        },
+        {
+          "mode": "per-request",
+          "outcome": "rejected",
+          "unreachable": false
+        }
+      ]
+    },
+    {
+      "id": "gzip/classification-parity",
+      "ok": true,
+      "detail": [
+        {
+          "mode": "keep-alive",
+          "outcome": "resolved"
+        },
+        {
+          "mode": "per-request",
+          "outcome": "resolved"
+        }
+      ]
+    },
+    {
+      "id": "catalog-propagation-and-classification",
+      "ok": false,
+      "detail": {
+        "codes": 118,
+        "cases": 472,
+        "failed": [
+          {
+            "code": "UND_ERR_INFO",
+            "depth": 0,
+            "mode": "keep-alive",
+            "transport": false,
+            "injected": 1,
+            "actual": true,
+            "codePreserved": false,
+            "chain": [
+              {
+                "name": "TimeoutError",
+                "code": 23,
+                "message": "The operation was aborted due to timeout",
+                "status": null,
+                "body": null
+              }
+            ]
+          },
+          {
+            "code": "UND_ERR_INFO",
+            "depth": 0,
+            "mode": "per-request",
+            "transport": false,
+            "injected": 1,
+            "actual": true,
+            "codePreserved": false,
+            "chain": [
+              {
+                "name": "TimeoutError",
+                "code": 23,
+                "message": "The operation was aborted due to timeout",
+                "status": null,
+                "body": null
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "caseCount": 15,
+  "catalogCount": 472
+}

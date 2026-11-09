@@ -1,0 +1,25 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 17340 "CX-DI01-trace-r7", pid 13226 "CX-P2B-R3-ordered-matrices", pid 91934 "CX-RT01-r6-products", pid 84654 "CX-VCHECKJS-r2"
+[lab] heavy: waiting for one of 4 slots; held by pid 17340 "CX-DI01-trace-r7", pid 13226 "CX-P2B-R3-ordered-matrices", pid 91934 "CX-RT01-r6-products", pid 9504 "CX-A01-0314-R3-G0-Q"
+[lab] heavy: waiting for one of 4 slots; held by pid 11250 "CX-P5B-R2-B0-10k", pid 13226 "CX-P2B-R3-ordered-matrices", pid 91934 "CX-RT01-r6-products", pid 9504 "CX-A01-0314-R3-G0-Q"
+[lab] heavy: waiting for one of 4 slots; held by pid 11250 "CX-P5B-R2-B0-10k", pid 13226 "CX-P2B-R3-ordered-matrices", pid 91934 "CX-RT01-r6-products", pid 9504 "CX-A01-0314-R3-G0-Q"
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+143 !== 0
+
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-df01/lab/verify/DF01/run-secondary.mjs:39:8
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 143,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2

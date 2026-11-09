@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] Node overloads over dynamic option/result unions. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-RQ01] Why: bind merge compatibility to fresh output and exact main bytes.
 // Rejected: a successful exit alone (does not prove byte identity or test count).
 import fs from "node:fs";

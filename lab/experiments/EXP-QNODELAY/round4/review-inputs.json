@@ -1,0 +1,26 @@
+{
+  "reviewerHead": "83c96de",
+  "directory": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-qnodelay/lab/verify/QNODELAY",
+  "files": [
+    {
+      "path": "VERIFY-round3.md",
+      "sha256": "8f38aead68b75924e8274c1f2fc0d10a54b1cdf7682af28bed9a3fd5939a55c5"
+    },
+    {
+      "path": "round3/result.json",
+      "sha256": "c419d9a492fb0ef5845e948f6f68dc8968fa4c7a089155c14fd5df610acc8ef9"
+    },
+    {
+      "path": "round3/extended-result.json",
+      "sha256": "d20619f9a286c3c6af2ac1b2fa533cef8f756aa98ee9e772a8957394eac25536"
+    },
+    {
+      "path": "round3/review.mjs",
+      "sha256": "19a5948d6f48bbc54b857b1161d114e3b79ca12a98b5ef58e619d70c7b5abd28"
+    },
+    {
+      "path": "round3/extended.mjs",
+      "sha256": "d11cb5e4ec782d199570b3d431a9d716a47d0ad5bc769f0dddeaefe2c6782756"
+    }
+  ]
+}

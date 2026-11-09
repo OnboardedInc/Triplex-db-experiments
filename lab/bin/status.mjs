@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
+import { readLatencyRun } from "../receipts/parse.ts";
 // lab/bin/status.mjs [--ref main | (working tree)] [--tree SOURCE-TREE-ID] [--json]
 // Evaluates the obligations lab/bin gates can produce receipts for (G1.found.unchanged44,
 // PKT.full142) against lab/acceptance/obligations.json, per ACCEPTANCE.md 5.1 (V1-V16) and 5.3.
@@ -64,7 +66,7 @@ main(async () => {
   const list = options.ref
     ? (git(['ls-tree', '-r', '--name-only', options.ref, '--', 'lab/runs']) ?? '').split('\n')
     : fs.existsSync(path.join(REPO, 'lab/runs')) ? fs.readdirSync(path.join(REPO, 'lab/runs')).flatMap(g => fs.readdirSync(path.join(REPO, 'lab/runs', g)).map(f => `lab/runs/${g}/${f}`)) : [];
-  const receipts = list.filter(f => f.endsWith('.json')).map(file => { try { return { file, receipt: JSON.parse(read(file)) }; } catch { return null; } }).filter(Boolean);
+  const receipts = list.filter(f => f.endsWith('.json')).map(file => { try { return { file, receipt: readLatencyRun(options.ref ? file : path.join(REPO, file), { ref: options.ref }).unwrap().data }; } catch { return null; } }).filter(Boolean);
   const tree = options.tree ?? sourceIdentity().sourceTreeId;
   const slots = loadSlots();
   const pins = Object.fromEntries(Object.entries(slots.lanes).map(([lane, conf]) => [lane, conf.imageId]));

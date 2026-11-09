@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Frozen proposal only. No worker/schema-preview import or backend action. */
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';

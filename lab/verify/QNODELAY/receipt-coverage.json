@@ -1,0 +1,57 @@
+{
+  "id": "21317e9b-7eb2-46ac-8d1b-dc8a731d185a",
+  "startedAt": "2026-11-09T04:08:10.087Z",
+  "node": "v22.23.2",
+  "head": "08a117761279de9ea0562b4f134b68df08889d6a",
+  "sources": {
+    "packages/qlever/src/QleverClient.ts": "59834c5427bfd1bfed4df04ebb773aae0e81e406ae577dc2a72829c60b0687b8",
+    "lab/verify/QNODELAY/common.mjs": "2f61c1f5278c9dbb804b6e1b74b7f17247693a562b6510ffe539ffb40a4c9385",
+    "lab/verify/QNODELAY/receipt-coverage.mjs": "6788ab3c9ab0d9104ba7b465b2a73d1b7e9dadd0c38835e6a8ad5e1c4fda1425",
+    "lab/experiments/EXP-QG1-qlever-generations/grid.mjs": "daec1c6d4dbc50c19028935ac38db7a47acdb17c86ab965292f3bd8c4f2ded7e",
+    "lab/experiments/EXP-QG1-qlever-generations/summarize.mjs": "141419833dd0a350dbaa64a134bf173e2c6ef7916f3a55ae556ab95b66a9164d",
+    "lab/scenarios/legacy.mjs": "a6b335b23de88965d79997fe2cb075468a81b815d09b4e0d9db40d8d9c836567",
+    "packages/qlever/experiments/string-order-probe.ts": "33695bf500c6bc4f03a652bf4f0985401496f7912515588d712f035944d9a709"
+  },
+  "classification": "SOURCE-EXACT WRITER FIXTURE; no engine calls",
+  "writers": [
+    {
+      "path": "lab/experiments/EXP-QG1-qlever-generations/grid.mjs",
+      "line": 60,
+      "sourceFunctionSha256": "1c19dee3f11b04ab4b0a191b4d3c65b9b2e7b0ab2c8f515562ad23fa6f38af92",
+      "fakeCalls": [
+        {
+          "url": "http://127.0.0.1:7071/",
+          "method": "POST"
+        }
+      ],
+      "receipt": {
+        "at": "2026-11-09T04:08:10.102Z",
+        "params": {
+          "query": "SELECT ?x WHERE {}"
+        },
+        "ms": 0.19562499999999972,
+        "status": 200,
+        "sha256": "ffbc2dfc402782325da71132100e74ff511d1585dd80e4ea196ed4bcace3fef2"
+      },
+      "missingMode": true
+    }
+  ],
+  "pinHashes": [
+    {
+      "file": "lab/acceptance/obligations.json",
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "label": "old",
+      "sha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f"
+    }
+  ],
+  "catalogSnapshots": {
+    "head": "1096fb8639903395593954e44be6872118fe4c68",
+    "files": {
+      "p2q-errors.ts": "71424ae70c78edb107f924beb6fe1fc683b7fa0c589d911b0f7f9ca5362f6f82",
+      "transport-codes.ts": "64dce7e7f77381a12f918e6ca67cf8086e4a7d442763b63140194a1d71f37727",
+      "p2q-client.ts": "eb5e1f134ada57f99f7fd3c30af63f65add603920aed5f85180c372e32e4f2ee"
+    }
+  },
+  "sourcesUnchanged": true,
+  "endedAt": "2026-11-09T04:08:10.195Z"
+}

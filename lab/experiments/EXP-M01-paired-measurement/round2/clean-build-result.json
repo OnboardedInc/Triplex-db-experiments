@@ -1,0 +1,9 @@
+{
+  "head": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+  "cleanStatusBeforeBuild": "",
+  "noDistBeforeBuild": true,
+  "command": "node lab/bin/heavy.mjs --label M01-window-build -- pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-xtdb --filter @triplex-build/triplex-qualification --filter @triplex-build/w0 build",
+  "packageSourcesUnchangedFromParent": true,
+  "exitCode": 0,
+  "buildLogSha256": "9a4a4b92af118442d35183f0ed1fac2d01fb6eae71d112fca1d5f3dd047fa7b4"
+}

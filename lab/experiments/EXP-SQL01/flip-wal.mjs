@@ -1,3 +1,4 @@
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // [EXP-SQL01] Why: reproduce R25's silent SQLite WAL truncation, then require the independent ACKED check.
 // Rejected: integrity_check alone (R25 recovered a valid but incomplete prefix).
 import { spawn } from "node:child_process";

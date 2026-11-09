@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Independent v2 publication/tamper review, with real owned crash injection.
  * All mutations below are confined to new explicit component contexts.
  */

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 import postgres from "postgres";
 import { execFileSync } from "node:child_process";
 import { cp, mkdir, writeFile } from "node:fs/promises";

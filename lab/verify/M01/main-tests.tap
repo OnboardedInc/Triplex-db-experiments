@@ -1,0 +1,199 @@
+TAP version 13
+# Subtest: trace: same inputs give byte-identical events; a different seed differs
+ok 1 - trace: same inputs give byte-identical events; a different seed differs
+  ---
+  duration_ms: 53.129542
+  type: 'test'
+  ...
+# Subtest: trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+ok 2 - trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+  ---
+  duration_ms: 10.720708
+  type: 'test'
+  ...
+# Subtest: trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+ok 3 - trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+  ---
+  duration_ms: 9.522167
+  type: 'test'
+  ...
+# Subtest: histogram: percentiles within 1/128 of exact nearest-rank values
+ok 4 - histogram: percentiles within 1/128 of exact nearest-rank values
+  ---
+  duration_ms: 17.99725
+  type: 'test'
+  ...
+# Subtest: scheduler: latency is measured from the scheduled time, including queueing behind the subject
+ok 5 - scheduler: latency is measured from the scheduled time, including queueing behind the subject
+  ---
+  duration_ms: 333.636959
+  type: 'test'
+  ...
+# Subtest: scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+ok 6 - scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+  ---
+  duration_ms: 96.249917
+  type: 'test'
+  ...
+# Subtest: world: hop classes, frozen P4 buckets and closed-form counts match materialization
+ok 7 - world: hop classes, frozen P4 buckets and closed-form counts match materialization
+  ---
+  duration_ms: 72.728334
+  type: 'test'
+  ...
+# Subtest: model: valid-time aware digests equal the materialized world at (R, V)
+ok 8 - model: valid-time aware digests equal the materialized world at (R, V)
+  ---
+  duration_ms: 1.190834
+  type: 'test'
+  ...
+# Subtest: feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+ok 9 - feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+  ---
+  duration_ms: 139.881084
+  type: 'test'
+  ...
+# Subtest: pool admits the two dev engines when only they run
+ok 10 - pool admits the two dev engines when only they run
+  ---
+  duration_ms: 0.657917
+  type: 'test'
+  ...
+# Subtest: pool counts external research probes and refuses with their names
+ok 11 - pool counts external research probes and refuses with their names
+  ---
+  duration_ms: 0.464625
+  type: 'test'
+  ...
+# Subtest: an uncapped external container counts as the whole VM (fail closed)
+ok 12 - an uncapped external container counts as the whole VM (fail closed)
+  ---
+  duration_ms: 0.0875
+  type: 'test'
+  ...
+# Subtest: a reserved container counts once even while it also runs
+ok 13 - a reserved container counts once even while it also runs
+  ---
+  duration_ms: 0.102708
+  type: 'test'
+  ...
+# Subtest: disk forecast refuses past the 50 GiB used limit
+ok 14 - disk forecast refuses past the 50 GiB used limit
+  ---
+  duration_ms: 0.146167
+  type: 'test'
+  ...
+# Subtest: slotInfo rejects forbidden and probe ports and names containers and volumes
+ok 15 - slotInfo rejects forbidden and probe ports and names containers and volumes
+  ---
+  duration_ms: 0.587791
+  type: 'test'
+  ...
+# Subtest: withDirLock serializes and breaks a lock whose owner pid is dead
+ok 16 - withDirLock serializes and breaks a lock whose owner pid is dead
+  ---
+  duration_ms: 229.729625
+  type: 'test'
+  ...
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] waiting for pool lock (held by pid 6289)
+# [lab] heavy: waiting for one of 2 slots; held by pid 6080 "a", pid 6080 "b"
+# Subtest: withPool read-modify-writes the ledger atomically across processes
+ok 17 - withPool read-modify-writes the ledger atomically across processes
+  ---
+  duration_ms: 810.068333
+  type: 'test'
+  ...
+# Subtest: reconcile drops only reservations with no container and a dead reserving pid
+ok 18 - reconcile drops only reservations with no container and a dead reserving pid
+  ---
+  duration_ms: 2.6895
+  type: 'test'
+  ...
+# Subtest: heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+ok 19 - heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+  ---
+  duration_ms: 132.21525
+  type: 'test'
+  ...
+# Subtest: object store is content addressed and refuses dependency caches and secret-like names
+ok 20 - object store is content addressed and refuses dependency caches and secret-like names
+  ---
+  duration_ms: 0.88625
+  type: 'test'
+  ...
+# Subtest: language classification: pure XTQL, pure SQL, hybrid, strict substeps
+ok 21 - language classification: pure XTQL, pure SQL, hybrid, strict substeps
+  ---
+  duration_ms: 0.232625
+  type: 'test'
+  ...
+# Subtest: verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+ok 22 - verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+  ---
+  duration_ms: 0.172
+  type: 'test'
+  ...
+# Subtest: caseLanguages lists every substep language in order
+ok 23 - caseLanguages lists every substep language in order
+  ---
+  duration_ms: 0.186083
+  type: 'test'
+  ...
+# Subtest: contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+ok 24 - contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+  ---
+  duration_ms: 0.398708
+  type: 'test'
+  ...
+# Subtest: second-writer guard refuses a second container on a slot volume unless its config is read-only
+ok 25 - second-writer guard refuses a second container on a slot volume unless its config is read-only
+  ---
+  duration_ms: 0.393541
+  type: 'test'
+  ...
+# Subtest: second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+ok 26 - second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+  ---
+  duration_ms: 0.186709
+  type: 'test'
+  ...
+# Subtest: follower config must be read-only and read the writer's own log and storage paths
+ok 27 - follower config must be read-only and read the writer's own log and storage paths
+  ---
+  duration_ms: 0.273834
+  type: 'test'
+  ...
+# Subtest: follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+ok 28 - follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+  ---
+  duration_ms: 3.463417
+  type: 'test'
+  ...
+# Subtest: cpusets parse against the VM and unpinned containers overlap everything
+ok 29 - cpusets parse against the VM and unpinned containers overlap everything
+  ---
+  duration_ms: 0.161666
+  type: 'test'
+  ...
+# Subtest: Datomic addition leaves every existing slot effective-config hash unchanged
+ok 30 - Datomic addition leaves every existing slot effective-config hash unchanged
+  ---
+  duration_ms: 2.277709
+  type: 'test'
+  ...
+# Subtest: Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist with an exclusive slot
+ok 31 - Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist with an exclusive slot
+  ---
+  duration_ms: 18.215875
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1272.895375

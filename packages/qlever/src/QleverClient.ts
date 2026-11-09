@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { Agent } from "undici";
 
 export interface SparqlTerm {
   readonly type: string;
@@ -7,6 +8,18 @@ export interface SparqlTerm {
   readonly "xml:lang"?: string;
 }
 export type SparqlBinding = Record<string, SparqlTerm>;
+export type QleverConnectionMode = "keep-alive" | "per-request";
+
+/** Explicit options take precedence over the lab environment; absent selection preserves keep-alive. */
+export const qleverConnectionModeOf = (
+  requested: string | undefined = process.env["TRIPLEX_QLEVER_CONNECTION_MODE"],
+): QleverConnectionMode => {
+  const mode = requested ?? "keep-alive";
+  if (mode !== "keep-alive" && mode !== "per-request")
+    throw new TypeError("Unknown QLever connection mode; choose keep-alive or per-request");
+  return mode;
+};
+
 export interface QleverRequestOptions {
   readonly signal?: AbortSignal;
   readonly timeoutMs?: number;
@@ -42,8 +55,13 @@ export class QleverRequestError extends Error {
 export class QleverDecodeError extends TypeError {}
 export const makeQleverClient = (
   url: string,
-  options: { readonly accessToken?: string; readonly timeoutMs?: number } = {},
+  options: {
+    readonly accessToken?: string;
+    readonly timeoutMs?: number;
+    readonly connectionMode?: QleverConnectionMode;
+  } = {},
 ): QleverClient => {
+  const connectionMode = qleverConnectionModeOf(options.connectionMode);
   const base = new URL(url);
   const cancel = async (queryId: string) => {
     const target = new URL(`/watch/${encodeURIComponent(queryId)}`, base);
@@ -92,12 +110,25 @@ export const makeQleverClient = (
       if (kind === "query") void cancel(queryId).catch(() => {});
     };
     signal.addEventListener("abort", onAbort, { once: true });
+    // [EXP-QNODELAY] Why: both modes must use fetch's decoding and abort identity
+    // (QA F1/F3). A private dispatcher changes socket lifetime only. Rejected:
+    // wrapping IncomingMessage as Response (skips gzip decoding and changes aborts).
+    // A normal keep-alive dispatcher is destroyed after this one response; forcing
+    // pipelining:0/Connection:close changes truncated-body error identities.
+    const dispatcher = connectionMode === "per-request" ? new Agent({ connections: 1 }) : undefined;
+    // [EXP-QNODELAY] Why: Node's ambient Undici types differ only in the unused
+    // compose overload. Fetch consumes dispatch; preserve the built-in fetch path.
+    // Rejected: switching the default to a second fetch implementation for typing.
+    const fetchDispatcher = dispatcher as unknown as
+      | NonNullable<RequestInit["dispatcher"]>
+      | undefined;
     try {
       const response = await fetch(target, {
         method: kind === "command" ? "GET" : "POST",
         headers,
         ...(sparql === undefined ? {} : { body: sparql }),
         signal,
+        ...(fetchDispatcher === undefined ? {} : { dispatcher: fetchDispatcher }),
       });
       const reader = response.body?.getReader();
       const chunks: Uint8Array[] = [];
@@ -134,6 +165,7 @@ export const makeQleverClient = (
       throw cause;
     } finally {
       signal.removeEventListener("abort", onAbort);
+      await dispatcher?.destroy();
     }
   };
   return {

@@ -1,0 +1,7 @@
+{
+  "old": "sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf",
+  "new": "sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf",
+  "reason": "Accepted DF01 gateway identity-only feed implementation; native measured queries, W0 data and writer schedule unchanged. New image requires fresh measurements.",
+  "review": "c98bbff8",
+  "candidate": "dcc8322d"
+}

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated local values; unannotated dynamic parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { closeSync, openSync, readFileSync, realpathSync, writeFileSync, writeSync } from "node:fs";

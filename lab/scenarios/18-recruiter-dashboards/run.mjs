@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 18: recruiter dashboards (TARGETS 6 row 18). Spec and golden only.
 //
 // The list: "placements in this branch with an overdue I-9" = placements whose :placement/branch is the

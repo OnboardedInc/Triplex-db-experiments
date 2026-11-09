@@ -1,0 +1,779 @@
+{
+  "base": "2a2fe2fc9317de346b5249924f7c1a0b9a95f81a",
+  "node": "v22.23.2",
+  "typescript": "6.0.2",
+  "typescriptPackageSha256": "bb6ee7e709ae60426e30b8d393df4d939ee61407794b4f053ce6338d6eaa8c63",
+  "at": "2026-11-09T06:53:00.531Z",
+  "changes": [
+    {
+      "file": "lab/bench/wait-slot.mjs",
+      "oldSha256": "e91b0f0d7eee84386b8d5cd945ea975cc11d33581285af39e5268731c1cb0ef0",
+      "newSha256": "4ad4784618eda18b28ca17995fed3a47c7d3101e3bb5494db42aa47d03ce1a4f",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/agent.mjs",
+      "oldSha256": "f9602bdaede7ef064f5825ffc0d405fcf50ba365a40267016caa6c857d31d2ca",
+      "newSha256": "873d2ce146f14d40926c952eee94147182dbd4adc5e0a2e08612e83dd3364649",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/claim.mjs",
+      "oldSha256": "0577b9ca68bda21f57df574bdeff501a0869dd06af4ad63300ce33eb1402229c",
+      "newSha256": "ca714f5c756399e16b4c2dbe336f3cfea91e5661edb0d7d28672270d33d38b78",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/datomic-context.mjs",
+      "oldSha256": "7d356e590175e6539065dfd7d709e0f2fd0a3748b85229299122ec4df62d6715",
+      "newSha256": "4dc30f3ed52ea6791e7b2a2635bcd7977e69a93f848539b9d67bafd441dd3611",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/engine.mjs",
+      "oldSha256": "78f1a6b9a2a8fba62ff35be34b426e723c39587a2104e69ff4b9b05889589a1f",
+      "newSha256": "96c7590c8ab35e21490bded2d45f0bbd65a723c0ce4e2c6bec8e876e12012acc",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/gate.mjs",
+      "oldSha256": "f5fa85691c324def748a967e2c7a891784e2a50970a87d9534a1e414b397be2f",
+      "newSha256": "a934c613174d7d00d57d287184073c38ac56a5ae20fad163432b973bf777f21f",
+      "pinnedSha256": null,
+      "commentOnly": false
+    },
+    {
+      "file": "lab/bin/heavy-lock.mjs",
+      "oldSha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+      "newSha256": "d0d442e9ca8fc4e7022fbcfa3404523ed823b64f59eb116fc66e06e1f703b052",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/heavy.mjs",
+      "oldSha256": "37d91c04a32dbaf9a67b6f9fab4c62c6965c37e5fc608e1fcd9a94a4800274a2",
+      "newSha256": "c4154d0da53ef639422c6fcb652429682d48cc7450babd34fca80b66057c8ae9",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/lib.mjs",
+      "oldSha256": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e",
+      "newSha256": "0288c5f586e57127dc302c7b6bc3ddf6e4ca6cdceb96ffdbf037787dd7672298",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/receipt.mjs",
+      "oldSha256": "ebdcfb60284d6efe378923c0f42eb4eb7ad9a260141ceb46958e86752d0d2d2c",
+      "newSha256": "7e9a4600866ea476e99ab9d6496b945192f6f12be7a285450b71ea93c5b4eb51",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/scorecard.mjs",
+      "oldSha256": "c8e632a3c353b5897ef2a82b7d9ee9484702fb3d222963e251c63186f439029e",
+      "newSha256": "1331d908e15db4ffb4c8785e3b285416051d7cfc9f04418a18315129acaf3a2d",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/status.mjs",
+      "oldSha256": "643c8a34fedeb7e90cb5d04e153187171b4643dfe250772b6b1eabfedc2ebc2b",
+      "newSha256": "89eed8943a6fac5247e86f07fa42a4b86d0f8b3bb9fdf016b591090f4034940d",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/test/claim-fixtures.mjs",
+      "oldSha256": "5cf4c1d8583135d34269e62b3a1a2585373d113c4ddd263cb52124c76fe8aa07",
+      "newSha256": "debcc0deb877912639cebdc2d107bb391397d5334f724676751ede18d7b52c89",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/test/claim-round2.test.mjs",
+      "oldSha256": "6aef70bd2448a6b37dc040d19d9ee219a4e4e5fdf78c8094e1bb66ec45104be9",
+      "newSha256": "4a5c65d1d26fd71996f8a0f6e8b765608d628abb74e69fbd7a4bf2348a22edc7",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/test/claim.test.mjs",
+      "oldSha256": "62de70ed333c40f8662da5749179f985f9f8b961a6c10459a0dadfad5bceb476",
+      "newSha256": "b8352b989fcf5857cb8f4a4a3d3766ed1f61f46ba6b0760f8568060f3b8f819f",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/test/lab.test.mjs",
+      "oldSha256": "c6970e197add4e865211662bcf80adb75b9c345a1aea0d3c341fc219ec4c005c",
+      "newSha256": "aa78da91d1e7bbf7b68e74bd34ccea0cacfc13be56086e99285a73065a278e7b",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/scenarios/lib/policy.mjs",
+      "oldSha256": "a3ab097e68cbf42be090038cae79f0a26b9111c48cd761f82566f8c0280e6f3a",
+      "newSha256": "210ce5d180bd104e9b88c892ccb6a68ea6cac0ba2550924a077cdddf3b96719e",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "package.json",
+      "oldSha256": "e65e8f8be2a05d2b440af87c03a7daf6781e42704e5a17319a14d666fd1c37b5",
+      "newSha256": "4be580a02dea06d9bb56aaa579e5f2e9f95f2bcaab86786fb62dc7bfada9c840",
+      "pinnedSha256": null,
+      "commentOnly": false
+    },
+    {
+      "file": "qualification/adapter/scale-fixture.mjs",
+      "oldSha256": "1a5fc8d5eb6e7387ab5b5957c677ef7bbc9588eaabcabd40c426af047a61e1a2",
+      "newSha256": "f131644c169b56d328a39fcdd5c49e0372d08444638886ed34a880854a041388",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/capacity/configured-entities-v1/oracle.mjs",
+      "oldSha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3",
+      "newSha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94",
+      "pinnedSha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3",
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs",
+      "oldSha256": "bc93f24c88365add1d215747cd95705a3c2a2b4fd1c6cdd7e347a014fb23b290",
+      "newSha256": "bbd656760719b67a3435419121b0b7df909a99ea9c1aba22d85ea1363cb6b08f",
+      "pinnedSha256": "bc93f24c88365add1d215747cd95705a3c2a2b4fd1c6cdd7e347a014fb23b290",
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/capacity/historical-assertion-metadata-v1/oracle.test.mjs",
+      "oldSha256": "4e6c36fee21ed058ab82d9cb9d612053b7535bcae31c249b7274aeb1b94277db",
+      "newSha256": "c2603da7057c879464726b4a048a209de1eef06c58f808c885baa7454ac1fee7",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
+      "oldSha256": "f661e8138d5194bbcbbe56eec9ec35f8766bc9938540192e7b0d92d04685721b",
+      "newSha256": "5ce6612714b2b7742c46e0599617d472b4bf18a352806e5d44a44577878c9649",
+      "pinnedSha256": "f661e8138d5194bbcbbe56eec9ec35f8766bc9938540192e7b0d92d04685721b",
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/capacity/historical-assertion-metadata-v2/oracle.test.mjs",
+      "oldSha256": "ff81358090f1cb697f67d0360b092673dbef9bd0adb471067f7b5cb02b33ed94",
+      "newSha256": "0fd54c311f3fbc821ab7c5950b6fdfb186212eeea84ceb9edaac02c0ae799f3e",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/capacity/historical-assertion-metadata-v2/prepare.mjs",
+      "oldSha256": "25ff5ed2ac8ddd9fe71ac5702de1996a1364260d97028596a3b5b18113283411",
+      "newSha256": "c2ff05b1de691228c46740a2d74f6a1d9cf8b3884c265a2014f9c3fb3a89aba6",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/capacity/historical-assertion-metadata-v2/run.mjs",
+      "oldSha256": "791611bd96737407ab68a78c44204e9dbcb98681edf4e27dfdd944a495c73c07",
+      "newSha256": "da1c3edcf6f7905b4ccd5f3b4e76ce1234df7941b0a1c9a8e4dc2844172b6cd0",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/compare.mjs",
+      "oldSha256": "335753f428afac60a02ee86a455f52d4606af1d8b072e5852166515f22d5f107",
+      "newSha256": "4d526b724dff6a6cb5ee48ed1e8fd527fca8dbdba45b6c8e4d1bf66826da986f",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/compare.test.mjs",
+      "oldSha256": "f035e752507a7d012f141c9e3952254f4886d425efc280047ce13138b7226627",
+      "newSha256": "2bd8ad63b898fc44765337f79527b34f84cba519ae2cc6f3e56a0cbd6a3aeb1b",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/compare.mjs",
+      "oldSha256": "e3c9d9b7d37f14ce51d19d6b7826428ec3cd6d00021310473e8ecddef2a7df10",
+      "newSha256": "426ffd6e185209a02855c637676484e92ad71f0116b9fecb6964709612e5bb7e",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/evidence.mjs",
+      "oldSha256": "ea0658dd4240a4877745310b44e476e485472df0100b79a58946781945c823db",
+      "newSha256": "401e0e9483971f25783f3fefecac5934c7d32ab7da254b2d3a18c8615bc62d50",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/executor.mjs",
+      "oldSha256": "0f88eaa5395cb6f6dc61a1f0de9a30dac33394c44f9ddd602888d95194c9167d",
+      "newSha256": "dcca25f7ef5a4b2f7b4aa0eadc890db4561186a0f74c93a36e9565a65541c827",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/fixtures/controller-child.mjs",
+      "oldSha256": "f5c6181f484cfa10df40273122162a0c68213b068e622904702877b368dc2deb",
+      "newSha256": "8ceef509da6db4ae6f6d36dd16aeb3a792c241afcc90f149142f1053dffbc1f3",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/fixtures/native-package-consumer.mjs",
+      "oldSha256": "c264d68d37284ff28327bbe21b2eca6b5bd39bb52dcfc1ce8fb9936a562fc4e1",
+      "newSha256": "a95380e05b94bc7329c0fb36c99501b96a65b52c288f6e8dcceb8a5df8184fc9",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/io.mjs",
+      "oldSha256": "47252e53edd42bb463e228e3603c5f837e605f973b949818d6defd9bd5a52ca3",
+      "newSha256": "901bcff69fa6dfd57a46763b138018c522c22558bf266f9deed68076595901a7",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/migration.mjs",
+      "oldSha256": "2f8915fdb8e69fe744d0f0a1c3bb5392c8153283f9ec5d9d90ce793677e89383",
+      "newSha256": "a33460cd69fe4f342b3c6245228bf573473c1876848eaf1135c802ba5508efb1",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/preimages.mjs",
+      "oldSha256": "0d1686502b3cca3c6409346474fc19310434b6c6556459d3c950c43094fe05ab",
+      "newSha256": "13dbc587c06159b9eeb729bf6e2f167ee36f86de06d4e78e232846c9fed447a6",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/recipes/prepare-public-regression.mjs",
+      "oldSha256": "5bd19bc2bb961752aa6c4302c97bbe73e146fc68c80aa539acac26867e777d65",
+      "newSha256": "56eb5ea0372b260abd52d5d629651ed116681959e10cec05d61daaf0ec02dfcf",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/recipes/public-regressions.mjs",
+      "oldSha256": "45118fcc16bfa7bcd7cd27f5f4acc9f16d7d7ae1af3e83683a69efd62040572b",
+      "newSha256": "e1de085d05c18a8d0509ec55531b4e6db5bc8e0bf29372c1cd44b1f4496e519e",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/scheduler.mjs",
+      "oldSha256": "a797ab5de71837a2a873094d3a6ae87f98580e77193a8160ea2d74e652935fe1",
+      "newSha256": "bd804d52ae8d25cb22c61979f7be43e9a37229f4afc628b1402e3d84768f5c97",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/state.mjs",
+      "oldSha256": "c5d17ed1f2a26be169592b8332cbc2b051eb3ae4acf82e49c56fa9b938ac1125",
+      "newSha256": "3c5aa3b2c2b66236778324b853d5031102b5328c1000e9fe06f90a60b3541501",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/test/controller.test.mjs",
+      "oldSha256": "d12f68dcff155a44d0f3bde38795bb54c281f76f5c4fbea7ee7c2ea2fc99d679",
+      "newSha256": "f83b083d3a6708c0635326146aed295ffb5ac2a4e130b3fc6b85ff4eb6a4123a",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/test/integrity.test.mjs",
+      "oldSha256": "95148b12bc5c2827f5b6399d4b2d383121cb163edddef13f19b9eb88986fb365",
+      "newSha256": "b99048e403938f4ded3ef89947d10ace6e8cebe4659851a12f6d5f2cc0172472",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/test/migration.test.mjs",
+      "oldSha256": "cf53454df2de9ffc32f16ed90f98346cec13b81556e92ec7447c385b6f0fe5c5",
+      "newSha256": "4d8faf588751ff3f69d92a26c50c27eeceb99d2d35231b6b971fa5664dcba56b",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/test/preimages.test.mjs",
+      "oldSha256": "362bd1e6ea69573a5eaadd01bdfe623973bce64960ff2bff3987c87d908548b5",
+      "newSha256": "a61761e3a6cdcac25ff20517fa98783636357466be57248ae659119d0d56ac1a",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/test/prepared-stopped.test.mjs",
+      "oldSha256": "6e648cf51af4f636a6adbb6ec982e306a0f8efa287d0e70c5c7aa5134eb55087",
+      "newSha256": "6fd0d2c7a3b0daa36b1b7d09cfceb3897bbe0cb5cb65ab5104a6e48f562485f4",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/test/process-identity.test.mjs",
+      "oldSha256": "20325d96a00261486b90a331e37c313350c3826436b94906e5bd9b1c75c2efa7",
+      "newSha256": "c1bc0ea7d2ffd965e56030c826f58bac1d2b8759bb0d587bc7c0ad7e69812cc3",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/devloop/worker.mjs",
+      "oldSha256": "57aefac0b762f11d29017a73cbf9043df9a9942c5352742416bd282d9d3011a8",
+      "newSha256": "d644e47bc45d72857383a4a4d7eaeef70f1677d26a3a081cd5b2dc8a0b733f27",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/build-v2.mjs",
+      "oldSha256": "17bf615ef14498586a7a33874f6b6662d1037b6fd9bfaf717259205617e0b5cb",
+      "newSha256": "f3c5db3d2768cfd05e5c8f8612174da18c76be0075da7adfd1139d81e4e61d40",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/build.mjs",
+      "oldSha256": "42b754fbc926fa372045add6cf2c6869362dad97fa4c270d25ea1c913c8f9be8",
+      "newSha256": "c4ad585e551e7272223728b8c603c9e5f47c75dabeddd2b134465a73e4455415",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/lowercase-support.mjs",
+      "oldSha256": "5a02f4c9c15c62fb8b0212034a4f6e0b72f3468cf14faffb43fdb99b1fad9624",
+      "newSha256": "9331e490e296a925ebfd7508502647bbd359590e93908c6324ae188fe3b83948",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/lowercase-support.test.mjs",
+      "oldSha256": "c248e14804d012c9769b6706e2687e938cce2d9323ecde188093e550ab110278",
+      "newSha256": "d2b783f0fe1a3a4ff5aa89f5306655b63be886ebc1b8c88ea1791873ad4492b8",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/client-outcomes.mjs",
+      "oldSha256": "fd7992cb0e6324ac233d5410d1db1ee19de537495a93ae9430a1d0f6c7485790",
+      "newSha256": "1364b594f4a6b5d63c542ef0973f809a13a678106e880324119e99d3d7c4e5c6",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/client-outcomes.test.mjs",
+      "oldSha256": "3152206b2215d0e876e190f6907496cb53917d3121e1ecbbaa4d8001e33eaba1",
+      "newSha256": "efad5660fb92588e6a7b7684ac4561a48bf85045b6346cfe4dc343b5f80afc31",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v1/sdk-observation.test.mjs",
+      "oldSha256": "25a8053bf34163391564bb30e3fe2344d94935dde3c642c843c08e6a5a63cd27",
+      "newSha256": "c72e8063dfbaa3a27d987351903f0f0eef3d8c4d7ddd85ce84d0352a9ab3023e",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/client-outcomes.mjs",
+      "oldSha256": "c225ded139ee248c285e2492c62fc07d0a410d4ccab58a908d524618ce84ba79",
+      "newSha256": "98a72aecc845b479c5cd0d87e6a502e361c2f6c4bfd8dab89dbe4a90a4d9f166",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/owned-client-seam-v2/client-outcomes.test.mjs",
+      "oldSha256": "8a55dd773b855f111bedc41f26a9f2958080893bb50348b7ccdee44033ca03f2",
+      "newSha256": "981065636fbdcb0135e20373034b2651be2723bcff1ba966e6681e56337029ac",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/prepare-build-v2.mjs",
+      "oldSha256": "f1fb2dd3238b9bd0e4370d3c8e19efa9cc4f24bda2dd4883ae8ff487b8f0ab05",
+      "newSha256": "855fa84ed616ad27870be372942dc7ef36d88e32d597bf67a71655efea3ed00a",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/prepare-build-v3.mjs",
+      "oldSha256": "899013d49a664aa3d4b0fb330e7b3c8318d59bd9b7831a39882ec8ecd59f59d6",
+      "newSha256": "71ae71332723b83b041bd52c0cd87cb72927cabb9c409c6a70ebe95212f4bbf5",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/prepare-build.mjs",
+      "oldSha256": "601ed48928910aec6f87fddb340e526aed7c833fbc1cf0aab515658e2ae0d233",
+      "newSha256": "d30df36df1f5057a38d8635bf25d6ff21f28977b71e082690fc2e26d03b11e1a",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/prepare-components-v2.mjs",
+      "oldSha256": "ebead71a889fa887beb251d3cde27f919d9a41eb30477c15af423b04eacacf6e",
+      "newSha256": "af4e1ba0bb19170ac289ef219fd762cdbba168c23148e0b04e8e82195a0e7a20",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/prepare-runtime.mjs",
+      "oldSha256": "f94a963548390a4058f2d00b491560b25a73f7c07c9425592372a6456616fe1f",
+      "newSha256": "5a7035203c7b62582a185aed78fa66735d9b8cf5c202e6916f0f9495e1f258bf",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/runtime-components-v2.mjs",
+      "oldSha256": "61a1f8d2ee7dc69a1760137deff4aaf6e19e6f25719685b214a4171f0d3b959f",
+      "newSha256": "ec9384488f9359eaae9e92dbfc176c78cee4cd0388f08a080b22d865a7133def",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/runtime-components.mjs",
+      "oldSha256": "a0b6aeec464bf94d63f13ea030beffff061a8749cc402841c6dd1ebbf4432d48",
+      "newSha256": "2344100a8bdcc4387cbe2156fa39a062de74ae335c5b06c1e7cf717e035372e9",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/runtime-noemit.mjs",
+      "oldSha256": "301df6d5695b2054adcd13309bfde151cab69676909f2e7526c8d35dc34b71ed",
+      "newSha256": "bacb4ecc167902df59f019005357b94d77c397c5abb9a4bfeb6fbb5a17fd5690",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/qlever-wrapper-repair-v1/runtime-runner.mjs",
+      "oldSha256": "12af4aac4d27a3902d844be1305f20d779483c76c741aa2aed496b15fe2445ce",
+      "newSha256": "afa870731b10d88641e2624039945dfdf5f58921a4d159d5288bd1c508467491",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/string-order-v1/component-runner.mjs",
+      "oldSha256": "7eeb7cb51a0af2d908125791730646bfb2ec3b93ab654fee0dc1d5f8d1ae8f69",
+      "newSha256": "c9b7d83730365ab1ac009feff5545efe97f4c83b4a32bbc68ddbfeb5fda73255",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/string-order-v1/prepare.mjs",
+      "oldSha256": "b27668be474f633f8fc927612acfc330ae7ae711c33f637ad580e73ae713947b",
+      "newSha256": "4e2c15f238d511aee6c0f778ab65130773f9542c241d2db6551175f3ca7f08ba",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/string-order-v1/probe-support.mjs",
+      "oldSha256": "1fed53c42dc87887b6790bd6f69b8959a4c74fd0e9d852b831166e0178373fb7",
+      "newSha256": "ebb999bf74c0b15192f7bf597a2ef21c39ea48a23849da71ac741f1d80c21437",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/string-order-v1/probe-support.test.mjs",
+      "oldSha256": "1058c6f4e04844cc6278e0b5627881e752dc6ee2d800e26a5518d9e0decffe06",
+      "newSha256": "d63df74b4055d6090659417e3bdd9c855d66c7318819045db5b810f5f40f4d4b",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/string-order-v1/runner.mjs",
+      "oldSha256": "a6075acc653e4d9f2795fab148864819e3f520c4e581a63b516fbff2887a0ce3",
+      "newSha256": "431d31c31cd9529f8abc0b077c6bd102fcf3307b4149d6b0edde0fcafffd9104",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/extensions/string-order-v1/type-runner.mjs",
+      "oldSha256": "f6152271c757bdcb58fe433a14d63fc270de39c23fb718100256de224e30de34",
+      "newSha256": "8e2a0ec07edd84a7e0734cb6e82da6317abadc11ae86ce532ae5ec258d0371fb",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/maintenance-jobs/reconcile-controller-publication.mjs",
+      "oldSha256": "7aa09c19c55755b58d85c963b6d3fba2fb876f536a0c48df61d15952592265ca",
+      "newSha256": "4a20dbcf4096560f61bc951661a3c2c6388ddc3c3099314ec6d44d05e7ca5a83",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/canonical-queue-review.mjs",
+      "oldSha256": "bd728b5619155efc430933bb72afa7f7e24b2088322e38f5b2f28e8b1a6666b3",
+      "newSha256": "a6423faf98b5d5c7c7c92549655741d252a75d232c9a7f6abe0f991950fff327",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/compare-hardening-review.mjs",
+      "oldSha256": "cf63dfe0c77dc5d4278dbe02eeb5c50cc712bb39a3437658bd400da87bf00e30",
+      "newSha256": "89157112d378fae5ed8f0ec969acc55d16696b8233cd763a60598cc2e8cf4f48",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/failure-artifact-review.mjs",
+      "oldSha256": "f05c044c37ffbf5e54ef6fa4191fbfc6b4e10108cabf52119a407c387614276b",
+      "newSha256": "3b2585489dd8e8cdc42ef466ec1e3b7a86c57007c9fc8f4a969530b0535b713f",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/load-observations-independent.mjs",
+      "oldSha256": "7e1fefa29edb9f7e47f2ab8eedcc2eeb66bf00651a340d56d275eff7f74178e9",
+      "newSha256": "0f19971073fdcd2dbc46980393acebfd853bad48e4cb3f507ca4cce82db2c408",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/native-packet-final-independent.mjs",
+      "oldSha256": "11248ea953449a12d7b1cf13c0bf444febed25f92e6b3d97b028991dce8f4ec5",
+      "newSha256": "ba6efd8f67ef52021ba1d5a37d1d560f6e49958777fc6399524be1557f1ac071",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/preimage-review.mjs",
+      "oldSha256": "b27bd1c8e1f2625fafed48b744a3d7bcf7c59c7bec58e53d1dae731e7e6b6359",
+      "newSha256": "d061126c3d8283cbdd2de78431f9f16182b5e0ac1e599ed732d9563c945bf838",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/qlever-controller-review.mjs",
+      "oldSha256": "bbe00900718a0e9f7ce5b72d04b8f9d239f407a95bb84d7f183007cf1b6ee42c",
+      "newSha256": "a3ac8b59ea9b21dd6f290af66ce6ee9e29f1276f0431768c1fd67cd05a7ca53b",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/qlever-public-string-v5-independent-check-v2.mjs",
+      "oldSha256": "4903c3da49b186ff3ee074404bfb0347a992e7f962b30e5a7e2f54e4d8674e9d",
+      "newSha256": "32c43f987b88a52bc8c658dd3f4948dc27bf669c90a0c33d61b969b3f93875e0",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/qlever-public-string-v5-independent-check.mjs",
+      "oldSha256": "9188307e05ff7a8dec17796776f03748be9bf59aebadab048e9f0d45d385d980",
+      "newSha256": "432ef51d9b14f7d04c5e51f67b3530ad7dd43635990f4c123744218c4b1bf18a",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/qlever-public-string-v6-independent-check.mjs",
+      "oldSha256": "0b4e69e2662257cc72d9d90b03dec94c192847877e545d3472bc9ddd1b8a44e2",
+      "newSha256": "03b3247d340cd96b3e2ec07dd0e860e4c97628a74d160af348b7311f7beeb7af",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/qlever-public-string-v6-terminal-independent.mjs",
+      "oldSha256": "ba04c20f1b22a5010ec90617e80fcf5a28cdb7e71b4a8e8e207c8306e0dc2f21",
+      "newSha256": "a04581744e0fa2c43d27238dc14c3987a5533d8060b54b22935ce53b73bc6fe7",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/qlever-wrapper-lowercase-v1-actual-independent.mjs",
+      "oldSha256": "8c14e8d7da5a89a1c65a51798c78bc4eb1f4da8d7fd8fcff338e09decb69fb73",
+      "newSha256": "488134943f94c9d6421cfff397b35f4f0bc7f6d3b598c1192e5369ba6ed0ac33",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/qlever-wrapper-mixed-v1-actual-independent.mjs",
+      "oldSha256": "734bf593567a90d87d4be3504d0089ba74669fadc2b280d40edad27235f2b54e",
+      "newSha256": "637ce6f11021f6cbd77f7953ff2783827eef1b5ae1d123dba3a3a68d4817ede4",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/qlever-wrapper-runtime-v1-source-independent.mjs",
+      "oldSha256": "18b3db3bc9717bc9cde961eb8ffe80b2eda458c7b4fb68a90e1b898be4e302be",
+      "newSha256": "79bef3ed9e7ec08bbc3977533a1b3ff84a09db4fb1b6dbafa1fd4c6feeda30d9",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/qlever-wrapper-sdk-build-v3-actual-independent.mjs",
+      "oldSha256": "1f7c170654726cbfe5af626f1dccbb6ab3c78485436a3a8d59f56983f15585d7",
+      "newSha256": "47871b65df898145346b21ecc43d9a7c465596185f8587a3b6293d582850b4cc",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/qlever-wrapper-text-lowering-v1-actual-independent.mjs",
+      "oldSha256": "6c38460d3dde39068d96ea8df2b4defb6dcfec3de2df36778ac08df1ec6c0606",
+      "newSha256": "4528edd72785628c125c804f9f79742be6f736d624893d96a2a093efbf420b51",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/required-owner-review.mjs",
+      "oldSha256": "d33ae958fb0a07fb408f3ac6be24c069f8f408df7dd6b71ecf59f8f12aa82802",
+      "newSha256": "a9fd30c135a2c9137daf334f9a9744881b3b123ba35b3a25ecb250a76557ad3a",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/sidecar-migration-review.mjs",
+      "oldSha256": "f262fb804a029c60e52eec66fd56abdde65fde13f395b8c4cdc1a4e860a57d84",
+      "newSha256": "a3828600f9fd4a0ffca8ede8c8ade90ed215e88f4bf95cd9b5af214072d9e818",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/xtdb-point-query-shape-independent.mjs",
+      "oldSha256": "5b8d4fd28acc41ed56ba2326df17a624f9592e9cded6cec2067e465166a5fddd",
+      "newSha256": "30641626d7fa2e6500cfb7e1c7d9ed98460dc603ba2a25616694c27ded225bda",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/xtdb-signed-zero-independent.mjs",
+      "oldSha256": "0e523cea428f13b730166ad6c92d52d3b00c86271af1d97cbf6ad4f1f142d4b9",
+      "newSha256": "e7550d548ecef15793e2277ee4fd1c9b189d4f16c630611c4f8ad114a6a7a323",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/reviews/xtdb-writer-visibility-independent.mjs",
+      "oldSha256": "a45608a5e03d3c068a77feb8adb3e1b1e8073a5d4c0415c3a83e8d89620f8f41",
+      "newSha256": "f4beb6a43ab2e0c71b9cd558004509a1433636af6ee04f293685e8db3cc0c7bf",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/access_cases.mjs",
+      "oldSha256": "9de17a852621ac4a69492fed124b54effa4d39f87c9f4576b7e77845e0c9af0f",
+      "newSha256": "2f13a7388ebdbb5ac8a4509422c5cae99d3fda3398f7dc93e11c2fc291aac3b8",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/containment_cases.mjs",
+      "oldSha256": "401a4bb5c3b64bf1d518374449592b89cc1629f413c6806d0b34fbdb53a295bd",
+      "newSha256": "cf16dd3d45cf6af9ff8c5c342ee1f50b134457946c042cfe246dbf7e1fd8883f",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/dependency_cases.mjs",
+      "oldSha256": "faaa7ef47c4112ff06d69d1f888b373be48587cbc00f340e8f72cdfb842fe261",
+      "newSha256": "cc4c0469802ae98cb33bec12757237dbb8767a5dc58a0acf0281051bc504ed13",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/engine_cases.mjs",
+      "oldSha256": "321672018338d88b75188a489aa296418938651b79c2c48cc3940d813e714d50",
+      "newSha256": "1727a26e563e754aec2db85f3a7700e0eaeedfdd1721750be7e96cf03a4d35dd",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/funnel_cases.mjs",
+      "oldSha256": "ce3bf3ee86bb8db657ed3a643b8515bea309232d6db86dd96e76a18e7cbb2faa",
+      "newSha256": "2b3874146265a979ff7c99f3a0d3c29ed64d5b951b3a0b9bea24dbf039f7cad9",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/interval_join_cases.mjs",
+      "oldSha256": "8155ee3655fa8c8be4d20d90e6523cf1448e47aef4fdae45723833ae93eeed85",
+      "newSha256": "c1bce169ce966aac92f04834cc9581864e15ef7c3f46352ad8b62b9ff768318d",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/recall_cases.mjs",
+      "oldSha256": "261247cc646e5eab3bf8c6bcdf84404f4b6b9cda07b885c94ca3d7a3906ac99c",
+      "newSha256": "46b9401b75776f3fa9f4d4aa330f2cfc1ae723f30018b7f14973ac98bb025035",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/run_three_engines.mjs",
+      "oldSha256": "001df67ddac5d1242ec681dc46926f95908ee883a19fa5173e88ab45aa48c5a5",
+      "newSha256": "d9cde046b16cd8e61e69ca60baa6f99f7fb8cfeabf0d8f3a8193bf6144f7fd26",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/support_cases.mjs",
+      "oldSha256": "3114043605a922218ae3fe1feeb4949d280f4dbe5e24d98159a8a691c5cebc02",
+      "newSha256": "3e09071d2d0846ce7134a2d63650e70bb60d312cebe9375013fd1b5c86e4bd89",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/test_engine_cases.mjs",
+      "oldSha256": "7d1d406e659f8a9f917c84a6a9c76517b0262cae07851500b58fa6ead1dd409a",
+      "newSha256": "310d646614811875084bff065d07eac6b6b6f7b00af77b310d1a3b6a331dad80",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/training_cases.mjs",
+      "oldSha256": "1474e7fd1ace7d18906d347de2a515149880542086e59feaf8cbcc0ffd1bd076",
+      "newSha256": "5ccf76e264e9c759f5bdaeba9e5f72cd9c888ebe8efa5ec88e30e5e9c8fa7389",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/uptime_cases.mjs",
+      "oldSha256": "432a4556422acf4122282c89757a12e926bcdf543551cce497b4c3519c3c4fe9",
+      "newSha256": "e0cddd83549808bb4680ce138a59efa6b23ad597ed622a6f832d30b7e6800264",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "qualification/workloads/webhook_cases.mjs",
+      "oldSha256": "084549364af26a6efdf472e521e1a1a8fde7c08389e96810816da43d3d151e54",
+      "newSha256": "8fcc54a333c0fce094134f031b892bb4ad2f1aaf44cfdad21fdd87363e64585c",
+      "pinnedSha256": null,
+      "commentOnly": true
+    },
+    {
+      "file": "lab/bin/checkjs.mjs",
+      "oldSha256": null,
+      "newSha256": "851ea13a1912acbdcb29c63cdce1617c5c089b72713958b5901085a3f1845e5e",
+      "pinnedSha256": null,
+      "commentOnly": false
+    },
+    {
+      "file": "lab/bin/test/checkjs.test.mjs",
+      "oldSha256": null,
+      "newSha256": "1d6ced49013593c1b1ef212dafadce610c041465aab50ded6b1be50aab6c063f",
+      "pinnedSha256": null,
+      "commentOnly": false
+    },
+    {
+      "file": "lab/tsconfig.checkjs.json",
+      "oldSha256": null,
+      "newSha256": "8639b21b50b5bdba0655cd3e72291a61c8a9e63b4cf8ccf639fc95a380446896",
+      "pinnedSha256": null,
+      "commentOnly": false
+    },
+    {
+      "file": "lab/experiments/EXP-CHECKJS/verify.mjs",
+      "oldSha256": null,
+      "newSha256": "e966103f64e5f97ecd057ccfe5224e54ee44fc122ae32f2e4f2faea9fc798e99",
+      "pinnedSha256": null,
+      "commentOnly": false
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "start": "2026-11-09T07:54:15.614Z",
+  "end": "2026-11-09T07:56:08.868Z",
+  "args": [
+    "--test",
+    "--test-name-pattern=^admitCore makes the contract",
+    "lab/bin/test/claim.test.mjs"
+  ],
+  "env": {},
+  "status": 1,
+  "signal": null,
+  "error": null
+}

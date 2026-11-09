@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing; runtime-guarded iterable values; negative fixtures intentionally delete fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-RQ01] Why: retain CX-VRQ01's independent ledger and five planted faults.
 // Rejected: replacing the review controls with the harness fold (would lose the independent check).
 // Copied from verify/RQ01 ae6b802 review.mjs; adaptations: explicit scope/contracts,

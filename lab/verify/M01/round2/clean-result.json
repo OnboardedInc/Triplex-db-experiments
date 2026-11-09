@@ -1,0 +1,59 @@
+{
+  "target": "99d9641d4d6f385ab3b3fade7e9e78680a8850b4",
+  "initial": {
+    "head": "99d9641d4d6f385ab3b3fade7e9e78680a8850b4",
+    "status": "",
+    "distAbsent": true,
+    "nodeModulesAbsent": true,
+    "lockfileSha256": "fb4ce15c7b6672b86d8b833436c8c0e9f37a4abfff4214417aedad7cf8cd3da4"
+  },
+  "command": "node lab/bin/heavy.mjs --label M01-window-build -- pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store --filter @triplex-build/triplex --filter @triplex-build/triplex-testkit --filter @triplex-build/triplex-xtdb --filter @triplex-build/triplex-qualification --filter @triplex-build/w0 build",
+  "install": {
+    "args": [
+      "lab/bin/heavy.mjs",
+      "--label",
+      "CX-VM01R-R2-install",
+      "--",
+      "pnpm",
+      "--store-dir",
+      "/Users/sam/projects/triplex-db-2/.pnpm-store",
+      "install",
+      "--offline",
+      "--frozen-lockfile"
+    ],
+    "status": 0,
+    "signal": null,
+    "logSha256": "be397a08613aa0867567902f1d6b79a4da22b342142e63d70a4051b67b3cc2b1"
+  },
+  "build": {
+    "args": [
+      "lab/bin/heavy.mjs",
+      "--label",
+      "M01-window-build",
+      "--",
+      "pnpm",
+      "--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store",
+      "--filter",
+      "@triplex-build/triplex",
+      "--filter",
+      "@triplex-build/triplex-testkit",
+      "--filter",
+      "@triplex-build/triplex-xtdb",
+      "--filter",
+      "@triplex-build/triplex-qualification",
+      "--filter",
+      "@triplex-build/w0",
+      "build"
+    ],
+    "status": 0,
+    "signal": null,
+    "logSha256": "cb6b9b21a41ae03c811a6259e56f70a0f12ab1b3843b0b752f5d52af8c97c48c"
+  },
+  "final": {
+    "head": "99d9641d4d6f385ab3b3fade7e9e78680a8850b4",
+    "status": "",
+    "distPresent": true,
+    "lockfileSha256": "fb4ce15c7b6672b86d8b833436c8c0e9f37a4abfff4214417aedad7cf8cd3da4"
+  },
+  "freeBytesBefore": 24415629312
+}

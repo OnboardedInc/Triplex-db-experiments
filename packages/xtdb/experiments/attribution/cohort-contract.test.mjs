@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] negative test fixture deliberately omits job fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { checkCohort, overlappingAttempts, validateGrantContract } from "./cohort-contract.mjs";

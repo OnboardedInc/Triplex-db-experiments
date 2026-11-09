@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { readLatencyRun } from "../receipts/parse.ts";
+import { latencyReceipt, requireQleverConnectionMode } from "../receipts/latency.mjs";
 /**
  * NS north-star benchmark driver (EXP-N01, measurement semantics v2 = TARGETS 1.1, 2.1, 4.1).
  * Measures P1 to P5 on the frozen writer trace against one composition and writes one report JSON.
@@ -9,6 +11,11 @@
  *     [--composition public] [--seed ns-v2] [--reader-threads 4] [--seed-budget-s 3600] [--seed-batch-facts 400]
  *     [--writer-max-inflight 32] [--sweep-concurrency 16] [--oracle-root DIR]
  *     development only: [--subjects N] [--max-readers N] [--burst-multiplier X] [--level-s S]
+ *   paired rounds (EXP-M01, PAIR-0; normally started by lab/bench/duet.ts, two drivers at once):
+ *     --arm A|B --round-plan FILE (--barrier-dir DIR | --start-at-abs-ms T)
+ *     The plan (lib/noise.ts makeRoundPlan) replaces the NS phases: one continuous trace from the agreed absolute start,
+ *     per-round histograms (commit, commitAll with censored values, open-loop read probe), per-second goodput and max
+ *     latency, ELU and a hiccup meter per round. R22 sections 2.4, 6.2, 7.
  *
  * Engine endpoint: XTDB_URL / QLEVER_URL. TX2_ENGINE_CONTAINER names the container whose CPU and logs
  * are sampled (docker over the lab socket only); TX2_ENGINE_CPUS is the slot's CPU quota.
@@ -24,6 +31,7 @@ import { Worker } from "node:worker_threads";
 import { openComposition, type CompositionHandle, type Receipt } from "./lib/composition.ts";
 import { buildHistoryGrowth, buildTraceCommand, type SubjectState } from "./lib/commands.ts";
 import { EVALUATE_SEAM, PUBLISH_SEAM, coverageHash, stubRelease } from "./lib/evaluate.ts";
+import { feedLagWithinBar } from "./lib/feed-lag.ts";
 import { FeedConsumer, type CrashPoint } from "./lib/feed.ts";
 import { Histogram } from "./lib/hist.ts";
 import { Model, partsOf } from "./lib/model.ts";
@@ -38,6 +46,8 @@ import { BUCKETS, HOP_SHARE, RUNGS, SEED_VALID_FROM, accountsFor, accountOfSubje
 import { REPO } from "./lib/triplex.ts";
 import { chooseHistorySample, chooseSamples } from "./lib/samples.ts";
 import { seedFromManifest } from "./lib/bulk.ts";
+import { startHiccupMeter, type RoundPlan } from "./lib/noise.ts";
+import { RoundBook, type ClientStats, type RoundRecord } from "./lib/rounds.ts";
 
 // ---------------------------------------------------------------- arguments
 
@@ -97,7 +107,20 @@ const config = {
   /** A bulk-seeded scope (lab/bench/qlever-bulk-seed.ts): skip seeding and continue from its manifest. */
   seedManifest: opt("seed-manifest") ?? null,
   settleS: 2,
+  /** [EXP-M01] paired rounds: arm label, round plan, and how both arms agree on one absolute trace start. */
+  arm: (opt("arm") ?? null) as "A" | "B" | null,
+  roundPlan: opt("round-plan") ?? null,
+  barrierDir: opt("barrier-dir") ?? null,
+  startAtAbsMs: opt("start-at-abs-ms") ? Number(opt("start-at-abs-ms")) : null,
 };
+const pairPlan: RoundPlan | null = config.roundPlan ? JSON.parse(fs.readFileSync(path.resolve(config.roundPlan), "utf8")) : null;
+if (pairPlan) {
+  if (pairPlan.format !== "tx2-round-plan/1") throw new Error(`--round-plan: format ${pairPlan.format}`);
+  if (config.arm !== "A" && config.arm !== "B") throw new Error("--round-plan needs --arm A|B");
+  if ((config.barrierDir === null) === (config.startAtAbsMs === null)) throw new Error("--round-plan needs exactly one of --barrier-dir or --start-at-abs-ms");
+  if (pairPlan.seed !== config.seed) throw new Error(`--round-plan is for seed ${pairPlan.seed}, not ${config.seed}`);
+}
+const planSha256 = config.roundPlan ? createHash("sha256").update(fs.readFileSync(path.resolve(config.roundPlan))).digest("hex") : null;
 const runTag = `ns${Date.now().toString(36)}${randomBytes(2).toString("hex")}`;
 const bulkManifest = config.seedManifest ? JSON.parse(fs.readFileSync(path.resolve(config.seedManifest), "utf8")) : null;
 if (bulkManifest && (bulkManifest.subjects !== rungSubjects || bulkManifest.lane !== lane || bulkManifest.seed !== config.seed))
@@ -114,8 +137,9 @@ const log = (line: string) => {
 const sha256File = (rel: string) => createHash("sha256").update(fs.readFileSync(path.join(REPO, rel))).digest("hex");
 const BENCH_FILES = ["lab/bench/driver.ts", "lab/bench/reader-worker.ts", ...fs.readdirSync(path.join(REPO, "lab/bench/lib")).filter((f) => f.endsWith(".ts")).sort().map((f) => `lab/bench/lib/${f}`)];
 
-const report: Record<string, any> = {
+const report: Record<string, any> = latencyReceipt({
   format: "tx2-ns-report/2",
+  qleverConnectionMode: lane === "qlever" ? requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive") : null,
   semantics: "TARGETS v2 sections 1.1, 2.1, 4.1",
   status: "RUNNING",
   startedAt: new Date().toISOString(),
@@ -125,7 +149,7 @@ const report: Record<string, any> = {
   generator: { traceSha256: sha256File("lab/bench/lib/trace.ts"), worldSha256: sha256File("lab/bench/lib/world.ts"), seed: config.seed },
   benchSources: Object.fromEntries(BENCH_FILES.map((f) => [f, sha256File(f)])),
   host: { cpus: os.cpus().length, platform: `${process.platform}-${process.arch}`, node: process.version, totalMemBytes: os.totalmem() },
-};
+});
 const save = () => fs.writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 
 // ---------------------------------------------------------------- engine sampling (async; never blocks the writer)
@@ -188,6 +212,8 @@ const resends: any[] = [];
 const ryowPending = new Set<Promise<void>>();
 let latestInstant = 0;
 const PHASE_RYOW = -2;
+/** [EXP-M01] Open-loop read probe records (paired rounds). */
+const PHASE_PROBE = -3;
 const SWEEP_PHASE_OFFSET = 1000;
 const OVERLAY_SEQ: Record<string, number> = { probe10: 3_000_000_000, "p5-mutation": 5_000_000_000 };
 /** Background trace commands offered and not yet finished, per subject (split reads straddle these). */
@@ -239,7 +265,9 @@ async function run() {
   const growthComp = await openComposition(config.composition, lane, scopeName);
   report.composition = { name: writer.name, assignments: writer.assignments, backend: writer.backend, scopeKey: `composition:${writer.name}/source:${lane}/scope:${scopeName}` };
   coordinate = writer.coordinate;
-  void engineSampler();
+  // [EXP-M01] In paired rounds the coordinator's VM agent reads every container's cgroup counters (lib/noise.ts);
+  // the per-second docker stats and watermark polls would only add apparatus load to the engine and the daemon.
+  if (!pairPlan) void engineSampler();
 
   // ---------------------------------------------------------------- seed (bulk lane)
   const pop = populationCounts(rungSubjects);
@@ -270,11 +298,14 @@ async function run() {
   const historyVersion = new Map<number, number>(historyList.map((i) => [i, 0]));
   latestInstant = seed.lastInstant;
   acked.push({ instant: seed.lastInstant, position: seed.lastPosition, txId: "seed-end", at: now() });
-  void watermarkSampler(aux);
+  if (!pairPlan) void watermarkSampler(aux);
 
   // ---------------------------------------------------------------- trace (frozen generator, TARGETS 2.1)
-  const params: TraceParams = { ...TRACE_DEFAULTS, burstMultiplier: config.burstMultiplier, steadyFactsPerS: TRACE_DEFAULTS.steadyFactsPerS * config.rateScale };
-  const traceDurationS = 7200;
+  // [EXP-M01] A round plan names its series' trace parameters (Q60g screening: a burst every 180 s), a new comparison
+  // series under TARGETS 2.1 item 5; the plan hash and the parameters are bound in the report.
+  const seriesParams: Partial<TraceParams> = pairPlan?.traceParams ?? {};
+  const params: TraceParams = { ...TRACE_DEFAULTS, ...seriesParams, burstMultiplier: opt("burst-multiplier") ? config.burstMultiplier : (seriesParams.burstMultiplier ?? TRACE_DEFAULTS.burstMultiplier), steadyFactsPerS: (seriesParams.steadyFactsPerS ?? TRACE_DEFAULTS.steadyFactsPerS) * config.rateScale };
+  const traceDurationS = pairPlan ? pairPlan.durationS : 7200;
   const events = generateTrace({ seed: config.seed, subjects: N, durationS: traceDurationS, params });
   report.trace = { params, durationS: traceDurationS, digest: traceDigest(events), generated: traceStats(events), generatorSha256: report.generator.traceSha256, seed: config.seed };
   log(`trace: ${events.length} events over ${traceDurationS}s, digest ${report.trace.digest}, active-set share ${report.trace.generated.activeShare.toFixed(3)}`);
@@ -305,7 +336,7 @@ async function run() {
     worker.on("message", onWorkerMessage(w, worker));
     return { worker, stopped: stoppedP };
   };
-  if (!config.zeroReaders) {
+  if (!config.zeroReaders && !(pairPlan && pairPlan.readers === 0)) {
     const started = await Promise.all(Array.from({ length: config.readerThreads }, (_, w) => startWorker(w, workerCfg(w))));
     for (const s of started) { workers.push(s.worker); stopped.push(s.stopped); }
     log(`readers: ${workers.length} worker threads ready`);
@@ -326,9 +357,13 @@ async function run() {
 
   // ---------------------------------------------------------------- writer (open loop)
   type Job = { key: number; scheduledAt: number; ev: TraceEvent; onDone?: (position: number) => void };
-  const traceStart = now() + 1000;
+  // [EXP-M01] Paired rounds: both arms seed, then meet at one absolute trace start, so the same command has the same
+  // scheduled instant in both arms (R22 section 1: only simultaneous pairing shares this host's noise).
+  const traceStart = pairPlan ? await pairBarrier(N, report.trace.digest) : now() + 1000;
   report.traceStartAbsMs = traceStart;
   const jobs: Job[] = events.map((ev) => ({ key: ev.subject, scheduledAt: traceStart + ev.atMs, ev }));
+  const probeEvents = pairPlan ? probeSchedule(pairPlan.probe.perS, pairPlan.durationS, N) : [];
+  const book = pairPlan ? new RoundBook(pairPlan.rounds, traceStart, events.filter((e) => e.stream === "background" && !e.resend), probeEvents) : null;
   const okey = (ev: TraceEvent) => `${ev.stream}:${ev.seq}:${+ev.resend}`;
   const resolveByCommand = async (commandId: string) => {
     const found = await writer.transactionByCommand(commandId);
@@ -435,6 +470,8 @@ async function run() {
       if (r.expired) { out.outcome = "unaccounted"; out.reason = "not sent: writer deadline passed"; r.job.onDone?.(-1); }
       writes.push({ stream: ev.stream, seq: ev.seq, resend: ev.resend, kind: ev.kind, subject: ev.subject, facts: ev.facts, burst: ev.burst, active: ev.active, correction: ev.correction, ackLoss: ev.ackLoss,
         offsetMs: r.job.scheduledAt - traceStart, scheduledAt: r.job.scheduledAt, startedAt: r.startedAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, waitMs: r.waitMs, expired: r.expired, ...out });
+      if (book && ev.stream === "background" && !ev.resend)
+        book.recordCommand({ seq: ev.seq, scheduledAt: r.job.scheduledAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, outcome: r.expired ? "expired" : out.outcome ?? "unaccounted" });
     },
   });
   upcomingJobs = (horizonMs) => scheduler.upcoming(horizonMs);
@@ -452,28 +489,99 @@ async function run() {
   }, 1000);
 
   // ---------------------------------------------------------------- feed consumer (P3)
+  // [EXP-M01] Paired rounds measure the writer and the read probe; the P3 consumer and its crash injection stay in NS.
   const lvl = (config.levelS ?? PROFILES[profile].levelS) * 1000;
   const crashPlan: { at: number; point: CrashPoint }[] = (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
-  feed = new FeedConsumer({
+  // [EXP-FD01-R2] Why: no source publication observer is integrated here yet. Missing instants now refuse P3 samples.
+  // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
+  feed = pairPlan ? null : new FeedConsumer({
     dir: rawDir, epoch: `${scopeName}#0`, startAfter: seed.lastPosition, now,
     commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, subjects: a.subjects ?? [a.subject], stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },
     open: () => openComposition(config.composition, lane, scopeName), log, crashes: crashPlan,
   });
-  const feedTarget = setInterval(() => { feed!.lifeMaxTarget = acked.length ? acked[acked.length - 1]!.position : 0; }, 100);
-  const feedDone = feed.run();
+  const feedTarget = setInterval(() => { if (feed) feed.lifeMaxTarget = acked.length ? acked[acked.length - 1]!.position : 0; }, 100);
+  const feedDone = feed ? feed.run() : Promise.resolve();
 
   // ---------------------------------------------------------------- probe10 (P2 diagnostic only)
   let probeTimer: ReturnType<typeof setInterval> | null = null;
   const probeRng = new Rng(seedOf(`probe10:${config.seed}`));
+
+  // ---------------------------------------------------------------- open-loop read probe (paired rounds; Q60d)
+  // [EXP-M01] Why (R22 section 2 "Coordinated omission", gap 2): closed-loop readers yield one slow sample per stall.
+  // The probe offers pulls at a fixed Poisson rate from intended time, whatever the store does; subjects are uniform
+  // over the seeded population from a seeded stream, so both arms issue the same pulls at the same instants. Basis:
+  // the latest receipt the driver has seen (named exactly). Latency from the scheduled time; expired and failed pulls
+  // are censored. Rejected: probing the hot set (it depends on each arm's own ACK timing, so the arms would diverge).
+  type ProbeJob = { key: number; scheduledAt: number; ev: { seq: number; atMs: number; subject: number }; ok?: boolean };
+  const probeComp = pairPlan ? await openComposition(config.composition, lane, scopeName) : null;
+  const probeScheduler = pairPlan
+    ? new OpenLoopScheduler<ProbeJob>(probeEvents.map((ev) => ({ key: ev.seq, scheduledAt: traceStart + ev.atMs, ev })), {
+        maxInFlight: pairPlan.probe.maxInFlight, deadlineMs: pairPlan.probe.deadlineMs, now,
+        exec: async (job) => {
+          const latest = acked[acked.length - 1]!;
+          const basis = { recordedAt: latest.instant, validAt: Math.floor(now()) };
+          const start = now();
+          const t0 = performance.now();
+          try {
+            const pr = await probeComp!.pull(ids.placement(job.ev.subject), basis);
+            const o = observe(pr);
+            records.push([PHASE_PROBE, job.ev.subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, o.stamp, o.facts, o.digest, o.bytes, pr.depth, pr.roundTrips, null, 0, latest.position, 0, -1, 0, pr.route, pr.language, pr.waitedMs]);
+            job.ok = true;
+          } catch (error: any) {
+            records.push([PHASE_PROBE, job.ev.subject, basis.recordedAt, basis.validAt, start, performance.now() - t0, -1, 0, "", 0, 0, 0, String(error?._tag ?? "Error"), 0, latest.position, 0, -1, 0, "error", "", 0]);
+            job.ok = false;
+          }
+        },
+        onDone: (r) => book!.recordProbe({ seq: r.job.ev.seq, scheduledAt: r.job.scheduledAt, finishedAt: r.finishedAt, latencyMs: r.latencyMs, ok: !r.expired && r.job.ok === true, expired: r.expired }),
+      })
+    : null;
+  const hiccup = pairPlan ? startHiccupMeter(1) : null;
+  /** Client signals for a round: mean and max main-loop ELU and the driver's 1 ms sleep overshoot (R22 section 4). */
+  const clientStats = (_id: string, fromMs: number, toMs: number): ClientStats => {
+    const elus = mainElu.filter((e) => e.t >= fromMs && e.t < toMs).map((e) => e.elu);
+    const hic = (hiccup?.seconds ?? []).filter((x) => x.t >= fromMs && x.t < toMs + 1000).map((x) => x.maxMs);
+    return { eluMean: elus.length ? mean(elus) : null, eluMax: elus.length ? Math.max(...elus) : null, hiccupMaxMs: hic.length ? Math.max(...hic) : null };
+  };
+  const emitRounds = (rows: RoundRecord[]) => {
+    if (!config.barrierDir) return;
+    for (const row of rows) atomicWrite(path.join(path.resolve(config.barrierDir), `${config.arm}.${row.id}.json`), JSON.stringify(row) + "\n");
+  };
 
   // ---------------------------------------------------------------- phases
   const plan = nsPlan(profile, config.zeroReaders).map((p) => (config.levelS && p.seconds ? { ...p, seconds: Math.min(p.seconds, config.levelS) } : p));
   const phases: any[] = [];
   await sleep(Math.max(0, traceStart - now()));
   scheduler.start();
+  probeScheduler?.start();
   if (config.probe10PerS > 0) probeTimer = setInterval(() => void overlay("probe10", probeRng.int(N), 10), 1000 / config.probe10PerS);
   cpuMarks.push({ t: now(), cpu: process.cpuUsage() });
-  for (const [idx, spec] of plan.entries()) {
+  if (pairPlan) {
+    // One continuous trace; rounds are windows over it (lib/noise.ts makeRoundPlan). A stop file from the
+    // coordinator (sequential looks at 8, 12, 18, 24 rounds) ends the trace early at a round boundary.
+    const entry: any = { idx: 0, name: "paired", readers: pairPlan.readers, mode: "mixed", measured: false, start: now(), traceStartS: (now() - traceStart) / 1000 };
+    phases.push(entry);
+    if (pairPlan.readers > 0) setReaders(0, pairPlan.readers, "mixed");
+    log(`paired: arm ${config.arm}, ${pairPlan.rounds.length} rounds (${pairPlan.mode}, series ${pairPlan.series}), trace ${pairPlan.durationS}s, ${pairPlan.readers} readers, probe ${pairPlan.probe.perS}/s`);
+    let until = traceStart + pairPlan.durationS * 1000;
+    const stopFile = config.barrierDir ? path.join(path.resolve(config.barrierDir), "stop.json") : null;
+    while (now() < until) {
+      emitRounds(book!.ready(now(), clientStats));
+      if (stopFile && fs.existsSync(stopFile)) {
+        const stop = JSON.parse(fs.readFileSync(stopFile, "utf8"));
+        if (Number.isFinite(stop.endAbsMs) && stop.endAbsMs < until) {
+          until = Math.max(now(), stop.endAbsMs);
+          scheduler.setUntil(until);
+          probeScheduler!.setUntil(until);
+          log(`paired: stop requested after ${stop.afterRound ?? "?"}; trace ends at +${((until - traceStart) / 1000).toFixed(0)}s`);
+        }
+      }
+      await sleep(Math.max(0, Math.min(500, until - now())));
+    }
+    entry.end = now();
+    entry.traceEndS = (entry.end - traceStart) / 1000;
+    report.phases = phases;
+    save();
+  } else for (const [idx, spec] of plan.entries()) {
     const start = now();
     const entry: any = { idx, name: spec.name, readers: config.maxReaders === null ? spec.readers : Math.min(spec.readers, config.maxReaders), mode: spec.mode ?? "mixed", measured: spec.measured, start, traceStartS: (start - traceStart) / 1000 };
     phases.push(entry);
@@ -507,9 +615,17 @@ async function run() {
   clearInterval(queueTimer);
   scheduler.setUntil(endAt);
   scheduler.stop();
+  probeScheduler?.setUntil(endAt);
+  probeScheduler?.stop();
   setReaders(-1, 0, "mixed");
   const drainDeadline = now() + 90_000;
-  while (scheduler.pending > 0 && now() < drainDeadline) await sleep(250);
+  while ((scheduler.pending > 0 || (probeScheduler?.pending ?? 0) > 0) && now() < drainDeadline) {
+    if (book) emitRounds(book.ready(now(), clientStats));
+    await sleep(250);
+  }
+  // Anything still pending is censored at this instant (it never finished): Q60d.
+  const pairRounds = book ? book.finalize(now(), clientStats, endAt) : null;
+  await hiccup?.stop();
   // [EXP-N01 A0 finding] Commands already handed to the store keep committing after the queue empties (they can
   // wait minutes in an adapter admission queue). Wait for them before fixing the feed target, so a late commit is
   // never mistaken for a feed gap.
@@ -532,15 +648,19 @@ async function run() {
   lateGrowth.length = 0;
   const lastAcked = Math.max(acked.length ? Math.max(...acked.map((a) => a.position)) : seed.lastPosition, await writer.currentPosition().catch(() => 0));
   const feedDeadline = now() + 120_000;
-  while (feed.checkpoint < lastAcked && now() < feedDeadline) await sleep(100);
-  feedWind = { target: lastAcked, checkpointAtStop: feed.checkpoint, inFlightAtFeedTarget };
-  feed.stop();
+  while (feed && feed.checkpoint < lastAcked && now() < feedDeadline) await sleep(100);
+  feedWind = feed ? { target: lastAcked, checkpointAtStop: feed.checkpoint, inFlightAtFeedTarget } : null;
+  feed?.stop();
   await feedDone;
   clearInterval(feedTarget);
-  const replayHandle = await openComposition(config.composition, lane, scopeName);
-  const firstCrash = feed.crashReport().find((c) => c.checkpoint !== null);
-  const replay = await feed.replayCheck(replayHandle, firstCrash?.checkpoint ?? seed.lastPosition);
-  await replayHandle.close().catch(() => {});
+  let replay: any = null;
+  // [EXP-M01R] Why: paired rounds have no P3 consumer; NS keeps main's post-drain target and replay. Rejected: restoring the old early feed target (misses late commits).
+  if (feed) {
+    const replayHandle = await openComposition(config.composition, lane, scopeName);
+    const firstCrash = feed.crashReport().find((c) => c.checkpoint !== null);
+    replay = await feed.replayCheck(replayHandle, firstCrash?.checkpoint ?? seed.lastPosition);
+    await replayHandle.close().catch(() => {});
+  }
   const finalPosition = await writer.currentPosition();
   samplersOn = false;
   clearInterval(eluTimer);
@@ -548,16 +668,18 @@ async function run() {
   await writer.close().catch(() => {});
   await aux.close().catch(() => {});
   await growthComp.close().catch(() => {});
-  log(`wind down: writer pending ${scheduler.pending}, feed checkpoint ${feed.checkpoint}/${lastAcked}, final position ${finalPosition}`);
-  fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify({ stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome })).join("\n") + "\n");
+  await probeComp?.close().catch(() => {});
+  log(`wind down: writer pending ${scheduler.pending}, probe pending ${probeScheduler?.pending ?? 0}, feed checkpoint ${feed?.checkpoint ?? "-"}/${lastAcked}, final position ${finalPosition}`);
+  fs.writeFileSync(path.join(rawDir, "ns-writes.jsonl"), writes.map((w) => JSON.stringify(latencyReceipt({ writer: "ns-write-event/1", qleverConnectionMode: report.qleverConnectionMode, stream: w.stream, seq: w.seq, resend: w.resend, offsetMs: w.offsetMs, latencyMs: w.latencyMs, facts: w.facts, burst: w.burst, outcome: w.outcome }))).join("\n") + "\n");
 
   // ---------------------------------------------------------------- analysis
   report.writer = { offered: scheduler.offered, completed: scheduler.completed, expired: scheduler.expired, notOffered: scheduler.notOffered, maxInFlightSeen: scheduler.maxInFlightSeen, pendingAtEnd: scheduler.pending, offeredUntilTraceS: (endAt - traceStart) / 1000, overlays: overlayCount };
   report.finalPosition = coordinate(finalPosition);
   report.positionCoordinates = "TARGETS 4.1 item 3: (stream, epoch, offset, ordinal); Triplex gives one dense position per scope and one engine transaction per transact, so offset = position and ordinal = 0";
   report.maintenance = maintenance;
-  analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
-  report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : runOracle(finalPosition, lastAcked);
+  if (pairPlan) pairedAnalysis({ rounds: pairRounds!, probeScheduler: probeScheduler!, probeEvents: probeEvents.length });
+  else analyse({ phases, traceStart, replay, maintenance, historyList, pendingAtEnd: scheduler.pending });
+  report.oracle = config.zeroReaders ? { status: "NOT-RUN", reason: "zero-reader baseline run" } : pairPlan && pairPlan.readers === 0 ? { status: "NOT-RUN", reason: "paired rounds without readers: O-REPLAY samples come from reader threads" } : runOracle(finalPosition, lastAcked);
   report.status = "DONE";
   report.endedAt = new Date().toISOString();
   fs.writeFileSync(path.join(rawDir, "ns-log.txt"), logLines.join("\n") + "\n");
@@ -637,6 +759,92 @@ async function run() {
 }
 
 // ---------------------------------------------------------------- helpers
+
+// ---------------------------------------------------------------- paired rounds (EXP-M01)
+
+const atomicWrite = (file: string, text: string) => {
+  const tmp = `${file}.${process.pid}.${randomBytes(3).toString("hex")}.tmp`;
+  fs.writeFileSync(tmp, text);
+  fs.renameSync(tmp, file);
+};
+/**
+ * Barrier: after seeding, write `<arm>.ready.json` (seeded subjects, trace digest, plan hash) and wait for the
+ * coordinator's `go.json` with one absolute start for both arms (or `abort`). The coordinator only says go when both
+ * arms report the same subjects and trace digest, so both replay byte-identical command lists.
+ */
+async function pairBarrier(N: number, traceDigestHex: string): Promise<number> {
+  if (config.startAtAbsMs !== null) {
+    if (config.startAtAbsMs < now() + 100) throw new Error(`--start-at-abs-ms ${config.startAtAbsMs} is not in the future (seeding ended at ${Math.round(now())})`);
+    return config.startAtAbsMs;
+  }
+  const dir = path.resolve(config.barrierDir!);
+  fs.mkdirSync(dir, { recursive: true });
+  atomicWrite(path.join(dir, `${config.arm}.ready.json`), JSON.stringify({ arm: config.arm, pid: process.pid, seededSubjects: N, traceDigest: traceDigestHex, planSha256, scope: scopeName, at: now() }) + "\n");
+  log(`paired: arm ${config.arm} ready (${N} subjects, trace ${traceDigestHex}); waiting for go`);
+  const deadline = now() + (config.seedBudgetS + 3600) * 1000;
+  const goFile = path.join(dir, "go.json");
+  for (;;) {
+    if (fs.existsSync(goFile)) {
+      const go = JSON.parse(fs.readFileSync(goFile, "utf8"));
+      if (go.abort) throw new Error(`coordinator aborted: ${go.abort}`);
+      if (!(go.startAtAbsMs > now())) throw new Error(`go time ${go.startAtAbsMs} already passed`);
+      log(`paired: go at ${new Date(go.startAtAbsMs).toISOString()}`);
+      return go.startAtAbsMs;
+    }
+    if (now() > deadline) throw new Error("no go from the coordinator before the barrier deadline");
+    await sleep(100);
+  }
+}
+/** Seeded Poisson probe schedule, uniform subjects: identical in both arms for the same seed and population. */
+function probeSchedule(perS: number, durationS: number, n: number): { seq: number; atMs: number; subject: number }[] {
+  if (!(perS > 0)) return [];
+  const rng = new Rng(seedOf(`read-probe:${config.seed}`));
+  const out: { seq: number; atMs: number; subject: number }[] = [];
+  for (let t = rng.exp(perS), seq = 0; t < durationS; t += rng.exp(perS)) out.push({ seq: seq++, atMs: Math.round(t * 1e6) / 1000, subject: rng.int(n) });
+  return out;
+}
+/**
+ * Paired-round report (R22 section 6.2): per-round records and histograms named `<round>.<arm>.<metric>`
+ * (`R03.A.commitAll`), the client saturation check per round, and the correctness of every read the arm made
+ * (probe, read-your-own-write, readers) against the expected-state model at the driver-recorded basis.
+ */
+function pairedAnalysis(ctx: { rounds: RoundRecord[]; probeScheduler: OpenLoopScheduler<any>; probeEvents: number }) {
+  const verdicts = records.map((r) => judgeRead(r));
+  const violationKinds: Record<string, number> = {};
+  const violationSample: any[] = [];
+  const byKind: Record<string, { reads: number; correct: number; violations: number; errors: number }> = {};
+  records.forEach((r, k) => {
+    const v = verdicts[k]!;
+    const kind = r[R.phase] === PHASE_PROBE ? "probe" : r[R.phase] === PHASE_RYOW ? "readYourOwnWrite" : "readers";
+    const b = (byKind[kind] ??= { reads: 0, correct: 0, violations: 0, errors: 0 });
+    b.reads++;
+    if (v.ok) b.correct++; else if (v.kind === "error") b.errors++; else b.violations++;
+    if (v.ok || v.kind === "error") return;
+    violationKinds[v.kind] = (violationKinds[v.kind] ?? 0) + 1;
+    if (violationSample.length < 10) violationSample.push({ kind: v.kind, phase: r[R.phase], subject: r[R.subject], basis: { recordedAt: r[R.recordedAt], validAt: r[R.validAt], position: r[R.basisPosition] }, observed: { stamp: r[R.stamp], digest: r[R.digest] }, expected: model.expected(r[R.subject], r[R.recordedAt], r[R.validAt]) });
+  });
+  const total = records.length, ok = verdicts.filter((v) => v.ok).length, errs = verdicts.filter((v) => v.kind === "error").length;
+  report.correctness = { reads: total, correct: ok, violations: total - ok - errs, errors: errs, violationKinds, violationSample, byKind, rule: "a read is correct when its :placement/stamp and whole-world multiset digest equal the expected-state model at the basis the driver requested; errors are censored in the latency histograms and never goodput" };
+  const histograms: Record<string, any> = {};
+  const rounds = ctx.rounds.map((row) => {
+    const { hist, ...rest } = row;
+    for (const [name, h] of Object.entries(hist)) histograms[`${row.id}.${config.arm}.${name}`] = h;
+    if (pairPlan!.readers > 0) {
+      const reads = new Histogram();
+      records.forEach((r, k) => { if (r[R.phase] === 0 && r[R.start] >= row.fromMs && r[R.start] < row.toMs && verdicts[k]!.ok) reads.recordMs(r[R.latency]); });
+      histograms[`${row.id}.${config.arm}.reads`] = reads.toJSON();
+    }
+    return rest;
+  });
+  const saturated = ctx.rounds.filter((r) => (r.client.eluMean ?? 0) > 0.9).map((r) => r.id);
+  report.client = { saturatedRounds: saturated, invalid: saturated.length > 0, processCpu: cpuUse(), readerThreads: pairPlan!.readers ? config.readerThreads : 0, rule: "a round is excluded (rule client-elu) when the driver's main event loop has mean utilization > 0.9 in it" };
+  report.pair = {
+    format: "tx2-pair-arm/1", arm: config.arm, planSha256, mode: pairPlan!.mode, series: pairPlan!.series, traceParams: report.trace.params, traceStartAbsMs: report.traceStartAbsMs,
+    rounds, probe: { perS: pairPlan!.probe.perS, events: ctx.probeEvents, offered: ctx.probeScheduler.offered, expired: ctx.probeScheduler.expired, notOffered: ctx.probeScheduler.notOffered },
+    histogramNames: "histograms[<round>.<arm>.<commitAll|commitCensored|commit|probeAll|probeCensored|probe|reads>] (tx2-loglinear-hist/1; censored = expired, failed, rejected or pending at end, at censor time)",
+  };
+  report.histograms = histograms;
+}
 
 /** A reader on a MessageChannel in this thread, shaped like a Worker (postMessage, on, terminate). */
 async function inThreadReader(cfg: any) {
@@ -877,7 +1085,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   // ---------------- P3
   const f = feed!;
   const lagAll = new Histogram(), lagAck = new Histogram();
-  for (const l of lagRows) { lagAll.recordMs(l.lagMs); lagAck.recordMs(l.lagFromAckMs); }
+  for (const l of lagRows) { lagAll.recordMs(l.lagMs); if (l.lagFromAckMs !== null) lagAck.recordMs(l.lagFromAckMs); }
   // A gap is a position the consumer passed (at or below its final checkpoint) without delivering it. Positions
   // acknowledged after the consumer stopped are reported separately, never as gaps.
   let gaps = 0;
@@ -895,7 +1103,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   const replayOk = ctx.replay.exact && f.counts.redeliveryMismatches === 0;
   const p3 = {
     consumer: f.name, cursor: { epoch: f.epoch, position: coordinate(f.checkpoint) }, counts: f.counts, gaps, gapSample, notReachedAtStop: { count: notReached.length, sample: notReached.sort((a, b) => a - b).slice(0, 10), wind: feedWind }, visibleDuplicateEffects: visibleDup, crashes, replay: ctx.replay,
-    lag: { fromCommitInstant: lagAll.summary(), fromDriverAck: lagAck.summary(), atL256: lag256, commitTime: "receipt instant (Triplex runtime publication stamp, host clock); 'known' = durable affected-set + checkpoint write" },
+    lag: { fromCommitInstant: lagAll.summary(), fromDriverAck: lagAck.summary(), atL256: lag256, commitTime: "producer publication record (bound host/boot hrtime; observer required); 'known' = durable affected-set + checkpoint write" },
     expectedAffected: "direct subjects from command intent; dependency-rule subjects (O-DOMAIN) are a seam: the trace writes only own entities, so expected = {subject}",
     bars: [
       bar("NS-P3 gaps", gaps, "= 0", gaps === 0),
@@ -903,7 +1111,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
       bar("NS-P3 visible duplicate effects", visibleDup, "= 0", visibleDup === 0, `replay attempts (allowed): ${f.counts.replayAttempts}`),
       bar("NS-P3 resume from checkpoint replays exactly", replayOk, "= true", replayOk),
       bar("NS-P3 crash injection at three points", crashes.filter((c) => c.fired).length, "= 3", crashes.filter((c) => c.fired).length === 3),
-      bar("NS-P3 lag p99 ms at L256", lag256?.p99Ms ?? null, "<= 250", lag256?.p99Ms != null ? lag256.p99Ms <= 250 : null),
+      bar("NS-P3 lag p99 ms at L256", lag256?.p99Ms ?? null, "<= 250", feedLagWithinBar(lag256?.p99Ms)),
       bar("NS-P3 affected-subject set matches", f.counts.affectedMismatches, "= 0", f.counts.affectedMismatches === 0),
       bar("NS-P3 corrections report their valid-time range", f.counts.corrections ? f.counts.correctionRangeReported / f.counts.corrections : null, "= 1.0", f.counts.corrections ? f.counts.correctionRangeReported === f.counts.corrections : null),
     ],
@@ -1002,7 +1210,7 @@ function p2Progress(background: any[], traceStart: number) {
 }
 function loadBaselineWrites(): any[] | null {
   if (!config.baselineWrites) return null;
-  return fs.readFileSync(config.baselineWrites, "utf8").split("\n").filter(Boolean).map((l) => JSON.parse(l)).filter((w) => w.stream === "background" && !w.resend);
+  return readLatencyRun(config.baselineWrites, { lane, encoding: "ndjson", expectedMode: report.qleverConnectionMode }).unwrap().records.filter((w) => w.stream === "background" && !w.resend);
 }
 function matchedBaseline(rows: any[], fromOffset: number, toOffset: number) {
   const h = new Histogram();

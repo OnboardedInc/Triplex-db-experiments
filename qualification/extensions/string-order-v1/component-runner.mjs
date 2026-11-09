@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-built or optional package modules absent from this standalone project. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Fake-only pure component gate. No public SDK, network or Docker imports. */
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 probe 6: where the EXP-P2X subject-stamp candidate's 95,364 bytes per 10-fact commit come from.
 // Captures one A0 10-fact command on the raw 43-character scope EXP-P2X's p10 used (`p10-A0-<uuid>`; A0
 // must reproduce p10's 27,581 bytes), rebuilds the candidate's statements for the same rows from its source

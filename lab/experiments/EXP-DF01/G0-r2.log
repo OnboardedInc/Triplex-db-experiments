@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 48236 "CX-NSR-G0-3", pid 20247 "CX-DI01-final-r5", pid 53686 "CX-P5B-final-evidence-04", pid 48250 "G0-qlever-20261109T073657Z-30e916 vitest-host"
+[lab] G0-datomic-20261109T074129Z-83a091: raw output runs/G0/G0-datomic-20261109T074129Z-83a091

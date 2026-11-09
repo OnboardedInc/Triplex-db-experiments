@@ -1,0 +1,16 @@
+[
+  {
+    "path": "packages/qlever/experiments/native-entry.ts",
+    "oldSha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+    "newSha256": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+    "contractLocation": "lab/acceptance/obligations.json/caseSets/CS-ENTRY/pinnedSourceFiles/1",
+    "pinnedSha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f"
+  },
+  {
+    "path": "packages/qlever/experiments/native-entry.ts",
+    "oldSha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+    "newSha256": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+    "contractLocation": "lab/acceptance/obligations.json/caseSourcesPinned/CS-ENTRY/1",
+    "pinnedSha256": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f"
+  }
+]

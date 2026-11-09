@@ -1,0 +1,296 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 1645 "CX-P2B-R3-step2-source-40", pid 20311 "CX-P2B-R3-build4b", pid 94690 "CX-DI01-G0-r4", pid 19566 "CX-RT01-live2-G2"
+[lab] heavy: waiting for one of 4 slots; held by pid 1645 "CX-P2B-R3-step2-source-40", pid 20311 "CX-P2B-R3-build4b", pid 94690 "CX-DI01-G0-r4", pid 19566 "CX-RT01-live2-G2"
+(node:22616) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "id": "5f2fa5e0-a9fe-4fb4-bc1f-cf40e910de4b",
+  "commands": [
+    {
+      "label": "builder-tests",
+      "status": 0
+    },
+    {
+      "label": "declarations",
+      "status": 0
+    },
+    {
+      "label": "qg1-positive-keep-alive",
+      "status": 0
+    },
+    {
+      "label": "qg1-positive-per-request",
+      "status": 0
+    },
+    {
+      "label": "qg1-cold-string",
+      "status": 1
+    },
+    {
+      "label": "qg1-cold-numeric-string",
+      "status": 1
+    },
+    {
+      "label": "qg1-cold-missing",
+      "status": 1
+    },
+    {
+      "label": "qg1-cold-seconds",
+      "status": 1
+    },
+    {
+      "label": "qg1-cold-negative",
+      "status": 1
+    },
+    {
+      "label": "qg1-p4-string",
+      "status": 1
+    },
+    {
+      "label": "qg1-p4-writer",
+      "status": 1
+    },
+    {
+      "label": "qg1-nested-modeless",
+      "status": 1
+    },
+    {
+      "label": "qg1-nested-mixed",
+      "status": 1
+    },
+    {
+      "label": "qg1-p4-mixed",
+      "status": 1
+    },
+    {
+      "label": "planted-guard",
+      "status": 1
+    },
+    {
+      "label": "misclassified-guard",
+      "status": 0
+    }
+  ],
+  "qg1": [
+    {
+      "label": "positive-keep-alive",
+      "coldMs": 7
+    },
+    {
+      "label": "positive-per-request",
+      "coldMs": 7
+    },
+    {
+      "label": "cold-string",
+      "error": {
+        "name": "LatencyRefusal",
+        "tag": "LatencyRefusal",
+        "code": "TIMING",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/qg1/cold-string/grid-M-attempt2/summary.json: TIMING: results.base[0].ms must be finite nonnegative milliseconds"
+      }
+    },
+    {
+      "label": "cold-numeric-string",
+      "error": {
+        "name": "LatencyRefusal",
+        "tag": "LatencyRefusal",
+        "code": "TIMING",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/qg1/cold-numeric-string/grid-M-attempt2/summary.json: TIMING: results.base[0].ms must be finite nonnegative milliseconds"
+      }
+    },
+    {
+      "label": "cold-missing",
+      "error": {
+        "name": "LatencyRefusal",
+        "tag": "LatencyRefusal",
+        "code": "TIMING",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/qg1/cold-missing/grid-M-attempt2/summary.json: TIMING: results.base[0].ms must be finite nonnegative milliseconds"
+      }
+    },
+    {
+      "label": "cold-seconds",
+      "error": {
+        "name": "LatencyRefusal",
+        "tag": "LatencyRefusal",
+        "code": "WRITER",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/qg1/cold-seconds/grid-M-attempt2/summary.json: WRITER: unrecognized grid sample schema"
+      }
+    },
+    {
+      "label": "cold-negative",
+      "error": {
+        "name": "LatencyRefusal",
+        "tag": "LatencyRefusal",
+        "code": "TIMING",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/qg1/cold-negative/grid-M-attempt2/summary.json: TIMING: results.base[0].ms must be finite nonnegative milliseconds"
+      }
+    },
+    {
+      "label": "p4-string",
+      "error": {
+        "name": "LatencyRefusal",
+        "tag": "LatencyRefusal",
+        "code": "TIMING",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/qg1/p4-string/grid-M-attempt2/N0-p4.json: TIMING: summary.p99 must be finite nonnegative milliseconds"
+      }
+    },
+    {
+      "label": "p4-writer",
+      "error": {
+        "name": "LatencyRefusal",
+        "tag": "LatencyRefusal",
+        "code": "WRITER",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/qg1/p4-writer/grid-M-attempt2/N0-p4.json: WRITER: unregistered or unexpected writer"
+      }
+    },
+    {
+      "label": "nested-modeless",
+      "error": {
+        "name": "LatencyRefusal",
+        "tag": "LatencyRefusal",
+        "code": "MIXED_MODE",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/qg1/nested-modeless/grid-M-attempt2/summary.json: MIXED_MODE: grid sample mode must match its run"
+      }
+    },
+    {
+      "label": "nested-mixed",
+      "error": {
+        "name": "LatencyRefusal",
+        "tag": "LatencyRefusal",
+        "code": "MIXED_MODE",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/qg1/nested-mixed/grid-M-attempt2/summary.json: MIXED_MODE: grid sample mode must match its run"
+      }
+    },
+    {
+      "label": "p4-mixed",
+      "error": {
+        "name": "LatencyRefusal",
+        "tag": "LatencyRefusal",
+        "code": "MIXED_MODE",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/qg1/p4-mixed/grid-M-attempt2/N0-p4.json: MIXED_MODE: receipt mode differs from its parent run"
+      }
+    }
+  ],
+  "independent": [
+    {
+      "label": "literal-R4-modeless",
+      "error": {
+        "name": "LatencyRefusal",
+        "code": "VERSION",
+        "tag": "LatencyRefusal",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/independent/.devloop/jobs/fixture/attempts/0001/events.ndjson: VERSION: expected qlever-latency/1"
+      }
+    },
+    {
+      "label": "versioned-modeless",
+      "error": {
+        "name": "LatencyRefusal",
+        "code": "MODE",
+        "tag": "LatencyRefusal",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/independent/.devloop/jobs/fixture/attempts/0001/events.ndjson: MODE: missing or invalid transport mode"
+      }
+    },
+    {
+      "label": "mixed",
+      "error": {
+        "name": "LatencyRefusal",
+        "code": "MIXED_MODE",
+        "tag": "LatencyRefusal",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/independent/.devloop/jobs/fixture/attempts/0001/events.ndjson: MIXED_MODE: declare connection-mode as the varied treatment; pooled runs are forbidden"
+      }
+    },
+    {
+      "label": "keep-alive",
+      "mode": "keep-alive"
+    },
+    {
+      "label": "per-request",
+      "mode": "per-request"
+    }
+  ],
+  "load": [
+    {
+      "label": "modeless",
+      "error": {
+        "name": "LatencyRefusal",
+        "code": "MODE",
+        "tag": "LatencyRefusal",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/load/events.ndjson: MODE: missing or invalid transport mode"
+      }
+    },
+    {
+      "label": "mixed",
+      "error": {
+        "name": "LatencyRefusal",
+        "code": "MIXED_MODE",
+        "tag": "LatencyRefusal",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt2/fixtures/load/events.ndjson: MIXED_MODE: declare connection-mode as the varied treatment; pooled runs are forbidden"
+      }
+    },
+    {
+      "label": "keep-alive",
+      "mode": "keep-alive"
+    },
+    {
+      "label": "per-request",
+      "mode": "per-request"
+    }
+  ],
+  "checks": {
+    "treatment": {
+      "populationModes": [
+        "keep-alive",
+        "per-request"
+      ],
+      "pooledRecords": false,
+      "pooledTimings": false
+    },
+    "independentReader": {
+      "path": "qualification/reviews/load-observations-independent.mjs",
+      "sha256": "7cc157f3534dc7e39c1965cf81c688d61fb35086c733a3430fc215ce6943cfd4",
+      "controller": "SYNTHETIC-FIXTURE-NOT-VERIFIED",
+      "completeBody": true
+    },
+    "loadCompatibility": {
+      "different": true,
+      "values": [
+        "{\"qleverConnectionMode\":\"keep-alive\",\"profile\":\"fixture\",\"clients\":1,\"duration\":1000,\"requiredClasses\":[\"lookup\"],\"fixture\":\"fixture\",\"resource\":\"fixture\",\"cohort\":\"fixture\",\"overloadPolicy\":\"none\",\"calibration\":null}",
+        "{\"qleverConnectionMode\":\"per-request\",\"profile\":\"fixture\",\"clients\":1,\"duration\":1000,\"requiredClasses\":[\"lookup\"],\"fixture\":\"fixture\",\"resource\":\"fixture\",\"cohort\":\"fixture\",\"overloadPolicy\":\"none\",\"calibration\":null}"
+      ],
+      "sourceSha256": "46f116cca69c76b7afebf9bd56d6a3d1f5353cea6da6cce9c0e984d2f92a61d3",
+      "controllerAndOracle": "MOCKED; not a verified attempt"
+    },
+    "default": {
+      "absent": "keep-alive",
+      "optIn": "per-request",
+      "explicitOverride": "keep-alive",
+      "requestsSent": 0
+    },
+    "replay": {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/round2/live1/result.json",
+      "sha256": "0f0394502270a9cd05fa5bf39b2e53c0d3be13dff387156234f2c640f7c115de",
+      "newReaderRefusal": "VERSION",
+      "measurementStatus": "historical diagnostic; arithmetic-only replay, no schema migration",
+      "warmupsExcluded": 40
+    },
+    "snapshotUnchanged": true,
+    "builderManifestFiles": 2093,
+    "transportDiff": "",
+    "acceptanceDiff": ""
+  },
+  "replay": [
+    {
+      "mode": "keep-alive",
+      "n": 240,
+      "stalls": 120,
+      "p50": 13.671624999999949,
+      "p99": 49.35758399999986
+    },
+    {
+      "mode": "per-request",
+      "n": 240,
+      "stalls": 0,
+      "p50": 4.347374999999374,
+      "p99": 7.760790999999699
+    }
+  ]
+}

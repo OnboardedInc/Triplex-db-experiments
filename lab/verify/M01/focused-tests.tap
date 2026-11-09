@@ -1,0 +1,319 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 1645 "CX-P2B-R3-step2-source-40", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-host", pid 98894 "CX-RT01-live2-diagnostic", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 1645 "CX-P2B-R3-step2-source-40", pid 79558 "G0-xtdb-20261109T070913Z-711e06 vitest-testkit", pid 98894 "CX-RT01-live2-diagnostic", pid 78423 "CX-VP3M-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 1645 "CX-P2B-R3-step2-source-40", pid 95147 "CX-VQNODELAY-R5-review", pid 98894 "CX-RT01-live2-diagnostic", pid 5506 "CX-VM01R-offline-install"
+TAP version 13
+# Subtest: trace: same inputs give byte-identical events; a different seed differs
+ok 1 - trace: same inputs give byte-identical events; a different seed differs
+  ---
+  duration_ms: 55.108292
+  type: 'test'
+  ...
+# Subtest: trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+ok 2 - trace: rates, bursts at 120 s + k x 600 s, size and writer mix (TARGETS 2 and 2.1)
+  ---
+  duration_ms: 11.73025
+  type: 'test'
+  ...
+# Subtest: trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+ok 3 - trace: active set is 2% of the rung, 95% of commands hit it with Zipf skew, residency 2,000 s
+  ---
+  duration_ms: 8.747958
+  type: 'test'
+  ...
+# Subtest: histogram: percentiles within 1/128 of exact nearest-rank values
+ok 4 - histogram: percentiles within 1/128 of exact nearest-rank values
+  ---
+  duration_ms: 18.282916
+  type: 'test'
+  ...
+# Subtest: scheduler: latency is measured from the scheduled time, including queueing behind the subject
+ok 5 - scheduler: latency is measured from the scheduled time, including queueing behind the subject
+  ---
+  duration_ms: 332.605334
+  type: 'test'
+  ...
+# Subtest: scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+ok 6 - scheduler: parallel across subjects, in-flight cap, deadline expiry, injected overlay jobs join the subject queue
+  ---
+  duration_ms: 99.098542
+  type: 'test'
+  ...
+# Subtest: world: hop classes, frozen P4 buckets and closed-form counts match materialization
+ok 7 - world: hop classes, frozen P4 buckets and closed-form counts match materialization
+  ---
+  duration_ms: 81.717708
+  type: 'test'
+  ...
+# Subtest: model: valid-time aware digests equal the materialized world at (R, V)
+ok 8 - model: valid-time aware digests equal the materialized world at (R, V)
+  ---
+  duration_ms: 1.128584
+  type: 'test'
+  ...
+# Subtest: feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+ok 9 - feed consumer: durable checkpoints, three crash points, keyed effects never duplicate
+  ---
+  duration_ms: 80.881208
+  type: 'test'
+  ...
+# Subtest: noise.json: every rule names a known class and the screening series puts one whole burst inside every measured window
+ok 10 - noise.json: every rule names a known class and the screening series puts one whole burst inside every measured window
+  ---
+  duration_ms: 31.988208
+  type: 'test'
+  ...
+# Subtest: host parser reads sysctl, vm_stat and top
+ok 11 - host parser reads sysctl, vm_stat and top
+  ---
+  duration_ms: 0.578167
+  type: 'test'
+  ...
+# Subtest: round summary: PSI shares, arm counters, neighbour on an arm's vCPUs, partition, restarts and missing signals
+ok 12 - round summary: PSI shares, arm counters, neighbour on an arm's vCPUs, partition, restarts and missing signals
+  ---
+  duration_ms: 0.964875
+  type: 'test'
+  ...
+# Subtest: rules: soft amber and exclusion, calibration drift window, cpuset-only throttling rule
+ok 13 - rules: soft amber and exclusion, calibration drift window, cpuset-only throttling rule
+  ---
+  duration_ms: 0.257042
+  type: 'test'
+  ...
+# Subtest: round book: every offered command counts, censored at its censor time; rounds emit only when complete
+ok 14 - round book: every offered command counts, censored at its censor time; rounds emit only when complete
+  ---
+  duration_ms: 3.974
+  type: 'test'
+  ...
+# Subtest: analysis: A/A synthetic rounds grade, exclusions drop rounds, and recompute reproduces the result bit for bit
+ok 15 - analysis: A/A synthetic rounds grade, exclusions drop rounds, and recompute reproduces the result bit for bit
+  ---
+  duration_ms: 1021.203583
+  type: 'test'
+  ...
+# Subtest: pooled quantiles equal Histogram.merge percentiles exactly (recomputable from receipt histograms)
+ok 16 - pooled quantiles equal Histogram.merge percentiles exactly (recomputable from receipt histograms)
+  ---
+  duration_ms: 56.07775
+  type: 'test'
+  ...
+# Subtest: censoring: a quantile below the censored mass is identified; one inside it is a lower bound only
+ok 17 - censoring: a quantile below the censored mass is identified; one inside it is a lower bound only
+  ---
+  duration_ms: 8.576292
+  type: 'test'
+  ...
+# Subtest: planner reproduces R22's s_d limits (1.25x: 0.28 at 12 rounds, 0.39 at 24; 1.10x: 0.17 at 24)
+ok 18 - planner reproduces R22's s_d limits (1.25x: 0.28 at 12 rounds, 0.39 at 24; 1.10x: 0.17 at 24)
+  ---
+  duration_ms: 1.436
+  type: 'test'
+  ...
+# Subtest: window grade: INVALID over a third excluded, RED above 0.39, AMBER above 0.28 or amber signal or no partition
+ok 19 - window grade: INVALID over a third excluded, RED above 0.39, AMBER above 0.28 or amber signal or no partition
+  ---
+  duration_ms: 0.388792
+  type: 'test'
+  ...
+# Subtest: sign flip is exact for small m; slot bias t interval; decide covers every verdict
+ok 20 - sign flip is exact for small m; slot bias t interval; decide covers every verdict
+  ---
+  duration_ms: 0.630542
+  type: 'test'
+  ...
+# Subtest: synthetic rounds (R22 model, rho 0.8, 660 per round, 12 rounds): coverage at 1.0, 1.25, 1.6 and A/A false positives
+ok 21 - synthetic rounds (R22 model, rho 0.8, 660 per round, 12 rounds): coverage at 1.0, 1.25, 1.6 and A/A false positives
+  ---
+  duration_ms: 1445.6975
+  type: 'test'
+  ...
+# Subtest: A/A procedure check and per-round s_d on synthetic A/A rounds
+ok 22 - A/A procedure check and per-round s_d on synthetic A/A rounds
+  ---
+  duration_ms: 425.951167
+  type: 'test'
+  ...
+# Subtest: recordCorrectedUs adds the samples a stalled closed loop never issued
+ok 23 - recordCorrectedUs adds the samples a stalled closed loop never issued
+  ---
+  duration_ms: 0.120375
+  type: 'test'
+  ...
+# Subtest: pool admits the two dev engines when only they run
+ok 24 - pool admits the two dev engines when only they run
+  ---
+  duration_ms: 0.759209
+  type: 'test'
+  ...
+# Subtest: pool counts external research probes and refuses with their names
+ok 25 - pool counts external research probes and refuses with their names
+  ---
+  duration_ms: 0.505875
+  type: 'test'
+  ...
+# Subtest: an uncapped external container counts as the whole VM (fail closed)
+ok 26 - an uncapped external container counts as the whole VM (fail closed)
+  ---
+  duration_ms: 0.068958
+  type: 'test'
+  ...
+# Subtest: a reserved container counts once even while it also runs
+ok 27 - a reserved container counts once even while it also runs
+  ---
+  duration_ms: 0.063834
+  type: 'test'
+  ...
+# Subtest: disk forecast refuses past the 50 GiB used limit
+ok 28 - disk forecast refuses past the 50 GiB used limit
+  ---
+  duration_ms: 0.124292
+  type: 'test'
+  ...
+# Subtest: slotInfo rejects forbidden and probe ports and names containers and volumes
+ok 29 - slotInfo rejects forbidden and probe ports and names containers and volumes
+  ---
+  duration_ms: 0.360542
+  type: 'test'
+  ...
+# Subtest: withDirLock serializes and breaks a lock whose owner pid is dead
+ok 30 - withDirLock serializes and breaks a lock whose owner pid is dead
+  ---
+  duration_ms: 228.273459
+  type: 'test'
+  ...
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] waiting for pool lock (held by pid undefined)
+# [lab] heavy: waiting for one of 2 slots; held by pid 18242 "a", pid 18242 "b"
+# Subtest: withPool read-modify-writes the ledger atomically across processes
+ok 31 - withPool read-modify-writes the ledger atomically across processes
+  ---
+  duration_ms: 582.473083
+  type: 'test'
+  ...
+# Subtest: reconcile drops only reservations with no container and a dead reserving pid
+ok 32 - reconcile drops only reservations with no container and a dead reserving pid
+  ---
+  duration_ms: 1.164375
+  type: 'test'
+  ...
+# [lab] measurement lease: waiting for 1 heavy tokens; held by 
+# Subtest: heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+ok 33 - heavy semaphore admits at most TX2_HEAVY_SLOTS holders
+  ---
+  duration_ms: 123.802583
+  type: 'test'
+  ...
+# Subtest: object store is content addressed and refuses dependency caches and secret-like names
+ok 34 - object store is content addressed and refuses dependency caches and secret-like names
+  ---
+  duration_ms: 1.259167
+  type: 'test'
+  ...
+# Subtest: language classification: pure XTQL, pure SQL, hybrid, strict substeps
+ok 35 - language classification: pure XTQL, pure SQL, hybrid, strict substeps
+  ---
+  duration_ms: 0.2685
+  type: 'test'
+  ...
+# Subtest: verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+ok 36 - verdict fails closed on missing identity, zero executions, skips; subsets never PASS
+  ---
+  duration_ms: 0.182417
+  type: 'test'
+  ...
+# Subtest: caseLanguages lists every substep language in order
+ok 37 - caseLanguages lists every substep language in order
+  ---
+  duration_ms: 0.165416
+  type: 'test'
+  ...
+# Subtest: contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+ok 38 - contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; subsets claim nothing
+  ---
+  duration_ms: 0.37725
+  type: 'test'
+  ...
+# Subtest: cpuset regime: s1/s3 get --cpuset-cpus and no quota; quota slots keep their exact effective config shape (hash unchanged)
+ok 39 - cpuset regime: s1/s3 get --cpuset-cpus and no quota; quota slots keep their exact effective config shape (hash unchanged)
+  ---
+  duration_ms: 6.690083
+  type: 'test'
+  ...
+# (node:18242) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 exit listeners added to [process]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: measurement lease waits for every heavy token, then holds them all; others wait until release (Q60h)
+ok 40 - measurement lease waits for every heavy token, then holds them all; others wait until release (Q60h)
+  ---
+  duration_ms: 700.025208
+  type: 'test'
+  ...
+# Subtest: PAIR verdicts: departures INVALID, RED or over a third excluded INVALID_NOISE, decisive PAIRED_DECIDED; identity fails closed
+ok 41 - PAIR verdicts: departures INVALID, RED or over a third excluded INVALID_NOISE, decisive PAIRED_DECIDED; identity fails closed
+  ---
+  duration_ms: 29.471375
+  type: 'test'
+  ...
+# Subtest: placement (Q67g): disjoint equal cpusets on two slots pass; shared, unequal, quota or same-slot placements do not
+ok 42 - placement (Q67g): disjoint equal cpusets on two slots pass; shared, unequal, quota or same-slot placements do not
+  ---
+  duration_ms: 0.434458
+  type: 'test'
+  ...
+# Subtest: second-writer guard refuses a second container on a slot volume unless its config is read-only
+ok 43 - second-writer guard refuses a second container on a slot volume unless its config is read-only
+  ---
+  duration_ms: 0.437416
+  type: 'test'
+  ...
+# Subtest: second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+ok 44 - second-writer guard fails closed on every config that does not say exactly readOnlyDatabases: true
+  ---
+  duration_ms: 0.202583
+  type: 'test'
+  ...
+# Subtest: follower config must be read-only and read the writer's own log and storage paths
+ok 45 - follower config must be read-only and read the writer's own log and storage paths
+  ---
+  duration_ms: 0.265458
+  type: 'test'
+  ...
+# Subtest: follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+ok 46 - follower: own container and port, the slot volume mounted read-only, the read-only config bytes, slot lock shared
+  ---
+  duration_ms: 1.609083
+  type: 'test'
+  ...
+# Subtest: cpusets parse against the VM and unpinned containers overlap everything
+ok 47 - cpusets parse against the VM and unpinned containers overlap everything
+  ---
+  duration_ms: 0.161209
+  type: 'test'
+  ...
+# Subtest: Datomic addition leaves every existing slot effective-config hash unchanged
+ok 48 - Datomic addition leaves every existing slot effective-config hash unchanged
+  ---
+  duration_ms: 1.505041
+  type: 'test'
+  ...
+# Subtest: Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist with an exclusive slot
+ok 49 - Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist with an exclusive slot
+  ---
+  duration_ms: 13.064792
+  type: 'test'
+  ...
+# Subtest: wrapped measurement borrows only the direct parent heavy token and releases the other tokens
+ok 50 - wrapped measurement borrows only the direct parent heavy token and releases the other tokens
+  ---
+  duration_ms: 174.2965
+  type: 'test'
+  ...
+1..50
+# tests 50
+# suites 0
+# pass 50
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2028.664041

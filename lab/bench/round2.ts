@@ -1,3 +1,4 @@
+import { readLatencyRun } from "../receipts/parse.ts";
 import fs from "node:fs";
 import path from "node:path";
 import { createInterface } from "node:readline";
@@ -19,7 +20,7 @@ const seedReceipt = path.resolve(opt("seed-receipt", "runs/P5/a0-1k-final/receip
 if (!output.startsWith(path.resolve("runs") + path.sep) || fs.existsSync(output))
   throw new Error("fresh owned output required");
 fs.mkdirSync(path.dirname(output), { recursive: true });
-const prior = JSON.parse(fs.readFileSync(seedReceipt, "utf8")),
+const prior = readLatencyRun(seedReceipt).unwrap().data,
   scope = "p5-r2-" + randomUUID(),
   comp = memoryComposition("xtdb", scope);
 const report: any = {

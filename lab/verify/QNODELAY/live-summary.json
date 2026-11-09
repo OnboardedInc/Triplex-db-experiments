@@ -1,0 +1,431 @@
+{
+  "id": "65ec05eb-4810-4f54-ad56-0645d072a0f6",
+  "startedAt": "2026-11-09T04:06:32.439Z",
+  "node": "v22.23.2",
+  "head": "08a117761279de9ea0562b4f134b68df08889d6a",
+  "sources": {
+    "packages/qlever/src/QleverClient.ts": "59834c5427bfd1bfed4df04ebb773aae0e81e406ae577dc2a72829c60b0687b8",
+    "lab/verify/QNODELAY/common.mjs": "2f61c1f5278c9dbb804b6e1b74b7f17247693a562b6510ffe539ffb40a4c9385",
+    "lab/verify/QNODELAY/live.mjs": "1827ae42ca39e553ac8e1243201b1d9379e8c719304c8d1288007abede84593b",
+    "lab/bin/lib.mjs": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e",
+    "lab/config/slots.json": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8"
+  },
+  "classification": "DIAGNOSTIC Q91a; small sequential read-only probes, no load qualification",
+  "before": {
+    "container": "a809fb6cb3ba858da2984c65fcea810bce9833627c930c7070e33e6e39a3f826",
+    "startedAt": "2026-11-07T22:06:14.751906646Z",
+    "image": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "config": "c10589d0cdd0e69b45bed28702540377efa735a7f511dbedd82b4de42bd342e6",
+    "owner": {
+      "format": "tx2-slot-owner/1",
+      "lane": "qlever",
+      "slot": "dev",
+      "mode": "resident",
+      "container": "tx2-qlever-dev",
+      "volume": "tx2-qlever-dev-data",
+      "endpoint": "http://127.0.0.1:7070",
+      "port": 7070,
+      "holder": "EXP-000",
+      "experiment": null,
+      "pid": 6312,
+      "worktree": "/Users/sam/projects/triplex-db-2",
+      "createdAt": "2026-11-07T20:15:31.784Z"
+    },
+    "endpoint": "http://127.0.0.1:7070",
+    "coRunning": [
+      {
+        "name": "tx2-xtdb-s1",
+        "running": true,
+        "status": "running",
+        "health": "healthy",
+        "memBytes": 3758096384,
+        "nanoCpus": 2000000000,
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "labels": {
+          "org.opencontainers.image.created": "2026-10-21T15:18:32.333Z",
+          "org.opencontainers.image.description": "An immutable SQL database for application development, time-travel reporting and data compliance. Developed by @juxt",
+          "org.opencontainers.image.licenses": "MPL-2.0",
+          "org.opencontainers.image.revision": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+          "org.opencontainers.image.source": "https://github.com/xtdb/xtdb",
+          "org.opencontainers.image.title": "xtdb",
+          "org.opencontainers.image.url": "https://github.com/xtdb/xtdb",
+          "org.opencontainers.image.version": "2.2.0",
+          "tx2.config-sha256": "c3ff6b95a576512e8135a57ad58eb1630b33a33ae508b8556997613b2a40a2d5",
+          "tx2.holder": "CX-P2X2",
+          "tx2.lane": "xtdb",
+          "tx2.managed-by": "lab/bin/engine.mjs",
+          "tx2.slot": "s1",
+          "usage": "For custom logging: --volume .:/config --env JDK_JAVA_OPTIONS='-Dlog4j2.configurationFile=/config/log4j2.xml'"
+        },
+        "startedAt": "2026-11-09T03:53:07.254409619Z"
+      },
+      {
+        "name": "tx2-qlever-dev",
+        "running": true,
+        "status": "running",
+        "health": "healthy",
+        "memBytes": 3758096384,
+        "nanoCpus": 2000000000,
+        "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+        "imageId": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+        "labels": {
+          "maintainer": "Hannah Bast <bast@cs.uni-freiburg.de>",
+          "org.opencontainers.image.created": "2026-08-13T10:19:18.263Z",
+          "org.opencontainers.image.description": "Graph database implementing the RDF and SPARQL standards. Very fast and scales to more than a trillion triples on a single commodity machine",
+          "org.opencontainers.image.licenses": "Apache-2.0",
+          "org.opencontainers.image.revision": "6c5861a6526d7d7ae77735d09339ee0825f0c001",
+          "org.opencontainers.image.source": "https://github.com/ad-freiburg/qlever",
+          "org.opencontainers.image.title": "qlever",
+          "org.opencontainers.image.url": "https://github.com/ad-freiburg/qlever",
+          "org.opencontainers.image.version": "0.6.0",
+          "tx2.config-sha256": "c10589d0cdd0e69b45bed28702540377efa735a7f511dbedd82b4de42bd342e6",
+          "tx2.holder": "EXP-000",
+          "tx2.lane": "qlever",
+          "tx2.managed-by": "lab/bin/engine.mjs",
+          "tx2.slot": "dev"
+        },
+        "startedAt": "2026-11-07T22:06:14.751906646Z"
+      },
+      {
+        "name": "tx2-xtdb-dev",
+        "running": true,
+        "status": "running",
+        "health": "healthy",
+        "memBytes": 3221225472,
+        "nanoCpus": 2000000000,
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "labels": {
+          "org.opencontainers.image.created": "2026-10-21T15:18:32.333Z",
+          "org.opencontainers.image.description": "An immutable SQL database for application development, time-travel reporting and data compliance. Developed by @juxt",
+          "org.opencontainers.image.licenses": "MPL-2.0",
+          "org.opencontainers.image.revision": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+          "org.opencontainers.image.source": "https://github.com/xtdb/xtdb",
+          "org.opencontainers.image.title": "xtdb",
+          "org.opencontainers.image.url": "https://github.com/xtdb/xtdb",
+          "org.opencontainers.image.version": "2.2.0",
+          "tx2.config-sha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac",
+          "tx2.holder": "worktree:/Users/sam/projects/triplex-db-2",
+          "tx2.lane": "xtdb",
+          "tx2.managed-by": "lab/bin/engine.mjs",
+          "tx2.slot": "dev",
+          "usage": "For custom logging: --volume .:/config --env JDK_JAVA_OPTIONS='-Dlog4j2.configurationFile=/config/log4j2.xml'"
+        },
+        "startedAt": "2026-11-07T19:39:01.589983918Z"
+      }
+    ]
+  },
+  "baseTriples": null,
+  "deltaTriples": null,
+  "touchedBlockDelta": null,
+  "cells": [
+    {
+      "cell": "0/keep-alive/16",
+      "mode": "keep-alive",
+      "size": 16,
+      "n": 64,
+      "p50": 7.7827499999999645,
+      "p99": 50.69329200000004,
+      "stalls": 32,
+      "created": 2,
+      "openCreated": 2
+    },
+    {
+      "cell": "0/keep-alive/2048",
+      "mode": "keep-alive",
+      "size": 2048,
+      "n": 64,
+      "p50": 19.147917000000234,
+      "p99": 62.68791699999974,
+      "stalls": 32,
+      "created": 0,
+      "openCreated": 0
+    },
+    {
+      "cell": "1/per-request/16",
+      "mode": "per-request",
+      "size": 16,
+      "n": 64,
+      "p50": 1.881750000000011,
+      "p99": 4.260624999999891,
+      "stalls": 0,
+      "created": 68,
+      "openCreated": 0
+    },
+    {
+      "cell": "1/per-request/2048",
+      "mode": "per-request",
+      "size": 2048,
+      "n": 64,
+      "p50": 2.1927919999998267,
+      "p99": 4.082374999999956,
+      "stalls": 0,
+      "created": 68,
+      "openCreated": 0
+    },
+    {
+      "cell": "2/per-request/16",
+      "mode": "per-request",
+      "size": 16,
+      "n": 64,
+      "p50": 2.023958999999195,
+      "p99": 3.3842090000007374,
+      "stalls": 0,
+      "created": 68,
+      "openCreated": 0
+    },
+    {
+      "cell": "2/per-request/2048",
+      "mode": "per-request",
+      "size": 2048,
+      "n": 64,
+      "p50": 2.3535000000001673,
+      "p99": 3.925333000000137,
+      "stalls": 0,
+      "created": 68,
+      "openCreated": 0
+    },
+    {
+      "cell": "3/keep-alive/16",
+      "mode": "keep-alive",
+      "size": 16,
+      "n": 64,
+      "p50": 6.850833000000421,
+      "p99": 51.334249999999884,
+      "stalls": 32,
+      "created": 0,
+      "openCreated": 0
+    },
+    {
+      "cell": "3/keep-alive/2048",
+      "mode": "keep-alive",
+      "size": 2048,
+      "n": 64,
+      "p50": 6.751874999999927,
+      "p99": 55.36000000000058,
+      "stalls": 32,
+      "created": 0,
+      "openCreated": 0
+    },
+    {
+      "cell": "4/per-request/16",
+      "mode": "per-request",
+      "size": 16,
+      "n": 1024,
+      "p50": 1.7536669999990409,
+      "p99": 3.589665999999852,
+      "stalls": 0,
+      "created": 1028,
+      "openCreated": 0
+    }
+  ],
+  "descriptors": [
+    {
+      "cell": "4/per-request/16",
+      "n": 0,
+      "numericDescriptors": 20,
+      "tcp": 2,
+      "openTargetSockets": 2
+    },
+    {
+      "cell": "4/per-request/16",
+      "n": 128,
+      "numericDescriptors": 20,
+      "tcp": 2,
+      "openTargetSockets": 2
+    },
+    {
+      "cell": "4/per-request/16",
+      "n": 256,
+      "numericDescriptors": 20,
+      "tcp": 2,
+      "openTargetSockets": 2
+    },
+    {
+      "cell": "4/per-request/16",
+      "n": 384,
+      "numericDescriptors": 20,
+      "tcp": 2,
+      "openTargetSockets": 2
+    },
+    {
+      "cell": "4/per-request/16",
+      "n": 512,
+      "numericDescriptors": 20,
+      "tcp": 2,
+      "openTargetSockets": 2
+    },
+    {
+      "cell": "4/per-request/16",
+      "n": 640,
+      "numericDescriptors": 20,
+      "tcp": 2,
+      "openTargetSockets": 2
+    },
+    {
+      "cell": "4/per-request/16",
+      "n": 768,
+      "numericDescriptors": 20,
+      "tcp": 2,
+      "openTargetSockets": 2
+    },
+    {
+      "cell": "4/per-request/16",
+      "n": 896,
+      "numericDescriptors": 20,
+      "tcp": 2,
+      "openTargetSockets": 2
+    },
+    {
+      "cell": "4/per-request/16",
+      "n": 1024,
+      "numericDescriptors": 20,
+      "tcp": 2,
+      "openTargetSockets": 2
+    }
+  ],
+  "after": {
+    "container": "a809fb6cb3ba858da2984c65fcea810bce9833627c930c7070e33e6e39a3f826",
+    "startedAt": "2026-11-07T22:06:14.751906646Z",
+    "image": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+    "config": "c10589d0cdd0e69b45bed28702540377efa735a7f511dbedd82b4de42bd342e6",
+    "owner": {
+      "format": "tx2-slot-owner/1",
+      "lane": "qlever",
+      "slot": "dev",
+      "mode": "resident",
+      "container": "tx2-qlever-dev",
+      "volume": "tx2-qlever-dev-data",
+      "endpoint": "http://127.0.0.1:7070",
+      "port": 7070,
+      "holder": "EXP-000",
+      "experiment": null,
+      "pid": 6312,
+      "worktree": "/Users/sam/projects/triplex-db-2",
+      "createdAt": "2026-11-07T20:15:31.784Z"
+    },
+    "endpoint": "http://127.0.0.1:7070",
+    "coRunning": [
+      {
+        "name": "tx2-xtdb-s1",
+        "running": true,
+        "status": "running",
+        "health": "healthy",
+        "memBytes": 3758096384,
+        "nanoCpus": 2000000000,
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "labels": {
+          "org.opencontainers.image.created": "2026-10-21T15:18:32.333Z",
+          "org.opencontainers.image.description": "An immutable SQL database for application development, time-travel reporting and data compliance. Developed by @juxt",
+          "org.opencontainers.image.licenses": "MPL-2.0",
+          "org.opencontainers.image.revision": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+          "org.opencontainers.image.source": "https://github.com/xtdb/xtdb",
+          "org.opencontainers.image.title": "xtdb",
+          "org.opencontainers.image.url": "https://github.com/xtdb/xtdb",
+          "org.opencontainers.image.version": "2.2.0",
+          "tx2.config-sha256": "c3ff6b95a576512e8135a57ad58eb1630b33a33ae508b8556997613b2a40a2d5",
+          "tx2.holder": "CX-P2X2",
+          "tx2.lane": "xtdb",
+          "tx2.managed-by": "lab/bin/engine.mjs",
+          "tx2.slot": "s1",
+          "usage": "For custom logging: --volume .:/config --env JDK_JAVA_OPTIONS='-Dlog4j2.configurationFile=/config/log4j2.xml'"
+        },
+        "startedAt": "2026-11-09T03:53:07.254409619Z"
+      },
+      {
+        "name": "tx2-qlever-dev",
+        "running": true,
+        "status": "running",
+        "health": "healthy",
+        "memBytes": 3758096384,
+        "nanoCpus": 2000000000,
+        "image": "adfreiburg/qlever:0.6.0@sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+        "imageId": "sha256:37d5ede193f1bffb6aebf734d15d2a4c2a3228ee102858b0c6c2e65c149a78ec",
+        "labels": {
+          "maintainer": "Hannah Bast <bast@cs.uni-freiburg.de>",
+          "org.opencontainers.image.created": "2026-08-13T10:19:18.263Z",
+          "org.opencontainers.image.description": "Graph database implementing the RDF and SPARQL standards. Very fast and scales to more than a trillion triples on a single commodity machine",
+          "org.opencontainers.image.licenses": "Apache-2.0",
+          "org.opencontainers.image.revision": "6c5861a6526d7d7ae77735d09339ee0825f0c001",
+          "org.opencontainers.image.source": "https://github.com/ad-freiburg/qlever",
+          "org.opencontainers.image.title": "qlever",
+          "org.opencontainers.image.url": "https://github.com/ad-freiburg/qlever",
+          "org.opencontainers.image.version": "0.6.0",
+          "tx2.config-sha256": "c10589d0cdd0e69b45bed28702540377efa735a7f511dbedd82b4de42bd342e6",
+          "tx2.holder": "EXP-000",
+          "tx2.lane": "qlever",
+          "tx2.managed-by": "lab/bin/engine.mjs",
+          "tx2.slot": "dev"
+        },
+        "startedAt": "2026-11-07T22:06:14.751906646Z"
+      },
+      {
+        "name": "tx2-xtdb-dev",
+        "running": true,
+        "status": "running",
+        "health": "healthy",
+        "memBytes": 3221225472,
+        "nanoCpus": 2000000000,
+        "image": "ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "imageId": "sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77",
+        "labels": {
+          "org.opencontainers.image.created": "2026-10-21T15:18:32.333Z",
+          "org.opencontainers.image.description": "An immutable SQL database for application development, time-travel reporting and data compliance. Developed by @juxt",
+          "org.opencontainers.image.licenses": "MPL-2.0",
+          "org.opencontainers.image.revision": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+          "org.opencontainers.image.source": "https://github.com/xtdb/xtdb",
+          "org.opencontainers.image.title": "xtdb",
+          "org.opencontainers.image.url": "https://github.com/xtdb/xtdb",
+          "org.opencontainers.image.version": "2.2.0",
+          "tx2.config-sha256": "034fff1703f2ecebb49b5ddeeaed4ee4e2a197ece368a6bdc93b074355e785ac",
+          "tx2.holder": "worktree:/Users/sam/projects/triplex-db-2",
+          "tx2.lane": "xtdb",
+          "tx2.managed-by": "lab/bin/engine.mjs",
+          "tx2.slot": "dev",
+          "usage": "For custom logging: --volume .:/config --env JDK_JAVA_OPTIONS='-Dlog4j2.configurationFile=/config/log4j2.xml'"
+        },
+        "startedAt": "2026-11-07T19:39:01.589983918Z"
+      }
+    ]
+  },
+  "openAtEnd": [
+    {
+      "id": 1,
+      "cell": "0/keep-alive/16",
+      "localPort": 60742,
+      "remotePort": 7070,
+      "openedAt": "2026-11-09T04:06:32.590Z",
+      "closedAt": null
+    },
+    {
+      "id": 2,
+      "cell": "0/keep-alive/16",
+      "localPort": 60743,
+      "remotePort": 7070,
+      "openedAt": "2026-11-09T04:06:32.653Z",
+      "closedAt": null
+    }
+  ],
+  "comparison": {
+    "keep-alive": {
+      "n": 256,
+      "p50": 19.147917000000234,
+      "p99": 55.36000000000058,
+      "stalls": 128
+    },
+    "per-request": {
+      "n": 256,
+      "p50": 2.1104169999998703,
+      "p99": 3.925333000000137,
+      "stalls": 0
+    }
+  },
+  "completedCollection": true,
+  "sourcesUnchanged": true,
+  "endedAt": "2026-11-09T04:06:44.493Z",
+  "raw": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/attempt1/result.json",
+  "rawSha256": "ba6e14ff192005b0ee4710aa8fb7d325643314287bca19afe4d7f25a0c58b1a9",
+  "connectionCount": 1302
+}

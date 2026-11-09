@@ -1,0 +1,6214 @@
+{
+  "reviewed": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+  "results": [
+    {
+      "path": "lab/experiments/EXP-M01-paired-measurement/receipts/PAIR-xtdb-20261108T010440Z-7fcef1.json",
+      "sha256": "8fae368bef229e16cacdc6e4d6293a367bb305bece1349ecb6d9c59f348f8204",
+      "original": {
+        "match": true,
+        "diffs": [],
+        "problems": [
+          "placement missing for an arm"
+        ],
+        "verdict": "INVALID",
+        "primary": {
+          "metric": "commitAll",
+          "quantile": 0.5,
+          "claim": {
+            "kind": "superiority",
+            "target": 1.25
+          },
+          "decision": "INCONCLUSIVE_NEED_MORE_ROUNDS",
+          "decisive": false
+        },
+        "grade": "INVALID"
+      },
+      "mutation": {
+        "item": "calibration",
+        "round": "R01",
+        "field": "pre.host.ms[17]",
+        "before": 21.42725,
+        "after": 0.2142725,
+        "staleHash": "Error: evidence item calibration does not match its sha256",
+        "rehashed": {
+          "match": false,
+          "diffs": [
+            ".checks.calibration.ok: true vs false",
+            ".checks.calibration.problems.0: undefined vs \"R01: calib.hostDrift 0.9398040345821326 does not follow from its samples (93.98",
+            ".checks.calibration.problems.1: undefined vs \"R01: calib.interferenceMax 1.239500309185733 does not follow from its samples ("
+          ],
+          "problems": [
+            "R01: calib.hostDrift 0.9398040345821326 does not follow from its samples (93.98040345821326)",
+            "R01: calib.interferenceMax 1.239500309185733 does not follow from its samples (123.95003091857332)",
+            "placement missing for an arm"
+          ],
+          "verdict": "FAIL",
+          "primary": {
+            "metric": "commitAll",
+            "quantile": 0.5,
+            "claim": {
+              "kind": "superiority",
+              "target": 1.25
+            },
+            "decision": "INCONCLUSIVE_NEED_MORE_ROUNDS",
+            "decisive": false
+          },
+          "grade": "INVALID"
+        }
+      }
+    },
+    {
+      "path": "lab/experiments/EXP-M01-paired-measurement/rebase/PAIR-xtdb-20261109T070418Z-f081c3.json",
+      "sha256": "1c373f3ab96dd31828457350db13ca58f6e5fe9f7158eed4e1921d8e98758380",
+      "original": {
+        "match": true,
+        "diffs": [],
+        "problems": [
+          "placement missing for an arm"
+        ],
+        "verdict": "INVALID",
+        "primary": {
+          "metric": "commitAll",
+          "quantile": 0.5,
+          "claim": {
+            "kind": "superiority",
+            "target": 1.25
+          },
+          "decision": "NOT_ESTIMABLE",
+          "decisive": false
+        },
+        "grade": "INVALID"
+      },
+      "mutation": {
+        "item": "calibration",
+        "round": "R01",
+        "field": "pre.host.ms[5]",
+        "before": 20.070041,
+        "after": 0.20070041,
+        "staleHash": "Error: evidence item calibration does not match its sha256",
+        "rehashed": {
+          "match": false,
+          "diffs": [
+            ".checks.calibration.ok: true vs false",
+            ".checks.calibration.problems.0: undefined vs \"R01: calib.hostDrift 0.9994851530198668 does not follow from its samples (99.94",
+            ".checks.calibration.problems.1: undefined vs \"R01: calib.interferenceMax 1.0133159169928951 does not follow from its samples "
+          ],
+          "problems": [
+            "R01: calib.hostDrift 0.9994851530198668 does not follow from its samples (99.94851530198669)",
+            "R01: calib.interferenceMax 1.0133159169928951 does not follow from its samples (101.33159169928952)",
+            "placement missing for an arm"
+          ],
+          "verdict": "FAIL",
+          "primary": {
+            "metric": "commitAll",
+            "quantile": 0.5,
+            "claim": {
+              "kind": "superiority",
+              "target": 1.25
+            },
+            "decision": "NOT_ESTIMABLE",
+            "decisive": false
+          },
+          "grade": "INVALID"
+        }
+      }
+    }
+  ],
+  "hardRuleCounterexample": {
+    "input": {
+      "mode": "aa",
+      "rounds": [
+        {
+          "id": "R01",
+          "kind": "aa",
+          "preflight": true
+        },
+        {
+          "id": "R02",
+          "kind": "aa",
+          "preflight": true
+        },
+        {
+          "id": "R03",
+          "kind": "aa",
+          "preflight": true
+        },
+        {
+          "id": "R04",
+          "kind": "aa",
+          "preflight": false
+        },
+        {
+          "id": "R05",
+          "kind": "aa",
+          "preflight": false
+        },
+        {
+          "id": "R06",
+          "kind": "aa",
+          "preflight": false
+        },
+        {
+          "id": "R07",
+          "kind": "aa",
+          "preflight": false
+        },
+        {
+          "id": "R08",
+          "kind": "aa",
+          "preflight": false
+        },
+        {
+          "id": "R09",
+          "kind": "aa",
+          "preflight": false
+        },
+        {
+          "id": "R10",
+          "kind": "aa",
+          "preflight": false
+        },
+        {
+          "id": "R11",
+          "kind": "aa",
+          "preflight": false
+        },
+        {
+          "id": "R12",
+          "kind": "aa",
+          "preflight": false
+        }
+      ],
+      "histograms": {
+        "R01.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R01.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R01.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R01.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R01.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R01.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R01.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R01.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R01.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R01.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R01.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R01.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R02.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R02.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R02.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R02.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R02.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R02.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R02.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R02.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R02.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R02.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R02.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R02.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R03.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R03.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R03.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R03.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R03.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R03.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R03.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R03.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R03.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R03.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R03.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R03.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R04.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R04.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R04.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R04.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R04.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R04.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R04.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R04.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R04.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R04.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R04.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R04.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R05.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R05.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R05.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R05.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R05.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R05.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R05.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R05.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R05.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R05.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R05.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R05.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R06.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R06.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R06.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R06.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R06.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R06.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R06.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R06.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R06.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R06.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R06.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R06.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R07.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R07.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R07.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R07.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R07.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R07.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R07.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R07.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R07.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R07.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R07.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R07.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R08.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R08.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R08.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R08.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R08.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R08.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R08.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R08.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R08.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R08.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R08.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R08.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R09.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R09.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R09.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R09.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R09.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R09.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R09.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R09.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R09.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R09.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R09.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R09.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R10.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R10.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R10.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R10.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R10.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R10.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R10.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R10.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R10.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R10.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R10.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R10.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R11.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R11.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R11.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R11.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R11.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R11.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R11.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R11.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R11.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R11.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R11.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R11.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R12.A.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R12.A.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R12.A.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R12.A.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R12.A.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R12.A.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R12.B.commitAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R12.B.commit": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 100,
+          "minMs": 1,
+          "maxMs": 1,
+          "meanMs": 1,
+          "p50Ms": 1,
+          "p90Ms": 1,
+          "p99Ms": 1,
+          "p999Ms": 1,
+          "sumUs": 100000,
+          "buckets": [
+            [
+              506,
+              100
+            ]
+          ]
+        },
+        "R12.B.commitCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R12.B.probeAll": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R12.B.probe": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        },
+        "R12.B.probeCensored": {
+          "format": "tx2-loglinear-hist/1",
+          "unit": "us",
+          "subBucketBits": 7,
+          "count": 0,
+          "minMs": null,
+          "maxMs": null,
+          "meanMs": null,
+          "p50Ms": null,
+          "p90Ms": null,
+          "p99Ms": null,
+          "p999Ms": null,
+          "sumUs": 0,
+          "buckets": []
+        }
+      },
+      "noise": [
+        {
+          "id": "R01",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0.05,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        },
+        {
+          "id": "R02",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        },
+        {
+          "id": "R03",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        },
+        {
+          "id": "R04",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        },
+        {
+          "id": "R05",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        },
+        {
+          "id": "R06",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        },
+        {
+          "id": "R07",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        },
+        {
+          "id": "R08",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        },
+        {
+          "id": "R09",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        },
+        {
+          "id": "R10",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        },
+        {
+          "id": "R11",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        },
+        {
+          "id": "R12",
+          "window": {
+            "fromMs": 0,
+            "toMs": 150000
+          },
+          "partitioned": true,
+          "missing": [],
+          "arms": {},
+          "neighbors": [],
+          "calib": {},
+          "signals": {
+            "signals.missing": 0,
+            "host.pressureLevelMax": 0,
+            "host.pageoutsDelta": 0,
+            "vm.psi.cpuSomeShare": 0,
+            "vm.psi.memFullShare": 0,
+            "vm.psi.ioSomeShare": 0,
+            "arms.throttledShareMax": 0,
+            "arms.oomKillDelta": 0,
+            "arms.restarts": 0,
+            "arms.memMaxEventsDelta": 0,
+            "neighbors.maxCoresOnArmCpus": 0,
+            "calib.hostDrift": 1,
+            "calib.vmDrift": 1,
+            "calib.interferenceMax": 1,
+            "hiccup.maxMs": 0,
+            "client.eluMax": 0,
+            "host.loadAvg1": 0,
+            "host.cpuIdlePct": 0,
+            "host.swapUsedBytes": 0,
+            "host.decompressionsDelta": 0,
+            "vm.stealShare": 0,
+            "vm.loadAvg1": 0,
+            "neighbors.totalCores": 0,
+            "hiccup.vmMaxMs": 0,
+            "hiccup.driverMaxMs": 0
+          }
+        }
+      ],
+      "config": {
+        "format": "tx2-noise/1",
+        "status": "provisional: R22 section 4 thresholds, to be reset at the 90th percentile of the signals that predict the A/A spread after a 7-day passive recording (R22 section 4, open question 11)",
+        "source": "lab/research/R22-noise-robust-benchmarking.md sections 2, 3, 4, 7; RULINGS-PENDING Q60a-i",
+        "sampling": {
+          "cadenceS": 10,
+          "hostTopEveryS": 30
+        },
+        "rounds": {
+          "min": 8,
+          "default": 12,
+          "max": 24,
+          "looks": [
+            8,
+            12,
+            18,
+            24
+          ],
+          "lookLevel": 0.982,
+          "level": 0.95,
+          "boots": 2000,
+          "aaEvery": 6,
+          "preflightAA": 3,
+          "bootSeed": 1
+        },
+        "claims": {
+          "superiority": 1.25,
+          "holdP50": 1.1,
+          "holdP99": 1.15
+        },
+        "p99Floor": {
+          "commandsPerArm": 25000,
+          "usableRounds": 8
+        },
+        "aaCheck": {
+          "trials": 200,
+          "boots": 500,
+          "seed": 11
+        },
+        "series": {
+          "screening-b180": {
+            "note": "Q60g: a burst every 180 s so every P2/P3 round holds about 3,300 commands; a new comparison series (TARGETS 2.1 item 5); acceptance keeps the frozen trace",
+            "traceParams": {
+              "burstPeriodS": 180,
+              "firstBurstAtS": 42
+            },
+            "round": {
+              "periodS": 180,
+              "measuredFromS": 12,
+              "measuredS": 150,
+              "settleS": 2,
+              "calibS": 10
+            },
+            "warmupPeriods": 1
+          },
+          "screening-r4": {
+            "note": "R22 section 7 alternative, not yet ruled: 4x the steady rate and no bursts (about 660 commands per 150 s; 16+ rounds at rho 0.8); for an engine whose burst queue censors the p50 under screening-b180",
+            "traceParams": {
+              "steadyFactsPerS": 60,
+              "burstMultiplier": 1
+            },
+            "round": {
+              "periodS": 180,
+              "measuredFromS": 12,
+              "measuredS": 150,
+              "settleS": 2,
+              "calibS": 10
+            },
+            "warmupPeriods": 1
+          },
+          "frozen-p600": {
+            "note": "the frozen TARGETS 2.1 trace; a round per 600 s burst period (about 2 h per 12-round decision, R22 section 7)",
+            "traceParams": {},
+            "round": {
+              "periodS": 600,
+              "measuredFromS": 102,
+              "measuredS": 150,
+              "settleS": 2,
+              "calibS": 10
+            },
+            "warmupPeriods": 1
+          }
+        },
+        "calibration": {
+          "note": "fixed integer work, about 20 ms per unit on this host (node xorshift) and VM (python LCG), measured 2026-11-07; reference = min of the first 5 runs (R22 section 4.3)",
+          "units": 20,
+          "hostUnitIterations": 12000000,
+          "vmUnitIterations": 300000,
+          "referenceRuns": 5
+        },
+        "hiccup": {
+          "sleepMs": 1
+        },
+        "partition": {
+          "note": "R22 section 3: arms on disjoint cpusets; partitioned = no non-arm container's effective cpuset intersects an arm's"
+        },
+        "rules": [
+          {
+            "id": "signals-missing",
+            "signal": "signals.missing",
+            "class": "hard",
+            "excludeAbove": 0,
+            "note": "fail closed: a round without host, VM or arm counters cannot be cleared"
+          },
+          {
+            "id": "host-mem-pressure-critical",
+            "signal": "host.pressureLevelMax",
+            "class": "hard",
+            "excludeAbove": 3,
+            "note": "kern.memorystatus_vm_pressure_level 4 = CRITICAL (1 normal, 2 warn); ambient 2"
+          },
+          {
+            "id": "host-pageouts",
+            "signal": "host.pageoutsDelta",
+            "class": "hard",
+            "excludeAbove": 20000,
+            "note": "swap growth: pageouts rising by more than 20,000 pages in a round"
+          },
+          {
+            "id": "vm-psi-cpu-some",
+            "signal": "vm.psi.cpuSomeShare",
+            "class": "soft",
+            "amberAbove": 0.4,
+            "excludeAbove": 0.6,
+            "note": "ambient 22 to 25% (R22), 41% on 2026-11-07 23:59Z"
+          },
+          {
+            "id": "vm-psi-mem-full",
+            "signal": "vm.psi.memFullShare",
+            "class": "hard",
+            "excludeAbove": 0.01
+          },
+          {
+            "id": "vm-psi-io-some",
+            "signal": "vm.psi.ioSomeShare",
+            "class": "soft",
+            "excludeAbove": 0.1
+          },
+          {
+            "id": "arm-throttled",
+            "signal": "arms.throttledShareMax",
+            "class": "hard-in-cpuset-regime",
+            "excludeAbove": 0.05,
+            "note": "77% of periods throttled on the busiest quota slot (R22 section 3)"
+          },
+          {
+            "id": "arm-oom-kill",
+            "signal": "arms.oomKillDelta",
+            "class": "hard",
+            "excludeAbove": 0
+          },
+          {
+            "id": "arm-restart",
+            "signal": "arms.restarts",
+            "class": "hard",
+            "excludeAbove": 0
+          },
+          {
+            "id": "arm-memory-max-events",
+            "signal": "arms.memMaxEventsDelta",
+            "class": "hard",
+            "excludeAbove": 50
+          },
+          {
+            "id": "neighbor-cpu",
+            "signal": "neighbors.maxCoresOnArmCpus",
+            "class": "hard-after-partition",
+            "excludeAbove": 0.25,
+            "note": "a non-arm container on an arm's cpuset; recorded, not applied, while the VM is not partitioned"
+          },
+          {
+            "id": "calib-drift-host",
+            "signal": "calib.hostDrift",
+            "class": "hard",
+            "excludeOutside": [
+              0.85,
+              1.18
+            ],
+            "note": "post/pre minimum of the host spin"
+          },
+          {
+            "id": "calib-drift-vm",
+            "signal": "calib.vmDrift",
+            "class": "hard",
+            "excludeOutside": [
+              0.85,
+              1.18
+            ],
+            "note": "post/pre minimum of the VM spin"
+          },
+          {
+            "id": "calib-interference",
+            "signal": "calib.interferenceMax",
+            "class": "hard",
+            "excludeAbove": 2,
+            "note": "p50/min of a spin; ambient 1.1 to 1.36"
+          },
+          {
+            "id": "hiccup",
+            "signal": "hiccup.maxMs",
+            "class": "hard",
+            "excludeAbove": 100,
+            "note": "1 ms sleep overshoot in either driver or the VM; ambient max 4 to 9 ms per 4 s"
+          },
+          {
+            "id": "client-elu",
+            "signal": "client.eluMax",
+            "class": "hard",
+            "excludeAbove": 0.9,
+            "note": "a driver's main event loop saturated in the round"
+          },
+          {
+            "id": "host-load",
+            "signal": "host.loadAvg1",
+            "class": "record",
+            "note": "11 to 15 on 12 cores; never discriminates here"
+          },
+          {
+            "id": "host-cpu-idle",
+            "signal": "host.cpuIdlePct",
+            "class": "record"
+          },
+          {
+            "id": "host-swap-used",
+            "signal": "host.swapUsedBytes",
+            "class": "record"
+          },
+          {
+            "id": "host-decompressions",
+            "signal": "host.decompressionsDelta",
+            "class": "record",
+            "note": "calibrate during the recording week"
+          },
+          {
+            "id": "vm-steal",
+            "signal": "vm.stealShare",
+            "class": "record",
+            "note": "always 0 under Virtualization.framework (R22 finding 3)"
+          },
+          {
+            "id": "vm-load",
+            "signal": "vm.loadAvg1",
+            "class": "record"
+          },
+          {
+            "id": "neighbor-cpu-total",
+            "signal": "neighbors.totalCores",
+            "class": "record"
+          },
+          {
+            "id": "hiccup-vm",
+            "signal": "hiccup.vmMaxMs",
+            "class": "record",
+            "note": "the VM part of rule hiccup"
+          },
+          {
+            "id": "hiccup-driver",
+            "signal": "hiccup.driverMaxMs",
+            "class": "record",
+            "note": "the drivers' part of rule hiccup"
+          }
+        ]
+      },
+      "regime": "cpuset",
+      "accounting": {
+        "R01": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        },
+        "R02": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        },
+        "R03": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        },
+        "R04": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        },
+        "R05": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        },
+        "R06": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        },
+        "R07": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        },
+        "R08": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        },
+        "R09": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        },
+        "R10": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        },
+        "R11": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        },
+        "R12": {
+          "A": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          },
+          "B": {
+            "offered": {
+              "commands": 100,
+              "commandsDigest": "fixture",
+              "probes": 0,
+              "probesDigest": "fixture"
+            },
+            "commands": {
+              "committed": 100,
+              "censored": 0,
+              "pendingAtEnd": 0,
+              "byOutcome": {
+                "committed": 100
+              }
+            },
+            "probes": {
+              "ok": 0,
+              "errors": 0,
+              "expired": 0,
+              "pendingAtEnd": 0
+            }
+          }
+        }
+      },
+      "calibration": {
+        "rounds": {
+          "R01": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          },
+          "R02": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          },
+          "R03": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          },
+          "R04": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          },
+          "R05": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          },
+          "R06": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          },
+          "R07": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          },
+          "R08": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          },
+          "R09": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          },
+          "R10": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          },
+          "R11": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          },
+          "R12": {
+            "pre": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            },
+            "post": {
+              "host": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              },
+              "vm": {
+                "ms": [
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20,
+                  20
+                ]
+              }
+            }
+          }
+        }
+      },
+      "placement": {
+        "A": {
+          "slot": "s1",
+          "cpuset": "0-1",
+          "regime": "cpuset",
+          "cpuMax": "max 100000",
+          "memCapBytes": 3758096384,
+          "cores": 2
+        },
+        "B": {
+          "slot": "s3",
+          "cpuset": "2-3",
+          "regime": "cpuset",
+          "cpuMax": "max 100000",
+          "memCapBytes": 3758096384,
+          "cores": 2
+        }
+      }
+    },
+    "observed": {
+      "checks": {
+        "rounds": {
+          "count": 12,
+          "registeredLooks": [
+            8,
+            12,
+            18,
+            24
+          ],
+          "isRegisteredLook": true
+        },
+        "accounting": {
+          "ok": true,
+          "problems": []
+        },
+        "calibration": {
+          "ok": true,
+          "problems": []
+        },
+        "placement": {
+          "problems": []
+        }
+      },
+      "stats": {
+        "primary": {
+          "metric": "commitAll",
+          "quantile": 0.5,
+          "claim": {
+            "kind": "superiority",
+            "target": 1.25
+          },
+          "decision": "EQUIVALENT_WITHIN_TARGET",
+          "decisive": true
+        },
+        "p50": {
+          "q": 0.5,
+          "ratio": 1,
+          "lo": 1,
+          "hi": 1,
+          "mdr": 1,
+          "level": 0.95,
+          "rounds": 11,
+          "aMs": 1,
+          "bMs": 1,
+          "countA": 1100,
+          "countB": 1100,
+          "censoredA": 0,
+          "censoredB": 0
+        },
+        "p99": {
+          "q": 0.99,
+          "ratio": 1,
+          "lo": 1,
+          "hi": 1,
+          "mdr": 1,
+          "level": 0.95,
+          "rounds": 11,
+          "aMs": 1,
+          "bMs": 1,
+          "countA": 1100,
+          "countB": 1100,
+          "censoredA": 0,
+          "censoredB": 0
+        },
+        "metrics": {
+          "commitAll": {
+            "p50": {
+              "q": 0.5,
+              "ratio": 1,
+              "lo": 1,
+              "hi": 1,
+              "mdr": 1,
+              "level": 0.95,
+              "rounds": 11,
+              "aMs": 1,
+              "bMs": 1,
+              "countA": 1100,
+              "countB": 1100,
+              "censoredA": 0,
+              "censoredB": 0
+            },
+            "p99": {
+              "q": 0.99,
+              "ratio": 1,
+              "lo": 1,
+              "hi": 1,
+              "mdr": 1,
+              "level": 0.95,
+              "rounds": 11,
+              "aMs": 1,
+              "bMs": 1,
+              "countA": 1100,
+              "countB": 1100,
+              "censoredA": 0,
+              "censoredB": 0
+            },
+            "decision": {
+              "p50": "EQUIVALENT_WITHIN_TARGET",
+              "p99": "EQUIVALENT_WITHIN_TARGET",
+              "claim": {
+                "kind": "superiority",
+                "target": 1.25
+              }
+            },
+            "roundRatios": {
+              "p50": [
+                {
+                  "id": "R02",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R03",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R04",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R05",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R06",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R07",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R08",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R09",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R10",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R11",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R12",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                }
+              ],
+              "p99": [
+                {
+                  "id": "R02",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R03",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R04",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R05",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R06",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R07",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R08",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R09",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R10",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R11",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R12",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                }
+              ]
+            },
+            "aa": {
+              "rounds": 11,
+              "sdLogP50": 0,
+              "sdLogP99": 0,
+              "slotBiasP50": {
+                "n": 11,
+                "meanLog": 0,
+                "sdLog": 0,
+                "lo": 0,
+                "hi": 0,
+                "ratio": 1,
+                "ratioLo": 1,
+                "ratioHi": 1,
+                "excludesZero": false
+              },
+              "slotBiasP99": {
+                "n": 11,
+                "meanLog": 0,
+                "sdLog": 0,
+                "lo": 0,
+                "hi": 0,
+                "ratio": 1,
+                "ratioLo": 1,
+                "ratioHi": 1,
+                "excludesZero": false
+              },
+              "signFlipP50": 1,
+              "signFlipP99": 1,
+              "procedureFalsePositive": {
+                "p50": {
+                  "q": 0.5,
+                  "trials": 200,
+                  "skipped": 0,
+                  "falsePositives": 0,
+                  "rate": 0,
+                  "mcSe": 0,
+                  "boots": 500,
+                  "level": 0.95
+                },
+                "p99": {
+                  "q": 0.99,
+                  "trials": 200,
+                  "skipped": 0,
+                  "falsePositives": 0,
+                  "rate": 0,
+                  "mcSe": 0,
+                  "boots": 500,
+                  "level": 0.95
+                },
+                "rule": "share of arm-swapped resamplings of this window's A/A rounds whose interval excludes 1 (R22 section 2: 5 to 15% expected at 8 rounds)"
+              },
+              "observedFalsePositive": {
+                "p50": false,
+                "p99": false
+              }
+            },
+            "allRounds": {
+              "rounds": 11,
+              "sdLogP50": 0,
+              "sdLogP99": 0
+            },
+            "p99Floor": {
+              "commandsPerArm": {
+                "A": 1100,
+                "B": 1100
+              },
+              "usableRounds": 11,
+              "met": false,
+              "rule": "p99 claims need 25000 commands per arm and 8 usable rounds (R22 section 2)"
+            }
+          },
+          "commit": {
+            "p50": {
+              "q": 0.5,
+              "ratio": 1,
+              "lo": 1,
+              "hi": 1,
+              "mdr": 1,
+              "level": 0.95,
+              "rounds": 11,
+              "aMs": 1,
+              "bMs": 1,
+              "countA": 1100,
+              "countB": 1100,
+              "censoredA": 0,
+              "censoredB": 0
+            },
+            "p99": {
+              "q": 0.99,
+              "ratio": 1,
+              "lo": 1,
+              "hi": 1,
+              "mdr": 1,
+              "level": 0.95,
+              "rounds": 11,
+              "aMs": 1,
+              "bMs": 1,
+              "countA": 1100,
+              "countB": 1100,
+              "censoredA": 0,
+              "censoredB": 0
+            },
+            "decision": {
+              "p50": "EQUIVALENT_WITHIN_TARGET",
+              "p99": "EQUIVALENT_WITHIN_TARGET",
+              "claim": {
+                "kind": "superiority",
+                "target": 1.25
+              }
+            },
+            "roundRatios": {
+              "p50": [
+                {
+                  "id": "R02",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R03",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R04",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R05",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R06",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R07",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R08",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R09",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R10",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R11",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R12",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                }
+              ],
+              "p99": [
+                {
+                  "id": "R02",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R03",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R04",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R05",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R06",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R07",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R08",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R09",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R10",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R11",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                },
+                {
+                  "id": "R12",
+                  "aMs": 1,
+                  "bMs": 1,
+                  "d": 0
+                }
+              ]
+            },
+            "aa": {
+              "rounds": 11,
+              "sdLogP50": 0,
+              "sdLogP99": 0,
+              "slotBiasP50": {
+                "n": 11,
+                "meanLog": 0,
+                "sdLog": 0,
+                "lo": 0,
+                "hi": 0,
+                "ratio": 1,
+                "ratioLo": 1,
+                "ratioHi": 1,
+                "excludesZero": false
+              },
+              "slotBiasP99": {
+                "n": 11,
+                "meanLog": 0,
+                "sdLog": 0,
+                "lo": 0,
+                "hi": 0,
+                "ratio": 1,
+                "ratioLo": 1,
+                "ratioHi": 1,
+                "excludesZero": false
+              },
+              "signFlipP50": 1,
+              "signFlipP99": 1
+            },
+            "allRounds": {
+              "rounds": 11,
+              "sdLogP50": 0,
+              "sdLogP99": 0
+            },
+            "p99Floor": {
+              "commandsPerArm": {
+                "A": 1100,
+                "B": 1100
+              },
+              "usableRounds": 11,
+              "met": false,
+              "rule": "p99 claims need 25000 commands per arm and 8 usable rounds (R22 section 2)"
+            }
+          },
+          "probeAll": {
+            "p50": {
+              "q": 0.5,
+              "ratio": null,
+              "lo": null,
+              "hi": null,
+              "mdr": null,
+              "level": 0.95,
+              "rounds": 0,
+              "aMs": null,
+              "bMs": null,
+              "countA": 0,
+              "countB": 0,
+              "censoredA": 0,
+              "censoredB": 0,
+              "why": "0 usable rounds, fewer than minBlocks 8"
+            },
+            "p99": {
+              "q": 0.99,
+              "ratio": null,
+              "lo": null,
+              "hi": null,
+              "mdr": null,
+              "level": 0.95,
+              "rounds": 0,
+              "aMs": null,
+              "bMs": null,
+              "countA": 0,
+              "countB": 0,
+              "censoredA": 0,
+              "censoredB": 0,
+              "why": "0 usable rounds, fewer than minBlocks 8"
+            },
+            "decision": {
+              "p50": "NOT_ESTIMABLE",
+              "p99": "NOT_ESTIMABLE",
+              "claim": {
+                "kind": "superiority",
+                "target": 1.25
+              }
+            },
+            "roundRatios": {
+              "p50": [],
+              "p99": []
+            },
+            "aa": {
+              "rounds": 0,
+              "sdLogP50": null,
+              "sdLogP99": null,
+              "slotBiasP50": {
+                "n": 0,
+                "meanLog": null,
+                "sdLog": null,
+                "lo": null,
+                "hi": null,
+                "ratio": null,
+                "ratioLo": null,
+                "ratioHi": null,
+                "excludesZero": null
+              },
+              "slotBiasP99": {
+                "n": 0,
+                "meanLog": null,
+                "sdLog": null,
+                "lo": null,
+                "hi": null,
+                "ratio": null,
+                "ratioLo": null,
+                "ratioHi": null,
+                "excludesZero": null
+              },
+              "signFlipP50": null,
+              "signFlipP99": null
+            },
+            "allRounds": {
+              "rounds": 0,
+              "sdLogP50": null,
+              "sdLogP99": null
+            },
+            "p99Floor": {
+              "commandsPerArm": {
+                "A": 0,
+                "B": 0
+              },
+              "usableRounds": 11,
+              "met": false,
+              "rule": "p99 claims need 25000 commands per arm and 8 usable rounds (R22 section 2)"
+            }
+          }
+        },
+        "planner": {
+          "superiority": {
+            "sd": 0,
+            "ratio": 1.25,
+            "power": 0.8,
+            "level": 0.95,
+            "needed": 0,
+            "rounds": 8,
+            "feasible": true,
+            "sdLimitAtMin": 0.22528148314156787,
+            "sdLimitAtMax": 0.390198974805667
+          },
+          "holdP50": {
+            "sd": 0,
+            "ratio": 1.1,
+            "power": 0.8,
+            "level": 0.95,
+            "needed": 0,
+            "rounds": 8,
+            "feasible": true,
+            "sdLimitAtMin": 0.09622334384457976,
+            "sdLimitAtMax": 0.1666637204129821
+          }
+        }
+      },
+      "noise": {
+        "aa": {
+          "sdLogP50": 0,
+          "sdLogP99": 0,
+          "rounds": 11,
+          "slotBiasP50": {
+            "n": 11,
+            "meanLog": 0,
+            "sdLog": 0,
+            "lo": 0,
+            "hi": 0,
+            "ratio": 1,
+            "ratioLo": 1,
+            "ratioHi": 1,
+            "excludesZero": false
+          },
+          "slotBiasP99": {
+            "n": 11,
+            "meanLog": 0,
+            "sdLog": 0,
+            "lo": 0,
+            "hi": 0,
+            "ratio": 1,
+            "ratioLo": 1,
+            "ratioHi": 1,
+            "excludesZero": false
+          }
+        },
+        "exclusions": {
+          "R01": [
+            "vm-psi-mem-full"
+          ]
+        },
+        "rules": {
+          "R01": {
+            "excluded": [
+              "vm-psi-mem-full"
+            ],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0.05,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          },
+          "R02": {
+            "excluded": [],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          },
+          "R03": {
+            "excluded": [],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          },
+          "R04": {
+            "excluded": [],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          },
+          "R05": {
+            "excluded": [],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          },
+          "R06": {
+            "excluded": [],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          },
+          "R07": {
+            "excluded": [],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          },
+          "R08": {
+            "excluded": [],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          },
+          "R09": {
+            "excluded": [],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          },
+          "R10": {
+            "excluded": [],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          },
+          "R11": {
+            "excluded": [],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          },
+          "R12": {
+            "excluded": [],
+            "amber": [],
+            "notApplied": [],
+            "values": {
+              "signals-missing": 0,
+              "host-mem-pressure-critical": 0,
+              "host-pageouts": 0,
+              "vm-psi-cpu-some": 0,
+              "vm-psi-mem-full": 0,
+              "vm-psi-io-some": 0,
+              "arm-throttled": 0,
+              "arm-oom-kill": 0,
+              "arm-restart": 0,
+              "arm-memory-max-events": 0,
+              "neighbor-cpu": 0,
+              "calib-drift-host": 1,
+              "calib-drift-vm": 1,
+              "calib-interference": 1,
+              "hiccup": 0,
+              "client-elu": 0,
+              "host-load": 0,
+              "host-cpu-idle": 0,
+              "host-swap-used": 0,
+              "host-decompressions": 0,
+              "vm-steal": 0,
+              "vm-load": 0,
+              "neighbor-cpu-total": 0,
+              "hiccup-vm": 0,
+              "hiccup-driver": 0
+            }
+          }
+        },
+        "partitioned": true,
+        "windowGrade": {
+          "grade": "GREEN",
+          "reasons": [],
+          "limits": {
+            "defaultRounds": 0.2759,
+            "maxRounds": 0.3902
+          },
+          "sdUsed": 0
+        },
+        "counts": {
+          "rounds": 12,
+          "excluded": 1,
+          "usable": 11,
+          "amber": 0
+        }
+      }
+    },
+    "expectedUnderQ100k": "Timing unjudged: hard rule broken; paired GREEN is not sufficient for single-arm NS acceptance"
+  },
+  "limits": {
+    "round12": 0.275912341097126,
+    "round24": 0.390198974805667
+  }
+}

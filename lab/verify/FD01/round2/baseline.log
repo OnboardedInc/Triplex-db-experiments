@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 17254 "CX-P5A-A1-G0", pid 30636 "CX-A01-0314-mutations", pid 39500 "CX-RT01-r4-final3", pid 35453 "CX-P2B-final"
+[lab] heavy: waiting for one of 4 slots; held by pid 17254 "CX-P5A-A1-G0", pid 30636 "CX-A01-0314-mutations", pid 39500 "CX-RT01-r4-final3", pid 40436 "CX-A01-0314-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 17254 "CX-P5A-A1-G0", pid 30636 "CX-A01-0314-mutations", pid 39500 "CX-RT01-r4-final3", pid 40436 "CX-A01-0314-evaluator"
+(node:69766) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-fd01/lab/verify/FD01/round2/baseline.json

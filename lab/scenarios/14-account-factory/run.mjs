@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated local values; unannotated dynamic parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 14: account factory, a new tenant while others are live (TARGETS 6 row 14). Spec and golden only.
 //
 // The new tenant's commands carry tags.tenant = 'tenant-new'; a runner must send them through a composition

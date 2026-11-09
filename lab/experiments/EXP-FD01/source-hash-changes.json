@@ -1,0 +1,42 @@
+[
+  {
+    "path": "lab/bench/lib/feed.ts",
+    "oldSha256": "935e7ce993c087e5b19f9eceafe71855a705c26161d24ef1d1ef2aa42951b4de",
+    "newSha256": "a67ea5c2953b8c277480634b0cb8ac4c2b334c9b72022555793a41b9f73f4f00"
+  },
+  {
+    "path": "lab/bench/test/bench.test.ts",
+    "oldSha256": "56d102078a5f96b4f93c68ec58410f71b90ad2d4af8dcd33124bbf9d1b6a3424",
+    "newSha256": "dbc73bc21a9b743009076ce4b4ccd274acb561ccfa10f719d085d8a7ffe3bb14"
+  },
+  {
+    "path": "lab/bin/gate.mjs",
+    "oldSha256": "f5fa85691c324def748a967e2c7a891784e2a50970a87d9534a1e414b397be2f",
+    "newSha256": "ee8c40b95ac6dba2dc3a75ae3c5891b6818489cd5bf2caaaedddf61d31eef2a6"
+  },
+  {
+    "path": "packages/core/package.json",
+    "oldSha256": "80dbec4b6dfd6489ae0765147cdac2fc3414f995a0c98bdf45056fe3711c7170",
+    "newSha256": "66c715927a8512408288f5b147cb1e61901e361ed1931f53edf6be7486d46719"
+  },
+  {
+    "path": "packages/host/package.json",
+    "oldSha256": "c5ba3ae96ed4ebb0f7805f32cf4a841b4975a6357e58a363923277d1ad4169f0",
+    "newSha256": "d4d2be0f0af70ddaaa73807c8a424a37a163a7d737e266318cb449333e29ab9e"
+  },
+  {
+    "path": "packages/host/vitest.config.ts",
+    "oldSha256": "fc4e93b5022fa88d6eb0ae274c7a63b2f04f35ba3505eea223c74dd2ca4450c4",
+    "newSha256": "06942e6654a9c310c57652f2b67d7a610f1eebdd4b2654d02322258d008ea1a4"
+  },
+  {
+    "path": "packages/testkit/package.json",
+    "oldSha256": "6f5638aa44cea610957ae15c2598a5db1086e13e116819ce79e8ae6aa25f8998",
+    "newSha256": "0fb4f522de3a2a761ccc111d07aa0fa9388f07af59e7fa744c3303566cc47984"
+  },
+  {
+    "path": "pnpm-lock.yaml",
+    "oldSha256": "fb4ce15c7b6672b86d8b833436c8c0e9f37a4abfff4214417aedad7cf8cd3da4",
+    "newSha256": "8c138ab3d1972de4660ff5e4e082250a581f13cd091ba358c62eed7521544ab3"
+  }
+]

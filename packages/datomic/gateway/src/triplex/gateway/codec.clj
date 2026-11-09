@@ -5,7 +5,9 @@
 ;; [EXP-DA00] Why: tagged exact values cross JSON without JS integer rounding. Rejected: bare JSON longs (precision loss).
 (defn invalid [message] (throw (ex-info message {:status 400 :code "InvalidValue"})))
 ;; [EXP-DA01] Why: runtime grammar and limits come from the shared specification. Rejected: separately maintained JVM constants (V-DA00 F4).
-(def spec (json/read-str (slurp "/opt/gateway/codec-spec.json")))
+;; [EXP-DF01] Why: offline JVM gates must load the same checked-in codec specification.
+;; Rejected: shadowing codec in tests (would not compile the shipped gateway namespaces).
+(def spec (json/read-str (slurp (System/getProperty "triplex.codec.spec" "/opt/gateway/codec-spec.json"))))
 (defn matches [kind v] (and (string? v) (re-matches (re-pattern (get spec kind)) v)))
 (defn decimal-text [v]
   (when-not (matches "integerPattern" v) (invalid "Expected decimal integer text")) v)

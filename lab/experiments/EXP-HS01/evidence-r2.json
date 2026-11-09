@@ -1,0 +1,637 @@
+{
+  "durableRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01",
+  "series": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4",
+  "files": 9420,
+  "attempts": {
+    "r2-cache-observer-10k-25a26166-4ae8-4b6b-9fe3-07a33a788f0a": {
+      "label": "r2-cache-observer-10k",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-r2-cache-observer",
+        "--",
+        "node_modules/.bin/tsx",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/cache-observer/observe.mts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-w0-10000",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-w0-10000/cache-observer.json"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T13:05:10.276Z",
+      "end": "2026-11-09T13:05:12.931Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "acdf892e7360df63599f66bdeeaa73adbf705a07410e94f3cba4dd2066c27e28"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-build-c2c2206c-697d-4b5c-8c65-807073e5a917": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-build",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-build",
+        "--",
+        "node",
+        "lab/experiments/EXP-HS01/build.mjs"
+      ],
+      "head": "e81c16df816bfce8d0aa2b548a779fa05ca0c0fb",
+      "start": "2026-11-09T12:07:14.091Z",
+      "end": "2026-11-09T12:07:27.066Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "20084df42be7ca375a2e46c2d91e5b1bee99c38382b8099be264bd28348b6381"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-diff-check-cf74c471-db12-401a-a57f-537c7d92db9f": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-diff-check",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-diff-check",
+        "--",
+        "git",
+        "diff",
+        "--check"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:56:50.737Z",
+      "end": "2026-11-09T12:56:50.841Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "e54d869606bda556bef51044de22abe1ec314963dc7162ef4d79afb1fb1ba35f"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-evaluator-e3115c76-d3ad-4768-997e-3f1bc4a06d64": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-evaluator",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-evaluator",
+        "--",
+        "node",
+        "--test",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/claim-round2.test.mjs"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:53:46.094Z",
+      "end": "2026-11-09T12:56:49.699Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "cf4b7cd7d546510c8911f7c2079827a41e69ccbed26b932dfd55bc71fceec64e"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-flip-6ba200a1-dee5-4276-89bf-e88149a64f56": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-flip",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-flip",
+        "--",
+        "node",
+        "lab/experiments/EXP-SQL01/flip-wal.mjs"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:52:32.472Z",
+      "end": "2026-11-09T12:52:39.660Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "c2edc564a21e16860cba3cf9b2cf657a1b9e07552392b859986dd69c749ab70c"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-format-b27312a2-3135-4568-8c30-48608c773eba": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-format",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-format",
+        "--",
+        "node_modules/.bin/oxfmt",
+        "--check",
+        "lab/bench/hs01-seed.ts",
+        "lab/experiments/EXP-HS01/build.mjs",
+        "lab/experiments/EXP-HS01/pipeline.mjs",
+        "lab/experiments/EXP-HS01/run.mjs",
+        "lab/verify/HS01/id-codec.test.ts",
+        "lab/verify/HS01/kill-child.ts",
+        "lab/verify/HS01/kill.mjs",
+        "lab/verify/HS01/layout.test.ts",
+        "lab/verify/HS01/retention.test.ts",
+        "lab/verify/HS01/v1-worker.ts",
+        "lab/verify/HS01/vitest.config.ts",
+        "lab/verify/P2Q/tests/round8-policy.test.ts",
+        "packages/qlever/src/broker/broker.ts",
+        "packages/qlever/src/broker/log.ts",
+        "packages/qlever/src/broker/row-codec.ts",
+        "packages/qlever/src/broker/sqlite-worker.ts",
+        "packages/qlever/src/index.ts"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:56:50.334Z",
+      "end": "2026-11-09T12:56:50.592Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "ca516bea4ad22b40d5813284edfbdb3fb60816ede02ed78f969a7a63c5e97bfb"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-g0-qlever-4764944b-9bcd-417e-b039-03172f36dbfd": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-g0-qlever",
+      "command": [
+        "node",
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "qlever",
+        "--exp",
+        "EXP-HS01"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:58:24.775Z",
+      "end": "2026-11-09T13:00:31.700Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "ff510f09c79cddea1c3474fccf593cea453efca63a6683bc3a68ed5c6752ae6f"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-g0-qlever-97ea21c0-dedb-4455-97f3-671ea605ac3f": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-g0-qlever",
+      "command": [
+        "node",
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "qlever",
+        "--exp",
+        "EXP-HS01"
+      ],
+      "head": "e81c16df816bfce8d0aa2b548a779fa05ca0c0fb",
+      "start": "2026-11-09T12:09:58.257Z",
+      "end": "2026-11-09T12:12:04.102Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "880831d091d269ea0c5b6882be87037a83d9401a2e2ae497ece0153ff885d2fb"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-g0-xtdb-22ba78bd-7d36-4a84-843c-b9e8ecfd7d6d": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-g0-xtdb",
+      "command": [
+        "node",
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "xtdb",
+        "--exp",
+        "EXP-HS01"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:57:07.393Z",
+      "end": "2026-11-09T12:58:24.558Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "5eefcbfce42764790dbbbd287bb55ee0d98f473b0188a98bd6f011da4a57b8e0"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-g0-xtdb-469dad59-31bd-47c2-a68f-f3b912f64c37": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-g0-xtdb",
+      "command": [
+        "node",
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "xtdb",
+        "--exp",
+        "EXP-HS01"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T13:02:29.161Z",
+      "end": "2026-11-09T13:03:55.098Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "92558b7ff6718e22d4ddd18aa6851122f613a2a2e95566744cc85bd11b6b6d16"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-g0-xtdb-f6f6aa1d-1f4e-40bd-bd9f-caa0b97ee622": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-g0-xtdb",
+      "command": [
+        "node",
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "xtdb",
+        "--exp",
+        "EXP-HS01"
+      ],
+      "head": "e81c16df816bfce8d0aa2b548a779fa05ca0c0fb",
+      "start": "2026-11-09T12:08:43.951Z",
+      "end": "2026-11-09T12:09:58.013Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "d2f59b2fe0162cf1812181d78d5803d65ed28568502b197752f136d3adb3408c"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-hs01-574554fa-c72c-4c9c-9b65-b8d69e5dad54": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-hs01",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-hs01",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/vitest.config.ts"
+      ],
+      "head": "e81c16df816bfce8d0aa2b548a779fa05ca0c0fb",
+      "start": "2026-11-09T12:07:27.271Z",
+      "end": "2026-11-09T12:08:43.717Z",
+      "result": {
+        "code": 1,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "60697f0ff76b41e3d30d3976a987be9f1354cbeb72dfc583b32d556d16f8082a"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-hs01-607fe4d4-75f4-42f3-adbe-90959c10b79f": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-hs01",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-hs01",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/HS01/vitest.config.ts"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:42:46.488Z",
+      "end": "2026-11-09T12:44:26.578Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "184dd7d6a889cadbb235f03ab677ab03f97aed2d492f6af5e5fe42c50481be9a"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-kill80-79b9e08c-b466-4521-8e8a-6f08386f78e7": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-kill80",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-kill80",
+        "--",
+        "node",
+        "lab/verify/HS01/kill.mjs"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:48:11.942Z",
+      "end": "2026-11-09T12:52:32.174Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "cb8dae28104c6d7fdd584a302a13e1b7781caf2ceb6ed9173ff1c85f1ab2114f"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-lint-c57f79b3-5006-48a7-b43c-85b9238978af": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-lint",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-lint",
+        "--",
+        "node_modules/.bin/oxlint",
+        "packages/qlever/src/broker",
+        "lab/verify/HS01",
+        "lab/bench/hs01-seed.ts",
+        "lab/experiments/EXP-HS01",
+        "--deny-warnings"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:56:49.996Z",
+      "end": "2026-11-09T12:56:50.161Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "85c02c01d901feb2ff1176691a8fd6ca459bed91a707be21ae3b2292a7929f10"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-p2q-f4c6a508-f40c-4d0f-8ba2-0a3c52146334": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-p2q",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-p2q",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/P2Q/vitest.config.ts",
+        "--exclude",
+        "**/live/**",
+        "--exclude",
+        "**/check1-*",
+        "--exclude",
+        "**/check2-ack*",
+        "--exclude",
+        "**/check4-feed*",
+        "--exclude",
+        "**/round10-types*",
+        "--exclude",
+        "**/round10-public-type*",
+        "-t",
+        "^(?!.*a burned LSN)"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:44:26.833Z",
+      "end": "2026-11-09T12:46:47.934Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "c8789d4888855e75c9b78ca07fc502c5bbba4120a57ad958b4e74ef3e2586f44"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-pack-build-1f7ef806-413a-4a1a-8a14-41c6d9dfaf11": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-pack-build",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-pack-build",
+        "--",
+        "node",
+        "--input-type=module",
+        "-e",
+        "\nimport fs from 'node:fs';import path from 'node:path';import {execFileSync}from 'node:child_process';\nconst root=process.cwd(),exclude=JSON.parse(fs.readFileSync('lab/config/pack-exclusions.json')),items=new Map();\nfor(const e of fs.readdirSync('packages')){const p=path.join('packages',e,'package.json');if(!fs.existsSync(p))continue;const m=JSON.parse(fs.readFileSync(p));if(!exclude[m.name])items.set(m.name,{dir:path.dirname(p),m});}\nconst done=new Set();function build(name){if(done.has(name))return;const x=items.get(name);for(const dep of Object.keys({...x.m.dependencies,...x.m.devDependencies}))if(items.has(dep))build(dep);execFileSync('/bin/sh',['-c',x.m.scripts.build],{cwd:x.dir,env:{...process.env,PATH:path.join(root,'node_modules/.bin')+':'+process.env.PATH},stdio:'inherit'});done.add(name);}for(const name of items.keys())build(name);\n"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:52:39.803Z",
+      "end": "2026-11-09T12:52:59.893Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "44785927a6769e2b7dce46e58ed2753613e61e7f9ff4e416501b6944c1a57598"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-pack-c93c80ef-ed0a-4663-9edd-00029c8c9a0f": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-pack",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-pack",
+        "--",
+        "node",
+        "lab/bin/check-packages.mjs"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:53:00.196Z",
+      "end": "2026-11-09T12:53:45.859Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "f382dae3f9ebb13d0e4dc54b9b31c0182ab680120d172a0dbd453ad5b83390e8"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-route-99391709-cfd6-4288-9004-9496daca948f": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-route",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-route",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--root",
+        "packages/testkit",
+        "--maxWorkers",
+        "1",
+        "--no-file-parallelism"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:46:56.327Z",
+      "end": "2026-11-09T12:48:11.667Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "990c6f572fe602cd2d207c47369a2ea53fab130f0abc1cb5c6e6f34674cfcfd1"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-seed-1000-4f06fe98-a356-476e-a3ff-03045b4110ea": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-seed-1000",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-seed-1000",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-seed.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-w0-1000",
+        "1000"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:21:31.620Z",
+      "end": "2026-11-09T12:22:58.188Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "2fad08db31e29d11caca394e027a82e625611d12f3bcfcad34f7c00d8183df0b"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-seed-10000-71b8610b-c4b7-461c-9f86-3a8001ab479e": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-seed-10000",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-seed-10000",
+        "--",
+        "node_modules/.bin/tsx",
+        "lab/bench/hs01-seed.ts",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-w0-10000",
+        "10000"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:22:58.436Z",
+      "end": "2026-11-09T12:42:34.192Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "5c4fceb76bc341be5f396c2552b9d79cdf00c0091b86696e0aa842c9422c0868"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-sql01-819f28b5-5d18-4d13-a089-2c08f52e0385": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-sql01",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-sql01",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/SQL01/vitest.config.ts"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T13:00:31.923Z",
+      "end": "2026-11-09T13:02:16.471Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "8df849ffb13cbc084d06e519aee9df4c70c2ba43834f85651ab8bd952da37c36"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-sql01-c4598ef4-d12a-460a-b06f-ec60807246bf": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-sql01",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-sql01",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/SQL01/vitest.config.ts"
+      ],
+      "head": "e81c16df816bfce8d0aa2b548a779fa05ca0c0fb",
+      "start": "2026-11-09T12:12:04.320Z",
+      "end": "2026-11-09T12:13:45.852Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "e1f3e6b102f0e8af6f6b241640a796ba68c94a14a3c4a7469542a803c0a6b826"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-storage-dbdc360a-15fb-4f3f-b9b2-539d86bb146d": {
+      "label": "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-storage",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-storage",
+        "--",
+        "node_modules/.bin/vitest",
+        "run",
+        "--config",
+        "lab/verify/P2Q/vitest.config.ts",
+        "check2-ack.test.ts",
+        "check4-feed.test.ts",
+        "check5-q31c.test.ts",
+        "-t",
+        "sequential resend|two transactions that read|100 crashes per variant|nested transacts|rejects|ordinal"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T12:46:48.193Z",
+      "end": "2026-11-09T12:46:56.180Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "9ba9e810b224d8150efbbaca666a216fcf3916efc12c427a425e91cfcb01f260"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-w0-1000": {
+      "seed": 1000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "DIAGNOSTIC",
+      "assertions": 442410,
+      "logicalBytes": 156131328,
+      "bytesPerAssertion": 352.9109378178613,
+      "manifestSha256": "adcb19ce45a261678878edb0519dea8ee79e88d2f79abbbcf314a6ddd58d64fe"
+    },
+    "r2-final-cf17f7ba-4dc3-4e5f-8e90-2f491ed9a0c4-w0-10000": {
+      "seed": 10000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "PASS",
+      "assertions": 4468284,
+      "logicalBytes": 969883648,
+      "bytesPerAssertion": 217.05953515935872,
+      "manifestSha256": "8681034e552cf45dc77b801531f1f3ba07efcd7ee27e82926089b20cff98b726"
+    },
+    "r2-g10-sql01-baseline-49dd46e2-bdb5-4465-9ebb-1e5234fbaa06": {
+      "label": "r2-g10-sql01-baseline",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-HS01-r2-G10",
+        "--",
+        "node_modules/.bin/tsx",
+        "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01/r2-g10/bench-final.mts"
+      ],
+      "head": "535459e26c360aa7b4e1260b8b2427d4c7e3b637",
+      "start": "2026-11-09T13:05:20.531Z",
+      "end": "2026-11-09T13:06:00.973Z",
+      "result": {
+        "code": 0,
+        "signal": null
+      },
+      "sourceStillMatches": true,
+      "receiptSha256": "e0e00a75f1c05dbaf9b22f057c2c3b3e6e3b19578664f9a9d4bda050377bcf32"
+    },
+    "r2-ulid-diag-w0-1000": {
+      "seed": 1000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "DIAGNOSTIC",
+      "assertions": 442410,
+      "logicalBytes": 196743168,
+      "bytesPerAssertion": 444.70777785312265,
+      "manifestSha256": "f55b7fd77865f05beb5057eceaeb6eeefe4306772fdc099158937f7eb788e4b6"
+    },
+    "r2-ulid-diag-w0-10000": {
+      "seed": 10000,
+      "status": "SEEDED-CONTENT-VERIFIED",
+      "sizeVerdict": "FAIL",
+      "assertions": 4468284,
+      "logicalBytes": 1376653312,
+      "bytesPerAssertion": 308.0944076070366,
+      "manifestSha256": "f96ced696d9fa0eaef19d8a05e92e5325fe8035235609b1be0176b54ded316d4"
+    }
+  },
+  "verification": "cd durableRoot; shasum -a 256 -c /absolute/path/to/repo/lab/experiments/EXP-HS01/SHA256SUMS-r2 (the durable manifest line); then shasum -a 256 -c SHA256SUMS-r2.durable"
+}

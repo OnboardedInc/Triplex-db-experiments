@@ -2020,3 +2020,295 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **verify/K01 88bce4f0:** ACCEPT-OFFLINE, 511 tests, five retained smoke captures reproduce D and D'. The smoke ledger is diagnostic only and grants nothing.
 - **Why the import was missed:** the tests imported engine.mjs to test its exported helpers but never ran the private golden, fresh and loadGolden branches; importing a module or syntax-checking it does not resolve names inside function bodies that never run, and tsc did not semantically check that JavaScript file. Now an allowJs/checkJs test fails on unbound names, with a negative control.
 - **Lesson:** our own JavaScript tools need the same type checking as the product. Queued: checkJs over every lab/bin and lab/bench file.
+
+## 2026-11-09: R43: no cell can PASS yet because qualification machinery is missing, not because engines are slow
+
+- **Finding:** every NS obligation needs machinery no accepted work supplies yet: a ruled NS rung (year-one fits no lane on this host), an NS runner and fault injector in G03, PAIR-0 (M01, parked since 2026-11-07), a CR-NS recompute in claim.mjs (gateNS stops at MEASURED), a trusted broker publication instant (R27 gap G3), and the qualification pins (frozen trace, CS-NS manifest, BUILD_SPEC, A0 registry).
+- **First PASS candidate:** NS.P3 on the broker log source, with lag p99 13.7-24.9 ms against 250 ms and 0 gaps, 0 order violations, 0 keyed duplicates in diagnostics. About 12 rounds and 16 slot hours on the longest chain, 1-2 days after Sam answers.
+- **Acted:** Q99a-e recorded as pending orchestrator rulings (contract 0.4.1 for qualification pins; absolute bars in GREEN windows where A0 cannot hold the rung; H1 reads count for the composition's repository surfaces; queue reordered; acceptance only after screening shows margin). Scorecard P2 is GAP for the XTDB-source columns (Q96d). Dispatched R44 (NS-run execution design, Opus) and CX-M01R (PAIR-0 rebase onto main). K01 live, P5 A1, W02 live and DA04 move below the critical windows.
+- **Ask Sam:** Q99-S1 (the NS rung) with Q94a, and Q60's host half (pausing his default colima VM for 1-3 hour acceptance windows).
+- **Lesson:** a loop that optimizes experiments one at a time can run for days without moving a scorecard cell. The critical path to the first PASS should be written early and checked each hourly pass.
+
+## 2026-11-09: RT01 live window: fresh XTDB init reads tx_meta before creating it
+
+- **d7f8def2:** G2 completed no cases and G6 did not run; the earlier timeout's cause is still unknown. Slot released, volumes removed, VM trimmed.
+- **Same class as K01 round 12:** a declared table that a fresh XTDB 2 engine has not created yet. **Lesson:** "XTDB creates tables on first insert" is a lab-wide fact, not a K01 detail; every path that reads a table it may not have written must check the catalog. RT01 live round 2 reuses K01's typed catalog check, then runs a diagnostic smoke pass before G2 and G6.
+
+## 2026-11-09: R44 designs the NS run: every candidate role in its own VM container; trusted P3 instants from the observer
+
+- **Placement (Q100a, Q100d):** broker, reader service and feed consumer each run in a hardened candidate container in the triplex2 VM; the NS driver is trusted evaluator code in its own container and imports nothing under packages/. Nothing measured stays on the Mac.
+- **Consequence for P2:** F_FULLFSYNC does not exist in the VM. Durability becomes guest fdatasync plus a virtio flush plus Lima's disk sync mode (unverified). Mac-placed P2 and P3 numbers, including P2B rounds 1-3 and R42's probes, become a separate comparison series; seven measurements (M1-M7) must be redone in the VM. P2B round 3's main-thread findings still carry over; its fsync numbers do not.
+- **P3 lag start (Q100e):** the observer brackets each position's publication [L, U] by polling broker.db's marker read-only, woken by inotify; lag is U_consumer minus L_source, which can only overstate lag. The broker's own watermarkAt and FD01's clock become cross-checks.
+- **One clock (Q100f):** all containers share the VM's CLOCK_MONOTONIC, so the Mac clock bridge (5.55 ms uncertainty) leaves the timing path; FD01's clock domain must drop the hostname.
+- **Single arm (Q100l):** one arm needs 6 CPUs and about 7 GiB, so a 256-reader duet does not fit; NS runs are single-arm and park two dev residents.
+- **Dispatched:** CX-CRNS (claim.mjs recompute, B5), CX-NSR (bench split plus FD01 clock and durable-flush fixes, B1+B7), CX-VM01R (M01 rebase review), CX-VA01-0314 round 2 (0.3.14 fixed F1/F2; value domains now mandatory). Q100a-p pending; Q100-S1 restates Q60's host half for Sam. Next: V1-V7 VM probes (one slot hour), then G03 round 5 once NSR lands.
+- **Lesson:** a design question deferred long enough (R28 open decision 2, driver placement) silently decides how every earlier measurement will be read. P2 work tuned on the Mac now needs a VM rerun.
+
+## 2026-11-09: P3M accepted offline; lane D resumes with EXP-DF01
+
+- **verify/P3M 9df9aaf9 ACCEPT-OFFLINE:** independent G0 1,246 passed, 0 failed; fresh probes passed. Native timing waits for R44's trusted publication instants (the observer bracket) and native prefix enumeration needs its own qualification. CX-NSR builds on P3M.
+- **Lane D:** no Datomic agent had run since DA01 merged, against Sam's goal of three lanes in parallel. CX-DF01 builds lane D's feed route offline (brief lab/experiments/EXP-DF01/BRIEF.md), with FD01's conformance suite on a Datomic adapter.
+
+## 2026-11-09 07:35Z: hourly pass (NORTH-STAR reread first): usage 8%; R42-R44 changed the plan; VM durability class found
+
+- **Learnings since 06:28Z:**
+  - **R43:** no cell can PASS yet because qualification machinery is missing, not because engines are slow. First PASS candidate: NS.P3 on the broker log; second: P5 on the host store. Q99a-e pending; queue reordered.
+  - **R44:** every measured role runs in its own VM container (Q100a-p pending). Mac-measured P2 and P3 numbers become a separate series.
+  - **R42 and P2B round 2:** moving readers off the broker's thread took commit p50 from 226 to 7.32 ms at 256 readers; the remaining tail is main-thread work (round 3 in progress).
+  - **Accepted offline:** K01 r13 (smoke run found two bugs in one pass), RT01 r5, FD01, P3M, QNODELAY (scoped). RT01 live hit the same lazy-table class as K01.
+  - **Coverage by enumeration failed twice more:** checkJs listed three directories and missed the GS launcher; 0.3.14's optional field let an adapter skip it. Both fixes invert the rule (everything is covered unless excluded with a reason; the field is required).
+  - **Codex service errors:** CX-CRNS stopped on "Selected model is at capacity" with its tests passing; resumed in the same session. Treat capacity errors as resumable, not as failures.
+- **New fact for Q100b (VM durability):** Lima's vz driver hardcodes `DiskImageSynchronizationModeFsync` and `DiskImageCachingModeCached` for the root and data disks, with no lima.yaml option (lima master, pkg/driver/vz/vm_darwin.go). A guest flush therefore becomes a host fsync of the disk image, and on macOS plain fsync does not flush the drive's write cache (R42). So the VM's durability class is weaker than the Mac's F_FULLFSYNC: data survives a guest or VM crash and a host process crash, but not necessarily host power loss. Apple's per-mode text was not readable by fetch; probe V1 should confirm. Receipts must bind this class (Q100b).
+- **Research this hour:** one web check (above). All 10 agent slots are busy with builders and reviewers on the critical path, so no Opus researcher was started.
+
+## 2026-11-09: contract 0.3.14 round 2: the required field found a lane D gap; main moved under the contract branch
+
+- **verify/A01-0314 aa24b4ef FIX-FIRST:** F1/F2 fixed, and omitting valueDomain now fails to compile. That requirement immediately surfaced F3: the Datomic domain has no integration codec entry (three test failures, TS2741). This is the required field doing its job.
+- **B1:** the Q99 and Q100 pending rows committed on main conflict with the contract branch, so the merged-main Q87 check could not run. **Rule:** while a contract branch is open, new pending rulings still go on main, but the contract builder's final round merges main as a named step, and the orchestrator lists the rows added since the branch point in that prompt.
+
+## 2026-11-09: P5 round B blocked on positions; ruling Q101a maps reference to native positions
+
+- **3d23d208:** round A merged (21 conflicts listed), sweep workers and retention leases added, 10 SQLite and 33 harness tests pass. The preflight stopped correctly: W0's first reference position is 1, and the broker's first commit is 2048 (LSN * 1024 + ordinal; LSN 1 is the epoch frame). First-command ACK took 7.133 ms.
+- **Ruling Q101a (pending):** positions need not be equal; the seed manifest binds an order-preserving map from reference to native positions, and every consumer translates through it. Lane D's position-to-t map (Q89d) is the same idea.
+- **Lesson:** "receipt position equals reference position" held on XTDB by accident of dense numbering. Any assumption that one engine's identifiers equal the oracle's needs an explicit map.
+
+## 2026-11-09: CR-NS review FIX-FIRST: six ways the evaluator could grant a PASS it should not
+
+- **verify/CRNS 93d2af9c:** the original 145 tests pass, but six reviewer regressions fail: P1 accepts an empty read stream (R01); a checkpoint can advance beyond every source position (R02); the affected-set check pools consumer and epoch identities (R03); P4 throughput counts reads outside its window (R04); a loop label stands in for single-client execution (R05); removing every CR event skips the cross-check requirement (R06).
+- **Pattern:** four of six are "absence passes": an empty stream, a missing CR event, an unbounded window. **Lesson:** every bar needs a minimum-evidence floor (non-empty, inside the window, per identity) checked before its arithmetic.
+- **Next:** CX-CRNS round 2 waits for the independent Opus forgery review, still running, so one round fixes both sets.
+
+## 2026-11-09: RT01 live: G2 passes on XTDB; G6 catches a 29% commit regression from the stamp guard
+
+- **6f8170f1:** catalog bootstrap fixed; 1,106 product tests and live G2 pass. G6's A/A window was frozen first at 5.56%; the first fresh ten-fact A0 point measured p50 +29.25%, so the run stopped there.
+- **Likely cause:** the stamp guard adds a MAX(stamp) column to the existing ASSERT, doubling the history rows visited per guard. Avoiding an extra round trip did not avoid extra engine work. Round 6 reads the prior stamp from the marker row in the same CAS (O(1)).
+- **Lesson:** the preregistered A/A band did its job: without it, a 29% regression on the A0 control would have looked like host noise. G6 before merge (Q96b) is worth its slot hour.
+
+## 2026-11-09: the Opus forgery review found 29 more false-PASS paths in CR-NS, none in R44's F1-F20
+
+- **Opus review (lab/verify/CRNS-opus/ on the CRNS branch):** 29 forgeries accepted (10 high, 11 medium, 8 low); 21 reproduced as tests. The highs include: source content never compared with the offered command (a consistently lying source passes), a P3-only run skipping accounting and ACK-before-publication, no recompute ever checking resume, duplicate commits of one command, typed errors counted as latency for commands that later commit, duplicates hidden behind free-text epoch or consumer labels, offset order never checked against position order, and the P1 memo keyed without hops.
+- **Two reviewers, little overlap:** the Codex reviewer found 6, the Opus reviewer 29, and R44's own list of 20 covered none of the Opus findings. Writing the forgery list before reading the design (the Opus reviewer did) found the most.
+- **Lesson:** for the component that grants PASS, use both reviewers, and have one enumerate attacks from the code before reading the design's list. CX-CRNS round 2 fixes all 35 under one rule: a minimum-evidence floor before any arithmetic.
+
+## 2026-11-09: VM probes; P5B's 10k store is 22x its prediction; four round-2 fixes in review
+
+- **G03 V-probes (1a2f362b), window 08:09-08:13Z:** V2 (commit visible only after WAL sync) and V5 (inotify across containers) observed. V1: a 10-row SQLite WAL/FULL commit in the VM is p50/p99 1.06/4.43 ms idle, 1.71/9.46 ms under read load, faster than the Mac's F_FULLFSYNC path (3.4-4.0 / 7.4-8.3 ms) but in a weaker class (host fsync, drive cache not flushed). V4: containers share the boot id but not the time-namespace inode; ping p99 99 us. V3: the 250 us poll ran at 470 us. V6, V7 not established. Rulings Q100q (clock domain by boot id and zero offsets) and Q100r (VM durability class; observer period) pending.
+- **P5B round 2 seed:** the 10k-subject broker.db is 10.1 GiB (R34 predicted about 0.45 GB, so 22x). At that rate 100k does not fit this disk. Waiting for P5B's own report to explain bytes per fact before deciding.
+- **Fixed and in review:** CRNS round 2 (all 35 findings, 213 tests; Codex and Opus re-reviews), NSR round 2 (canonical answer digest keyed on the full request), DF01 round 2 (long-poll decides on the log). PACK review found two high gaps (silent omission of a failing new package; import-time throws pass); round 2 fixing.
+- **RT01 round 6 (37ae44a9):** the stamp is read from the marker row; 1,112 tests pass; G6 reruns live now.
+- **Disk:** 11 GiB free. Removing seven review worktrees freed little because node_modules are hard links into the shared pnpm store; the growth is evidence (34 GiB, mostly P5B and DI01 databases).
+
+## 2026-11-09 08:40Z: hourly pass (NORTH-STAR reread first): usage 8%; the host store's size is a P4/P5 design problem
+
+- **Learnings since 07:35Z:**
+  - **Two reviewers of the PASS-granting evaluator found 35 false-PASS paths** (Codex 6, Opus 29, R44's own list 0 of the Opus ones). Fixed in CRNS round 2 under one rule: a minimum-evidence floor before any arithmetic. Re-reviews running.
+  - **Measurement evidence must survive to the evaluator:** NSR hashed answers with random RPC ids, so CR-NS could not compare them; fixed with answer-canonical/1 keyed on the full request.
+  - **Gates that enumerate keep missing things:** PACK silently omitted a failing new package. Every gate now lists its inputs from the source of truth (git ls-files, the pnpm workspace) and fails on anything neither covered nor excluded with a reason.
+  - **VM facts:** commit in the VM is p50/p99 1.06/4.43 ms (weaker durability class, Q100r); clocks share a boot id but not a time-namespace inode (Q100q).
+  - **RT01's G6 regression** traced to a doubled history scan; the marker-row stamp fix reruns live now.
+- **P5B's 10k broker.db, measured read-only (sqlite dbstat, 08:38Z):** 10.1 GiB total for 10k subjects:
+
+  | Table | Size | Rows | Note |
+  | --- | ---: | ---: | --- |
+  | live_rows | 4.0 GB | 5,419,097 | row stored as JSON TEXT, about 740 bytes each |
+  | recent_rows | 4.0 GB | 5,419,936 | a second full copy of the same rows |
+  | frames | 1.7 GB | 2,931 | the log's payloads, never purged during the seed |
+  | live_id, recent_id indexes | 0.34 GB each | | |
+
+  Three causes, in order of size: (1) recent_rows holds a full second copy, because with no replica caught up every row counts as recent; (2) rows are JSON text at about 740 bytes, where a compact binary row with interned attribute and entity ids would be several times smaller; (3) log frames are retained for the whole seed. R34's 0.45 GB prediction assumed none of the three. 5.4M stored rows for 10k subjects (about 540 per subject, journal included) also needs checking against W0's population counts. **This sets the next P5 and P4 direction:** a store layout round (dedupe live and recent, a binary row encoding, frame purge after checkpoint) before 100k can fit, measured as bytes per fact.
+- **Research this hour:** the store analysis above, done directly (read-only). All 10 agent slots are busy, so no Opus researcher was started; when P5B returns, its next round gets the store layout work with this table as input.
+
+## 2026-11-09: contract 0.3.14 on main; P5B cannot seed 10k on this disk; CRNS round 3; disk at 8 GiB
+
+- **Contract 0.3.14 merged (1de3e640),** accepted in verify/A01-0314 842761c0 round 3: INT-Q (broker, default off), GS12F, mandatory value domains on every adapter (which caught the missing Datomic codec), Q96a-d and Q97a-c compiled. Regenerated for Q100q and Q100r added after the branch point; --verify byte-identical; evaluator 108/108 after commit. **Lesson:** run the evaluator suite only on a committed tree; an uncommitted merge trips its tamper guard (EVALUATOR-TAMPERED) and marks the checkout poisoned, which `claim.mjs restore-evaluator` clears. Unblocks EXP-QH1.
+- **P5B round 2 (3ffc1fff):** Q101a's position map and the group seeder work (38 harness and 21 broker tests; N=50 fingerprints match), but the 10k seed aborted at 187,520 of 434,768 references with broker.db at 10.85 GB, so a full 10k is about 25 GB. R45 (Opus) designs the store layout.
+- **CRNS:** Codex round 2 found one high (P5 judged live traffic on 1 s of a 100 s sweep); the Opus round 2 found all 29 originals refused but 10 of 13 variants of the highs still pass, plus 13 new (4 high: unchecked reader answers count as load; crash witnesses not tied to crashes; a commit before its offer clamped instead of refused; an oracle-invalid commit accepted). CX-CRNS round 3 fixes all. **Lesson:** a fix that closes the planted case can leave its variants open; reviewers should try a variant of every high finding.
+- **NSR round 2:** F1 closed; F2 (a destructured Worker import still loads candidate code) and F3 (file-level mounts) remain. Round 3 stops pattern-matching and enforces the closed module graph at runtime.
+- **DF01 round 2:** the early-empty bug is fixed; one deadline race remains (round 3).
+- **Disk:** 7.8 GiB free. P2B round 3 creates and deletes broker databases per run; archiving freed space but it was consumed at about the same rate. RT01 live G6 waits for more than 10 GiB.
+
+## 2026-11-09: R45: the host store is 5,656 B per fact; a four-change layout targets about 259 B; EXP-HS01 started
+
+- **Correction to the 08:40Z entry:** recent_rows is not a replica overlay; every append upserts every row version into it and nothing deletes from it, so it is the broker's history of record for source-fallback reads. It is a full second copy with or without a replica.
+- **Why 28.9 rows per command:** the Triplex journal. 10.27 facts plus 18.63 _tx rows per command (4 header, 4.35 changed-entity, 10.28 change rows, each embedding the whole fact again at about 786 B). Journal rows are 64% of rows and 71% of row bytes. The counts match W0 (447 facts per subject).
+- **Today:** 5,656 B per asserted fact (25.3 GB at 10k, 252 GB at 100k), and HostLog.open loads every frame into memory (about 41 GB at 100k), which is a recovery defect.
+- **Layout round 1 (EXP-HS01, rulings Q102a-e pending):** drop recent_rows and read history by position from live and retired rows (3,304 B); purge frames below a retention floor with a CRC anchor (2,380 B); compact typed rows with interned ids (about 555 B); journal values stored as references with write-time byte equality (about 259 B, prototype 241.5 + 17.5). About 1.2 GB at 10k and 11.5 GB at 100k. R34 assumed 100 B; reaching it needs a journal format change (one record per transaction), a later round.
+- **P4 warning for EXP-QH1:** a 447-fact pull costs about 1.1 ms of SQLite CPU in either layout, so 1,100 pulls/s per core is at risk regardless of layout.
+- **DF01 round 3 (4c72ed27):** one bounded post-deadline read; 19 tests, conformance 4/4, G0 1,279; in review.
+- **Lesson:** my first explanation of the store size (from table sizes alone) was wrong on its main cause; reading the code that writes the table found it. Diagnose from the writer, not from the shape of the data.
+
+## 2026-11-09 09:42Z: hourly pass (NORTH-STAR reread first): usage 8%; store size and P4 throughput are now the lane Q/X priorities
+
+- **Learnings since 08:40Z:**
+  - **On main:** contract 0.3.14 (1de3e640) and the lab pack gate (3d9dca59); evaluator 108/108 on each committed tree.
+  - **R45:** the host store is 5,656 B per fact (journal rows embed each fact again; recent_rows is a full second copy; frames never purged); EXP-HS01 targets about 259 B. My first explanation from table sizes alone was wrong; the code that writes the table gave the cause.
+  - **Disk is the binding constraint on live work.** Archived, analyzed evidence is compressed in place (P5B's 11.8 GB store to 372 MB, P2X2's dependency copies); free space went from 6.7 to 18 GiB, and RT01's G6 is running again.
+  - **Isolation belongs at the filesystem, not in-process:** NSR spent three rounds patching loader tricks inside one process; round 4 makes the driver's filesystem hold only its closed artifact.
+  - **The PASS-granting evaluator keeps improving under two reviewers:** CRNS round 3 passes 257 tests; both reviewers re-reviewing.
+  - **Lane D:** DF01 accepted offline (22 tests, 247 assertions); its live run on datomic-dev follows RT01's G6.
+- **Open question that shapes P4:** R45 measured 2.4-2.9 us of warm SQLite CPU per row, so a 447-fact W0 pull costs about 1.1 ms, about 900 pulls/s per core against the 1,100 bar, in either layout. EXP-QH1 waits on this.
+- **Research dispatched (Opus 5.5 high):** R46, P4 per-core throughput from H1: where the per-row cost goes, and the options (a materialized per-subject current document maintained at commit, one-statement reach fetch, raw bytes without decoding, clustering, reader pools), each with its effect on P2 commit latency, bytes per fact, P1 exactness and route equivalence.
+
+## 2026-11-09: CRNS Opus round 3: all earlier forgeries refused with the right code; three high variants remain
+
+- **Rounds 1 and 2:** 29 of 29 and 13 of 13 refused, each with the code for the forged property (46 of 46 tests). Test pins now come from an independently frozen trace, with two small gaps.
+- **Still accepted (high):** readers that answer correctly but take 900 ms per read still count as load (the read p99 bar applies only when P1 is requested); a planned crash with no witness drops out silently (witnesses are checked against the plan, not the plan against the witnesses); validity judged on what the candidate made visible before the offer.
+- **Contract items, recorded as pending rulings Q103a-c:** the frozen trace is secret from the candidate (pre-applying it is otherwise indistinguishable from a fast engine); crash runs are indistinguishable from main runs; calibration records never come from the candidate under test.
+- **The reviewer's verdict:** acceptable for offline P2 and P3 arithmetic once the three highs are fixed, but not for NS PASS until the production decoders, oracles and calibration registry are qualified components rather than test stand-ins.
+- **Lesson:** each round closes the planted cases and their nearest variants; the remaining attacks move from "forge a value" to "control what is observable" (timing, visibility, which run is which), which only the run's architecture (R44's boundary, Q103) can close.
+
+## 2026-11-09: RT01 live round 3: the marker-row stamp fixes A0; a one-pair A/A band fails compact p99
+
+- **43f9d590:** G2 passes. G6: both fresh ten-fact points pass (round 2 had A0 p50 +29.25%), so the marker-row stamp removed the native A0 regression. The run stopped at compact five-fact p99 +39.32% against a 0.237% band. Steady-state statements and round trips are identical in both builds (6 A0 / 5 compact statements; 13 / 12 cycles).
+- **The band was unsound:** it came from one A/A pair, and a nearest-rank p99 at n=150 is the second-highest sample. The receipt stays FAILED under its frozen rule. Ruling Q104a (pending): no-regression gates use M01's PAIR-0 grading over at least three A/A rounds, p99 only at n >= 1,000 or with a bootstrap interval, the rule fixed before B. RT01 round 7 builds that rule and diagnoses the compact path offline; the rerun follows DF01's live window.
+- **Lesson:** preregistering a rule protects against widening it after the fact, but not against a rule that is wrong. A noise band needs repeated A/A rounds, and tail percentiles need samples sized for the tail.
+- **Lane D:** CX-DF01 has the pool for its live window on datomic-dev (diagnostic on dev storage, Q88a).
+
+## 2026-11-09: DF01's first live Datomic attempt stops on a fixture bug; NSR reviewer filtered and relaunched
+
+- **DF01 live attempt 001 (1b110023), DIAGNOSTIC-FAIL:** the fixture supplied a null schema version and the first write failed before feed conformance ran. No retries; Datomic parked with its volume. Attempt 002 fixes the fixture and adds an offline check of the fixture against the peer's schema-version rule. **Lesson:** offline fakes must apply the same input checks as the real peer, or the first live write finds what the fake let through.
+- **CX-VNSR round 4 stopped on the Codex content filter** (escape-style wording about links and descriptors). Its partial files were committed as WIP (1c3185f8) and the review relaunched as CX-VNSR-5 with neutral QA wording (file inventory, link resolution, environment paths), per PROTOCOL 6.
+- **CRNS:** Codex ACCEPT round 3 (3183681b); round 4 fixes the Opus reviewer's three remaining highs.
+
+## 2026-11-09: lane D's feed passes live on Datomic dev; the Opus reviewer accepts CR-NS arithmetic
+
+- **DF01 live attempt 002 (dcc8322d), DIAGNOSTIC-PASS** on tx2-datomic-dev: feed conformance, resume across an excision batch, a peer restart with resume from the log alone, skipped non-Triplex transactions and the long-poll checks passed against the real peer and tx-report-queue; 117 regression tests and G1 88/88. Dev storage only (Q88a); the deadline boundaries used a controlled clock. This is lane D's first live P3 result.
+- **CR-NS:** the Opus reviewer ACCEPTS the evaluator for offline P2 and P3 arithmetic (round 4: 53 of 53 earlier forgeries refused with the right code; the validity fix held). Remaining before NS PASS: readers that park reads (ruling Q103d: activity in every 100 ms bin, no read over 1 s), the crash target pinned to the consumer, and race pairs (ruling Q103e). CRNS round 5 closes them.
+- **RT01 round 7 (2332e98b):** G6 now grades with Q104a (PAIR-0, three A/A rounds); the live rerun has the slot now, with the window grade recorded per point.
+- **NSR round 5 (709a18f1):** exact output grant and a minimal recorded environment; in review.
+
+## 2026-11-09: RT01's G6 stops on a sandbox denial of `top`; more evidence compressed; CRNS round 5
+
+- **RT01 live round 4 (54e59314):** G2 passed again; G6 stopped before any sample because M01's noise recorder spawns `top`, which is setuid and the Codex sandbox refuses it. Timing unjudged, not failed. Round 5 moves the recorder to non-setuid counters (os.loadavg, vm_stat, sysctl) at its source in M01, then reruns G6 under Q104a. **Lesson:** a measurement tool must be exercised offline in the same sandbox it will run in; M01's report had noted the permission need and the runbook did not carry it.
+- **Disk:** compressed the large databases in INT-Q, VINTQ and DI01's superseded attempts (final-r2 to r8, two lag dirs), each verified by hash, originals' hashes kept; host free went from 11 to 19 GiB.
+- **CRNS round 5 (676b0a45):** Q103d, Q103e and the pinned crash target implemented; 292 tests and 59 reviewer assertions pass; the Opus reviewer does a final scoped check. After that CR-NS joins the contract 0.4.0 queue.
+
+## 2026-11-09 10:50Z: hourly pass (NORTH-STAR reread first): usage 10%; contract 0.4.0 started; lane D live
+
+- **Learnings since 09:42Z:**
+  - **Lane D's feed passed live on Datomic dev** (DF01 attempt 002, DIAGNOSTIC-PASS) after a fixture fix; offline fakes must apply the peer's input checks.
+  - **The PASS-granting evaluator converged:** the Opus reviewer accepts CR-NS for offline P2 and P3 arithmetic after four rounds; round 5 closes the last items (parked reads, crash target, race pairs); final scoped check running.
+  - **R46:** H1 can reach P4's 1,100 pulls per core with compact rows clustered by owner, one worker op per pull and SQLite-built answers (1,140-1,720 per CPU second). SQLite's JSON functions lose double precision unless formatted with %!.17g (Q105b): Sam's "no silent precision loss" applies to every serialized path.
+  - **Isolation by filesystem worked:** NSR accepted once the driver's layout held only its artifact under Node's permission model.
+  - **Statistics:** a one-pair A/A band failed RT01's compact p99 spuriously; Q104a requires repeated A/A rounds and tail-sized samples. RT01's marker-row fix removed the real A0 regression.
+  - **Sandbox:** a measurement tool that spawns a setuid binary (`top`) fails inside Codex; tools must be exercised in the sandbox they run in.
+  - **Disk:** compressing analyzed evidence keeps the slot runs going (now 19 GiB free).
+- **Action:** contract 0.4.0 started (CX-A01-040) with NSR+P3M+FD01, DF01, QNODELAY, M01, CHECKJS; compiles Q98a-i, Q101a, Q104a. RT01 with Q89/Q90 joins in a later round once its G6 completes; CRNS, HS01, P2B, DI01 and G03 follow as they are accepted.
+- **Long runners:** DI01 has made about ten "final" attempts over 228 minutes; P2B is on its last step after 223 minutes. Both are still writing. If DI01's report shows the attempts were churn, its next brief caps final attempts.
+- **Research this hour:** none new; R45 and R46 just landed and their builders (HS01, then QH1) are the follow-up.
+
+## 2026-11-09: RT01 G6 stopped on disk again; live windows need the heavy writers quiet
+
+- **7ee171ea:** recorder fixed (non-setuid counters), G2 passes, G6 stopped on its own disk forecast after 500 control commits. Three G6 attempts in a row stopped before judging (sandbox denial, then disk twice), each correctly. **Lesson:** a live window competes with every agent writing evidence on the same disk; schedule live windows when the heavy writers (here P2B and DI01) are idle, not only when the slot is free.
+
+## 2026-11-09: P2B round 3: R42's design delivered; P2's p99 still unmet on a shared Mac
+
+- **ba10ebb9:** 81 cells, 243,000 commits, 24.1M concurrent read checks, 153 tests. Eight reader workers with their own read-only connections; feed consumer off the broker thread; asynchronous RPCs; full fsync by default. Root-thread CPU 54.61 s to 18.67 s; durable-to-host p99 57.04 to 13.33 ms; main-thread read RPCs zero.
+- **P2 at 256 readers, ten facts:** p50/p99 13.80/92.88, 11.34/100.52, 8.92/81.62 ms across three repeats (bars 10/50). The tail is scheduling and host contention on a Mac running about nine agents; maintenance changes moved scheduling p99 from 34.87 to 14.90 ms.
+- **Decision:** stop tuning P2 on the shared Mac. R44 puts P2 acceptance in the VM, single-arm, in a GREEN window, with a different durability class (Q100r: VM commit 1.06/4.43 ms idle). P2B's next measurement runs through G03's NS runner. CX-VP2B reviews rounds 1-3 for correctness now (pinned reads in workers, watermark, durability default, pin/purge ordering, lost-ACK, WAL growth).
+- **Lesson:** a latency bar measured on a host that is also running the lab's agents mostly measures the agents. Absolute bars need the quiet window (Q60/Q100-S1, still waiting for Sam).
+
+## 2026-11-09: HS01 cuts the host store 11x (5,656 to 509 B per fact); correctness unchanged
+
+- **2f7b42d6 (frozen product 13ce4978):** schema v2 (entity-clustered facts, history, journal with derived references, dictionaries,
+  frame retention with a CRC anchor). G6: 50,000 v1/v2 reads, zero mismatches. G7: 100,000 rows exact, 15.5% verbatim fallback on a
+  deliberately pathological sample. Recovery, pack and evaluator gates pass. 10k seed: 2.275 GB, 509 B per asserted fact (G9 target 300;
+  not promoted).
+- **Where the bytes are (10k dbstat):** journal 213.77 B/fact (R45 132), frames tail 140.10 (1,024 frames retained at 10k), facts 107.37,
+  entity dictionary 28.09. IDs stayed TEXT because the core generator makes base-36 ids, not canonical ULIDs, so R45's 16-byte ids did not
+  apply.
+- **Next:** review (CX-VHS01, from the diff and R45's design). Then a round 2 aimed at the three largest terms: frame retention by bytes
+  rather than count, a compact id encoding for base-36 ids, and R45's round 2 journal record (one record per transaction, 150-195 B/fact
+  predicted). At 509 B, 100k is about 23 GB, which still does not fit this disk next to everything else.
+- **Lesson:** a size prediction built on a prototype with substituted ids measured something the real generator does not produce. Prototype
+  with the real id generator.
+
+## 2026-11-09: Sam's decisions; protocol v2 (Sonnet builders); observer accepted fail-closed
+
+- **Sam approved every pending recommendation** (Q106a-g; verbatim in lab/research/SAM-decisions-2026-11-09.md): NS/GS rung, quiet windows on his whole Mac (default colima VM now stopped), broker-backed lane X, erasure S1-S4, an opaque position token, tiered lane D tenancy, VM hardening H1/H2, the pre-commit hook (installed). He switched builders to Sonnet 5.5 at high (protocol v2) to use more Claude and less Codex.
+- **Disk guidance given:** about 60 GiB free for 100k on one lane at a time, about 150 GiB for several lanes plus evidence.
+- **OBS01 accepted offline,** with live P3 evidence refused until writer sync is independently witnessed; that witness is the next design item on the critical path.
+- **HS01 review:** one finding (a frame over 16 MiB stalls finite retention); round 2 is the first Sonnet builder.
+
+## 2026-11-09: R48: writer durability is witnessed in the kernel; OBS01 round 9 (Sonnet) builds it
+
+- **Design (R48, rulings Q108a-d pending):** a trusted sync-witness container with only CAP_BPF and CAP_PERFMON traces ext4 file and filesystem syncs, writes, mmap writes and truncations in the store directory, with the calling cgroup and CLOCK_MONOTONIC time; it never opens candidate files. A commit's durable instant D is the first successful sync from the writer's own cgroup after its WAL frames were written. P2 requires ACK >= D, the source requires U >= D, and consumer lag ends at max(U_c, D_c). Estimated cost 5-60 us per commit.
+- **Rejected:** trusting SQLite settings (per connection, overridable), and process kills as sync tests (the VM page cache survives a container kill; kill-after-ACK is a recovery test, Q108c). Enforcing durability for the candidate is not allowed (Q108d).
+- **Lesson:** "the writer says it synced" and "the setting says FULL" are both candidate claims. The only trustworthy durability evidence comes from below the candidate, here the guest kernel.
+- **R47 (journal format)** committed with rulings Q107a-c; Q107-S asked of Sam. DF01 round 4 (Sonnet) fixes the lane D feed emitting journal facts.
+
+## 2026-11-09: QH1 round 1: 302 pulls per CPU second against R46's 1,140-1,720 prediction
+
+- **65ffe2f2:** owner prefetch and whole-pull in the reader worker, a decoder fast path, H1 routing; 100,000 pulls with zero O-REPLAY mismatches; RQ01 route checks pass. Single-client 302.3 and four-client 323.5 pulls/CPU-second (baseline 172.5; bar 1,100). P2 p99 ratio 1.20x against 1.10x allowed. R46's decomposition gate was not completed.
+- **The gap:** R46 measured 4-6x in isolation; the real stack gave 1.75x. QH1 round 2 (Sonnet) decomposes per-pull CPU on the real stack, ABAB against R46's microbench path, before any further design change.
+- **DF01 round 4 (Sonnet, 302a7a63)** fixed the lane D feed emitting journal facts (real Datomic peer test; G0 1,279); in review.
+- **Lesson:** a microbench prediction holds only for the code path it measured; the gate that decomposes the real path has to come first, as R46 itself said.
+
+## 2026-11-09: OBS01 round 9 builds the sync witness offline; it has never attached to a kernel
+
+- **3403e187 (Sonnet):** the R48 bpftrace program, a strict sync-witness/1 parser, the D rule, seven refusal codes (TRACE-INCOMPLETE,
+  WITNESS-UNBOUND, UNWITNESSED-WRITE, CHECKPOINT-UNSYNCED, SYNC-MISSING, ACK-BEFORE-DURABLE, VISIBLE-BEFORE-DURABLE), eleven planted
+  writers. 32 Python + 13 Node tests; 11/11 planted modes and 36/36 fixtures return their expected codes; 3,000 parser fuzz mutations
+  refuse cleanly. In review (CX-VOBS6 round 3, offline).
+- **Blocker:** the triplex2 VM has no bpftrace, and installing it is a download that needs Sam's approval. The VM kernel is ready: Ubuntu
+  24.04, 6.8.0-117, BTF present, BPF syscall/JIT, kprobes and syscall tracepoints on, ext4_sync_fs in kallsyms. R49 (Opus) is comparing
+  sources (Ubuntu package, upstream image, static binary) by version support, privileges, provenance and exact size.
+- **Lesson:** an offline witness proves the judging logic, not that the probes fire. Until W0-W3 run, the kernel cost per commit and the
+  probe attach points are predictions.
+- **Disk:** 11 GiB free after compression. Still well short of the 60 GiB needed for a 100k run.
+
+## 2026-11-09: R49: bpftrace from the Ubuntu archive; the witness clock was wrong
+
+- **Source:** one local image, built from ubuntu:24.04 (arm64 digest 19cad596...) plus bpftrace 0.20.2-1ubuntu4.3 and LLVM 18
+  1:18.1.3-1ubuntu1, every package version and .deb SHA256 pinned (about 90 MB in total; signed by the Ubuntu archive key, the same root
+  of trust as the VM kernel). The upstream AppImage (196 MB, unsigned, needs FUSE and a user namespace) and quay.io/iovisor/bpftrace
+  (unmaintained since 2023, Ubuntu 20.04) are rejected. LLVM must be pinned too: a newer LLVM 18 build broke 0.20.2 (LP #2097317).
+- **Bug found:** bare `nsecs` is CLOCK_BOOTTIME since bpftrace 0.12, not CLOCK_MONOTONIC. vm_syncwitness.bt must use
+  `nsecs(monotonic)` (0.19+), or every witness time is on a different clock from ACK and the observer bracket (Q100q). Fix in OBS01
+  round 10, after CX-VOBS7 reports.
+- **W0 must also check:** perf_event_paranoid (Ubuntu sets 4; whether CAP_PERFMON alone suffices is unverified), peak memory against the
+  256 MiB cap, ext4 built in rather than a module, BPFTRACE_MAX_MAP_KEYS (4096 default). The per-CPU sequence check cannot see probes the
+  kernel skips for recursion protection (low risk for ext4 events).
+- **Lesson:** the offline tests could not catch the clock bug, because the fixtures were written in the clock the normalizer expects. A
+  clock-domain claim needs a check against the running kernel (W0 should compare nsecs(monotonic) with the observer's CLOCK_MONOTONIC).
+
+## 2026-11-09: QH1 round 2: the real H1 path spends its CPU on statement count, tuple width and main-thread decode
+
+- **173831eb (measurement only):** per pull, today 7,154 us (140/CPU-s), round 1 3,122 us (320), R46's microbench path 712 us (1,405;
+  reproduces R46 but carries 8 of 15 fields and is not a valid path), R46 shape with every kernel field 1,248 us (801; answers equal on
+  1,000/1,000). c=4 equals c=1 per CPU second.
+- **Where round 1 spends it:** worker SQL about 750 us (JSON/printf building 402, %!.17g on timestamps alone 219), main JSON.parse and
+  decode about 550 us (hex-to-base32 ids 195), Effect/adapter/kernel about 350 us. Round 1 issues 17.7 statements and about 304 per-entity
+  probes per pull against R46's 4; tuples are 15 fields wide with 7 dictionary joins; main-thread cost is about 1,048 us against R46's
+  150-300.
+- **Plan:** QH1 round 3 (Sonnet) builds five changes in order, measured step by step: R46-shape worker op, one Effect run per pull, cheaper
+  decode (together = L3, 801 measured), dictionary ids on the wire, columnar transfer (predicted about 1,000-1,250). The 1.2x screening
+  margin (1,320) is not yet in reach by measurement; the per-subject document fallback fails the commit guard (+0.91 ms p50).
+- **Lesson:** the gap between a microbench and the real path was in the fields and statements the microbench left out. A prediction
+  needs the same answer, by full-field digest, before its speed counts.
+
+## 2026-11-09: OBS01 rounds 10-11: two clocks that agree cannot be told apart by watching them
+
+- **Round 10 (1f7d412b)** fixed round 9's five findings and R49's clock bug; review FIX-FIRST on three medium gaps (untimed WAL tails,
+  multiple ACKs, the W0 clock check).
+- **Lesson:** CLOCK_BOOTTIME minus CLOCK_MONOTONIC is accumulated suspend time, often zero on a fresh VM, so no tolerance can tell the
+  two apart by observation. Which clock a probe reads has to be proven from the program itself (its compiled helper calls), with
+  observation kept only as a transport check that may honestly say INCONCLUSIVE.
+
+## 2026-11-09: HS01 round 2: 217 B per fact at 10k; P5 round B can seed again
+
+- **a9ebe759 (Sonnet):** retention by bytes (64 MiB tail at 10k; frames 140.10 to 15.25 B/fact), compact ids (core-generator ids as
+  integers with a 63-slot head dictionary, ULIDs as 16-byte blobs), and the round 1 finding fixed by guaranteed purge progress rather than
+  a frame-size cap. **10k W0: 217.06 B/fact, 0.970 GB** (predicted 220-250); both G9 bars pass (300 B, 1.4 GB). G6, G7, G8 (80 stops,
+  zero lost) pass. In review (CX-VHS01 round 2).
+- **The production caveat:** with ULID-shaped ids the same 10k store is 308.09 B/fact (1.377 GB), about 8 B over the bar. The next
+  levers are the entity dictionary storing every name twice (28.09 B/fact), numeric refs and booleans bound as 8-byte REAL, and R47's
+  one-record journal (journal is still 97.55 B/fact).
+- **What it unblocks:** P5 round B stopped at 10.85 GB partway through a 10k seed. At about 1 GB for 10k and an estimated 9.7 GB for
+  100k, P5B round 3 (Sonnet) now seeds 10k and screens B0-B2; 100k waits for a disk window.
+- **Lesson:** the W0 generator's ids are not production ids. Every size result should be reported on both, so a bar met on a test-only
+  id shape is not mistaken for a production result.
+- **Disk:** removing 15 finished worktrees (their two sets of untracked receipts saved to evidence/worktree-leftovers/) took free space
+  from 7.8 to 15 GiB.
+- **Merged since the last entry:** contract 0.4.0 (e09c2ff4). DF01 round 4 and G03 round 7a are accepted offline or in review; see
+  STATE.

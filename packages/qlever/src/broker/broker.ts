@@ -31,7 +31,7 @@ import {
   type FrameMember,
   type MemberClaim,
 } from "./frames.js";
-import { HostLog, type EpochBeginPayload, type LogFrame } from "./log.js";
+import { HostLog, hostLogRecovery, type FrameRetention, type LogFrame } from "./log.js";
 import { ORDINALS, lastPositionOf, lsnOf, packPosition } from "./position.js";
 import { buildFence, buildPublication, markerQuery, type ReplicaMarker } from "./sparql.js";
 import { BasisNotAvailable, ReplicaUnavailable, type BasisSurface } from "./errors.js";
@@ -141,6 +141,7 @@ export interface HostBrokerOptions {
   readonly rebuildAtDeltaTriples?: number;
   readonly applyTimeoutMs?: number;
   readonly minFreeBytes?: number;
+  readonly frameRetention?: FrameRetention;
   readonly requireFullFsync?: boolean;
   /** Start the applier on open (default true when a replica is given). */
   readonly autoApply?: boolean;
@@ -267,6 +268,7 @@ export class HostBroker {
       ...(options.requireFullFsync === undefined
         ? {}
         : { requireFullFsync: options.requireFullFsync }),
+      ...(options.frameRetention === undefined ? {} : { frameRetention: options.frameRetention }),
       ...(options.takeover === undefined ? {} : { takeover: options.takeover }),
     });
     try {
@@ -288,7 +290,15 @@ export class HostBroker {
     });
     let marker: ReplicaMarker = { position: 0, epoch: 0, incarnation: "" };
     if (options.replica) marker = await broker.readReplicaMarker();
-    const lastLsn = opened.frames[opened.frames.length - 1]?.lsn ?? 0;
+    const recovery = hostLogRecovery(opened.log);
+    const recovered = recovery.marker;
+    const lastLsn = recovered.lsn;
+    broker.headPosition = recovered.position;
+    broker.aborted.push(...recovery.epochs.flatMap((e) => JSON.parse(e.aborted) as number[]));
+    // [EXP-HS01] Why: replicas without a durable index base may regress all the way to zero.
+    // Rejected: retaining only the current replica marker (not restart-safe for QLever).
+    if (options.replica) opened.log.retain("replica", 0);
+    else opened.log.release("replica");
     // R13 2.4 known limit: damage to the last acknowledged frame looks like a torn write. A replica marker
     // beyond the log means the log lost an acknowledged frame, so refuse to start (R13 6.5 step 5).
     if (lsnOf(marker.position) > lastLsn)
@@ -297,7 +307,9 @@ export class HostBroker {
       );
     broker.evictedThroughLsn = lsnOf(marker.position);
     broker.publishedLsn = lsnOf(marker.position);
-    for (const frame of opened.frames) broker.replay(frame, lsnOf(marker.position));
+    for (const frame of recovery.headers)
+      if (frame.kind === FrameKind.COMMIT_GROUP && frame.lsn > lsnOf(marker.position))
+        broker.overlayFrames.push({ lsn: frame.lsn });
     broker.durableLsn = lastLsn;
     if (options.replica) {
       // Fence: take the epoch on the replica before applying anything (R13 6.5 step 6, C3.3). A broker of
@@ -327,18 +339,6 @@ export class HostBroker {
       position: broker.headPosition,
     });
     return broker;
-  }
-
-  private replay(frame: LogFrame, replicaLsn: number) {
-    if (frame.kind === FrameKind.EPOCH_BEGIN) {
-      const begin = JSON.parse(frame.payload.toString("utf8")) as EpochBeginPayload;
-      this.aborted.push(...begin.abortedLsns);
-      return;
-    }
-    if (frame.kind !== FrameKind.COMMIT_GROUP) return;
-    const payload = decodeCommitGroup(frame.payload);
-    this.record(payload.members);
-    if (frame.lsn > replicaLsn) this.addOverlay({ lsn: frame.lsn, members: payload.members });
   }
 
   private record(members: readonly FrameMember[]) {

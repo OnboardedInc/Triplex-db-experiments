@@ -1,3 +1,4 @@
+import { latencyReceipt, connectionModeForBackend } from "../../../lab/receipts/latency.mjs";
 /** Lab G1 entry: the unchanged upstream 44 Triplex conformance cases against one lab slot.
  *
  * [EXP-000] Why: one route for both lanes, over built public `dist` exports only (the gate hashes
@@ -52,7 +53,8 @@ const selected = limit
   : [...triplesConformanceCases];
 assert.ok(selected.length > 0, "--cases must select at least one case");
 const runId = randomUUID();
-const report: Record<string, any> = {
+const report: Record<string, any> = latencyReceipt({
+  qleverConnectionMode: connectionModeForBackend(backend.name),
   format: "tx2-lab-conformance/1",
   runId,
   backend: backend.name,
@@ -68,7 +70,7 @@ const report: Record<string, any> = {
   startedAt: new Date().toISOString(),
   suite: null as unknown,
   executions: [] as Record<string, unknown>[],
-};
+});
 writeFileSync(output, JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
 const save = () => writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 
@@ -129,5 +131,14 @@ report.status =
     : "FAIL";
 report.endedAt = new Date().toISOString();
 save();
-console.log(JSON.stringify({ status: report.status, ...report.counts, output }));
+console.log(
+  JSON.stringify(
+    latencyReceipt({
+      status: report.status,
+      ...report.counts,
+      output,
+      qleverConnectionMode: connectionModeForBackend(backend.name),
+    }),
+  ),
+);
 if (!report.status.startsWith("PASS")) process.exitCode = 1;

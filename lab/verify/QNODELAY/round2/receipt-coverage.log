@@ -1,0 +1,122 @@
+{
+  "id": "624632b8-4fbb-479a-8425-88b536b7cc27",
+  "startedAt": "2026-11-09T04:35:47.067Z",
+  "node": "v22.23.2",
+  "head": "5c240a0a9c4884c8bfcbc93dc660e9e4411f2deb",
+  "sources": {
+    "packages/qlever/src/QleverClient.ts": "27c6228887c9484c7c9c4ef69e84889431a200b9ef083c4d68952e5e98f17de2",
+    "lab/verify/QNODELAY/round2/bootstrap.mjs": "575ccd46fc15e59851b6916843eed38743c0294be5cd115fed668d6d3bb4dd4d",
+    "lab/verify/QNODELAY/round2/resolve.mjs": "1496df6a87d5472fa4b2c4d4bd7a6ba64fe489fab641e0ad71988e40ffd6e48a",
+    "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici@7.29.1/node_modules/undici/index.js": "dca95e2bbf4bae18325a4e5d9c887427a8a63a1345ed92a46f1067360dec0ffa",
+    "/Users/sam/projects/triplex-db-2/node_modules/.pnpm/undici@7.29.1/node_modules/undici/package.json": "10e55f4adb6a43e72823ea235ff6a0c777db1ef68e3a1c810f0246e1b9332d8b",
+    "lab/verify/QNODELAY/round2/common.mjs": "14e3b9cfac09b5226a759b57814de66d1467a8bee0da1ca1c15281d6c56d0aa0",
+    "lab/verify/QNODELAY/round2/receipt-coverage.mjs": "c18cb2b6d029e33986a28480fd4c30186b3676a51e4e8f2eb047c47bc2bd36d9",
+    "lab/experiments/EXP-C8-read-only-frontier/summarize-timing.mjs": "5194ed4709d0d269396f1f874495d86b4a4bddc473e7be822b81cada9c24bcb4",
+    "lab/receipts/check-writers.mjs": "9a5477f4b9ce33c9b670961bfcfdb572b8f90acce088e74c7fd33a3a364c5a51",
+    "lab/experiments/EXP-QNODELAY/round2/receipt-writers.json": "df83784b0e37bab77507cc724c94d012c753116cdb985aa702dbcdebe44d13f2",
+    "lab/receipts/latency.mjs": "f5a02e99e2b62c279a369e334cc0d3e5e1fd4f537c1b5dcbb77316430d55a684",
+    "lab/receipts/latency.d.mts": "a9a866a4d7e7819674493e6e0648f3ec12b5c62ea82180a66fd39939e89b195e",
+    "lab/experiments/EXP-QG1-qlever-generations/grid.mjs": "d6fa11ccbbd7b286f8668fad256e54e6bf7e4d260513607d9213459947ef5bcb",
+    "lab/experiments/EXP-QG1-qlever-generations/summary-cell.mjs": "ecb3e429ee208cc3b74433c672725be0d392c4d9d292aff3ee0c53185f105371"
+  },
+  "classification": "OFFLINE SERIALIZATION QA; synthetic fixture timings, no engine or performance acceptance",
+  "c8": [
+    {
+      "mode": "keep-alive",
+      "inputPath": "lab/verify/QNODELAY/round2/c8-keep-alive-input.json",
+      "inputSha256": "786d23b9c446b8dba8684c00354fa5b7c4892c380b60c65d19c1b587382f4285",
+      "output": {
+        "lane": "qlever",
+        "label": "624632b8-4fbb-479a-8425-88b536b7cc27",
+        "graph": "fixture",
+        "edges": 1,
+        "reach": 1,
+        "nativeTotalMs": "7-7",
+        "nativeFailures": 0,
+        "engineWriteTransactionsPerCall": 0,
+        "phasesMs": {
+          "read": "7-7 (n=1)"
+        },
+        "datalogMs": [
+          9
+        ]
+      },
+      "missingMode": true
+    },
+    {
+      "mode": "per-request",
+      "inputPath": "lab/verify/QNODELAY/round2/c8-per-request-input.json",
+      "inputSha256": "825119585a86af7b8acaf3a6db301a269626c05f536d70f2c9658e1aa233f671",
+      "output": {
+        "lane": "qlever",
+        "label": "624632b8-4fbb-479a-8425-88b536b7cc27",
+        "graph": "fixture",
+        "edges": 1,
+        "reach": 1,
+        "nativeTotalMs": "7-7",
+        "nativeFailures": 0,
+        "engineWriteTransactionsPerCall": 0,
+        "phasesMs": {
+          "read": "7-7 (n=1)"
+        },
+        "datalogMs": [
+          9
+        ]
+      },
+      "missingMode": true
+    }
+  ],
+  "grid": [
+    {
+      "receipt": {
+        "qleverConnectionMode": "keep-alive",
+        "at": "2026-11-09T04:35:47.180Z",
+        "params": {
+          "query": "SELECT ?x WHERE {}"
+        },
+        "ms": 0.16374999999999318,
+        "status": 200,
+        "sha256": "05f03e4bd4c232afe15de11ed75e5955fe223facd026c0d6c3e6717ab9cc9212"
+      },
+      "returned": {
+        "qleverConnectionMode": "keep-alive",
+        "id": 1,
+        "ms": 0.22666599999999448,
+        "data": {
+          "nonce": "624632b8-4fbb-479a-8425-88b536b7cc27"
+        }
+      },
+      "sourceFragmentSha256": "376ba2397d7fe6babeb3a6bb2daebd8304fa25546d39901483fb0c8fc0aa6906"
+    }
+  ],
+  "c8Uninventoried": true,
+  "gridSummary": {
+    "qleverConnectionMode": "keep-alive",
+    "p4QleverConnectionMode": "per-request",
+    "arm": "M",
+    "label": "N0",
+    "base": 1,
+    "delta": 0,
+    "rss": 1,
+    "c8Status": 0,
+    "p4Status": 0,
+    "p4Summary": {
+      "p50": 1,
+      "p99": 2
+    },
+    "p4ContentChecks": {
+      "n": 1,
+      "matched": 1
+    },
+    "queries": {
+      "base": {
+        "qleverConnectionMode": "keep-alive",
+        "coldMs": 2,
+        "warmMs": 1,
+        "rows": 1
+      }
+    }
+  },
+  "sourcesUnchanged": true,
+  "endedAt": "2026-11-09T04:35:47.181Z"
+}

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from'node:assert/strict';import test from'node:test';
 import{requiredOutcomeEvidence}from'./required-evidence.mjs';
 test('unexpected Success retains the full same public receipt; Failure keeps safe typed violations',()=>{

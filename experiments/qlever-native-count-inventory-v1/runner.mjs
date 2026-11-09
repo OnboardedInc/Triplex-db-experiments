@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Canonical READ-ONLY context. Deliberately does not import openContext, locked,
 // scheduler mutations, fault executor/storage/worker or the operational bridge.
 import assert from 'node:assert/strict';

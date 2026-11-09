@@ -1,0 +1,4 @@
+Retained initial matrix startup failure: Vite tried to write its config cache in the shared dependency tree.
+Raw bytes preserved at /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round2/attempt1/builder-matrix-startup.log
+SHA-256: f7311e6e0ab77a45caf68317e2eeb8387517fd559ea3ab68ea8457228f3ae833
+Final successful run: builder-matrix-native.json / builder-matrix-native.log

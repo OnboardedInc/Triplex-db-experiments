@@ -1,0 +1,663 @@
+{
+  "classification": "INDEPENDENT OFFLINE AUDIT; no performance admission",
+  "builder": "08a117761279de9ea0562b4f134b68df08889d6a",
+  "startedAt": "2026-11-09T04:04:21.481Z",
+  "checksums": [
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt1/result.json",
+      "sha256": "c52c9eaa0569e974e8381990849828448681edb1f4682795872d5b4fd82b2170"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt1/source-0.ts",
+      "sha256": "f238df2c30409e8a6d9216d59ba2305f6823c184b08729d7c5e34c371e54d590"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt1/source-1.ts",
+      "sha256": "561279c0858c1b46bd0f2cb13d18e24192ab471c00aeb42dbab37a769b994ef4"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt1/source-2.mjs",
+      "sha256": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt1/source-3.json",
+      "sha256": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt1/start.json",
+      "sha256": "41c9e31033b41a17ead809b3a0f0064acbfe004d75f0777482aa7c5ce3044066"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt2/result.json",
+      "sha256": "10ab1352882c64d7c070db53e24ab27cc2c3b69d8400d8f2f56776a1888491b5"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt2/source-0.ts",
+      "sha256": "8141530aba6c6266a9c6e7a04daf8cbb06780c4b8d44ffa8063cd1255249d345"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt2/source-1.ts",
+      "sha256": "ece2d42126cf9757082b35a80932d6dba0bc70c861d43f5f8ebea5818d212ef9"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt2/source-2.mjs",
+      "sha256": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt2/source-3.json",
+      "sha256": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt2/start.json",
+      "sha256": "9aa963dbaef213a6b76dc17cef665666af2bbe0cdb493869e35f5e1e5d166e09"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt3/result.json",
+      "sha256": "2d88835591a8cf904fea46a1e00b03ef0d39a87e186c0e299f066b4a2dbc85a1"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt3/source-0.ts",
+      "sha256": "59834c5427bfd1bfed4df04ebb773aae0e81e406ae577dc2a72829c60b0687b8"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt3/source-1.ts",
+      "sha256": "5165196dfb14ba54605a259ab859650fb49651e0a7132f918560e52690c647a2"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt3/source-2.mjs",
+      "sha256": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt3/source-3.json",
+      "sha256": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt3/start.json",
+      "sha256": "1e4f0091bcc8ffd3bfce96281e36699bbed3455d02ebd001390aef8fc5919880"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt4/result.json",
+      "sha256": "b850a42dd32638e797a30954c8ff2cc4f7141fee00b38fd16e7b7bf6e25a136b"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt4/source-0.ts",
+      "sha256": "59834c5427bfd1bfed4df04ebb773aae0e81e406ae577dc2a72829c60b0687b8"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt4/source-1.ts",
+      "sha256": "3e34d0f6c83d69425b2ef3a17d7767e954a1ab2fc11d57038669af0a2892c0df"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt4/source-2.mjs",
+      "sha256": "d3031840141fb5e13597e69e75511c809d5814610fe9d39b838ab52e0561b13e"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt4/source-3.json",
+      "sha256": "335b42612449b0b3399b8282e1a2bdaf1ecdd1e573335d051aedcfa3f9e109a8"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt4/source-4.js",
+      "sha256": "8fa0a2d623c219359951125cf419e82d280dd736724913e34cb253232a043083"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt4/source-5.js",
+      "sha256": "53e316c9d5dc45e845b84a9caf6e5d8746c1576b42830d998bfe4ef5fbc79128"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt4/source-6.yaml",
+      "sha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt4/start.json",
+      "sha256": "e17102db0bb3ee022bfd4d56da35aa07216f97659ddb25e350a952eb3c294a69"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/pack-check.json",
+      "sha256": "f7f2c1519070badb7c284092bb57d11f002ccf57509a21860d3928057a4ef513"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/pack.log",
+      "sha256": "25876ded0cb20f0e14ad9e4adb8d47e77b1d39abe3bec7301e70c1e6f717a35c"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/LICENSE",
+      "sha256": "7561b258d9a721a8552895d0bd432a5b52e1a4f47d4aaeb149fc43bbe6515cbc"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/README.md",
+      "sha256": "abf556e7523c2ac35cd879f8979a3df186c7da7fa0211c9b8f2fd39c69aa1b85"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/AggregateAnswers.d.ts",
+      "sha256": "81057fd183d2009b269c8dd4452fd84c187336a479f5512ce4142b44d0861d79"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/AggregateAnswers.d.ts.map",
+      "sha256": "5b57e30a88594cefe9896f8411d8a7cff7f35e70852c056530f9895ed2dd0361"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/AggregateAnswers.js",
+      "sha256": "386ee7bd6c97afdb30f7985e2c36edac140d9417ab49d79bb314e43cdac13dda"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/AggregateAnswers.js.map",
+      "sha256": "9716cda014f2fd6fcf985cb3b851588a5813ddfc42154927167c7b47c99ca3b5"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/FamilyDomainDistinct.d.ts",
+      "sha256": "1aaa9713e92430e009a40c50455d0efe67380f1fe6f8659e031f5f5be0938630"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/FamilyDomainDistinct.d.ts.map",
+      "sha256": "aeed6b4323a3e30f983c08f6c2847cea4a19be454a995cc7fa1cd60559604398"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/FamilyDomainDistinct.js",
+      "sha256": "94344fd1681f68a3b27fbfea2c27d93afe6ad7f2d9e24e0726ee4b98bf3f75ad"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/FamilyDomainDistinct.js.map",
+      "sha256": "cadd644fe71482cb8a9a6c016003025d2862f1018c0fcb2c9531c7347c8a9f03"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/FamilyDomainMask.d.ts",
+      "sha256": "944c3692aa12661f2ea092d849775f761e699595e10406f263d0f4b3ddd8c87a"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/FamilyDomainMask.d.ts.map",
+      "sha256": "a26d7bbaed248123ef643020da79a83a0e2e5d1bfdb84b59d09f13b35286fd3b"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/FamilyDomainMask.js",
+      "sha256": "48673d7b054c5f27c65d589674e1234b0272b984483c0341bfc19a14d3a9fb69"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/FamilyDomainMask.js.map",
+      "sha256": "83cc39fd799b6b7057d4a9c3a9106208fc43e0c303999b57f60eaf685afd63b9"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/FamilyDomains.d.ts",
+      "sha256": "c6bd35a243a50cfeea8d9fb9f44983ed8274f840885f7a18117da8c528674819"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/FamilyDomains.d.ts.map",
+      "sha256": "1ce509e6806764a9774db6d11dc4638337ef81d6a8c61b3316a8ff51911de96f"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/FamilyDomains.js",
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/Operations.d.ts",
+      "sha256": "bd5691c8d61a4d4a31ef3a7fea803b91fe90a8a99d76c02f9bcd4c66a7fbf1e9"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/Operations.d.ts.map",
+      "sha256": "351b7efbe4cfebb16ffed8c57e59a2ba079331f8fb1609917dec48a9f1fd594b"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/Operations.js",
+      "sha256": "9d11c32a0a7dea08cddb0d83f5616243f0737ce0132ec2671e925f07f05cc8be"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/Operations.js.map",
+      "sha256": "a0ce1d88e182d55b2b63d0204043892aa6027d6795e0fd907505c1fe3833aff7"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/PersistedScalarSource.d.ts",
+      "sha256": "f9a768968a85808935d1adcdf2e29a162b1260e8b3c238f7dc4ec69320fd78ac"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/PersistedScalarSource.d.ts.map",
+      "sha256": "ce173a13dec409adf8d96918f821aee794831008688bb3ffd2b894c3ee37aead"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/PersistedScalarSource.js",
+      "sha256": "568bad785436f0860945da8549ff66e8eb75915dd808649459b98593523b1ae3"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/PersistedScalarSource.js.map",
+      "sha256": "5e299f537fb85691cd6a0a6e31e23337b882b14dde5a851d96725b6b6c39a8e7"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverClient.d.ts",
+      "sha256": "a5c96d763ebe53fc0fe14e33fbb182805cd7d6d60b7069ca75926c1cf494787f"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverClient.d.ts.map",
+      "sha256": "cb132e5c2771f99f43ca491beab8c51415932c232dedae412635d0b02700adc3"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverClient.js",
+      "sha256": "8fa0a2d623c219359951125cf419e82d280dd736724913e34cb253232a043083"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverClient.js.map",
+      "sha256": "fd84314ca885c7166479fc81259b3209f3e4a5fb11c79e9b314ea90a917a36eb"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverQueryExecutor.d.ts",
+      "sha256": "b3c0ad3e13e2318b908c121f20b8af11c7315bbf17a51c00c254b4c53e3be2a9"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverQueryExecutor.d.ts.map",
+      "sha256": "d15b1b2231b47e33bc8e63514eb93220fa623c7062561429093db4009aeff588"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverQueryExecutor.js",
+      "sha256": "52ee44ca577b071714b071e89cf561da9b71e69c83c52892916805cad8168cb8"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverQueryExecutor.js.map",
+      "sha256": "aa62060eb9a804858ddbb6316284d79b35333fbcb8703cc18af406cc0ceb695a"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverStorageAdapter.d.ts",
+      "sha256": "0cb0c2a5e5ec86aeae11395ef35bded9bc453296a7ba653a3a0771b21cd117d6"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverStorageAdapter.d.ts.map",
+      "sha256": "31ecea4b323f41c29257e41f8fb5604bb06839080bccb930ee271fa0322331bd"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverStorageAdapter.js",
+      "sha256": "454d5d859db1bdb50ffb250d5f4f68c4a75517d5cc6fe606bef0d1ecdcd0df8d"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/QleverStorageAdapter.js.map",
+      "sha256": "6c6779fa6bf87dcede05339ffb12c855723736441eefb3621c071f9b1705cbcc"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/ReadOnlyClient.d.ts",
+      "sha256": "5708db23a929bb236ffa9f41b868a879714947bd465b1a074ce5844de9561198"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/ReadOnlyClient.d.ts.map",
+      "sha256": "160e0ccc8475fad64476eb23a68c4eb495b589b89ca0e53d677a7edca337afa9"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/ReadOnlyClient.js",
+      "sha256": "f888de7db30df1b1815cb02e2b03235cc6852af808527d7686ce66d3a01f5577"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/ReadOnlyClient.js.map",
+      "sha256": "f35cb1a9a86c55f67c89b4f8c6dd23ddaa63363db0d6ee6c771b7079e14ba98c"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/ScalarSource.d.ts",
+      "sha256": "9af245df73f198ed7844fd960339c3f5040396d9c1884dcb8dc2d692cc5dfeac"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/ScalarSource.d.ts.map",
+      "sha256": "3d2aa7babf937493cda0a2c9842b4bc28cdc880fa6cffac2dcbe01078e5473ff"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/ScalarSource.js",
+      "sha256": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/TemporalQueries.d.ts",
+      "sha256": "f73cbd253567a8c24eb9653adada8c2bbfaf126f7ac7c8a9fe6a74c35846d23a"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/TemporalQueries.d.ts.map",
+      "sha256": "623f479b963cf0c0e93b80b3617dfe472eafac23e3aae2c7c248b598845bc796"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/TemporalQueries.js",
+      "sha256": "b2b5d1e93e65ae1a468d1af4f3e2aba93dd6fd7e7ba0ada8063361c56aa8f0ba"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/TemporalQueries.js.map",
+      "sha256": "8e7aa5373b9630456f19bc17ed7107a32c247002291bb26eeb89799d42dc32f1"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/compiler.d.ts",
+      "sha256": "4c708e502d75c605739298d43d158fdb4e3b46b9c9ab35907a6b64371cc24e7b"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/compiler.d.ts.map",
+      "sha256": "d163a3a6102c6cb84d93682bdcb79952071d50244d282f45e4fd49a9586cd339"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/compiler.js",
+      "sha256": "f11c6b62911cb5015fe6235e4daa0b8c0b2bfda647f5b9062251be60025e6318"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/compiler.js.map",
+      "sha256": "a25ce522cb3963ee0ffad709d9b00c7141b9b195c7683a168ac2e935a3e6d9a0"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/index.d.ts",
+      "sha256": "0040216520e021aad1c1bad589f3bd19fa8b1b63f0342b7fe77adc32bbd33543"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/index.d.ts.map",
+      "sha256": "de56bed38d52a46c4c66b0a891012aa72056a16defb75857e05455e49609b0bc"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/index.js",
+      "sha256": "53e316c9d5dc45e845b84a9caf6e5d8746c1576b42830d998bfe4ef5fbc79128"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/index.js.map",
+      "sha256": "093094d49006fe5b7ce3d6c98fb6842ef97fb81a710c9e630904414af909fbcd"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/BasisRelations.d.ts",
+      "sha256": "e18d6454c0e3a730d8fdfeaa671204524adadb4cbabb08001df19e30464e2e22"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/BasisRelations.d.ts.map",
+      "sha256": "d3f76cfcbfd1071f6bf30ed7fb904db35a3e742f3e8cd6542e3360d34ce85348"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/BasisRelations.js",
+      "sha256": "e92a7cab71b386deda3c270c3831b554894720989408b4faf9899400c5ec45d3"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/BasisRelations.js.map",
+      "sha256": "ccd1b80327220fd99ad8dbd2d03fde98dceff2f1e946c539b1617f72a80f3776"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/NativeContext.d.ts",
+      "sha256": "8cced87cd40abdfdd6fa9caa8a774bb29cb396d39e3dab3e0372b74bc5d89f94"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/NativeContext.d.ts.map",
+      "sha256": "6e8227714cce1ff2619b2db6eb101900d11e8914001156c9f8eb57912b7f8643"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/NativeContext.js",
+      "sha256": "e946760da6ddc6d19d3ed262ca5baf1e08799bdfd36358ea66bcfa08a3f01b49"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/NativeContext.js.map",
+      "sha256": "482f81af9b9ae45e30cbe7e8118d55b745b6267c5ed0340a81c0e64fcd155d35"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/NativeQueries.d.ts",
+      "sha256": "264cb81b4c0d14a63b95858009141990c10921fa1cec5f73d24c6e45db3ed90e"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/NativeQueries.d.ts.map",
+      "sha256": "44bbfd9482849b1cbeb187b3fcb566a4a522eec64613d2eb0e57e71eab41f0fb"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/NativeQueries.js",
+      "sha256": "19b2fe8ae8892e8fc9ad8e91ab6708ddc4661247df26a9727b36891d5bf1f648"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/native/NativeQueries.js.map",
+      "sha256": "d3b102232b2ec50bfb563dbc978fe82a92298b35aef149cdc219f4a27d0f550c"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/rdf.d.ts",
+      "sha256": "3d90dccd73f6d7da73cba87b6d389bee6d1cab082342c98bbbe50a7ddd373825"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/rdf.d.ts.map",
+      "sha256": "686fd2e7c33b82e150b8465cd6b801c31f23df2ad11efd811c4e836d7c17143b"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/rdf.js",
+      "sha256": "c2b6392efa727380a2e1f5a161100a746a96dd26ca04f57f3bd71ccabe627ef6"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/rdf.js.map",
+      "sha256": "62b2204b1a2032c52615f5b8d259553e460237337a82a75956b0a95c5ade0166"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/recursion.d.ts",
+      "sha256": "e60a7123e8ed5233688a1937cb49f0ec853c7c74e3dd67e2f26a68a970a8ee34"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/recursion.d.ts.map",
+      "sha256": "bfbf5b9162a59387fdab852c0a074aa9fafe6700d7d2ed2592d5b0f0ea81a211"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/recursion.js",
+      "sha256": "e01025b4904817105bc7b9ced1c0c03086ac8a8f1d9279d58f55d8663911fa4a"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/dist/recursion.js.map",
+      "sha256": "eb1f3adc08b1aaf84f8027a654cea3b57fde5832eb8629e7ddb6de4fb338bc63"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer/package/package.json",
+      "sha256": "065b7cea0342b7d87d20e6d2288a5f89b9821dc5c1f0f863c6ec83ffc86198d2"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/packed-consumer.log",
+      "sha256": "b4d2de1cf0d973e648bd6652e7aec3cb7c112880bf07efb26e36656a9de0ebe8"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/probe4.log",
+      "sha256": "55127b0d16629602efe2085d1095cda108f155e393bb18406ba4243e0bab4527"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/qlever-build.log",
+      "sha256": "6459bc422717a0e09ab69297a29f4380c86ce0793af1549289a9a05ec82f9b20"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/testkit-build.log",
+      "sha256": "f1368dcd45273fd898819a4f26677896e75b752c7e762f180894f4fa83340b4b"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/tests.json",
+      "sha256": "f02837dc1f3543a224c6a2474662a2759cb8143331f8978df3829dfb29c53b6f"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/tests.log",
+      "sha256": "de676c54d48f7d1852dac14b61c8aa2dd11cfb03f69f7de55d1c5224062975b5"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/tests3.log",
+      "sha256": "dc9b41413322588005ae1f7e229140bdc52a47208c35bb72321d64b3207405f3"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/triplex-build-triplex-qlever-0.1.0.tgz",
+      "sha256": "bf97f9f0f5f8be5ac3a64d2880d2d578490a2f2e4d32e09ffce8f35b03e0354e"
+    },
+    {
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/typecheck.log",
+      "sha256": "4d151c0352efafe480e284c90f45be557771a0041f6be0a4f5f529628ab75dcf"
+    }
+  ],
+  "attempts": [
+    {
+      "attempt": "attempt1",
+      "sha256": "c52c9eaa0569e974e8381990849828448681edb1f4682795872d5b4fd82b2170",
+      "completed": false,
+      "error": "Error: wrong content at 0/16/-5",
+      "samples": 1,
+      "summaries": []
+    },
+    {
+      "attempt": "attempt2",
+      "sha256": "10ab1352882c64d7c070db53e24ab27cc2c3b69d8400d8f2f56776a1888491b5",
+      "completed": true,
+      "samples": 520,
+      "summaries": [
+        {
+          "key": "keep-alive/16",
+          "n": 120,
+          "p50Ms": 6.656708999999864,
+          "p99Ms": 54.14108299999998,
+          "stalls": 60
+        },
+        {
+          "key": "keep-alive/all",
+          "n": 240,
+          "p50Ms": 7.660334000000148,
+          "p99Ms": 55.2475,
+          "stalls": 120
+        },
+        {
+          "key": "keep-alive/2048",
+          "n": 120,
+          "p50Ms": 7.660334000000148,
+          "p99Ms": 55.27149999999983,
+          "stalls": 60
+        },
+        {
+          "key": "per-request/16",
+          "n": 120,
+          "p50Ms": 1.6063749999998436,
+          "p99Ms": 3.166874999999891,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/all",
+          "n": 240,
+          "p50Ms": 1.7585000000003674,
+          "p99Ms": 3.166874999999891,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/2048",
+          "n": 120,
+          "p50Ms": 1.9427089999999225,
+          "p99Ms": 2.6477500000000873,
+          "stalls": 0
+        }
+      ]
+    },
+    {
+      "attempt": "attempt3",
+      "sha256": "2d88835591a8cf904fea46a1e00b03ef0d39a87e186c0e299f066b4a2dbc85a1",
+      "completed": true,
+      "samples": 520,
+      "summaries": [
+        {
+          "key": "keep-alive/16",
+          "n": 120,
+          "p50Ms": 7.748250000000098,
+          "p99Ms": 53.320708000000195,
+          "stalls": 60
+        },
+        {
+          "key": "keep-alive/all",
+          "n": 240,
+          "p50Ms": 8.069667000000209,
+          "p99Ms": 53.0932499999999,
+          "stalls": 120
+        },
+        {
+          "key": "keep-alive/2048",
+          "n": 120,
+          "p50Ms": 8.069667000000209,
+          "p99Ms": 52.36670800000002,
+          "stalls": 60
+        },
+        {
+          "key": "per-request/16",
+          "n": 120,
+          "p50Ms": 2.475750000000062,
+          "p99Ms": 3.5379579999998896,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/all",
+          "n": 240,
+          "p50Ms": 2.653417000000445,
+          "p99Ms": 3.841957999999977,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/2048",
+          "n": 120,
+          "p50Ms": 2.8060000000004948,
+          "p99Ms": 3.8447500000002037,
+          "stalls": 0
+        }
+      ]
+    },
+    {
+      "attempt": "attempt4",
+      "sha256": "b850a42dd32638e797a30954c8ff2cc4f7141fee00b38fd16e7b7bf6e25a136b",
+      "completed": true,
+      "samples": 520,
+      "summaries": [
+        {
+          "key": "keep-alive/16",
+          "n": 120,
+          "p50Ms": 15.946042000000034,
+          "p99Ms": 52.09704200000033,
+          "stalls": 60
+        },
+        {
+          "key": "keep-alive/all",
+          "n": 240,
+          "p50Ms": 15.946042000000034,
+          "p99Ms": 59.05662500000108,
+          "stalls": 120
+        },
+        {
+          "key": "keep-alive/2048",
+          "n": 120,
+          "p50Ms": 14.16295799999989,
+          "p99Ms": 59.395166000000245,
+          "stalls": 60
+        },
+        {
+          "key": "per-request/16",
+          "n": 120,
+          "p50Ms": 4.037000000000262,
+          "p99Ms": 7.279333000000406,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/all",
+          "n": 240,
+          "p50Ms": 4.233249999999316,
+          "p99Ms": 7.869083000000501,
+          "stalls": 0
+        },
+        {
+          "key": "per-request/2048",
+          "n": 120,
+          "p50Ms": 4.621583000000101,
+          "p99Ms": 7.869083000000501,
+          "stalls": 0
+        }
+      ]
+    }
+  ],
+  "pins": [
+    {
+      "acceptanceFile": "lab/acceptance/obligations.json",
+      "line": 15266,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "new": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "context": "    \"CS-ENTRY\": {\n      \"status\": \"EXISTS\",\n      \"source\": \"packages/xtdb/experiments/native-entry.ts and packages/qlever/experiments/native-entry.ts\",\n      \"requiredTags\": [\n        \"all\",\n        \"read-only\",\n        \"safe-parameters\""
+    },
+    {
+      "acceptanceFile": "lab/acceptance/obligations.json",
+      "line": 15288,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "new": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "context": "        },\n        {\n          \"path\": \"packages/qlever/experiments/native-entry.ts\",\n          \"sha256\": \"c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f\"\n        }\n      ],\n      \"note\": null"
+    },
+    {
+      "acceptanceFile": "lab/acceptance/obligations.json",
+      "line": 16780,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "new": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "context": "      },\n      {\n        \"path\": \"packages/qlever/experiments/native-entry.ts\",\n        \"sha256\": \"c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f\"\n      }\n    ],\n    \"CS-STR\": ["
+    },
+    {
+      "acceptanceFile": "lab/acceptance/obligations.json",
+      "line": 21747,
+      "path": "packages/qlever/experiments/native-entry.ts",
+      "old": "c82ce6cfabfcf61ab9f5d76791146d167741420a3be07b92559026f987634b0f",
+      "new": "39b11393379e443e17d5c5cd708671e7aa33ee5e16e781eace61081ae2dce74e",
+      "context": "      \"contracts\": [],\n      \"sources\": [\n        \"packages/qlever/experiments/native-entry.ts unavailable-cut-and-preaborted-query-reject\"\n      ],\n      \"grounding\": \"grounded\",\n      \"notes\": null,\n      \"layer\": null,"
+    }
+  ],
+  "acceptanceChanged": [],
+  "endedAt": "2026-11-09T04:04:21.990Z"
+}

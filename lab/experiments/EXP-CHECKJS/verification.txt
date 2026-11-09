@@ -1,0 +1,29 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 16436 "CX-A01-0314-R2b-G0-X", pid 52118 "CX-DI01-trace-r2", pid 64945 "G0-xtdb-20261109T065103Z-3715a0 vitest-testkit", pid 16437 "CX-A01-0314-R2b-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 17276 "CX-A01-0314-R2b-focused", pid 52118 "CX-DI01-trace-r2", pid 16437 "CX-A01-0314-R2b-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 65637 "CX-DI01-lag-r2", pid 66595 "CX-M01R-install", pid 63449 "CX-P2B-R3-step1b", pid 16437 "CX-A01-0314-R2b-mutations"
+Compared executable source in 104 existing JavaScript files; only gate.mjs adds a runtime check.
+checkjs-final: exit=0 signal=null
+tsc-final: exit=0 signal=null
+tests-final: exit=0 signal=null
+lab-tests: exit=1 signal=null
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: lab-tests: 
+
+1 !== 0
+
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/checkjs/lab/experiments/EXP-CHECKJS/verify.mjs:48:10
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 1,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2

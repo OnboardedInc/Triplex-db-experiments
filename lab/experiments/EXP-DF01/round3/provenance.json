@@ -1,0 +1,8 @@
+{
+  "reviewCommit": "bedf748341be24299bbe03c690d91aa8889b5ba8",
+  "probeSha256": "8c30227f0097270401eb5bcb951a2abb6c8655ba850775b6d0145cf844f9579b",
+  "deadlineProbeSha256": "f77a268c9f84be43db0d285430065eedd4eb0831ea165edd1fbae987ea71baab",
+  "base": "0f6c28c08daf9d370d2370eca8d152931b0ac512",
+  "offlineOnly": true,
+  "slot": null
+}

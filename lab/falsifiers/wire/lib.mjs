@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated bigint arithmetic or intentional JavaScript boolean/number coercion; unannotated bigint arithmetic or deliberate cross-kind comparisons. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-F02 helpers: exact conversions, rendering and comparison. No engine I/O here.
 
 /** Render any measured value for the report: keeps -0, NaN, bigint, Date and long text visible. */

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 import test from "node:test";
 import assert from "node:assert/strict";
 import { SubjectQueue } from "./candidate.mjs";
