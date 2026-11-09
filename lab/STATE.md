@@ -493,3 +493,10 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   docker context reset to default after colima switched it; all images survived (bpftrace 06f62235 included). lab/config/slots.json
   vm and pool updated to match (pool 19 of 20 GiB, disk 90 of 100 GiB; not hashed per Q64e; --verify byte-identical). Host disk 83 GiB
   free. Agents are resumed in stages, no more than 5 at once, to avoid another lock-up.
+- 2026-11-09 EXP-P5N brief (Opus): at 10k with 4 workers the 33.9 s is world building 44.4 CPU-s (worldOf's sort canonicalizes both facts
+  on every comparison, about 4.0 of 9.1 ms per subject), SQLite page reads 33 s, publishing 25.9 s (17.8 s of it outbox pulls queued
+  behind page reads), commits 6.4 s. Journal triples (option C) are 60% of activation commit rows but about 1-2% of wall time: not the
+  cause. Eight fixes (precomputed sort keys, sampled full worlds, sweep workers read SQLite, batched outbox reads, pipelined publisher,
+  lift the 4-worker cap, scoped journal lookup, no DELETE lookups for new ids) predict 54-74 s at 100k with 4 sweep cores, 71-98 s with 3.
+  Main risk is P2 (writer 40-68% busy; fix is putting activation frames in the live group commit). EXP-P5N round 1 queued for the next
+  free builder slot (after QH1 round 4); P5B round 3 writes its report from existing evidence without new heavy runs.
