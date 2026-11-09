@@ -21,6 +21,7 @@ const recordCheckpoint=(mode,outcome,start,result={})=>{
 };
 const statements = new Map();
 const q = sql => { let s=statements.get(sql); if(!s) statements.set(sql,s=db.prepare(sql)); return s; };
+const publicMarker = m => ({lsn:m.lsn,epoch:m.epoch,h:m.h,position:m.position,crc:m.crc,size:m.size});
 const marker = () => q('SELECT lsn,epoch,h,position,crc,size,base_lsn,base_crc,base_end FROM marker WHERE id=1').get();
 const durablePragmas = d => {
  d.pragma('synchronous=FULL'); d.pragma('fullfsync=ON'); d.pragma('checkpoint_fullfsync=ON');
@@ -185,9 +186,9 @@ const pull = a => {
  if(a.recordedAt!==undefined)throw Error('H1_RECORD_TIME_UNSUPPORTED');
  const m=marker(), b=a.basis;
  if(!Number.isSafeInteger(b)||b<0)throw Error('Invalid basis');
- if(b<m.h || b>m.lsn*1024+1023)return {snapshot:m,basis:b,eligible:false,rows:[]};
+ if(b<m.h || b>m.lsn*1024+1023)return {snapshot:publicMarker(m),basis:b,eligible:false,rows:[]};
  const out=rows('facts',a.selection,'pos<=?',[b]).concat(rows('journal',a.selection,'pos<=?',[b]),rows('history',a.selection,'rpos>? AND pos<=?',[b,b]));
- return {snapshot:m,basis:b,eligible:true,rows:out};
+ return {snapshot:publicMarker(m),basis:b,eligible:true,rows:out};
 };
 const handle = (op,a) => {
  if(op==='close'){clearInterval(timer);clearInterval(passiveTimer);db?.close();lock?.close();return;}
@@ -224,7 +225,9 @@ const handle = (op,a) => {
   if(last){q('DELETE FROM frames WHERE lsn<=?').run(last.lsn);q('UPDATE marker SET base_lsn=?,base_crc=?,base_end=? WHERE id=1').run(last.lsn,last.crc,last.end);}
   return {removed,anchor:last?.lsn??m.base_lsn};
  }).immediate();
- if(op==='marker')return marker();
+ // [EXP-HS01] Why: anchors are internal recovery metadata; preserve existing marker/pull result shapes. Rejected: stripping extra fields only in equivalence tests.
+ if(op==='anchor')return marker();
+ if(op==='marker')return publicMarker(marker());
  if(op==='frames')return frames(a.from,a.upto,a.maxBytes);
  if(op==='after'){
   if(a.after<marker().base_lsn)throw Error('FEED_RETENTION_EXPIRED:'+JSON.stringify({requested:a.after,retainedFrom:marker().base_lsn}));

@@ -299,7 +299,7 @@ try {
 } finally {
   fs.closeSync(fd);
   while (log.purgeFrames().removed) {}
-  const marker = log.writer.sync("marker");
+  const marker = log.writer.sync("anchor");
   await managed.dispose();
   await broker.close();
   const db = new Database(path.join(out, "store/broker.db"), { readonly: true }),

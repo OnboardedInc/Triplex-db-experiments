@@ -61,7 +61,7 @@ const emit = (x: unknown) => console.log(JSON.stringify(x));
 emit({ event: "worker-instrumentation", instrumentation });
 const feed = new LogFeed(dir);
 const store = (b as any).log;
-store.retain("crash-feed", store.writer.sync("marker").base_lsn);
+store.retain("crash-feed", store.writer.sync("anchor").base_lsn);
 let cursor = JSON.parse(cursorText) ?? feed.start();
 const feedPositions: number[] = [];
 for (;;) {

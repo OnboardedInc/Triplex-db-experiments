@@ -85,10 +85,12 @@ export interface Selection {
   readonly entities?: readonly string[];
   readonly id?: string;
 }
-export interface StoreSnapshot extends Watermark {
+interface AnchoredSnapshot extends StoreSnapshot {
   readonly base_lsn: number;
   readonly base_crc: number;
   readonly base_end: number;
+}
+export interface StoreSnapshot extends Watermark {
   readonly h: number;
   readonly crc: number;
   readonly size: number;
@@ -275,7 +277,9 @@ export class HostLog {
       writer = connect(file, "writer", gate, options.requireFullFsync);
     const connections = [writer];
     try {
-      const init = await writer.request<{ marker: StoreSnapshot; calibrationMs: number }>("init");
+      const init = await writer.request<{ marker: AnchoredSnapshot; calibrationMs: number }>(
+        "init",
+      );
       // [EXP-HS01] Why: verification memory is bounded by one retained page, independent of log age.
       // Rejected: maxBytes=MAX_SAFE_INTEGER (R45 measured a 41 GB restart at 100k).
       let cursor = {
@@ -578,7 +582,7 @@ export const hostLogRecovery = (log: HostLog) => {
   const writer = hostStores.get(log);
   if (!writer) throw new BrokerLogError("Broker log is not open");
   return {
-    marker: writer.sync<StoreSnapshot>("marker"),
+    marker: writer.sync<AnchoredSnapshot>("anchor"),
     epochs:
       writer.sync<{ epoch: number; begin_lsn: number; previous_epoch: number; aborted: string }[]>(
         "epochs",
@@ -592,7 +596,7 @@ export const readWatermark = (dir: string): Watermark | undefined => {
   return readConnection(file).sync<StoreSnapshot>("marker");
 };
 export const segmentStart = (file: string) => {
-  const m = readConnection(file).sync<StoreSnapshot>("marker");
+  const m = readConnection(file).sync<AnchoredSnapshot>("anchor");
   return { offset: m.base_end, seed: m.base_crc, nextLsn: m.base_lsn + 1 };
 };
 export const readFramesFrom = (

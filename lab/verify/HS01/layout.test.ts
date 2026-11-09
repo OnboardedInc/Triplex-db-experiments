@@ -326,6 +326,7 @@ describe("EXP-HS01", () => {
           ["claim", "cmd" + n],
           ["operation", "op" + n],
           ["head", "s:" + (n % 19)],
+          ["marker", undefined],
           [
             "frames",
             {
@@ -337,9 +338,6 @@ describe("EXP-HS01", () => {
         ];
         const [op, args] = choices[i % choices.length];
         const [a, b] = await Promise.all([old.call(op, args), now.call(op, args)]);
-        // Marker anchor columns are new scheduling metadata; row content and existing marker fields stay exact.
-        if (op === "pull")
-          for (const k of ["base_lsn", "base_crc", "base_end"]) delete b.snapshot[k];
         expect(canonical(b), op + ":" + i).toBe(canonical(a));
         calls++;
       }
