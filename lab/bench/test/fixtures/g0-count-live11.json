@@ -1,0 +1,15 @@
+{
+  "sources": {
+    "lab/experiments/EXP-K01-seed-clone/evidence/live-round11/seed.log": "67771de3c680cf8bdd767520a291e4cfd071ff0cad47f1cc707dada25e879c5b",
+    "lab/experiments/EXP-K01-seed-clone/evidence/live-round11/receipt.json": "e88720b60b0bbf3f7dc9a9aa5190a978682976463e5ab253b1c57e594d17d58d"
+  },
+  "command": "heavy.mjs --label CX-K01-R11-seed -- node lab/bench/xtdb-seed.ts --subjects 500 --seed ns-v2 --seed-batch-facts 400 --out runs/xtdb-seed/k01-r11-20261109T052411Z/seed",
+  "subjects": 500,
+  "accounts": 20,
+  "scope": "ns-xtdb-dev500-seed-ns-v2-0604cd31",
+  "batchFacts": 400,
+  "seed": "ns-v2",
+  "capturedError": "G0 count mismatch: tx_assertions",
+  "actualStoredCount": null,
+  "note": "No engine count or rows were captured. Regression reconstructs rows with the real public writer and a storage spy from captured inputs; it is not a replay of observed database rows."
+}

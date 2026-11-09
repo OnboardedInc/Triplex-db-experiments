@@ -103,11 +103,14 @@ async function readContent(
       if (!Number.isSafeInteger(count) || count < 0) throw Error("G0 invalid independent count");
       const want = expected.counts[table];
       const core = ["tx_assertions", "tx_claims", "tx_attempts", "tx_meta"].includes(table);
+      // [EXP-K01-R12] Why: retain both count observations at the refusing boundary for first-failure diagnosis. Rejected: a table-only error that loses the observed/expected values when cleanup removes the volume.
       if (
         (core || want !== undefined) &&
         (!Number.isSafeInteger(want) || want < (core ? 1 : 0) || count !== want)
       )
-        throw Error("G0 count mismatch: " + table);
+        throw Error(
+          `G0 count mismatch: ${table} (expected ${want}, observed ${count}; scope ${expected.scope}, position ${expected.position})`,
+        );
       // [EXP-K01-R8] Why: auxiliary tables have no N01 closed form; their independently counted complete contents are pinned in D. Rejected: skipping side tables or deriving core expected counts from the scan.
       // [EXP-K01-R7] Why: sort row hashes, preserving multiplicity, to stream pages without retaining full rows. Rejected: a sum/XOR digest (duplicates cancel) or a subject sample (misses changed history).
       const hashes: string[] = [];

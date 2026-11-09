@@ -14,10 +14,13 @@ import {
   type Expected,
   type Pin,
 } from "./g0.ts";
-import { populationCounts } from "./world.ts";
+import { n01SeedCounts } from "./n01-counts.ts";
 export function expectedN01(m: any): Expected {
-  const n = populationCounts(m.subjects, m.accounts).seedAssertions;
+  const plan = n01SeedCounts(m.subjects, m.seedInputs?.options?.seedBatchFacts);
+  const n = plan.business;
   if (
+    m.accounts !== plan.accounts ||
+    m.result?.commands !== plan.commands ||
     !m.result?.complete ||
     m.result.seededSubjects !== m.subjects ||
     m.result.assertions !== n ||
@@ -30,7 +33,7 @@ export function expectedN01(m: any): Expected {
     position: m.result.lastPosition,
     world: "N01",
     counts: {
-      tx_assertions: n,
+      tx_assertions: plan.storedAssertions,
       tx_claims: m.result.commands,
       tx_attempts: m.result.commands,
       tx_meta: 1,
