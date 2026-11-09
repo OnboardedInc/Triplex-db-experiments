@@ -2033,3 +2033,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
 
 - **d7f8def2:** G2 completed no cases and G6 did not run; the earlier timeout's cause is still unknown. Slot released, volumes removed, VM trimmed.
 - **Same class as K01 round 12:** a declared table that a fresh XTDB 2 engine has not created yet. **Lesson:** "XTDB creates tables on first insert" is a lab-wide fact, not a K01 detail; every path that reads a table it may not have written must check the catalog. RT01 live round 2 reuses K01's typed catalog check, then runs a diagnostic smoke pass before G2 and G6.
+
+## 2026-11-09: R44 designs the NS run: every candidate role in its own VM container; trusted P3 instants from the observer
+
+- **Placement (Q100a, Q100d):** broker, reader service and feed consumer each run in a hardened candidate container in the triplex2 VM; the NS driver is trusted evaluator code in its own container and imports nothing under packages/. Nothing measured stays on the Mac.
+- **Consequence for P2:** F_FULLFSYNC does not exist in the VM. Durability becomes guest fdatasync plus a virtio flush plus Lima's disk sync mode (unverified). Mac-placed P2 and P3 numbers, including P2B rounds 1-3 and R42's probes, become a separate comparison series; seven measurements (M1-M7) must be redone in the VM. P2B round 3's main-thread findings still carry over; its fsync numbers do not.
+- **P3 lag start (Q100e):** the observer brackets each position's publication [L, U] by polling broker.db's marker read-only, woken by inotify; lag is U_consumer minus L_source, which can only overstate lag. The broker's own watermarkAt and FD01's clock become cross-checks.
+- **One clock (Q100f):** all containers share the VM's CLOCK_MONOTONIC, so the Mac clock bridge (5.55 ms uncertainty) leaves the timing path; FD01's clock domain must drop the hostname.
+- **Single arm (Q100l):** one arm needs 6 CPUs and about 7 GiB, so a 256-reader duet does not fit; NS runs are single-arm and park two dev residents.
+- **Dispatched:** CX-CRNS (claim.mjs recompute, B5), CX-NSR (bench split plus FD01 clock and durable-flush fixes, B1+B7), CX-VM01R (M01 rebase review), CX-VA01-0314 round 2 (0.3.14 fixed F1/F2; value domains now mandatory). Q100a-p pending; Q100-S1 restates Q60's host half for Sam. Next: V1-V7 VM probes (one slot hour), then G03 round 5 once NSR lands.
+- **Lesson:** a design question deferred long enough (R28 open decision 2, driver placement) silently decides how every earlier measurement will be read. P2 work tuned on the Mac now needs a VM rerun.
