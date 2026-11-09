@@ -1,0 +1,21 @@
+{
+  "bytes": 8171616,
+  "claim": "offline review and file integrity only; no sealed VM or NS acceptance",
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VOBS6",
+  "files": 265,
+  "finalAttempt": "adversarial03",
+  "format": "CX-VOBS6-evidence-index/1",
+  "manifestSha256": "31ee9b316e2d476aa64a6fcd669275b61609efc935724ff8281f6f50bffe2de8",
+  "nestedManifestEntriesChecked": 258,
+  "retentionToolSha256": "5517f45ff16d4dd71bdf96ef6355aed8fc5df807fd906228ed87942f6c7b63ac",
+  "reviewedCommit": "c1a14ad577fcdebbfdea4407b9d5999da12ac0e2",
+  "sourceSha256": {
+    "lab/bin/vm-observer.mjs": "5e179a7142f56fb72e464d1a111a23cb41ab350f71598243a66c6f6b7d16ec1d",
+    "lab/observer/test_vm.py": "046ec9ebbfcace452565f4e7d5bb9d0cb4f1f87d54f996790a847f5d9952fc4c",
+    "lab/observer/vm_fixture.py": "785bf49d536290505c1a204caeb7f0d36b9d374874a1253943ef120318691578",
+    "lab/observer/vm_normalizer.py": "dea777c2aeab0060d7f1d4b13f157a54f1cdbcf6c367fb3fc63c5ea49e5f965b",
+    "lab/observer/vm_watch.py": "ba49db1b705c07c3e1ca3da20b99f284fbb580b6a4f76c0d17f6be6353dbd7bd",
+    "lab/verify/OBS01/probe_round7.py": "17c6f471c77ba56cb225ce6e41d55add543015d067b0bf1246b89880e27e63c1"
+  },
+  "verdict": "FIX-FIRST"
+}
