@@ -277,3 +277,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 NSR ACCEPT-OFFLINE (verify/NSR-r4 bd0555df; driver isolation by filesystem layout and Node's permission model; exact output
   grant; minimal recorded environment). G03 round 5 (the NS runner, R44 B2) started on G03 + NSR 709a18f1. R43 chain now: G03 rounds 5-7,
   then the G03 slot run, M01 A/A, OBS01 round 6, P3 screening, A0 under PAIR-0, contract 0.4.1, calibration, acceptance.
+- 2026-11-09 CR-NS ACCEPTED for offline P2 and P3 arithmetic by both reviewers (Codex verify/CRNS 3183681b at round 3; Opus round 5 at
+  exp/CRNS-recompute 40589336, which includes the reviewer's files). Joins contract 0.4.0's next round. NS PASS still waits on qualified
+  decoders, oracles and the calibration registry (0.4.1). Contract note for 0.4.1's CS-NS manifest: the per-loop reader floor must be the
+  intended closed-loop load, not the fixture's 2 per second. **Question for Sam (low priority):** P1's read bar is p99 <= 100 ms, which
+  allows reads to bunch within 100 ms; if he wants read service spread below that, it needs a p99.9 or max read bar.
