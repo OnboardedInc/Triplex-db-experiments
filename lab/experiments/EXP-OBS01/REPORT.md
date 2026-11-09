@@ -1559,3 +1559,93 @@ No `lab/acceptance` path moved. Changed or new sources (old at `e696c828`):
 - `clockProgramStep`, the new `bpftraceOnce` options (entrypoint, timeout) and the updated `windowW0` wiring are syntax-checked only; their pure verdicts and the parser are unit-tested on constructed samples.
 - The Dockerfile is still not built (libbsd0 version open); B9 and CR-NS `claim.mjs` still not built.
 - `probe_round9.py` and earlier durable evidence were not re-run. The helper's real CLOCK_BOOTTIME path (Linux) was not exercised on this macOS host.
+
+## Round 12: fail-closed clock proof (fixes the round 11 review `VERIFY-round11.md`: A1, A2 and the UAPI gap)
+
+Builder Claude Sonnet 5.5, from `exp/OBS01-observer` at `ba10e8f7`. Offline only: no VM, docker, colima, network, pull or install. Heavy runs went through `lab/bin/heavy.mjs --label OBS01-R12`.
+
+### What changed
+
+| Finding | Fix |
+| --- | --- |
+| A1 failed or missing compile status yields a proof | `clockPrimitiveVerdict` adopts a dump only when its process completed: `exitCode === 0` (an integer), no signal, `timedOut === false`, no spawn error. The same check applies to `--version`, `sha256sum` and the new BTF read; missing or null status refuses. A failed compile's output stays a diagnostic (no sections, no calls counted). `bpftraceOnce` now records `signal` and `error`; W0's three short containers use the kill-timeout path so the status is that of `docker start -a`. |
+| A2 partial format recognition | One representation is judged, and it must be present and complete (see divergence 1): per-probe `Disassembly of section` start marker, only instruction lines, final `exit` instruction, at least 15 sections. Every call-like line in a section must parse to one helper id in any spelling (symbolic, name only, numeric, parenthesised opcode, raw bytes, LLVM `inttoptr`) or the proof refuses UNPARSED-CALL. Every id must be on `HELPER_ALLOW_LIST` (derived from the .bt source, below); any clock helper but `bpf_ktime_get_ns` and any other helper refuse. Calls in other stages never count. The 15-site count is secondary. |
+| UAPI gap | `lab/bin/btf-helpers.mjs`: strict BTF reader (header, contiguous sections, string section, every type record, ENUM and ENUM64) extracting `enum bpf_func_id`. W0 reads `/sys/kernel/btf/vmlinux` with the pinned image (`base64 -w0`), derives the five clock ids and every allow-listed id, and refuses if the enum is missing or ambiguous or a name is absent or two names share an id. The clock proof uses only those ids; the old table is `REFERENCE_CLOCK_IDS`/`FORBIDDEN_CLOCK_HELPERS`, used by tests and an informational `referenceNote`. |
+
+**Allow-list (stated, derived from `vm_syncwitness.bt`).** `bpf_ktime_get_ns` (nsecs(monotonic)); `bpf_map_lookup_elem`, `bpf_map_update_elem` (`@m[k]`, `@n[cpu]++`); `bpf_map_delete_elem` (`delete`);
+`bpf_get_smp_processor_id` (`cpu`); `bpf_get_current_pid_tgid` (`tid`); `bpf_get_current_cgroup_id` (`cgroup`); `bpf_perf_event_output` or `bpf_ringbuf_output/reserve/submit/discard` (`printf`);
+`bpf_probe_read_kernel` or `bpf_probe_read` (`->` chains). `sourceHelperNeeds` recomputes this set from the source, a test asserts it equals the allow-list exactly, and any source construct that would call another helper
+(`comm`, `pid`, `str`, `hist`, `count`, `system`, ...) makes the proof refuse.
+
+### Tests
+
+| Suite | Result |
+| --- | --- |
+| `test_vm.py` | 14/14 |
+| `test_syncwitness.py` | 18/18 |
+| `test_round10.py` | 40/40 |
+| `test_round11.py` | 20/20 |
+| `node --test lab/observer/test_engine.mjs` | 25/25 (clock-proof verdict test rewritten for the new rules, see divergence 3) |
+| `node --test lab/observer/test_round12.mjs` (new) | 18/18: A1 (13 bad statuses through each of compile, version, hash and BTF, through the proof and `judgeW0`; partial output with failure; truncation), A2 (reviewer mixed-format fixture appended, inside first and last section and after a blank line; 15 call-like lines that do not parse; bytes/mnemonic disagreement; truncated and missing-section dumps; duplicate and empty sections; other stages cannot rescue; every forbidden clock in six spellings; unknown helpers; allow-list equals the source's needs), BTF (ENUM and ENUM64 blob built byte by byte, labeled constructed; ids differing from the reference table drive the verdict; missing enum, empty enum, duplicate enum, absent name, id collision, absent blob; every strict prefix of a blob refuses; bad and swapped magic, version, header and section bounds, gap, overlap, trailing byte, bad string section, bad name offset, unknown kind, overrunning record, bad enum size, out-of-range and negative id) |
+| reviewer `review_round9.py` | 11/11 (output to a scratch dir) |
+| reviewer `review_round10.py` | 4/4 (scratch dir) |
+| reviewer `review_round11.mjs` | 5/5 (3 controls and both Class A assertions now pass; its retained evidence under `round11/` was restored after each run, not overwritten) |
+
+Mutation spot checks (each failed the new or reworked tests, then was reverted byte for byte): the exit-status check, the `timedOut` check, the section-complete check, the allow-list check, the UNPARSED-CALL refusal, the section-count check.
+
+### Divergences from the brief (all of them)
+
+1. **The chosen representation is the per-probe BPF disassembly (`dis`), and its textual format is constructed.** Why this one: it is the last form bpftrace produces for the program it loads (after the optimiser and the BPF backend);
+   the LLVM IR stages precede both, and the verifier log needs a kernel load and is truncated at the log buffer size. The decision asked for "start and end markers for every probe". bpftrace 0.20.2's real dump format is unobserved,
+   so the markers are the proof's own convention: a `Disassembly of section <name>:` start line, instruction lines `N: ...`, and an `exit` instruction as the end marker (a truncated section does not end with one). Section names are
+   not mapped one-to-one onto source probes (the real naming is unknown); the rule is at least as many sections as the source's 15 probe blocks, each complete. If the real dump differs, W0 refuses and the first run records it (Class B).
+2. **`-d all` and the real output are still unobserved** (unchanged from round 11 divergence 1). A wrong flag now fails twice: nonzero exit (A1) and no section.
+3. **Fixture changes (decision-driven).** `lab/verify/CX-VOBS7/review_round11.mjs` (reviewer file): `good` is now a sectioned constructed dump and `facts()` carries `versionRun`, `hashRun` and a constructed BTF blob, because the new proof requires them; no assertion was changed.
+   `lab/observer/test_engine.mjs`: `goodProof` and the verdict test were rewritten on the same basis. Message expectations that moved: "no recognisable helper calls" became "compiled program section not found";
+   "unrecognised clock-reading helper" became "not in the kernel bpf_func_id enum" plus "clock helper named in the compiled output"; per-format `monotonicCalls.ir` became one number (calls in the chosen section); ids in the verdict
+   come from the BTF fixture. The parser-spellings test (`parseCompiledHelpers`) is unchanged. The W0 test keeps all its assertions.
+4. **Allow-list alternatives are unverified.** Whether bpftrace 0.20.2 emits perf-buffer or ring-buffer `printf` output, and `bpf_probe_read` or `bpf_probe_read_kernel`, is not known offline, so both alternatives are allowed. Consequence of
+   decision 3: every allow-listed name must exist in the kernel enum, so a kernel without the ring-buffer helpers (before 5.8) or `bpf_ktime_get_tai_ns` (before 6.1) makes W0 refuse. The triplex2 VM kernel version is not known here.
+5. **The BTF is read with the pinned image's `base64 -w0`** (the decision said "in the observer container"; the bpftrace image is the only trusted container with the read-only `/sys/kernel/btf` mount, and docker's stdout is read as text,
+   so base64 keeps the bytes intact). A corrupt or truncated transfer fails the strict parser. The 5 MB BTF is not stored; its sha256 and size are in the verdict and the derived enum in `w0-bpf-func-id-enum.json`.
+6. **Extra strictness beyond the decision:** any name the kernel enum classes as a clock (names with ktime, jiffies, time, clock, tai, boot, coarse) other than `bpf_ktime_get_ns` is a clock refusal even if this file never heard of it; a clock helper
+   named or called in any stage, even outside the chosen section, refuses (never rescues); a source that uses a construct outside the derivation refuses; the BTF reader requires contiguous sections with no trailing bytes, which could in principle
+   refuse an unusual real BTF (Class B, W0 would show it).
+7. **API shape.** `facts` gained `versionRun`, `hashRun`, `btf {exitCode,signal,timedOut,error,bytes}`; `compiled` gained `signal` and `error`. `MONOTONIC_HELPER` lost its `id`. `parseCompiledHelpers(text, ids)` is kept as the loose whole-text
+   scan and spelling test. New: `lab/bin/btf-helpers.mjs`, `lab/observer/btf_fixture.mjs`, `lab/observer/dump_fixture.mjs`, `lab/observer/test_round12.mjs`; `run_vm_offline.py` now pins and runs them.
+
+### PASS audit (rule 9a): every site that turns observations into a verdict or receipt
+
+| Site | Content | Freshness | Binding |
+| --- | --- | --- | --- |
+| `clockPrimitiveVerdict` process checks | exit status 0, no signal, `timedOut === false`, no error, for the compile, version, hash and BTF read | each container is started in this W0 window and its status is read from that run | statuses come from the `docker start -a` of that container; a missing status refuses |
+| `clockPrimitiveVerdict` compiled section | every line of every section parsed; each section complete; every call an allow-listed id; no other clock | the dump is this attempt's compile (`compiled` of the same step) | exact text hashed (`compiledSha256`); section rules tied to the source's probe count (15) and `nsecs(monotonic)` site count; allow-list tied to the source by `sourceHelperNeeds` |
+| `deriveHelperIds` / `parseBtfEnums` | strict structure and the `bpf_func_id` enum; every needed name present, ids distinct | read from `/sys/kernel/btf/vmlinux` in the same W0 window | `btfSha256`, `btfBytes`, the derived ids and the enum file are recorded; the same running kernel as the later attach session only by being the same VM in the same run (uname is in the W0 facts; not re-read between the steps) |
+| `clockPrimitiveVerdict` source, version and hash binding | source text hash equals the pinned hash and the image's `sha256sum`; version string equals `bpftrace v0.20.2` | read before and after in this step | unchanged from round 11 |
+| `judgeW0` | proof AND transport not INCONSISTENT AND the earlier items | as above | unchanged |
+
+Known gaps: the real `-d all` output (flag, stage order, section markers, spellings) is unobserved; the allow-list alternatives are unverified; the dump is compiled with placeholder arguments, so the binding to the later attach session's program is by
+source hash, version string and image digest only; the three W0 containers are separate runs of one pinned image.
+
+### Moved source hashes
+
+No `lab/acceptance` path is pinned to any file changed here. Changed or new paths (old at `ba10e8f7`):
+
+| Path | Old SHA256 | New SHA256 |
+| --- | --- | --- |
+| `lab/bin/clock-proof.mjs` | `bb661980c8e1e72a4e35dab1e395fd5fef8cd09f9d99c15ed0f14e9c48c3cf3e` | `e927fa817485c59426d45d4bc262d51f1f3c522f6d233451964a2dfe45749961` |
+| `lab/bin/sync-witness.mjs` | `f07003dd43f04728073c27887c4d01b74478d3e1170561e03180e33f22c88e10` | `01d2bca4aaefc80ee112d734dda6d064cccf798bc1429d529aa817041f7995f8` |
+| `lab/observer/test_engine.mjs` | `312ed665595847125e213e1c68b442c86bbde4fe8f735189238dae660d036bca` | `a80f81f88e440ac4c8d6f07c3777ba390f2486235202eabb5e939f6ae02d273b` |
+| `lab/observer/run_vm_offline.py` | `276f58166358f96ab9ace17a9c901f3dff0104abc70778a9e870c7de375a66e3` | `a8453b9a179bf67f7642e1ed9b590f69a92e0abb61cab48cf23d71574a80ddcd` |
+| `lab/verify/CX-VOBS7/review_round11.mjs` | `5d1db606ce4f5ffe5aeb80b498218aafd62780ac943f018428fda62f887b49f3` | `b4973a961114c8f3afc8634c871c2caaea26265b0fee4faab6fbd3fc74024e69` |
+| `lab/bin/btf-helpers.mjs` | new | `4553651921b04d42bd99b1978641d4315fb9b54b5a63f8e8312c4a77f8cad166` |
+| `lab/observer/btf_fixture.mjs` | new | `2d0ded83020f1866cfef544acca3719c9b74fc612a9d9a436ad6221d40798a23` |
+| `lab/observer/dump_fixture.mjs` | new | `2e09d261cf25e78557926f6aaccbed76813eea617ddfa08511f7d87016935cfe` |
+| `lab/observer/test_round12.mjs` | new | `27717bfdf3107f30cf69103c8d33288511feea4ae3d42f2296c844a391b63fc8` |
+
+### What did not run
+
+- No VM, Docker, colima, engine or network command; no image pull, apt, pip or pnpm. W0 to W4 not run; no real bpftrace of any kind, so `--version`, `-d all`, the real dump format, the real kernel BTF and the real `bpf_func_id` enum are all unobserved.
+- `clockProgramStep` (the BTF read container, the status recording, the enum file) and `bpftraceOnce` changes are syntax-checked and covered by a static wiring test only; they never ran against Docker.
+- The BTF reader ran only on blobs constructed byte by byte, never on a real vmlinux BTF (size, kind mix, section layout unverified).
+- The Dockerfile is still not built; B9 and CR-NS `claim.mjs` still not built; `probe_round9.py` and earlier durable evidence not re-run.

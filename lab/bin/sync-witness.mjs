@@ -7,8 +7,10 @@ import {spawn,spawnSync} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
 import {REPO,ENGINE_DIR,LOCKS,atomicJson,defaultHolder,docker,dockerStats,inspect,listTx2Containers,readJson,sha256,fail,sleep,POOL_FILE} from './lib.mjs';
 import {harden,pinImage,remove,reserve,vmAvailable,waitFile} from './vm-observer.mjs';
-import {BPFTRACE_VERSION,COMPILE_FLAGS,COMPILE_PLACEHOLDER_ARGS,clockPrimitiveVerdict,sha256Hex} from './clock-proof.mjs';
-export {BPFTRACE_VERSION,COMPILE_FLAGS,clockPrimitiveVerdict,parseCompiledHelpers,sourceTimeSites} from './clock-proof.mjs';
+import {BPFTRACE_VERSION,COMPILE_FLAGS,COMPILE_PLACEHOLDER_ARGS,REQUIRED_HELPER_NAMES,clockPrimitiveVerdict,sha256Hex} from './clock-proof.mjs';
+import {deriveHelperIds as deriveBtfHelperIds,parseBtfEnums} from './btf-helpers.mjs';
+export {BPFTRACE_VERSION,COMPILE_FLAGS,HELPER_ALLOW_LIST,clockPrimitiveVerdict,extractSections,parseCallLine,parseCompiledHelpers,sourceHelperNeeds,sourceProbes,sourceTimeSites} from './clock-proof.mjs';
+export {deriveBtfHelperIds,parseBtfEnums};
 
 export const PROGRAM=path.join(REPO,'lab/observer/vm_syncwitness.bt');
 export const CLOCK_PROBE=path.join(REPO,'lab/observer/vm_clockprobe.bt');
@@ -329,10 +331,11 @@ async function bpftraceOnce(ctx,tag,argv,{mounts=[],caps=['BPF','PERFMON'],entry
    '-v','/sys/kernel/btf:/sys/kernel/btf:ro','-v','/sys/kernel/tracing:/sys/kernel/tracing:ro',...mounts],argv));
   if(timeoutMs===null){
    const stdout=docker(['start','-a',name],{allowFail:true})??'',doc=inspect(name),logs=run(['docker','-H',SOCK,'logs',name]);
-   return {stdout,stderr:logs.stderr??'',exitCode:doc?.State.ExitCode??null,timedOut:false};
+   return {stdout,stderr:logs.stderr??'',exitCode:doc?.State.ExitCode??null,signal:null,timedOut:false,error:null};
   }
-  const done=run(['docker','-H',SOCK,'start','-a',name],{timeout:timeoutMs,killSignal:'SIGKILL'});
-  return {stdout:done.stdout??'',stderr:done.stderr??'',exitCode:done.error?.code==='ETIMEDOUT'?null:done.status,timedOut:done.error?.code==='ETIMEDOUT'};
+  const done=run(['docker','-H',SOCK,'start','-a',name],{timeout:timeoutMs,killSignal:'SIGKILL'}),timedOut=done.error?.code==='ETIMEDOUT';
+  // [EXP-OBS01-R12] Why (A1): the signal and any spawn error are recorded next to the exit status so the clock proof can require a clean completion. Rejected: exit code alone.
+  return {stdout:done.stdout??'',stderr:done.stderr??'',exitCode:timedOut?null:done.status,signal:done.signal??null,timedOut,error:done.error&&!timedOut?String(done.error.code??done.error.message):null};
  }finally{await remove(name,ctx.holder);}
 }
 
@@ -341,16 +344,25 @@ async function bpftraceOnce(ctx,tag,argv,{mounts=[],caps=['BPF','PERFMON'],entry
  * it. The sha256 is computed by the same image on the mounted file (not by the harness on its own copy), and compared with the harness's hash of the
  * pinned file read before and after. The dump uses placeholder positional arguments (only constants differ). Output goes to <out>/w0-compiled-program.txt
  * (can exceed 1 MB: durable evidence, not git, rule 9c).
+ * [EXP-OBS01-R12] Every container's exit status, signal, timeout and spawn error are passed to the verdict (A1), and the helper ids come from the running kernel's
+ * BTF read by the same image (`base64 -w0 /sys/kernel/btf/vmlinux`, decoded here; a truncated or corrupt transfer fails the strict BTF parser). The derived enum is
+ * written to <out>/w0-bpf-func-id-enum.json; the 5 MB BTF itself is identified by its sha256 and size, not copied.
  */
 async function clockProgramStep(ctx){
  const bind=['-v',PROGRAM+':/program/vm_syncwitness.bt:ro'],before=fs.readFileSync(PROGRAM),expected=sha256Hex(before);
- const version=await bpftraceOnce(ctx,'version',['--version']);
- const hashed=await bpftraceOnce(ctx,'sha',['/program/vm_syncwitness.bt'],{mounts:bind,entrypoint:'sha256sum'});
+ const version=await bpftraceOnce(ctx,'version',['--version'],{timeoutMs:60000});
+ const hashed=await bpftraceOnce(ctx,'sha',['/program/vm_syncwitness.bt'],{mounts:bind,entrypoint:'sha256sum',timeoutMs:60000});
+ const btfRun=await bpftraceOnce(ctx,'btf',['-w0','/sys/kernel/btf/vmlinux'],{entrypoint:'base64',timeoutMs:120000});
+ const btfBytes=Buffer.from(btfRun.stdout.replace(/\s+/g,''),'base64');
  const compiled=await bpftraceOnce(ctx,'compile',[...COMPILE_FLAGS,'/program/vm_syncwitness.bt',...COMPILE_PLACEHOLDER_ARGS],{mounts:bind,timeoutMs:120000});
  const after=fs.readFileSync(PROGRAM);
  const dumpPath=path.join(ctx.out,'w0-compiled-program.txt');fs.writeFileSync(dumpPath,'--- stdout ---\n'+compiled.stdout+'\n--- stderr ---\n'+compiled.stderr+'\n');
- return {facts:{expectedSourceSha256:sha256Hex(after)===expected?expected:null,mountedSourceSha256:(/^([0-9a-f]{64})\s/.exec(hashed.stdout)??[])[1]??null,sourceText:before.toString('utf8'),versionOutput:version.stdout,compiled},
-  image:ctx.bpftrace,dumpPath,exitCodes:{version:version.exitCode,sha:hashed.exitCode,compile:compiled.exitCode},versionStderr:version.stderr};
+ const status=r=>({exitCode:r.exitCode,signal:r.signal,timedOut:r.timedOut,error:r.error});
+ const facts={expectedSourceSha256:sha256Hex(after)===expected?expected:null,mountedSourceSha256:(/^([0-9a-f]{64})\s/.exec(hashed.stdout)??[])[1]??null,sourceText:before.toString('utf8'),versionOutput:version.stdout,
+  versionRun:status(version),hashRun:status(hashed),btf:{...status(btfRun),bytes:btfBytes},compiled};
+ const derived=deriveBtfHelperIds(btfBytes,REQUIRED_HELPER_NAMES),enumPath=path.join(ctx.out,'w0-bpf-func-id-enum.json');
+ fs.writeFileSync(enumPath,JSON.stringify({btfSha256:derived.btfSha256,btfBytes:derived.btfBytes,typeCount:derived.typeCount,enumKind:derived.enumKind,ok:derived.ok,reasons:derived.reasons,ids:derived.ids},null,1)+'\n');
+ return {facts,image:ctx.bpftrace,dumpPath,enumPath,exitCodes:{version:version.exitCode,sha:hashed.exitCode,btf:btfRun.exitCode,compile:compiled.exitCode},versionStderr:version.stderr};
 }
 
 /** R49 W0 clock step: the clock probe container streams CK lines through vm_clockcheck.py running in the VM, which stamps its own CLOCK_MONOTONIC on receipt. */
@@ -386,7 +398,7 @@ async function windowW0(ctx){
  const all={facts,listing,tracepointAttach,clock:{status:clock.status,stderr:clock.stderr,unparsed:clock.unparsed},clockProgram:program.facts,attach,
   paranoid:Number.parseInt(facts.perfEventParanoid,10),ext4BtfPresent:facts.ext4BtfPresent,clockSamples:clock.status===0&&!clock.unparsed?clock.samples:null};
  const verdict=judgeW0(all);
- return {window:'W0',facts,listing,tracepointAttach,clock,clockProgram:{image:program.image,dumpPath:program.dumpPath,exitCodes:program.exitCodes,versionStderr:program.versionStderr,verdict:verdict.checks.clock},attach,verdict,pass:verdict.pass,
+ return {window:'W0',facts,listing,tracepointAttach,clock,clockProgram:{image:program.image,dumpPath:program.dumpPath,enumPath:program.enumPath,exitCodes:program.exitCodes,versionStderr:program.versionStderr,verdict:verdict.checks.clock},attach,verdict,pass:verdict.pass,
   claim:'kernel and capability facts; attach under default seccomp with only CAP_BPF and CAP_PERFMON; clock primitive proven from the pinned program hash, bpftrace version and compiled helper calls (nsecs(monotonic) only), with an observational transport check against local CLOCK_MONOTONIC/CLOCK_BOOTTIME references recorded as consistent, inconclusive or inconsistent; perf_event_paranoid, peak memory, ext4 built in and map keys recorded; D<ack bracket for 200 FULL commits'};
 }
 async function windowW1(ctx){

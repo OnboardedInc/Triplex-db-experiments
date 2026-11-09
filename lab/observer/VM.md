@@ -394,3 +394,22 @@ Orchestrator decision: observation cannot prove which clock a timestamp used (eq
    The verdict is `INCONSISTENT` (value ahead of the receipt by more than 1 ms, backwards, lagging more than 100 ms, malformed or missing), `CONSISTENT` (fits monotonic and the local separation, lower bound
    `boot - after`, exceeds `tolerance + slack - minimum hop`, so a boot reading is excluded) or `INCONCLUSIVE` (everything else, in particular a separation not larger than the measured uncertainty; also no CLOCK_BOOTTIME
    reference). `INCONCLUSIVE` is never a pass. `judgeW0` records it as `clockTransport` and blocks W0 only on `INCONSISTENT`; `checks.clock` is the program proof alone; `clockIdentity` in the verdict says which proved what.
+
+## Round 12: the clock proof is fail-closed (fixes the round 11 review A1, A2 and the UAPI gap)
+
+Supersedes steps 2 and 3 of "R10-F3" above. `clockPrimitiveVerdict` (`lab/bin/clock-proof.mjs`) now passes only when all of this holds:
+
+1. **Every process completed.** `bpftrace --version`, `sha256sum`, the BTF read and the compile each have exit status 0 (an integer), no signal, `timedOut === false` and no spawn error. A missing, null, nonzero,
+   killed or timed-out status refuses, and a failed compile's output is kept only as a diagnostic (its sections and calls are not counted).
+2. **One representation, complete.** Judged: the per-probe BPF bytecode disassembly (`dis`, the last form bpftrace produces for the program it loads; not the LLVM IR, which precedes the optimiser and BPF backend,
+   and not the verifier log, which exists only after a kernel load and is cut at the log buffer size). Each section starts at a `Disassembly of section <name>:` line, holds only `N: ...` instruction lines and
+   ends with an `exit` instruction; there must be at least as many sections as the source has probe blocks (15). The marker spelling and instruction spellings are the proof's own convention, **constructed and
+   unverified until W0 records a real dump**; if bpftrace prints something else the section check refuses (fail closed), and the first W0 run settles the real format.
+3. **Every call accounted for.** Inside the sections each line that is a call in any spelling (`call bpf_x#5`, `call bpf_x`, `call 5`, `call 0x7d`, raw bytes `85 00 00 00 05 ...`, `(85) call 125`, LLVM
+   `call ... inttoptr (i64 5 ...)`) must parse to one helper id, else the proof refuses with UNPARSED-CALL (`callx`, `call pc+N`, two call tokens on a line, bytes and mnemonic that disagree, and any
+   call-like token that matches no form included). Each id must be on `HELPER_ALLOW_LIST` (the helpers the .bt source needs, derived construct by construct and checked against the source by `sourceHelperNeeds`);
+   a ktime/jiffies/clock helper other than `bpf_ktime_get_ns` refuses; any other helper refuses. Calls in other stages never count; a clock helper named or called anywhere in the output still refuses.
+   The per-site count (`bpf_ktime_get_ns` calls in the sections at least the 15 `nsecs(monotonic)` sites) is a secondary sanity check.
+4. **Helper ids from the running kernel.** The same pinned image runs `base64 -w0 /sys/kernel/btf/vmlinux` (read-only mount, entrypoint override); `lab/bin/btf-helpers.mjs` is a strict BTF reader (header, contiguous sections,
+   string section, every type record, ENUM and ENUM64) that extracts `enum bpf_func_id`. W0 refuses if the BTF is unreadable, the enum is missing or ambiguous, a needed helper name is absent, or two needed names share an id.
+   The enum is written to `<W0 out>/w0-bpf-func-id-enum.json`; the BTF itself is identified by its sha256 and size.

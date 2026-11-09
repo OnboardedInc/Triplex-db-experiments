@@ -5,6 +5,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { test } from 'node:test';
+import { buildKernelLikeBtf } from './btf_fixture.mjs';
+import { sectionedDump } from './dump_fixture.mjs';
 process.env.TX2_ENGINE_DIR ??= path.resolve('runs/OBS01/test-engines');
 const { observerPlan } = await import('../bin/observer.mjs');
 const { sameResident } = await import('../bin/resident-observer.mjs');
@@ -232,33 +234,39 @@ const ir18 = id => `  %x = tail call i64 inttoptr (i64 ${id} to ptr)()`;
 const dis = id => `      12:\t85 00 00 00 ${id.toString(16).padStart(2, '0')} 00 00 00\tcall ${id}`;
 const ver = (name, id) => `12: (85) call ${name}#${id}`;
 const pinned = fs.readFileSync(witness.PROGRAM);
+// [OBS01-R12] The proof judges the per-probe disassembly section and takes helper ids from the kernel BTF (both CONSTRUCTED: btf_fixture.mjs, dump_fixture.mjs) and requires a clean exit of every process.
+const okRun = { exitCode: 0, signal: null, timedOut: false, error: null };
+const fixtureBtf = buildKernelLikeBtf();
+const dumpOf = (callIds, form) => sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: callIds, form })) });
+const fifteenOf = (id, form) => dumpOf([id], form);
 const goodProof = (compiledText, over = {}) => ({ expectedSourceSha256: sha(pinned), mountedSourceSha256: sha(pinned), sourceText: pinned.toString('utf8'), versionOutput: 'bpftrace v0.20.2\n',
-  compiled: { stdout: compiledText ?? Array.from({ length: 15 }, () => ir(5)).join('\n'), stderr: '', exitCode: 0, timedOut: false }, ...over });
+  versionRun: okRun, hashRun: okRun, btf: { ...okRun, bytes: fixtureBtf }, compiled: { stdout: compiledText ?? sectionedDump(), stderr: '', exitCode: 0, timedOut: false }, ...over });
 function sha(b) { return crypto.createHash('sha256').update(b).digest('hex'); }
 test('compiled-program parser reads helper calls in the IR (old and opaque-pointer forms), disassembly and verifier forms [constructed samples]', () => {
   const p = witness.parseCompiledHelpers([ir(5), ir18(5), ir(125), '  %y = call i32 @llvm.bpf.pseudo(i64 1, i64 2)', '  %z = load i64, ptr inttoptr (i64 0 to ptr)', dis(5), dis(125), '      13:\t85 10 00 00 7d 00 00 00\tcall 0x7d', ver('bpf_ktime_get_ns', 5), ver('bpf_get_current_pid_tgid', 14)].join('\n'));
   assert.deepEqual(p.ir, { 5: 2, 125: 1 }); assert.deepEqual(p.asm, { 5: 1, 125: 2 }); assert.deepEqual(p.named, { 5: 1, 14: 1 }); assert.deepEqual(p.problems, []);
   assert.deepEqual(witness.parseCompiledHelpers('').ir, {}); assert.deepEqual(witness.parseCompiledHelpers(undefined).asm, {});
 });
-test('clock primitive step passes only on the pinned program, exact bpftrace version and monotonic-only compiled time reads [constructed samples]', () => {
+test('clock primitive step passes only on the pinned program, exact bpftrace version and a complete, allow-listed, monotonic-only compiled program [constructed samples]', () => {
   const run = (compiled, over) => witness.clockPrimitiveVerdict(goodProof(compiled, over));
-  const good = run(); assert.deepEqual(good.reasons, []); assert.equal(good.pass, true); assert.equal(good.sourceMonotonicSites, 15); assert.equal(good.monotonicCalls.ir, 15); assert.deepEqual(good.flags, witness.COMPILE_FLAGS);
-  assert.equal(run([...Array.from({ length: 15 }, () => dis(5)), ir(8), ir(14)].join('\n')).pass, true);                           // other helpers (cpu id, pid_tgid) are fine, in the other format
-  assert.equal(run([...Array.from({ length: 15 }, () => ver('bpf_ktime_get_ns', 5))].join('\n')).pass, true);
-  assert.equal(run(Array.from({ length: 45 }, () => ir(5)).join('\n')).pass, true);                                              // all stages printed: more calls than sites is fine
+  const good = run(); assert.deepEqual(good.reasons, []); assert.equal(good.pass, true); assert.equal(good.sourceMonotonicSites, 15); assert.equal(good.monotonicCalls, 15); assert.deepEqual(good.flags, witness.COMPILE_FLAGS);
+  assert.equal(good.sections.length, 15); assert.equal(good.helperIds.bpf_ktime_get_ns, 5);                                      // ids reported are the ones read from the kernel BTF
+  for (const form of ['numeric', 'bytes', 'bytes-only', 'paren']) assert.equal(run(fifteenOf(5, form)).pass, true, form);
+  assert.equal(run(sectionedDump({ form: 'named' })).pass, true); assert.equal(run(sectionedDump({ form: 'name' })).pass, true);
+  assert.equal(run(dumpOf([5, 5, 5])).pass, true);                                                                                // more calls than sites is fine
   const refuse = (compiled, over, pattern) => { const v = run(compiled, over); assert.equal(v.pass, false); assert.match(v.reasons.join(';'), pattern); return v; };
-  const fifteen = id => Array.from({ length: 15 }, () => ir(id)).join('\n');
-  refuse(fifteen(5) + '\n' + ir(125), undefined, /another clock: ir:bpf_ktime_get_boot_ns#125 x1/);                                // one boot read among monotonic ones
-  refuse(fifteen(125), undefined, /boot_ns/);                                                                                      // the bare-nsecs shape: every read is boot
-  for (const [id, name] of [[118, 'jiffies64'], [160, 'coarse_ns'], [208, 'tai_ns']]) refuse(fifteen(5) + '\n' + dis(id), undefined, new RegExp('asm:.*' + name));
-  refuse(fifteen(5) + '\n' + ver('bpf_ktime_get_boot_ns', 125), undefined, /named:bpf_ktime_get_boot_ns/);
-  refuse(fifteen(5) + '\n' + ver('bpf_ktime_get_ns', 125), undefined, /listed with id 125/);                                       // name and id disagree
-  refuse(fifteen(5) + '\n' + ver('bpf_ktime_get_boot_ns', 5), undefined, /listed with id 5/);
-  refuse(fifteen(5) + '\n' + ver('bpf_ktime_get_new_ns', 300), undefined, /unrecognised clock-reading helper/);
-  refuse(fifteen(5) + '\n; mentions bpf_ktime_get_tai_ns in a comment', undefined, /forbidden clock helper named/);
-  refuse(Array.from({ length: 14 }, () => ir(5)).join('\n'), undefined, /fewer bpf_ktime_get_ns calls \(14.*15 nsecs\(monotonic\) sites/);
-  refuse('', undefined, /compile dump is empty/); refuse('error: unknown option -d', undefined, /no recognisable helper calls/);
-  refuse(undefined, { compiled: { stdout: fifteen(5), stderr: '', exitCode: null, timedOut: true } }, /did not terminate/);
+  const withLast = calls => sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: i === 14 ? [5, ...calls] : [5] })) });
+  refuse(withLast([125]), undefined, /another clock: bpf_ktime_get_boot_ns#125 x1/);                                             // one boot read among monotonic ones
+  refuse(fifteenOf(125), undefined, /boot_ns/);                                                                                   // the bare-nsecs shape: every read is boot
+  for (const [id, name] of [[118, 'jiffies64'], [160, 'coarse_ns'], [208, 'tai_ns']]) for (const form of ['numeric', 'bytes', 'paren']) refuse(withLast([id]), undefined, new RegExp('another clock: .*' + name));
+  refuse(sectionedDump({ form: 'named', sections: [...Array.from({ length: 14 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5] })), { name: 's_probe_15', calls: [5, 125], form: 'named' }] }), undefined, /bpf_ktime_get_boot_ns#125/);
+  refuse(sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5], extra: i === 14 ? ['  @@: (85) call bpf_ktime_get_ns#125'] : [] })) }), undefined, /listed with id 125, the kernel enum says bpf_ktime_get_boot_ns/);   // name and id disagree
+  refuse(sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5], extra: i === 14 ? ['  @@: (85) call bpf_ktime_get_boot_ns#5'] : [] })) }), undefined, /listed with id 5, the kernel enum says bpf_ktime_get_ns/);
+  refuse(sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: [5], extra: i === 14 ? ['  @@: (85) call bpf_ktime_get_new_ns#300'] : [] })) }), undefined, /id 300 .* is not in the kernel bpf_func_id enum/);
+  refuse(sectionedDump() + '\n; mentions bpf_ktime_get_tai_ns in a comment', undefined, /clock helper named in the compiled output: bpf_ktime_get_tai_ns/);
+  refuse(Array.from({ length: 14 }, () => 0).length && sectionedDump({ sections: Array.from({ length: 15 }, (_, i) => ({ name: 's_probe_' + (i + 1), calls: i === 0 ? [] : [5] })) }), undefined, /fewer bpf_ktime_get_ns calls \(14\) than the 15/);
+  refuse('', undefined, /compile dump is empty/); refuse('error: unknown option -d', undefined, /compiled program section not found/);
+  refuse(undefined, { compiled: { stdout: sectionedDump(), stderr: '', exitCode: null, timedOut: true } }, /did not terminate/);
   refuse(undefined, { versionOutput: 'bpftrace v0.20.1\n' }, /not exactly v0\.20\.2/); refuse(undefined, { versionOutput: 'bpftrace v0.20.2-dirty\n' }, /not exactly/); refuse(undefined, { versionOutput: '' }, /not exactly/);
   refuse(undefined, { mountedSourceSha256: '0'.repeat(64) }, /different program than the pinned source/);
   refuse(undefined, { mountedSourceSha256: null }, /hash not recorded/); refuse(undefined, { expectedSourceSha256: null }, /hash not recorded/);
@@ -266,7 +274,7 @@ test('clock primitive step passes only on the pinned program, exact bpftrace ver
   const withBare = Buffer.from(pinned.toString('utf8') + '\nEND { printf("%llu", nsecs); }\n'); refuse(undefined, { sourceText: withBare.toString('utf8'), expectedSourceSha256: sha(withBare), mountedSourceSha256: sha(withBare) }, /reads a clock other than nsecs\(monotonic\)/);
   refuse(undefined, { sourceText: '', expectedSourceSha256: sha(Buffer.from('')), mountedSourceSha256: sha(Buffer.from('')) }, /no nsecs\(monotonic\) read/);
   assert.equal(witness.clockPrimitiveVerdict(undefined).pass, false);
-  assert.equal(run().compiledSha256, sha(Buffer.from(Array.from({ length: 15 }, () => ir(5)).join('\n'))));                         // the receipt binds the exact compiled text it judged
+  assert.equal(run().compiledSha256, sha(Buffer.from(sectionedDump())));                                                          // the receipt binds the exact compiled text it judged
 });
 test('the real program sources pass or fail the source-side check as designed', () => {
   assert.equal(witness.sourceTimeSites(fs.readFileSync(witness.PROGRAM, 'utf8')).monotonic, 15); assert.deepEqual(witness.sourceTimeSites(fs.readFileSync(witness.PROGRAM, 'utf8')).other, []);
@@ -280,8 +288,8 @@ test('W0 passes its clock step only on the program proof; an observational resul
   assert.equal(mutate(x => { x.clockSamples = samples(0, 50, 2_000_000, 0); }).pass, true);                                     // INCONCLUSIVE observation: W0 still passes on the proof
   assert.equal(mutate(x => { x.clockSamples = samples(0, 50, 2_000_000, 0); }).clockIdentity.observational, 'INCONCLUSIVE');
   assert.equal(mutate(x => { x.clockSamples = samples(0, 50, 2_000_000, 0); }).clockIdentity.provenBy, 'compiled program');
-  assert.match(mutate(x => { x.clockProgram = goodProof(Array.from({ length: 15 }, () => ir(125)).join('\n')); }).reasons.join(';'), /^clock: compiled program reads another clock/);
-  assert.equal(mutate(x => { x.clockProgram = goodProof(Array.from({ length: 15 }, () => ir(125)).join('\n')); x.clockSamples = samples(0); }).pass, false);   // a CONSISTENT observation cannot rescue a failed proof
+  assert.match(mutate(x => { x.clockProgram = goodProof(fifteenOf(125)); }).reasons.join(';'), /^clock: compiled program reads another clock/);
+  assert.equal(mutate(x => { x.clockProgram = goodProof(fifteenOf(125)); x.clockSamples = samples(0); }).pass, false);   // a CONSISTENT observation cannot rescue a failed proof
   assert.equal(mutate(x => { x.clockProgram = undefined; }).pass, false);                                                         // proof not recorded
   assert.match(mutate(x => { x.clockSamples = samples(7e9); }).reasons.join(';'), /^clockTransport:/);                              // a contradiction still blocks
   assert.equal(mutate(x => { x.clockSamples = null; }).pass, false);                                                              // an unrecorded transport check is a refusal

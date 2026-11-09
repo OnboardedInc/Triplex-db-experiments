@@ -5,13 +5,17 @@ import path from 'node:path';
 import {test} from 'node:test';
 import {clockPrimitiveVerdict,sha256Hex,FORBIDDEN_CLOCK_HELPERS} from '../../bin/clock-proof.mjs';
 import {judgeW0} from '../../bin/sync-witness.mjs';
+// [OBS01-R12] fixture adaptation (decisions 1 to 3): the proof now needs a sectioned dump, recorded version/hash/BTF process status and a kernel BTF blob. All CONSTRUCTED.
+import {buildKernelLikeBtf} from '../../observer/btf_fixture.mjs';
+import {sectionedDump} from '../../observer/dump_fixture.mjs';
 
 const out=path.join(import.meta.dirname,'round11','independent');
 const source=fs.readFileSync(new URL('../../observer/vm_syncwitness.bt',import.meta.url),'utf8');
 const ir=id=>`%time = call i64 inttoptr (i64 ${id} to i64 ()*)()`;
-const good=Array.from({length:15},()=>ir(5)).join('\n');
+const good=sectionedDump({count:15,sections:Array.from({length:15},(_,i)=>({name:'s_probe_'+(i+1),calls:[5]}))});
+const okRun={exitCode:0,signal:null,timedOut:false,error:null},btfBytes=buildKernelLikeBtf();
 const facts=(text=good,over={})=>({expectedSourceSha256:sha256Hex(Buffer.from(source)),mountedSourceSha256:sha256Hex(Buffer.from(source)),sourceText:source,
- versionOutput:'bpftrace v0.20.2\n',compiled:{stdout:text,stderr:'',exitCode:0,timedOut:false},...over});
+ versionOutput:'bpftrace v0.20.2\n',versionRun:okRun,hashRun:okRun,btf:{...okRun,bytes:btfBytes},compiled:{stdout:text,stderr:'',exitCode:0,timedOut:false},...over});
 function retain(name,value){fs.mkdirSync(out,{recursive:true});fs.writeFileSync(path.join(out,name+'.json'),JSON.stringify(value,null,2)+'\n');}
 function w0(clockProgram){
  const samples=Array.from({length:20},(_,i)=>({monotonicNs:1_000_000_000+i*20_000_000,bootNs:1_000_000_000+i*20_000_000,
