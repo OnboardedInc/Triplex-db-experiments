@@ -1921,3 +1921,8 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **K01 live round 11 (f3584a6):** numeric wire probes passed; the first failure was "G0 count mismatch: tx_assertions" during source pinning. No retries; slot released, volumes removed.
 - **Next for K01:** CX-K01-R2 resumed offline (round 12) to decide whether the expected count, the seed's writes, or XTDB's read visibility at the pin basis is wrong, with a fixture from the captured bytes.
 - **Slot:** xtdb-s1 goes to P5 A1 at 1k (CX-P5A, A1-RUNBOOK.md). If its G0 refuses with the same symptom, it records it and stops.
+
+## 2026-11-09: P2X2 accepted and merged; RT01 round 3 FIX-FIRST on F7
+
+- **P2X2 ACCEPT (verify/P2X2 4155fda7), merged in 795aef4c.** F3 p50/p99 7.68/21.81 ms and F5 fresh 33.00/63.26 ms reproduce, and all 338 evidence hashes match. The native lane X P2 path stays closed (Q96d); lane X P2 now depends on EXP-P2B (XTDB behind the broker). Open: reader/full-trace, aged F6, strict no-wait. An irreducible indexer floor is not established.
+- **RT01 round 3 review: F4-F6 fixed, F7 high.** Entity-journal pages at a fixed snapshotPosition filter by the runtime clock (validAt = now against validFrom = stagedAt), so a backward clock empties a committed page. **Lesson:** a position-bound read must not take any clock input; the journal read path needs its own all-valid-time cut. CX-RT01 round 4 fixes it at one choke point, KV analogue included.
