@@ -134,7 +134,9 @@ describe("EXP-P5B host store", () => {
         ["future"],
       );
       await expect(log.sweepPage(b.head(), Array(65).fill("s"))).rejects.toThrow();
-      await expect(log.sweepPage(b.head(), [], { worker: 4 })).rejects.toThrow();
+      // [EXP-P5N] Why: D6 lifts the sweep connection cap from 4 to 16 (workers 0..15). Rejected: keeping the old bound (it capped activation at 4 owner-routed workers).
+      await expect(log.sweepPage(b.head(), [], { worker: 4 })).resolves.toBeDefined();
+      await expect(log.sweepPage(b.head(), [], { worker: 16 })).rejects.toThrow();
       await expect(log.sweepPage(b.head(), [], { validAt: NaN })).rejects.toThrow();
       expect(() => log.pinBasis(b.head(), "bad", { ttlMs: 0, maxLagPositions: 0 })).toThrow();
     });
