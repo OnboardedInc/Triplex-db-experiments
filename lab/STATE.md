@@ -313,3 +313,9 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   durable/P3 evidence until the writer's synchronization is independently witnessed. **Open on the critical path:** a design for that
   witness (for example the trusted broker wrapper or container setting the pragmas and attesting them, or syscall-level fsync evidence in
   the VM). It joins G03 round 7's integration brief; an Opus design check goes first when a slot frees.
+- 2026-11-09 R47 (journal format): one journal record per transaction inside the broker is 7.6 B/fact against 213.7 for HS01's journal
+  rows; with compact ids the broker store is predicted at about 281 B/fact (1.25 GB) at 10k and 154 B/fact (6.9 GB) at 100k, passing
+  G9's 300 B by about 6%. No P3 feed reads journal content. Rulings Q107a (journal record), Q107b (lossless 16/17-byte ids), Q107c (lane D
+  feed excludes journal facts) pending. **HS01 round 3** (after the running round 2) builds Q107a and must derive both the current and
+  RT01's v2 change formats. **DF01 round 4** (Sonnet, running) fixes the lane D feed emitting journal facts; contract 0.4.0's next round
+  picks it up. **Q107-S waits for Sam:** stop storing :_tx/change and :_tx/changed-entity as queryable triples on every lane (R47 option A).
