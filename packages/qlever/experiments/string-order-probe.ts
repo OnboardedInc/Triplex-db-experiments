@@ -135,8 +135,8 @@ const admin = async (id: string, value?: "1" | "100") => {
   for await (const part of response.body!) { size += part.length; assert(size <= 65536, "SETTING_REPLY_CAP"); parts.push(part); }
   assert(response.ok, "SETTING_HTTP_FAILURE"); const raw = Buffer.concat(parts).toString(); assert(!raw.includes(token));
   const parsed = JSON.parse(raw);
-  const observation = { id, value: value ?? "READ", elapsedMsClientWall: performance.now() - started, rawSha256: sha(raw), rawBytes: size,
-    settings: value === undefined ? Object.fromEntries(["query-planning-budget", "cache-max-size", "cache-max-size-single-entry"].map(key => [key, parsed[key]])) : null };
+  const observation = qleverLatencyReceipt({ qleverConnectionMode: "keep-alive", id, value: value ?? "READ", elapsedMsClientWall: performance.now() - started, rawSha256: sha(raw), rawBytes: size,
+    settings: value === undefined ? Object.fromEntries(["query-planning-budget", "cache-max-size", "cache-max-size-single-entry"].map(key => [key, parsed[key]])) : null });
   event("setting-" + id, observation); report.settings.push(observation);
   if (value === undefined) { assert.equal(parsed["cache-max-size"], "64 MB"); assert.equal(parsed["cache-max-size-single-entry"], "32 MB"); }
   return parsed["query-planning-budget"];

@@ -1,0 +1,26 @@
+{
+  "reviewerHead": "e990d18",
+  "directory": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-qnodelay/lab/verify/QNODELAY",
+  "files": [
+    {
+      "path": "VERIFY-round2.md",
+      "sha256": "d335266d7375c1d7a779ec69f3e68650f7b6505a092424bf18231f77b1606a76"
+    },
+    {
+      "path": "round2/receipt-coverage.json",
+      "sha256": "71c2a4a034ab3f95e4d356f94cd640cda8a2499d8d6a2c90a574bb53b8ee7187"
+    },
+    {
+      "path": "round2/receipt-coverage.mjs",
+      "sha256": "c18cb2b6d029e33986a28480fd4c30186b3676a51e4e8f2eb047c47bc2bd36d9"
+    },
+    {
+      "path": "round2/latency-source-inventory.txt",
+      "sha256": "ca9a32a16c1016339aca3fb1ae82e537d6e216d393ead8d46dad8000234b1c0d"
+    },
+    {
+      "path": "round2/evidence-audit.json",
+      "sha256": "f2966c219c354a3225075852b6fbf91d8b18526e6dde6da81c0c6e3e4c3cea96"
+    }
+  ]
+}

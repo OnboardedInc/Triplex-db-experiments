@@ -32,4 +32,4 @@ await writeFile(
   path,
   JSON.stringify(qleverLatencyReceipt({ qleverConnectionMode: qleverConnectionModeOf(), run, expected: numericOrderKey(300), results }), null, 2) + "\n",
 );
-console.log(path, JSON.stringify(results, null, 2));
+console.log(path, JSON.stringify(qleverLatencyReceipt({ qleverConnectionMode: qleverConnectionModeOf(), results }), null, 2));

@@ -124,3 +124,58 @@ Intermediate failures remain visible: `parity-first`/`truncated` exposed the rej
 `round2/changed-pins.json` lists both locations; `round2/changed-source-hashes.json` records all modified existing code/config bytes. The contract builder must re-pin in its next version. The full report and receipt inventory do not confer that authority.
 
 Durable round-2 evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/round2/`. See `round2/EVIDENCE.md` and `round2/SHA256SUMS`. The round-1 manifest/evidence is preserved unchanged. No default flip, full root check or full multi-backend pack gate, integrated P2Q/broker acceptance, HTTPS/proxy qualification, 10k-descriptor longevity rerun, loaded comparison, merge or push was performed. Independent review and representative admitted P1/P4 measurement remain open.
+
+## Round 3 — C8 summary and timing-source discovery
+
+Baseline: builder `80d16039160aaa497c98821a166b8d8599b51e70`; reviewer `verify/QNODELAY` at `e990d18`. Read `VERIFY-round2.md` and the actual receipt-coverage reproduction/evidence. `round3/review-inputs.json` records their byte hashes; copied inputs remain in durable evidence. The reviewer confirmed response/error parity and lifecycle behavior but reproduced a mode-less C8 summary outside round 2's constructor inventory. Those prior transport and timing results remain historical; this round adds no engine measurement. Default remains **keep-alive** and the transport implementation is unchanged.
+
+### Fixes and complete discovery boundary
+
+C8 `summarize-timing.mjs` now validates the recorded input mode and constructs each output through the required receipt boundary. It preserves both native/phase and Datalog timings, refuses absent/unknown QLever modes, and never labels historical observations from the current process environment. C8's raw stdout envelope now retains the mode too.
+
+Searched timing field names and clocks as well as serializers across **lab/ and packages/**, rather than searching receipt types. `lab/receipts/coverage.mjs` discovers JS/MJS/CJS/TS/MTS/CTS/TSX/JSX, Python and shell sources containing timing or serialization patterns. It excludes dependencies, generated dist/coverage/cache trees, symlinks and the checker's temporary shape file. The reviewed, hashed ledger is `lab/receipts/source-inventory.json`: **521 candidates**, comprising **43 labeled**, 161 forwarded plumbing, 200 non-QLever/non-network sources, 100 fixtures, 16 unchanged contract/oracle sources and one externally attributed profiler. Candidate classification includes timing-only sources and serializers with no obvious QLever name. Internal trace/protocol values inherit the containing labeled receipt; source generation time without an HTTP query is not a QLever connection measurement. Each entry records the reviewed source hash and rationale.
+
+The audit found and fixed additional boundaries:
+
+- NS human summaries and traffic audits preserve input metadata; NS write-event JSONL now carries it.
+- J01 service stdout and raw receipt files carry mode. Raw files now use a `j01-raw/2` envelope; no in-tree rawPath consumer was found. Non-QLever lane receipts carry explicit null.
+- QG1's standalone base/join timing stdout, package boundary-shapes/upstream44 stdout and string-order's direct fetch observation are labeled. The direct fetch observation stays explicitly keep-alive even if the separate client selects per-request.
+- Qualification workload, pilot, foundation, scale and conformance reports, standalone summaries, and load seed/report/raw event writers carry selected factory mode. Scale resumption refuses a different/missing recorded QLever mode. Failed-load inspection validates the events' recorded modes and refuses mixtures.
+- Both C8's opt-in integration test and its light live verifier emit mode-bearing timing/trace output. Their fixed **keep-alive counting-proxy upstream** is recorded separately from the selected client mode; the proxy source uses `http.Agent({keepAlive:true})`. Neither live workflow ran in this round.
+- QLever server-log latency and R35 execution-tree viewers require explicit validated `--connection-mode`. Their output identifies this as **caller-declared attribution**, since raw server bodies/logs cannot establish the originating client transport. Every profiler output line carries that attribution. The current environment is never substituted as proof.
+
+Readers without an input mode now refuse legacy QLever data. The raw-envelope and human-line label changes are intentional output compatibility changes; frozen prior evidence is not rewritten.
+
+### Guard and validation
+
+`lab:receipts:check`, already part of root `check`, now runs the coverage regressions, tree discovery/ledger audit, actual constructor-shape checker and declarations/runtime JS checks. New candidates fail until reviewed; any changed source (including a previously excluded fixture/non-QLever file) loses its reviewed hash. Labeled files must retain a checked mode boundary, and direct standalone JSON timing literals without mode are rejected even when another receipt in the file is labeled. Constructor inventory derives from discovered labeled source, replacing the fixed 29-file opt-in list.
+
+This deliberately conservative review guard is not arbitrary JavaScript dataflow analysis: forwarding/classification decisions are reviewed source assertions bound to hashes. A new exclusion requires an explicit ledger change; a new or changed source cannot silently escape by avoiding a receipt constructor. Future extensions or new generated-output conventions require extending discovery explicitly.
+
+Final command, admitted by the heavy runner:
+
+```sh
+node lab/bin/heavy.mjs --label CX-QNODELAY-round3-final -- pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store lab:receipts:check
+```
+
+`round3/final2.log` in durable evidence records exit zero: **20/20 tests**, **521 discovered files**, **43 constructor files**, **75/75 shapes typecheck with mode and 75/75 fail without it**, plus runtime implementation and declaration checks. All recorded source hashes were independently compared with the final working bytes. The tests insert new mode-less writers under both trees in six source forms, change a reviewed exclusion, remove metadata, and serialize a second unlabeled timing from an otherwise labeled file. Actual subprocess fixtures run C8 with keep-alive, per-request, absent and unknown input modes; exact 7 ms/5 ms timings and mode preservation/refusal are asserted while the environment is deliberately set to per-request. Actual Python/server-log viewers are exercised with fresh local inputs and missing/explicit attribution.
+
+Changed JavaScript/TypeScript syntax (23 files) and Python syntax checks passed. Focused oxlint reports **zero errors, seven existing warnings** (inherited test expression/unused-variable patterns); newly introduced unnecessary-spread warnings were removed. Formatting was applied to the changed workload/load scripts and light verifier; inherited unrelated formatting was retained. `git diff --check` passed.
+
+Intermediate logs are retained: `gate-final.log` exposed a missing explicit Node ambient type option when checking the JS implementation; this was fixed. Earlier successful logs bind earlier sources and are not substituted for `final2.log`. The broad lint log retains the unnecessary-spread warnings before cleanup. No benchmark, engine integration/load test, package build, full package/body typecheck, full root check or default change ran in this round. Source-shape checking verifies the required mode boundary, not the dynamic types or semantic correctness of every legacy harness body.
+
+### Round 3 PASS / verdict / receipt audit
+
+1. **Discovery and `check-writers.mjs`:** content checks actual current source patterns, reviewed hashes/classifications, required literal fields, successful compilation and the expected missing-field diagnostics; it rehashes inputs before emitting its check receipt. Fresh traversal and compilation occur in this attempt. Its sourceHashes bind the precise 521-source inventory, checker/helper/declaration bytes and shape inputs. No engine slot or semantic PASS is claimed.
+2. **`coverage.test.mjs`:** content checks actual rejection messages, parsed output modes and exact known timing values. Fresh temporary directories/input bytes and actual C8/log/profiler subprocesses supply observations. The executed test and producer sources are hashed and copied with the final gate. No historical test success is adopted.
+3. **Mode helpers, added writers and summarizers listed above:** metadata validation is performed before serializing or retaining QLever timing. Current producers use the actual factory selection or explicitly fixed direct-fetch/proxy mode; readers use the recorded input, never today's selection. Server-side timing attribution remains explicitly caller-declared. Existing semantic verdict/content/freshness/slot gates are unchanged; constructors do not certify the workload or manufacture semantic PASS. These engine workflows were not executed or promoted here. Existing verdict writers retain their source/input checks; only their metadata boundary changed.
+4. **Audit-traffic and inspect-trial:** preserve their original content/oracle/hash/attempt checks and add recorded-mode validation. They continue to describe offline/diagnostic observations. No old result is relabeled from the environment or newly promoted.
+5. **Evidence manifests and report:** SHA-256 values attest actual bytes, final-source equality and reviewer-input identity only. The logs retain first failures and distinguish final successful execution from earlier snapshots. No timing, production acceptance or independent-review PASS is inferred from these file checks.
+
+### Round 3 pins, evidence and open boundaries
+
+`lab/acceptance/` is unchanged. A recursive pin-object audit and textual changed-path cross-check found **no newly changed fixed-hash pinned path** (`round3/changed-pins.json` is empty). The contract's generic build-input rules mention root package.json without pinning its hash. `round3/changed-source-hashes.json` lists old/new hashes for all 26 changed existing code/config files. Round 2's native-entry pin discrepancy remains unchanged and still requires the contract builder's next version.
+
+Durable evidence: `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/round3/`. `round3/EVIDENCE.md` and `round3/SHA256SUMS` index raw logs, reviewer inputs and exact source preimages. No dependency/credential caches are copied. Prior rounds' evidence/manifests remain unchanged.
+
+Open: independent review of the expanded source classifications and mode propagation; representative admitted P1/P4 comparison and connection/CPU/TLS cost before proposing any default flip. This round does not rerun transport/socket longevity or claim engine-backed semantic acceptance. No merge or push.

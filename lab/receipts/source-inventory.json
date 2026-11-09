@@ -1,0 +1,4170 @@
+[
+  {
+    "path": "lab/acceptance/build_contract.py",
+    "sha256": "914db3d15e91180e8b449fffeeb27b997dc10eb835fff66e10eca6517e985b59",
+    "timing": true,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/bundle_fixtures.py",
+    "sha256": "b9318445cb47f4a23917afb884d2a39c2d41d4f7203b471d61aca7f0e09fb32c",
+    "timing": true,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/fixture_normalizer.py",
+    "sha256": "886b40be26cc44a6b8078804bd80ab28016f400fe8820aa3e0e2409ccb85785e",
+    "timing": false,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/gates_round2.py",
+    "sha256": "9a5aedb4bc2cb1c8cde2b31f32919b89b38f59058ccb7a8c0cc698d094de8f99",
+    "timing": true,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/gates_round3.py",
+    "sha256": "a34495d0a0554d0d57f0e834e1f1406e5c8b0375620d61061985648e8c7e0b62",
+    "timing": true,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/gates_round4.py",
+    "sha256": "7c66c6b97ba9ce3e502a8586d0d4ab62e5e01a3507404ade61bee78e343cc4e7",
+    "timing": true,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/gates.py",
+    "sha256": "c0ece061a5864e7f4236cba73f0f6ac74ea0bebca2bd67a7d233e941eb6e087c",
+    "timing": false,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/observe.py",
+    "sha256": "668136f3c99e09b5332363bb6beaac7f177d07ef7718eb59b2b801faeedcb2cb",
+    "timing": true,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/replay_review_round2.py",
+    "sha256": "e21a1151cbad4636d64fe9391c3cb3cc19347354faea545a3e882d51664301e9",
+    "timing": true,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/replay_review_round3.py",
+    "sha256": "94eac6eaaefc14c1ef566583f4a6b405b953ee1f4b1064bd43e18991bc4a5589",
+    "timing": false,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/selfcheck.py",
+    "sha256": "154eeedc4622d5265686477787d088fdb52b58e5279a5e28eda78d1f046b3881",
+    "timing": false,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/test_cli.py",
+    "sha256": "c0aa0f0d7fcba3745789ab3c75943d49b2ce4862d9b117280b7f8ddf14d9ac92",
+    "timing": false,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/test_observe.py",
+    "sha256": "dcc4f01d7b55e4691acfd40709612484377547006a5a7bb040ac7a3f9731501d",
+    "timing": true,
+    "serialization": true,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/test_round2.py",
+    "sha256": "7e39e3e6c0c2cf3ed696f2b208025d11d4d617ce09265be4fd8f41077ec371f8",
+    "timing": true,
+    "serialization": false,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/test_round3.py",
+    "sha256": "6a35bb20b8fcc5de2403060205aebc94a1d618080836c595e13b0e43ae7654bd",
+    "timing": true,
+    "serialization": false,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/acceptance/oracle/test_round4.py",
+    "sha256": "be4d8b044170c8d3f90ea655258b84b38c5f7ac44e998f009c0c972044aeaef8",
+    "timing": true,
+    "serialization": false,
+    "role": "contract",
+    "reason": "Frozen contract/oracle code: validates observations, no client HTTP timing collection. Not edited."
+  },
+  {
+    "path": "lab/bench/audit-traffic.ts",
+    "sha256": "e5c36ca4a5b5d9403a0c86d6401762b0458b8a96ec705779ede8b0b0009855a0",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/bench/driver.ts",
+    "sha256": "c8c9a38f931980e4d1922f316fd18efe8bd71542291728586955a6bebb19d179",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/bench/lib/bulk.ts",
+    "sha256": "4acb046a0cd2a6f065a802c635e42ae088904d96f3548370c2ceb34ef755e98f",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/commands.ts",
+    "sha256": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/composition.ts",
+    "sha256": "ffb98e59ee6cc44932b47cb80412c09a2e2c810c2f0116ebb3d814ba5299df23",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/evaluate.ts",
+    "sha256": "e47f87b57042bdc9c712f4a92fefbf0020f581e6ce6b966352fedd7088193d3d",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/feed.ts",
+    "sha256": "935e7ce993c087e5b19f9eceafe71855a705c26161d24ef1d1ef2aa42951b4de",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/g0.ts",
+    "sha256": "f26ada16b5f03316eb005eb94adc29a07ad0257f1426b6ec5f56fd433ff7deb4",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/hist.ts",
+    "sha256": "dad68c421251334d768dcd8ebfb7817bab5f800190cfcf882f129a3dc0aa5d2a",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/memory.ts",
+    "sha256": "22a6368f5d7369583f65ec17e59ed9031ded7fd85b4197bdd95f687d47b8a641",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/model.ts",
+    "sha256": "252a8c1099b999936522b664eb96c7630ab95062d5626c217ebf27c66695a691",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/observe.ts",
+    "sha256": "7a60e6e068ddbbf53d7dd9b1718df5ff25bacf8ea2b72b02cf93ded32a66597e",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/oracle.ts",
+    "sha256": "ff7467e85fe4947e4efbaef2c5fd735ba9379208ca7f28509185b89f45a9d693",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/phases.ts",
+    "sha256": "b2a144d7e95383ace5e1a7d35b0b44580fae671c475371fe83a1436895b75281",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/samples.ts",
+    "sha256": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/scheduler.ts",
+    "sha256": "854bcc74c6cfc037ae5d0389f049fdb59fdedff6d4debceda1ad0e2b36bffe19",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/seed.ts",
+    "sha256": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/sweep-recovery.ts",
+    "sha256": "11a92be5db1bfbb073f2030690bd7ddff039e58b537c083fdb7453b5a7ba3fa6",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/sweep.ts",
+    "sha256": "b10cdd3c9121a7c001a7b2c4da4a24545f6dd6b12542fc0acb072c329edb9b04",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/trace.ts",
+    "sha256": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/w0-fingerprint.ts",
+    "sha256": "c41124d9f677f0b1620a9dfec2838cb01946447774a54b0fbfc99918491728fb",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/w0-oracle.py",
+    "sha256": "bc946b507ebabaf98e844d598cb1f89fa2a66e8100c6629d841ffbf2c72490f7",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/w0-outbox.ts",
+    "sha256": "c5d2b8ad2c5768084b29ac4ba01f548a43f82ac00ea5796b4cf7a51de4913291",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/w0-public.ts",
+    "sha256": "1613e685b487c7794cdeb2941eb6b025540e1f33eeb5a7a4855712f4747c62ed",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/w0-rounds.ts",
+    "sha256": "16c856f806dcf08db5ec996359024408828db25ac97511d079a13663a2e322c2",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Memory-composition-only sweep controller; no database HTTP requests or QLever transport timings."
+  },
+  {
+    "path": "lab/bench/lib/w0-seed.ts",
+    "sha256": "6af3c8866edb3a5f935c54741c1f7021634ce09c660f7c3c43e49a4b6e0e0a8d",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/w0-trace.ts",
+    "sha256": "28ffa1a0b29952058857d2ed117bc5cf62850a7fea3242c6f0133cf23cbcdc1d",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/w0-traffic.ts",
+    "sha256": "237d7d84ac774025869d7952adb815132606a69524d0db0fa0ea17a0aa55dd50",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/w0-world.ts",
+    "sha256": "fbef736a339772693d68d7bd86b48a1c1b778f657e26ddec2b0204936ee5ed5a",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/lib/world.ts",
+    "sha256": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/qlever-bulk-seed.ts",
+    "sha256": "cdd8308ba8f88feb836928e9e611d4e6731867d24ab34933eec7d19dbff5dfd2",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Offline capture client emits N-Quads; wallS measures source generation with no HTTP query or connection."
+  },
+  {
+    "path": "lab/bench/reader-worker.ts",
+    "sha256": "97b3b5439f47301ea9fd758a6edfb7923e1811fafabfcd38c499e0c9f7df057d",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bench/round2.ts",
+    "sha256": "dedf9f14eed4fc77278f85a55a0de426435e4df371b329b627b0c19e7e6975e4",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Memory-composition-only sweep controller; no database HTTP requests or QLever transport timings."
+  },
+  {
+    "path": "lab/bench/summarize.mjs",
+    "sha256": "fffffebd5e9c2253c63019cdbbd474e08bb3a57a7cd855dc8193294d64c77259",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "NS human timing/bar summary: validates recorded metadata and prefixes every emitted line with actual input mode."
+  },
+  {
+    "path": "lab/bench/test/bench.test.ts",
+    "sha256": "56d102078a5f96b4f93c68ec58410f71b90ad2d4af8dcd33124bbf9d1b6a3424",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/bench/test/p5-g6.stacked.ts",
+    "sha256": "c52f012ff9203c105f69b8c01261a062cb5c01aa8c3f48ed7e3eab161c4306c7",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/bench/test/p5-round2.test.ts",
+    "sha256": "f0fc08bba19806bf038f0224d467d90dc49e331c2dbab652c81355b1167ecd66",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/bench/test/p5.test.ts",
+    "sha256": "67554998f2589f396e90ed8f6fffb65be3043de12fd64b796d59c1302f4e3b9b",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/bench/w0-driver.ts",
+    "sha256": "aad5759e97a721b2a2d6fcfe3f2390bdfb0268ee40f29afa2f6faed330a0e9da",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/bench/wait-slot.mjs",
+    "sha256": "e91b0f0d7eee84386b8d5cd945ea975cc11d33581285af39e5268731c1cb0ef0",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bin/agent.mjs",
+    "sha256": "f9602bdaede7ef064f5825ffc0d405fcf50ba365a40267016caa6c857d31d2ca",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bin/claim.mjs",
+    "sha256": "4069ca82ea877eed39cdddc8e0323b09d392fd013f9a2c8ac8f542a1bed62e2a",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bin/engine.mjs",
+    "sha256": "9e7f2daf9a52b3d617dbc193f2b2e6dccca7d530175a40ae1c38a16ab0c3e7b2",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bin/gate.mjs",
+    "sha256": "dc374e1de7916c27b78b3ec38611a12fd9329db45819607e587b6115ba4e58f8",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/bin/heavy-lock.mjs",
+    "sha256": "88dd2071c8d8c1e3212c9a65dc719b79af46fbe6cc2e6ede8fbe0b61112803fa",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bin/heavy.mjs",
+    "sha256": "37d91c04a32dbaf9a67b6f9fab4c62c6965c37e5fc608e1fcd9a94a4800274a2",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bin/lib.mjs",
+    "sha256": "815321d9473cecc0229118025bf4286ad4eba02a7107094ce8b4e624ede4c842",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bin/scorecard.mjs",
+    "sha256": "c8e632a3c353b5897ef2a82b7d9ee9484702fb3d222963e251c63186f439029e",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bin/status.mjs",
+    "sha256": "643c8a34fedeb7e90cb5d04e153187171b4643dfe250772b6b1eabfedc2ebc2b",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/bin/test/claim_ref.py",
+    "sha256": "34c3c40e76085a4b40d853843d0d8470d423ad87790215f480d8dcf6db56c5ab",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/bin/test/claim-fixtures.mjs",
+    "sha256": "5cf4c1d8583135d34269e62b3a1a2585373d113c4ddd263cb52124c76fe8aa07",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/bin/test/claim-round2.test.mjs",
+    "sha256": "6aef70bd2448a6b37dc040d19d9ee219a4e4e5fdf78c8094e1bb66ec45104be9",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/bin/test/claim.test.mjs",
+    "sha256": "62de70ed333c40f8662da5749179f985f9f8b961a6c10459a0dadfad5bceb476",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/bin/test/lab.test.mjs",
+    "sha256": "5ac1fddf05493dd24c5fc6c78b1b9633023788800f7ed2f968f76b8fac1680df",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-001-xtdb-baseline/task-languages.mjs",
+    "sha256": "0cc966bb4e46ecb2cb2c3e3a55a8f99d5edf3d52f9f92beecbc54b466b434a99",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-002-qlever-baseline/qlever-log-latency.mjs",
+    "sha256": "cfc340860df6fc7c0f58eaccaf9efa7836043ca485b4d3574ca96013784cbdb0",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/audit_briefs0312.py",
+    "sha256": "aad69e7de58d0c15a679bcdf1e47a32d95e73fd57858d4e4c41abd7c1581117f",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/gates0312.py",
+    "sha256": "af36cef525c10632afb718984c5827a8655454fdbf476e17df9cf198543f7e74",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/negtest0310.py",
+    "sha256": "bdfb8d0467ca009a45dd4c5a176fbc968d1130c759980f5bd36097033edf93cb",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/negtest0311.py",
+    "sha256": "3cf67111045ea2e52f2a7f83dd4856e0a76e051a975fafbf9cfeb8ee1d117e83",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/negtest0312.py",
+    "sha256": "ddb0c68defd27adaaa61b6a5496f13dfbd795af7e23c21c07c14e42b24782464",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/negtest037.py",
+    "sha256": "ce8235c3b6c2628918150456b005b2fca1d76637a9ec896a4b5a7f342e824eea",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/negtest038.py",
+    "sha256": "5b5612f08c5c78a1c38e30551edc854f2a9f25dadba262d0a0f8da3dccd52d2f",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/negtest039.py",
+    "sha256": "d0b6955b1e4746d5479e3a6c836f3cee9dd19b23fb30cb2165b2224d80643872",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/q47d_test.py",
+    "sha256": "41c8772a1f8565616420eb2bf6e148bffdd82caf543e2db906e2785aa14a25cd",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/q47d_test0310.py",
+    "sha256": "dff31ef3e5bc24ad6f3c6a1c29b7bc36d53d91b87b61fc091a6b43b0384aaa4c",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/q47d_test0311.py",
+    "sha256": "cbffd5eede490ceacd6a5d8ed9d351e4b42441c55703757ea8775b2677bc3393",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/q47d_test038.py",
+    "sha256": "dff31ef3e5bc24ad6f3c6a1c29b7bc36d53d91b87b61fc091a6b43b0384aaa4c",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-A01-acceptance-contract/regressions/q47d_test039.py",
+    "sha256": "dff31ef3e5bc24ad6f3c6a1c29b7bc36d53d91b87b61fc091a6b43b0384aaa4c",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-C8-read-only-frontier/round-timing.mjs",
+    "sha256": "79389fcb81dcbb097351093afe6fcd2114bcc1034d9bb9d57d6982ff0cc133d6",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/experiments/EXP-C8-read-only-frontier/round2/capture-source.mjs",
+    "sha256": "12cb2b571e0842ca3a226e1bf27d6186e5238bc98f5a4bb4cacb044546f4c29b",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-C8-read-only-frontier/round2/run-checks.mjs",
+    "sha256": "cf96a5db04803bf59a931e8d2bb1073acc4baa0dcb64a866160a7be90334e377",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-C8-read-only-frontier/round3/capture-source.mjs",
+    "sha256": "62cd325936fac9bdbd71bf0b30ce6f9b5e8e92d2aa32aaac941dc563c17761d6",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-C8-read-only-frontier/round3/run-checks.mjs",
+    "sha256": "fe7d2692b5a8527554cad65d6dd5a91271edd23ce4112e6fcf3cbeb8866b2720",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-C8-read-only-frontier/round3/run-offline.mjs",
+    "sha256": "129de9427a430700ab9a620c74a14333f76369ed5b3b6c2fee57a3628bfc6212",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-C8-read-only-frontier/summarize-timing.mjs",
+    "sha256": "2f9f8d686d8f883bc9b1b9e650f6f8110bd667ad18e1080fb4b120c31b7ae0c3",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/experiments/EXP-D01b-w0-kernel/receipts/mutation-112/mutate.mjs",
+    "sha256": "0c4bcfbd2942d8606df8399d521de7bb24111cce2644ecd03fc54b5516a6c7f3",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-E01-claim-evaluator/reference-replay.mjs",
+    "sha256": "6c07b385e32a7366d083266c6e82e7e16a3139ec9e07cb85a6be13f4a4f5e188",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/equivalence-diff.mjs",
+    "sha256": "c4704a9493ca62e7657ba53a5dde0f24dde8b625fd0a35beb91154bc673cfdb4",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/journal-equivalence.mjs",
+    "sha256": "4f0caa60c307254b3d26d3ce717213f2471fc3cc0a1150c652121b9a0aaeec81",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/lib.mjs",
+    "sha256": "05b9ad35413ce2f5139c44b3e9ab8b0a8bf733ca03ee4e774013df20b2c0f75e",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/qlever-attribution.mjs",
+    "sha256": "e7e72db953e7028d2c2d6245ad23d92d3882240af584ef412126681e20f704fb",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Triple/channel/byte accounting, no returned timing statistics; timed command collection belongs to the labeled J01 library/service."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/service.mjs",
+    "sha256": "e7793601971fa23f853800dcac8f2318c53a3045224baed53fa24ea879d5f9e4",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/show.mjs",
+    "sha256": "254b9091b5c1c83202d3330bf1cf20c22a738ff096f2a688c9a74f77332235b2",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Triple/channel/byte accounting, no returned timing statistics; timed command collection belongs to the labeled J01 library/service."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/xtdb-attribution.mjs",
+    "sha256": "60f9e925c24fe5cc45f537a088894f042094eebda293ce082638408c3acd65fd",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/bench/xtdb-replay.mjs",
+    "sha256": "15b34905a2a944b0bc3cf941f89d57a2230c9ba19a7da72736ab24d6b0fa5c95",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p0-log-columns.mjs",
+    "sha256": "14e6ac64941b27ef0987342be1b16e1c9ed154d12528b813ebcc052ed29d5ef2",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p1-record-shape.mjs",
+    "sha256": "aad465042f9a2e53b931482810129b8e3e50221c5df9b23cc8ae182390db4ab3",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p10-qlever-designs.mjs",
+    "sha256": "0a16a94adb9b5355c26ffc83a40b21fd6947c5a5ef8b2260fa5ccb3b7520e8b5",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p11-constraint-rerun.mjs",
+    "sha256": "a597cb14b2103eda45d93f1ced3b80b7fdcd8a7fabafddc0e29dcdc3002034e4",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p12-json-array.mjs",
+    "sha256": "0de31fac1a3309086008bd2d79a1a6df775bb16fe543cb63a3905357e5d7d6c0",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p3-xtdb-structure.mjs",
+    "sha256": "b3af81a9165f7c1e047f2f1591d9afa7663fdeaaa5a6eac8699eafd7aee076cc",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p4-literal-equality.mjs",
+    "sha256": "b62b94b7b334240bc21718bc0671fde05dcb7c703c0061d94c1207da101b5fcb",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p5-array-param.mjs",
+    "sha256": "972e941ae564c1ee047f714a8b5561830f10d271c652205969c1352eaf6763a5",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p6-p2x-reconstruction.mjs",
+    "sha256": "e78854748d805c1e5935ff596d0ddc2e5e3d5a4cea425d336465246b391eecc2",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p7-xtdb-designs.mjs",
+    "sha256": "61d014627a89ee5c3b49ed67fa8aecfdca63c97769463b0af12f3ee9ab4649d9",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p8-dev-scan.mjs",
+    "sha256": "1a78940c308e0648ab2bf7409f8334b294a351b930e1b51ea3e8a7518944bc73",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-J01-bytes-per-commit/probes/p9-g1-mode-proof.mjs",
+    "sha256": "81a8b7dfb3a5e1abed22943fa8a68a00830cbfc27aeaa90cf9d8136d8c0cdfd3",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/delta-count.mjs",
+    "sha256": "56cb20e020d65f5a3afb1296d215144fb49b770f21ad24f2fa6acd61bc521812",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/delta-count.test.mjs",
+    "sha256": "9f128197309331d8b66ca9abdfdf5da8035489fdc45437e604a7c44c45af66aa",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/engine-options.test.mjs",
+    "sha256": "84314f129cb969834dc60db3f0f541b339b4ee4bd7ef1d6abf369e3bd946771b",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/final-audit.mjs",
+    "sha256": "2d796c2155a506c28e3092d46140d61ad5681e0ef2ce85bd604a7ef39cb96835",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/grid.mjs",
+    "sha256": "33faff5613583ba77e47c5f3723a2d37db08254632b781a3ff5b52c49aed46dd",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/lint-updates.mjs",
+    "sha256": "15cc316b7cdfde7ad4877783eddbf2350d2178f5f4ea44e89d11d24e3b485d2f",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/p4-sample.ts",
+    "sha256": "38314a8ee0a49f6eaeb6389709ece7b4efd5b881e23a9d33c8d32c091f9905eb",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/prepare-base.mjs",
+    "sha256": "aada3bbbe40d9bfeaa5f051240ee67ac9d9e6d062bf7dc996182ac934ba3094e",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/probe.mjs",
+    "sha256": "eb50c22fe078471fe63aeafc5e60147116aaf86c88ee1c97ab9ddbae88cf314d",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/summarize.mjs",
+    "sha256": "3a627747588b87f61bee0f44517a48308073e2c5c9246f6c3b9255f9c59ef9a4",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/experiments/EXP-QG1-qlever-generations/summary-cell.mjs",
+    "sha256": "ecb3e429ee208cc3b74433c672725be0d392c4d9d292aff3ee0c53185f105371",
+    "timing": true,
+    "serialization": false,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/experiments/EXP-QNODELAY/probe.ts",
+    "sha256": "beaaa9e6ac1ec3ecfdb0ace1a230e27e6bbc69872077d1e5d21e77c8e4684b86",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/experiments/EXP-QNODELAY/round2/receipts.test.ts",
+    "sha256": "4c6c91e2ba1522102c944787a46d891de5785fdf4690478686bda0fb816a0b63",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-RQ01/attempt-io.mjs",
+    "sha256": "82a0f65b63da2f6ff849620ad708bb48999904712d2af1224f34dc657dd72e16",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-RQ01/coverage.mjs",
+    "sha256": "6af29ba0fe630e5a50e1495211a1a663c9651364a02ae548fbcfd8c6c3a10af6",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-RQ01/evidence/round2-package-smoke-controller.mjs",
+    "sha256": "a9e9b65d97fd864db509af06c33cb8b0e5a2b6c2e7ff06050888e69070a29b33",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/experiments/EXP-RQ01/gate.mjs",
+    "sha256": "917dfba5940dbe376d5fa9f01f37b331e6f716ee09ac96520f05a6f9af95f0bb",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-RQ01/package-smoke.mjs",
+    "sha256": "c78de35358503e4fa5c1bae2db7067c6402d782dc4ff834cb9a1a58ac41aaa30",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-RQ01/reviewer-round1/empty-without-flag.mjs",
+    "sha256": "561dcc97c3e2c29d3c2f0457f37fd0d9397eab5833932eab77b39384729139ea",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/experiments/EXP-RQ01/reviewer-round1/review.mjs",
+    "sha256": "8973554c3bd846307a54638fec77f6cb3e623f4a43a9fb85febacf9c01bb2c30",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/experiments/EXP-RQ01/reviewer-round2/boundary.mjs",
+    "sha256": "86593aeb4f71d9d89bc3ed8071ca5d293c80c5b4552ca00453d07aeb532567b1",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/experiments/EXP-RQ01/reviewer-round2/probe.mjs",
+    "sha256": "6cd9ed0963d1dddaf2b23d10dce5d66aebc65b73123750c2f94b15f97b573933",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/experiments/EXP-RQ01/round4.mjs",
+    "sha256": "035e1ea77e2f841402ca40379ce04f409b62c2c0c579a6a68d7c15cb7bcc2348",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-W02/build-public.mjs",
+    "sha256": "5502dd8fe938495e417b00804e89e319390f104622034a3da26bf4334aaa4222",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-W02/check-offline.mjs",
+    "sha256": "8dd3f994ce3cd506369fadd3ea6de48b84c7a8692c4e2f567f399ee1d6861588",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-W02/check-round3.mjs",
+    "sha256": "2bd02873116d88da8c515e26b7b2412bd46d9fa22fb298acfbe7193c7039f5b2",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/experiments/EXP-W02/controls/qa-original.ts",
+    "sha256": "8f4ce1fa95374ce45e53c56c1c9be835af5bbecdb5da4b8032ebf4484b332fb7",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/experiments/EXP-W02/controls/round3.ts",
+    "sha256": "0115fc441506472b0f885fc1042f4c0415bed6c9718e0b0666d5c618d40703de",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/collect.py",
+    "sha256": "bc70bc77db29ae7d7efffb6c73a861edcda90cf3705c464f965f94bb02b40774",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-live.ts",
+    "sha256": "e5608e0596b87239f829f8d9bebdb37092ced2570bce29fa6b31a0f6810cfdff",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-offline.ts",
+    "sha256": "5d50257cc9e698468b78a74a07ec33841bccee25f5ea045da2b429d02cf8e63d",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/delta-sums.ts",
+    "sha256": "6f4bb065e2b8f31c69257cba4e03ae8fa8cc90ea9477149c3ef276addbd75a19",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/grammar-live.ts",
+    "sha256": "8aed451e7fc9599cc07ac1bcacdff21023eef2ae5db9509339b36154294743c5",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/offline-source.ts",
+    "sha256": "f6e550248680518e4373e6c7cae43327d7de1438f5e66eea9866fc2dce9d3653",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/probe-source.ts",
+    "sha256": "fcbde6a4d502f5c843cd24923955f98bb636b56a2836487272899650f88211ed",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/probe-sums.ts",
+    "sha256": "662a64f67e103a7eb0cbdcbddc70e8eb3a8d99741483b62437fdea96cadc42e8",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/run-probes.mjs",
+    "sha256": "8c2c13a9fd37d385f57acc514d714b6657f236ccfda34c246ec79dfb5b8e54d9",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/q79e/subquery-regression.ts",
+    "sha256": "46d859ec4b3975a1d524978ccb87603de4e1fe7e7ad6e8f39025696b824387c4",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round2/offline-source.ts",
+    "sha256": "c3301ca2b613a654f0a4c14e808acdba682ab1a09e6276711a2856bf9f5af646",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round2/probe-source.ts",
+    "sha256": "6c1ff47d651979605767def8241c75b7f49480cdbd18deaf8e9bd5b125304cf3",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round2/probe-sums.ts",
+    "sha256": "bc323d12ab01f759b4b266ba116065025ff1bccf450f5e087196693d39e00656",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round3/collect.py",
+    "sha256": "8bcbca70bde553a096e1290dbbbf4fb0d84f8ff9c7fc4df261de5c4c6a9f6923",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round3/delta-live.ts",
+    "sha256": "74e4dfa3a49bf8cae994b103ed09d11d059090882e33aa131877a4014ee3fb3a",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round3/delta-offline.ts",
+    "sha256": "905206df3f0dadf110f04f1fc48df86acb08543a88b859b3c103a3809ae7539a",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round3/delta-sums.ts",
+    "sha256": "67deb072eaa5fcf0633772d051554a693016c53d6a1ebee3f898d505124c0bec",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round3/offline-source.ts",
+    "sha256": "d24d2738d2119058a37cbcff6070e65b702faf1372e8dc7688139998e59dff31",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round3/probe-source.ts",
+    "sha256": "95a188cd621fac166298351ff026d6137ffe7550900ecc67dee4d6066c35e95c",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round3/probe-sums.ts",
+    "sha256": "495317c267c7a4cf0cb2dc3783aa44e795147b77090f8024cac04f6a992010b4",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round3/run-probes.mjs",
+    "sha256": "51de2322e9da1ef2c7846d941ffe741d931ce608462ebd4bab532d906edc474f",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round3/subquery-regression.ts",
+    "sha256": "ad0f81da122c8cf6818fbaa94facaa6d035c8e2d5ce451641e134715c358ce60",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round4/collect.py",
+    "sha256": "bd0c0446b65c603c24c40aae6543304f550f9bf1f66342187d27712751716b4b",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round4/delta-live.ts",
+    "sha256": "3a10640a6112bd03c5bfec733894f7149eb7a3b5a3a0a9a6a118c5a089324793",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round4/delta-offline.ts",
+    "sha256": "07096117a577415ac0fa83d91bbed87efebb3f5adf5c8227c640752f259dbfa6",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round4/delta-sums.ts",
+    "sha256": "9ac5660e0f8616b71af49d8099f9f4dd5fa9492b68ec40c86456df08ff9a4063",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round4/grammar-live.ts",
+    "sha256": "0d11e3eb492e2f3b696e74b5552021147fd55aaf4d085df6cf74dff966e8c397",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round4/lexer-live.ts",
+    "sha256": "0753db9d6198ae15f17afa977ca32f54970580883f0de91647915f5dbfa9c588",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round4/offline-source.ts",
+    "sha256": "a4382c69c0650a3f90326fddb6f11fa9cb2fa406d40b4094334102ad913c8ad3",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round4/probe-source.ts",
+    "sha256": "448df71c40f3452bf60fe7ccd34ec66897c3e19ec53b9d4ed4be70302cfe04d9",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round4/probe-sums.ts",
+    "sha256": "f8a244901757f6b46a60db43b3a49f40a7fa0b4ada97ea401ce1534a16be3657",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round4/run-probes.mjs",
+    "sha256": "775d731ef2abf3e0d92c7bd4679200db8cc71669884925cb5e10f7e78f6480da",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X02-xtql-parity/round4/subquery-regression.ts",
+    "sha256": "4f7ece5acfe041a83e49efcad0dc3a4457ae8104fe582d2ddca40eb2121904ec",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X05-xtdb-read-follower/catchup.mjs",
+    "sha256": "a1f83797356d3ab77de1e72bfa8aeb8adb1a9604d1b686a86f4672204ec756b6",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X05-xtdb-read-follower/common.mjs",
+    "sha256": "a409b8fcfec202e14f23e2dfdcb266d4ab4244158bc8c8faa278ef51649c4e70",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X05-xtdb-read-follower/driver.mjs",
+    "sha256": "244ce3db86ba8ee11ea81ced6120ed7fcc1fcc0fc7197140bd9941656ed3c7aa",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X05-xtdb-read-follower/guard-live.mjs",
+    "sha256": "5b9acccb3280abaafc3316df7f80193b34af3374e26400bdacf1c38c74f93444",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X05-xtdb-read-follower/reader-worker.mjs",
+    "sha256": "1d357fe327b866fe8e75ef1ed6a7355873040f49e5c4051aadfa209f7b45702d",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X05-xtdb-read-follower/receipt-summary.py",
+    "sha256": "ec6860e2cf3e6f69fa965f128340d5c26d56f6f11131c37cd1ca996d4de647a4",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X05-xtdb-read-follower/report-numbers.py",
+    "sha256": "40c118390926976e156f9074cc983af8fd1eedfc6c55a50e92c3b69fde43e4ee",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/EXP-X05-xtdb-read-follower/vm-cpu-report.py",
+    "sha256": "70eb8e26bbaf8c0f797c5214fdf798f4a6e53d219c00e4780d77c61b48176f0c",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "lab/experiments/INT-XCJ/evidence/audit-pins.py",
+    "sha256": "3ee7f38eca05c1fefdf0091f2e24b7269418b66e41cb280474c21150647f934c",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/experiments/INT-XCJ/evidence/round4/run-live.mjs",
+    "sha256": "b7e6c156f26c19e79e8d5068b07b6351dcfce971e963f242008d92b4763e2f3f",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/experiments/INT-XCJ/evidence/round5/run-live.mjs",
+    "sha256": "26b0f9deed50d42422b6a2d260c073b666e776b1831854798b5fe4cf52238655",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/falsifiers/wire/domain.mjs",
+    "sha256": "99c0db47ac68d0687c09b528024cceb4c344f5a4cba2fdd46a88ab9a1457c7cd",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/falsifiers/wire/lib.mjs",
+    "sha256": "dbe73620830f231316d05a082b7789b65b7f75f724af8e9e840d3f84242bddb1",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/falsifiers/wire/run.mjs",
+    "sha256": "f433c2c20ca01850387df4f61f3c497b522f0a207b9860e1ea28853166b053f1",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Wire-value correctness result writer; ms hits are datetime SQL values, not latency measurements."
+  },
+  {
+    "path": "lab/oracles/decimal/gen_vectors.py",
+    "sha256": "b30b430acbfc7476cf47e676d38abaa247d3545b20aac5d481bea67a11cf11e1",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/decimal/tdk1_reference.py",
+    "sha256": "73467589480deb93fb700cdaf856cccb8f67b9a24d1963e26744a0ac4754bf33",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/domain/cli.py",
+    "sha256": "fb14ef13bffe12c963a01b76b37f52fbde921476d4482f9616022a3cdbdbb6d8",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/domain/population.py",
+    "sha256": "7c33da567e3530b40210c7fcae3ad850026cf1dd037b5edc0808f78be1d7eb3d",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/cli.py",
+    "sha256": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/exact.py",
+    "sha256": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/selfcheck_fixtures/freeze-ham-reference.mjs",
+    "sha256": "c533122597c940d69c8a101a1a175ba5e9d6ab62f1efdb2d5526c9f65a86a206",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/selfcheck.py",
+    "sha256": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/tests/helpers.py",
+    "sha256": "005be879fb88580f578f8befc73d22218006cd38504a88226fedb91b3ede3703",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/tests/test_contract_section4.py",
+    "sha256": "99273adb536a3835b62f49c7be7fddf690e871e5f7dccce5b73d9e1f3a44982e",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/tests/test_entities.py",
+    "sha256": "562feac4b58c11e8fabb8e30fff85c41cd9562cbd05a94df3d8c3d8f19caffe6",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/tests/test_replay.py",
+    "sha256": "6900d4fc9710e3248c476c036aba84565c53b4265b231867778d776668feb7b9",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/tests/test_rulings.py",
+    "sha256": "3997f66b01be8f697977911ec1fdf5209223d5310206657f7ed65c7ea106aea4",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/tests/test_scale_and_selfcheck.py",
+    "sha256": "3b78a5adc8e665730c2b53799de7fbfbc04b99cae343404f630fc856f4b255f4",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/tests/test_views.py",
+    "sha256": "d79f5bab47c842aa443ffe814df88ff65bf153777c95ff39a32e5501e16c1584",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/values.py",
+    "sha256": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/oracles/replay/views.py",
+    "sha256": "bbfb8989e054ba7ed4998f466478bdef92ede643e9554c313672f7db2a865901",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/receipts/check-writers.mjs",
+    "sha256": "a3fa153ebaea2a1feef6187e30303623f6cdd6f4f957b9bfc05c12dc827658d0",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/receipts/coverage.mjs",
+    "sha256": "71daf51b7b1b3d39736e8755ab5149d1b6a983de1bab84902684f1f001aaac99",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/receipts/coverage.test.mjs",
+    "sha256": "e57b93cf171d7609668e96cf3c0190286af6e80ecaec7000eaf1997db51e2a11",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/receipts/latency.d.mts",
+    "sha256": "dd15bda7aa36de438780ad3e8076dca45146f1ba49980f2b2a43f3dee2f40762",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/receipts/latency.mjs",
+    "sha256": "98fa210e2e90d71fd22ac785aa332b23d646fd8e76aec3c81337fc76217524d8",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/receipts/typecheck.ts",
+    "sha256": "0a49928eb469d5bb01906d470f5b640ce5f183438f7f8ee40ad2cea046a7f74d",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/research/R3-artifacts/physical-names.mjs",
+    "sha256": "05417b98afe27cca5c04854e206ac5758fe048eb3b4a2ee9b6f00b37bd450744",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/research/R35-probes/prof.py",
+    "sha256": "cef08aca2a242d0a823b5b71837d370106075440aea36e31bb2f988a4d0ec164",
+    "timing": true,
+    "serialization": true,
+    "role": "external-mode",
+    "reason": "Raw QLever execution-tree timing viewer: requires explicit --connection-mode, labels each output; caller attribution is not measured transport proof."
+  },
+  {
+    "path": "lab/research/R4-test-outputs/qlever-triple-count.mts",
+    "sha256": "a54e2392882eaf8a456c4d6e92087fd34be8a571aec8b0bca9218114b847841a",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/research/R4-test-outputs/xtdb-statement-trace.mts",
+    "sha256": "f12f9e32cfc3672c3f3e69fcfde78bec25a7aa8ca0a1720eeed3465610594e44",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/research/R5-probe/gen.py",
+    "sha256": "b00b23dbcec490834d95d37d8e94f985a48ee3c6518afbd800fbd4aaa851adaf",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Archived collation/order correctness and index-generation probes; no measured HTTP latency. Engine build process logs remain native diagnostic text, not a host latency receipt."
+  },
+  {
+    "path": "lab/research/R5-probe/lib.py",
+    "sha256": "d2bb0a41c14d5ac6a5ff36b252706f56d3b0e81bca08517f1dbad286cf83d709",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Archived collation/order correctness and index-generation probes; no measured HTTP latency. Engine build process logs remain native diagnostic text, not a host latency receipt."
+  },
+  {
+    "path": "lab/research/R5-probe/probe1.py",
+    "sha256": "031cb9887c7385e04ddf48e035461b8f981f65e5aeeabdd7bfa2a744e47434c6",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Archived collation/order correctness and index-generation probes; no measured HTTP latency. Engine build process logs remain native diagnostic text, not a host latency receipt."
+  },
+  {
+    "path": "lab/research/R5-probe/probe2.py",
+    "sha256": "dbae6ec2e24bdf13b0e67a8ff3f2df449a176cada50e036335281c9ad5d479f8",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Archived collation/order correctness and index-generation probes; no measured HTTP latency. Engine build process logs remain native diagnostic text, not a host latency receipt."
+  },
+  {
+    "path": "lab/research/R5-probe/probe3.py",
+    "sha256": "67e5d6bbbc6e520ee3d01a03e00a5ec33d611a186dfb6fc844b162165349738e",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Archived collation/order correctness and index-generation probes; no measured HTTP latency. Engine build process logs remain native diagnostic text, not a host latency receipt."
+  },
+  {
+    "path": "lab/research/R5-probe/probe4.py",
+    "sha256": "8e59bb4961c91fb75aa726776f9f83938fd3af5e8d407ccccfcb594a1deba180",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Archived collation/order correctness and index-generation probes; no measured HTTP latency. Engine build process logs remain native diagnostic text, not a host latency receipt."
+  },
+  {
+    "path": "lab/scenarios/01-monday-rush/run.mjs",
+    "sha256": "2426ea1d0b498eca49605d3c5e05685e9bca746d22c5e1dba863a88b91146caf",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/02-form-submit/run.mjs",
+    "sha256": "1849864f9ced39cc8ae4a2357f41f50887fa35d2007b0f05da196b4a66e4c2fd",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/03-webhook-storm/run.mjs",
+    "sha256": "a425536e045a16845fcf84ef29304cc77cf23affb8488beef020888796c6b1df",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/04-lost-ack-restart/run.mjs",
+    "sha256": "aab793c48d5bd82ae4a806f94ab66b8b3f12524df80a7f770562b13474695f94",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/05-background-check-burst/run.mjs",
+    "sha256": "5cfd62d839c7c42c0eff432d4a1274cd5900c1e240232db99a00caff66e6f552",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/06-decision-fanout/run.mjs",
+    "sha256": "5b8442d6cef1fcbade10569a702b236b44034abf3df93fae34037df11355b0a4",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/07-two-reviewers/run.mjs",
+    "sha256": "52b17c614fe0dc3d1d308851c1920476c038842172795216a96ea39b70717caa",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/08-address-since-october/run.mjs",
+    "sha256": "b26212658d8b1038435977569a046a6e404dbb7c13fe67a67478eb829509f811",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/09-start-dates-move/run.mjs",
+    "sha256": "ec25420f28cc52b5c3f7ebb253c457b04fe97d101022640251aa59be04d62244",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/10-release-activation/run.mjs",
+    "sha256": "dacb927bcaf7ac3d8b877d0e91ae24ec56374c2d83bc3f371b7fc0ab8fc1c6ba",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/11-plan-impact-preview/run.mjs",
+    "sha256": "1561b18187be5353e0513d04c5fd8a0919d9c7571a080b9ab8ec30c90bc792ce",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/12-audit-march-3/check-patch.mjs",
+    "sha256": "e24e5ef4cd1a3529feb5877ff8615a27e98149aebe0d8272eab1f4e77e0c0419",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/12-audit-march-3/probe.ts",
+    "sha256": "0e38a5d1bd9c187a37ffa39505f4953b3e410b76035db62609986e17b8d575de",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/12-audit-march-3/run.mjs",
+    "sha256": "326ef53734d96117c5d687958a42c8c5022b1a28821278bb5962beb631637692",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/13-hris-backfill/run.mjs",
+    "sha256": "e2f27970588cfc717b2ded0f45f1ca0ecd597f15af6c8159a134ead3eacb73d1",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/14-account-factory/run.mjs",
+    "sha256": "00c3a37d93851d45dbc18eb1186473dcd77088c104ea56056b87f6e98307ff08",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/15-tenant-mix/run.mjs",
+    "sha256": "2846ec482ec95e532d85d3a6238b169290e252f4d19da2af6677d56a0ce68f48",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/16-pii-erasure/run.mjs",
+    "sha256": "501c3540d3a45f712a5122f504776cb35e10fc1a4d38b4ac8711ec0d4b531125",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/17-agent-proposals/run.mjs",
+    "sha256": "735133b38bdad7cc739ed1ef366dc8a36870f705650c9cf00634b8d7600af6ce",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/18-recruiter-dashboards/run.mjs",
+    "sha256": "f728430137e3ed51b4cf7c252499ece13459b6228ee90e37cc2fca738c3a1091",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/19-feed-consumer-crash/run.mjs",
+    "sha256": "17c6f25ea5848054c09e1998fad10dd984fa082b2b8e085e9b448176a16f440e",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/expect.mjs",
+    "sha256": "ff95b076175c920019ffc7c506f65a6ef9c960c4204d94ff6513aca87592b23c",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/legacy.mjs",
+    "sha256": "25bd33228aa2e4a51eed87d65aaa4dafc6e256aa0400b904c08029f77eafb1fb",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/scenarios/lib/diagnostics.mjs",
+    "sha256": "1328f792662b17dc9b2bcca3517855123bee777171bb637d0332fcd90c1b7773",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/lib/domain.mjs",
+    "sha256": "d9f4ed4235386642a01c2865a8d63f1905aba04a079851114bdfca313626798f",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/lib/gen.mjs",
+    "sha256": "566a7c6abeb9f82200e587dd894503507903716e685f0ecacf2ff174724cf3c5",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/lib/oracle.mjs",
+    "sha256": "d783fe3a8be4174404101d8c33ffe0b5a6695c633c351966d6578a574ffbc9f6",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/lib/runner.mjs",
+    "sha256": "fdf2651cfd525b76a3fcb816c41c9ffad8c334f915ff57793d14cecd1430b76d",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/case-driver.ts",
+    "sha256": "89d0486fd6e98e57aed27d90c3c0f618a37e4acc46ea106f49fd8127d0160976",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/cases.mjs",
+    "sha256": "be5c9846ac239b50d45b158149823f049bbc31f0b57ee506236f4a86be825803",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/claims.test.ts",
+    "sha256": "32d2a190e53a7788dcece492d3fa0296016ab59233f9ac379e178f30bcd0800d",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/coverage.test.ts",
+    "sha256": "eeb95227f22d5b9dc10dae95bdde6bdcd5deb790612879ce038f2affb3edb602",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/expect.ts",
+    "sha256": "5a079461e55327ffbb8162f0c17dfcae0a823f3250f0b7c57cc0027197b6cd1d",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/faults.test.ts",
+    "sha256": "ea311bdd7f86eb4619d25b8235f7b31bf16882a6963f7fd85ddc0e556c0f0e49",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/faults.ts",
+    "sha256": "006030eb5509498df779e913abd9b291fe32d6d2fc9740cbbc35c8b8c63b93f4",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/generate.ts",
+    "sha256": "2f3de68155cef239c63bfe29273c7831b595bfd09efc6e8eaacdc186681466a6",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/lanes.ts",
+    "sha256": "84f90aa1464af6bb0c4b41d59954263728124e141c6be7cfb1cf1352536d17f9",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/offline.test.ts",
+    "sha256": "3bebd84597cc0ecdc64f5892a59510ea7a8e8f554612e0cba63b91f23044307f",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/probe.ts",
+    "sha256": "8653b85e912a3c2e46aaf87bc97135d8790b0690001274233bdf606255a0cfba",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "lab/scenarios/v2/run.ts",
+    "sha256": "03012476b4951fab03dfb062d9b64b9a3084141f7236bb02f3a919d34b633735",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "lab/verify/A01/regressions_review0311.py",
+    "sha256": "9f258188b525cd512dc2a515e8acf5745593c4de97b1ff23ea2ca14b48c370aa",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/A01/regressions_round2.py",
+    "sha256": "54f242ba08485e877a1de13399bfd5827c36a9775bdbdb2b134e7a7a5e0b4c2c",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/C8/adversarial.test.ts",
+    "sha256": "00d856d747e0394c012923290e2e2942f75532aab9ff36862221872dc02b42d8",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/C8/light-live.test.ts",
+    "sha256": "81b92261f8f0509c3fb2bd433113f834c6c27112db13d4b3d45ee25722594c31",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Live opt-in verifier serializes trace step timings: selected client mode and fixed keep-alive proxy upstream are explicit."
+  },
+  {
+    "path": "lab/verify/C8/round3-delta.test.ts",
+    "sha256": "23ba09266beff803484c3e1321017c6f6e90c5f12e7ff4c7a740b3c889f28873",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/C8/run-offline.mjs",
+    "sha256": "b30691ed3d98cfb2f58b64c8f65951f31489db34e742daa037c81e65857eec26",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/convert_and_run_o01.py",
+    "sha256": "9e8288628bcb1e36968165563ad96a48b8196bd21b2a6c317c51a3bb1db50ebe",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/convert_and_run.py",
+    "sha256": "4aca518361e559dcf0e09c094bf7a74981b417210ae39c9043f59a3110d6aac1",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/probe_section4.py",
+    "sha256": "f1e337230c15b2b4b89a7d0bfc83d9f499c7595707a7d3033d839df692af3152",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/compare_results.py",
+    "sha256": "413f11805cdfafa386f019ad0b7e3b90a08338f4088c4b2e222e9cad499d9e1b",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/convert_and_run.o01-original.py",
+    "sha256": "9e8288628bcb1e36968165563ad96a48b8196bd21b2a6c317c51a3bb1db50ebe",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/convert_and_run.o02-patched.author.py",
+    "sha256": "4aca518361e559dcf0e09c094bf7a74981b417210ae39c9043f59a3110d6aac1",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/diff_runs.py",
+    "sha256": "48a7cd40b06647367d4f84f832bf204151c131334072a16ec405483dd92bab72",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/differential.py",
+    "sha256": "ee74838dc74207e05b31e5ce8bf83d28123589d35f78ef2b9816a7b0d46ee410",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/f1_feasibility.py",
+    "sha256": "adfddde60579a4b4f190de18779e51e5f6635f49a3573e66e4ddd4846fbde253",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/fuzz_stats.py",
+    "sha256": "020956c1980541dff6c84edc72d43ced0c255734e3048bb247d9ce44fd5900bd",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/hash_table.py",
+    "sha256": "6f905cfdf2c6c1873c04a3c6123c670129eafc0b28422e7cbaa18721acbcefab",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/hash_verify.py",
+    "sha256": "64d423428f3e200409ee778c62aefe76fa9a20eb87635e0c8e64d1c5b8c4b38e",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/judge_changed.py",
+    "sha256": "b13ec881dfb4eeb6808c39018cf37f4c95989622f11b31d7fb5a9e4aa93a743d",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/negative_control.o01.py",
+    "sha256": "a3c3659628c5506d4014624de827953df9f4a6ba658ca4177b8dfd9ccac84c73",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/patch_converter.author.py",
+    "sha256": "01c1e6cb0f83f8f5288ede7ff330740849c0b453bfcc1964e3ddb615a2a8a76d",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/pin_scope.py",
+    "sha256": "3dd7fa1530173ec0225caa6f0441005e52fce854e51b5a6c20be05d9e3f39c86",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/plant_errors.py",
+    "sha256": "44c20875d40153e917fe556d8c4c85b36c163ff2289980d8889708ee66462703",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/probe_035.py",
+    "sha256": "0fa65b2593ba1628fc84029ff28ee889fe16c3197dfc184deaef2814b46526d1",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/probe_delta_033.py",
+    "sha256": "0ff7eb4cb9e022958b95463b5b3626011beb4b61160873ba029d6a49b78ca406",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/probe_q49.py",
+    "sha256": "672924f2b43d26dc96edc2ecc927b3da4ae052d92a1a8d190edb929842f0ad69",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/probe_section4.o01.py",
+    "sha256": "f1e337230c15b2b4b89a7d0bfc83d9f499c7595707a7d3033d839df692af3152",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/qlever_legacy_check.py",
+    "sha256": "9217d5d08ee941e4dfd8121b299c16addb119d988c20fdf41bc874569c2e2e15",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/scan_golden_delta.py",
+    "sha256": "79783f3c007bb98245645f1e81bf4dc73a970312c0ebbb20dae176999d089e5c",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/verify/O02/tools/transitions.py",
+    "sha256": "06e938c1afa3da2199285d5691ad319aab127fe1003b43943188dd07c1c0bcdd",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Historical independent verifier/evidence fixture, source capture or offline regression; no new host query performance collection."
+  },
+  {
+    "path": "lab/world/W0/validate.py",
+    "sha256": "ae44e94dcf6e60f98cd7a7208a6f34a3e1e2a43d744a6d503111887fd1b261eb",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/cli/src/program.ts",
+    "sha256": "b2a17e6f45ee1d76a1c14ed325d11b33cb63e0739e2835081c0bcb124c929323",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/cli/tsdown.config.ts",
+    "sha256": "912d9d34182e788d7b355d5716cd2b788b6b5e5d427bba3ccca32f539f0643d1",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/cloudflare/src/adapter-support.ts",
+    "sha256": "6a7629040dc827fd9b99ced9ddb054e94c55138d3fdb2abd21e9bfa88c84f360",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/bench/config/scale.mjs",
+    "sha256": "c3dd61637f60136191fdef8f9454c7a7f837e474247cad05374ffca9cf7e13ff",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/bench/config/typecheck-budget.mjs",
+    "sha256": "546d01e07cb783d6c6b124917dd8b21a6ac2d2f948794d23b5b8e35b452e308a",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/config/EntityValidation.ts",
+    "sha256": "3ccaf08b621517aa3955a6eb4a3113edb617f71d79ce835a5f0c601d3efa18f4",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/config/GraphConstraint.ts",
+    "sha256": "46f9f800fe35617792abab7403d9f0e908f781463937823b3852bebcfd325929",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/Constraint.ts",
+    "sha256": "8af934e31a17660911c29ccbcd9c84c2f144f3c78103f04726289f9722d34c64",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/content/CanonicalJson.ts",
+    "sha256": "16475d1c66f329c0d13ea8d065734b3ef4b0bf546f848d753fe627f24edb5727",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/datalog/compiler.ts",
+    "sha256": "549f685706fc0de023dd36913216b921591b89ab6fe4fadb1dff58775229ec67",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/datalog/schema.ts",
+    "sha256": "6000a11b2635a9a915f3a6b41504ce07631e62d6673fdd76c070cf1a8ce639bf",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/datalog/types.ts",
+    "sha256": "0a74df375fbaca0eaf388af5799d0612c2763de4d58f7fa00813268537d5d913",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/datalog/wrapper.ts",
+    "sha256": "9a24a60bb57dd1d89a4c89601c56dc8153fb9f93f587b8780f236eb97f992b87",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/derivation/Derivation.ts",
+    "sha256": "2d0d52d4ca3b0f687ebbe4bc4a7499dc2e7ef8df87f8a2341341a51139682304",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/entity/EntityCodec.ts",
+    "sha256": "0ffc72c0182f50345d5ccac56d16a7a55930584575a330609382dc08d8fb211a",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/entity/ProjectionSpec.ts",
+    "sha256": "6945dd2100052fbe3f2d68b6177b454c72631e6f0ea41ad0f4d8c9a663510c63",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/EntityPage.ts",
+    "sha256": "e4b8ce0842eff6b9a279159ef10ff13828c426dd1e5e7ffc6d1674db1c650eac",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/kv/datalog/executor.ts",
+    "sha256": "87770b124f41b99c89bf615925c290f8b176c7c1a5fdeb90dc3f3da91b5a7f1e",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/kv/datalog/pattern.ts",
+    "sha256": "9276ea3346cd3ba7b0543ce93c481384c5e2542ea3832933a55d5e4fa40f3b06",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/kv/hexastore/KvTripleStore.ts",
+    "sha256": "0d4e96309facb7720c29a152c1307e8dac7b9e660a2c815b261477341bfb74b3",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/kv/hexastore/tuple.ts",
+    "sha256": "b04adabfb3614e5ae23d92a177face2532eb812b6032ca9d51a83731d5b60963",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/kv/layers/KvTriplesLive.ts",
+    "sha256": "d97c302ee63e068cd3b475e2f41707210b1d5ace2a965e18c9ad19b211cde7bd",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/native/FrontierClosure.ts",
+    "sha256": "664108e81e1104b7cc04e7e5d25f410e38cede5ce11ad32566897a81f10563b2",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/native/NativeQuery.ts",
+    "sha256": "c5f3ef36ba3578c46e9f845bb4afb752f1617416feee1fdbf534b4c72fea9470",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/Pagination.ts",
+    "sha256": "a2a7d3a1eed1982b823edd969f296ee6029ce68084e641994785609a0da63d8f",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/runtime/DatabaseScope.ts",
+    "sha256": "15a7a8f031c31b8348fd31f44dd0c6c9b4a418229d08721feaa13d1a8a765ddc",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/snapshots/canonical.ts",
+    "sha256": "a9d0198cb45465d3b1a07eadd98093461698f3a4720c595a384a22ca67655a18",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/storage/QueryExecutor.ts",
+    "sha256": "16c37f620cc25d6b2883722726689c516d501dfa679de6b85bf04ef6273c4f98",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/store/Triples.ts",
+    "sha256": "f8c0d35c1308c96796843ef15da8047ae9acfb0d08064f4f5cb60fe7d8e8b62a",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/subscriptions/query-hash.ts",
+    "sha256": "01c8ac1e2e12c5f892a34702f1ca6f5783bdd410f2ac5f85e405c9cdd594d0ef",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/src/subscriptions/SyncHub.ts",
+    "sha256": "56cb393a0b821eb854b1fa6c8c4a45037b65595fec8f98babc4189bad28d9ffe",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/core/test/config/Lifecycle.e2e.test.ts",
+    "sha256": "567bbccd0480815cb61ac16c137e8e470e38a54c41606581705c1df169521418",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/config/Proof.test.ts",
+    "sha256": "8a3d43798f1bb8a770bd21e5ef4c9109a679af9e5d07bf18029a612048af97df",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/config/Reactor.test.ts",
+    "sha256": "01d4ddbcf3a889ee7f16b31fd6ee5d5b8ea0a1df65dad5031d16432ac5f645ce",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/config/TypeExpr.test.ts",
+    "sha256": "b56a4d400719701ac572c66783eaea9a8194791ee0af9953ea7d0235b3fe5f5f",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/content/Sha256.test.ts",
+    "sha256": "79256f3b5819d8a7e452ed7b9fcc4ea6e8c7ae3ef1d81bf33a79bcb3f014f586",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/datalog/compiler.test.ts",
+    "sha256": "6b2259a3e2e62380cd13ab5edc80e6d3816258a954bb556f32cd86176cb00532",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/datalog/schema.test.ts",
+    "sha256": "a250f7fb183abf6eebe0dd4c57e0d0fbe6b2280afd56d667c522573725187e8f",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/datalog/wrapper.test.ts",
+    "sha256": "42cd644c22f77481918af696c7812b40cd70f4f76ddd9f03b2ca7cf7978db1d1",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/entity/Descriptors.test.ts",
+    "sha256": "1c7d73e86aeeb0a8d376067df90b0f9f50d2be5b52b266dfe76ab3951484dc51",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/entity/ProjectionSpec.test.ts",
+    "sha256": "b0a37ae0b657bfea147575017808b37be428f601439ed66d126fe89aa60d8c66",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/kv/layers/KvTriples.test.ts",
+    "sha256": "a185494ea67481e2e673ca6c9bd2981e072cd97c843fc900346932e57407444a",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/native-query.test.ts",
+    "sha256": "4bf6d56ca3d09128a46ff1b01dcfc771f310dd1a03134983773554d2381ca299",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/native/frontier-closure.test.ts",
+    "sha256": "91eeb7951876f0e7a73d55628ffd27a006b68fbff288cc36a622057975668161",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/Pagination.test.ts",
+    "sha256": "1e14f6e0e15ac8723bba3057f6d5b2387a62f8494bf09f92d650ef403a0b0466",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/core/test/subscriptions/sync-hub.test.ts",
+    "sha256": "a8cdc86e0e9b1536e9f2d3af66f136de685fcfb8655eac24ee187ee43b3d5bd3",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/dashboard/src/api.ts",
+    "sha256": "a7170d80cdcd9930e30300134a5a6ef1d95b8d6da1d93bd714803a6eeefaa9a4",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/dashboard/src/data.ts",
+    "sha256": "45554ef6f9d55408e0d5270985ceddcc2d5af12c3fb72c552b9c36404f59bbc7",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/dashboard/src/main.test.ts",
+    "sha256": "f65b3a316d1530e5eb973521d134fc8bca3df249d949abe0db3ba737ac16dde1",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/dashboard/src/main.ts",
+    "sha256": "81672d0c0f5a76f905f7f07285d36e12af790c3189961e0e2d7b42a264767e5b",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/dashboard/src/model.ts",
+    "sha256": "18a9e5b1124cb6a9548280726e04f1fd3f527992b196305b010187e42d9ac310",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/build-core.mjs",
+    "sha256": "6b59cf1f2353ef3a7fb1cbb31a2c9ee166d13caa364d09fba8812d6d52cb2413",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/build-owner.mjs",
+    "sha256": "347b57e409d8cbe0cd20c4a65aa2bdc17960c1fa26ede99623b5c897eddfca66",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/prepare-public-read-stage-job.mjs",
+    "sha256": "7655dd9e3ee930c760f2ecfb2fd16be05ba4c71ed8ccb0949b0bd90b25134384",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/prepare-public-read-withdrawal-job.mjs",
+    "sha256": "80b41110459769741321e239d43fda66b421d31a6c1e274571563aa5c972315d",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/prepare-sdk-job.mjs",
+    "sha256": "09eeb1586a1fdaec472dd80238993adda81f35330eec3b09a7b0c60d178884dd",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/prepare-withdrawal-build-job.mjs",
+    "sha256": "31761248037c49520627d428524a5d673b5d862aa91dabcc2ce3c13909fe8e3e",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/prepare-withdrawal-unit-job.mjs",
+    "sha256": "56ff45afeaf36025bbe7df32c249ac83c742c91e8ba1e1d095c3242ead01df40",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/public-read-stage-preload.mjs",
+    "sha256": "4a15422d1eb96421a3d7933e3e902bd183244b4d2d177121e97c6f90484e9044",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/public-read-stages.mjs",
+    "sha256": "dc9562939cb8c62da7a8876fa68e181bb2394be0846098939faa40c88a060e89",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/public-read-withdrawal.mjs",
+    "sha256": "9885278cd9b294ea135fde0de2f401bf706e59b2ca4649510996c831e2a5de2a",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/recursion-entry.ts",
+    "sha256": "69846aca87740490f2f2270a2cce94b41adaefa3a1036d102543318f196b0fc1",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/resource-entry.ts",
+    "sha256": "63bbe17a561cde09cd2357568243114e670895f6258d61b782c0c2a56857bb1a",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/sdk-entry.ts",
+    "sha256": "609516d0e71dc270b4a2a7a2ac2c528048a24710a4c1a11805e9325667e3ff90",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/temporal-entry.ts",
+    "sha256": "8a1fdff4340b351ddd1e5b265f9a37b7872ef3038e93928e5b8b44e1e426db11",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/withdrawal-build-checks.mjs",
+    "sha256": "1117543aa6ec7abe8b66293709dec8e69932cebaafd0d5790c34d86f38e4b7df",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/experiments/withdrawal-unit-checks.mjs",
+    "sha256": "0ede6a0832bff0847c08a6c53e720fc85dab440a982d4c179015098382046620",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/src/DuckDBClient.ts",
+    "sha256": "ac09511d4c74e61ae768e37687993771ed2bff787cc4b5950c1d18fd2e3e0b2d",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/src/native-duckdb-port.d.mts",
+    "sha256": "fb437d9486d3df1108508cfefa0b9f194d6c1ae23b4647b149f8ff466ba0369b",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/src/native-duckdb-port.mjs",
+    "sha256": "ce2763518cd3c9d9f6fdbca515ee6e9179b4a4ab760bdc2e38b10ede93d60835",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/src/public-backend.mjs",
+    "sha256": "ab23f7fed23866c175f6294278758fcfd3f5063eab55fb0d5dbabe2c36076334",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/src/query-executor-adapter.ts",
+    "sha256": "1231a70b04b48f40902c1ad738c0a905c8f976b1ee4f310756c3b3267e4f126d",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/src/query-result-boundary.mjs",
+    "sha256": "fb7e51e20c87372e261deb4362ed7654d8b7782ad8a8a9d99e55f0fdf4ec0a6d",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/duckdb/src/TemporalQueries.ts",
+    "sha256": "d9165104a562c0a8a6dfda5a9cae299d4616c331c25ae7cbf6d99809efdbcd94",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/foundationdb/src/FdbKvBackend.ts",
+    "sha256": "8a85a430e988f3dfa198f0cef7a2dbd09aadb54b9953060d61b193aff8339026",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/foundationdb/src/FdbSubscriptions.ts",
+    "sha256": "d7c8700f0f8a1fee250d38337e2537d171630c0c37b598fc105f4375709fe3b0",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/foundationdb/test/FdbSubscriptions.test.ts",
+    "sha256": "0a801a8139b29f5b4f93bbfc45efed4f7424514ae286f41dd326f4102b2caef3",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/foundationdb/test/fixtures/FdbTestLayer.ts",
+    "sha256": "eedc0a3babbae22dc70a7ced1de8b6ade760eccb43fd0344ff329e6e04b322e1",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/http/src/ConfigApi.ts",
+    "sha256": "7c1a5b142fe0590604647a64ad537e9c66c2e88ce10d23b93741cf2c2dcd21d1",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/http/src/EntityHttpHandlers.ts",
+    "sha256": "48f560a2eca32236891abec8ff77169c5e87dffead4c8c3f602749fe1f6644b7",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/http/test/integer-codec.test.ts",
+    "sha256": "c815912c42a7db5e780daf8325a9ecdd99bd9272ff2f0c0f0db2915d7d7a3ca9",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/qlever/experiments/aggregate-entry.ts",
+    "sha256": "90a0e16509fd805f38a46aaf330c886c7f3ac1cd865751ad2ea435d52d666459",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/boundary-shapes.ts",
+    "sha256": "6c5c6610743a0f25bac4518428dc1327dc3bb9373c93235d8af2b836c8e76df4",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/cancel-restart.ts",
+    "sha256": "fe0d7569346c4db27635a44fe7541db1efc264505803ab3b721e154a0881ba0d",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/join-shapes.ts",
+    "sha256": "f49c6202273e8b5aa0f56078159aa534b5170f9474c2760e40f97fc31957b063",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/lab-counterexamples.ts",
+    "sha256": "2b9b318ca53bcdc8ad3eb3970b14d123b87912e3ca114cac2597d34d42f4874f",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/native-capabilities.ts",
+    "sha256": "bab52feafbb10102102650a4ab3ddeeadb1249d4bb6ec928a823710bd1fb2836",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/native-entry.ts",
+    "sha256": "0f78b5bfcf5d2198015bd6a0e9111a4c7d98fb6fd9022de468d047d90a8bca8d",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/native-query-shapes.ts",
+    "sha256": "05cb0d0fd0c5dc997d1f7b75b284f0998bbf012d3b2a0cd485687761372aaee1",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/oom-recovery.ts",
+    "sha256": "27dca5b7f069e60c5c49a435d85728038a2a477251b6eb8b93d42eab93961201",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/persisted-source-entry.ts",
+    "sha256": "9209e697596dcc7122000fdd3cdf9c6c59357a47fd2f045974f3d1e0a25ef12e",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/retirement-pair-entry.ts",
+    "sha256": "e2488a6536461183fee7bf43efc872578b2bc612bcbed9afd0bb1489d26bfc75",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/scalar-order-entry.ts",
+    "sha256": "c637df1cd9e767760288cc04d5f5de578b030326946cb5bfbb285bf0a701a38e",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/string-order-probe.ts",
+    "sha256": "5a868375fa6698519470dd817a972460e02f4fe423d6a109eb3702ece617aa37",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/transaction-admission.ts",
+    "sha256": "14be33566f4982b4f12b4bc1dd39ac16fe8f9d39917262450a0284867fd626e0",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/update-shapes.ts",
+    "sha256": "988152d16c653cba58c83c1f8d1a1bc58c7af0fa53aee9fa6e497bfd3a530f86",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/upstream44.ts",
+    "sha256": "df9712db8aaf1127d8c03db9010bf8cab984eea9784cc36085904998fd87efe7",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qlever/experiments/verify-xtdb-entry.ts",
+    "sha256": "4c1ab37b826424eb7d2d13e1e4f020ad428e1da7d68cdf51249994333912891e",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Cross-lane author verifies XTDB through its public client, not QLever."
+  },
+  {
+    "path": "packages/qlever/src/index.ts",
+    "sha256": "d5854948be58dd395b11022ad5dd8470eae2adb4dd26aaaa6fc3f4391e14c065",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qlever/src/native/BasisRelations.ts",
+    "sha256": "a4651692d16c68e79e65253a4f389fb579078295814a62eec052b4f75b9f8826",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qlever/src/native/NativeQueries.ts",
+    "sha256": "a05f98b30825370d967b646cb9df31e07e8e71d696909e62c472b7ab5f6bff3c",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qlever/src/Operations.ts",
+    "sha256": "c3851be7457eec8af340c79621aa2152662389d33ee6e9752f20fc7fcb69170e",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qlever/src/QleverClient.ts",
+    "sha256": "27c6228887c9484c7c9c4ef69e84889431a200b9ef083c4d68952e5e98f17de2",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qlever/src/QleverQueryExecutor.ts",
+    "sha256": "433080bc14b2c7922d91e0bfa2e36b4ac2e92823968ecaa6c81cff96ad77bde5",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qlever/src/QleverStorageAdapter.ts",
+    "sha256": "8cefbcc631375c196663232fd726dad147a153cbd1cc72a9c7f2b33ec0df9ab0",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qlever/src/rdf.ts",
+    "sha256": "829ba773bbbf9455ada8d10f37ed8ae1f327a82a007748a69ea7070a925e5494",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qlever/src/recursion.ts",
+    "sha256": "4c9747745f3a317326d0c8bfb0a34a859a4c93a2bcc0472459014fe99d48c88e",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qlever/src/TemporalQueries.ts",
+    "sha256": "986ba49d9c7af25f6a5ec4cf4f2bda97746e1fc4f232dbe9c9b00f9eeeb5bb3f",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qlever/test/client-connection.test.ts",
+    "sha256": "da7bebcfac192d41e402b55aade4fe743d372f407b85b7b9196d9f97a3e741cc",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/qlever/test/client-parity.test.ts",
+    "sha256": "16e2067f424afc5ae352dad81031fb4b77685fbd33f95b158532e9d76a1d9d94",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/qlever/test/native-relations.test.ts",
+    "sha256": "ccde3b93566d8678c376ddbd74dbbdaa53b93ca12c7c8d5d35e16331c1b51a1c",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/qlever/test/outcomes.test.ts",
+    "sha256": "fd1a3c5251496d7bf211c5237cbdc1c8382abd46527cd4b43d71b71b13ad94f8",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/qlever/test/query.test.ts",
+    "sha256": "1e160f73db4c1db1cdf1367470cbd3b35f22015a83281b8a1e308e111a11d7f7",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/qlever/test/unicode.test.ts",
+    "sha256": "2105e98c93200cf516cd23da55d81287880516b82333741a8321caa04745483c",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/components.mjs",
+    "sha256": "2d5db11941a1c6baab7991e9caa5ca5f972d6dc1b9cc3c93ffcdd8fa48205e8b",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/prepare-components.mjs",
+    "sha256": "0acfc2f098d69ca9754cb0b6f545d5e0f7b4b22b962695e1374fb52db334d67d",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v1/growth.mjs",
+    "sha256": "f05f32c5addf6aa34d338d93be02a004789afb615b61732f4de6e65723759d0d",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v1/prepare.mjs",
+    "sha256": "c2eee4f7f950033a95420190fcd592605d44c68cae82d07c76793b0ec3fad6b8",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v1/worker.mjs",
+    "sha256": "3724cb5d683caa90ba39ad662c12decbd6d0e706aa6725769f1bd688a400ca9b",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/codec-components.mjs",
+    "sha256": "f5360c790501e17d2b7b42fb425f9db77514b185de793c6eed941e4c484c1d42",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/codec-schema.test.mjs",
+    "sha256": "40a89ab0604e1fad31b9c144ffe3ac2d9db76827faae90f96e577fba2253224b",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/growth.mjs",
+    "sha256": "f05f32c5addf6aa34d338d93be02a004789afb615b61732f4de6e65723759d0d",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/prepare-codec-components.mjs",
+    "sha256": "ce37996ca0088d09d07339a7e1241465c24a47fe5fc2641337a628b4774e89f0",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/prepare.mjs",
+    "sha256": "a7025840e6b5da317f902dc34f626fc2e583a977a69a37d169ca41037b27edf5",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v2/worker.mjs",
+    "sha256": "3305d96105931dab068f49ea0a6292a247b2d1ddc7ac647cf4dc691b80d96b40",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/codec-schema.test.mjs",
+    "sha256": "40a89ab0604e1fad31b9c144ffe3ac2d9db76827faae90f96e577fba2253224b",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/entry-components.mjs",
+    "sha256": "32e91ce591857a3b4a56b453acd4b751c0cff52c97d89c80276454c427d4c41c",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/growth.mjs",
+    "sha256": "f05f32c5addf6aa34d338d93be02a004789afb615b61732f4de6e65723759d0d",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/prepare-entry-components.mjs",
+    "sha256": "8c19f1a11551466a89b160fa99ff695911d4a0f3e4615ff3b3a9a5b3b46f3e6a",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/prepare.mjs",
+    "sha256": "289e53f6cb91f22f837bf1dd24cbb3e851fb0fe445d7b5c5e27f179a76227ac7",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v3/worker.mjs",
+    "sha256": "22bcd67a1f92239a19912bb819a3a07305cc3c1b20eb071fef08c0f90dddfdf5",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/codec-schema.test.mjs",
+    "sha256": "40a89ab0604e1fad31b9c144ffe3ac2d9db76827faae90f96e577fba2253224b",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/entry-components.mjs",
+    "sha256": "fffe783abe6083a16ddd94c1a29b43830bf47c576a6390e944555911531d2706",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/growth.mjs",
+    "sha256": "f05f32c5addf6aa34d338d93be02a004789afb615b61732f4de6e65723759d0d",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/prepare-entry-components.mjs",
+    "sha256": "a8319bf72793ef9455735ed23227e96cf189b4c2cd605912c928be5617931f61",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/prepare.mjs",
+    "sha256": "5dab67eca63fb57c007a0b04df30f55346dde36d18138c3159a457ea917f071b",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/configured-entities-v1/tiny-backend-v4/worker.mjs",
+    "sha256": "bd9487989630a2dd6f44a92134821cce67642e0860d6a41b2c8c62abe4ea2d87",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "XTDB-only configured entity experiments and metadata-only disk scans; do not serve QLever."
+  },
+  {
+    "path": "packages/qualification/experiments/qlever-foundation-budget.ts",
+    "sha256": "96418db501adc26eb1b2d446cfc63d5e4fadfdf822f2c914d2da91caf0a84a3a",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Settings/admission wrapper: collects no call latency; runs the labeled workloads/runner, foundation-entry or load/runner child for timing receipts."
+  },
+  {
+    "path": "packages/qualification/experiments/qlever-load-datalog-budget.ts",
+    "sha256": "9bb0b30e771dbb97f1f8200cd7769808279bbd1a0dad1cf65905e73434672839",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Settings/admission wrapper: collects no call latency; runs the labeled workloads/runner, foundation-entry or load/runner child for timing receipts."
+  },
+  {
+    "path": "packages/qualification/experiments/qlever-load-native-baseline.ts",
+    "sha256": "a4b0e61f3f715d765a790990341985a22cfb45ad72f1f83adaf9c8824595f220",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Settings/admission wrapper: collects no call latency; runs the labeled workloads/runner, foundation-entry or load/runner child for timing receipts."
+  },
+  {
+    "path": "packages/qualification/experiments/qlever-load-native-strict-baseline.ts",
+    "sha256": "cf6c10e6286ca7b63d82fae020f7fd22205a47697243c9585663b81a6a57f66c",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Settings/admission wrapper: collects no call latency; runs the labeled workloads/runner, foundation-entry or load/runner child for timing receipts."
+  },
+  {
+    "path": "packages/qualification/experiments/qlever-native-baseline.ts",
+    "sha256": "46697dbde93a0c3f97e3d2992ea2ec4c6e27e0705ef33223cad08aeede079ebc",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Settings/admission wrapper: collects no call latency; runs the labeled workloads/runner, foundation-entry or load/runner child for timing receipts."
+  },
+  {
+    "path": "packages/qualification/experiments/qlever-native-entry-baseline.ts",
+    "sha256": "6498c68c235b73e176713378bfa37a0dcf3b46e521700d610f39c1e75d410b71",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Settings/admission wrapper: collects no call latency; runs the labeled workloads/runner, foundation-entry or load/runner child for timing receipts."
+  },
+  {
+    "path": "packages/qualification/experiments/qlever-native-instance-preflight.ts",
+    "sha256": "e7a7b065597c4433919d82dde0b9d9f08ba8d6880053cfb41dc5a1d65304024c",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Settings/admission wrapper: collects no call latency; runs the labeled workloads/runner, foundation-entry or load/runner child for timing receipts."
+  },
+  {
+    "path": "packages/qualification/experiments/qlever-native-preflight-baseline.ts",
+    "sha256": "b780c11db11d9f66182565a133ac9c019999aa772d6b043265b1ea6c9a453d18",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Settings/admission wrapper: collects no call latency; runs the labeled workloads/runner, foundation-entry or load/runner child for timing receipts."
+  },
+  {
+    "path": "packages/qualification/experiments/qlever-planner-budget.ts",
+    "sha256": "6b859bcdf18c4f44de73d272be526cbbbcbfcfdb9da42119fba02605fd3a2dee",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Settings/admission wrapper: collects no call latency; runs the labeled workloads/runner, foundation-entry or load/runner child for timing receipts."
+  },
+  {
+    "path": "packages/qualification/experiments/qlever-task-basis.ts",
+    "sha256": "e73a8d54cda92d6722ef7216e4b6dfdf56342371c66f778e627ee67480b6a5ff",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Settings/admission wrapper: collects no call latency; runs the labeled workloads/runner, foundation-entry or load/runner child for timing receipts."
+  },
+  {
+    "path": "packages/qualification/experiments/verify-feasibility-contract.ts",
+    "sha256": "932fde7c5691dac798dbcc1f8a287b7fad44252059b100ab954c7577bab27cf9",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qualification/load/dispatch.test.ts",
+    "sha256": "f45cc64cfedae4775c46584597978d32ea282cb3b689e2e8d73e78b15633613b",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/qualification/load/dispatch.ts",
+    "sha256": "a37577301b8a494583e491bb9a036604eecb8a0dae7aebcb45530a6a8823c87a",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qualification/load/inspect-trial.mjs",
+    "sha256": "2ce58066e609c448fd930fa38d6fcbb432381c489735500834a809b7d8bbafbc",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qualification/load/model.ts",
+    "sha256": "c975528695a66e965b9bc63429db7cb172b1dcd4929b3bb0d82968e02e356764",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qualification/load/prepare-job.mjs",
+    "sha256": "108188002ba0bd1f0faf28e272c945dc94ad1e41269ee66a4b038dcb7e31f950",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qualification/load/runner.ts",
+    "sha256": "88bd6b76eecc8296c0c8d007dde5c38a08cc64d3e90846b4ee6955e59f45fb75",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qualification/load/verify-run.mjs",
+    "sha256": "a766eedae903443c3bbee7b039c87edeff2512d725e89715396ee8dcd3526683",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qualification/src/native/qlever-recursion.ts",
+    "sha256": "0d2f26abe38e35da65d75c82a23280dd62174bd7a1081fcde48673a73218f058",
+    "timing": true,
+    "serialization": false,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qualification/src/native/qlever-workloads.ts",
+    "sha256": "9349878403ee468ce6b64922c648d88f598f799b1c65fc42a712aa47598e54da",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qualification/src/native/xtdb-workloads.ts",
+    "sha256": "ff39d3f2fcb74ee2a318e8801a12680a4f9f366b4a7f5ed9e20e89d5ccd8a3d0",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qualification/test/c8-reads-never-write.test.ts",
+    "sha256": "4f99cdc66196bf29dd1a24edecaa99bb881c6b6bfa2ae2b457dabee9b247a365",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Actual opt-in XTDB/QLever load test serializes host timings: labels selected factory mode and QLever proxy upstream keep-alive separately."
+  },
+  {
+    "path": "packages/qualification/test/engine-write-counter.test.ts",
+    "sha256": "b73bb781ee5715624944fe2f19902c19648527863cf15857a138a74df9b96f7c",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/qualification/test/runtime-conformance.test.ts",
+    "sha256": "b01ac61355aaf25ac0e5823a3907b4d906b68898b9b2f1864597c6a80d717834",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/qualification/test/xtdb-native-library.test.ts",
+    "sha256": "a8cab1a9ee32948e94e5debbbadfd6e517733177ea5cbf86f33fa2385c786d3d",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/qualification/workloads/foundation-entry.ts",
+    "sha256": "ed350ae20828b5d4d8c75d66f38e9549e978b5510bffd7eb05cc1662c949f06e",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qualification/workloads/lab-conformance.ts",
+    "sha256": "ab0bb9a3780a81905624394f995f9c951ec9a70054815b4b0c38f160326c06f0",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qualification/workloads/prepare-native-job.mjs",
+    "sha256": "a67703f67172c71000f5df41486dc81ffc66784d5143615d2e43dff0905c5b2a",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qualification/workloads/public-pilot.ts",
+    "sha256": "1087fa613d4b5a5644136d0bc598169e9addcc8ef70a28eb519da0f6bff5de8b",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qualification/workloads/runner.ts",
+    "sha256": "41db83fd85075038522d3d5d758c2e05b83d96b669a247969337d2faaf3472aa",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qualification/workloads/scale-loader.ts",
+    "sha256": "43ac07507bfae0ea7f819c2a4d67cb63d5c846eb49207c522f23b031b3041ae9",
+    "timing": true,
+    "serialization": true,
+    "role": "labeled",
+    "reason": "Timing serializer/reader uses checked mode metadata; nested samples inherit the labeled report boundary."
+  },
+  {
+    "path": "packages/qualification/workloads/verify-qlever-recovery.ts",
+    "sha256": "6cc2355eca3f49e4cedafef04875c6f9e6ff20d0152791e12ef3d8ac9a279eca",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qualification/workloads/verify-scale.ts",
+    "sha256": "fe02b3271014c1ea0c7aa69b7c64dec07d01be6bce113a3d41bc901351b820e5",
+    "timing": false,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/qualification/workloads/xtdb-native-x02.ts",
+    "sha256": "01130a6e2fcc63bf6718df70241dcbea6e636c0176b8f181636bb96a16de6d84",
+    "timing": true,
+    "serialization": true,
+    "role": "forwarded",
+    "reason": "Shared calculation/fixture plumbing; timing values are forwarded to the labeled gate, NS/GS/P5 or qualification/load report rather than a standalone QLever timing receipt."
+  },
+  {
+    "path": "packages/sql/src/queries.ts",
+    "sha256": "a5f085c74875ef467fcff844ac16c4f5fb4906b338f905083e1c018be0329a4d",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/sql/src/SqlQueryExecutor.ts",
+    "sha256": "7436c6a27363c0927fafb0b7aad70112495ec1a8d60cd563645cb65d36ab2f5f",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/sqlite/src/SqliteBackend.ts",
+    "sha256": "1abab0395073f12cc3623d1ac3a21f3df25a8c06f6e3631a39640eb32645be04",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/testkit/src/index.ts",
+    "sha256": "6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/testkit/src/offline-route-fixtures.ts",
+    "sha256": "e6ca91277f7ef4e70888983f86e68727e02e43fa3046c221fa27f35eaa09d37c",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/testkit/src/route-equivalence.ts",
+    "sha256": "723399315a33500832e215b1a79085d8c449d1ecb99e2254e2e23a33013b6505",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/testkit/test/route-equivalence-review.test.mjs",
+    "sha256": "302ecf6134a04cf2845e6c611a41b13201584d15ad17b6007f44eb6f765d1520",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/w0/src/cli/cost.ts",
+    "sha256": "6fb753739c133fbecb69c09e15a9393a26a6abd91a1b7bec2966c194159f8622",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/w0/src/cli/fingerprint.ts",
+    "sha256": "16bb32c194dbf39fed1b23d9430e010acd524a965adcd04538257729d5ca0b0f",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/w0/src/index.ts",
+    "sha256": "c6d1fa28868511a416fc848ab228596413bd462f8f65ead0f212cbd828e96a17",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/w0/src/json.ts",
+    "sha256": "a60211cac330e1fd114274e51e903c6e5552b778b630a1f17984364a364a8ca1",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/w0/src/population.ts",
+    "sha256": "6f67a032ca3359d7d71fcc5d1d63e80cb25d8932f3ecf398e73ce61e5c42de21",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/w0/test/kernel.test.ts",
+    "sha256": "c7bf12b0c254738f2dfc5fe3507fc4b63909e146f388a7798e8964ceff9d7ebb",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/xtdb/experiments/attribution/cohort-contract.mjs",
+    "sha256": "638fd7d463f9b341d100e77a5fd5a67d2fbda6a895b0bb9cb635b48c3db45792",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/attribution/cohort-contract.test.mjs",
+    "sha256": "609313f82c9c4bc853cb8f274ee3c2d1d2ec095af2bb614dd63de5300a7f13ef",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/xtdb/experiments/attribution/isolated-load-entry.mjs",
+    "sha256": "b7da8b2885e731739da97b97d2fd18a594b66ce21b4eaa5c23e8db7fe59a82c7",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/attribution/observe-postgres.mjs",
+    "sha256": "be2362f6b9f081bf4c53e1e2aec86a73797d92c4cd7194fc1fa163b3db2d34e5",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/attribution/observe-postgres.test.mjs",
+    "sha256": "bbf431d47d191c7b57ae208d8baff0dae04fa312729c3405e08547a5ae4ef32a",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/xtdb/experiments/attribution/prepare-observed-entry.mjs",
+    "sha256": "5ff1b7c14c76a3c425f5a412316cb2983899103eb137c23245b2e3a874e68d08",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/attribution/prepare-observed-load.mjs",
+    "sha256": "dc05555f1305556da82a0729b677ec8582e4e7546401d20b3f17dd138c0581f2",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/attribution/trace-session.mjs",
+    "sha256": "87cce30a544a80724ab3ea86b26cf8a8d5184944ce561d0a0ddcee2f48c007c6",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/attribution/verify-isolated-cohort.mjs",
+    "sha256": "beea22eb7f0065f61c3cec15ae24265550a90e8a5c4139c856f56f30a3ab3cb6",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/attribution/verify-trace.mjs",
+    "sha256": "f0a2163db18edc4cdfd34b0dd579060d27e7339a64b1e493b2b88c6523728ff0",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/concurrent-readers.ts",
+    "sha256": "cad34522107b0c87b890ca58a399db5b354354d677b69f25b25cd730a9bb9ca4",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/constraint-shapes.ts",
+    "sha256": "059c6eddf0ea08b0958d024a1fe2d803c42b7e8057ca62e481b79f9d9d848feb",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/native-entry.ts",
+    "sha256": "ade743681636055b7e5e18fcb105f8da59b579e8de61b65452596b05027872a4",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/native-f64-parameters.ts",
+    "sha256": "7626ff8b580b6e8da44c12c1ebc31f0dd172586e0f535d77daf2531f9e280504",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/optional-shapes.ts",
+    "sha256": "a872636b6b1be9ec73237b7c2a7e847beb59b596af53ced021b15c426cc8a506",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/prepare-native-entry-job.mjs",
+    "sha256": "6e59becce53afc06374a1ba5f1388aadc084111f7a0a7ab83eb297f2877b9825",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/prepare-native-f64-job.mjs",
+    "sha256": "26c78b44ea2462641a2c65e92f85798cc86fa23f504f333066e43b26054abeee",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/query/group-shapes.ts",
+    "sha256": "a8877ff153174f0e9b454841859cbe0b6304d5e8d0899b8e8b6ef1a67d5ddd52",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/query/integer-casts.ts",
+    "sha256": "200f08066dbaee6a992c3049cf4fa05142fe78d0e1bc16e1a589931abb35cfc8",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/query/integer-extrema.ts",
+    "sha256": "7a0d18a57254342d08715571c4565ad04da7047431c75437301d674e7843c38a",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/query/native-shapes.ts",
+    "sha256": "383850ee9dd2d0965bc482f4bcf421fce2a055a7bd97304a3b7bb61b9d18385f",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/recovery.mjs",
+    "sha256": "e70ae4ed1b6b00591d0e5aa0204f58682cf416221d3903254b117bc55a2bef8c",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/transaction-admission.ts",
+    "sha256": "97a71cebea8e9ef7a0cced6433ec9e73ecb9edfe114f2fad46e6af663045cbab",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/experiments/transport.mjs",
+    "sha256": "3990a04a4a3bc0734fc6ce91bef44299d40760bda92e22f0d2f808a7ffdf85d6",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/codecs.ts",
+    "sha256": "f36b8de4af66fddd30b3a055ebf4473ad29c0634d9fd1ea0e45c7fb4e522e8f3",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/ConstraintValidation.ts",
+    "sha256": "b298dfe7841684ea3fda905b283e16f33853a0884af04f13b9913b89d82e9d29",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/index.ts",
+    "sha256": "144d7cdc0c93f746de56acfb90bb540a5d2d21214e20092f135357806ae48fe6",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/MaintainedQueries.ts",
+    "sha256": "2e8618e3e27e3cc7d60b237aebc17922b6a5e12389ffbb31d4adaf922317dabe",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/native/NativeQueries.ts",
+    "sha256": "ff9b1eecad9294bb67bb8764ef2c2224882127ba2a7b8c608d81cf8de9ca7cee",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/native/Reachability.ts",
+    "sha256": "d404e84931d4cecb339b5f935a4791b0035afb4e7999c7010fdec90f26680e91",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/Operations.ts",
+    "sha256": "2fa4dc6fc4c50a42cc088d497f70e49029e2f535399ae84d9c94239125147b66",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/query/compiler.ts",
+    "sha256": "5f532c15896d6939169e0fc14ead76d4841028039d06fd28d3260d97f70b104d",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/query/recursion.ts",
+    "sha256": "6796b505545ad47a3f60cfc69823f20256b4856953a5f68cfb7b17f9b2d7c5be",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/TemporalQueries.ts",
+    "sha256": "5b2223281e10d076498fe6c1c1676643a9e70591cca337998eebd9f19fbcfc14",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/XtdbClient.ts",
+    "sha256": "b581b97b0d5eb449465655336b0fa7be76b8e82d1f07ea1c62a4b07d9ddbac9d",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/XtdbQueryExecutor.ts",
+    "sha256": "5e219a2c6c4aef5ad187d140653f46b8260731f5dc2019535017bb1d4cf79c7d",
+    "timing": true,
+    "serialization": false,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/src/XtdbStorageAdapter.ts",
+    "sha256": "5a9b4d63a8754e974c4a270610880f3c5199a525354255ff6bf0b9c9a2d6a58e",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/test/adapter.test.ts",
+    "sha256": "083947cc74626aa6ecd012c7de737fe4db641e768e6699f8bd4f01c30a6c1fee",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/xtdb/test/client-parameters.test.ts",
+    "sha256": "7d7df45b3e8def490cddcef08e4f86c43d8c3143ece0a5192f5dff7fa709486c",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/xtdb/test/commit-encoding.test.ts",
+    "sha256": "01d879bf95089510567e0cdcac4c29adbb32e2c877a1262d44251aafa6a50fe0",
+    "timing": true,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/xtdb/test/fixtures/client-before-j01.ts",
+    "sha256": "fa5c31c44c45e9e129d65464ee2f012146911f5b11d433d1ce7d73aadee6c67c",
+    "timing": true,
+    "serialization": false,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/xtdb/test/json-compatibility.test.ts",
+    "sha256": "3536b4deb402db2e782b19eddcb987de72333cd2b5c41745ff75e9d172a1f3e1",
+    "timing": false,
+    "serialization": true,
+    "role": "fixture",
+    "reason": "Regression/type-check/discovery fixture or guard; no measured database performance receipt."
+  },
+  {
+    "path": "packages/xtdb/workloads/calibrate-capacity.ts",
+    "sha256": "a0c56c4b0dd39ccda2847b871a9a5a51588468d979c1df0263efb4c6a07fa454",
+    "timing": false,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  },
+  {
+    "path": "packages/xtdb/workloads/capacity-experiments.ts",
+    "sha256": "c17f8c2d45bdd65111e1c3a92598055b9dc478997cbd9586efaf085290440432",
+    "timing": true,
+    "serialization": true,
+    "role": "non-qlever",
+    "reason": "Engine-specific non-QLever source, pure core/domain/UI code, or contract regression; no QLever timing serializer."
+  }
+]

@@ -1,3 +1,4 @@
+import { latencyReceipt, recordedConnectionMode } from "../receipts/latency.mjs";
 /** [EXP-P5-R2] Why: audit the retained event bytes and matched-window samples independently of transported summary fields. Rejected: accepting a summary flag or legacy short trace digest. */
 import fs from "node:fs";
 import { createHash } from "node:crypto";
@@ -107,13 +108,14 @@ for (const r of report.traffic.rounds) {
 fs.writeFileSync(
   out,
   JSON.stringify(
-    {
+    latencyReceipt({
+      qleverConnectionMode: recordedConnectionMode(report),
       status: "OFFLINE-SAMPLES-MATCH",
       acceptance: false,
       reportSha256: hash(bytes),
       auditSourceSha256: hash(fs.readFileSync(new URL(import.meta.url))),
       rounds,
-    },
+    }),
     null,
     2,
   ) + "\n",

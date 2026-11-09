@@ -1,3 +1,4 @@
+import { latencyReceipt, requireQleverConnectionMode } from "../../../lab/receipts/latency.mjs";
 /** Inspect failed diagnostic trials without converting them into acceptance. */
 import assert from "node:assert/strict";
 import { createReadStream } from "node:fs";
@@ -25,6 +26,7 @@ const duration = manifest.profile.endMilliseconds,
   errors = {},
   service = [],
   queue = [];
+let qleverConnectionMode = null;
 let reads = 0,
   failedReads = 0,
   declaredRejects = 0;
@@ -34,6 +36,11 @@ for await (const line of createInterface({
 })) {
   if (!line.trim()) continue;
   const event = JSON.parse(line);
+  if (manifest.queryPath.startsWith("qlever")) {
+    const mode = requireQleverConnectionMode(event.qleverConnectionMode);
+    if (qleverConnectionMode !== null && qleverConnectionMode !== mode) throw new TypeError("mixed timing event modes");
+    qleverConnectionMode = mode;
+  }
   if (event.type === "read") {
     assert(
       Number.isFinite(event.startedMs) &&
@@ -80,7 +87,8 @@ const percentile = (values, fraction) => {
   return values[Math.min(values.length - 1, Math.ceil(values.length * fraction) - 1)];
 };
 const visibleInside = writes.filter((event) => event.visibleMs <= duration).length;
-const result = {
+const result = latencyReceipt({
+  qleverConnectionMode: qleverConnectionMode,
   format: "triplex-diagnostic-load-inspection/1",
   at: new Date().toISOString(),
   reference: option("--run"),
@@ -118,7 +126,7 @@ const result = {
   },
   qualification:
     "NOT_ACCEPTED_OR_PROMOTED; failed deadline/availability/liveness outcomes remain failures. Single-run small-fixture diagnostic only.",
-};
+});
 const output = path.resolve(root, option("--output"));
 assert(output.startsWith(path.join(root, "qualification/evidence") + path.sep));
 await writeFile(output, JSON.stringify(result, null, 2) + "\n", { flag: "wx" });
