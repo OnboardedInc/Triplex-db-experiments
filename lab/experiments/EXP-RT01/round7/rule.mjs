@@ -33,11 +33,13 @@ export function calibrate(context, armId) {
       p50Ms:quantile(r.left,0.5),noise:r.noise}))});
   const metrics = {};
   for (const [metric,q] of [["p50",0.5],["p99",0.99]]) {
+    const observed_d=context.rounds.map((r)=>Math.log(quantile(r.right,q)/quantile(r.left,q)));
+    const diagnostic={observed_d,observed_s_d:sd(observed_d),observedRounds:observed_d.length,note:"all observed A/A rounds, diagnostic only; excluded rounds never create a judged band"};
     const d = context.rounds.filter((r) => !window.exclusions[r.id]).map((r) => Math.log(quantile(r.right,q)/quantile(r.left,q)));
-    if(d.length < 3) { metrics[metric]={d,s_d:null,band:null,why:"fewer than 3 usable A/A rounds"}; continue; }
+    if(d.length < 3) { metrics[metric]={d,s_d:null,band:null,diagnostic,why:"fewer than 3 usable A/A rounds"}; continue; }
     const s_d=sd(d), bias=mean(d), radius=t975(d.length-1)*policy.safety*s_d*Math.sqrt(1+1/d.length);
     // [EXP-RT01] Why: estimate spread from independent A/A rounds with M01's sample sd, preflight safety and small-sample t bound. Rejected: treating a single near-equal pair or a standard error of the mean as future-window noise.
-    metrics[metric]={d,s_d,meanLog:bias,rounds:d.length,predictionRadius:radius,band:Math.expm1(Math.abs(bias)+radius)};
+    metrics[metric]={d,s_d,meanLog:bias,rounds:d.length,predictionRadius:radius,band:Math.expm1(Math.abs(bias)+radius),diagnostic};
   }
   return {encoding:context.encoding,size:context.size,window,metrics};
 }

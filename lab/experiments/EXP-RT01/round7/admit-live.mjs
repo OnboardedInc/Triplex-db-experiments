@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 const root = path.resolve(import.meta.dirname, "../../../..");
 const attempt = process.argv[2] ?? "admission1";
 assert.match(attempt, /^admission[1-9][0-9]*$/);
-const out = `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live4/${attempt}`;
+const out = `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live5/${attempt}`;
 assert.ok(!fs.existsSync(out));
 fs.mkdirSync(out, { recursive: true });
 assert.equal(process.env.DOCKER_HOST, "unix:///Users/sam/.colima/triplex2/docker.sock");

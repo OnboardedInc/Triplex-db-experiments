@@ -3,7 +3,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-const out = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live4";
+const out = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live5";
 assert.ok(!fs.existsSync(path.join(out, "cleanup.json")));
 const hash = (p) => createHash("sha256").update(fs.readFileSync(p)).digest("hex");
 const original = JSON.parse(fs.readFileSync(path.join(out, "owner-start.json"), "utf8"));

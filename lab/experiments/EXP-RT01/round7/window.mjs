@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
-import { VmAgent,hostSample,hostSpin,startHiccupMeter,summarizeRound } from "./m01/noise.ts";
+import { VmAgent,hostSample,hostSpin,startHiccupMeter,summarizeRound } from "../../../bench/lib/noise.ts";
 import {config} from "./rule.mjs";
 
 export async function noiseSession(engine,out) {

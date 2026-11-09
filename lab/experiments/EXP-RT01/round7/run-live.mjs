@@ -3,7 +3,7 @@ import path from "node:path";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 const root = path.resolve(import.meta.dirname, "../../../.."),
-  raw = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live4",
+  raw = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live5",
   out = path.join(raw, "live-attempt1");
 assert.ok(!fs.existsSync(out));
 fs.mkdirSync(out, { recursive: true });

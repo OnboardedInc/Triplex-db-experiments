@@ -1,0 +1,9 @@
+# Shared recorder change for M01 merge
+
+This branch adds M01's canonical `lab/bench/lib/noise.ts` path from accepted M01 `99d9641d4d6f385ab3b3fade7e9e78680a8850b4` (same source as the immutable `round7/m01/noise.ts` copy). Only the import, optional HostSample provenance fields and hostSample implementation differ. R22 thresholds, summarizeRound, VM sampling, hard-signal treatment and Q100k grading are unchanged. The RT01 live window now imports the canonical recorder, so the fix is shared rather than an RT01-only shim. Carry this patch and new `host-counters.ts`/`test/noise-host.test.ts` when merging M01; do not restore the accepted base's setuid `top` call over it.
+
+The host collector uses Node `os.loadavg()`, `os.freemem()` and delta aggregate `os.cpus()` times. First CPU idle sample is null. It runs only sandbox-tested non-setuid `/usr/bin/vm_stat` and `/usr/bin/memory_pressure -Q`; each sample records command, raw output/error and counter provenance. Both synchronous spawn denial and callback errors become missing observations. Actual sandbox tests exercise the canonical hostSample, not only parser fixtures.
+
+`/usr/sbin/sysctl` for load/swap and `kern.memorystatus_vm_pressure_level` exits 1 with Operation not permitted in this sandbox. Therefore pressure level and swap remain null, explicitly identified unavailable. memory_pressure's free percentage is diagnostic only: it is not the OS pressure-level scale and cannot satisfy R22's active hard pressure signal. Unchanged rules exclude such rounds, leaving timing UNJUDGED. This fixes recorder execution, not host eligibility. No quiet-host claim or proxy threshold is introduced.
+
+Historical parseHost fixtures and RT01's vendored M01 source remain intact for provenance. Canonical noise.ts is absent on RT01's starting main lineage; the merge must reconcile the newly added canonical file with M01's existing canonical copy. No product package, acceptance contract or oracle changed.

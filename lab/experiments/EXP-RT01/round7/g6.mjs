@@ -11,7 +11,7 @@ import {noiseSession} from "./window.mjs";
 import { wireProxy } from "../live2/wire.mjs";
 const root = path.resolve(import.meta.dirname, "../../../.."),
   base = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live2/baseline";
-const out = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live4/g6-attempt1";
+const out = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live5/g6-attempt1";
 assert.ok(!fs.existsSync(out));
 fs.mkdirSync(out, { recursive: true });
 const sha = (b) => createHash("sha256").update(b).digest("hex"),
@@ -24,7 +24,7 @@ const baseline = JSON.parse(fs.readFileSync(path.join(base, "identity.json")));
 assert.ok(baseline.phases.every((p) => p.exit === 0));
 const g2 = JSON.parse(
   fs.readFileSync(
-    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live4/g2-attempt1/execution.json",
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-RT01/live5/g2-attempt1/execution.json",
   ),
 );
 assert.equal(g2.live.exit, 0);
@@ -51,7 +51,7 @@ const sourcePaths = execFileSync(
 const snapshot = () => Object.fromEntries(sourcePaths.map((p) => [p, hash(path.join(root, p))]));
 const before = snapshot(),
   runnerHashes = Object.fromEntries(
-    ["g6.mjs", "rule.mjs", "window.mjs", "M01-SOURCES.json", "m01/paired.ts", "m01/single-analysis.ts", "m01/noise.ts", "m01/noise.json", "m01/hist.ts", "m01/rng.ts", "../live2/wire.mjs"].map((p) => [p, hash(path.join(import.meta.dirname, p))]),
+    ["g6.mjs", "rule.mjs", "window.mjs", "../../../bench/lib/noise.ts", "../../../bench/lib/host-counters.ts", "M01-SOURCES.json", "m01/paired.ts", "m01/single-analysis.ts", "m01/noise.ts", "m01/noise.json", "m01/hist.ts", "m01/rng.ts", "../live2/wire.mjs"].map((p) => [p, hash(path.join(import.meta.dirname, p))]),
   );
 const statements = {};
 let stage = "setup",
@@ -97,7 +97,7 @@ function diskBudget() {
 }
 async function runtime(arm, encoding, size, label) {
   const m = modules[arm],
-    scope = `rt01-g6-live4:${label}:${encoding}:${size}:${arm}`;
+    scope = `rt01-g6-live5:${label}:${encoding}:${size}:${arm}`;
   const inner = m.client.makeXtdbClient(wire.url, {
     maxConnections: 1,
     transactionTimeoutMs: 30000,
