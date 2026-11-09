@@ -8,15 +8,13 @@
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
 (def base-uri (or (System/getenv "DATOMIC_BASE_URI") "datomic:dev://127.0.0.1:4334/"))
 (def connections (atom {}))
-;; [EXP-DX1] Why: sync once when opening a peer; subsequent reads use pushed immutable db values.
-;; Rejected: no-argument sync on reads (contacts the transactor).
+ ;; [EXP-DX1] Why: opening a connection must not introduce a no-argument sync on a read route.
+;; Rejected: lazy initial sync inside connection (a cold read would contact the transactor).
 (defn connection [uri]
   (or (@connections uri)
       (locking connections
         (or (@connections uri)
-            (let [conn (d/connect uri) result (deref (d/sync conn) 2000 ::timeout)]
-              (when (= result ::timeout) (throw (ex-info "Initial sync deadline exceeded" {:status 503 :code "SyncTimeout"})))
-              (swap! connections assoc uri conn) conn)))))
+            (let [conn (d/connect uri)] (swap! connections assoc uri conn) conn)))))
 (defn sync-db [uri] (let [result (deref (d/sync (connection uri)) 2000 ::timeout)]
                      (when (= result ::timeout) (throw (ex-info "Sync deadline exceeded" {:status 503 :code "SyncTimeout"}))) result))
 (def scope-name scope/name-for)
@@ -131,5 +129,7 @@
                                 {:code (or (:code (ex-data e)) "GatewayError") :message (.getMessage e)}))))
 (defn -main [& _]
   (d/create-database (str base-uri "tx2-health"))
-  (sync-db (str base-uri "tx2-health"))
+  ;; [EXP-DX1] Why: synchronize existing databases before accepting HTTP, not from their first read.
+  ;; Rejected: per-read initialization barriers.
+  (doseq [name (d/get-database-names (str base-uri "*"))] (sync-db (str base-uri name)))
   (jetty/run-jetty handler {:port 8080 :host "0.0.0.0" :join? true :min-threads 8 :max-threads 512}))

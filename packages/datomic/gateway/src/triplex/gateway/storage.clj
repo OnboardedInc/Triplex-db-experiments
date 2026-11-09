@@ -67,17 +67,17 @@
   (let [datom (first (d/seek-datoms db :eavt eid :triplex.entity/row prefix))]
     (when (and datom (= eid (:e datom)) (= (d/entid db :triplex.entity/row) (:a datom))
                (.startsWith ^String (:v datom) prefix)) (:v datom))))
-(defn row-updates [db rows new-ids texts scope source]
+(defn row-updates [db rows new-ids texts scope source position]
   (let [out (java.util.ArrayList.) times (java.util.ArrayList.) prior (:triplex.scope/max-recorded-at (d/entity db scope))
         irregular (volatile! false)]
     (doseq [row rows]
       (let [fresh (contains? new-ids (:id row)) stamp (if fresh (:recorded_at row) (:retracted_at row))]
         (when fresh
           (.add times (double (:recorded_at row)))
-          (when (<= (:recorded_position row) source) (vreset! irregular true)))
+          (when (or (<= (:recorded_position row) source) (> (:recorded_position row) position)) (vreset! irregular true)))
         (when (some? (:retracted_at row))
           (.add times (double (:retracted_at row)))
-          (when (<= (:retracted_position row) source) (vreset! irregular true)))
+          (when (or (<= (:retracted_position row) source) (> (:retracted_position row) position)) (vreset! irregular true)))
         (if fresh
           (when (nil? (:retracted_at row))
             (let [text (get texts (:id row)) prefix (row-prefix (:id row))]
@@ -119,7 +119,7 @@
                    :triplex.tx/operation-id (get input "operationId")
                    :triplex.tx/id (or (:id metadata) "") :triplex.tx/recorded-at (finite! (:recorded-at metadata))}]
                  (upserts fresh) (map #(fact-map % metadata) fresh)
-                 (row-updates db rows new-ids (get input "rowTexts") scope source)
+                 (row-updates db rows new-ids (get input "rowTexts") scope source position)
                  (mapcat (fn [row]
                            (let [eid (d/entid db [:f/id (:id row)]) entity (when eid (d/entity db eid))]
                              (when-not (and eid (:f/live entity) (:retracted_at row)) (codec/invalid "Invalid retraction"))

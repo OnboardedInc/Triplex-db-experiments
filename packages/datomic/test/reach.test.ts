@@ -173,3 +173,30 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("row-datom reach equ
     }
   }, 600000);
 });
+
+// [EXP-DX1] Why: unusual low-level positions must decline rather than expose rows outside the commit cut.
+// Rejected: assuming every SPI caller used the core's allocated position.
+describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("irregular SPI position guards", () => {
+  it("declines fresh positions outside (sourceK, position] and future retirements", async () => {
+    const client = new DatomicClient(process.env["DATOMIC_GATEWAY_URL"] ?? "http://127.0.0.1:8490");
+    try {
+      for (const mode of ["lower", "upper", "retirement"]) {
+        const scope = DatabaseScope.test(`dx1-irregular-${randomUUID()}`);
+        const a = makeDatomicStorageAdapter(client, scope);
+        try {
+          await Effect.runPromise(a.initialize());
+          await Effect.runPromise(a.withTransaction(Effect.gen(function* () {
+            const p = yield* a.nextCommitPosition();
+            yield* a.insert({entityId:"root",attribute:":dx/guard",value:{type:"string",value:"guarded"},validFrom:0},"_tx/00000000000000000000000001",100,"row",mode === "lower" ? 0 : mode === "upper" ? p+1 : p);
+          })));
+          if (mode === "retirement") await Effect.runPromise(a.withTransaction(Effect.gen(function* () {
+            const p = yield* a.nextCommitPosition();
+            yield* a.retract("row",200,"_tx/00000000000000000000000002",p+1);
+          })));
+          expect(await Effect.runPromise(a.getReachTriples!("root",{validAt:200}))).toBeUndefined();
+          expect(client.reachDiagnostics.declines["irregular"]).toBeGreaterThan(0);
+        } finally { await client.delete(scope); }
+      }
+    } finally { client.close(); }
+  },30000);
+});

@@ -53,3 +53,9 @@ Final Datomic suite: 10 files, 140 passed, 1 failed (141). The only failure is t
 - commit-fast.test.ts: freshly created UUID scope, two actual HTTP requests, typed duplicate receipt with the exact original transaction id, typed stale precondition, lost-ACK readback exactly once, and attempts to read released handles rejected by SnapshotExpired.
 - reads-without-transactor.mjs (still pending measurement lock at this checkpoint): will verify exact owned process identity, stopped state, expected row bytes/position across 90 reads, then resume in finally. It cannot claim success without content checks.
 - measure.mjs waits for the measurement directory before taking a heavy token. The first M2 wait was cancelled (only its own waiting process) to free a heavy slot; m2-wait-cancelled.json records it. No other process or shared lock was stopped/removed. A mistyped measurement-wrapper smoke invocation also failed before running a diagnostic; it produced no measurement or semantic verdict.
+
+## M1/M2 edge-guard follow-up
+
+Removed the lazy initial d/sync from connection lookup entirely: existing databases are synchronized before Jetty accepts HTTP; subsequent cold read lookup has no explicit no-argument sync. Added conservative irregular declines when a low-level caller supplies assertion/retirement positions above the submitted commit position, as well as the specified at/below-source cases. This avoids treating an unusual SPI position as a row visible at the physical commit cut.
+
+Fresh affected-route run: 3 files, 7 passed, including another full 200-scenario/6,600-comparison equivalence run with identical 5,960/380/260 counts, the lower/upper/future-retirement guard test (three fresh scopes), read-pin tests and the typed two-call test. Evidence: guard-tests.log and guard-reach-results.json. This is additional builder verification, not an acceptance PASS.
