@@ -1,0 +1,90 @@
+{
+  "base": "9e565e9159cf9f39016611f7ae39e0c6ec22b8b7",
+  "note": "All changed existing source paths are listed, including unpinned ones. Contract unchanged. Exact path mentions are conservative candidates, not proof of a pin.",
+  "paths": [
+    {
+      "path": "lab/bench/driver.ts",
+      "oldSha256": "3da9bf3a1994179a079c41fbcfa5518260481d67f746285bc6ece3c0d506bc41",
+      "newSha256": "6fdb2eda4c7d8385845e8fc77aa0cbac40f213543da5f0810c094061b652020c",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "lab/experiments/EXP-DX1/stack/down.sh",
+      "oldSha256": "7e2b63f671bd1a827672b19e6c08edf62097ec9bfaa5798013d271d785a25e4b",
+      "newSha256": "77eaafcbd8a9d128582a59a8f04629cc62d01e83e878e831e19932e60dd5ef20",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "lab/experiments/EXP-DX1/stack/up.sh",
+      "oldSha256": "a5932796ce92fc1f01aa714596ababcdbb50b73e88fe60a8e10a2d838cca52f0",
+      "newSha256": "16239303b42979720d7aa43d18e04da9ac4d91415c8b2115cf5589c696bb81e7",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/core/src/storage/StorageAdapter.ts",
+      "oldSha256": "e4fc53e12643d065be9f78a52945c962e70d85790b8350d8a811bd5a74b64701",
+      "newSha256": "bf50f2255828a9f5697f77d86617533e59c18768a0d25fb88771564e5e9c265b",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/main.clj",
+      "oldSha256": "a6198f0f30ff26e6be41668cd98b993a633c1ce98c7b34d5f32e122358d6a172",
+      "newSha256": "3d4f6e078ad28cf8e13626b5d3e62da6d62fe12ae5ac2ed2e0ed3526e7347429",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/reach.clj",
+      "oldSha256": "b16a2ae00d44bc362630d8b3961ab954fc1cbffdb11f29d58764f140a7fc8773",
+      "newSha256": "1ac2b86392fd53f149f33618df7d54be1d01af6afb48a715ddfe377463a8a4bc",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/schema.clj",
+      "oldSha256": "8026af67e3256c1248092af04820f273889e865b9746099d9b5afcbc09b048b7",
+      "newSha256": "635f529dfc9aeccf9aab88b35291c17b2410160b4ab82c4a44810556a44f4978",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/gateway/src/triplex/gateway/storage.clj",
+      "oldSha256": "206b5b5348ae383d50a185e4042a06248694cda36caf79896e40a1cb5b0126fe",
+      "newSha256": "71388dfb74752647f4ebfe4bbbd4b589db88555921bbfad5256e59e8320a3d6f",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/src/DatomicClient.ts",
+      "oldSha256": "a6aa9280d14078b348d089d44a32ab1072ee7d3999e097c35a7e0a4afe3b19c4",
+      "newSha256": "ed11b44bf8a12559c9b3ab371f5777af0ae29ba85e8ef1328240cfa3cadb2ceb",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/src/DatomicStorageAdapter.ts",
+      "oldSha256": "41db0700fcc54f90eedbae19ada2d56ec6d702ea713c822fd2df8b4d9bc7c8ee",
+      "newSha256": "8b24090062cc49f90e9a8e154fc5a528788b60480d645bc3227eb236604987b9",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/src/reach.ts",
+      "oldSha256": "dd6d8aef3dd45d68fb14c3359c4e20eee3f54243783c8d20f877c2b155f3b4ab",
+      "newSha256": "148d78988c5f3e167c5f3571ee057f75e56cf9e1eed46a01f6ad804358dba290",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/src/rowText.ts",
+      "oldSha256": "cdaf0563d3f4ab0bf3e558ec01169ddcf82e261beeff849585db286b0879ad4f",
+      "newSha256": "18c59b341121e164a2d8d37188650cb87deab2c9aeab8e6a17f978169489f795",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/test/commit-fast.test.ts",
+      "oldSha256": "0546d7d5fbfb5140c37eddf05e1be10f91ccb07c40a85411cef5ebfb08918b57",
+      "newSha256": "d61c061ad7d0e6f787531c36d2fe5fb62410350f778deebaebe8311c8ac1a542",
+      "pathMentionedInAcceptance": false
+    },
+    {
+      "path": "packages/datomic/test/reach.test.ts",
+      "oldSha256": "eea7ddfc3308fb1e913ddb272293181867c1557124f43da8aeb018f9e0ca1f49",
+      "newSha256": "90efa1ccc21d7b4bd1e9b522692e7ae0acbcdcfcfe93ba50ed32a1cb786ab8e9",
+      "pathMentionedInAcceptance": false
+    }
+  ]
+}
