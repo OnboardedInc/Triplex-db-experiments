@@ -7,10 +7,12 @@ import { spawnSync } from "node:child_process";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { checkImports } from "../../bench/ns-driver/check-imports.mjs";
 import { buildDriver } from "../../bench/ns-driver/build.mjs";
-import { runNS, readerLevel } from "../../bench/ns-driver/driver.mjs";
+import { readerLevel } from "../../bench/ns-driver/driver.mjs";
 import { encode, lineReceiver, REQUEST_CAP, RESPONSE_CAP } from "../../bench/ns-driver/rpc.mjs";
 import { sameFeedClock, publicationLagMs } from "../../bench/ns-driver/feed.mjs";
 
+import { launchArtifact } from "../../bench/ns-driver/launch-artifact.mjs";
+import { runArtifactControls } from "./round3/artifact-controls.mjs";
 const root = process.cwd();
 const output = path.resolve(
   process.env.VNSR_EVIDENCE ?? ".cache/verify-nsr",
@@ -25,13 +27,13 @@ const record = (name, data) => {
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const graph = checkImports(path.join(root, "lab/bench/ns-driver/driver.mjs"));
 const bundle = path.join(output, "bundle");
-buildDriver(bundle);
+const builtManifest = buildDriver(bundle);
 const load = spawnSync(
   process.execPath,
   [
     "--input-type=module",
     "-e",
-    `import(${JSON.stringify(path.join(bundle, "lab/bench/ns-driver/driver.mjs"))}).then(() => console.log('loaded'))`,
+    `import(${JSON.stringify(path.join(bundle, builtManifest.entry))}).then(() => console.log('loaded'))`,
   ],
   { encoding: "utf8" },
 );
@@ -42,53 +44,18 @@ record("current bundle", {
   copiedBundleLoads: true,
 });
 
-for (const kind of ["worker", "aliased-require"]) {
-  const fixture = path.join(output, kind);
-  fs.mkdirSync(path.join(fixture, "packages"), { recursive: true });
-  const marker = path.join(fixture, "candidate-ran");
-  const candidate = path.join(fixture, "packages/candidate.cjs");
-  fs.writeFileSync(
-    candidate,
-    `require('node:fs').writeFileSync(${JSON.stringify(marker)}, 'candidate executed');`,
-  );
-  const code =
-    kind === "worker"
-      ? `import { Worker } from 'node:worker_threads'; new Worker(new URL('./packages/candidate.cjs', import.meta.url));`
-      : `import { createRequire as cr } from 'node:module'; const load = cr(import.meta.url); load('./packages/candidate.cjs');`;
-  const entry = path.join(fixture, "entry.mjs");
-  fs.writeFileSync(entry, code);
-  assert.throws(() => checkImports(entry, fixture), /runtime loader|dynamic execution/);
-  assert.equal(fs.existsSync(marker), false);
-  record("runtime loader refused", { kind, candidateExecuted: false });
+record("runtime artifact controls", {
+  results: await runArtifactControls(path.join(output, "runtime-controls")),
+});
+async function runNS(config) {
+  const artifact = path.join(output, "driver-" + randomUUID());
+  buildDriver(artifact);
+  const file = path.join(output, "config-" + randomUUID() + ".json");
+  fs.writeFileSync(file, JSON.stringify(config));
+  const result = await launchArtifact(artifact, file);
+  assert.equal(result.code, 0, result.stderr);
+  return JSON.parse(result.stdout.trim().split("\n").at(-1));
 }
-const control = path.join(output, "control.mjs");
-fs.mkdirSync(path.join(output, "packages"));
-for (const extension of ["mjs", "cjs", "ts"])
-  fs.writeFileSync(path.join(output, `packages/candidate.${extension}`), "export {};");
-for (const code of [
-  "import './packages/candidate.mjs';",
-  "export * from './packages/candidate.mjs';",
-  "import(process.argv[2]);",
-  "const x = require('./packages/candidate.cjs');",
-  "const load = require; load('./packages/candidate.cjs');",
-  "import * as workers from 'node:worker_threads'; new workers.Worker('./packages/candidate.cjs');",
-  "import { fork as launch } from 'node:child_process'; launch('./packages/candidate.cjs');",
-  "import vm from 'node:vm'; vm.runInThisContext('1');",
-  "const load = process.getBuiltinModule('module').createRequire(import.meta.url);",
-  "import load = require('./packages/candidate.cjs');",
-  "import type { X } from './packages/candidate.ts';",
-]) {
-  const file =
-    code.includes("import type") || code.includes("import load =")
-      ? control.replace(".mjs", ".ts")
-      : control;
-  fs.writeFileSync(file, code);
-  assert.throws(
-    () => checkImports(file, output),
-    /candidate\/outside|dynamic execution\/import|runtime loader/,
-  );
-}
-record("direct import controls", { rejected: 11 });
 
 const domain = {
   primitive: "CLOCK_MONOTONIC",
@@ -186,7 +153,7 @@ async function runCandidate(mutant) {
   });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   const endpoint = { host: "127.0.0.1", port: server.address().port };
-  const keyFile = path.join(output, `${runId}.key`);
+  const keyFile = path.join(output, `key-${runId}`);
   fs.writeFileSync(keyFile, randomBytes(32));
   const eventDir = path.join(output, runId);
   let result;

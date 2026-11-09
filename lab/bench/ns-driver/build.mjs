@@ -1,24 +1,36 @@
-// [EXP-NSR] Why: the evaluator publishes only its checked import closure as a content-addressed bundle. Rejected: copying the repository or candidate dependencies into the driver volume.
+// [EXP-NSR-R3] Why: publish one executable artifact plus its mandatory hash-checked runtime launcher, retaining the bundler's own metafile. Rejected: a source-directory copy described as a closed bundle.
 import fs from "node:fs";
-import { createHash } from "node:crypto";
 import path from "node:path";
-import { checkImports } from "./check-imports.mjs";
-export function buildDriver(output, root = path.resolve(import.meta.dirname, "../../..")) {
-  const graph = checkImports(path.join(root, "lab/bench/ns-driver/driver.mjs"), root);
+import { createHash } from "node:crypto";
+import { compileDriver } from "./compile.mjs";
+const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
+export function buildDriver(
+  output,
+  root = path.resolve(import.meta.dirname, "../../.."),
+  entry = path.join(root, "lab/bench/ns-driver/driver.mjs"),
+) {
+  const { code, metafile, ...graph } = compileDriver(entry, root);
   fs.mkdirSync(output, { recursive: true });
   if (fs.readdirSync(output).length) throw Error("Driver bundle destination is not fresh");
-  for (const [relative, sha256] of Object.entries(graph.files)) {
-    const target = path.join(output, relative);
-    fs.mkdirSync(path.dirname(target), { recursive: true });
-    fs.copyFileSync(path.join(root, relative), target, fs.constants.COPYFILE_EXCL);
-    if (createHash("sha256").update(fs.readFileSync(target)).digest("hex") !== sha256)
-      throw Error("Driver changed during bundle copy");
+  fs.writeFileSync(path.join(output, "driver.mjs"), code, { flag: "wx" });
+  const support = {};
+  for (const name of ["runtime-guard.mjs", "launch-artifact.mjs"]) {
+    const bytes = fs.readFileSync(new URL(name, import.meta.url));
+    support[name] = sha(bytes);
+    fs.writeFileSync(path.join(output, name), bytes, { flag: "wx" });
   }
+  const metaBytes = JSON.stringify(metafile, null, 2) + "\n";
+  fs.writeFileSync(path.join(output, "metafile.json"), metaBytes, { flag: "wx" });
   const manifest = {
-    schema: "ns-driver-bundle/1",
+    schema: "ns-driver-bundle/2",
     ...graph,
-    generatorSha256: graph.files["lab/bench/lib/trace.ts"],
-    entry: "lab/bench/ns-driver/driver.mjs",
+    generatorSha256: graph.files["lab/bench/lib/trace.ts"] ?? null,
+    entry: "driver.mjs",
+    metafileSha256: sha(metaBytes),
+    support,
+    launch: ["node", "launch-artifact.mjs", ".", "<config.json>"],
+    runtime:
+      "Node --permission (no workers/children) plus registerHooks closed-artifact load policy",
   };
   fs.writeFileSync(path.join(output, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", {
     flag: "wx",

@@ -11,9 +11,11 @@ export function clockDomain() {
       primitive: "CLOCK_MONOTONIC",
     };
   if (os.platform() !== "darwin") throw Error("Clock domain unavailable");
-  const boot = execFileSync("/usr/sbin/sysctl", ["-n", "kern.bootsessionuuid"], {
-    encoding: "utf8",
-  }).trim();
+  const boot =
+    process.env.NSR_DARWIN_BOOT_ID ||
+    execFileSync("/usr/sbin/sysctl", ["-n", "kern.bootsessionuuid"], {
+      encoding: "utf8",
+    }).trim();
   const hash = (v) => createHash("sha256").update(v).digest("hex");
   return {
     primitive: "node-hrtime-v1",

@@ -31,6 +31,9 @@ export function readerLevel(events, startNs, endNs, level = 256, relay) {
   return { level, seconds: buckets.length, qualified };
 }
 export async function runNS(c) {
+  // [EXP-NSR-R3] Why: the trusted execution path must not bypass its artifact/permission guard. Rejected: source-tree runs silently standing in for guarded driver evidence.
+  if (!globalThis[Symbol.for("ns-driver-runtime/1")] || !process.permission)
+    throw Error("NSR driver requires guarded artifact launch");
   if (!c.offline) throw Error("NSR requires evaluator/observer integration for qualification");
   if (
     !Number.isSafeInteger(c.readers ?? 256) ||
@@ -42,6 +45,13 @@ export async function runNS(c) {
   if (!Number.isSafeInteger(sampleEvery) || sampleEvery < 1 || sampleEvery > 10000)
     throw Error("Invalid answer sampling interval");
   const events = new Events(c.output, fs.readFileSync(c.keyFile), c.binding);
+  events.write("driver-runtime", {
+    artifactFormat: "ns-driver-bundle/2",
+    bundleSha256: globalThis[Symbol.for("ns-driver-runtime/1")].bundleSha256,
+    permissionModel: true,
+    childPermission: process.permission.has("child"),
+    workerPermission: process.permission.has("worker"),
+  });
   const call = (role, method, params, observe) =>
     rpc(c.endpoints[role], c.binding.runId, method, params, c.timeoutMs ?? 10000, observe);
   events.write("answer-policy", {
