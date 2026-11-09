@@ -1,3 +1,4 @@
+import { Data } from "effect";
 import type {
   ReferenceReader,
   ReferenceRow,
@@ -7,6 +8,25 @@ import type {
 import type { CompositionHandle } from "./composition.ts";
 import { W0, visibleRows, factValue, type WorldRow } from "./w0-world.ts";
 
+// [EXP-DI01] Why: one shared tagged refusal for every reference-basis guard, so callers classify by _tag and fields, not prose (CX-VDI01 F1). Backend-provided typed expiration errors are not wrapped; they propagate unchanged. Rejected: retrying at a newer position (the index would derive from a different basis than the page's, silently).
+export class BasisNotAvailable extends Data.TaggedError("BasisNotAvailable")<{
+  readonly reason: "head-moved" | "reported-basis-mismatch" | "row-outside-basis";
+  readonly requested: { readonly position: number; readonly validAt: number };
+  /** Source head observed by the storage guard, when the guard observed one. */
+  readonly availableHead?: number;
+  /** Basis the memory composition reported serving, when it reported one. */
+  readonly reportedBasis?: {
+    readonly position?: number;
+    readonly validAt?: number;
+  };
+  /** Oldest retained position, only where the backend reports one (none of the shipped readers' backends do today). */
+  readonly retentionFloor?: number;
+  readonly detail?: string;
+}> {
+  override get message() {
+    return `BasisNotAvailable: ${this.reason} (requested position ${this.requested.position})`;
+  }
+}
 const wanted = new Set(["location", "jurisdiction", "documents", "decisions", "p5/activation"]);
 const refsOf = (rows: readonly WorldRow[], entities: readonly string[]): ReferenceRow[] =>
   rows
@@ -30,7 +50,18 @@ export const memoryReferenceReader =
   async (entities, position, validAt) => {
     const page = await comp.sweepPage(entities, { position, validAt });
     if (page.reportedBasis?.position !== position || page.reportedBasis?.validAt !== validAt)
-      throw Error("Memory reference basis unavailable");
+      throw new BasisNotAvailable({
+        reason: "reported-basis-mismatch",
+        requested: { position, validAt },
+        reportedBasis: {
+          ...(page.reportedBasis?.position === undefined
+            ? {}
+            : { position: page.reportedBasis.position }),
+          ...(page.reportedBasis?.validAt === undefined
+            ? {}
+            : { validAt: page.reportedBasis.validAt }),
+        },
+      });
     return refsOf(page.rows, entities);
   };
 export function storageReferenceReader(
@@ -43,12 +74,26 @@ export function storageReferenceReader(
   return async (entities, position, validAt) => {
     const head = Number(await handle.run(handle.storage.currentCommitPosition()));
     if (!Number.isSafeInteger(head) || head < position || (headOnly && head !== position))
-      throw Error("BasisNotAvailable");
+      throw new BasisNotAvailable({
+        reason: "head-moved",
+        requested: { position, validAt },
+        ...(Number.isSafeInteger(head) ? { availableHead: head } : {}),
+      });
     const result = await handle.run<ReadonlyMap<string, readonly any[]>>(
-      handle.storage.getByEntities(entities, { recordedPosition: position, validAt }),
+      handle.storage.getByEntities(entities, {
+        recordedPosition: position,
+        validAt,
+      }),
     );
-    if (headOnly && Number(await handle.run(handle.storage.currentCommitPosition())) !== position)
-      throw Error("BasisNotAvailable");
+    if (headOnly) {
+      const after = Number(await handle.run(handle.storage.currentCommitPosition()));
+      if (after !== position)
+        throw new BasisNotAvailable({
+          reason: "head-moved",
+          requested: { position, validAt },
+          ...(Number.isSafeInteger(after) ? { availableHead: after } : {}),
+        });
+    }
     const rows: ReferenceRow[] = [];
     for (const body of result.values())
       for (const r of body) {
@@ -58,7 +103,12 @@ export function storageReferenceReader(
           Number(r.recorded_position) > position ||
           (r.retracted_position != null && Number(r.retracted_position) <= position)
         )
-          throw Error("BasisNotAvailable");
+          throw new BasisNotAvailable({
+            reason: "row-outside-basis",
+            requested: { position, validAt },
+            availableHead: head,
+            detail: `recorded_position=${String(r.recorded_position)} retracted_position=${String(r.retracted_position ?? null)}`,
+          });
         if (!wanted.has(r.attribute)) continue;
         rows.push({
           entity: r.entity_id,
@@ -85,12 +135,20 @@ export function dependencyPlan(release: W0.CompiledRelease): DependencyPlan {
     subject: entities.subject,
     facts: [
       { e: entities.subject, a: "location", v: entities.location, tx: 1 },
-      { e: entities.location, a: "jurisdiction", v: entities.jurisdiction, tx: 1 },
+      {
+        e: entities.location,
+        a: "jurisdiction",
+        v: entities.jurisdiction,
+        tx: 1,
+      },
       { e: entities.subject, a: "documents", v: entities.documents, tx: 1 },
       { e: entities.subject, a: "decisions", v: entities.decisions, tx: 1 },
     ],
   };
-  const result = W0.evaluateWorld(world, release, { tx: 1, validTime: W0.POPULATION_VALID_TIME });
+  const result = W0.evaluateWorld(world, release, {
+    tx: 1,
+    validTime: W0.POPULATION_VALID_TIME,
+  });
   if (W0.isFailure(result)) throw Error(result.error);
   return {
     release: release.hash,
