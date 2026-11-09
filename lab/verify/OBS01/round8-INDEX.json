@@ -1,0 +1,28 @@
+{
+  "bytes": 7862005,
+  "evidenceRoot": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VOBS6/round8",
+  "files": 272,
+  "finalAttempt": "attempt02",
+  "format": "cx-vobs6-round8-index/1",
+  "manifestSha256": "9e925d79b9811f2d7a8eaaf4e4c51879fd9e4153aaeb2a79cca72836a5be4afd",
+  "nestedManifestEntriesChecked": 266,
+  "originalProbeSha256": "17c6f471c77ba56cb225ce6e41d55add543015d067b0bf1246b89880e27e63c1",
+  "retentionToolSha256": "13b503aa83297e51ff24b5822e2bcf324ef29ca726d72cce19126d616c4cd579",
+  "reviewedCommit": "bcbf21c48097163ea83557fc8876168983c60595",
+  "reviewerToolSha256": "eaac087053f1eceaed9a4eb3929e3fe899c44c60171910da65f7bb14160a47cc",
+  "scope": "F1-F3 offline; VM durable/P3 evidence refuses pending independent sync enforcement",
+  "sourceSha256": {
+    "lab/acceptance/oracle/observe.py": "668136f3c99e09b5332363bb6beaac7f177d07ef7718eb59b2b801faeedcb2cb",
+    "lab/experiments/EXP-OBS01/REPORT.md": "ba49835bd4fbcb7cd6cd0a88616364a1d031f5d17a9be06177ae937592a881ce",
+    "lab/experiments/EXP-OBS01/round8/probe_round8.py": "7429714cd5ff699a2e918ecff8ea93c194cd34e9e35c218acd231a752a6fbde0",
+    "lab/observer/VM.md": "2146dfe70428e0ec50299e447d166a183574139c1ceddf77e68f6b4b177b37a4",
+    "lab/observer/capture.py": "ab01e9906b46784567ae4a76e3a66bf8a612aa1dcba1e431b8075944b60a8a7f",
+    "lab/observer/collector.py": "44d667409ed707a18f07e72c308372fa01264c06cb163820429a27c73a49ec1f",
+    "lab/observer/test_vm.py": "9c128c47999fcb00e46088a5cf22771f332be01711f4d8817956a4a5c603b531",
+    "lab/observer/verify_seal.py": "edde8ce810ddb426679c5ffebea4478b109c51f7e19117d87faad8970a825f7e",
+    "lab/observer/vm_fixture.py": "785bf49d536290505c1a204caeb7f0d36b9d374874a1253943ef120318691578",
+    "lab/observer/vm_normalizer.py": "2b564d42d860ed983b4c8cbcf33b1ff103228fc597f764791ab32496df9b0118",
+    "lab/observer/vm_watch.py": "e545745e2667a8bf1787d1951b053e65c27f951e37cce78e38a5167c6da827b2"
+  },
+  "verdict": "ACCEPT-OFFLINE"
+}
