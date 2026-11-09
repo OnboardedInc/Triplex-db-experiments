@@ -490,7 +490,6 @@ async function windowABBA(ctx,options){
   claim:'writer commit latency with the witness off and on, judged under Q104a (>= 1,000 commits per arm, >= 3 A/A rounds, block bootstrap); the verdict (analysis.verdict) is a report, never a gate (R48 9.1 W2)'};
 }
 
-const W4_COLLECT="import base64,json,os;d='/data/store';print(json.dumps({n:base64.b64encode(open(os.path.join(d,n),'rb').read()).decode() for n in ('broker.db','broker.db-wal') if os.path.exists(os.path.join(d,n))}))";
 const dockerUp=()=>spawnSync('docker',['-H',SOCK,'info'],{encoding:'utf8',timeout:15000}).status===0;
 const colimaRunning=()=>spawnSync('colima',['status','-p','triplex2'],{encoding:'utf8',timeout:30000}).status===0;
 async function waitContent(file,test,ms,what){const until=Date.now()+ms;for(;;){const text=fs.existsSync(file)?fs.readFileSync(file,'utf8'):'';if(test(text))return text;if(Date.now()>until)fail('REFUSED','timeout waiting for '+what);await sleep(50);}}
@@ -525,6 +524,8 @@ async function w4Trial(ctx,{index,mode,rehearsal}){
  const others=()=>docker(['ps','--format','{{.Names}}']).split('\n').filter(n=>n&&n!==names.witness&&n!==names.writer);
  try{
   if(!rehearsal&&others().length)fail('REFUSED','W4 needs a VM with no other running container (a guest crash kills them all, residents included); running: '+others().join(', '));
+  // [EXP-OBS01-R16] Why: nothing else is running (checked above), so one guest `sync` leaves no dirty page of anybody else's data to lose in the crash; only this trial's own unsynced writes are at risk. Rejected: crashing without it.
+  if(!rehearsal&&vm(['sudo','sync']).status!==0)fail('REFUSED','could not sync the guest before the trial');
   for(const v of [volume,witnessVolume]){docker(['volume','create','--label',`tx2.holder=${holder}`,'--label',`tx2.run=${tag}`,v]);volumes.push(v);}
   const store=await makeStoreDir(config,holder,python,volume);result.dir=store;
   await reserve(config,names.witness,holder,5);made.push(names.witness);
@@ -533,7 +534,7 @@ async function w4Trial(ctx,{index,mode,rehearsal}){
   children.push(spawn('docker',['-H',SOCK,'start','-a',names.witness],{stdio:['ignore',fs.openSync(files.trace,'w'),fs.openSync(files.witnessErr,'w')]}));
   await waitContent(files.trace,t=>t.includes('SW1|B|'),30000,'the witness attach record');
   await reserve(config,names.writer,holder,4);made.push(names.writer);
-  docker(harden(names.writer,holder,python,4,['--cgroupns','host','--user','10001:10001','-v',volume+':/data','-v',SRC+':/code:ro'],['python3','-B','-u','/code/vm_w4_writer.py','--mode',mode,'--dir','/data/store']));
+  docker(harden(names.writer,holder,python,4,['--cgroupns','host','--user','10001:10001','-v',volume+':/data','-v',SRC+':/code:ro'],['python3','-B','-u','/code/vm_w4_writer.py','--mode',mode,'--dir','/data/store','--pace-us',mode==='off'?'500':'0']));
   children.push(spawn('docker',['-H',SOCK,'start','-a',names.writer],{stdio:['ignore',fs.openSync(files.writer,'w'),fs.openSync(files.writerErr,'w')]}));
   await waitContent(files.writer,t=>t.startsWith('R|')&&t.includes('\n'),30000,'the writer ready line');
   const writerDoc=inspect(names.writer);result.writerId=writerDoc.Id;result.writerCgroupId=vmCgroupId(writerDoc.Id);
@@ -563,8 +564,11 @@ async function w4Trial(ctx,{index,mode,rehearsal}){
    spawnSync('docker',['context','use','default'],{encoding:'utf8'});
   }
   for(const child of children)try{child.kill('SIGKILL');}catch{}
-  const collected=JSON.parse(await helper(config,holder,python,5,['-v',volume+':/data:ro'],['python3','-B','-c',W4_COLLECT]));
-  for(const [name,b64] of Object.entries(collected))fs.writeFileSync(path.join(dir,name),Buffer.from(b64,'base64'));
+  // [EXP-OBS01-R16] Why: the store files are copied out with `docker cp` from a created (never started) container that mounts the volume read-only. The first version printed them from a helper: an OFF writer's WAL
+  // reaches 100 MB and overflowed the 64 MB output buffer, and with every capability dropped a root process could not read the writer's 0600 files anyway. Rejected: raising the buffer.
+  const collector='tx2-sw-w4c-'+randomBytes(6).toString('hex');await reserve(config,collector,holder,5);made.push(collector);
+  docker(harden(collector,holder,python,5,['-v',volume+':/data:ro'],['true']));
+  for(const f of ['broker.db','broker.db-wal'])docker(['cp',collector+':/data/store/'+f,path.join(dir,f)],{allowFail:true});
   const judged=py(path.join(SRC,'vm_w4_judge.py'),dir,mode,String(result.writerCgroupId));
   result.judge=judged.stdout.trim()?JSON.parse(judged.stdout):{pass:false,problems:[judged.stderr.trim().slice(0,300)]};result.pass=judged.status===0;
  }finally{
