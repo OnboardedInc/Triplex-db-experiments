@@ -4,12 +4,19 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawn, execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+// HS01_ATTEMPT continues an earlier attempt id and HS01_ONLY (comma-separated stage labels) runs just those stages, so a
+// series interrupted by the 5 GiB disk floor resumes on the same source without repeating completed stages.
 const base = "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-HS01",
-  attempt = "r2-final-" + randomUUID();
+  attempt = process.env.HS01_ATTEMPT ?? "r2-final-" + randomUUID(),
+  only = process.env.HS01_ONLY?.split(",");
 const stages = [];
-const resultFile = path.join(base, attempt + "-pipeline.json");
+const resultFile = path.join(
+  base,
+  attempt + "-pipeline" + (only ? "-resume-" + Date.now() : "") + ".json",
+);
 fs.mkdirSync(base, { recursive: true });
 const run = async (label, cmd, heavy = true, env = {}) => {
+  if (only && !only.includes(label)) return 0;
   const args = [
     "lab/experiments/EXP-HS01/run.mjs",
     attempt + "-" + label,

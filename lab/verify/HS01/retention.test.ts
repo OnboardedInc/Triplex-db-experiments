@@ -204,10 +204,16 @@ describe("EXP-HS01 round 2 frame retention", () => {
     writeStats();
     for (const dir of dirs) fs.rmSync(dir, { recursive: true, force: true });
   });
-  it("purges and reopens the largest legal frame (256 MiB payload)", async () => {
-    const free = fs.statfsSync(root);
-    if (free.bavail * free.bsize < 5 * 1024 ** 3 + 1024 ** 3)
-      throw Error("RESOURCE-ABORT largest-frame test needs 1 GiB above the 5 GiB floor");
+  it("purges and reopens a frame at the format's payload limit (256 MiB) when disk allows, else 64 MiB", async () => {
+    // [EXP-HS01] Why: the purge work bound is "16 MiB plus one frame", so the cost of the largest legal frame is measured.
+    // The test never crosses the lab's 5 GiB disk floor: with under 768 MiB of headroom it uses a 64 MiB payload (still four
+    // times the 16 MiB budget) and says so in the measurement (`full:false`). Rejected: skipping silently.
+    const free = fs.statfsSync(root),
+      headroom = free.bavail * free.bsize - 5 * 1024 ** 3;
+    if (headroom < 192 * MiB)
+      throw Error("RESOURCE-ABORT largest-frame test needs 192 MiB above the 5 GiB floor");
+    const full = headroom >= 768 * MiB,
+      payloadBytes = full ? MAX_PAYLOAD : 64 * MiB;
     const dir = fresh();
     let { log } = await HostLog.open(dir, {
       minFreeBytes: 5 * 1024 ** 3,
@@ -215,12 +221,12 @@ describe("EXP-HS01 round 2 frame retention", () => {
     });
     try {
       const appendStart = performance.now();
-      const frame = await log.append(FrameKind.APPLIED_HINT, Buffer.alloc(MAX_PAYLOAD, 3));
+      const frame = await log.append(FrameKind.APPLIED_HINT, Buffer.alloc(payloadBytes, 3));
       const appendMs = performance.now() - appendStart;
       await hint(log, 100, false);
       await hint(log, 100, false);
       const calls = drain(log);
-      const bigCall = calls.find((c) => c.bytes >= MAX_PAYLOAD + FRAME_OVERHEAD)!;
+      const bigCall = calls.find((c) => c.bytes >= payloadBytes + FRAME_OVERHEAD)!;
       expect(bigCall, "one call removes the whole frame").toBeDefined();
       expect(bigCall.removed).toBe(1);
       expect(retained(log).n).toBe(1);
@@ -228,16 +234,19 @@ describe("EXP-HS01 round 2 frame retention", () => {
       const open = performance.now();
       ({ log } = await HostLog.open(dir, { minFreeBytes: 0, frameRetention: { tailFrames: 1 } }));
       stats.largestFrame = {
-        payload: MAX_PAYLOAD,
+        full,
+        payload: payloadBytes,
+        formatLimit: MAX_PAYLOAD,
         frameBytes: frame.end - frame.offset,
         appendMs,
         purgeCalls: calls,
         reopenMs: performance.now() - open,
+        headroomBytes: headroom,
       };
       writeStats();
     } finally {
       await log.close();
-      // The file keeps its 270 MB of freed pages; the measurement is recorded, so the store is disposable.
+      // The file keeps its freed pages; the measurement is recorded, so the store is disposable.
       fs.rmSync(dir, { recursive: true, force: true });
     }
   }, 300_000);
