@@ -1,3 +1,4 @@
+import { ValueDomains, storedValueDomain } from "@triplex-build/triplex/runtime";
 /**
  * SqliteAdapter - SQLite implementation of StorageAdapter
  *
@@ -248,7 +249,10 @@ export const makeSqliteAdapter = (config: SqliteAdapterConfig = {}) =>
       const insert: StorageAdapterService["insert"] = (input, txId, timestamp, id, position) =>
         provide(
           Effect.gen(function* () {
-            const packed = packValue(input.value);
+            const packed = packValue(
+              input.value,
+              storedValueDomain(ValueDomains.sqlite, input.attribute),
+            );
 
             yield* sql`
             INSERT INTO triples (
@@ -325,7 +329,10 @@ export const makeSqliteAdapter = (config: SqliteAdapterConfig = {}) =>
         // Pre-generate IDs and pack values upfront
         const prepared = inputs.map((input, index) => {
           const id = ids[index]!;
-          const packed = packValue(input.value);
+          const packed = packValue(
+            input.value,
+            storedValueDomain(ValueDomains.sqlite, input.attribute),
+          );
           return { id, input, packed };
         });
 
@@ -596,7 +603,7 @@ export const makeSqliteAdapter = (config: SqliteAdapterConfig = {}) =>
             }
 
             if (pattern.value && !isPatternVariable(pattern.value)) {
-              const packed = packValue(pattern.value);
+              const packed = packValue(pattern.value, ValueDomains.sqlite);
               conditions.push("value_type = ?");
               params.push(packed.value_type);
 
@@ -706,6 +713,7 @@ export const makeSqliteAdapter = (config: SqliteAdapterConfig = {}) =>
       // =========================================================================
 
       return {
+        valueDomain: ValueDomains.sqlite,
         withTransaction,
         nextCommitPosition,
         currentCommitPosition,

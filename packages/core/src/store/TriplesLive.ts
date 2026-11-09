@@ -10,6 +10,12 @@
  * The same service owns storage mutations and query execution.
  */
 
+import {
+  decodeValueColumns,
+  storedValueDomain,
+  ValueDomains,
+  type ValueDomain,
+} from "../ValueDomain.js";
 import { withValidAssertValues } from "./validateValues.js";
 import { Effect, Layer, Option } from "effect";
 import {
@@ -32,14 +38,12 @@ import type {
   TransactOp,
 } from "../Triple.js";
 import { queryToPattern } from "../Triple.js";
-import { integer } from "../Value.js";
 import type { Pattern } from "../types/Pattern.js";
 import type { DatalogQuery, WrappedQuery } from "../datalog/types.js";
 import { validateDatalogQuery, validateWrappedQuery } from "../datalog/validation.js";
 import {
   InvalidTripleError,
   WriteError,
-  UnsupportedValueTypeError,
   ReadError,
   DatalogError,
   DatalogValidationError,
@@ -78,63 +82,30 @@ import { encodeEntityPageCursor, prepareEntityPage } from "../EntityPage.js";
 // Row to Triple Conversion
 // =============================================================================
 
-const rowToTriple = (row: TripleRow): Triple => {
-  let value: Triple["value"];
-  switch (row.value_type) {
-    case "string":
-      value = { type: "string", value: row.value_string ?? "" };
-      break;
-    case "number":
-      value = { type: "number", value: Number(row.value_number ?? 0) };
-      break;
-    case "integer":
-      value = integer(row.value_string!);
-      break;
-    case "boolean":
-      value = { type: "boolean", value: row.value_boolean === 1 };
-      break;
-    case "datetime":
-      value = { type: "datetime", value: Number(row.value_datetime ?? 0) };
-      break;
-    case "ref":
-      value = { type: "ref", value: unsafe.entityId(row.value_string ?? "") };
-      break;
-    case "json":
-      value = { type: "json", value: row.value_json ? JSON.parse(row.value_json) : null };
-      break;
-    case "blob": {
-      const meta = row.value_json ? JSON.parse(row.value_json) : {};
-      value = {
-        type: "blob",
-        value: row.value_string ?? "",
-        mimeType: meta.mimeType ?? "application/octet-stream",
-        size: meta.size ?? 0,
-        ...(meta.filename !== undefined && { filename: meta.filename }),
-      };
-      break;
-    }
-    default:
-      value = { type: "string", value: "" };
-  }
+const rowDecoder =
+  (domain: ValueDomain) =>
+  (row: TripleRow): Triple => {
+    const value = decodeValueColumns(row, storedValueDomain(domain, row.attribute));
 
-  return {
-    id: row.id as TripleId,
-    entityId: row.entity_id as EntityId,
-    attribute: row.attribute as Attribute,
-    value,
-    recordedAt: Number(row.recorded_at),
-    validFrom: Number(row.valid_from),
-    validTo: row.valid_to !== null ? Option.some(Number(row.valid_to)) : Option.none(),
-    createdBy: row.created_by ? Option.some(row.created_by) : Option.none(),
-    retractedAt: row.retracted_at !== null ? Option.some(Number(row.retracted_at)) : Option.none(),
-    entityType: row.entity_type ? Option.some(row.entity_type) : Option.none(),
-    schemaVersion: row.schema_version ? Option.some(row.schema_version) : Option.none(),
-    txId: row.tx_id ? Option.some(unsafe.transactionId(row.tx_id)) : Option.none(),
-    retractTxId: row.retract_tx_id
-      ? Option.some(unsafe.transactionId(row.retract_tx_id))
-      : Option.none(),
+    return {
+      id: row.id as TripleId,
+      entityId: row.entity_id as EntityId,
+      attribute: row.attribute as Attribute,
+      value,
+      recordedAt: Number(row.recorded_at),
+      validFrom: Number(row.valid_from),
+      validTo: row.valid_to !== null ? Option.some(Number(row.valid_to)) : Option.none(),
+      createdBy: row.created_by ? Option.some(row.created_by) : Option.none(),
+      retractedAt:
+        row.retracted_at !== null ? Option.some(Number(row.retracted_at)) : Option.none(),
+      entityType: row.entity_type ? Option.some(row.entity_type) : Option.none(),
+      schemaVersion: row.schema_version ? Option.some(row.schema_version) : Option.none(),
+      txId: row.tx_id ? Option.some(unsafe.transactionId(row.tx_id)) : Option.none(),
+      retractTxId: row.retract_tx_id
+        ? Option.some(unsafe.transactionId(row.retract_tx_id))
+        : Option.none(),
+    };
   };
-};
 
 // =============================================================================
 // Triples Layer using StorageAdapter + QueryExecutor
@@ -144,6 +115,14 @@ export const TriplesLive = Layer.effect(
   Triples,
   Effect.gen(function* () {
     const adapter = yield* StorageAdapter;
+    const fallbackDomain = adapter.supportedValueTypes?.includes("integer")
+      ? ValueDomains.memory
+      : ValueDomains.sqlite;
+    const valueDomain = adapter.valueDomain ?? {
+      ...fallbackDomain,
+      kinds: adapter.supportedValueTypes ?? fallbackDomain.kinds,
+    };
+    const rowToTriple = rowDecoder(valueDomain);
     const executor = yield* QueryExecutor;
     const runtime = yield* TripleStoreRuntime;
     const now = runtime.now;
@@ -277,18 +256,6 @@ export const TriplesLive = Layer.effect(
         ({ operations, meta }) =>
           adapter.withTransaction(
             Effect.gen(function* () {
-              const unsupportedValue = operations.find(
-                (operation) =>
-                  operation.op === "assert" &&
-                  !(
-                    adapter.supportedValueTypes?.includes(operation.value.type) ??
-                    operation.value.type !== "integer"
-                  ),
-              );
-              if (unsupportedValue?.op === "assert")
-                return yield* Effect.fail(
-                  new UnsupportedValueTypeError("storage adapter", unsupportedValue.value.type),
-                );
               if (!isSystemWriteAuthorized(meta)) {
                 const reserved = reservedAssertError(operations);
                 if (reserved) return yield* Effect.fail(reserved);
@@ -523,7 +490,7 @@ export const TriplesLive = Layer.effect(
             }),
             { replaySafe: true },
           ),
-      ).pipe((effect) => withValidAssertValues(operations, effect));
+      ).pipe((effect) => withValidAssertValues(operations, effect, valueDomain));
 
     const retract = (id: TripleId): Effect.Effect<void, WriteError> =>
       transact([{ op: "retract", id }]).pipe(

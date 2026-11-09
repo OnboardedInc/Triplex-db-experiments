@@ -80,3 +80,12 @@ export {
   type RuleTail,
   countSimplePaths,
 } from "../native/FrontierClosure.js";
+
+export {
+  decodeValueColumns,
+  ValueDomains,
+  invalidValue,
+  assertValueInDomain,
+  storedValueDomain,
+  type ValueDomain,
+} from "../ValueDomain.js";

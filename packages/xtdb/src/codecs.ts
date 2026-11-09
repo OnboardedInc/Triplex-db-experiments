@@ -1,4 +1,11 @@
 import {
+  decodeValueColumns,
+  assertValueInDomain,
+  ValueDomains,
+  storedValueDomain,
+  type ValueDomain,
+} from "@triplex-build/triplex/runtime";
+import {
   integer,
   isPatternVariable,
   type TripleValue,
@@ -66,7 +73,8 @@ export const canonicalJson = (value: unknown): string => {
   return encode(value);
 };
 
-export const packValue = (value: TripleValue) => {
+export const packValue = (value: TripleValue, domain: ValueDomain = ValueDomains.xtdb) => {
+  assertValueInDomain(value, domain);
   const packed = {
     value_type: value.type,
     value_string: null as string | null,
@@ -136,7 +144,11 @@ export const decodeAssertionRow = (input: Record<string, unknown>): TripleRow =>
     "retracted_position",
     "schema_version",
   ]) {
-    row[column] = nullableNumber(row[column]);
+    row[column] = ["value_number", "value_datetime", "value_boolean"].includes(column)
+      ? row[column] === null
+        ? null
+        : Number(row[column])
+      : nullableNumber(row[column]);
   }
   for (const column of ["recorded_position", "retracted_position"]) {
     if (row[column] !== null && !Number.isSafeInteger(row[column]))
@@ -145,11 +157,10 @@ export const decodeAssertionRow = (input: Record<string, unknown>): TripleRow =>
   for (const column of ["id", "entity_id", "attribute", "value_type"]) {
     if (typeof row[column] !== "string") throw new TypeError(`Missing assertion ${column}`);
   }
-  if (row["value_type"] === "integer") {
-    const payload = row["value_string"];
-    if (typeof payload !== "string" || integer(payload).value !== payload)
-      throw new TypeError("Invalid exact integer payload in XTDB");
-  }
+  decodeValueColumns(
+    row as unknown as TripleRow,
+    storedValueDomain(ValueDomains.xtdb, String(row["attribute"])),
+  );
   return row as unknown as TripleRow;
 };
 
