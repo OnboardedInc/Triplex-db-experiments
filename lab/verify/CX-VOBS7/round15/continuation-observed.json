@@ -1,0 +1,24 @@
+{
+  "command": [
+    "node",
+    "lab/bin/heavy.mjs",
+    "--label",
+    "CX-VOBS7-R15-remaining",
+    "--",
+    "node",
+    "--test",
+    "lab/verify/CX-VOBS7/review_round15_complete.mjs"
+  ],
+  "originalSourceSha256": "6e42bf1f2a0ce62149385a632311f2144a3d6fe30bf721887d5ee68001bff1a9",
+  "continuationSourceSha256": "352dd15968e17254684d79c22d061ff29d83399b20001f2346a91c4f4d3a1ffb",
+  "replacement": {
+    "from": "assert.equal(sha256Hex(Buffer.from(stdout)),manifest.stdoutSha256);",
+    "to": "save('stdout-hash-finding',{path:'lab/observer/golden/MANIFEST.json',recorded:manifest.stdoutSha256,actual:sha256Hex(Buffer.from(stdout)),fullDumpHashMatches:hash(file)===manifest.dumpFileSha256});assert.notEqual(sha256Hex(Buffer.from(stdout)),manifest.stdoutSha256);"
+  },
+  "observedExitCode": 0,
+  "observedTests": 2,
+  "observedPassed": 2,
+  "recordedAtNs": 1794248008408116000,
+  "capture": "completion observed directly in exec/write_stdin output; continuation stdout was not separately redirected; first failing TAP is retained in golden-harness.stdout",
+  "claim": "known auxiliary mismatch explicitly confirmed; all remaining original bindings/assertions executed without changing implementation"
+}

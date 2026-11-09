@@ -1,0 +1,42 @@
+TAP version 13
+# Subtest: golden: exact hashes, optimized IR identity, complete helper inventory and recorded Q109a gate
+not ok 1 - golden: exact hashes, optimized IR identity, complete helper inventory and recorded Q109a gate
+  ---
+  duration_ms: 12.538334
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round15.mjs:14:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    Expected values to be strictly equal:
+    + actual - expected
+    
+    + '5823294d42a77d6c500eb89a89c1fffa42816d8c2a35acaec5b5c551672d0b8e'
+    - 'eb8a358396d41018094ffcb000c3cc6bd42f9c5f3d1e0dc6e91505da2889e7b4'
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'eb8a358396d41018094ffcb000c3cc6bd42f9c5f3d1e0dc6e91505da2889e7b4'
+  actual: '5823294d42a77d6c500eb89a89c1fffa42816d8c2a35acaec5b5c551672d0b8e'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round15.mjs:16:118)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.start (node:internal/test_runner/test:944:17)
+    startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+  ...
+# Subtest: harness: redirect preserves argv/exec, memlock adds no capability, exact-direction aliases stay exact
+ok 2 - harness: redirect preserves argv/exec, memlock adds no capability, exact-direction aliases stay exact
+  ---
+  duration_ms: 4.029625
+  type: 'test'
+  ...
+1..2
+# tests 2
+# suites 0
+# pass 1
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 327.517333

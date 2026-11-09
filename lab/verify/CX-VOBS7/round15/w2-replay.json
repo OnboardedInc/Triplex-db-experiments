@@ -1,0 +1,136 @@
+{
+  "runs": [
+    {
+      "bpfCallsPerCoveredCommit": 15.380047505938242,
+      "coveredCommits": 421,
+      "inputSha256": {
+        "W2.json": "39c2fa061a6ab93fe7654f09485ed73e6ef66947ad1c7ad555d4a5eeba6a5578",
+        "w2-cost/bpf-samples.jsonl": "ac4340cbeaba7c41e5123af74bf26e6bf54717fb5e91497a30db7a7c5fa5ee9c",
+        "w2-cost/ops.json": "028943e71ef1461fa719c8e81b3981fcb3fe1f50a6654fe05c5a536fb6262402"
+      },
+      "intervals": 10,
+      "judgeReplay": {
+        "cleanCommits": 1000,
+        "codes": [],
+        "count": 1000,
+        "directory": [
+          265289745,
+          277523
+        ],
+        "globalCodes": [],
+        "inputSha256": {
+          "RESULT.json": "a3dfdf4d40e01001feb7d1998439d4298f95eae5d480cd0b660114975bf774ad",
+          "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+          "ops.json": "028943e71ef1461fa719c8e81b3981fcb3fe1f50a6654fe05c5a536fb6262402",
+          "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "trace.txt": "3a2a4ba464827f5c93ca0f697d0ac719694dab4a522d9655ca0a78a41f1909ff",
+          "wal.bin": "407dd7b15584c2561dbf6f030132a3c894f64b921e018de2ddcb8cb4cf8a6c6b"
+        },
+        "mismatches": [],
+        "mode": "full",
+        "perCommitCodeCounts": {},
+        "perCommitSha256": "4b7d0609d31dc8409dc36ba367c4077e02388f190a7891d1d44738a03f10d705",
+        "primary": null,
+        "writerCgroupId": 4403940,
+        "writerId": "15cbc27bd3a7d04cd140657c20dd9f51533267e77b2763102bdea194e7ce858b"
+      },
+      "medianIntervalMeanNs": 20491.416666666668,
+      "nsPerBpfCall": 1357.9363706563706,
+      "p90IntervalMeanNs": 22657.11111111111,
+      "p99IntervalMeanNs": 28270.458333333332,
+      "path": "w1w2-attempt1",
+      "samples": 14,
+      "scope": "p99 of sampled interval means, not individual-commit latency or ABBA overhead",
+      "totalWriterCommits": 1000,
+      "weightedMeanNs": 20885.12589073634
+    },
+    {
+      "bpfCallsPerCoveredCommit": 15.387530562347187,
+      "coveredCommits": 818,
+      "inputSha256": {
+        "W2.json": "254596e6fd757ada71fd1f61ab408becfaf69dd1193c441ad2b04409f054775a",
+        "w2-cost/bpf-samples.jsonl": "aa38eaada9e0287454afac65ccf8c7a46a387f93b898c5dcf64ce2d24d3769a0",
+        "w2-cost/ops.json": "d6dc93fa7d381459356aa84f4c8e9477533ca142163d5610cdbe09d553ca0a69"
+      },
+      "intervals": 51,
+      "judgeReplay": {
+        "cleanCommits": 1000,
+        "codes": [],
+        "count": 1000,
+        "directory": [
+          265289745,
+          277523
+        ],
+        "globalCodes": [],
+        "inputSha256": {
+          "RESULT.json": "bb7ad110aeea9e3e82a9e04eeae84d63e22af05f258d5d8827f42526d1c72f61",
+          "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+          "ops.json": "d6dc93fa7d381459356aa84f4c8e9477533ca142163d5610cdbe09d553ca0a69",
+          "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "trace.txt": "930cae035943394e0d53b99792ff64ed905c5e640f84878022bb6c48fe5e997f",
+          "wal.bin": "e7e4123a5349dcd5ed7335b2fc7ee9cdbc1160544eccb381b53bcbd0991dc9b1"
+        },
+        "mismatches": [],
+        "mode": "full",
+        "perCommitCodeCounts": {},
+        "perCommitSha256": "8792a3b0a29011a098047aa933ebb50f3828c3be18203357a5bbd7921965a7ba",
+        "primary": null,
+        "writerCgroupId": 4404498,
+        "writerId": "8f958b4cb01c6f60402b012b7bb775f95dc3a8f4798b620e76072d40aee2db6c"
+      },
+      "medianIntervalMeanNs": 32321.9,
+      "nsPerBpfCall": 2197.700484626996,
+      "p90IntervalMeanNs": 52371.333333333336,
+      "p99IntervalMeanNs": 81158.90909090909,
+      "path": "w2-attempt2",
+      "samples": 54,
+      "scope": "p99 of sampled interval means, not individual-commit latency or ABBA overhead",
+      "totalWriterCommits": 1000,
+      "weightedMeanNs": 33817.18337408313
+    },
+    {
+      "bpfCallsPerCoveredCommit": 15.362565445026178,
+      "coveredCommits": 764,
+      "inputSha256": {
+        "W2.json": "a977d1fd08f7dfba4e175be38463e769cbf66fa8c5666f8153442f55ad60e10b",
+        "w2-cost/bpf-samples.jsonl": "80c29275f36b30a1fb7dca7c7c14d6ca4e22a02dbfc28a1af0b7814cd31efe50",
+        "w2-cost/ops.json": "2fa0c86362c466d4ead3e2217103bf2f4d4a8b55d174a711bf1064953a3ba34f"
+      },
+      "intervals": 40,
+      "judgeReplay": {
+        "cleanCommits": 1000,
+        "codes": [],
+        "count": 1000,
+        "directory": [
+          265289745,
+          3175790
+        ],
+        "globalCodes": [],
+        "inputSha256": {
+          "RESULT.json": "ca88fb41a3d89ed76d4d46f495447f4a504ed0242800dca6effa87dc6b97ca66",
+          "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+          "ops.json": "2fa0c86362c466d4ead3e2217103bf2f4d4a8b55d174a711bf1064953a3ba34f",
+          "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "trace.txt": "93156f70d95a4fbed53f22e77110b9f04810e95b2e7d157a1e32407aaf285fb7",
+          "wal.bin": "f5d7ffff24cc5c3fbd22b84eb4a182a6c1db3f2572ccec818b0123815e9d4808"
+        },
+        "mismatches": [],
+        "mode": "full",
+        "perCommitCodeCounts": {},
+        "perCommitSha256": "43b0c96e47b98ace08eb273751e14de1df73d5b6a7987e14d6a444ed8fba9e2f",
+        "primary": null,
+        "writerCgroupId": 8457,
+        "writerId": "352dabd316706af3ce323b1e76e76c79704b1fefa177b7267c3777a19e393464"
+      },
+      "medianIntervalMeanNs": 24907.333333333332,
+      "nsPerBpfCall": 1686.4743972054187,
+      "p90IntervalMeanNs": 33323.555555555555,
+      "p99IntervalMeanNs": 53188.5,
+      "path": "resized/w0w2-attempt1",
+      "samples": 42,
+      "scope": "p99 of sampled interval means, not individual-commit latency or ABBA overhead",
+      "totalWriterCommits": 1000,
+      "weightedMeanNs": 25908.57329842932
+    }
+  ]
+}

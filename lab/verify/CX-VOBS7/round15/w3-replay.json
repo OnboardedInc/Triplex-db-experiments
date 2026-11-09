@@ -1,0 +1,70 @@
+{
+  "runs": [
+    {
+      "inputSha256": {
+        "W3.json": "d605156a63511935c06396a4e2b357182e4f81bbb95391ef72edc095e58a1afe",
+        "w3-load/RESULT.json": "1d1f9ae879c6d2ccda677c3a22b3209d255cb64230d83433e1bd83fae4e6cd92",
+        "w3-load/stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "w3-load/trace.txt": "6f60314ea4d1f289c42bbb5c29a67bfffadc3ad2213969cfa643e5ef1efcb875",
+        "w3-load/writer-done.json": "92b3aa8bc372fe03f5e2260a87e01e7cf8b60f62277ef1d6ea25f98d4c5c3484"
+      },
+      "limits": "sequence completeness only; no per-commit judgment; raw CPU sample vector and reader poll counts not retained",
+      "path": "w3-attempt1",
+      "readerCompletionFiles": 0,
+      "readerReadyFiles": 8,
+      "recordedCpuSummary": {
+        "max": 15.75,
+        "mean": 2.5308860759493674,
+        "samples": 79
+      },
+      "streamReplay": {
+        "attachNs": 175360153039821,
+        "cpus": 3,
+        "detachNs": 176569971682313,
+        "events": 928067,
+        "lostEvents": 0
+      },
+      "writer": {
+        "commits": 120000,
+        "format": "w3-writer/1",
+        "late": 16091,
+        "pid": 1,
+        "rate": 100.0,
+        "seconds": 1200.0
+      }
+    },
+    {
+      "inputSha256": {
+        "W3.json": "35b8018d83d7b376dca6ce02dc2bc839eea4d89fd3c99cfa3ff5f3456c8644e3",
+        "w3-load/RESULT.json": "f365ac2d02231f63b5e287f95a612fafce22a55e7b70d207579fdde3de93832a",
+        "w3-load/stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "w3-load/trace.txt": "4081334043148cf9a7011711dca3c9c57ce66bb837851d2fbdc659ac2d665d1a",
+        "w3-load/writer-done.json": "3beb6d5b481b28d418e8d34876bd3088308ad44b2ab17bcc917ad403e6b5d789"
+      },
+      "limits": "sequence completeness only; no per-commit judgment; raw CPU sample vector and reader poll counts not retained",
+      "path": "resized/w3-attempt1",
+      "readerCompletionFiles": 0,
+      "readerReadyFiles": 8,
+      "recordedCpuSummary": {
+        "max": 2.48,
+        "mean": 1.7010126582278484,
+        "samples": 79
+      },
+      "streamReplay": {
+        "attachNs": 333806039563,
+        "cpus": 3,
+        "detachNs": 1540189986164,
+        "events": 935983,
+        "lostEvents": 0
+      },
+      "writer": {
+        "commits": 120000,
+        "format": "w3-writer/1",
+        "late": 2124,
+        "pid": 1,
+        "rate": 100.0,
+        "seconds": 1200.0
+      }
+    }
+  ]
+}

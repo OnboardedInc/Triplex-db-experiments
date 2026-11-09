@@ -1,0 +1,54 @@
+{
+  "sessions": [
+    {
+      "cleanCommits": 200,
+      "codes": [],
+      "count": 200,
+      "directory": [
+        265289745,
+        277756
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "d2e1a4ecdc9241cdd8d77fe989c4e5e5d6291426e04459e5860f5944162fddc9",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "7ae78231dce2ab01ab6e86c378c8759825979d365e992cad2c70020de643cf8f",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "c81c3e1749ca99a9dbbf23df403e66fd09592c30e7864d8475935e33ea237fa9",
+        "wal.bin": "a07f8f872fffce492cbe1f1c7dc964eb1e073a9b7d0ddecbcf4142675993a542"
+      },
+      "mismatches": [],
+      "mode": "full",
+      "perCommitCodeCounts": {},
+      "perCommitSha256": "b2936295ec144d8a27142496e7245d07c996e1642ea0e890ffb826560202721d",
+      "primary": null,
+      "writerCgroupId": 4391478,
+      "writerId": "27e828937dbcaf58fff3586aef8ad64fe4ee7af768676ce2211e173e9320f487"
+    },
+    {
+      "cleanCommits": 200,
+      "codes": [],
+      "count": 200,
+      "directory": [
+        265289745,
+        3175790
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "1f332524e5afc8f610cdae579b02aa02c3acc5af5f6a9b31b32378a485305341",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "5ba3317efdeda08a4f12a8ad2f059c841e5477c39d29c2f19c0805e3156bed6c",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "d44400e038645d0d523531cc729e3c36f627270fc625eed50ce7f697ce80f3a2",
+        "wal.bin": "7da8aa8d4de7cd0e03ff1b5e85195f897172b1f9bc231cacf82af824256ea7e5"
+      },
+      "mismatches": [],
+      "mode": "full",
+      "perCommitCodeCounts": {},
+      "perCommitSha256": "d535fc191744ee6cb0fec1b642454419d2f400226ceb4295d3ec367839baf4f8",
+      "primary": null,
+      "writerCgroupId": 7899,
+      "writerId": "deac9e82e5ac114a88343e99fe37dfaca013b136538884852e6aa2f50e7a80d3"
+    }
+  ]
+}

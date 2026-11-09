@@ -1,0 +1,263 @@
+{
+  "dumpSha256": "b35312b41cb000e625dfcd15c748a7a4e9db98a0226e26d1f67dd67621a94309",
+  "scannedSha256": "73c9cb2b647070cf788be0dea42851372901fac5b63a8075ae122c86285cf1b3",
+  "optimizedIrSha256": "d9d7333924a4a5eb3fbbd3caf1e177439cd67903f5f609922d6e2467b08cdb7a",
+  "shortVerboseOptimizedIrIdentical": true,
+  "functions": [
+    {
+      "header": "define noundef i64 @BEGIN(ptr nocapture readnone %0) local_unnamed_addr section \"s_BEGIN_1\" !dbg !3 {",
+      "helperCounts": {
+        "bpf_map_update_elem": 4,
+        "bpf_ktime_get_ns": 1,
+        "bpf_ringbuf_output": 1,
+        "bpf_map_lookup_elem": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"kretfunc:vmlinux:ext4_file_write_iter\"(ptr %0) local_unnamed_addr section \"s_kretfunc:vmlinux:ext4_file_write_iter_2\" !dbg !12 {",
+      "helperCounts": {
+        "bpf_probe_read_kernel": 9,
+        "bpf_map_update_elem": 2,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_lookup_elem": 4,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"kfunc:vmlinux:ext4_page_mkwrite\"(ptr %0) local_unnamed_addr section \"s_kfunc:vmlinux:ext4_page_mkwrite_3\" !dbg !16 {",
+      "helperCounts": {
+        "bpf_probe_read_kernel": 9,
+        "bpf_map_lookup_elem": 4,
+        "bpf_map_update_elem": 2,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"tracepoint:ext4:ext4_sync_file_enter\"(ptr %0) local_unnamed_addr section \"s_tracepoint:ext4:ext4_sync_file_enter_4\" !dbg !20 {",
+      "helperCounts": {
+        "bpf_map_lookup_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_pid_tgid": 5,
+        "bpf_map_update_elem": 5
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"tracepoint:ext4:ext4_sync_file_exit\"(ptr %0) local_unnamed_addr section \"s_tracepoint:ext4:ext4_sync_file_exit_5\" !dbg !24 {",
+      "helperCounts": {
+        "bpf_get_current_pid_tgid": 13,
+        "bpf_map_lookup_elem": 11,
+        "bpf_map_update_elem": 2,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1,
+        "bpf_map_delete_elem": 5
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"tracepoint:syscalls:sys_enter_syncfs\"(ptr nocapture readnone %0) local_unnamed_addr section \"s_tracepoint:syscalls:sys_enter_syncfs_6\" !dbg !28 {",
+      "helperCounts": {
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_pid_tgid": 1,
+        "bpf_map_update_elem": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"tracepoint:syscalls:sys_enter_sync\"(ptr nocapture readnone %0) local_unnamed_addr section \"s_tracepoint:syscalls:sys_enter_sync_7\" !dbg !32 {",
+      "helperCounts": {
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_pid_tgid": 1,
+        "bpf_map_update_elem": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"kfunc:vmlinux:ext4_sync_fs\"(ptr %0) local_unnamed_addr section \"s_kfunc:vmlinux:ext4_sync_fs_8\" !dbg !36 {",
+      "helperCounts": {
+        "bpf_map_lookup_elem": 2,
+        "bpf_get_current_pid_tgid": 2,
+        "bpf_ktime_get_ns": 1,
+        "bpf_map_update_elem": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"kretfunc:vmlinux:ext4_sync_fs\"(ptr %0) local_unnamed_addr section \"s_kretfunc:vmlinux:ext4_sync_fs_9\" !dbg !40 {",
+      "helperCounts": {
+        "bpf_map_lookup_elem": 2,
+        "bpf_get_current_pid_tgid": 3,
+        "bpf_map_update_elem": 2,
+        "bpf_ktime_get_ns": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"tracepoint:syscalls:sys_exit_syncfs\"(ptr %0) local_unnamed_addr section \"s_tracepoint:syscalls:sys_exit_syncfs_10\" !dbg !44 {",
+      "helperCounts": {
+        "bpf_get_current_pid_tgid": 9,
+        "bpf_map_lookup_elem": 8,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_delete_elem": 4,
+        "bpf_map_update_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"tracepoint:syscalls:sys_exit_sync\"(ptr nocapture readnone %0) local_unnamed_addr section \"s_tracepoint:syscalls:sys_exit_sync_11\" !dbg !48 {",
+      "helperCounts": {
+        "bpf_get_current_pid_tgid": 9,
+        "bpf_map_lookup_elem": 8,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_delete_elem": 4,
+        "bpf_map_update_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"tracepoint:ext4:ext4_truncate_enter\"(ptr %0) local_unnamed_addr section \"s_tracepoint:ext4:ext4_truncate_enter_12\" !dbg !52 {",
+      "helperCounts": {
+        "bpf_map_lookup_elem": 4,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_update_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"tracepoint:ext4:ext4_punch_hole\"(ptr %0) local_unnamed_addr section \"s_tracepoint:ext4:ext4_punch_hole_13\" !dbg !56 {",
+      "helperCounts": {
+        "bpf_map_lookup_elem": 4,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_update_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @\"tracepoint:ext4:ext4_zero_range\"(ptr %0) local_unnamed_addr section \"s_tracepoint:ext4:ext4_zero_range_14\" !dbg !60 {",
+      "helperCounts": {
+        "bpf_map_lookup_elem": 4,
+        "bpf_get_smp_processor_id": 3,
+        "bpf_map_update_elem": 1,
+        "bpf_ktime_get_ns": 1,
+        "bpf_get_current_cgroup_id": 1,
+        "bpf_ringbuf_output": 1
+      },
+      "monotonicSites": 1
+    },
+    {
+      "header": "define noundef i64 @END(ptr nocapture readnone %0) local_unnamed_addr section \"s_END_15\" !dbg !64 {",
+      "helperCounts": {
+        "bpf_ktime_get_ns": 1,
+        "bpf_ringbuf_output": 13,
+        "bpf_map_lookup_elem": 13
+      },
+      "monotonicSites": 1
+    }
+  ],
+  "helperCounts": {
+    "bpf_map_update_elem": 25,
+    "bpf_ktime_get_ns": 15,
+    "bpf_ringbuf_output": 22,
+    "bpf_map_lookup_elem": 66,
+    "bpf_probe_read_kernel": 18,
+    "bpf_get_smp_processor_id": 24,
+    "bpf_get_current_cgroup_id": 8,
+    "bpf_get_current_pid_tgid": 43,
+    "bpf_map_delete_elem": 13
+  },
+  "intrinsicCounts": {
+    "llvm.lifetime.start.p0": 157,
+    "llvm.bpf.pseudo": 126,
+    "llvm.lifetime.end.p0": 170,
+    "llvm.memset.p0.i64": 5
+  },
+  "kernelClockIds": {
+    "5": "bpf_ktime_get_ns",
+    "118": "bpf_jiffies64",
+    "125": "bpf_ktime_get_boot_ns",
+    "160": "bpf_ktime_get_coarse_ns",
+    "208": "bpf_ktime_get_tai_ns"
+  },
+  "runs": [
+    {
+      "path": "w0-attempt6",
+      "exitCodes": {
+        "version": 0,
+        "sha": 0,
+        "btf": 0,
+        "compile": 0
+      },
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "btfSha256": "70d2c194ac86837df6584464f3d890a1ff7fbf6dd786daed508546f0447cff87",
+      "diagnosticReasonCount": 745,
+      "transport": "INCONCLUSIVE"
+    },
+    {
+      "path": "resized/w0w2-attempt1",
+      "exitCodes": {
+        "version": 0,
+        "sha": 0,
+        "btf": 0,
+        "compile": 0
+      },
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": true
+        }
+      },
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "btfSha256": "70d2c194ac86837df6584464f3d890a1ff7fbf6dd786daed508546f0447cff87",
+      "diagnosticReasonCount": 745,
+      "transport": "INCONCLUSIVE"
+    }
+  ],
+  "limit": "Recorded process verdicts are checked; no new process was run and raw kernel BTF was not retained. This artifact-specific inventory is not a production parser promotion.",
+  "recordedStdoutSha256": "eb8a358396d41018094ffcb000c3cc6bd42f9c5f3d1e0dc6e91505da2889e7b4",
+  "actualStdoutSha256": "5823294d42a77d6c500eb89a89c1fffa42816d8c2a35acaec5b5c551672d0b8e",
+  "postprocess": "Renamed the copied manifest claim and added the actual extracted stdout hash; original emitted summary retained as golden-audit.emitted.json. Other audit fields unchanged."
+}

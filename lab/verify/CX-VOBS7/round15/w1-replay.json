@@ -1,0 +1,321 @@
+{
+  "modes": [
+    {
+      "cleanCommits": 1000,
+      "codes": [],
+      "count": 1000,
+      "directory": [
+        265289745,
+        277681
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "a775bafe3a2967c55ecb0f378e2dba293cd1a0d5a4bba7e8266dd87532e64891",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "52cc986a3eedee45db827d59f4e9e75468c9ca4429f653a7f4afa44b2840897c",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "29206af415da99b7db5ff4537e87c04702598d08a7bc2c735e2b7548c6bc3cee",
+        "wal.bin": "c3ee00ff4a4ad583214debf7d029c590423fec37dd12a92ad47e20f82fdb606d"
+      },
+      "mismatches": [],
+      "mode": "full",
+      "perCommitCodeCounts": {},
+      "perCommitSha256": "4ff9efc39cd882732c8cec6574319ebf3a577022ed5fc56eaa75b204ea856d07",
+      "primary": null,
+      "writerCgroupId": 4397616,
+      "writerId": "1dfad5b3262e45588d3e00f897b262c8e5996ca6773bc7d19d4db566f0e0ce5a"
+    },
+    {
+      "cleanCommits": 0,
+      "codes": [
+        "SYNC-MISSING"
+      ],
+      "count": 1000,
+      "directory": [
+        265289745,
+        277587
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "d2e127530deb261efaee35b990266f280e62179b3c25b07d8081e189ac52db09",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "9718ee7fc6797902486b83132b2d062524b24e68c9780367f6be5a52ec918a13",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "bd325faf7a98bcf4acecc40a6ae441e43d83ecd0412f2719dfb88964a47abb28",
+        "wal.bin": "deb74cddf76968cc6cd509ffd5deee9b404cedc22a345793a7f194abef3f8884"
+      },
+      "mismatches": [],
+      "mode": "off",
+      "perCommitCodeCounts": {
+        "SYNC-MISSING": 1000
+      },
+      "perCommitSha256": "7a7bd969a603054e4e03644fcb89448880ec33933a638cf5cbf1ddc61bcac542",
+      "primary": "SYNC-MISSING",
+      "writerCgroupId": 4398174,
+      "writerId": "cc29f5beebf86d099e164e8c121b6043ade0a977f0c6d38dfdfb9b2257122c9c"
+    },
+    {
+      "cleanCommits": 0,
+      "codes": [
+        "ACK-BEFORE-DURABLE"
+      ],
+      "count": 1000,
+      "directory": [
+        265289745,
+        277523
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "8a2f6e8d0379fa566a870e375928c8b5100d6c2cbb60d2b25f84201ec723944a",
+        "main.bin": "53c43cc51fa0a87de013668356c29cbe212c63cc159e84c79cb9c961761e1536",
+        "ops.json": "89fef3b8fdf4d354401ce3e468e496861f5a2a832ad8beab03f5bb6b49748f6d",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "c6e03edd7725038d1ca21a4780f9335047a697da9a651b4906596a3377a5046c",
+        "wal.bin": "388165616ebea25bce06c21f012e8097f057ef9eeba43ad431b2d44051a7b9cb"
+      },
+      "mismatches": [],
+      "mode": "normal",
+      "perCommitCodeCounts": {
+        "ACK-BEFORE-DURABLE": 1000
+      },
+      "perCommitSha256": "1f01f1edbf1ec87f0bf52fc93d542d4a241906ce43bdea68f79cc741dbb26662",
+      "primary": "ACK-BEFORE-DURABLE",
+      "writerCgroupId": 4398732,
+      "writerId": "58a2e9db69b5aa323d75e4fb8807d7e13127144a872cceb31b0b5e5ecfd2d4d7"
+    },
+    {
+      "cleanCommits": 500,
+      "codes": [
+        "SYNC-MISSING"
+      ],
+      "count": 1000,
+      "directory": [
+        265289745,
+        277523
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "b4e58aebc6656e3e678257d98e96b884119fbe0a7168953b476bddc206f5f519",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "68281f18c192a28949502c9a0cf4f6d01906d7e8f0b11f7502db26b54506068d",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "71140810a967e5aa518656ecd160b30f9a9eb4d61f34924e374d14f712629bac",
+        "wal.bin": "7a07c00c6d4f54750add3f65e7c96d61dbcba88b659242d6ffcda559de88a20a"
+      },
+      "mismatches": [],
+      "mode": "full-then-off",
+      "perCommitCodeCounts": {
+        "SYNC-MISSING": 500
+      },
+      "perCommitSha256": "359a8ffa740bf91a99ac0d8514aaf656c4f2a17013e91b7508a911fd9b2a4053",
+      "primary": "SYNC-MISSING",
+      "writerCgroupId": 4399290,
+      "writerId": "94c7645f357b7be0a401f59220d65c7c472d265f277f1fc6fd328cd773148398"
+    },
+    {
+      "cleanCommits": 0,
+      "codes": [
+        "ACK-BEFORE-DURABLE"
+      ],
+      "count": 1000,
+      "directory": [
+        265289745,
+        277523
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "8f4b9274c2264cbf2861ab62ac794916ba57aea172b7059954bcaaaddb349cbc",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "a1f7f731cff12c7267a8f297170f2eb91aa5f148e221f1537ddd66dc9feaaaf4",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "57b929c549f061113fea7789cea2103eeed8e43406a12e91d00bd82b637bc13b",
+        "wal.bin": "24b97b706d8ed6853fcdb1de7c6e11803796dd7bf8490b31fa1749a1e80a99ab"
+      },
+      "mismatches": [],
+      "mode": "ack-early",
+      "perCommitCodeCounts": {
+        "ACK-BEFORE-DURABLE": 1000
+      },
+      "perCommitSha256": "8a945b8b4325f0d0a8e5dbb3d5ab013fabf9b0469f1329796955f0508115a7c2",
+      "primary": "ACK-BEFORE-DURABLE",
+      "writerCgroupId": 4399848,
+      "writerId": "f19e4b833a287c2bc2a8f11af55c534fe182a1523e0232711cf69575144f9669"
+    },
+    {
+      "cleanCommits": 0,
+      "codes": [
+        "SYNC-MISSING",
+        "ACK-BEFORE-DURABLE"
+      ],
+      "count": 1000,
+      "directory": [
+        265289745,
+        277523
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "66e24a03bdcb164c8ee89bd2039860f81eedc8dba271c41074c381f22da6bd9f",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "dbfcee1ee8c1ff3cbdfed5037e07ed943e0c9f54f02e09b29ce9b5d0d9e01d7b",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "89d209a0efae8dfcece85dc471f6afdab7a32759491ef11f66a192a5064752fd",
+        "wal.bin": "61c6e1702329247a527cc5d5d5c69c16e6ebaeaf46fb6bb64debe2b4dda0f447"
+      },
+      "mismatches": [],
+      "mode": "sync-before-write",
+      "perCommitCodeCounts": {
+        "ACK-BEFORE-DURABLE": 999,
+        "SYNC-MISSING": 1
+      },
+      "perCommitSha256": "2b7e44294b5ff09959c3dbaa229aef0d2853b8ac8802f0862d18646ed79ff2bc",
+      "primary": "SYNC-MISSING",
+      "writerCgroupId": 4400406,
+      "writerId": "a7ed56bfaf4d05c17c96e35beab2294023dee0b94441b923161dfaa75a2309fa"
+    },
+    {
+      "cleanCommits": 0,
+      "codes": [
+        "SYNC-MISSING"
+      ],
+      "count": 1000,
+      "directory": [
+        265289745,
+        277523
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "c74b5379ef0b1d6fd6e93f37a3e2a2376849c0fe7a4f052c02ad27b0bd4f309c",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "a18c87f8fe46a5dffefeb8c9ec891fc85df74fa4f8d202d53b069b37ed9b2212",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "5e08f5d2e8c8537e8042343e0261062839672f5e8451d02ec61d728dfc988ca5",
+        "wal.bin": "710118f5060a125ba48bb45452da74383a68e89729136ddc305f3b25e4f1b149"
+      },
+      "mismatches": [],
+      "mode": "sync-other-file",
+      "perCommitCodeCounts": {
+        "SYNC-MISSING": 1000
+      },
+      "perCommitSha256": "69bce768053e48f4b8e2de367c4226062e72bb41ae7f8524b25cb508e1004121",
+      "primary": "SYNC-MISSING",
+      "writerCgroupId": 4400964,
+      "writerId": "593a7d59497a7442ac8e9f697ce8d8287ca2df41ee774a1b4bb571e6d25ab511"
+    },
+    {
+      "cleanCommits": 0,
+      "codes": [
+        "SYNC-MISSING"
+      ],
+      "count": 1000,
+      "directory": [
+        265289745,
+        277523
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "799ae79c44885c00d0b271d69be2b0ca758e318f8096eea603b5b082fc37fdb6",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "83ee93a0cb5c6ff94ea8844dccbad23e0c85eef9789a6731afe83dc18d2dbcac",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "01dc2c0df0c4cede808a22f4655c6e26e9cc585462d764f6a956049f3b1a740e",
+        "wal.bin": "d07af023dbe8458a7787454c45bd1123e1d3de4550bca36c55cb0abc33ad5093"
+      },
+      "mismatches": [],
+      "mode": "range-only",
+      "perCommitCodeCounts": {
+        "SYNC-MISSING": 1000
+      },
+      "perCommitSha256": "8fe044176ca98483cd4d83287b13952b62927a7e692c791b65206bc012aa873d",
+      "primary": "SYNC-MISSING",
+      "writerCgroupId": 4401522,
+      "writerId": "a72bbfec096f72a5268e129c245ee6e598701ee28f4dc5149ffe22bcd2d0134e"
+    },
+    {
+      "cleanCommits": 1000,
+      "codes": [],
+      "count": 1000,
+      "directory": [
+        265289745,
+        277523
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "ddf98a904cf7b35129f8455a734b7446844088c7b98d50fd2309e8b95fcafad7",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "a2ed8cfece115ebcccdada5d3354a1e3fa7e358ca1be72ee9f5bfd835d6caac5",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "433d473b82d6f6be442a899b1e99435c78a7456ab3b0a5f6cdc5adb387b0a695",
+        "wal.bin": "0ba024e140bd6656fff447ae11ba8684767cb45b80df06e99198ef688cd20727"
+      },
+      "mismatches": [],
+      "mode": "syncfs",
+      "perCommitCodeCounts": {},
+      "perCommitSha256": "8fcfed1658c2fa93c4cb8141bfd14e35d4393f0d656ca674a49510b3ea0bef25",
+      "primary": null,
+      "writerCgroupId": 4402080,
+      "writerId": "401ace129efc612c38cab60603ef89854d31028e2f87e67c1a894ad67d375294"
+    },
+    {
+      "cleanCommits": 0,
+      "codes": [
+        "UNWITNESSED-WRITE",
+        "SYNC-MISSING"
+      ],
+      "count": 1000,
+      "directory": [
+        265289745,
+        277523
+      ],
+      "globalCodes": [
+        "UNWITNESSED-WRITE"
+      ],
+      "inputSha256": {
+        "RESULT.json": "9532bff21018457aa0a86969538da59cea00786bc5148aa61588cf4fc50c9df6",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "c53d3c3213f92b3ab8d6f4dc78ab63421b446b6be6e359677dd8bb3f57305c45",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "2107b1fc3c037bee2603e2f4abe3a16b065bdc4c31ee4818cab11d36cb3eeeeb",
+        "wal.bin": "730788989ff400fa82e657ad4329c284a8d8d9dd2391764c12b0a1de2d66718a"
+      },
+      "mismatches": [],
+      "mode": "mmap",
+      "perCommitCodeCounts": {
+        "SYNC-MISSING": 1000
+      },
+      "perCommitSha256": "834cb294c5e51bdac8d7a69914ea7275f3b27b60d716a8999d25fde873b6db89",
+      "primary": "UNWITNESSED-WRITE",
+      "writerCgroupId": 4402638,
+      "writerId": "489c21ea98641b1e1cfb33b6379c32d8fbe6a08172145ef00d94df0ae9508939"
+    },
+    {
+      "cleanCommits": 0,
+      "codes": [
+        "SYNC-MISSING"
+      ],
+      "count": 1000,
+      "directory": [
+        265289745,
+        277523
+      ],
+      "globalCodes": [],
+      "inputSha256": {
+        "RESULT.json": "b0b8a8345cabb27bdad0cc5a6f0cd7caea8f8e0792b8b6c2951ba3e1587b43ed",
+        "main.bin": "e084fee2577295a49bf62c9eaa1e6b4136d8dca7db3d31d1aad9e829c15c549c",
+        "ops.json": "cfcd9355c09f7b9904b66bd057a6c0158b1f995f772397086c5d172926b0a772",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "trace.txt": "2c2252df89a711f61adffeee4f79f84eadee66ed4653d8a067c6b36c9042f048",
+        "wal.bin": "28c20b4998d901d6d90e8dd650bde150ea4ced000d13691f0242c6e1a4985331"
+      },
+      "mismatches": [],
+      "mode": "neighbor-sync",
+      "perCommitCodeCounts": {
+        "SYNC-MISSING": 1000
+      },
+      "perCommitSha256": "6f8a61b75576a5155b091be54f6220c49a35e5251fa2101667678f0c015f8bf5",
+      "primary": "SYNC-MISSING",
+      "writerCgroupId": 4403382,
+      "writerId": "88c26f46fe385b80d461aa677ca8bcd101942babc0335bf57f5ad48b6b35afb4"
+    }
+  ],
+  "vmLabel": "6 CPU / 12 GiB (pre-resize); not rerun on resized VM"
+}

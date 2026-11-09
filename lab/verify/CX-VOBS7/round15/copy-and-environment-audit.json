@@ -1,0 +1,23 @@
+{
+  "byteIdenticalCopies": {
+    "W0.attempt6-PASS.json": "w0-attempt6/W0.json",
+    "W1.json": "w1w2-attempt1/W1.json",
+    "W2.attempt1.json": "w1w2-attempt1/W2.json",
+    "W2.attempt2.json": "w2-attempt2/W2.json",
+    "W3.json": "w3-attempt1/W3.json",
+    "resized-W0.json": "resized/w0w2-attempt1/W0.json",
+    "resized-W2.json": "resized/w0w2-attempt1/W2.json",
+    "resized-W3.json": "resized/w3-attempt1/W3.json"
+  },
+  "currentMainVmConfig": {
+    "cpus": 8,
+    "diskBytes": 107374182400,
+    "memBytes": 21474836480
+  },
+  "environmentBindingLimit": "CPU count appears in contemporaneous load logs; RAM sizes are configuration labels, not per-attempt MemTotal receipts",
+  "reviewWorktreeVmConfig": {
+    "cpus": 6,
+    "diskBytes": 63088406528,
+    "memBytes": 12884901888
+  }
+}
