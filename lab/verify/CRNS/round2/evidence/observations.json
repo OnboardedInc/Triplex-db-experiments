@@ -1,0 +1,963 @@
+{
+  "format": "CX-VCRNS-round2-observations/1",
+  "observedAt": "2026-11-09T08:33:51.389Z",
+  "targetCommit": "2cdb3d2f8f52087c87a8492597065143a4598d82",
+  "evaluatorSha256": "0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892",
+  "targetEvaluatorSha256": "0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892",
+  "evaluatorUnchanged": true,
+  "tools": {
+    "fixtures.mjs": "4572d4a437cbd37f1d2ea73a71859a8a96be4cf8e8e8d178f67f687500881b01",
+    "observe.mjs": "61eaa5d936087d7fd664fdc827f182b0696129b47412617309feaa6d24e66aa7",
+    "review.test.mjs": "ed924774c081b6b3423988d380dc9bf62c5521c5651cbe18fcaf170257b2a5be"
+  },
+  "copiedFixtureSha256": "80ee433b7490622f6c6a07c0e25fd0ef98b7192b8fd00d2ab2e405e2392ae67a",
+  "oldFindings": [
+    {
+      "id": "R01",
+      "positiveStatus": "RECOMPUTED",
+      "expectedCode": "READS-NOT-ESTIMABLE",
+      "actual": {
+        "status": "REFUSED",
+        "reasons": [
+          {
+            "code": "READER-LEVEL-MISMATCH",
+            "detail": "no completed reads"
+          },
+          {
+            "code": "READER-LEVEL-MISMATCH",
+            "detail": "READER-LEVEL-MISMATCH"
+          },
+          {
+            "code": "READS-NOT-ESTIMABLE",
+            "detail": "READS-NOT-ESTIMABLE"
+          }
+        ],
+        "bars": {
+          "P3": {
+            "sourcePrefixEnumerated": true,
+            "everyPositionAccounted": true,
+            "counts": true,
+            "lag": true,
+            "resume": true
+          }
+        },
+        "measurements": {
+          "P3": {
+            "gaps": 0,
+            "orderViolations": 0,
+            "duplicates": 0,
+            "frontier": "2",
+            "misses": 0,
+            "extras": 0,
+            "readerShare": 0,
+            "lag": {
+              "pooled": {
+                "count": 2,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "steady": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "burst": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "midpointP99Ms": 8.5,
+              "bracketWidthP99Ms": 2
+            },
+            "lagJudged": true
+          },
+          "P2": {
+            "latency": {
+              "5-10": {
+                "count": 2,
+                "p50Ms": 3,
+                "p99Ms": 3,
+                "maxMs": 3
+              }
+            },
+            "unaccounted": 0,
+            "ackUndecided": 0,
+            "maxWaitMs": 3,
+            "maxQueue": 1,
+            "maxSteadyQueue": 1,
+            "ackUndecidedShare": 0
+          }
+        },
+        "a0": null
+      },
+      "trustedContextUnchanged": true,
+      "fixturePayloadSha256": "4e54a1603e503aba1cdd3f4b71c9c6a2a89150b4de77519949469ee6a092bde8",
+      "witnessedHeadSha256": "bcf5985c8b88ce6c119ef7a982b6fc10e68eb600919567d759e6baa78ec2bd68"
+    },
+    {
+      "id": "R02",
+      "positiveStatus": "RECOMPUTED",
+      "expectedCode": "NS-P3-ORDER-VIOLATIONS-MAX",
+      "actual": {
+        "status": "REFUSED",
+        "reasons": [
+          {
+            "code": "NS-P3-ORDER-VIOLATIONS-MAX",
+            "detail": "frontier is not a resolved source position"
+          },
+          {
+            "code": "NS-P3-ORDER-VIOLATIONS-MAX",
+            "detail": "final checkpoint must reach exactly the final source frontier"
+          }
+        ],
+        "bars": {
+          "P3": {
+            "sourcePrefixEnumerated": true,
+            "everyPositionAccounted": true,
+            "counts": false,
+            "lag": true,
+            "resume": true,
+            "met": false
+          }
+        },
+        "measurements": {
+          "P3": {
+            "gaps": 0,
+            "orderViolations": 0,
+            "duplicates": 0,
+            "frontier": "999",
+            "misses": 0,
+            "extras": 0,
+            "readerShare": 1,
+            "lag": {
+              "pooled": {
+                "count": 2,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "steady": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "burst": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "midpointP99Ms": 8.5,
+              "bracketWidthP99Ms": 2
+            },
+            "lagJudged": true
+          },
+          "P2": {
+            "latency": {
+              "5-10": {
+                "count": 2,
+                "p50Ms": 3,
+                "p99Ms": 3,
+                "maxMs": 3
+              }
+            },
+            "unaccounted": 0,
+            "ackUndecided": 0,
+            "maxWaitMs": 3,
+            "maxQueue": 1,
+            "maxSteadyQueue": 1,
+            "ackUndecidedShare": 0
+          }
+        },
+        "a0": null
+      },
+      "trustedContextUnchanged": true,
+      "fixturePayloadSha256": "5c914d063c0bba7f0fa594740ae1f7cf6c66a108a36224affb4e48c88ffca100",
+      "witnessedHeadSha256": "b202be98d8841d18485ccc93a6b70875ea1c6abff9bee168ab8be8b32d3c5098"
+    },
+    {
+      "id": "R03-epoch",
+      "positiveStatus": "RECOMPUTED",
+      "expectedCode": "CONSUMER-IDENTITY-MISMATCH",
+      "actual": {
+        "status": "REFUSED",
+        "reasons": [
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          }
+        ],
+        "bars": {
+          "P3": {
+            "sourcePrefixEnumerated": true,
+            "everyPositionAccounted": true,
+            "counts": false,
+            "lag": true,
+            "resume": true,
+            "met": false
+          }
+        },
+        "measurements": {
+          "P3": {
+            "gaps": 0,
+            "orderViolations": 0,
+            "duplicates": 0,
+            "frontier": "2",
+            "misses": 0,
+            "extras": 0,
+            "readerShare": 1,
+            "lag": {
+              "pooled": {
+                "count": 2,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "steady": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "burst": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "midpointP99Ms": 8.5,
+              "bracketWidthP99Ms": 2
+            },
+            "lagJudged": true
+          },
+          "P2": {
+            "latency": {
+              "5-10": {
+                "count": 2,
+                "p50Ms": 3,
+                "p99Ms": 3,
+                "maxMs": 3
+              }
+            },
+            "unaccounted": 0,
+            "ackUndecided": 0,
+            "maxWaitMs": 3,
+            "maxQueue": 1,
+            "maxSteadyQueue": 1,
+            "ackUndecidedShare": 0
+          }
+        },
+        "a0": null
+      },
+      "trustedContextUnchanged": true,
+      "fixturePayloadSha256": "e234302e79191eb3f9cd8a7033f641c6464e3710394166a978c14e83b018819b",
+      "witnessedHeadSha256": "4c9cf2b8aa2cdf5e7f98892ba63f10901319829afc5072d7d72f7368379a647a"
+    },
+    {
+      "id": "R03-consumer",
+      "positiveStatus": "RECOMPUTED",
+      "expectedCode": "CONSUMER-IDENTITY-MISMATCH",
+      "actual": {
+        "status": "REFUSED",
+        "reasons": [
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          },
+          {
+            "code": "CONSUMER-IDENTITY-MISMATCH",
+            "detail": "CONSUMER-IDENTITY-MISMATCH"
+          }
+        ],
+        "bars": {
+          "P3": {
+            "sourcePrefixEnumerated": true,
+            "everyPositionAccounted": true,
+            "counts": false,
+            "lag": true,
+            "resume": true,
+            "met": false
+          }
+        },
+        "measurements": {
+          "P3": {
+            "gaps": 0,
+            "orderViolations": 0,
+            "duplicates": 0,
+            "frontier": "2",
+            "misses": 0,
+            "extras": 0,
+            "readerShare": 1,
+            "lag": {
+              "pooled": {
+                "count": 2,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "steady": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "burst": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "midpointP99Ms": 8.5,
+              "bracketWidthP99Ms": 2
+            },
+            "lagJudged": true
+          },
+          "P2": {
+            "latency": {
+              "5-10": {
+                "count": 2,
+                "p50Ms": 3,
+                "p99Ms": 3,
+                "maxMs": 3
+              }
+            },
+            "unaccounted": 0,
+            "ackUndecided": 0,
+            "maxWaitMs": 3,
+            "maxQueue": 1,
+            "maxSteadyQueue": 1,
+            "ackUndecidedShare": 0
+          }
+        },
+        "a0": null
+      },
+      "trustedContextUnchanged": true,
+      "fixturePayloadSha256": "6c1be9beb5c4512a29a890b48ca06590882585761851d25f5d3040cb51d354d5",
+      "witnessedHeadSha256": "ae28f727ab1c5c5f1b3e046b92f02bfba348f313c7cfad603ed625ba5377ba07"
+    },
+    {
+      "id": "R04",
+      "positiveStatus": "RECOMPUTED",
+      "expectedCode": "READ-OUTSIDE-WINDOW",
+      "actual": {
+        "status": "REFUSED",
+        "reasons": [
+          {
+            "code": "READER-LEVEL-MISMATCH",
+            "detail": "READER-LEVEL-MISMATCH"
+          },
+          {
+            "code": "READ-OUTSIDE-WINDOW",
+            "detail": "READ-OUTSIDE-WINDOW"
+          }
+        ],
+        "bars": {
+          "P3": {
+            "sourcePrefixEnumerated": true,
+            "everyPositionAccounted": true,
+            "counts": true,
+            "lag": true,
+            "resume": true
+          }
+        },
+        "measurements": {
+          "P3": {
+            "gaps": 0,
+            "orderViolations": 0,
+            "duplicates": 0,
+            "frontier": "2",
+            "misses": 0,
+            "extras": 0,
+            "readerShare": 0,
+            "lag": {
+              "pooled": {
+                "count": 2,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "steady": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "burst": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "midpointP99Ms": 8.5,
+              "bracketWidthP99Ms": 2
+            },
+            "lagJudged": true
+          },
+          "P2": {
+            "latency": {
+              "5-10": {
+                "count": 2,
+                "p50Ms": 3,
+                "p99Ms": 3,
+                "maxMs": 3
+              }
+            },
+            "unaccounted": 0,
+            "ackUndecided": 0,
+            "maxWaitMs": 3,
+            "maxQueue": 1,
+            "maxSteadyQueue": 1,
+            "ackUndecidedShare": 0
+          }
+        },
+        "a0": null
+      },
+      "trustedContextUnchanged": true,
+      "fixturePayloadSha256": "bb8aafc84edf8ffc8ed20b612686d6296b474b88443d5bd1665e4d1ea1426f49",
+      "witnessedHeadSha256": "4a877fdba23f827f327f908d5a1f1304c4ea435c4cc2c97f38c1a95a9f7c8d1f"
+    },
+    {
+      "id": "R05",
+      "positiveStatus": "RECOMPUTED",
+      "expectedCode": "P4-SINGLE-CLIENT",
+      "actual": {
+        "status": "REFUSED",
+        "reasons": [
+          {
+            "code": "P4-SINGLE-CLIENT",
+            "detail": "overlapping single-client requests"
+          }
+        ],
+        "bars": {
+          "P3": {
+            "sourcePrefixEnumerated": true,
+            "everyPositionAccounted": true,
+            "counts": true,
+            "lag": true,
+            "resume": true
+          }
+        },
+        "measurements": {
+          "P3": {
+            "gaps": 0,
+            "orderViolations": 0,
+            "duplicates": 0,
+            "frontier": "2",
+            "misses": 0,
+            "extras": 0,
+            "readerShare": 1,
+            "lag": {
+              "pooled": {
+                "count": 2,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "steady": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "burst": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "midpointP99Ms": 8.5,
+              "bracketWidthP99Ms": 2
+            },
+            "lagJudged": true
+          },
+          "P2": {
+            "latency": {
+              "5-10": {
+                "count": 2,
+                "p50Ms": 3,
+                "p99Ms": 3,
+                "maxMs": 3
+              }
+            },
+            "unaccounted": 0,
+            "ackUndecided": 0,
+            "maxWaitMs": 3,
+            "maxQueue": 1,
+            "maxSteadyQueue": 1,
+            "ackUndecidedShare": 0
+          },
+          "P1": {
+            "correct": 2200,
+            "violations": 0,
+            "evaluatedShare": 1,
+            "goodput": 1100,
+            "latency": {
+              "count": 2200,
+              "p50Ms": 0.1,
+              "p99Ms": 0.1,
+              "maxMs": 0.1
+            }
+          }
+        },
+        "a0": null
+      },
+      "trustedContextUnchanged": true,
+      "fixturePayloadSha256": "aea90c15e6b130ff6723b3d0fba6246d29583240e63d8b3441b26ec1099b6d09",
+      "witnessedHeadSha256": "f7d2aa66f60b1fc504e7b17bcf15a8888c13e55f0bc02a5ec9aa11d1b7efc7f3"
+    },
+    {
+      "id": "R06",
+      "positiveStatus": "RECOMPUTED",
+      "expectedCode": "CR-CROSSCHECK-MISSING",
+      "actual": {
+        "status": "REFUSED",
+        "reasons": [
+          {
+            "code": "CR-CROSSCHECK-MISSING",
+            "detail": "CR-CROSSCHECK-MISSING"
+          },
+          {
+            "code": "CR-CROSSCHECK-MISSING",
+            "detail": "CR-CROSSCHECK-MISSING"
+          },
+          {
+            "code": "CR-CROSSCHECK-MISSING",
+            "detail": "CR-CROSSCHECK-MISSING"
+          },
+          {
+            "code": "CR-CROSSCHECK-MISSING",
+            "detail": "CR-CROSSCHECK-MISSING"
+          }
+        ],
+        "bars": {
+          "P3": {
+            "sourcePrefixEnumerated": true,
+            "everyPositionAccounted": true,
+            "counts": false,
+            "lag": true,
+            "resume": true,
+            "met": false
+          }
+        },
+        "measurements": {
+          "P3": {
+            "gaps": 0,
+            "orderViolations": 0,
+            "duplicates": 0,
+            "frontier": "2",
+            "misses": 0,
+            "extras": 0,
+            "readerShare": 1,
+            "lag": {
+              "pooled": {
+                "count": 2,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "steady": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "burst": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "midpointP99Ms": 8.5,
+              "bracketWidthP99Ms": 2
+            },
+            "lagJudged": true
+          },
+          "P2": {
+            "latency": {
+              "5-10": {
+                "count": 2,
+                "p50Ms": 3,
+                "p99Ms": 3,
+                "maxMs": 3
+              }
+            },
+            "unaccounted": 0,
+            "ackUndecided": 0,
+            "maxWaitMs": 3,
+            "maxQueue": 1,
+            "maxSteadyQueue": 1,
+            "ackUndecidedShare": 0
+          }
+        },
+        "a0": null
+      },
+      "trustedContextUnchanged": true,
+      "fixturePayloadSha256": "c9088037172e38573ec72f7387facfa9e34cdee14e02dd17ee1555d4ceb40958",
+      "witnessedHeadSha256": "7f116389aeda73aa8851d66577636877a8ee19c7c63bb9953c1302b952878f1d"
+    }
+  ],
+  "N01": {
+    "sweepPlan": {
+      "startNs": "2000000000",
+      "endNs": "102000000000",
+      "baselineStartNs": "0",
+      "baselineEndNs": "1000000000",
+      "liveReaders": 64,
+      "seconds": 100
+    },
+    "planPreimageSha256": "e10a91d2dadab23828e98021f3140d3b84e858b36083a211963dd63541f4ed1c",
+    "binding": {
+      "attemptId": "CX-VCRNS-R2-P5",
+      "sourceSha256": "41cf6794ba4200b839c53531555f0f3998df4cbb01a4d5cb0b94e3ca5e23947d",
+      "slot": "offline",
+      "inputsSha256": "e10a91d2dadab23828e98021f3140d3b84e858b36083a211963dd63541f4ed1c"
+    },
+    "expectedContextSha256": "ad371780df420f0c98d3dd94c764cbcd13bfb2a73ad4ad4905cda927be938531",
+    "trustedContextUnchanged": true,
+    "full": {
+      "coverage": {
+        "sweep": {
+          "startNs": "2000000000",
+          "endNs": "102000000000"
+        },
+        "measuredTraffic": {
+          "startNs": "2000000000",
+          "endNs": "102000000000"
+        },
+        "completedReads": 6400,
+        "writerEvents": 100,
+        "observedSeconds": 100
+      },
+      "result": {
+        "status": "RECOMPUTED",
+        "reasons": [],
+        "bars": {
+          "P3": {
+            "sourcePrefixEnumerated": true,
+            "everyPositionAccounted": true,
+            "counts": true,
+            "lag": true,
+            "resume": true,
+            "met": true
+          }
+        },
+        "measurements": {
+          "P3": {
+            "gaps": 0,
+            "orderViolations": 0,
+            "duplicates": 0,
+            "frontier": "2",
+            "misses": 0,
+            "extras": 0,
+            "readerShare": 1,
+            "lag": {
+              "pooled": {
+                "count": 2,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "steady": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "burst": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "midpointP99Ms": 8.5,
+              "bracketWidthP99Ms": 2
+            },
+            "lagJudged": true
+          },
+          "P2": {
+            "latency": {
+              "5-10": {
+                "count": 2,
+                "p50Ms": 3,
+                "p99Ms": 3,
+                "maxMs": 3
+              }
+            },
+            "unaccounted": 0,
+            "ackUndecided": 0,
+            "maxWaitMs": 3,
+            "maxQueue": 1,
+            "maxSteadyQueue": 1,
+            "ackUndecidedShare": 0
+          },
+          "P1": {
+            "correct": 512,
+            "violations": 0,
+            "evaluatedShare": 1,
+            "goodput": 256,
+            "latency": {
+              "count": 512,
+              "p50Ms": 0.1,
+              "p99Ms": 0.1,
+              "maxMs": 0.1
+            }
+          },
+          "P5": {
+            "wallMs": 100000,
+            "subjects": 100000,
+            "basis": "1",
+            "traffic": {
+              "met": true,
+              "baseline": {
+                "readP99Ms": 0.1,
+                "writerP99Ms": 1
+              },
+              "sweep": {
+                "readP99Ms": 0.1,
+                "writerP99Ms": 1
+              }
+            }
+          }
+        },
+        "a0": null
+      },
+      "payloadSha256": "35d9ec663f660025b8530f4ce5a859cce693ed39da40c29a5d78cd7742862dd6",
+      "headSha256": "26c7a7d95350bf2cc4be9d299d8d7fac1bdf6056127159fc6433241d2b07b60a"
+    },
+    "firstSecondOnly": {
+      "coverage": {
+        "sweep": {
+          "startNs": "2000000000",
+          "endNs": "102000000000"
+        },
+        "measuredTraffic": {
+          "startNs": "2000000000",
+          "endNs": "3000000000"
+        },
+        "completedReads": 64,
+        "writerEvents": 1,
+        "observedSeconds": 1
+      },
+      "result": {
+        "status": "RECOMPUTED",
+        "reasons": [],
+        "bars": {
+          "P3": {
+            "sourcePrefixEnumerated": true,
+            "everyPositionAccounted": true,
+            "counts": true,
+            "lag": true,
+            "resume": true,
+            "met": true
+          }
+        },
+        "measurements": {
+          "P3": {
+            "gaps": 0,
+            "orderViolations": 0,
+            "duplicates": 0,
+            "frontier": "2",
+            "misses": 0,
+            "extras": 0,
+            "readerShare": 1,
+            "lag": {
+              "pooled": {
+                "count": 2,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "steady": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "burst": {
+                "count": 1,
+                "p50Ms": 10,
+                "p99Ms": 10,
+                "maxMs": 10
+              },
+              "midpointP99Ms": 8.5,
+              "bracketWidthP99Ms": 2
+            },
+            "lagJudged": true
+          },
+          "P2": {
+            "latency": {
+              "5-10": {
+                "count": 2,
+                "p50Ms": 3,
+                "p99Ms": 3,
+                "maxMs": 3
+              }
+            },
+            "unaccounted": 0,
+            "ackUndecided": 0,
+            "maxWaitMs": 3,
+            "maxQueue": 1,
+            "maxSteadyQueue": 1,
+            "ackUndecidedShare": 0
+          },
+          "P1": {
+            "correct": 512,
+            "violations": 0,
+            "evaluatedShare": 1,
+            "goodput": 256,
+            "latency": {
+              "count": 512,
+              "p50Ms": 0.1,
+              "p99Ms": 0.1,
+              "maxMs": 0.1
+            }
+          },
+          "P5": {
+            "wallMs": 100000,
+            "subjects": 100000,
+            "basis": "1",
+            "traffic": {
+              "met": true,
+              "baseline": {
+                "readP99Ms": 0.1,
+                "writerP99Ms": 1
+              },
+              "sweep": {
+                "readP99Ms": 0.1,
+                "writerP99Ms": 1
+              }
+            }
+          }
+        },
+        "a0": null
+      },
+      "payloadSha256": "79bdfd797ec82bd2dd396c99ebb54ebbcf83d2644678514e5c9d54170d10cc16",
+      "headSha256": "2dd0124dbfd98b0e39c7bcf6d69562bf970c8c49aec29a2503bbde30318cdbd2"
+    },
+    "sameSparseEventsFullWindow": {
+      "met": false,
+      "reason": "READER-LEVEL-MISMATCH"
+    }
+  },
+  "scope": "Synthetic normalized events; evaluator-owned deterministic callback/JSON-decoder stand-ins. No engine, SQLite adapter qualification, or NS admission PASS."
+}

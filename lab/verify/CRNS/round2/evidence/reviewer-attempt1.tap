@@ -1,0 +1,105 @@
+TAP version 13
+# Subtest: CX-VCRNS-R2-R01: refusal is content-specific after a valid control
+ok 1 - CX-VCRNS-R2-R01: refusal is content-specific after a valid control
+  ---
+  duration_ms: 84.200083
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R02: refusal is content-specific after a valid control
+ok 2 - CX-VCRNS-R2-R02: refusal is content-specific after a valid control
+  ---
+  duration_ms: 19.92
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R03-epoch: refusal is content-specific after a valid control
+ok 3 - CX-VCRNS-R2-R03-epoch: refusal is content-specific after a valid control
+  ---
+  duration_ms: 21.278583
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R03-consumer: refusal is content-specific after a valid control
+ok 4 - CX-VCRNS-R2-R03-consumer: refusal is content-specific after a valid control
+  ---
+  duration_ms: 18.818625
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R04: refusal is content-specific after a valid control
+ok 5 - CX-VCRNS-R2-R04: refusal is content-specific after a valid control
+  ---
+  duration_ms: 131.777
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R05: refusal is content-specific after a valid control
+ok 6 - CX-VCRNS-R2-R05: refusal is content-specific after a valid control
+  ---
+  duration_ms: 117.875917
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-R06: refusal is content-specific after a valid control
+ok 7 - CX-VCRNS-R2-R06: refusal is content-specific after a valid control
+  ---
+  duration_ms: 25.355834
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-C01: missing raw streams and decoder/configuration floors refuse
+ok 8 - CX-VCRNS-R2-C01: missing raw streams and decoder/configuration floors refuse
+  ---
+  duration_ms: 137.214167
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-C02: full P5 live interval meets the arithmetic control
+ok 9 - CX-VCRNS-R2-C02: full P5 live interval meets the arithmetic control
+  ---
+  duration_ms: 516.895875
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-C03: missing 99 seconds is detected when the full interval is used
+ok 10 - CX-VCRNS-R2-C03: missing 99 seconds is detected when the full interval is used
+  ---
+  duration_ms: 4.626458
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-C04: fully empty P5 live read/writer streams cannot meet the floor
+ok 11 - CX-VCRNS-R2-C04: fully empty P5 live read/writer streams cannot meet the floor
+  ---
+  duration_ms: 45.064167
+  type: 'test'
+  ...
+# Subtest: CX-VCRNS-R2-N01: P5 must refuse live evidence for only one second of a pinned 100-second sweep
+not ok 12 - CX-VCRNS-R2-N01: P5 must refuse live evidence for only one second of a pinned 100-second sweep
+  ---
+  duration_ms: 564.450625
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-crns/lab/verify/CRNS/round2/review.test.mjs:54:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    99 seconds of live traffic are absent, yet a self-selected one-second denominator can pass
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-crns/lab/verify/CRNS/round2/review.test.mjs:62:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..12
+# tests 12
+# suites 0
+# pass 11
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1800.354625
