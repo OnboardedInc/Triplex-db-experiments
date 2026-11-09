@@ -267,3 +267,10 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   c98bbff8), then the M01 A/A calibration window, OBS01, P3 screening per Q99d.
 - NSR F2 moved from in-process loader guards to a filesystem boundary (round 4): the driver's runtime layout holds only the closed
   artifact, enforced offline with Node's permission model.
+- 2026-11-09 R46 (P4 per-core from H1): today's QH1 design is 4-5x over the 909 us CPU budget per pull; one combination reaches the bar
+  with no commit cost (compact rows clustered by owner +5.2 B/fact, one worker op per pull in one read transaction, the answer built as
+  one text by SQLite and parsed once, lean decode): 1,140-1,720 pulls per CPU second, margin 1.04-1.56x. The read-side domain check
+  (assertValueInDomain, about 1 us per row) needs an exact fast path in core, shared by all lanes. A per-subject document reaches
+  3,100-4,000 but adds 0.91 ms to commit p50: fallback arm only. **EXP-QH1 starts after HS01 lands**, on the compact layout plus the owner
+  key, with R46 section 9's gates (decomposition G0, codec G4c, fixed CPU accounting). Rulings Q105a (per-core accounting), Q105b
+  (round-tripping doubles on serialized paths) pending. Note for HS01's reviewer: check the codec with Q105b's inputs.
