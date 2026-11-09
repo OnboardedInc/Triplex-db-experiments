@@ -506,3 +506,4 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   mapped host now resolves commands through the broker claim table. 10k timings predate 9949f8cc. EXP-P5N takes over.
 - 2026-11-09 compress-evidence.sh bug: it compressed P5B's stores while a run still read them (read-only opens do not update mtime).
   Fixed: skip files any process has open (lsof), and skip SQLite files unless their directory has a .settled marker.
+- 2026-11-09 ~11:00 Sam: let the in-flight agents finish, launch no more; orchestration moves to the Claude Code CLI. Hourly loop cron cancelled. Handoff: lab/HANDOFF-2026-11-09.md.
