@@ -71,6 +71,21 @@ export interface Assignments {
 }
 
 export interface CompositionHandle {
+  sweepPage(
+    subjects: readonly string[],
+    basis: import("./w0-world.ts").PositionBasis,
+  ): Promise<{
+    rows: readonly import("./w0-world.ts").WorldRow[];
+    position: number;
+    epoch: string;
+    roundTrips: number;
+  }>;
+  pinBasis?(position: number, owner: string): Promise<{ release(): Promise<void> }>;
+  publishOutbox(
+    records: readonly import("../../../packages/w0/dist/index.js").EvaluationRecord[],
+  ): Promise<{ deliveries: readonly any[]; retry: boolean }>;
+  storeCounts(): Promise<Record<string, number>>;
+
   readonly name: string;
   readonly assignments: Assignments;
   /** Each read index's watermark (a source position); one-engine compositions read the source directly. */
@@ -134,7 +149,12 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
   };
   const one = { lane, role: `triplex public Triples service on one engine slot${variant === "public-queued" && lane === "xtdb" ? " (XTDB adapter admissionQueue: true)" : ""}` };
   const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : "triplex-entities(sparql)";
-  return {
+  const sweep = await (await import("./w0-public.ts")).publicSweep(lane, h);
+  const handle: CompositionHandle = {
+    sweepPage: sweep.page,
+    storeCounts: sweep.counts,
+    publishOutbox: (records) =>
+      import("./w0-outbox.ts").then((m) => m.publishRecords(handle, records)),
     name: variant,
     assignments: { source: one, current: one, history: one, analytics: one, replicationEdges: [] },
     watermarks: async () => ({ source: await h.run(T.currentPosition()) }),
@@ -148,8 +168,9 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     sweepPull: pull,
     feedPage: (after, limit) => h.run(T.transactions({ after, limit })),
     currentPosition: () => h.run(T.currentPosition()),
-    close: () => h.close(),
+    close: async () => { await sweep.close(); await h.close(); },
   };
+  return handle;
 }
 
 export const COMPOSITIONS: Record<string, (lane: Lane, scope: string) => Promise<CompositionHandle>> = {

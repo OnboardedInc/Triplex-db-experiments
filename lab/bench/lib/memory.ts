@@ -12,6 +12,7 @@
  * Simplest honest rule: `memory` is valid only when every opening is in the same thread, so the driver
  * runs it with readers in the main thread (see driver: composition "memory" forces in-thread readers).
  */
+import { requirePosition, visibleRows, type WorldRow } from "./w0-world.ts";
 import type { CompositionHandle, Outcome, PullResult, Receipt } from "./composition.ts";
 
 interface Fact { id: string; entityId: string; attribute: string; value: any; validFrom: number; validTo?: number; recordedAt: number; position: number; retractedAt?: number; retractedPosition?: number; txId: string }
@@ -73,7 +74,39 @@ export function memoryComposition(lane: "xtdb" | "qlever", scope: string, servic
     return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1, route: "source", language: "memory", waitedMs: 0 };
   };
   const one = { lane, role: "in-process reference store (diagnostic)" };
-  return {
+  const handle: CompositionHandle = {
+    sweepPage: async (subjects, basis) => {
+      requirePosition(basis, st.position);
+      const head = st.position;
+      const rows: WorldRow[] = [],
+        seen = new Set(subjects);
+      let roundTrips = 0;
+      let frontier = [...subjects];
+      while (frontier.length) {
+        roundTrips++;
+        const level = visibleRows(
+          frontier.flatMap((e) => (st.byEntity.get(e) ?? []).map((f) => ({ ...f }))),
+          basis,
+        );
+        rows.push(...level);
+        const next: string[] = [];
+        for (const r of level)
+          if (r.value.type === "ref" && !seen.has(r.value.value)) {
+            seen.add(r.value.value);
+            next.push(r.value.value);
+          }
+        frontier = next;
+      }
+      return { rows, position: head, epoch: `memory:${scope}`, roundTrips };
+    },
+    storeCounts: async () => ({
+      position: st.position,
+      assertions: st.facts.size,
+      retired: [...st.facts.values()].filter((f) => f.retractedPosition !== undefined).length,
+      frames: st.journal.length,
+    }),
+    publishOutbox: (records) =>
+      import("./w0-outbox.ts").then((m) => m.publishRecords(handle, records)),
     name: "memory",
     assignments: { source: one, current: one, history: one, analytics: one, replicationEdges: [] },
     watermarks: async () => ({ source: st.position }),
@@ -91,4 +124,5 @@ export function memoryComposition(lane: "xtdb" | "qlever", scope: string, servic
     currentPosition: async () => st.position,
     close: async () => {},
   };
+  return handle;
 }

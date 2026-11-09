@@ -47,6 +47,10 @@ const opt = (name: string, fallback?: string) => {
   return i >= 0 ? argv[i + 1] : fallback;
 };
 const flag = (name: string) => argv.includes(`--${name}`);
+if (opt("world") === "w0") {
+  await (await import("./w0-driver.ts")).runW0Driver(argv);
+  process.exit(process.exitCode ?? 0);
+}
 const lane = opt("lane") as "xtdb" | "qlever";
 const rung = opt("rung", "10k")!;
 const devSubjects = opt("subjects");
