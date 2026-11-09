@@ -1,0 +1,1 @@
+previously-unknown-area/dormant.mjs(2,29): error TS2304: Cannot find name 'cxR2NewTrackedName'.
