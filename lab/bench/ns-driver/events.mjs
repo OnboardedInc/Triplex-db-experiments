@@ -15,8 +15,11 @@ export class Events {
       !binding.slot
     )
       throw Error("HR binding/key missing");
-    fs.mkdirSync(dir, { recursive: true });
-    if (fs.readdirSync(dir).length) throw Error("HR output not fresh");
+    // [EXP-NSR-R4] Why: the launcher checks freshness before granting write-only output. Rejected: making future output files readable by the driver.
+    if (process.env.NSR_FRESH_OUTPUT !== dir || !process.permission) {
+      fs.mkdirSync(dir, { recursive: true });
+      if (fs.readdirSync(dir).length) throw Error("HR output not fresh");
+    }
     this.dir = dir;
     this.key = key;
     this.binding = binding;

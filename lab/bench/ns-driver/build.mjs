@@ -14,7 +14,7 @@ export function buildDriver(
   if (fs.readdirSync(output).length) throw Error("Driver bundle destination is not fresh");
   fs.writeFileSync(path.join(output, "driver.mjs"), code, { flag: "wx" });
   const support = {};
-  for (const name of ["runtime-guard.mjs", "launch-artifact.mjs"]) {
+  for (const name of ["runtime-guard.mjs", "launch-artifact.mjs", "layout-audit.mjs"]) {
     const bytes = fs.readFileSync(new URL(name, import.meta.url));
     support[name] = sha(bytes);
     fs.writeFileSync(path.join(output, name), bytes, { flag: "wx" });
@@ -29,8 +29,7 @@ export function buildDriver(
     metafileSha256: sha(metaBytes),
     support,
     launch: ["node", "launch-artifact.mjs", ".", "<config.json>"],
-    runtime:
-      "Node --permission (no workers/children) plus registerHooks closed-artifact load policy",
+    runtime: "Closed filesystem layout with Node --permission; registerHooks is secondary only",
   };
   fs.writeFileSync(path.join(output, "manifest.json"), JSON.stringify(manifest, null, 2) + "\n", {
     flag: "wx",
