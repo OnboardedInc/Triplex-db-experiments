@@ -102,3 +102,34 @@ Offline consumer stops are logical client/consumer replacements over retained
 memory state. Replica maintenance actually replays the source feed into a new
 immutable generation and tests fallback/catch-up while writes proceed. Neither
 is an engine process stop, compaction, physical tenant isolation or real erasure.
+
+## Round 3 containment checks
+
+After the public dependency builds above, and only with >=5 GiB host free:
+
+```sh
+node lab/bin/heavy.mjs --poll-ms 100 --label CX-W02-R3 -- node lab/experiments/EXP-W02/check-round3.mjs
+```
+
+This is the current regression controller. `check-offline.mjs` retains round 2's
+historical 48-test / 66-match expectations and is superseded for current source.
+Round 3 checks 53 tests, G0, frozen goldens, unchanged manifest, and the copied
+reviewer controls. Raw output goes to a fresh directory beneath
+`/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-W02/`; the controller prints it.
+The mutation child prints a second fresh directory for its baseline and controls.
+Commit a SHA256SUMS inventory and short index, not these raw directories.
+
+The two lane baselines deliberately remain red: 40 OFFLINE-MATCH, 26 FAIL, 4
+BLOCKED each. The 26 failures are missing executed domain schedules for GS.03,
+08,10,11,12,14,19,20, their witnesses, and the 10/11 and 19B schedules. Their
+previous matches were invalid. The controller asserts those exact members and
+coverage-failure reasons; it does not turn them into GS acceptance. The original
+four unsupported members remain BLOCKED. The 33 mutation controls must each
+execute a corruption and fail before the missing-coverage check. GS.16's control
+checks fixture integrity before capability refusal; it proves no erasure behavior.
+
+Every v2 sweep read records requested and route-reported position/valid-time
+bases and refuses missing/different metadata. Independent state and fallback
+comparisons use O-REPLAY at the requested cut. Native route acknowledgements and
+expected-load GS remain unqualified; the conditional live commands above still
+wait for the scale window and the listed instrumentation/prerequisites.

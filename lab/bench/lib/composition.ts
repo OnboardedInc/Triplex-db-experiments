@@ -79,6 +79,7 @@ export interface CompositionHandle {
   ): Promise<{
     rows: readonly import("./w0-world.ts").WorldRow[];
     position: number;
+    reportedBasis?: import("./w0-world.ts").PositionBasis;
     epoch: string;
     roundTrips: number;
   }>;
