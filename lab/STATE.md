@@ -387,3 +387,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 DI01 built (CX-DI01, the last Codex builder; 7ae302bc, code 96b9a259): eight offline gates and the readback audit pass,
   438,140 trace positions, 900 crash trials. pack:check incomplete (offline consumer install ERESOLVE effect@undefined; branch predates
   the PACK fix on main). In review (CX-VDI01, verify/DI01), including a main merge to settle the pack gate. All builders are Sonnet now.
+- 2026-11-09 OBS01 round 11 (Sonnet, 44607c6d): R10-F1..F3 fixed offline (WAL tails timed, ACKs classified independently, clock proven
+  from the compiled program via lab/bin/clock-proof.mjs with `-d all`; observation is CONSISTENT/INCONCLUSIVE/INCONSISTENT only).
+  Python 92, Node 25, reviewer fixtures 15/15. The bpftrace dump flag and output format are unobserved until W0. In review (CX-VOBS7
+  round 3) with findings split into "must fix before W0" and "settled only by W0 output, already fail-closed"; the second class does not
+  block ACCEPT-OFFLINE. Further offline rounds have diminishing value; the next real information is W0, which needs Sam's download OK.
