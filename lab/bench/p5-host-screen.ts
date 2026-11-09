@@ -45,6 +45,7 @@ const ROUNDS = Number(opt("rounds", "4")),
   // DILATE stretches the offer schedule by this factor (the commands and their valid times are unchanged): a named screening series, never the frozen trace. Rejected: concurrent
   // writers (the position map needs acknowledgements in order) and dropping the burst (about 1 command/s gives no p99).
   DILATE = Number(opt("dilate", "2")),
+  SAMPLE_EVERY = Number(opt("sample-every", "10")),
   FLOOR = 5 * 1024 ** 3;
 fs.mkdirSync(outDir, { recursive: false });
 const b0 = JSON.parse(fs.readFileSync(path.join(seedDir, "receipt.json"), "utf8"));
@@ -212,6 +213,7 @@ async function activationArm(name: string, W: number) {
       workers: W,
       activations,
       readThroughOwner: true,
+      sampleEvery: SAMPLE_EVERY,
       onPage: async (records) => {
         const t = performance.now();
         const actual = await publishRecords(timed, records.map((r: any) => r.record));
@@ -219,7 +221,7 @@ async function activationArm(name: string, W: number) {
         for (const r of records) {
           if (coverage.has(r.subject)) throw Error("G4 duplicate evaluation");
           coverage.add(r.subject);
-          if (index.get(r.subject)! % 50 === 0)
+          if (r.world !== undefined)
             sample.push({ subject: r.subject, world: r.world, output: W0.outputJson(r.output) });
         }
         pubLog.push({ evaluations: records.map((r: any) => r.record), deliveries: actual.deliveries });

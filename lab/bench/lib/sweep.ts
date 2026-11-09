@@ -73,6 +73,8 @@ export interface SweepOptions {
   beforePublish?: () => Promise<void>;
   signal?: AbortSignal;
   readThroughOwner?: boolean;
+  /** [EXP-P5N] Return the full world only for every sampleEvery-th subject of the list (default: all). */
+  sampleEvery?: number;
 }
 export async function runW0Sweep(o: SweepOptions) {
   if (
@@ -176,6 +178,10 @@ export async function runW0Sweep(o: SweepOptions) {
               basis: o.basis,
               release: o.release ?? "R2",
               activations: o.activations,
+              sample:
+                o.sampleEvery === undefined
+                  ? undefined
+                  : subjects.map((_, i) => (pageIndex * 64 + i) % o.sampleEvery! === 0),
             });
           });
           if (

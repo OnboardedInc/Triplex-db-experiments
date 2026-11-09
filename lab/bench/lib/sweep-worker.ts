@@ -1,6 +1,6 @@
 import { parentPort, workerData } from "node:worker_threads";
 import { performance } from "node:perf_hooks";
-import { canonical, reachableRows, worldOf } from "./w0-world.ts";
+import { canonical, reachableRows, sha256, worldOf } from "./w0-world.ts";
 import { evaluateW0, loadW0Pins } from "./evaluate.ts";
 import { openComposition } from "./composition.ts";
 const comp =
@@ -42,7 +42,7 @@ port.on("message", async (msg) => {
       a.push(row);
       byEntity.set(row.entityId, a);
     }
-    for (const subject of msg.subjects) {
+    for (const [si, subject] of (msg.subjects as string[]).entries()) {
       c = cpu();
       const world = worldOf(subject, reachableRows([subject], page.rows, byEntity));
       decodeCpu += diff(c, cpu());
@@ -50,7 +50,15 @@ port.on("message", async (msg) => {
       const r = await evaluateW0(world, msg.release, msg.basis, pins, msg.activations);
       kernelCpu += diff(c, cpu());
       if ("error" in r) throw new Error(subject + ": " + r.error);
-      result.push({ subject, world, output: r.output, record: r.record });
+      // [EXP-P5N] Why: parsing every subject's full world on the main thread cost 0.5 to 1.0 ms per subject; every subject returns the sha256 of its canonical world, and the world itself only for the sampled ones (the G2 oracle sample).
+      // Rejected: dropping the world from every record (G2 needs the exact world bytes the kernel saw).
+      result.push({
+        subject,
+        worldSha256: sha256(canonical(world)),
+        ...(msg.sample === undefined || msg.sample[si] ? { world } : {}),
+        output: r.output,
+        record: r.record,
+      });
     }
     tl.kernelEnd = abs();
     const bytes = new TextEncoder().encode(canonical(result));
