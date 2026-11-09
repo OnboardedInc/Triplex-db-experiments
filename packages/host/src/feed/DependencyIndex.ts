@@ -1,3 +1,4 @@
+import { Data } from "effect";
 import type { DatabaseSync } from "node:sqlite";
 import { feedBytes } from "@triplex-build/triplex/feed";
 import type {
@@ -8,6 +9,31 @@ import type {
 } from "@triplex-build/triplex/feed";
 import { SqliteConsumerStore, type ConsumerDeriver } from "./ConsumerStore.js";
 
+// [EXP-DI01] Why: one stable tagged refusal for "the pinned reference basis cannot be served", shared by the consumer's own row validation and by reference-reader helpers, so callers classify by _tag and fields, never prose (CX-VDI01 F1, R2-F1). It lives in the host package's public feed exports because the host must not import a lab helper. Backend-provided typed expiration errors are never wrapped; nothing catches this refusal and continues from a newer position. Rejected: a lab-only class (host cannot import it); plain Error with a message (not classifiable).
+export class BasisNotAvailable extends Data.TaggedError("BasisNotAvailable")<{
+  readonly reason: "head-moved" | "reported-basis-mismatch" | "row-outside-basis";
+  readonly requested: { readonly position: number; readonly validAt: number };
+  /** Source head observed by a storage guard, when it observed one. */
+  readonly availableHead?: number;
+  /** Basis a memory composition reported serving, when it reported one. */
+  readonly reportedBasis?: { readonly position?: number; readonly validAt?: number };
+  /** Coordinates of the offending row returned for the pinned read, for row-outside-basis. */
+  readonly observedRow?: {
+    readonly entity?: string;
+    readonly attribute?: string;
+    readonly position?: number;
+    readonly retractedPosition?: number;
+    readonly validFrom?: number;
+    readonly validTo?: number;
+  };
+  /** Oldest retained position, only where a backend reports one (none of the shipped readers' backends do today). */
+  readonly retentionFloor?: number;
+  readonly detail?: string;
+}> {
+  override get message() {
+    return `BasisNotAvailable: ${this.reason} (requested position ${this.requested.position})`;
+  }
+}
 export type DependencyPath = "subject" | "location" | "jurisdiction" | "documents" | "decisions";
 export interface DependencyPlan {
   readonly release: string;
@@ -173,6 +199,7 @@ export class DependencyIndex extends SqliteConsumerStore {
       if (!Number.isSafeInteger(position)) throw Error("Reference position exceeds safe integer");
       const entities = [...new Set(needed.map((c) => c.entity))];
       const rows = await this.options.readRefs(entities, position, this.options.validAt);
+      // The refusal is raised here, in prepare, before any transaction opens; durable state cannot change.
       for (const r of rows)
         if (
           !entities.includes(r.entity) ||
@@ -183,7 +210,23 @@ export class DependencyIndex extends SqliteConsumerStore {
           r.validFrom > this.options.validAt ||
           r.validTo !== undefined
         )
-          throw Error("Pinned reference reader returned invalid basis");
+          throw new BasisNotAvailable({
+            reason: "row-outside-basis",
+            requested: { position, validAt: this.options.validAt },
+            observedRow: {
+              entity: r.entity,
+              attribute: r.attribute,
+              position: r.position,
+              ...(r.retractedPosition === undefined
+                ? {}
+                : { retractedPosition: r.retractedPosition }),
+              validFrom: r.validFrom,
+              ...(r.validTo === undefined ? {} : { validTo: r.validTo }),
+            },
+            detail: entities.includes(r.entity)
+              ? "reader returned a row outside the pinned position/valid-time basis"
+              : "reader returned a row for an entity that was not requested",
+          });
       prepared.set(
         key,
         rows.map((r) => ({ ...r })),
