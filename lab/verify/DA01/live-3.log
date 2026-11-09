@@ -1,0 +1,244 @@
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da01
+
+ ✓ lab/verify/DA01/review.test.ts > Q85b public scope identities round-trip controls, UTF-16, whitespace and long names; noncanonical identities refuse 1432ms
+ ✓ lab/verify/DA01/review.test.ts > Q85a overlapping creates converge and never lower the position during continued publication 4043ms
+ ✓ lab/verify/DA01/review.test.ts > Q85d shared codec acceptance vectors agree at the TS validator and actual JVM decode boundary 446ms
+ ✓ lab/verify/DA01/review.test.ts > Q89i repeats complete P and TP row bytes after later retractions and preserves an interior ordinal 211ms
+ ✓ lab/verify/DA01/review.test.ts > Q89d holds one DB for optional pulls across a commit and releases it exactly once 158ms
+ ✓ lab/verify/DA01/review.test.ts > Q89c future pins refuse typed on populated, empty, dependency and query routes, including held stale DBs 2694ms
+ ✓ lab/verify/DA01/review.test.ts > Q89b forced live routes refuse T and TP; source retains rows hidden by position retirement 149ms
+ ✓ lab/verify/DA01/review.test.ts > P2 duplicate commands identify the original immutable public receipt after intervening writes and lost ACK resolution 212ms
+stdout | packages/datomic/test/read-pins.test.ts > Datomic read pins > pins optional pulls across a commit between query requests
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-7799d327-45b4-4e91-ace8-0d31473f4f1e\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi03Nzk5ZDMyNy00NWI0LTRlOTEtYWNlOC0wZDMxNDczZjRmMWUiLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+stdout | packages/datomic/test/read-pins.test.ts > Datomic read pins > pins optional pulls across a commit between query requests
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-7799d327-45b4-4e91-ace8-0d31473f4f1e\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi03Nzk5ZDMyNy00NWI0LTRlOTEtYWNlOC0wZDMxNDczZjRmMWUiLDBd","deleted":true}
+
+ ✓ packages/datomic/test/read-pins.test.ts > Datomic read pins > pins optional pulls across a commit between query requests 158ms
+stdout | packages/datomic/test/read-pins.test.ts > Datomic read pins > pins rule rounds and the final query across an edge replacement
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-5e09b6e9-a1dd-41e8-8b92-05f0aa4bbce9\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi01ZTA5YjZlOS1hMWRkLTQxZTgtOGI5Mi0wNWYwYWE0YmJjZTkiLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+stdout | packages/datomic/test/read-pins.test.ts > Datomic read pins > pins rule rounds and the final query across an edge replacement
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-5e09b6e9-a1dd-41e8-8b92-05f0aa4bbce9\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi01ZTA5YjZlOS1hMWRkLTQxZTgtOGI5Mi0wNWYwYWE0YmJjZTkiLDBd","deleted":true}
+
+ ✓ packages/datomic/test/read-pins.test.ts > Datomic read pins > pins rule rounds and the final query across an edge replacement 149ms
+stdout | packages/datomic/test/read-pins.test.ts > Datomic read pins > waits then refuses future positions on pulls, batches, dependencies, queries and held reads
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-ac006c53-1dbc-4fdb-8b40-29e702a3dfb0\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1hYzAwNmM1My0xZGJjLTRmZGItOGI0MC0yOWU3MDJhM2RmYjAiLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+stdout | packages/datomic/test/read-pins.test.ts > Datomic read pins > waits then refuses future positions on pulls, batches, dependencies, queries and held reads
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-ac006c53-1dbc-4fdb-8b40-29e702a3dfb0\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi1hYzAwNmM1My0xZGJjLTRmZGItOGI0MC0yOWU3MDJhM2RmYjAiLDBd","deleted":true}
+
+ ✓ packages/datomic/test/read-pins.test.ts > Datomic read pins > waits then refuses future positions on pulls, batches, dependencies, queries and held reads 3193ms
+stdout | packages/datomic/test/read-pins.test.ts > Datomic read pins > keeps T and TP on full history while guarded position retirement refuses them
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-6005bd96-715c-4a43-bf2d-1a021e78f9dd\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi02MDA1YmQ5Ni03MTVjLTRhNDMtYmYyZC0xYTAyMWU3OGY5ZGQiLDBd","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+stdout | packages/datomic/test/read-pins.test.ts > Datomic read pins > keeps T and TP on full history while guarded position retirement refuses them
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"read-pin-6005bd96-715c-4a43-bf2d-1a021e78f9dd\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyZWFkLXBpbi02MDA1YmQ5Ni03MTVjLTRhNDMtYmYyZC0xYTAyMWU3OGY5ZGQiLDBd","deleted":true}
+
+ ✓ packages/datomic/test/read-pins.test.ts > Datomic read pins > keeps T and TP on full history while guarded position retirement refuses them 196ms
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > accepts exactly public constructor scopes with reversible database names
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"public-5914f3f7-31f7-4edf-b27a-e5fc2b56b8d4\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJwdWJsaWMtNTkxNGYzZjctMzFmNy00ZWRmLWIyN2EtZTVmYzJiNTZiOGQ0IiwwXQ","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > accepts exactly public constructor scopes with reversible database names
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"public-5914f3f7-31f7-4edf-b27a-e5fc2b56b8d4\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJwdWJsaWMtNTkxNGYzZjctMzFmNy00ZWRmLWIyN2EtZTVmYzJiNTZiOGQ0IiwwXQ","deleted":true}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > accepts exactly public constructor scopes with reversible database names
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"prod\",\"租户/😀\",\"quote\\\" slash/\\\\ lone\\ud800-09671467-a0a2-4ba6-970e-84e683f05f83\",9007199254740991]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwicHJvZCIsIuenn-aIty_wn5iAIiwicXVvdGVcIiBzbGFzaC9cXCBsb25lXHVkODAwLTA5NjcxNDY3LWEwYTItNGJhNi05NzBlLTg0ZTY4M2YwNWY4MyIsOTAwNzE5OTI1NDc0MDk5MV0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > accepts exactly public constructor scopes with reversible database names
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"prod\",\"租户/😀\",\"quote\\\" slash/\\\\ lone\\ud800-09671467-a0a2-4ba6-970e-84e683f05f83\",9007199254740991]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwicHJvZCIsIuenn-aIty_wn5iAIiwicXVvdGVcIiBzbGFzaC9cXCBsb25lXHVkODAwLTA5NjcxNDY3LWEwYTItNGJhNi05NzBlLTg0ZTY4M2YwNWY4MyIsOTAwNzE5OTI1NDc0MDk5MV0","deleted":true}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > accepts exactly public constructor scopes with reversible database names
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\" staging \",\"﻿x\",\"\\n0ee1c687-3f6d-4a92-b25d-c5fd930c170b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwiIHN0YWdpbmcgIiwi77u_eCIsIlxuMGVlMWM2ODctM2Y2ZC00YTkyLWIyNWQtYzVmZDkzMGMxNzBiIiwwXQ","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > accepts exactly public constructor scopes with reversible database names
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\" staging \",\"﻿x\",\"\\n0ee1c687-3f6d-4a92-b25d-c5fd930c170b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwiIHN0YWdpbmcgIiwi77u_eCIsIlxuMGVlMWM2ODctM2Y2ZC00YTkyLWIyNWQtYzVmZDkzMGMxNzBiIiwwXQ","deleted":true}
+
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > accepts exactly public constructor scopes with reversible database names 387ms
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > reads speculative inserts and retractions without publishing them
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-f459fa6f-cd95-4485-91e9-06ab2d91bab6\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWY0NTlmYTZmLWNkOTUtNDQ4NS05MWU5LTA2YWIyZDkxYmFiNiIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > reads speculative inserts and retractions without publishing them
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-f459fa6f-cd95-4485-91e9-06ab2d91bab6\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWY0NTlmYTZmLWNkOTUtNDQ4NS05MWU5LTA2YWIyZDkxYmFiNiIsMF0","deleted":true}
+
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > reads speculative inserts and retractions without publishing them 130ms
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rolls back nested failures while preserving the parent
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-80af217c-9a79-49fd-b3bd-61f6b8de4740\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTgwYWYyMTdjLTlhNzktNDlmZC1iM2JkLTYxZjZiOGRlNDc0MCIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rolls back nested failures while preserving the parent
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-80af217c-9a79-49fd-b3bd-61f6b8de4740\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTgwYWYyMTdjLTlhNzktNDlmZC1iM2JkLTYxZjZiOGRlNDc0MCIsMF0","deleted":true}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rejects identity reuse without replacing the original
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-5df44c3a-e793-40bf-9951-28bb58bbc7da\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTVkZjQ0YzNhLWU3OTMtNDBiZi05OTUxLTI4YmI1OGJiYzdkYSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rolls back nested failures while preserving the parent 129ms
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rejects identity reuse without replacing the original
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-5df44c3a-e793-40bf-9951-28bb58bbc7da\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTVkZjQ0YzNhLWU3OTMtNDBiZi05OTUxLTI4YmI1OGJiYzdkYSIsMF0","deleted":true}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > resolves an acknowledgement lost after durable submission
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-8b033f4d-ab3c-40e3-b34b-43bf7183e620\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLThiMDMzZjRkLWFiM2MtNDBlMy1iMzRiLTQzYmY3MTgzZTYyMCIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > rejects identity reuse without replacing the original 119ms
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > resolves an acknowledgement lost after durable submission
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-8b033f4d-ab3c-40e3-b34b-43bf7183e620\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLThiMDMzZjRkLWFiM2MtNDBlMy1iMzRiLTQzYmY3MTgzZTYyMCIsMF0","deleted":true}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns an identifiable unknown outcome within the resolution budget
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d31bdcfa-8d06-4b40-8c7b-446d4ae0cfd5\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQzMWJkY2ZhLThkMDYtNGI0MC04YzdiLTQ0NmQ0YWUwY2ZkNSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > resolves an acknowledgement lost after durable submission 105ms
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns an identifiable unknown outcome within the resolution budget
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d31bdcfa-8d06-4b40-8c7b-446d4ae0cfd5\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQzMWJkY2ZhLThkMDYtNGI0MC04YzdiLTQ0NmQ0YWUwY2ZkNSIsMF0","deleted":true}
+
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns an identifiable unknown outcome within the resolution budget 300ms
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns the original transaction id for a duplicate command
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d76ea051-34a1-4a73-8729-57e44c41c8ec\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQ3NmVhMDUxLTM0YTEtNGE3My04NzI5LTU3ZTQ0YzQxYzhlYyIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns the original transaction id for a duplicate command
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-d76ea051-34a1-4a73-8729-57e44c41c8ec\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWQ3NmVhMDUxLTM0YTEtNGE3My04NzI5LTU3ZTQ0YzQxYzhlYyIsMF0","deleted":true}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > preserves signed zero and int64 bounds and rejects noncanonical integers
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-107d2406-5abf-42a5-a2de-8ea742e5c78b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTEwN2QyNDA2LTVhYmYtNDJhNS1hMmRlLThlYTc0MmU1Yzc4YiIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > returns the original transaction id for a duplicate command 112ms
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > preserves signed zero and int64 bounds and rejects noncanonical integers
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-107d2406-5abf-42a5-a2de-8ea742e5c78b\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTEwN2QyNDA2LTVhYmYtNDJhNS1hMmRlLThlYTc0MmU1Yzc4YiIsMF0","deleted":true}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > replays one safe callback after a concurrent scope conflict
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-b0216e49-3f87-4e19-a3ab-3151db5c77af\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWIwMjE2ZTQ5LTNmODctNGUxOS1hM2FiLTMxNTFkYjVjNzdhZiIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > preserves signed zero and int64 bounds and rejects noncanonical integers 156ms
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > replays one safe callback after a concurrent scope conflict
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-b0216e49-3f87-4e19-a3ab-3151db5c77af\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLWIwMjE2ZTQ5LTNmODctNGUxOS1hM2FiLTMxNTFkYjVjNzdhZiIsMF0","deleted":true}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > queries the speculative delta through native Datalog
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-2d8fa079-62e2-4e87-93a2-8f795f2cd641\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTJkOGZhMDc5LTYyZTItNGU4Ny05M2EyLThmNzk1ZjJjZDY0MSIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > replays one safe callback after a concurrent scope conflict 123ms
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > queries the speculative delta through native Datalog
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-2d8fa079-62e2-4e87-93a2-8f795f2cd641\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTJkOGZhMDc5LTYyZTItNGU4Ny05M2EyLThmNzk1ZjJjZDY0MSIsMF0","deleted":true}
+
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > reconstructs intermediate logical cuts and mixed timestamps in one physical commit
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-4c350f8f-ab0c-41d0-9709-3e5082584326\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTRjMzUwZjhmLWFiMGMtNDFkMC05NzA5LTNlNTA4MjU4NDMyNiIsMF0","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > queries the speculative delta through native Datalog 114ms
+stdout | packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > reconstructs intermediate logical cuts and mixed timestamps in one physical commit
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"da01-4c350f8f-ab0c-41d0-9709-3e5082584326\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJkYTAxLTRjMzUwZjhmLWFiMGMtNDFkMC05NzA5LTNlNTA4MjU4NDMyNiIsMF0","deleted":true}
+
+ ✓ packages/datomic/test/adapter.test.ts > Datomic storage transaction boundary > reconstructs intermediate logical cuts and mixed timestamps in one physical commit 122ms
+stdout | packages/datomic/test/route-equivalence.test.ts > Datomic route equivalence > matches O-REPLAY across seeded source, held, staged and guarded live routes
+{"kind":"datomic-test-db-created","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"routes-089ebaa0-d6f2-4eb7-a302-5a2f46cd5822\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyb3V0ZXMtMDg5ZWJhYTAtZDZmMi00ZWI3LWEzMDItNWEyZjQ2Y2Q1ODIyIiwwXQ","created":true,"schemaHash":"b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"}
+
+stdout | packages/datomic/test/route-equivalence.test.ts > Datomic route equivalence > matches O-REPLAY across seeded source, held, staged and guarded live routes
+{"kind":"datomic-route-equivalence","seed":29,"bases":11,"oracleBefore":40,"commitsAfter":51,"output":"/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da01/lab/verify/DA01/route-gate/seed-29-d2aca760-60b4-4268-bd9a-8f6da6c28bdf","observations":88}
+
+stdout | packages/datomic/test/route-equivalence.test.ts > Datomic route equivalence > matches O-REPLAY across seeded source, held, staged and guarded live routes
+{"kind":"datomic-test-db-deleted","scope":"[\"triplex-scope-v1\",\"test\",\"test\",\"routes-089ebaa0-d6f2-4eb7-a302-5a2f46cd5822\",0]","db":"s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJyb3V0ZXMtMDg5ZWJhYTAtZDZmMi00ZWI3LWEzMDItNWEyZjQ2Y2Q1ODIyIiwwXQ","deleted":true}
+
+ ✓ packages/datomic/test/route-equivalence.test.ts > Datomic route equivalence > matches O-REPLAY across seeded source, held, staged and guarded live routes 1250ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips long -9223372036854775808 1ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips long 9223372036854775807 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips ref 9007199254740993 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips double 0 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips double 5e-324 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips double 2.2250738585072014e-308 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips double 0.30000000000000004 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips double 1.7976931348623157e+308 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips bigdec 16.50 1ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips bigdec 1E+3 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips bigint 9999999999999999999999999999999999 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips instant 1731000000000 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips keyword :f/attr 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips string exact 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips bool false 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > round trips uuid 00000000-0000-0000-0000-000000000001 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"-9223372036854775808"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"9223372036854775807"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"9007199254740993"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"-9007199254740993"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"-0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"-9223372036854775809"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"9223372036854775808"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"01"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"1.0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"1e0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"1\n"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"1\r"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"-9223372036854775808"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"9223372036854775807"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"9007199254740993"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"-9007199254740993"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"-0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"-9223372036854775809"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"9223372036854775808"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"01"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"1.0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"1e0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"1\n"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"ref","v":"1\r"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"-9223372036854775808"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"9223372036854775807"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"9007199254740993"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"-9007199254740993"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"-0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"-9223372036854775809"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"9223372036854775808"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"01"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"1.0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"1e0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"1\n"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"instant","v":"1\r"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigint","v":"99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigint","v":"-99999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigint","v":"0"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigint","v":"1\n"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"16.5000"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"-0.0000"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1.234567890123456789012345678901234567890"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1E+2147483647"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1E-2147483647"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1.0E-2147483646"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1E+2147483648"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1E-2147483648"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1.0E-2147483647"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1E+999999999999999999999"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"16.50\n"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"double","v":0} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"double","v":5e-324} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"double","v":-5e-324} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"double","v":1.7976931348623157e+308} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"double","v":-1.7976931348623157e+308} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"double","v":100000000000000000000} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"double","v":9007199254740992} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"double","v":0.10000000000000002} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1E+2147483649"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1.0E+2147483649"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1.0E+2147483648"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1E+000000002147483648"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"bigdec","v":"1E-000000002147483648"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"keyword","v":":a b"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > shared acceptance {"t":"long","v":"1\n"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > rejects NaN 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > rejects Infinity 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > rejects -Infinity 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > rejects malformed {"t":"long","v":"9223372036854775808"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > rejects malformed {"t":"long","v":1} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > rejects malformed {"t":"bool","v":"true"} 0ms
+ ✓ packages/datomic/test/client.test.ts > tagged codec > rejects malformed {"t":"ref","v":"01"} 0ms
+ ✓ packages/datomic/test/client.test.ts > uses keepalive, exact JSON, typed HTTP errors, and a total deadline 112ms
+ ✓ packages/datomic/test/client.test.ts > fails with a typed transport error when the configured response budget is exceeded 3ms
+ ✓ packages/datomic/test/query.test.ts > Datomic compiler and kernel > keeps fact witnesses and escapes constants 3ms
+ ✓ packages/datomic/test/query.test.ts > Datomic compiler and kernel > uses anti/semi joins with outer bindings 1ms
+ ✓ packages/datomic/test/query.test.ts > Datomic compiler and kernel > sums duplicate supports before final distinct and counts distinct values 1ms
+ ✓ packages/datomic/test/query.test.ts > Datomic compiler and kernel > never rounds exact integer arithmetic 0ms
+ ✓ packages/datomic/test/query.test.ts > Datomic compiler and kernel > preserves null semantics and stable family order in pages 0ms
+ ✓ packages/datomic/test/query.test.ts > Datomic compiler and kernel > orders computed dependencies and applies computed predicates in the exact kernel 0ms
+
+ Test Files  6 passed (6)
+      Tests  124 passed (124)
+   Start at  19:41:27
+   Duration  17.92s (tests 93%, import 6%, transform 1%)
+

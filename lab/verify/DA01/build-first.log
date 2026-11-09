@@ -1,0 +1,5 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 87753 "CX-VA01-0312R2-mut", pid 87754 "CX-VA01-0312R2-eval", pid 7473 "CX-G03-r3-claim-suites4", pid 89778 "CX-O06-round2"
+[lab] heavy: waiting for one of 4 slots; held by pid 87753 "CX-VA01-0312R2-mut", pid 87754 "CX-VA01-0312R2-eval", pid 7473 "CX-G03-r3-claim-suites4", pid 24607 "CX-VRQ01-round2-package-a3"
+[ERROR] Unknown option: 'store-dir'
+Did you mean 'stream'? Use "--config.unknown=value" to force an unknown option.
+For help, run: pnpm help run

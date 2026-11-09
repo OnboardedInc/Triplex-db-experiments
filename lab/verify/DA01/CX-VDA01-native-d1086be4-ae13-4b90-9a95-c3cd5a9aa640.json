@@ -1,0 +1,2891 @@
+{
+  "attempt": "CX-VDA01-native-d1086be4-ae13-4b90-9a95-c3cd5a9aa640",
+  "startedAt": "2026-11-09T00:45:37.915Z",
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "92c14a52764a4933376e8efbf4b7164a4d8f0318fe7996d6ac3ac8242e62386f"
+  },
+  "owner": {
+    "format": "tx2-slot-owner/1",
+    "lane": "datomic",
+    "slot": "dev",
+    "mode": "resident",
+    "container": "tx2-datomic-dev",
+    "volume": "tx2-datomic-dev-data",
+    "endpoint": "http://127.0.0.1:8470",
+    "port": 8470,
+    "holder": "EXP-DA01",
+    "experiment": "EXP-DA01",
+    "pid": 58762,
+    "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01",
+    "createdAt": "2026-11-09T00:14:11.316Z"
+  },
+  "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-native-d1086be4-ae13-4b90-9a95-c3cd5a9aa640\",0]",
+  "requests": [
+    {
+      "label": "before-ground-T",
+      "body": {
+        "edn": "[:find ?id :in $ $rules :where [(ground :f/live) ?a] [?f ?a _] [?f :f/id ?id]]",
+        "relations": [],
+        "basis": {
+          "validAt": 30,
+          "recordedAt": 10
+        }
+      },
+      "status": 200,
+      "raw": "{\"rows\":[[{\"t\":\"string\",\"v\":\"f20\"}],[{\"t\":\"string\",\"v\":\"f22\"}],[{\"t\":\"string\",\"v\":\"f21\"}],[{\"t\":\"string\",\"v\":\"f24\"}],[{\"t\":\"string\",\"v\":\"f23\"}],[{\"t\":\"string\",\"v\":\"f26\"}],[{\"t\":\"string\",\"v\":\"f25\"}],[{\"t\":\"string\",\"v\":\"f28\"}],[{\"t\":\"string\",\"v\":\"f27\"}],[{\"t\":\"string\",\"v\":\"f29\"}],[{\"t\":\"string\",\"v\":\"f31\"}],[{\"t\":\"string\",\"v\":\"f30\"}],[{\"t\":\"string\",\"v\":\"f33\"}],[{\"t\":\"string\",\"v\":\"f11\"}],[{\"t\":\"string\",\"v\":\"f10\"}],[{\"t\":\"string\",\"v\":\"f32\"}],[{\"t\":\"string\",\"v\":\"f13\"}],[{\"t\":\"string\",\"v\":\"f35\"}],[{\"t\":\"string\",\"v\":\"f34\"}],[{\"t\":\"string\",\"v\":\"f12\"}],[{\"t\":\"string\",\"v\":\"f15\"}],[{\"t\":\"string\",\"v\":\"f37\"}],[{\"t\":\"string\",\"v\":\"f14\"}],[{\"t\":\"string\",\"v\":\"f0\"}],[{\"t\":\"string\",\"v\":\"f36\"}],[{\"t\":\"string\",\"v\":\"f1\"}],[{\"t\":\"string\",\"v\":\"f39\"}],[{\"t\":\"string\",\"v\":\"f17\"}],[{\"t\":\"string\",\"v\":\"f38\"}],[{\"t\":\"string\",\"v\":\"f2\"}],[{\"t\":\"string\",\"v\":\"f16\"}],[{\"t\":\"string\",\"v\":\"f19\"}],[{\"t\":\"string\",\"v\":\"f3\"}],[{\"t\":\"string\",\"v\":\"f18\"}],[{\"t\":\"string\",\"v\":\"f4\"}],[{\"t\":\"string\",\"v\":\"f5\"}],[{\"t\":\"string\",\"v\":\"f6\"}],[{\"t\":\"string\",\"v\":\"f7\"}],[{\"t\":\"string\",\"v\":\"f8\"}],[{\"t\":\"string\",\"v\":\"f9\"}]]}",
+      "parsed": {
+        "rows": [
+          [
+            {
+              "t": "string",
+              "v": "f20"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f22"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f21"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f24"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f23"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f26"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f25"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f28"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f27"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f29"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f31"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f30"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f33"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f11"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f10"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f32"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f13"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f35"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f34"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f12"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f15"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f37"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f14"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f0"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f36"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f1"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f39"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f17"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f38"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f2"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f16"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f19"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f3"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f18"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f4"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f5"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f6"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f7"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f8"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f9"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "label": "after-literal-T",
+      "body": {
+        "edn": "[:find ?id :in $ $rules :where [?f :f/live _] [?f :f/id ?id]]",
+        "relations": [],
+        "basis": {
+          "validAt": 30,
+          "recordedAt": 10
+        }
+      },
+      "status": 409,
+      "raw": "{\"code\":\"BasisNotAvailable\",\"message\":\"Position-retired subject route cannot answer a record-time basis\"}",
+      "parsed": {
+        "code": "BasisNotAvailable",
+        "message": "Position-retired subject route cannot answer a record-time basis"
+      }
+    },
+    {
+      "label": "after-ground-T",
+      "body": {
+        "edn": "[:find ?id :in $ $rules :where [(ground :f/live) ?a] [?f ?a _] [?f :f/id ?id]]",
+        "relations": [],
+        "basis": {
+          "validAt": 30,
+          "recordedAt": 10
+        }
+      },
+      "status": 200,
+      "raw": "{\"rows\":[[{\"t\":\"string\",\"v\":\"f20\"}],[{\"t\":\"string\",\"v\":\"f22\"}],[{\"t\":\"string\",\"v\":\"f21\"}],[{\"t\":\"string\",\"v\":\"f24\"}],[{\"t\":\"string\",\"v\":\"f23\"}],[{\"t\":\"string\",\"v\":\"f26\"}],[{\"t\":\"string\",\"v\":\"f25\"}],[{\"t\":\"string\",\"v\":\"f28\"}],[{\"t\":\"string\",\"v\":\"f27\"}],[{\"t\":\"string\",\"v\":\"f29\"}],[{\"t\":\"string\",\"v\":\"f31\"}],[{\"t\":\"string\",\"v\":\"f30\"}],[{\"t\":\"string\",\"v\":\"f33\"}],[{\"t\":\"string\",\"v\":\"f11\"}],[{\"t\":\"string\",\"v\":\"f10\"}],[{\"t\":\"string\",\"v\":\"f32\"}],[{\"t\":\"string\",\"v\":\"f13\"}],[{\"t\":\"string\",\"v\":\"f35\"}],[{\"t\":\"string\",\"v\":\"f34\"}],[{\"t\":\"string\",\"v\":\"f12\"}],[{\"t\":\"string\",\"v\":\"f15\"}],[{\"t\":\"string\",\"v\":\"f37\"}],[{\"t\":\"string\",\"v\":\"f14\"}],[{\"t\":\"string\",\"v\":\"f36\"}],[{\"t\":\"string\",\"v\":\"f39\"}],[{\"t\":\"string\",\"v\":\"f17\"}],[{\"t\":\"string\",\"v\":\"f38\"}],[{\"t\":\"string\",\"v\":\"f16\"}],[{\"t\":\"string\",\"v\":\"f19\"}],[{\"t\":\"string\",\"v\":\"f18\"}]]}",
+      "parsed": {
+        "rows": [
+          [
+            {
+              "t": "string",
+              "v": "f20"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f22"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f21"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f24"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f23"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f26"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f25"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f28"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f27"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f29"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f31"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f30"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f33"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f11"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f10"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f32"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f13"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f35"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f34"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f12"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f15"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f37"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f14"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f36"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f39"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f17"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f38"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f16"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f19"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f18"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "label": "after-ident-T",
+      "body": {
+        "edn": "[:find ?id :in $ $rules :where [?a :db/ident :f/live] [?f ?a _] [?f :f/id ?id]]",
+        "relations": [],
+        "basis": {
+          "validAt": 30,
+          "recordedAt": 10
+        }
+      },
+      "status": 200,
+      "raw": "{\"rows\":[[{\"t\":\"string\",\"v\":\"f20\"}],[{\"t\":\"string\",\"v\":\"f22\"}],[{\"t\":\"string\",\"v\":\"f21\"}],[{\"t\":\"string\",\"v\":\"f24\"}],[{\"t\":\"string\",\"v\":\"f23\"}],[{\"t\":\"string\",\"v\":\"f26\"}],[{\"t\":\"string\",\"v\":\"f25\"}],[{\"t\":\"string\",\"v\":\"f28\"}],[{\"t\":\"string\",\"v\":\"f27\"}],[{\"t\":\"string\",\"v\":\"f29\"}],[{\"t\":\"string\",\"v\":\"f31\"}],[{\"t\":\"string\",\"v\":\"f30\"}],[{\"t\":\"string\",\"v\":\"f33\"}],[{\"t\":\"string\",\"v\":\"f11\"}],[{\"t\":\"string\",\"v\":\"f10\"}],[{\"t\":\"string\",\"v\":\"f32\"}],[{\"t\":\"string\",\"v\":\"f13\"}],[{\"t\":\"string\",\"v\":\"f35\"}],[{\"t\":\"string\",\"v\":\"f34\"}],[{\"t\":\"string\",\"v\":\"f12\"}],[{\"t\":\"string\",\"v\":\"f15\"}],[{\"t\":\"string\",\"v\":\"f37\"}],[{\"t\":\"string\",\"v\":\"f14\"}],[{\"t\":\"string\",\"v\":\"f36\"}],[{\"t\":\"string\",\"v\":\"f39\"}],[{\"t\":\"string\",\"v\":\"f17\"}],[{\"t\":\"string\",\"v\":\"f38\"}],[{\"t\":\"string\",\"v\":\"f16\"}],[{\"t\":\"string\",\"v\":\"f19\"}],[{\"t\":\"string\",\"v\":\"f18\"}]]}",
+      "parsed": {
+        "rows": [
+          [
+            {
+              "t": "string",
+              "v": "f20"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f22"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f21"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f24"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f23"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f26"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f25"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f28"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f27"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f29"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f31"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f30"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f33"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f11"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f10"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f32"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f13"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f35"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f34"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f12"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f15"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f37"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f14"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f36"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f39"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f17"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f38"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f16"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f19"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f18"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "label": "after-source-T",
+      "count": 40,
+      "rows": [
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f0",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v0",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f1",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v1",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f2",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v2",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f3",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v3",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f4",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v4",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f5",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v5",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f6",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v6",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f7",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v7",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f8",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v8",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f9",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v9",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f10",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v10",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f11",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v11",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f12",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v12",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f13",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v13",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f14",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v14",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f15",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v15",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f16",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v16",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f17",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v17",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f18",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v18",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f19",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v19",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f20",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v20",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f21",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v21",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f22",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v22",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f23",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v23",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f24",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v24",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f25",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v25",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f26",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v26",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f27",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v27",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f28",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v28",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f29",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v29",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f30",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v30",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f31",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v31",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f32",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v32",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f33",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v33",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f34",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v34",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f35",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v35",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f36",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v36",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f37",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v37",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f38",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v38",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f39",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v39",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        }
+      ]
+    },
+    {
+      "label": "after-literal-TP",
+      "body": {
+        "edn": "[:find ?id :in $ $rules :where [?f :f/live _] [?f :f/id ?id]]",
+        "relations": [],
+        "basis": {
+          "validAt": 30,
+          "recordedAt": 10,
+          "recordedPosition": 2
+        }
+      },
+      "status": 409,
+      "raw": "{\"code\":\"BasisNotAvailable\",\"message\":\"Position-retired subject route cannot answer a record-time basis\"}",
+      "parsed": {
+        "code": "BasisNotAvailable",
+        "message": "Position-retired subject route cannot answer a record-time basis"
+      }
+    },
+    {
+      "label": "after-ground-TP",
+      "body": {
+        "edn": "[:find ?id :in $ $rules :where [(ground :f/live) ?a] [?f ?a _] [?f :f/id ?id]]",
+        "relations": [],
+        "basis": {
+          "validAt": 30,
+          "recordedAt": 10,
+          "recordedPosition": 2
+        }
+      },
+      "status": 200,
+      "raw": "{\"rows\":[[{\"t\":\"string\",\"v\":\"f20\"}],[{\"t\":\"string\",\"v\":\"f22\"}],[{\"t\":\"string\",\"v\":\"f21\"}],[{\"t\":\"string\",\"v\":\"f24\"}],[{\"t\":\"string\",\"v\":\"f23\"}],[{\"t\":\"string\",\"v\":\"f26\"}],[{\"t\":\"string\",\"v\":\"f25\"}],[{\"t\":\"string\",\"v\":\"f28\"}],[{\"t\":\"string\",\"v\":\"f27\"}],[{\"t\":\"string\",\"v\":\"f29\"}],[{\"t\":\"string\",\"v\":\"f31\"}],[{\"t\":\"string\",\"v\":\"f30\"}],[{\"t\":\"string\",\"v\":\"f33\"}],[{\"t\":\"string\",\"v\":\"f11\"}],[{\"t\":\"string\",\"v\":\"f10\"}],[{\"t\":\"string\",\"v\":\"f32\"}],[{\"t\":\"string\",\"v\":\"f13\"}],[{\"t\":\"string\",\"v\":\"f35\"}],[{\"t\":\"string\",\"v\":\"f34\"}],[{\"t\":\"string\",\"v\":\"f12\"}],[{\"t\":\"string\",\"v\":\"f15\"}],[{\"t\":\"string\",\"v\":\"f37\"}],[{\"t\":\"string\",\"v\":\"f14\"}],[{\"t\":\"string\",\"v\":\"f36\"}],[{\"t\":\"string\",\"v\":\"f39\"}],[{\"t\":\"string\",\"v\":\"f17\"}],[{\"t\":\"string\",\"v\":\"f38\"}],[{\"t\":\"string\",\"v\":\"f16\"}],[{\"t\":\"string\",\"v\":\"f19\"}],[{\"t\":\"string\",\"v\":\"f18\"}]]}",
+      "parsed": {
+        "rows": [
+          [
+            {
+              "t": "string",
+              "v": "f20"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f22"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f21"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f24"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f23"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f26"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f25"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f28"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f27"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f29"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f31"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f30"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f33"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f11"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f10"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f32"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f13"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f35"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f34"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f12"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f15"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f37"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f14"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f36"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f39"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f17"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f38"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f16"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f19"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f18"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "label": "after-ident-TP",
+      "body": {
+        "edn": "[:find ?id :in $ $rules :where [?a :db/ident :f/live] [?f ?a _] [?f :f/id ?id]]",
+        "relations": [],
+        "basis": {
+          "validAt": 30,
+          "recordedAt": 10,
+          "recordedPosition": 2
+        }
+      },
+      "status": 200,
+      "raw": "{\"rows\":[[{\"t\":\"string\",\"v\":\"f20\"}],[{\"t\":\"string\",\"v\":\"f22\"}],[{\"t\":\"string\",\"v\":\"f21\"}],[{\"t\":\"string\",\"v\":\"f24\"}],[{\"t\":\"string\",\"v\":\"f23\"}],[{\"t\":\"string\",\"v\":\"f26\"}],[{\"t\":\"string\",\"v\":\"f25\"}],[{\"t\":\"string\",\"v\":\"f28\"}],[{\"t\":\"string\",\"v\":\"f27\"}],[{\"t\":\"string\",\"v\":\"f29\"}],[{\"t\":\"string\",\"v\":\"f31\"}],[{\"t\":\"string\",\"v\":\"f30\"}],[{\"t\":\"string\",\"v\":\"f33\"}],[{\"t\":\"string\",\"v\":\"f11\"}],[{\"t\":\"string\",\"v\":\"f10\"}],[{\"t\":\"string\",\"v\":\"f32\"}],[{\"t\":\"string\",\"v\":\"f13\"}],[{\"t\":\"string\",\"v\":\"f35\"}],[{\"t\":\"string\",\"v\":\"f34\"}],[{\"t\":\"string\",\"v\":\"f12\"}],[{\"t\":\"string\",\"v\":\"f15\"}],[{\"t\":\"string\",\"v\":\"f37\"}],[{\"t\":\"string\",\"v\":\"f14\"}],[{\"t\":\"string\",\"v\":\"f36\"}],[{\"t\":\"string\",\"v\":\"f39\"}],[{\"t\":\"string\",\"v\":\"f17\"}],[{\"t\":\"string\",\"v\":\"f38\"}],[{\"t\":\"string\",\"v\":\"f16\"}],[{\"t\":\"string\",\"v\":\"f19\"}],[{\"t\":\"string\",\"v\":\"f18\"}]]}",
+      "parsed": {
+        "rows": [
+          [
+            {
+              "t": "string",
+              "v": "f20"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f22"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f21"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f24"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f23"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f26"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f25"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f28"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f27"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f29"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f31"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f30"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f33"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f11"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f10"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f32"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f13"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f35"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f34"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f12"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f15"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f37"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f14"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f36"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f39"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f17"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f38"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f16"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f19"
+            }
+          ],
+          [
+            {
+              "t": "string",
+              "v": "f18"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "label": "after-source-TP",
+      "count": 40,
+      "rows": [
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f0",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v0",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f1",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v1",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f2",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v2",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f3",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v3",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f4",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v4",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f5",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v5",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f6",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v6",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f7",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v7",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f8",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v8",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f9",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v9",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f10",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v10",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f11",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v11",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f12",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v12",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f13",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v13",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f14",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v14",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f15",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v15",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f16",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v16",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f17",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v17",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f18",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v18",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f19",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v19",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f20",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v20",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f21",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v21",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f22",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v22",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f23",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v23",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f24",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v24",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f25",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v25",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f26",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v26",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f27",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v27",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f28",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v28",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f29",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v29",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f30",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v30",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f31",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v31",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f32",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v32",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f33",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v33",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f34",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v34",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f35",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v35",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f36",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v36",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f37",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v37",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f38",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v38",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        },
+        {
+          "recorded_position": 1,
+          "value_number": null,
+          "retracted_at": null,
+          "entity_id": "s",
+          "value_json": null,
+          "attribute": ":value",
+          "id": "f39",
+          "created_by": null,
+          "tx_id": "assert",
+          "value_type": "string",
+          "valid_from": 0,
+          "retract_tx_id": null,
+          "value_datetime": null,
+          "schema_version": 1,
+          "recorded_at": 10,
+          "value_string": "v39",
+          "value_boolean": null,
+          "retracted_position": null,
+          "valid_to": null,
+          "entity_type": null
+        }
+      ]
+    }
+  ],
+  "cleanup": {
+    "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1uYXRpdmUtZDEwODZiZTQtYWUxMy00YjkwLTlhOTUtYzNjZDVhOWFhNjQwIiwwXQ",
+    "deleted": true
+  },
+  "created": {
+    "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1uYXRpdmUtZDEwODZiZTQtYWUxMy00YjkwLTlhOTUtYzNjZDVhOWFhNjQwIiwwXQ",
+    "created": true,
+    "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+  },
+  "findingReproduced": true,
+  "endedAt": "2026-11-09T00:45:38.210Z"
+}

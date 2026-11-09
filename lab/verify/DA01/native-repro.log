@@ -1,0 +1,54 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 87753 "CX-VA01-0312R2-mut", pid 30542 "CX-K01-R6-final", pid 7473 "CX-G03-r3-claim-suites4", pid 30616 "CX-VRQ01-round2-boundary-a1"
+{
+  "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da01/lab/verify/DA01/CX-VDA01-native-d1086be4-ae13-4b90-9a95-c3cd5a9aa640.json",
+  "findingReproduced": true,
+  "outcomes": [
+    {
+      "label": "before-ground-T",
+      "status": 200,
+      "count": 40
+    },
+    {
+      "label": "after-literal-T",
+      "status": 409,
+      "code": "BasisNotAvailable"
+    },
+    {
+      "label": "after-ground-T",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-ident-T",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-source-T",
+      "count": 40
+    },
+    {
+      "label": "after-literal-TP",
+      "status": 409,
+      "code": "BasisNotAvailable"
+    },
+    {
+      "label": "after-ground-TP",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-ident-TP",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-source-TP",
+      "count": 40
+    }
+  ],
+  "cleanup": {
+    "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1uYXRpdmUtZDEwODZiZTQtYWUxMy00YjkwLTlhOTUtYzNjZDVhOWFhNjQwIiwwXQ",
+    "deleted": true
+  }
+}

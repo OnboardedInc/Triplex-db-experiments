@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 87753 "CX-VA01-0312R2-mut", pid 39362 "CX-O06-round2-bound-inputs", pid 7473 "CX-G03-r3-claim-suites4"
+JSON report written to /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da01/lab/verify/DA01/final-tests.json

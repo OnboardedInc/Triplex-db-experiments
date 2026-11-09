@@ -1,0 +1,53 @@
+{
+  "file": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da01/lab/verify/DA01/CX-VDA01-native-81193ed2-b733-4745-b5cf-c55a5a7a3357.json",
+  "findingReproduced": true,
+  "outcomes": [
+    {
+      "label": "before-ground-T",
+      "status": 200,
+      "count": 40
+    },
+    {
+      "label": "after-literal-T",
+      "status": 409,
+      "code": "BasisNotAvailable"
+    },
+    {
+      "label": "after-ground-T",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-ident-T",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-source-T",
+      "count": 40
+    },
+    {
+      "label": "after-literal-TP",
+      "status": 409,
+      "code": "BasisNotAvailable"
+    },
+    {
+      "label": "after-ground-TP",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-ident-TP",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "label": "after-source-TP",
+      "count": 40
+    }
+  ],
+  "cleanup": {
+    "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1uYXRpdmUtODExOTNlZDItYjczMy00NzQ1LWI1Y2YtYzU1YTVhN2EzMzU3IiwwXQ",
+    "deleted": true
+  }
+}

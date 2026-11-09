@@ -1,0 +1,2064 @@
+{
+  "id": "CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3",
+  "startedAt": "2026-11-09T00:44:45.872Z",
+  "head": "9df8c63be4c7de786103e974f1b1f0a54bc5bfa4",
+  "owner": {
+    "format": "tx2-slot-owner/1",
+    "lane": "datomic",
+    "slot": "dev",
+    "mode": "resident",
+    "container": "tx2-datomic-dev",
+    "volume": "tx2-datomic-dev-data",
+    "endpoint": "http://127.0.0.1:8470",
+    "port": 8470,
+    "holder": "EXP-DA01",
+    "experiment": "EXP-DA01",
+    "pid": 58762,
+    "worktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/da01",
+    "createdAt": "2026-11-09T00:14:11.316Z"
+  },
+  "ownerSha256": "6e2d8215a050933509af9e2e5317cd14cc861a1440eff1c0c494dbcc07baeb6e",
+  "health": {
+    "datomicVersion": "1.0.7745",
+    "gatewaySourceHash": "92c14a52764a4933376e8efbf4b7164a4d8f0318fe7996d6ac3ac8242e62386f"
+  },
+  "built": {
+    "packages/core/dist/Branded.d.ts": "af83d342d1ec08da476095a6feb1531f3331396f33317227734ad6592d682285",
+    "packages/core/dist/Branded.d.ts.map": "33ef452e63cde65ca2a47bb5d428d2d1a767f8e35292f667743e69634c30b688",
+    "packages/core/dist/Branded.js": "202deb52fed11b0be98b5a5fdc33505a1d8f845d7dc162ba6fddcbc40bc8acaa",
+    "packages/core/dist/Branded.js.map": "2d714c36774f6ed3ad8f573e95e2eafe7b60e60e375c179bc90787bbbb5ffed4",
+    "packages/core/dist/Constraint.d.ts": "09ba0c948fda0d47332329d4d76815e78db5406f5f601874dade492ef6ffc7bb",
+    "packages/core/dist/Constraint.d.ts.map": "d10e5ba6a5da8e475dd63fed3b8d6f99501625b6792b3d878dc75e76cc76bfec",
+    "packages/core/dist/Constraint.js": "0f99a34a7adf46262f70ccc2a8b61d2228319c72a0a2dbb5460ffdac804bf574",
+    "packages/core/dist/Constraint.js.map": "75bdb0a3376e0074a1a9467f3f226d98f686133d8367b34c95da0f92d0400f8f",
+    "packages/core/dist/EntityPage.d.ts": "ec48fdc3fa085c4205c5f1e9f7291046e17f67d3a2b512b7aa50ae5370c9ac77",
+    "packages/core/dist/EntityPage.d.ts.map": "034382796c4b86bc40ebd9d5f48cad5461f8132276c62bb85d8faf9936e7337d",
+    "packages/core/dist/EntityPage.js": "d1b4fd09e2cfcaf666f7cfccec6a3bcef01e8c22ab1c30b9972d906bafff6432",
+    "packages/core/dist/EntityPage.js.map": "4b44c785df8e1bca948176baa298bd26d1191fb7d8a75b6ebdf2c877f9b871a3",
+    "packages/core/dist/Error.d.ts": "96d509143ad9eb359361ddebcf36cd45e08fe08c08c6ec703ded7dfd83a5cbe4",
+    "packages/core/dist/Error.d.ts.map": "dd928a39e21282f1af034164aada43633fea3ff81d93958ce4226b6aecd6aa7a",
+    "packages/core/dist/Error.js": "6c317159a1182015dff6f7aee02607c39760626095460e1bd98074a6c633b30e",
+    "packages/core/dist/Error.js.map": "d1535744d33c8908ce0da2d6471844c64a8d5c8961b022803b9676a16412b7e9",
+    "packages/core/dist/Pagination.d.ts": "32b1e2821485f9c6acd5b88940a8232e0d0730fc221e54c7f99ab2b9e6e411d0",
+    "packages/core/dist/Pagination.d.ts.map": "25967ff1723e0768b1549719067278a87708ba95aef7b099b423b78a6929b88c",
+    "packages/core/dist/Pagination.js": "33753e83aec05bd866acb15f5940fb69a7c2c80641cdbf1f8ed1d3d18694ffe3",
+    "packages/core/dist/Pagination.js.map": "cec776869cf3557111f28eea27d704a804fa4529d6e6938021429bb546c8448a",
+    "packages/core/dist/Temporal.d.ts": "7a9662a5f0c4c2832ef22312656c9b3b5823932aa7625322c16712d99b2fa0af",
+    "packages/core/dist/Temporal.d.ts.map": "00aafc327ab319ca3d3cbc94164515655c3c2e2123164ee6102da1bc1535f3b2",
+    "packages/core/dist/Temporal.js": "24ab17cb3d5a4b547c7cccd55b32c4653a84a966d7d45baaa5ecbf41c7a71deb",
+    "packages/core/dist/Temporal.js.map": "a12a544a731eede5c327cf6a1180109a0460858c067037f670c9d2ba08a94f5b",
+    "packages/core/dist/Triple.d.ts": "aa140e6ed6f090a5cd5bd806bbf22c381ff9c3666335ed967f6d9d5cf70e3923",
+    "packages/core/dist/Triple.d.ts.map": "135c152f627f6eca9431523eaeffab97198a0dc7ef7e0558b3e7d1706bf21a97",
+    "packages/core/dist/Triple.js": "4209082373c1b3ae1a84cf036b8daa863cab67906542b2f0a659bc1643a65134",
+    "packages/core/dist/Triple.js.map": "e99d7f3f68e7e7e3c1a9a6e382207778279ab917cd7627509e6a3c3dd6e628f2",
+    "packages/core/dist/Value.d.ts": "9d796899c3467499aa0f8beb8a3970f8f6b1e8d73114df3c75bf238603022f74",
+    "packages/core/dist/Value.d.ts.map": "5af7bae74bbb7420889f69218dd8b54c300f494e310aa3e81b1677f5b4d7763e",
+    "packages/core/dist/Value.js": "136d3cf1b78df7a24a5a26604414137652d642ad1051fad824cba721b4a59dad",
+    "packages/core/dist/Value.js.map": "c8716bd7e0a6194fac0ffacf102524cfe3afe216c612e98aaf1357b27dc047e8",
+    "packages/core/dist/_virtual/_rolldown/runtime.js": "1b10431e13b4eb349c329aba7d2beb6e6c224de569eac52966731c8239a941c9",
+    "packages/core/dist/config/Attribute.d.ts": "5b9ed03e736a4562197e3d84443ce25801fbb130cb42fb66ab39acd4815bafab",
+    "packages/core/dist/config/Attribute.d.ts.map": "736afe04707f0c054ee64acd316f7d7fd958b1e58b6b340fb85abe8cbb3cd64e",
+    "packages/core/dist/config/Attribute.js": "4aedff0d291469880db4702745744657fa159058b0058236df3a3b7710e8074f",
+    "packages/core/dist/config/Attribute.js.map": "f8fb8c9cadc616b975cfd68dcba549376fd20bb82e8c2a1c5b0bf69be878a1eb",
+    "packages/core/dist/config/BoolExpr.d.ts": "a10d3d16df1f7a535d0491ff3ee780cd240635d413084da65630318df65369af",
+    "packages/core/dist/config/BoolExpr.d.ts.map": "871000ce29cb245f135e7ebab3190137ca1e54f306fa8432f1b3788aae2a335c",
+    "packages/core/dist/config/BoolExpr.js": "1b1bb4f2273879e96ee78fb1e89963610d20d919db0b02440be39a2c9e9a5d41",
+    "packages/core/dist/config/BoolExpr.js.map": "e0f3e2cb110778de50c042ee8b7aa5a3a4be7a5ff1a3f5d28e2404d86d8b7461",
+    "packages/core/dist/config/Catalog.d.ts": "7cb84e56c63f3df73b47fd87f626ef61dc07ea5c5bc9f418690707b7d7340281",
+    "packages/core/dist/config/Catalog.d.ts.map": "dc508738cfcde79575d90bb1fdc078c3c3d590caff9e73b717dc10c8b5586c6d",
+    "packages/core/dist/config/Catalog.js": "0a27d6f64ce0b68e33b8b9435e9272c8073ca930c0ba2386091c9466998c1e9f",
+    "packages/core/dist/config/Catalog.js.map": "088b04ae0b9830c64cb48011397098c5e3df5e0f731427f5eb479c9c5a8786ca",
+    "packages/core/dist/config/ConfigNode.d.ts": "c02997c1993f71ab3fa5f19ba0df8ae12f2fd3a730ef94c4351a54ec05310584",
+    "packages/core/dist/config/ConfigNode.d.ts.map": "e1ca83972a69647188a615b6888328002be9d710f33d583e431252f6a4f842a4",
+    "packages/core/dist/config/ConfigNode.js": "fecf82103afb76d8dd5639345f5e423b7c24484d435d92e5b32783c56730d20a",
+    "packages/core/dist/config/ConfigNode.js.map": "6de74ee43b83b5aff5f6c6d5da916aef6d6e2ef255082d32daa3288b5704f37d",
+    "packages/core/dist/config/ConfigRuntime.d.ts": "9cc5eb2e44fbfd9024a55bf732bfdcc8571865a00ec13321398d760b983b3208",
+    "packages/core/dist/config/ConfigRuntime.d.ts.map": "b3b8fd14805e59f56668905c432a218d8c9c795eb1fa75e7bbae6b7cd08daef1",
+    "packages/core/dist/config/ConfigRuntime.js": "05ddc46c9d59aefc3beede1df13506b38c0872a11483fef63dab24a5b7725c69",
+    "packages/core/dist/config/ConfigRuntime.js.map": "cc81a10677d39b4b756d65234fb6ce755106b915778402d82de7463331d339a6",
+    "packages/core/dist/config/ConfigStore.d.ts": "3cf69050f0a4fa8b6cb06c7311bac1d5eff8e04d158721c3f13f7d2fad20e9fe",
+    "packages/core/dist/config/ConfigStore.d.ts.map": "cb60bccaec02d148e20400f20cb2289068c88f1ff91f57a1571fbbffd34b7f6a",
+    "packages/core/dist/config/ConfigStore.js": "19f59fff44ce3c922487d9238210b50353a21d66cd0a3deffc9be3e25d4a4ca8",
+    "packages/core/dist/config/ConfigStore.js.map": "a1f9f3562dc33161021ab3e2b8752b9828fb55dc02874b7af9f5786d3241fd82",
+    "packages/core/dist/config/Entity.d.ts": "6bd3e6c1de6dd346b7d4a508b4fa0ffd7c5d1941833f122602457c9187f4f9ac",
+    "packages/core/dist/config/Entity.d.ts.map": "97fea4384c6575324d2ef32af9b720e77c350159af1db10478ef5f8564da8a79",
+    "packages/core/dist/config/Entity.js": "bf1c697ae18ca57e975a5c9082baf70bb14c6768353384c3cbf78ff2f873eb22",
+    "packages/core/dist/config/Entity.js.map": "65dd8c0f77e955ce0cdcc14a56758986c7e1b51ad03b3b5c1c63f653b9504dea",
+    "packages/core/dist/config/EntityType.d.ts": "104321be759ffb7d83e94a615479b49db7380252ce3d05e99aa676f4db778abc",
+    "packages/core/dist/config/EntityType.d.ts.map": "0a1e0d85d6c4715321b1336c0b6d4fb002361298b575dc28cc2940d46527b6d7",
+    "packages/core/dist/config/EntityType.js": "2c6c03dd9e95c47932bfc1f5857ab17e1237ed9be4ed453d31f7019c275ab93c",
+    "packages/core/dist/config/EntityType.js.map": "9f13c09e0f5337838bf886260ed23b2f85df6fde5191bef92e81778504a5a1dc",
+    "packages/core/dist/config/EntityValidation.d.ts": "e2de6203d93cbc141dad71dbdee28ebb5af6510559983174aa6d30835a0b900b",
+    "packages/core/dist/config/EntityValidation.d.ts.map": "e080b8c75c2c5f6c9d08bc81e23c8de5be71fedec4365f0464d7d1fba3506092",
+    "packages/core/dist/config/EntityValidation.js": "670dd79e10f69e0d26b963b99139a92917166fcb5ee596a4a79a0d2dd72a7dd1",
+    "packages/core/dist/config/EntityValidation.js.map": "84aae71091a52fbfc5d75e90ca63ae8c04d554ce6360ccbd17f71a7042a32c4e",
+    "packages/core/dist/config/Evaluate.d.ts": "39eea8e2b5120084ce3b8dfd0ab9a12ef7d74b3dd550ca38895be0adf1045726",
+    "packages/core/dist/config/Evaluate.d.ts.map": "d962892d34bd05c9832311fd70ee0ebdb603d71a5011a7c4cb35385f99790e45",
+    "packages/core/dist/config/Evaluate.js": "fa52803a5fdb939d2608f827a4b8f9ecc37cb1737d2ec801864dac381535753f",
+    "packages/core/dist/config/Evaluate.js.map": "39c8b142ef4501226693e95b731e3f38dae3037374e415ac00cc75ef2fce4af8",
+    "packages/core/dist/config/GraphConstraint.d.ts": "a4102d74c8a4a726559839ff5b588911fe97dcb4634dfae582826f1e0f7bae1f",
+    "packages/core/dist/config/GraphConstraint.d.ts.map": "fe80895faf94b2b45432590c33241009feb0919ea889eee8569ff4d9306c886f",
+    "packages/core/dist/config/GraphConstraint.js": "98e3a13f52272e56811606aa1609655f3b79f2303adde881db372178b1eae362",
+    "packages/core/dist/config/GraphConstraint.js.map": "89125a92f577f9984a771f6213683c8c8cae32280f3469719834d772ca7191c9",
+    "packages/core/dist/config/InMemoryConfigStore.d.ts": "28bccd17becfc908cd63a174a1022acc0645a1b2cf7c9a1287419f7045207fac",
+    "packages/core/dist/config/InMemoryConfigStore.d.ts.map": "8591af343083510e99106da5f0adad5ed0c4393929bf2a86f9376edd7670a721",
+    "packages/core/dist/config/InMemoryConfigStore.js": "c60b22f91ce6cdee8027b44eecae0e44b843bd8b5d79360273b1a8c8a4f0b5cc",
+    "packages/core/dist/config/InMemoryConfigStore.js.map": "9a7716e1c6bfb6548faa3a10bcfec65c7b2987c929857ea59ac842cd28e7bfdf",
+    "packages/core/dist/config/Reactor.d.ts": "9a934e3ab992af856a90c794ea4a0ef8dceeb56d86d3a209f39ef63a1dfabd58",
+    "packages/core/dist/config/Reactor.d.ts.map": "c1c0167b091106071b4ee1e77abf76f8dd97beb7a069b30a3c9fbdc0ec37bcda",
+    "packages/core/dist/config/Reactor.js": "5732f44bb5d27ddbfa9752d1e25fc8c8a1bc4cfa3b9207b1969f7a3c309c72dd",
+    "packages/core/dist/config/Reactor.js.map": "5145e09ffee6a18fc92a4b28d2e67440c992fa1a0385f65e2017987361e9de33",
+    "packages/core/dist/config/TypeExpr.d.ts": "b284084b951d7e733a61bbc726a67fb876392a5987d43cd5575994d57934548b",
+    "packages/core/dist/config/TypeExpr.d.ts.map": "35dc128eded5e23c9e4a2a30837d144d620c8c9e03ad7629d6c55617e56b3826",
+    "packages/core/dist/config/TypeExpr.js": "0f74f8bec8937b032207c4cc47bff2bee16f3a538e16beb79c24b3a840254db8",
+    "packages/core/dist/config/TypeExpr.js.map": "d7897218378933aa60a3dae3a68a121a41da146db267e75d9178e1626798f8bf",
+    "packages/core/dist/config/TypeSchema.d.ts": "5b2170c82fba0f5cbded7e5a3046a54676405858ab1eceab03e121ff5869e886",
+    "packages/core/dist/config/TypeSchema.d.ts.map": "065937623c840497d2d4d1d51eb476ad81c134f2f0266fc2ecfcef801973d551",
+    "packages/core/dist/config/TypeSchema.js": "81a7f52b3105c50d1be4af209d92121bf7e7bcdede1b91ccc98cab7bc97b1c01",
+    "packages/core/dist/config/TypeSchema.js.map": "40feccfd9cc5f76141bab7eabd48ed698e510639ef8b4addacbce5939ef2b230",
+    "packages/core/dist/config/TypeSubsumption.d.ts": "acc76ea129611c47bc959ecf1a82f4d8d807361571226c8fe737adae7811d2d0",
+    "packages/core/dist/config/TypeSubsumption.d.ts.map": "62f1f77db466398f6c2d0f40b971679c4186cbfd9faf92f351f7621463e944e2",
+    "packages/core/dist/config/TypeSubsumption.js": "798521a8a64d2c1e0aaa37c6c5d1bd36ccf18978055e9769f64137b45b27ed0f",
+    "packages/core/dist/config/TypeSubsumption.js.map": "4b1684ce58500f0ad3bd24a440c5ed7b0406477579d646b623d1386b4a2dc3e9",
+    "packages/core/dist/config/World.d.ts": "44ae56e1ce593e9369a4a498237ed346ed03b726caa9b9fcf8d9e327a1e15504",
+    "packages/core/dist/config/World.d.ts.map": "ac225014ed5e49dd4105be998d392884e2d5be302e7145e0c38308ed1f6b5556",
+    "packages/core/dist/config/World.js": "ece4511e4e793c5dc948cd20a51ecd68843b3c63e862860917f608a3d3ae0360",
+    "packages/core/dist/config/World.js.map": "b7d904c8183adb98450df4648a1411aa4d48daf16098750c085efa8490de63e7",
+    "packages/core/dist/config/index.d.ts": "02e01fe9709236211e7e8c9039444b67af9135fb22c15f0ad64a7013604dbd18",
+    "packages/core/dist/config/index.js": "f4333f960d47d01c46e3bfcea3b401c38290e991c44dd66040890ff1284437aa",
+    "packages/core/dist/content/CanonicalJson.d.ts": "42d4abbf7c32888277c062ca83b7b5e71aacc45fa4bd48c2baa92df4b86bed0a",
+    "packages/core/dist/content/CanonicalJson.d.ts.map": "c6e2d78ef893762b75c3ea1b3c73eb7127e85dca037ce535fd0646fe8ca65c53",
+    "packages/core/dist/content/CanonicalJson.js": "5119d6bdbb7e5c5daa60185e16da28a71f57cbe1713fbb78472296b58297f62f",
+    "packages/core/dist/content/CanonicalJson.js.map": "234accd604ab744f4f63b71ed1f98fbf31ba0369ad1e47f91ec269d8c5a772c1",
+    "packages/core/dist/content/ContentId.d.ts": "80c13f05e1e499a8d86253e053eec92a30be543d8ef8d71a6e2c0ad2ca28c1a6",
+    "packages/core/dist/content/ContentId.d.ts.map": "905ce3677a26e7946ccf94bae08282c70e3a8659ea1c0412db6a68b3f69ffba7",
+    "packages/core/dist/content/ContentId.js": "e7313cfe840ded65d40dfc90d7c42c122b2cef32924d338e184871e1955fcf2e",
+    "packages/core/dist/content/ContentId.js.map": "4cecc8c5dbc7abb35ffd7111f0887092ed698924078ac0c5dc0651eba630a50c",
+    "packages/core/dist/content/Sha256.d.ts": "3a4c4948d5839b8bd7c995455f3c64082195cbd893ce4de65dc323820b988fe9",
+    "packages/core/dist/content/Sha256.d.ts.map": "819105ff71e71d549f7b736dd91d72fa2d9b741894c785a44f2eaf941797288a",
+    "packages/core/dist/content/Sha256.js": "21ce04be7ec7557a53ef310343dd7bf3dca8d08cfa73bd8bd91dfbf05e4500e6",
+    "packages/core/dist/content/Sha256.js.map": "00e32e38ffa782a824ae138348659096fb7160bb9c88a481f4c724b9d9408034",
+    "packages/core/dist/content/index.d.ts": "a0ea87a8028ea4f7dc86591b1f18c02c6d3bd8f0c0aac31f01409f7383b52c10",
+    "packages/core/dist/content/index.js": "caf7233e751f0d881d67efc07b62e6945d16fbd0cbbdc6fb2f4fd6fa1e200858",
+    "packages/core/dist/datalog/compiler.d.ts": "ba10415c88a6515f2eb06d44d3de764d77fccc6e232141bdf008bb7d6c5ac37e",
+    "packages/core/dist/datalog/compiler.d.ts.map": "085b85ef25d915f27a13e33568cd0b3eadf2066dc268c176f4f37c377b1b915a",
+    "packages/core/dist/datalog/compiler.js": "f75f35fb93ea576dbb47d99b6e918effc6baef6d0aa1ed2eadfb88249f024483",
+    "packages/core/dist/datalog/compiler.js.map": "a88f5a6038a91ca066801be9da94ea1cd90dcd24af2545692914bb4a359334ec",
+    "packages/core/dist/datalog/index.d.ts": "6c35bc26db2cc2ecfcf44e9ee5a5d8fd4521139f7308f2709648edaa625d3eb5",
+    "packages/core/dist/datalog/index.js": "4c8bcebbee1f4779d1b11d5fb317bfd98bd2e6ed855e96f67474070bc98906a3",
+    "packages/core/dist/datalog/schema.d.ts": "6ff2637df480e083ae956f89c48aa5b7705a4edbf2cae12637e34a94624c9675",
+    "packages/core/dist/datalog/schema.d.ts.map": "068b73b9c66a34b870276b12cb2ef8a00c858624bfe392574ca3e09c6e82eaf9",
+    "packages/core/dist/datalog/schema.js": "77cefc3c97ed0ba79380f86caa02f3589c40f1270a97b4a389209314140686a5",
+    "packages/core/dist/datalog/schema.js.map": "8f5a058edc6c04f9823298652f799a12b5cbf6a824dc83c754aee380e904c41c",
+    "packages/core/dist/datalog/types.d.ts": "81f13a8fb13cefb26baba13e9475c2228a83b83f6b4e0ceaec1f4bf3efb3380e",
+    "packages/core/dist/datalog/types.d.ts.map": "7b16f3e35f7a891f003ece15896e1ea5a9113e9c9ad69d34ea6abd836a5210a3",
+    "packages/core/dist/datalog/types.js": "c95a84aed993a081b2ca56419e09635531d0066a4d606b8861f4bd64c3b8103d",
+    "packages/core/dist/datalog/types.js.map": "cc92cea5c1442137ce32d1195a6a439504d10abe9225edab5a67f07acf507562",
+    "packages/core/dist/datalog/validation.d.ts": "746068622ce8b0dff46025c03484144f021ae8ea4995175339df9eac97b5c168",
+    "packages/core/dist/datalog/validation.d.ts.map": "d5440cade70f96332dd30b19957fdb03bd2da91c29d36d3a1c0dd5ceee61d6cf",
+    "packages/core/dist/datalog/validation.js": "29a965c23d058aed16cc84fa633be8d4b5b814fb4a7c55fcbed63b645cb0d940",
+    "packages/core/dist/datalog/validation.js.map": "a6416c7ead93046ff7b33fbd3f2eb2c3a1791d24401912ebb23d9fccbafaea37",
+    "packages/core/dist/datalog/wrapper.d.ts": "ef1034901eca8ef452c43b1db7b3e8dd3f204cf63050d86385d2c88e69bf31f2",
+    "packages/core/dist/datalog/wrapper.d.ts.map": "257d88e95a96cdecc660d57a1b9437f1c2d188114cb496e237e0398e1d48c40a",
+    "packages/core/dist/datalog/wrapper.js": "1dbc5af675a96641c2a9a0d864194902bee77f01eeabc6a19a62c984e89764a8",
+    "packages/core/dist/datalog/wrapper.js.map": "8b50e361bc0d4642a93c40e5bc26c92fdbe60c35ae4f1207b897abd6e56a2bff",
+    "packages/core/dist/derivation/Derivation.d.ts": "b8388feb89dc937bf977c86a7c80cb17443fb806bda5c65432ce1c386d3d6fe3",
+    "packages/core/dist/derivation/Derivation.d.ts.map": "9c4e393e4e616e4e5f57cfed2d0c50c54c676d8d19f1d67e483a7fecb15d7d21",
+    "packages/core/dist/derivation/Derivation.js": "0baea1149823674da68cbd781ead539e44ee0e5cbc15bd65dc2f68ae1735c7b0",
+    "packages/core/dist/derivation/Derivation.js.map": "82fdc35817cbb1de56291193ac6e4cd5319dd8e555db7149c72902d7282a940b",
+    "packages/core/dist/derivation/Materialization.d.ts": "8306c889f87b3a1ea7cfa0a2f557194723fa0f9c6c12fcc6f4840d111ab1ef8b",
+    "packages/core/dist/derivation/Materialization.d.ts.map": "46b2710e6852dac7350f87dbba2d833bc406f52bfe88f1685fd001f720c279db",
+    "packages/core/dist/derivation/Materialization.js": "ea69187e6695c556be9f165f52a3ba9d18c3ac920495def64bcb561b220730a1",
+    "packages/core/dist/derivation/Materialization.js.map": "5ea298bd5e0f98ef301c727e0bb5fd47597b6a2184d91d01d4c2499e13846aa6",
+    "packages/core/dist/derivation/Overlay.d.ts": "a931537383d2535d143c88954cd071c0a9a2015d77d53b87481056c5e64e06f6",
+    "packages/core/dist/derivation/Overlay.d.ts.map": "a2e2eeba84ce51937b0a918f3a2a6e496033eb8f08bcda1a081db6ef4af9ff8a",
+    "packages/core/dist/derivation/Overlay.js": "6c5eed3bdfeb36b1561da0840d63dcfb8aa0369229f6c984684de5d229e17467",
+    "packages/core/dist/derivation/Overlay.js.map": "f9e2e579a5aaacf159a12b912c298185bcb0b2039ccfd5f3a085a67e3fb44ac6",
+    "packages/core/dist/derivation/index.d.ts": "ebfb23efe4683fec93e1e7840ed50ef4b68a61033958d2208b3fd80914213fdf",
+    "packages/core/dist/derivation/index.js": "6210a30ee7a07cf8d1b8c88f96537d8c5ee23368b2c29ca5f32ae4ce76346e14",
+    "packages/core/dist/dialects/index.d.ts": "37d107dafd9c703bf87624e3628eba5303eb4d699f6a43f3bea1fe1761800689",
+    "packages/core/dist/dialects/index.js": "80784705fd5fe1ec96be34997b9df6a58f1c959be7ed9ce1015d4f34aac556e7",
+    "packages/core/dist/dialects/postgresql.d.ts": "b5942c21f66d6a507b73d278182e1d5bf287ad80ab6be03720d5d574054e056d",
+    "packages/core/dist/dialects/postgresql.d.ts.map": "d821808bd7d8d82229f087259f63a2e42cb90971922bdca0bde2625cfeb9f872",
+    "packages/core/dist/dialects/postgresql.js": "9512b2beba23c398fa83616a37e4f539384e2530f3bf1ac7b442918bd28b22ee",
+    "packages/core/dist/dialects/postgresql.js.map": "c18dc82e370fb7cfd38d5a581dfef9b5f05beffab15836ddc714a7e5acb92559",
+    "packages/core/dist/dialects/sqlite.d.ts": "98405aaa46bf2b96e29b2e08cf83718ad18af3be0d8cac38cc19cd67510a20cf",
+    "packages/core/dist/dialects/sqlite.d.ts.map": "74378b1d2b980b99e1f9d5d2d2780edba453bd893f1bae603c8bbcead09b24a5",
+    "packages/core/dist/dialects/sqlite.js": "3af7674b49dbbef656d9f7c8922995952a6d8f57fca365381293f17a2ef33bb0",
+    "packages/core/dist/dialects/sqlite.js.map": "5d06f23f0797bf57f06e41717f3a19b0cd3c95e7dbc4040033c5e664717ddaea",
+    "packages/core/dist/dialects/types.d.ts": "100bff2dea152d5feec0e110c5b90a028cc3c972fde03aa626c021ecd8203900",
+    "packages/core/dist/dialects/types.d.ts.map": "dea26fccede9621687af532bc2146f55945040419ee237de7cf12c912d2ce71f",
+    "packages/core/dist/dialects/types.js": "90ca0326f78d587fdd78cf1c1b3ac30af2bb7553ee0a449386943fdf237c6302",
+    "packages/core/dist/dialects/types.js.map": "3a93f3b36445703e65002d0adadf52d58b6cbafd9e3364b3639546bc562fb593",
+    "packages/core/dist/entity/Descriptors.d.ts": "9d127fb9bc61b72f169e4b2887606204f3d4555d305ad6266cd8223638c59109",
+    "packages/core/dist/entity/Descriptors.d.ts.map": "0858a263a0322864e26b1ed5607443985313fffacb924e1393723b58981a5f01",
+    "packages/core/dist/entity/Descriptors.js": "57f84545de4208b84cccb4b3b0450cdbd96fcbeae3beb6e8c5762f5e1518d201",
+    "packages/core/dist/entity/Descriptors.js.map": "280b4c8ae9d3f6ec91586dceb389bffe707d6983b9ed6bc7d310d2b4880de984",
+    "packages/core/dist/entity/EntityCodec.d.ts": "15c5be13d064196ce26ac6551f039afaa899e24201c356e538330d0ed41a592b",
+    "packages/core/dist/entity/EntityCodec.d.ts.map": "5ea1dd3745db771d91fe31e0dc4fea53779a24ca7365c8166e44d42cc566b298",
+    "packages/core/dist/entity/EntityCodec.js": "32ea766bffef3ebe98649d1c2916ae76b877a84755a32624841cd1ff646b4f65",
+    "packages/core/dist/entity/EntityCodec.js.map": "712171dcfc76f3d13a66e2971295e0895891d08bc61d9248e6e76df30046e9de",
+    "packages/core/dist/entity/Errors.d.ts": "af30456fa12b9b8af07545ef99ba2d9e7ec6a4e09c99cde3a915d692fc02e4b1",
+    "packages/core/dist/entity/Errors.d.ts.map": "404a8fa6adde60b59f9d826b1bf8784d2ab06f157086cd325b6ed12c1a6347d9",
+    "packages/core/dist/entity/Errors.js": "8934d8d03b3b2d4aa095e6406cdd25f05456979cb2a3fbd3d7c354a2f4ae7b8d",
+    "packages/core/dist/entity/Errors.js.map": "300b5579230ced6be008e5ed0858a0f24d213be26ac7c74d4fa09c1b0e7216bc",
+    "packages/core/dist/entity/Model.d.ts": "ba0774c3d668f220e2b45a7814c8624ee6bf9fb126dc6eee7a6a3c37b5c0f6dd",
+    "packages/core/dist/entity/Model.d.ts.map": "717d84e668c501950dea354cdc8fe7d5b819c35e0e3851479d53b8fff1f077f5",
+    "packages/core/dist/entity/Model.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "packages/core/dist/entity/PhysicalNames.d.ts": "e8e4a7e035ed65ade0c9205d9142f2f39226885de6f83029917f1c2bcb294a66",
+    "packages/core/dist/entity/PhysicalNames.d.ts.map": "dfab90c9547470b53d1cd7e50cb34152c8ac3d0f9200d138d7da96ee9e55e028",
+    "packages/core/dist/entity/PhysicalNames.js": "31ff797a1cf6b5e92d55ab3a82fde74956a566475eb6552efb4cc3f428706d6f",
+    "packages/core/dist/entity/PhysicalNames.js.map": "a1e720ea90e617a39d606aa9b16ea05958330e4e584c2b018d079d59e4e4e3ee",
+    "packages/core/dist/entity/Plan.d.ts": "036612a3fa581e1c3e7cf1357ffc09b2902a6c1d3538bd20cbf774c8872ff05e",
+    "packages/core/dist/entity/Plan.d.ts.map": "db88b3a68cf38c83687037e15e38fb8c86ae1136a4e676569360db772e6da67a",
+    "packages/core/dist/entity/Plan.js": "011e9abdb8a12b11a69d6f0db60d17a8df3062882c1e2c34dcd6cdd21d0bc556",
+    "packages/core/dist/entity/Plan.js.map": "a2f2ba9dc7bc92202b97271d3f98b876d87ddc73ad7940b703e07bea5894e81f",
+    "packages/core/dist/entity/ProjectionSpec.d.ts": "7e9b17ca5af227c1448bbf50386159bb002957cf7fb2fb5dbe6cfbaa4b1b2bca",
+    "packages/core/dist/entity/ProjectionSpec.d.ts.map": "e76ebcd3a71252e35a5435a5cc8817aecf8675a2b73dc1624758aa8d17e4fe63",
+    "packages/core/dist/entity/ProjectionSpec.js": "2236bf09ccafd84c9079ea45f1b495998d5c2842644c5f289afc3ad78b395af2",
+    "packages/core/dist/entity/ProjectionSpec.js.map": "880c1c03f3fb5007968e1f64bb7bded88f09f5a467b07ce251aeb9a846d85e86",
+    "packages/core/dist/entity/Repository.d.ts": "40dfa0e9ccf74849bf3ea89d1681038b15c142e0a46514a91bcda1dc5611e54e",
+    "packages/core/dist/entity/Repository.d.ts.map": "4d53ac1a6d74a909a0468b5d4e8e651fa2bfe4957bc2817bb4757132478d2b2e",
+    "packages/core/dist/entity/Repository.js": "c8b80fa991bc175309cb16d15940dbe807806e567e2bcf5e534c1ba0b9e52910",
+    "packages/core/dist/entity/Repository.js.map": "c77a15787e9772f5fe872b0778db4d7e66a61160219319b80c3bd4bd6dd1e2b3",
+    "packages/core/dist/entity/index.d.ts": "ce7e2a855ff6f2e3605862c0497a8e92e6019ca1a24667c78613d7ce1c24a600",
+    "packages/core/dist/entity/index.js": "71c9d9bb884bf66a88cf2395a8a5d7b79c9f849ecf4685cb7f6cdf5df61c307e",
+    "packages/core/dist/errors/index.d.ts": "767a5bfa41a747fbc375ef508411f2ec50b3e3e1b8daf75453503b98a96f8e2d",
+    "packages/core/dist/errors/index.d.ts.map": "a2ec54e0924104e320acb6f5bbc0b07a201b635e0ae5e45c81681eecce669c83",
+    "packages/core/dist/errors/index.js": "5df58797bdd29ae1aff4962289c76e143dd08aa5d51f9df63d679065900b14fb",
+    "packages/core/dist/errors/index.js.map": "faa1132ddac1ec8388c5c260650bb6292375d5d4c819e1ca23d8d4b10ee0d86a",
+    "packages/core/dist/index.d.ts": "4f85d521f0402671fc960bd08acd429cccd3665090602c4bdd1850ca898ed411",
+    "packages/core/dist/index.js": "58fe9072ed1d383387835600a7131d345005c95a630b75323cc32b1812140103",
+    "packages/core/dist/internal.d.ts": "6e61f64c9428226cf3903d420e167b6968e1f775ddfe96c421c5c3db33547e1c",
+    "packages/core/dist/internal.js": "bf07d1363b0556316fe9109babb92376d15cf0c12a620c9dc486dfb665b3d638",
+    "packages/core/dist/kv/datalog/executor.d.ts": "2af0ca99267c670725c3303a8e1ba169173f4c22917e6443a2c8acdf9afd6f4e",
+    "packages/core/dist/kv/datalog/executor.d.ts.map": "1b58a9ca7eca9d447518959de124062f4c7e6da5aff77b4d296c9f6812b02513",
+    "packages/core/dist/kv/datalog/executor.js": "5b161e50a992bbf8af3657395df559dab7a92dd0ae44cbf9778f08885593d8b5",
+    "packages/core/dist/kv/datalog/executor.js.map": "c9c387fbdb3021f0d30c9df3c2682a4d200101ab434c21710c1170941cafecf8",
+    "packages/core/dist/kv/datalog/index.d.ts": "18181c92b5db9d1c24b3008cbde316ff5f36546b533aae3fe395844b0f4ed1a2",
+    "packages/core/dist/kv/datalog/index.js": "0814752382f2cee48056909799211a97957a9fb8b2ec7af25960943e35a261b8",
+    "packages/core/dist/kv/datalog/pattern.d.ts": "6e4761b8c3b17e1dadd3cb8b968ea68aa62feb25c74bb041e2d68101a4dda052",
+    "packages/core/dist/kv/datalog/pattern.d.ts.map": "6da2be250aaa24ee363be53944fae3e29cea67f433ce7e50030f7f85fa627dea",
+    "packages/core/dist/kv/datalog/pattern.js": "ea09f9f477fd435571e1ccd4095381687e5d0690ac280a64ed0b6771bc472248",
+    "packages/core/dist/kv/datalog/pattern.js.map": "692262291bba53e72a2bd1bf2badaef0ae2fa775601949546b69d6a548d32230",
+    "packages/core/dist/kv/datalog/predicate.d.ts": "a9830df31874ed91199b5e7efedfb7a584951362507c5760cf8725492eff1b95",
+    "packages/core/dist/kv/datalog/predicate.d.ts.map": "f132824a8ca9ab3f5739923f73291be2e88ce7ba47b536c63051df99155c6f80",
+    "packages/core/dist/kv/datalog/predicate.js": "6f94bfa2ebd8cb7d45e3de678e6c2646c808645e632bbc6ffddd16caa67b83bd",
+    "packages/core/dist/kv/datalog/predicate.js.map": "af54728eb4ebf4375410e5cc5521a3ddf4334aa2be4e559a6cca5ee177cc9e58",
+    "packages/core/dist/kv/datalog/types.d.ts": "3a2c12edb803ca4d59c19e07c1d433aa8241109f8890bedb45edbd82f928f9a8",
+    "packages/core/dist/kv/datalog/types.d.ts.map": "1deb815d1501445d862210f7017e49b2bf9d45fd5920259265f8e30c4b77e9ad",
+    "packages/core/dist/kv/datalog/types.js": "b6e5c0cc2d2fa042fd21ed73b093059342fd0c74362e02fc77bf36a4c035d978",
+    "packages/core/dist/kv/datalog/types.js.map": "87872d65a2c925f92d106899cd1cb0a529a7d7f3d479f5765fcb3deab60341bf",
+    "packages/core/dist/kv/hexastore/KvTripleStore.d.ts": "09f7b83b3720b7ab5f84bf862a7dca23349271fd24a0cc1ac7601b11bde9208b",
+    "packages/core/dist/kv/hexastore/KvTripleStore.d.ts.map": "b6f235fea8d1d8247536afde1dcfaf5013eb0839de86d9d0984bfe1d23697ed0",
+    "packages/core/dist/kv/hexastore/KvTripleStore.js": "ef08618b809ef7b0acf44c583c7814ff15547c325551f2c89adb75f6e4be55e3",
+    "packages/core/dist/kv/hexastore/KvTripleStore.js.map": "7ae2962c7ae3060d7e081b1a0569537e5f7a7c30a58370880fb833ebf4636676",
+    "packages/core/dist/kv/hexastore/index.d.ts": "fdaae73e8bf7415b318e1b52da1eee39bba1e3444bc1b93db48f439705fa7391",
+    "packages/core/dist/kv/hexastore/index.js": "b6dd54cd9df2158c3be0441b1e634f37eaa41dddf3e448b05e6eb066cdad033e",
+    "packages/core/dist/kv/hexastore/indexes.d.ts": "cac4ec6bc08a2c91cf1e3e8f96efa4a241a480ceb3406daa71ff9a3762ad0e72",
+    "packages/core/dist/kv/hexastore/indexes.d.ts.map": "01624c88895f19aadf0983bcd23993cf1c36bd98b35730323762d74441137c63",
+    "packages/core/dist/kv/hexastore/indexes.js": "80c1e8573a4796a686b3a1e75003cf2ac86f6b6eb01d0e08b35599496748539a",
+    "packages/core/dist/kv/hexastore/indexes.js.map": "10f53041868b2f2182c89479807900730dc5d5539b48061587dd54c697a33cef",
+    "packages/core/dist/kv/hexastore/scan.d.ts": "8f03efd4961161bb36e668fd2097d36e2dfad9188ac8b4ce2be88aa7ed575e64",
+    "packages/core/dist/kv/hexastore/scan.d.ts.map": "017fb681077cf59de3bb68f0a2d32b901aef5921a096cafda1e97495224c4f1d",
+    "packages/core/dist/kv/hexastore/scan.js": "899d33c3800dd62e5e523b9e7f89aadd369ad4d2a72ebebc46edccf41230bd29",
+    "packages/core/dist/kv/hexastore/scan.js.map": "7563caacea65de37bdbf7b3d1483f2740779d392d5d2a88638d8a1c376f3a3be",
+    "packages/core/dist/kv/hexastore/tuple.d.ts": "e4cc3e5ecaa9b874d5dd4d4f852c9ddfd1312dcef58bdaedddade3551acb094a",
+    "packages/core/dist/kv/hexastore/tuple.d.ts.map": "53b00b37f3d01c3bda76d61945a44d862d5a0267ba608831d14ab2b0c1fec94c",
+    "packages/core/dist/kv/hexastore/tuple.js": "e97451f2a993ce94aafb3b8032b635aa92f6e2296e73b8aad245ae60bff95d06",
+    "packages/core/dist/kv/hexastore/tuple.js.map": "b40c96aba65758e73f307ff9283634cf24f6c791aa5aeaa71752ffc398487752",
+    "packages/core/dist/kv/index.d.ts": "8a77e8ebdf90522c64f434d659169698627951b4d47c6646b8bf66d8a41978cf",
+    "packages/core/dist/kv/index.js": "ef51ac49dba183097299b46e52eb5894697c5415bdea27cffc35ef7872c7b44f",
+    "packages/core/dist/kv/kv/InMemoryKvBackend.d.ts": "7fb1ed94e06789e659dd59c3bff63a333ec26b4f9b560cee3659b4cd21b682f9",
+    "packages/core/dist/kv/kv/InMemoryKvBackend.d.ts.map": "3f18f318746064d83df53c0fdbd12bfb0105382d4ef8b71ed799b1f92f3689cb",
+    "packages/core/dist/kv/kv/InMemoryKvBackend.js": "4f1909eb57ad50f2d5dad9814dea2af8678ad9d11eee3d2b017312b19449545f",
+    "packages/core/dist/kv/kv/InMemoryKvBackend.js.map": "b385d64a31547526fadda809fff3f4a40b634f1f17e87efe5f23f0aee70357ec",
+    "packages/core/dist/kv/kv/KvBackend.d.ts": "f34ade9aa01528b3ef3c260b604ad75b09f37e83bed98bd7bd882bf5ed16e2d6",
+    "packages/core/dist/kv/kv/KvBackend.d.ts.map": "f200138cb87f2024036a01681fb15b237b40d55d5fd499492db6de792e76abdc",
+    "packages/core/dist/kv/kv/KvBackend.js": "70843f4fecb0d78b5b0d28648e0bd8f191c9862a2e282348346154cd445f5d72",
+    "packages/core/dist/kv/kv/KvBackend.js.map": "455f7d03a7c699fc546eac1aae8d0765b8e6e2cd44aae188b321a3ba5547899a",
+    "packages/core/dist/kv/kv/encoding.d.ts": "62118929120a31bc67cf85d1e7ee40991244fc1fc0a27e22308951cc83f2509d",
+    "packages/core/dist/kv/kv/encoding.d.ts.map": "e402cb9f26f30be640b70ccff075ba0386c3e5480f5bde5ea381c3e8fe879c8a",
+    "packages/core/dist/kv/kv/encoding.js": "43ec9869ee31e4285c69c08e9af38f77f38fe4847760647ab5b269937a251720",
+    "packages/core/dist/kv/kv/encoding.js.map": "99a6958fb99be0dfaf73f8c2944e9d52875d73811e903a278cc1e7ad0a6f469b",
+    "packages/core/dist/kv/kv/index.d.ts": "bf4bf13573cbe6fd539c853c11e7cbc52e5bd5c7b3e27abf4309f29ac5d5a568",
+    "packages/core/dist/kv/kv/index.js": "84c9a9b6ddcd03f1f6ed08df6eee51cfbc139c5805ba4a37f9631840fa6edea6",
+    "packages/core/dist/kv/layers/KvTriplesLive.d.ts": "3325b53ab034666447eab034f059facd1dfad5515cd2b40d338994b539ba43af",
+    "packages/core/dist/kv/layers/KvTriplesLive.d.ts.map": "0903d6c3c4debc6e96ca4f795a61b773c62b8c3931b30ccc1ccb71be5f30a800",
+    "packages/core/dist/kv/layers/KvTriplesLive.js": "d9a28fa812a92c5509de2a183c9e67b57c1f05d1fc2cdd89a4189a1b2d77db55",
+    "packages/core/dist/kv/layers/KvTriplesLive.js.map": "421de8e1dfa6d1846c8c41970f4ad7147cce695e96b5973ebdbe7a09139b4540",
+    "packages/core/dist/kv/layers/index.d.ts": "2c1e3d7b271a62f076962e2cdfebff89b5d49d47305653c669cd32140b82c7fd",
+    "packages/core/dist/kv/layers/index.js": "9f2c7f14f396b45da79186d2686e0d4bc7d2d26419ad4a176366f613523a9651",
+    "packages/core/dist/native/NativeQuery.d.ts": "f8b61ad45744ce74d8a615e2b4376bc3adcccbe93ea512317466e77126aef171",
+    "packages/core/dist/native/NativeQuery.d.ts.map": "5d8800f0d828e1b16451feb85e9c3b5b70f8e4dbf4e1f8daeaa8bca97965bf45",
+    "packages/core/dist/native/NativeQuery.js": "24c10e296a96ee81d25bc8ccdabdda52b52906ed566c44a4a7830ecf7f772362",
+    "packages/core/dist/native/NativeQuery.js.map": "b4853720c3b7f9803865ee82bc1a45cb411c9241f767486a3de2e2d8048dbf50",
+    "packages/core/dist/operational/ConsumerCheckpoint.d.ts": "b3d8e7c76189171372ae8534694f4acd80f115642d1bf8725a1d8a44cd3209bc",
+    "packages/core/dist/operational/ConsumerCheckpoint.d.ts.map": "2261eed65e8498173e11693656cbb89dec7505f0d4d9fb70a26b3d5a7d014d40",
+    "packages/core/dist/operational/ConsumerCheckpoint.js": "c0a96030aee564fcaf9a8bf5a383a2d981c0e58da7bc3138991aa2f8d9ed0a10",
+    "packages/core/dist/operational/ConsumerCheckpoint.js.map": "51e7a46284667f7674dce45ba57a5bac898015262bfc28f6082bff17b76e2245",
+    "packages/core/dist/operational/index.d.ts": "a2d446234d56ee4f348ed99dd726ee26a7be2f0e9b29804be19fdad184c96ed8",
+    "packages/core/dist/operational/index.js": "c88d859a959ea897f779a59ba23121d5a1354e5f49aabd414912d58faea7d457",
+    "packages/core/dist/params.d.ts": "4e0856aa021749b0f588244d04c81627c51f60e91bc4ff65df2f32313f9c9ae0",
+    "packages/core/dist/params.d.ts.map": "0faa30b974332e259ea288c7f25514527a847c2f941f66758d89b590c4593651",
+    "packages/core/dist/params.js": "1f4cb3e565242726f5591e421eee68b978ddefd3aefa4ad8932f7099d3d9537b",
+    "packages/core/dist/params.js.map": "f1cb2a47a99827cab05724da4035efb457f8891e01fb8060ad6d88ba347876dc",
+    "packages/core/dist/runtime/Capabilities.d.ts": "0bcfd020c1732736dbbe1fa4946411582806738e6bbfdbb786cf7733cc9249b9",
+    "packages/core/dist/runtime/Capabilities.d.ts.map": "63910c66d12615d891c23b003d19d076c18ca46832ae21a4f5395405dd59cb91",
+    "packages/core/dist/runtime/Capabilities.js": "1349fd2b1553e1e9a602a270c9d6fa751deca0faab84b503c14c84f9578c66a8",
+    "packages/core/dist/runtime/Capabilities.js.map": "b07c031da7283d9124330a1e641254333ffc69330380c9d30b58126e35971cc4",
+    "packages/core/dist/runtime/DatabaseScope.d.ts": "f50bcd0dd3e6f32ac9409b8ca9e16d09d68e738cc62590f6dadb316b68cb3390",
+    "packages/core/dist/runtime/DatabaseScope.d.ts.map": "5ae3c0c3d9dcdcd918004a31ca3bb77230eed88a838c75252cf4c2c2b1dba249",
+    "packages/core/dist/runtime/DatabaseScope.js": "27ac0916e3e3aee6bb4fbbcaebcc1ae595e63cdf23cfb55fc818b9e7baa86f3f",
+    "packages/core/dist/runtime/DatabaseScope.js.map": "39e312693e2c370f49b491b42fe1337b33aa893159d31dc4fea0298f6d71f51e",
+    "packages/core/dist/runtime/Runtime.d.ts": "fcc02131d636e8f0dd8ab970c7b1ad6aab05d10e9c655a1fd818ec311baae9d3",
+    "packages/core/dist/runtime/Runtime.d.ts.map": "07b6af86e9d985af54be1dac89ddc423b4f61d5a7f5868df127666fd228b2301",
+    "packages/core/dist/runtime/Runtime.js": "3976442e7408a5ef658eead6dab0b9a091cf4e14886f9b0645924ee0a3113d86",
+    "packages/core/dist/runtime/Runtime.js.map": "8ffeedcf70a1f398353cd6add97ca3822ee32dfa41e3fdbcf98357d116c73d0b",
+    "packages/core/dist/runtime/index.d.ts": "38e5337bb1fedba7695cc46a95088441910c849b3d913dab56b0cf768dd33f63",
+    "packages/core/dist/runtime/index.js": "a558ff64b66dc0ca51688a94ec35f5659c03fa56c3fb3153e6a4c6e1cffdaf2c",
+    "packages/core/dist/snapshots/EntitySnapshotsCapability.d.ts": "a645215b58961170cda4eae510616a59f38c35a37b8a312b60281b9887f01f5b",
+    "packages/core/dist/snapshots/EntitySnapshotsCapability.d.ts.map": "4780e872be8cb758bec5051a0fe165ee75247c146f5456bfb1b22624b638ee16",
+    "packages/core/dist/snapshots/EntitySnapshotsCapability.js": "c0b360c99a0de333b321af0b8d8fc8ab278c9219c22f3e13815f85a8a7d0bb13",
+    "packages/core/dist/snapshots/EntitySnapshotsCapability.js.map": "9cf690feff1bee8e9b7494f994939668d06df5fa5bfc4c8f0901f9ad131ab9a0",
+    "packages/core/dist/snapshots/SnapshotService.d.ts": "b124c5e75bf2e7b189db78601577ea7cd6333003e813ff4ec986b0dfcfabadcf",
+    "packages/core/dist/snapshots/SnapshotService.d.ts.map": "53d57b989ff5b02e0b40760c52307391e14b34c9ee8efdd76710e0bf8cd24b41",
+    "packages/core/dist/snapshots/SnapshotService.js": "aac3ee8746891ec46bf9b1448a5861f6711ad8a090b75cc345ae1bb9bde22a73",
+    "packages/core/dist/snapshots/SnapshotService.js.map": "6454d1ceb77455350ac2a138cd0064e13259c52825ec4959cedf7c02470c3ca0",
+    "packages/core/dist/snapshots/SnapshotServiceLive.d.ts": "c65483fcdbeb7a4711d207a9455b9a60f8b4b981c4d2073032a37496fc0b57b1",
+    "packages/core/dist/snapshots/SnapshotServiceLive.d.ts.map": "5ab24afceec85b17d5b98017387679d3a7321e0b999a4323be7da270d0fa2edd",
+    "packages/core/dist/snapshots/SnapshotServiceLive.js": "2da76d5277fee562dc0104d5b58a99a75b0704309d2745abd608fec093a8cd65",
+    "packages/core/dist/snapshots/SnapshotServiceLive.js.map": "7e12480a71b5b3d02a6271acb7884f4013d69e3f34736e0f8dbc88a1f092e751",
+    "packages/core/dist/snapshots/canonical.d.ts": "cc71de459e8676b4fe1b2563459a567a27abf7efd4e04815ae62cc0bbd2f92c9",
+    "packages/core/dist/snapshots/canonical.d.ts.map": "a46e20b5d3457539577e000eb8d5289d9fe6c27fc95caee7289ed40847d0173c",
+    "packages/core/dist/snapshots/canonical.js": "ca9aa32e7e1ee48343c0fdc7601f9ffe80f0b5e6294e4ff53c02d7a28fa9db04",
+    "packages/core/dist/snapshots/canonical.js.map": "2a527954c786b6bb30cfafb577cb8da4c70881395ea565d5f1a7d2b217e6f9df",
+    "packages/core/dist/snapshots/index.d.ts": "22abf970448c281aa111d4248c7d031dd5ad5d7a2062a6efec4e20a76d4626a5",
+    "packages/core/dist/snapshots/index.js": "6012ddd23e880021a933abe236aebe0829d7678d5654d5dd7d1e9a9230dd8823",
+    "packages/core/dist/storage/QueryExecutor.d.ts": "1b6c4dae502579b29d47bbaf02c005bc16de815cf839523778ccedff9d3e2520",
+    "packages/core/dist/storage/QueryExecutor.d.ts.map": "2cd923708cdb78af9c5712d3f59d1c586834c01a2540cbf42fe58d0b46bf6a66",
+    "packages/core/dist/storage/QueryExecutor.js": "d6648179977cc9ae6f4fb58ac29b0df9fe053e966f082a33d03e9cdac748a9d0",
+    "packages/core/dist/storage/QueryExecutor.js.map": "9144712a7189465b56f4bfa19dd5b1ffc33b87bb98ee766ee1b934ca34eb8742",
+    "packages/core/dist/storage/StorageAdapter.d.ts": "e3ac16eaf653aed079ec8a4d6b698b4e97cd157fa3096ac2d1b40524848b42fc",
+    "packages/core/dist/storage/StorageAdapter.d.ts.map": "f2f0d1d4a774092f9d26c31dea0a329330081ed3acbdbc72b5fa1602f91a0b48",
+    "packages/core/dist/storage/StorageAdapter.js": "182d82d5e909f49778a0fd0245aa6751949545fee20b1ca0ea5ef20199b10cdf",
+    "packages/core/dist/storage/StorageAdapter.js.map": "2ab5281b5fffe0202e5e43d472ea68e76e5a0c01c5bd6513e443c39cc175d2ea",
+    "packages/core/dist/storage/types.d.ts": "489c6bd6f911476f1e52bfaee76dc07875d2b8ca672fe4b6e03d1beb2b107e5e",
+    "packages/core/dist/storage/types.d.ts.map": "ffa45cf279795c2f7fb7404a4bee4c9f86785e1f09594a3d72fad5cd76676883",
+    "packages/core/dist/storage/types.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "packages/core/dist/store/ChangeEmissionCapability.d.ts": "d7558ab3cdbcfaefd68909c113422994f949c6b6fb2af48e21caccb6a398b0a2",
+    "packages/core/dist/store/ChangeEmissionCapability.d.ts.map": "679beaca036ce3539ba3363a38bd57bc3bbce529e94c8cf72a693f9cf17a3343",
+    "packages/core/dist/store/ChangeEmissionCapability.js": "36e5b9f11aeb6fdb6d1b6b019c6e70ab51e2f4d712552b4495ce387950699667",
+    "packages/core/dist/store/ChangeEmissionCapability.js.map": "44baa9e1f68125034e616c5598d886d67f555f64b1319db431850c921fcc657a",
+    "packages/core/dist/store/ChangeEmitter.d.ts": "9ff2d7bd112e32f007bfd11ec4a9b90e71f1c6a48bdc67ff2077574fda309e4f",
+    "packages/core/dist/store/ChangeEmitter.d.ts.map": "594d48bf035630e54d7696faf0d0955f2c4895e92a80c3fe9cf8d77929ce178d",
+    "packages/core/dist/store/ChangeEmitter.js": "50ca1ee7892ca96bff07b5106c9e6ca200c4d981c67b7a399514f28756b1da8e",
+    "packages/core/dist/store/ChangeEmitter.js.map": "efa16e24bd403867fc7648c377a7cad0f764ebbdf7d66073bcf019073fbe2764",
+    "packages/core/dist/store/DatabaseManager.d.ts": "92f99166e94be9f05e3225e1a3320aca5b95012a55d3dab8a8e42968c4221f6f",
+    "packages/core/dist/store/DatabaseManager.d.ts.map": "84ed6f1b82ef40a389d92e7fa7172549771db4838bb2b216410c596727507a4c",
+    "packages/core/dist/store/DatabaseManager.js": "41c3406c9e70eda2e53c9919793a53dda72c827bcc3a55284f7ca37a3c5a4d05",
+    "packages/core/dist/store/DatabaseManager.js.map": "53d5891f5142398b564322aa6798f3e9c7b19b6cc09c06599a1b62f159aabc9b",
+    "packages/core/dist/store/DatabaseRegistry.d.ts": "6ace154242a0516c47a2c908091d25e9c91946ce77195df4753bcdeb8dc19a82",
+    "packages/core/dist/store/DatabaseRegistry.d.ts.map": "ad62d724da6f20c1eab31762376b441f1c01a54d7408082a94b84807beaee840",
+    "packages/core/dist/store/DatabaseRegistry.js": "9829904220c975bfbb266e62987d0639b933a000a951c434eb7783a7522e3114",
+    "packages/core/dist/store/DatabaseRegistry.js.map": "dde5bcc7ddeb893e8795cbb5bd91518d6ce9c83846b04de8792105b75cfd006d",
+    "packages/core/dist/store/RuntimeServices.d.ts": "1c65762318b1cd658271656160a430461158333a524a56e8fabaf4c82ff9d17f",
+    "packages/core/dist/store/RuntimeServices.d.ts.map": "8fe36510399883a1ad6b587a27be6e40b7a060608d16b65c21a83a5bffa775b1",
+    "packages/core/dist/store/RuntimeServices.js": "05b6d0a4b6e0f1b2f65b11a0d5d401802830a554a90f7872d339b93fc09f9b05",
+    "packages/core/dist/store/RuntimeServices.js.map": "c8c3e15cb2d50f36aacc01df5d77d33eddc2903ddb84f337dc7119f545a1bf10",
+    "packages/core/dist/store/StoreCapability.d.ts": "0a99e95df96fc2b972427014ad9d645d51d042e9866ae16827f88a2a7f518687",
+    "packages/core/dist/store/StoreCapability.d.ts.map": "2f64dcff1e3fb21203172cfbec2cffd27094c509d66417c100ecdabf24989fa8",
+    "packages/core/dist/store/StoreCapability.js": "cb309f3d6ddc521f6eb3309504bbe67b0c0c012f841955dff361cb83214188f2",
+    "packages/core/dist/store/StoreCapability.js.map": "6ae03ace1a9c40118f22f73ffbecd599aeae759aeb1c910416b13e57f04d90d2",
+    "packages/core/dist/store/TripleStoreRuntime.d.ts": "0897ac722a9435cede6968473309bb899a1e01e91717b01de0b00f53b934c62a",
+    "packages/core/dist/store/TripleStoreRuntime.d.ts.map": "c321e03a7474119e9b9a6650ef7dd28a26c74b6e33d049039563507234251bd6",
+    "packages/core/dist/store/TripleStoreRuntime.js": "25b1b1e67c8d3fc4c80e6c0c7090ee078c018ba9fdcabc56eb1b95d2becb0a65",
+    "packages/core/dist/store/TripleStoreRuntime.js.map": "8d2ccb5f56805be1bc5c13cf946ce6f0dd1eb8e321cf3df3d9e9762d72753231",
+    "packages/core/dist/store/Triples.d.ts": "c6c4eebf0675947f0f81527970a96afa2947de577577838e52814cba3ec2ec6d",
+    "packages/core/dist/store/Triples.d.ts.map": "e2ca471fe5b49dc751455c9f4326cd5d4d531297064691f4bf4b5c0dc6623a70",
+    "packages/core/dist/store/Triples.js": "fd8c377c39d3cf3afbf4b1f647b5d0fc1cdadc8554e3e8be7c4d51deb50e1c53",
+    "packages/core/dist/store/Triples.js.map": "be9b5557b57152bfd5cad7c176ce1eb8bba526362e117eb29003083f44b71299",
+    "packages/core/dist/store/TriplesLive.d.ts": "89e749fca8a162a7adec070163649ce25d6a360ac2ab5210415580500af460f0",
+    "packages/core/dist/store/TriplesLive.d.ts.map": "db41a105f73a5420a5867669bc6425849f75f4a2b7f7218984e69b3cfe31e94e",
+    "packages/core/dist/store/TriplesLive.js": "dea28c7d29fe072dc933d875e943a71a4bc92f087045f5bd042a15feda825bc6",
+    "packages/core/dist/store/TriplesLive.js.map": "b7ad5abe33763a51c819f6873d0d75ac1c3a278c1637d5ff59a1da668c582fd5",
+    "packages/core/dist/store/entityTransactionHistory.d.ts": "04fa644088101864e3e30ba8772249fe9aced90c7cc5c238054b4e6d6f0a7609",
+    "packages/core/dist/store/entityTransactionHistory.d.ts.map": "11429fa5696b0d39058420673093b988a235233de60557ecac10eeba5665a68f",
+    "packages/core/dist/store/entityTransactionHistory.js": "e292689c2a1f35e839f4b7d7a5609de4cad0f0963c163950647286d64caafda3",
+    "packages/core/dist/store/entityTransactionHistory.js.map": "5935040ea6463d3a27d820f46c0381342ccaefbe8dcb5b3b4f0f277c16dc47c9",
+    "packages/core/dist/store/systemNamespace.d.ts": "34050d5d69841f0b09d94ae83df0d0725b7b03ae8f460eb750fee0dadda6cd34",
+    "packages/core/dist/store/systemNamespace.d.ts.map": "1406448e7e3fcc7472ca1b72d38ddd674abad59a67fb4267d0e549593d31c75c",
+    "packages/core/dist/store/systemNamespace.js": "9d040976755d2e107cd7f9004d8c5e479d6b10c558d24613937cea5eed8c8464",
+    "packages/core/dist/store/systemNamespace.js.map": "cfb0e146f1236184fa85a94dd9a215ed960b3d4609baac26324de464cf2d22f0",
+    "packages/core/dist/store/transactionMetadata.d.ts": "c4c7528f3e21e7dc2d9d3efb339adc04eb84eccb224eb78550f00ec3224f9719",
+    "packages/core/dist/store/transactionMetadata.d.ts.map": "228ec08d67d89fafcfbb48507ac5e669e3563d8869d0f9be438d74286f81553a",
+    "packages/core/dist/store/transactionMetadata.js": "605e92a86e18d3faac5796f7e7ed6c5bebb730aa5542dbfdca73c907d690c8dd",
+    "packages/core/dist/store/transactionMetadata.js.map": "d9e7ed39bf87c6526b50685623e2d3bf01ed458252648c0419b1107bda8585d0",
+    "packages/core/dist/store/writeEventUtils.d.ts": "b681ab552e4c03106e0e8576bd56ae2cab551c5d319ec3d61ccff2162b0fb423",
+    "packages/core/dist/store/writeEventUtils.d.ts.map": "4fe3d9a916652eb7d14c2b9e52f51a4c5ae6be591ea6d39f5a84e3e3557c5b4b",
+    "packages/core/dist/store/writeEventUtils.js": "20258f12a21b828841a84a90b9ae05134f1855affd39782dd07b58507278c0bb",
+    "packages/core/dist/store/writeEventUtils.js.map": "3968666394aa1026761607b9274122ad8ed261d660b680d258b8b0f00585cce7",
+    "packages/core/dist/subscriptions/SubscriptionManager.d.ts": "80165e8198db948029591966d986719632f9c6425635251ac40a83d3cea8cdd7",
+    "packages/core/dist/subscriptions/SubscriptionManager.d.ts.map": "5df4f198dce46bf517c32d48f3c6650513a105fe85741ff470865cb83a42da70",
+    "packages/core/dist/subscriptions/SubscriptionManager.js": "fc357da43288d9542b8657ea0193bb2082a5455a8d1ac2114755050ac245ce39",
+    "packages/core/dist/subscriptions/SubscriptionManager.js.map": "19cb286e728c47ec28b56461c7b6ae11d474d8642b412cf0c22e5063cfe7d1c2",
+    "packages/core/dist/subscriptions/SyncHub.d.ts": "466abb29b70ea7dad389026aac66ffe902b6010cebcf0932c40d8c0c31520c9d",
+    "packages/core/dist/subscriptions/SyncHub.d.ts.map": "863d05f13913ec0ee5eca9782c7125c5eceb1caec1174162583af7c7ce716f1c",
+    "packages/core/dist/subscriptions/SyncHub.js": "8e85bfe7e08f7c29f87c3389ca2865ceefe80165948d9c09867d0390fcd5bffa",
+    "packages/core/dist/subscriptions/SyncHub.js.map": "6b8f97e5d0b7edf2c490dbeb42b18a1948ae9bf355df739cd449418bd235db06",
+    "packages/core/dist/subscriptions/TopicTree.d.ts": "9527d083a947c9c5df2c198f72554770bb8e975d6d5ac9b4f8777c0d1d3f3a6e",
+    "packages/core/dist/subscriptions/TopicTree.d.ts.map": "066c68d59f1f4f974984254525b9c57a8725eb0e6003640448c6455129e23a09",
+    "packages/core/dist/subscriptions/TopicTree.js": "77aea4ef83a64a210b7e82e0ea7808fbd162f5e72a848ec7e9d330376e6a6ac4",
+    "packages/core/dist/subscriptions/TopicTree.js.map": "6ba05810a7e3ecd9f0a3b380a4d00ce09d63b74432e67e84ec4b0e12fcc9e7b4",
+    "packages/core/dist/subscriptions/extract-dependencies.d.ts": "f028c94a9683b1afebc00e621857b42d86fea6514f51b2cc5bb5a25b4a7efeb5",
+    "packages/core/dist/subscriptions/extract-dependencies.d.ts.map": "dedd967dbe86e26a07051b94bb14c18fdc526709629879dc6b69e9bd3c0159ce",
+    "packages/core/dist/subscriptions/extract-dependencies.js": "cd4a4a6f6390cef31ccc66c212766e9b4e22acff471418d4638ef720fce4e491",
+    "packages/core/dist/subscriptions/extract-dependencies.js.map": "168f3b6ed74dffb7c5d8a8d8a7e55c360e41496f264d5c6cd48838163c004507",
+    "packages/core/dist/subscriptions/index.d.ts": "b4a3e1e287f605cea81c3a6afa94705b9ab90bebbc538cb76a25dd2826db92f0",
+    "packages/core/dist/subscriptions/index.js": "fced03489d04e40ed4d769ed7b8e44e0efddffc5ca24726ca40930cb160b5fb7",
+    "packages/core/dist/subscriptions/invalidation.d.ts": "fa2947504ef2c591b8afd62787c835c7e2dccdfa4c438fbf4b893c900e00c768",
+    "packages/core/dist/subscriptions/invalidation.d.ts.map": "4863fdb1feff03b4a24404e68d66db35692b558c7df4c2e5d16da937a37d8462",
+    "packages/core/dist/subscriptions/invalidation.js": "935a9639a2563c1a1e9f74d4a34687748f3bb889d354da67e91da504939fc2ed",
+    "packages/core/dist/subscriptions/invalidation.js.map": "776f7919022d773e7214526147b8654f8349a6d76e7dfefd4b19b6b0161e3208",
+    "packages/core/dist/subscriptions/query-hash.d.ts": "713bedcf1d4f8255eed091d7098dcf4fd73c5347f66c0c58d7e9a66dbdc26fd5",
+    "packages/core/dist/subscriptions/query-hash.d.ts.map": "66aefcd6f3b182c4e103d3eb3ed7e960ea84aaa16b44e08d2de01ac418173b4a",
+    "packages/core/dist/subscriptions/query-hash.js": "091d023bf9e852ac5034389b3123d2c053751d973a89887d1ff5d42c86aba17d",
+    "packages/core/dist/subscriptions/query-hash.js.map": "5cef687348a81dc86653b7ba0120dd546650ffae598dc5c1cc58c94a929570cb",
+    "packages/core/dist/subscriptions/types.d.ts": "7002ddb9df07e9771e835f8e12041b05352beab31c90ee701985fdb3050822db",
+    "packages/core/dist/subscriptions/types.d.ts.map": "00fb895ee473484d93571e27265b809f4c93e356b5b3ce488e2e609ae830197f",
+    "packages/core/dist/subscriptions/types.js": "8e609bb71c20b858c77f0e9f90bb1319db8477b13f9f965f1a1e18524bf50881",
+    "packages/core/dist/types/Pattern.d.ts": "e3cc5c1acd1d87e8025fe11364065fb60b172319014d20ee13d4c9a685ab4941",
+    "packages/core/dist/types/Pattern.d.ts.map": "48300191316cd3a6ad71c09dbe0e9dfcd4392084bba1363244787b81147acbf6",
+    "packages/core/dist/types/Pattern.js": "099799cadbdde946546ea9041bc8600d564552c633b937dee399f4dad04120f5",
+    "packages/core/dist/types/Pattern.js.map": "10ff1dd14e35a16606c902c295f8617ebe1c985b1b43780ed9256b21f9879ece",
+    "packages/core/dist/utils/id.d.ts": "968e810183298b37d3b02c07b6416ac4ff6d697ae5ef86ff566285af69f6ddc0",
+    "packages/core/dist/utils/id.d.ts.map": "288451728bc0042673ebac84bf30df52136e08326600f9035c82cb79da4bbc5d",
+    "packages/core/dist/utils/id.js": "442bd3ad0d64cacc8e91382d9f7ddc6f7c08651993afb105ffc06b5cb6ac3a87",
+    "packages/core/dist/utils/id.js.map": "6cafefb583758c61df0860d2807bedc5caa1ecf5d872a7807e4ed24ff42b4fb4",
+    "packages/datomic/dist/DatomicClient.d.ts": "1ab7a49d503ebb7260a66b1bcc31bc76058704f10eafcac92e3aff4e3cb63d87",
+    "packages/datomic/dist/DatomicClient.d.ts.map": "965b33986f56de939ede72726fa03762030af73d6916e66f6d3d23b40691bba7",
+    "packages/datomic/dist/DatomicClient.js": "02717f153f75629bf4dffa3f51e67e30df4515591cfeca67749094c7e2a1a829",
+    "packages/datomic/dist/DatomicClient.js.map": "2597829c1eca1e304696fc061bb82860db6bd3eb5ade5c8ade8e50d11f50ccff",
+    "packages/datomic/dist/DatomicQueryExecutor.d.ts": "23dc1533a44590a46731c85d8403db3a1a023f7fb347a675cbbbc1b2025e49e7",
+    "packages/datomic/dist/DatomicQueryExecutor.d.ts.map": "cd39174f1e284c6b46cf3639a903dc4a8569b51e8f1e6bd8098e035268d3c2c9",
+    "packages/datomic/dist/DatomicQueryExecutor.js": "3d9397daf5bb96bcd2001f563cb1f0046eae45efa7bb847c5b5ea375d59ca621",
+    "packages/datomic/dist/DatomicQueryExecutor.js.map": "deaaca8de60672fdd6fe232cfd74c6c6d6ee9a622c06dccf2718e5d59371d345",
+    "packages/datomic/dist/DatomicStorageAdapter.d.ts": "ce7e3ec08b2787a64423fba3fd67fa79f7b517608b41235cbcf926430ae91481",
+    "packages/datomic/dist/DatomicStorageAdapter.d.ts.map": "8734a23bf66afbc24e203a230a819c2d5043f6736949dd7bee7e0a68deeb83c3",
+    "packages/datomic/dist/DatomicStorageAdapter.js": "34370771aa55f72ecb0e1d56de7c9443a71a2d1029e69baad7d07ff9184e0437",
+    "packages/datomic/dist/DatomicStorageAdapter.js.map": "ab1085d6787b5eafa49e1efb849be4918e1374f05c3a413d656cc2e575da576d",
+    "packages/datomic/dist/TransactionContext.d.ts": "295bec9b526347025764ede0ed63bc0d944823ec8dbe7438513ec9e676d34a7d",
+    "packages/datomic/dist/TransactionContext.d.ts.map": "4b5d1d470c9970cd50ddce6359f1251289447dc4b9e2f5fdb26a2e80df5433f2",
+    "packages/datomic/dist/TransactionContext.js": "f135142f1fd46dd0b21db2d40023844ecde7cbbe639aed912852792fd03a7fe1",
+    "packages/datomic/dist/TransactionContext.js.map": "57ae8513f02ffcd1a66afeac9da36a76234c0445ec8a4162431d489fbc7a3982",
+    "packages/datomic/dist/codec-spec.js": "56227988aebf8183c4f5a9c4b899ddee8ecf678f8c99abb10596fa60902d2ae7",
+    "packages/datomic/dist/codec-spec.js.map": "47659d8bf38e616f9f8a98369227f8b3651c0babd25a7b8a443e0a602494e701",
+    "packages/datomic/dist/codec.d.ts": "72e3986b45ef99863a97e68f0ae20b70f9090a91d62fc0bafc0ab3ea1f108bb7",
+    "packages/datomic/dist/codec.d.ts.map": "bf32ca7deb18362356b9e929ed1b0ced464914b129b95c5fa10bdfd733f70d0e",
+    "packages/datomic/dist/codec.js": "3459c1c3412a029a0595b29794fef418fb2154f52e0ee76e8f511de04f93727c",
+    "packages/datomic/dist/codec.js.map": "aa4d0b73e3494f0d09aee359f36550dec112d9d75832edf678c04e241a48496c",
+    "packages/datomic/dist/compiler.d.ts": "3450ce176ddc634250b570c0fca68c3c7514a7775083898e1cbdad1adb48e211",
+    "packages/datomic/dist/compiler.d.ts.map": "c082dfb9a6381bd9943ed1f928f20df34fa5efc33a705f91167f36616065a658",
+    "packages/datomic/dist/compiler.js": "33a74edd3773732bf4bd97e781433e4698c0327c98e302de09df713182cfecdb",
+    "packages/datomic/dist/compiler.js.map": "edcacf1d732d9c9cfaa177124388aa9886a673a88431fed4798089bf7c35f7e9",
+    "packages/datomic/dist/index.d.ts": "ab845fdaf65c91899fc44dd2af69fb271a9c85270f88a9d9dd4ce815f78c0dba",
+    "packages/datomic/dist/index.d.ts.map": "9014b79dc6e03b2398562c38cf097b9cc847bd4cde2393c152c784201811489e",
+    "packages/datomic/dist/index.js": "b5661e4be1eb7b98e446cd820d63c81a8dfa0f7873e8d3a7c2d5c367955e07b0",
+    "packages/datomic/dist/index.js.map": "e0f23d12d3c442897e80b5a8d9694dec2aa8d2b05d39dc4a0a690d81a82c512c",
+    "packages/datomic/dist/kernel.d.ts": "a364e18c2810387effd2f9a0b15c068fe4eb4cdeea9334118fd9424bb39e4332",
+    "packages/datomic/dist/kernel.d.ts.map": "d248279401bb56888b612728b3b54cc3a6c61cedf6204eb6470222fc6ac7c81a",
+    "packages/datomic/dist/kernel.js": "66003cb3446977c02427e8fa56362cffa3a67c7dc38f47c083685e71bf449722",
+    "packages/datomic/dist/kernel.js.map": "ac3ddd49ae22f9dcbeda7b3196cc99f636b982b3497ff31bbaeb373bf095fcbc",
+    "packages/datomic/dist/protocol.d.ts": "067cc15a36a1852118b40cb23df237853cbc65872248709ab6816a8ba9225cc2",
+    "packages/datomic/dist/protocol.d.ts.map": "9433e4f9ac4c9b720183ccc7074dcf92df8874452b0c9bec628194fa5bc1b414",
+    "packages/datomic/dist/protocol.js": "c0ff9f1c57737695aca5e1407669520b4366aa2e4a499cedd4625f1e88b0649f",
+    "packages/datomic/dist/protocol.js.map": "453adc03faae19f5dff7072214ba8be004e65e9f56bc41f7a01679bbf15f8fe1",
+    "packages/datomic/dist/readErrors.d.ts": "d846fd18dbf71e5dab818c68f5aa4db3f4e4c888dadcde345899bb7b4379be19",
+    "packages/datomic/dist/readErrors.d.ts.map": "b3267240b125d10061a551c5cf3f8212270a1a9dcdf45a682e62a9986bfad140",
+    "packages/datomic/dist/readErrors.js": "74a8e614733841a3b25d835eb667971a17827218636ba0970ac6e4d78de86360",
+    "packages/datomic/dist/readErrors.js.map": "cb09beae463abb8c62d53695e130569df2a09eb9557edd7e9f575835d7332e22",
+    "packages/datomic/dist/rows.d.ts": "14bae8bac1d2b792a3d61eb74d6da88e03e5a904da426cffd0a235d06520ecea",
+    "packages/datomic/dist/rows.d.ts.map": "bcfd2db9b0d9e3712649bff20f993274065045225b7422139cd15b0be6fdb7f3",
+    "packages/datomic/dist/rows.js": "a221b1538e3a3b2a11609db545f0e3ef444955384ee1d9892d3b952a8a0c9d84",
+    "packages/datomic/dist/rows.js.map": "972d04f2d76d78c60c6e8ee9aa89e681d3b80083dcd1837b3f758682de8396e6",
+    "packages/datomic/dist/scopeName.d.ts": "5782c79d41ea853dc485966116b5f98dcc370161e5043979a6f14cf11b43900d",
+    "packages/datomic/dist/scopeName.d.ts.map": "82fce75d3262bb94a4deacdcf73a78b9559f6d14c1d02a54351420735b9d21f1",
+    "packages/datomic/dist/scopeName.js": "764b71c2308a5395f01ef9d0ce6bf39a9881f07e2b55876004289ae6f31056c2",
+    "packages/datomic/dist/scopeName.js.map": "e8841b4b4dd52b0c0e41e4db53757fe82b960498fb3f205017bfe5f393e68fa2",
+    "packages/testkit/dist/index.d.ts": "3281eec847a8f0a6bf752258032a313ec7fede8d23ac7e7681caa75cc476af9c",
+    "packages/testkit/dist/index.d.ts.map": "8807d669b431539bfe45367b2de6df2d801ce5a19c031637b4e85e56b9e8d0c5",
+    "packages/testkit/dist/index.js": "e6cf762205ac81649705a5de6b736f2145c50f161ea54a92d751b943645a5255",
+    "packages/testkit/dist/index.js.map": "4b07fdbe8554d401098f39a93a294275679ddb8a3e01587cd77d205c7cc7e0fe",
+    "packages/testkit/dist/routeEquivalence.d.ts": "9b3c7f56bafc657d9ebcfe7d2b5583d74f2b51854dfa83c3da5d5d425411ccb5",
+    "packages/testkit/dist/routeEquivalence.d.ts.map": "0895f66fed40c1e21594b7518e073e3db8f75b3ecaf0b636e281ed57f61c2c01",
+    "packages/testkit/dist/routeEquivalence.js": "8dd539762429ff89519191040993e927db0f169c2f92d3c21664457738ff5afa",
+    "packages/testkit/dist/routeEquivalence.js.map": "0a1c1adc8edf35bda9f263cc2b5ed78663f1028fb37e9ae7c82d015ce47ad1d3",
+    "packages/testkit/dist/routeHistory.d.ts": "3e4985728eb4589751392ac61f8771ace2475a9342d5c9a4f9159e865fefb5be",
+    "packages/testkit/dist/routeHistory.d.ts.map": "c24ac48bc82afe4293ad954c228d1a4766545881150db22c630d6462ba9007ed",
+    "packages/testkit/dist/routeHistory.js": "cf3f742d06ebdf74f6e438b8b411af164582564337bfab604c656aeb1594f678",
+    "packages/testkit/dist/routeHistory.js.map": "98bf6c6f97b720da1cb668f5646d0482ca989a9640319d81855056b456caf525"
+  },
+  "cases": [
+    "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+    "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+    "historical cursor pages intersect recorded time and the commit snapshot",
+    "recursive relations support cursor pagination and optional total counts",
+    "assert then get and match return the fact",
+    "same-value facts in one batch keep distinct identities",
+    "datalog query finds asserted facts",
+    "datalog projections preserve scalar types without guessing from text",
+    "datalog deduplicates flattened scalar families before grouping and pagination",
+    "datalog constant projections retain their scalar values through pagination",
+    "datalog pattern constants use flattened scalar identity in filters",
+    "datalog value joins compare every scalar family",
+    "datalog equality predicates compare numeric values as numbers",
+    "datalog equality keeps identity bindings string-typed",
+    "ordered Datalog predicates accept only numeric scalar families",
+    "datalog reverse lookup matches an explicitly typed ref constant",
+    "datalog joins a variable bound from a ref in value position",
+    "datalog supports multi-hop joins over ref edges",
+    "datalog recursive rules compute the same transitive closure",
+    "datalog rule patterns unify repeated variables",
+    "datalog aggregations group, filter, and order consistently",
+    "datalog having preserves typed group and aggregate equality",
+    "datalog aggregates preserve duplicate rows and define empty and distinct results",
+    "datalog conjunctions establish bindings independent of clause order",
+    "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+    "wrapped filters preserve scalar types and SQL null semantics",
+    "Datalog ordering and pagination preserve mixed scalar order",
+    "datalog untyped strings match string and ref values while typed refs stay exact",
+    "transact records provenance datoms",
+    "conditional transactions are atomic and journal their changes",
+    "entity transaction history is indexed, complete, and snapshot-stable",
+    "graph constraints reject invalid post-states across valid time",
+    "dependency state is attribute-scoped and schedules temporal edges",
+    "derivation materialization uses indexed dependency freshness",
+    "graph constraints agree across storage backends",
+    "consumer checkpoints advance atomically and remain queryable",
+    "retractByPattern respects entityType",
+    "reserved Triplex namespaces reject ordinary writes atomically",
+    "transaction journals cannot be retracted through ordinary writes",
+    "direct and Datalog reads share one bitemporal basis",
+    "historical corrections preserve what was previously recorded",
+    "batch entity reads preserve association, missing entries, and temporal basis",
+    "retract is coherent across write and datalog paths",
+    "paged queries use deterministic snapshot-stable cursors"
+  ],
+  "executions": [
+    {
+      "phase": "suite",
+      "name": "complete unchanged suite",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-suite-d0224ee9-7da4-4ba7-ad4f-c0db111b37ad\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtc3VpdGUtZDAyMjRlZTktN2RhNC00YmE3LWFkNGYtYzBkYjExMWIzN2FkIiwwXQ",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:46.174Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtc3VpdGUtZDAyMjRlZTktN2RhNC00YmE3LWFkNGYtYzBkYjExMWIzN2FkIiwwXQ",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:51.961Z"
+    },
+    {
+      "phase": "current",
+      "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-dc51bcef-316a-4de4-ae82-576399766e6b\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1kYzUxYmNlZi0zMTZhLTRkZTQtYWU4Mi01NzYzOTk3NjZlNmIiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:52.058Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1kYzUxYmNlZi0zMTZhLTRkZTQtYWU4Mi01NzYzOTk3NjZlNmIiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:52.517Z"
+    },
+    {
+      "phase": "current",
+      "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-0c3fd0ab-7eb0-4a3d-b8a6-0b285e37fb54\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0wYzNmZDBhYi03ZWIwLTRhM2QtYjhhNi0wYjI4NWUzN2ZiNTQiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:52.600Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0wYzNmZDBhYi03ZWIwLTRhM2QtYjhhNi0wYjI4NWUzN2ZiNTQiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:52.879Z"
+    },
+    {
+      "phase": "current",
+      "name": "historical cursor pages intersect recorded time and the commit snapshot",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-82747bcb-561b-4cbc-8fdd-13261316f276\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC04Mjc0N2JjYi01NjFiLTRjYmMtOGZkZC0xMzI2MTMxNmYyNzYiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:52.974Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC04Mjc0N2JjYi01NjFiLTRjYmMtOGZkZC0xMzI2MTMxNmYyNzYiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:53.127Z"
+    },
+    {
+      "phase": "current",
+      "name": "recursive relations support cursor pagination and optional total counts",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-fb1b19c2-b578-4e39-9678-32be4462ecbc\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mYjFiMTljMi1iNTc4LTRlMzktOTY3OC0zMmJlNDQ2MmVjYmMiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:53.209Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mYjFiMTljMi1iNTc4LTRlMzktOTY3OC0zMmJlNDQ2MmVjYmMiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:53.344Z"
+    },
+    {
+      "phase": "current",
+      "name": "assert then get and match return the fact",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-2e0d084f-d0e9-4c14-ae75-152aac09565a\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0yZTBkMDg0Zi1kMGU5LTRjMTQtYWU3NS0xNTJhYWMwOTU2NWEiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:53.467Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0yZTBkMDg0Zi1kMGU5LTRjMTQtYWU3NS0xNTJhYWMwOTU2NWEiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:53.555Z"
+    },
+    {
+      "phase": "current",
+      "name": "same-value facts in one batch keep distinct identities",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-b03ae7de-a79e-4591-aab7-c7ffee7d4d12\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1iMDNhZTdkZS1hNzllLTQ1OTEtYWFiNy1jN2ZmZWU3ZDRkMTIiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:53.632Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1iMDNhZTdkZS1hNzllLTQ1OTEtYWFiNy1jN2ZmZWU3ZDRkMTIiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:53.693Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog query finds asserted facts",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-a3f2372a-0159-4564-80a0-d5efaf29d54d\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1hM2YyMzcyYS0wMTU5LTQ1NjQtODBhMC1kNWVmYWYyOWQ1NGQiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:53.775Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1hM2YyMzcyYS0wMTU5LTQ1NjQtODBhMC1kNWVmYWYyOWQ1NGQiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:53.854Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog projections preserve scalar types without guessing from text",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-1bd70bd0-3014-4710-9011-65a1f13cf4c5\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0xYmQ3MGJkMC0zMDE0LTQ3MTAtOTAxMS02NWExZjEzY2Y0YzUiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:53.953Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0xYmQ3MGJkMC0zMDE0LTQ3MTAtOTAxMS02NWExZjEzY2Y0YzUiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:54.051Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog deduplicates flattened scalar families before grouping and pagination",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-800a1de6-2544-4eee-ab8a-9a3cb1476dc8\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC04MDBhMWRlNi0yNTQ0LTRlZWUtYWI4YS05YTNjYjE0NzZkYzgiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:54.168Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC04MDBhMWRlNi0yNTQ0LTRlZWUtYWI4YS05YTNjYjE0NzZkYzgiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:54.288Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog constant projections retain their scalar values through pagination",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-2f121174-fd9d-4df4-81c1-9904e008d451\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0yZjEyMTE3NC1mZDlkLTRkZjQtODFjMS05OTA0ZTAwOGQ0NTEiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:54.404Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0yZjEyMTE3NC1mZDlkLTRkZjQtODFjMS05OTA0ZTAwOGQ0NTEiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:54.504Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog pattern constants use flattened scalar identity in filters",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-f1758b73-d03a-412c-a9be-1d8553aae2cc\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mMTc1OGI3My1kMDNhLTQxMmMtYTliZS0xZDg1NTNhYWUyY2MiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:54.585Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mMTc1OGI3My1kMDNhLTQxMmMtYTliZS0xZDg1NTNhYWUyY2MiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:54.702Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog value joins compare every scalar family",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-8aadc241-fce5-4ee5-a296-7aa9e610d68e\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC04YWFkYzI0MS1mY2U1LTRlZTUtYTI5Ni03YWE5ZTYxMGQ2OGUiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:54.914Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC04YWFkYzI0MS1mY2U1LTRlZTUtYTI5Ni03YWE5ZTYxMGQ2OGUiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:55.006Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog equality predicates compare numeric values as numbers",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-b07974c3-4e1d-41d9-b8eb-f89daa206561\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1iMDc5NzRjMy00ZTFkLTQxZDktYjhlYi1mODlkYWEyMDY1NjEiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:55.092Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1iMDc5NzRjMy00ZTFkLTQxZDktYjhlYi1mODlkYWEyMDY1NjEiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:55.168Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog equality keeps identity bindings string-typed",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-649fdeaf-9208-4450-8b90-c1294aa0d39e\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC02NDlmZGVhZi05MjA4LTQ0NTAtOGI5MC1jMTI5NGFhMGQzOWUiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:55.256Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC02NDlmZGVhZi05MjA4LTQ0NTAtOGI5MC1jMTI5NGFhMGQzOWUiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:55.361Z"
+    },
+    {
+      "phase": "current",
+      "name": "ordered Datalog predicates accept only numeric scalar families",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-55eefccd-791d-4750-93c0-7b8890b4026e\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC01NWVlZmNjZC03OTFkLTQ3NTAtOTNjMC03Yjg4OTBiNDAyNmUiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:55.468Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC01NWVlZmNjZC03OTFkLTQ3NTAtOTNjMC03Yjg4OTBiNDAyNmUiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:55.548Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog reverse lookup matches an explicitly typed ref constant",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-421f3139-46c9-46f0-b0eb-572e4f1b6188\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC00MjFmMzEzOS00NmM5LTQ2ZjAtYjBlYi01NzJlNGYxYjYxODgiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:55.639Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC00MjFmMzEzOS00NmM5LTQ2ZjAtYjBlYi01NzJlNGYxYjYxODgiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:55.724Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog joins a variable bound from a ref in value position",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-ea6fea5e-abc2-4001-b1ba-2b6367920fc8\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1lYTZmZWE1ZS1hYmMyLTQwMDEtYjFiYS0yYjYzNjc5MjBmYzgiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:55.806Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1lYTZmZWE1ZS1hYmMyLTQwMDEtYjFiYS0yYjYzNjc5MjBmYzgiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:55.892Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog supports multi-hop joins over ref edges",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-760604c0-f002-4e1b-a22e-827e0caed5f8\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC03NjA2MDRjMC1mMDAyLTRlMWItYTIyZS04MjdlMGNhZWQ1ZjgiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:55.982Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC03NjA2MDRjMC1mMDAyLTRlMWItYTIyZS04MjdlMGNhZWQ1ZjgiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:56.068Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog recursive rules compute the same transitive closure",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-921921ca-7bf8-4a45-88d4-2de099c76c53\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC05MjE5MjFjYS03YmY4LTRhNDUtODhkNC0yZGUwOTljNzZjNTMiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:56.154Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC05MjE5MjFjYS03YmY4LTRhNDUtODhkNC0yZGUwOTljNzZjNTMiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:56.302Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog rule patterns unify repeated variables",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-ea6e5663-3d56-4212-9cb5-4cf9ceb3d63d\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1lYTZlNTY2My0zZDU2LTQyMTItOWNiNS00Y2Y5Y2ViM2Q2M2QiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:56.399Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1lYTZlNTY2My0zZDU2LTQyMTItOWNiNS00Y2Y5Y2ViM2Q2M2QiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:56.490Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog aggregations group, filter, and order consistently",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-e24d5c8b-5394-4e75-8c73-47cbd53321a4\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1lMjRkNWM4Yi01Mzk0LTRlNzUtOGM3My00N2NiZDUzMzIxYTQiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:56.568Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1lMjRkNWM4Yi01Mzk0LTRlNzUtOGM3My00N2NiZDUzMzIxYTQiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:56.645Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog having preserves typed group and aggregate equality",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-fb4b72bf-5b5c-414b-b281-c2bf8e869871\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mYjRiNzJiZi01YjVjLTQxNGItYjI4MS1jMmJmOGU4Njk4NzEiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:56.725Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mYjRiNzJiZi01YjVjLTQxNGItYjI4MS1jMmJmOGU4Njk4NzEiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:56.829Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-f5d126fc-a983-4a3c-8b83-718ec81d5954\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mNWQxMjZmYy1hOTgzLTRhM2MtOGI4My03MThlYzgxZDU5NTQiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:56.924Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mNWQxMjZmYy1hOTgzLTRhM2MtOGI4My03MThlYzgxZDU5NTQiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:57.038Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog conjunctions establish bindings independent of clause order",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-5325bec5-0125-40f1-8e9d-139be5ccbdb2\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC01MzI1YmVjNS0wMTI1LTQwZjEtOGU5ZC0xMzliZTVjY2JkYjIiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:57.126Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC01MzI1YmVjNS0wMTI1LTQwZjEtOGU5ZC0xMzliZTVjY2JkYjIiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:57.236Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-d24742ef-3f52-4a89-80e6-35f935d5549c\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1kMjQ3NDJlZi0zZjUyLTRhODktODBlNi0zNWY5MzVkNTU0OWMiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:57.325Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1kMjQ3NDJlZi0zZjUyLTRhODktODBlNi0zNWY5MzVkNTU0OWMiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:57.381Z"
+    },
+    {
+      "phase": "current",
+      "name": "wrapped filters preserve scalar types and SQL null semantics",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-cff60105-9136-4944-909b-f612d86e11c8\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1jZmY2MDEwNS05MTM2LTQ5NDQtOTA5Yi1mNjEyZDg2ZTExYzgiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:57.483Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1jZmY2MDEwNS05MTM2LTQ5NDQtOTA5Yi1mNjEyZDg2ZTExYzgiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:57.670Z"
+    },
+    {
+      "phase": "current",
+      "name": "Datalog ordering and pagination preserve mixed scalar order",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-2d3bdcc4-0cec-416c-8bda-8cd7d3ea4b57\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0yZDNiZGNjNC0wY2VjLTQxNmMtOGJkYS04Y2Q3ZDNlYTRiNTciLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:57.777Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0yZDNiZGNjNC0wY2VjLTQxNmMtOGJkYS04Y2Q3ZDNlYTRiNTciLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:57.966Z"
+    },
+    {
+      "phase": "current",
+      "name": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-4df081b2-84a7-43bd-ab34-cfc8960514eb\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC00ZGYwODFiMi04NGE3LTQzYmQtYWIzNC1jZmM4OTYwNTE0ZWIiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:58.070Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC00ZGYwODFiMi04NGE3LTQzYmQtYWIzNC1jZmM4OTYwNTE0ZWIiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:58.175Z"
+    },
+    {
+      "phase": "current",
+      "name": "transact records provenance datoms",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-4fe8d900-8f34-44b2-a144-ac15f4bf9be6\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC00ZmU4ZDkwMC04ZjM0LTQ0YjItYTE0NC1hYzE1ZjRiZjliZTYiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:58.279Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC00ZmU4ZDkwMC04ZjM0LTQ0YjItYTE0NC1hYzE1ZjRiZjliZTYiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:58.382Z"
+    },
+    {
+      "phase": "current",
+      "name": "conditional transactions are atomic and journal their changes",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-246a7f49-e97a-4317-a48e-acff1d1ff506\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0yNDZhN2Y0OS1lOTdhLTQzMTctYTQ4ZS1hY2ZmMWQxZmY1MDYiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:58.468Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0yNDZhN2Y0OS1lOTdhLTQzMTctYTQ4ZS1hY2ZmMWQxZmY1MDYiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:58.599Z"
+    },
+    {
+      "phase": "current",
+      "name": "entity transaction history is indexed, complete, and snapshot-stable",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-4dbe9bde-c71a-4791-8ef1-86a7b2b4873f\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC00ZGJlOWJkZS1jNzFhLTQ3OTEtOGVmMS04NmE3YjJiNDg3M2YiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:58.682Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC00ZGJlOWJkZS1jNzFhLTQ3OTEtOGVmMS04NmE3YjJiNDg3M2YiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:58.865Z"
+    },
+    {
+      "phase": "current",
+      "name": "graph constraints reject invalid post-states across valid time",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-f881b012-50ca-465c-8ee7-c86238096215\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mODgxYjAxMi01MGNhLTQ2NWMtOGVlNy1jODYyMzgwOTYyMTUiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:58.948Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mODgxYjAxMi01MGNhLTQ2NWMtOGVlNy1jODYyMzgwOTYyMTUiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:59.057Z"
+    },
+    {
+      "phase": "current",
+      "name": "dependency state is attribute-scoped and schedules temporal edges",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-fc1398ef-0d22-48bc-86e6-ef84c445dd1a\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mYzEzOThlZi0wZDIyLTQ4YmMtODZlNi1lZjg0YzQ0NWRkMWEiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:59.151Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1mYzEzOThlZi0wZDIyLTQ4YmMtODZlNi1lZjg0YzQ0NWRkMWEiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:59.260Z"
+    },
+    {
+      "phase": "current",
+      "name": "derivation materialization uses indexed dependency freshness",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-e1ea02cd-7ad2-43e5-acfd-eaedf39c202a\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1lMWVhMDJjZC03YWQyLTQzZTUtYWNmZC1lYWVkZjM5YzIwMmEiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:59.343Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1lMWVhMDJjZC03YWQyLTQzZTUtYWNmZC1lYWVkZjM5YzIwMmEiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:59.521Z"
+    },
+    {
+      "phase": "current",
+      "name": "graph constraints agree across storage backends",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-1c93cc7a-5d40-4a84-9250-81b2b12bdad0\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0xYzkzY2M3YS01ZDQwLTRhODQtOTI1MC04MWIyYjEyYmRhZDAiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:59.594Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0xYzkzY2M3YS01ZDQwLTRhODQtOTI1MC04MWIyYjEyYmRhZDAiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:59.661Z"
+    },
+    {
+      "phase": "current",
+      "name": "consumer checkpoints advance atomically and remain queryable",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-c6827a1b-901a-4169-91e2-ebbe9626bea2\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1jNjgyN2ExYi05MDFhLTQxNjktOTFlMi1lYmJlOTYyNmJlYTIiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:59.746Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1jNjgyN2ExYi05MDFhLTQxNjktOTFlMi1lYmJlOTYyNmJlYTIiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:44:59.903Z"
+    },
+    {
+      "phase": "current",
+      "name": "retractByPattern respects entityType",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-5b1d7b91-1734-4850-9bb0-2fb4284ca827\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC01YjFkN2I5MS0xNzM0LTQ4NTAtOWJiMC0yZmI0Mjg0Y2E4MjciLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:44:59.991Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC01YjFkN2I5MS0xNzM0LTQ4NTAtOWJiMC0yZmI0Mjg0Y2E4MjciLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:00.098Z"
+    },
+    {
+      "phase": "current",
+      "name": "reserved Triplex namespaces reject ordinary writes atomically",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-3233ed26-d95e-4e90-b861-1f8d6813de1e\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0zMjMzZWQyNi1kOTVlLTRlOTAtYjg2MS0xZjhkNjgxM2RlMWUiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:00.221Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC0zMjMzZWQyNi1kOTVlLTRlOTAtYjg2MS0xZjhkNjgxM2RlMWUiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:00.315Z"
+    },
+    {
+      "phase": "current",
+      "name": "transaction journals cannot be retracted through ordinary writes",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-dd415ed0-909b-47b8-9d39-6dabd274b891\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1kZDQxNWVkMC05MDliLTQ3YjgtOWQzOS02ZGFiZDI3NGI4OTEiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:00.399Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1kZDQxNWVkMC05MDliLTQ3YjgtOWQzOS02ZGFiZDI3NGI4OTEiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:00.471Z"
+    },
+    {
+      "phase": "current",
+      "name": "direct and Datalog reads share one bitemporal basis",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-9d272b11-a33d-479d-bb4b-0be968f890db\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC05ZDI3MmIxMS1hMzNkLTQ3OWQtYmI0Yi0wYmU5NjhmODkwZGIiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:00.562Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC05ZDI3MmIxMS1hMzNkLTQ3OWQtYmI0Yi0wYmU5NjhmODkwZGIiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:00.650Z"
+    },
+    {
+      "phase": "current",
+      "name": "historical corrections preserve what was previously recorded",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-e48bdb00-6fd3-4044-b913-dd3854863ba9\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1lNDhiZGIwMC02ZmQzLTQwNDQtYjkxMy1kZDM4NTQ4NjNiYTkiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:00.744Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1lNDhiZGIwMC02ZmQzLTQwNDQtYjkxMy1kZDM4NTQ4NjNiYTkiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:00.833Z"
+    },
+    {
+      "phase": "current",
+      "name": "batch entity reads preserve association, missing entries, and temporal basis",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-a5127d03-d074-4783-a5fd-87fc446d0505\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1hNTEyN2QwMy1kMDc0LTQ3ODMtYTVmZC04N2ZjNDQ2ZDA1MDUiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:00.927Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1hNTEyN2QwMy1kMDc0LTQ3ODMtYTVmZC04N2ZjNDQ2ZDA1MDUiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:01.007Z"
+    },
+    {
+      "phase": "current",
+      "name": "retract is coherent across write and datalog paths",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-49a65d19-bb1b-40d0-90d5-254060f645c3\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC00OWE2NWQxOS1iYjFiLTQwZDAtOTBkNS0yNTQwNjBmNjQ1YzMiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:01.136Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC00OWE2NWQxOS1iYjFiLTQwZDAtOTBkNS0yNTQwNjBmNjQ1YzMiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:01.266Z"
+    },
+    {
+      "phase": "current",
+      "name": "paged queries use deterministic snapshot-stable cursors",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-current-ad403900-372f-4786-b0dc-611aca6764a8\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1hZDQwMzkwMC0zNzJmLTQ3ODYtYjBkYy02MTFhY2E2NzY0YTgiLDBd",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:01.375Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtY3VycmVudC1hZDQwMzkwMC0zNzJmLTQ3ODYtYjBkYy02MTFhY2E2NzY0YTgiLDBd",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:01.524Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "actor due-work ranges preserve numeric aliases, visibility, ordering, and limits",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-b03f4d37-409b-4e17-aec1-085ac909fb44\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWIwM2Y0ZDM3LTQwOWItNGUxNy1hZWMxLTA4NWFjOTA5ZmI0NCIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:01.643Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWIwM2Y0ZDM3LTQwOWItNGUxNy1hZWMxLTA4NWFjOTA5ZmI0NCIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:02.129Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "Datalog reads are bounded by default and cursors traverse the complete snapshot",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-a0246289-93dd-4f82-a48e-e6bb3f6e0f63\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWEwMjQ2Mjg5LTkzZGQtNGY4Mi1hNDhlLWU2YmIzZjZlMGY2MyIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:02.228Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWEwMjQ2Mjg5LTkzZGQtNGY4Mi1hNDhlLWU2YmIzZjZlMGY2MyIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:02.490Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "historical cursor pages intersect recorded time and the commit snapshot",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-ea84671d-3ecb-4001-9fd4-5d32594b1076\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWVhODQ2NzFkLTNlY2ItNDAwMS05ZmQ0LTVkMzI1OTRiMTA3NiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:02.574Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWVhODQ2NzFkLTNlY2ItNDAwMS05ZmQ0LTVkMzI1OTRiMTA3NiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:02.696Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "recursive relations support cursor pagination and optional total counts",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-42e20bd2-3466-4b63-bed5-9c5bf298e7f2\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTQyZTIwYmQyLTM0NjYtNGI2My1iZWQ1LTljNWJmMjk4ZTdmMiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:02.779Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTQyZTIwYmQyLTM0NjYtNGI2My1iZWQ1LTljNWJmMjk4ZTdmMiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:02.915Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "assert then get and match return the fact",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-a229ba44-18f8-4ff8-b0ca-96a4eb412c65\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWEyMjliYTQ0LTE4ZjgtNGZmOC1iMGNhLTk2YTRlYjQxMmM2NSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:03.003Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWEyMjliYTQ0LTE4ZjgtNGZmOC1iMGNhLTk2YTRlYjQxMmM2NSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:03.073Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "same-value facts in one batch keep distinct identities",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-62b2b8df-9ce9-4da6-8e9a-a393df4a6012\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTYyYjJiOGRmLTljZTktNGRhNi04ZTlhLWEzOTNkZjRhNjAxMiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:03.168Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTYyYjJiOGRmLTljZTktNGRhNi04ZTlhLWEzOTNkZjRhNjAxMiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:03.255Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog query finds asserted facts",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-bf8f0c51-ce65-405e-a4eb-01378b954293\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWJmOGYwYzUxLWNlNjUtNDA1ZS1hNGViLTAxMzc4Yjk1NDI5MyIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:03.341Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWJmOGYwYzUxLWNlNjUtNDA1ZS1hNGViLTAxMzc4Yjk1NDI5MyIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:03.411Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog projections preserve scalar types without guessing from text",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-159fd17c-ee39-4fde-9d35-11a1457c21bf\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTE1OWZkMTdjLWVlMzktNGZkZS05ZDM1LTExYTE0NTdjMjFiZiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:03.488Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTE1OWZkMTdjLWVlMzktNGZkZS05ZDM1LTExYTE0NTdjMjFiZiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:03.576Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog deduplicates flattened scalar families before grouping and pagination",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-53149037-fec2-47a0-b80b-23718d9ee904\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTUzMTQ5MDM3LWZlYzItNDdhMC1iODBiLTIzNzE4ZDllZTkwNCIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:03.662Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTUzMTQ5MDM3LWZlYzItNDdhMC1iODBiLTIzNzE4ZDllZTkwNCIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:03.776Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog constant projections retain their scalar values through pagination",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-f4d3605c-e971-47c4-aa17-dd0a11b854bf\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWY0ZDM2MDVjLWU5NzEtNDdjNC1hYTE3LWRkMGExMWI4NTRiZiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:03.858Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWY0ZDM2MDVjLWU5NzEtNDdjNC1hYTE3LWRkMGExMWI4NTRiZiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:03.943Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog pattern constants use flattened scalar identity in filters",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-8de52d09-1124-4248-aead-30bae1c82b29\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLThkZTUyZDA5LTExMjQtNDI0OC1hZWFkLTMwYmFlMWM4MmIyOSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:04.043Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLThkZTUyZDA5LTExMjQtNDI0OC1hZWFkLTMwYmFlMWM4MmIyOSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:04.254Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog value joins compare every scalar family",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-f7be2735-e8ce-4ddd-ae7c-a67fdc9634d7\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWY3YmUyNzM1LWU4Y2UtNGRkZC1hZTdjLWE2N2ZkYzk2MzRkNyIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:04.387Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWY3YmUyNzM1LWU4Y2UtNGRkZC1hZTdjLWE2N2ZkYzk2MzRkNyIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:04.482Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog equality predicates compare numeric values as numbers",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-a624e23a-9ca4-4191-b728-0de41910abbd\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWE2MjRlMjNhLTljYTQtNDE5MS1iNzI4LTBkZTQxOTEwYWJiZCIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:04.570Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWE2MjRlMjNhLTljYTQtNDE5MS1iNzI4LTBkZTQxOTEwYWJiZCIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:04.649Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog equality keeps identity bindings string-typed",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-b04e019e-362d-4544-97fe-c4faae382535\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWIwNGUwMTllLTM2MmQtNDU0NC05N2ZlLWM0ZmFhZTM4MjUzNSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:04.751Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWIwNGUwMTllLTM2MmQtNDU0NC05N2ZlLWM0ZmFhZTM4MjUzNSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:04.866Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "ordered Datalog predicates accept only numeric scalar families",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-78c2e4da-cb47-48a3-803e-bd36edaa96a4\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTc4YzJlNGRhLWNiNDctNDhhMy04MDNlLWJkMzZlZGFhOTZhNCIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:04.950Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTc4YzJlNGRhLWNiNDctNDhhMy04MDNlLWJkMzZlZGFhOTZhNCIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:05.021Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog reverse lookup matches an explicitly typed ref constant",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-e00a45c8-532f-4501-8772-0aa73aa231d9\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWUwMGE0NWM4LTUzMmYtNDUwMS04NzcyLTBhYTczYWEyMzFkOSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:05.102Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWUwMGE0NWM4LTUzMmYtNDUwMS04NzcyLTBhYTczYWEyMzFkOSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:05.163Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog joins a variable bound from a ref in value position",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-8ff7c70a-0b33-4c4c-9533-1accbf072b56\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLThmZjdjNzBhLTBiMzMtNGM0Yy05NTMzLTFhY2NiZjA3MmI1NiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:05.235Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLThmZjdjNzBhLTBiMzMtNGM0Yy05NTMzLTFhY2NiZjA3MmI1NiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:05.325Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog supports multi-hop joins over ref edges",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-255e4c0a-074e-4894-9d18-bf753d60a9f5\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTI1NWU0YzBhLTA3NGUtNDg5NC05ZDE4LWJmNzUzZDYwYTlmNSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:05.409Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTI1NWU0YzBhLTA3NGUtNDg5NC05ZDE4LWJmNzUzZDYwYTlmNSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:05.480Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog recursive rules compute the same transitive closure",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-809e884e-b531-478d-95b5-97f2dd616f8b\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTgwOWU4ODRlLWI1MzEtNDc4ZC05NWI1LTk3ZjJkZDYxNmY4YiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:05.567Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTgwOWU4ODRlLWI1MzEtNDc4ZC05NWI1LTk3ZjJkZDYxNmY4YiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:05.721Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog rule patterns unify repeated variables",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-276b3f6b-77b5-4526-afb9-4fcc7f8ff121\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTI3NmIzZjZiLTc3YjUtNDUyNi1hZmI5LTRmY2M3ZjhmZjEyMSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:05.794Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTI3NmIzZjZiLTc3YjUtNDUyNi1hZmI5LTRmY2M3ZjhmZjEyMSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:05.872Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog aggregations group, filter, and order consistently",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-906d5c1d-3a60-4ff9-a3ff-3efdfa8d1c35\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTkwNmQ1YzFkLTNhNjAtNGZmOS1hM2ZmLTNlZmRmYThkMWMzNSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:05.953Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTkwNmQ1YzFkLTNhNjAtNGZmOS1hM2ZmLTNlZmRmYThkMWMzNSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:06.025Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog having preserves typed group and aggregate equality",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-ab9817c5-15f1-49f3-a041-d1d55c85fa44\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWFiOTgxN2M1LTE1ZjEtNDlmMy1hMDQxLWQxZDU1Yzg1ZmE0NCIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:06.102Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWFiOTgxN2M1LTE1ZjEtNDlmMy1hMDQxLWQxZDU1Yzg1ZmE0NCIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:06.189Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog aggregates preserve duplicate rows and define empty and distinct results",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-5564eb82-7f6e-46aa-b2b9-92e1fa9022bf\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTU1NjRlYjgyLTdmNmUtNDZhYS1iMmI5LTkyZTFmYTkwMjJiZiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:06.283Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTU1NjRlYjgyLTdmNmUtNDZhYS1iMmI5LTkyZTFmYTkwMjJiZiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:06.363Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog conjunctions establish bindings independent of clause order",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-5b1de9fe-611f-474c-bc7b-13b5df406a97\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTViMWRlOWZlLTYxMWYtNDc0Yy1iYzdiLTEzYjVkZjQwNmE5NyIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:06.449Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTViMWRlOWZlLTYxMWYtNDc0Yy1iYzdiLTEzYjVkZjQwNmE5NyIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:06.529Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog rejects invalid and unbound queries with backend-neutral typed errors",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-6c3f5602-9982-42b8-8f8f-d847449377df\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTZjM2Y1NjAyLTk5ODItNDJiOC04ZjhmLWQ4NDc0NDkzNzdkZiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:06.603Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTZjM2Y1NjAyLTk5ODItNDJiOC04ZjhmLWQ4NDc0NDkzNzdkZiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:06.676Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "wrapped filters preserve scalar types and SQL null semantics",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-8242cb94-c6b3-4c18-882a-aa792ef60fe2\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTgyNDJjYjk0LWM2YjMtNGMxOC04ODJhLWFhNzkyZWY2MGZlMiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:06.758Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTgyNDJjYjk0LWM2YjMtNGMxOC04ODJhLWFhNzkyZWY2MGZlMiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:06.950Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "Datalog ordering and pagination preserve mixed scalar order",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-0b0c3741-3081-43e5-be07-2f5feb852e79\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTBiMGMzNzQxLTMwODEtNDNlNS1iZTA3LTJmNWZlYjg1MmU3OSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:07.042Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTBiMGMzNzQxLTMwODEtNDNlNS1iZTA3LTJmNWZlYjg1MmU3OSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:07.265Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "datalog untyped strings match string and ref values while typed refs stay exact",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-b0653a8d-7029-46c0-b3f4-cce70c37b9ff\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWIwNjUzYThkLTcwMjktNDZjMC1iM2Y0LWNjZTcwYzM3YjlmZiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:07.408Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWIwNjUzYThkLTcwMjktNDZjMC1iM2Y0LWNjZTcwYzM3YjlmZiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:07.538Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "transact records provenance datoms",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-94370e8b-3652-443b-bcb7-586e7e449e5e\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTk0MzcwZThiLTM2NTItNDQzYi1iY2I3LTU4NmU3ZTQ0OWU1ZSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:07.639Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTk0MzcwZThiLTM2NTItNDQzYi1iY2I3LTU4NmU3ZTQ0OWU1ZSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:07.741Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "conditional transactions are atomic and journal their changes",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-74a01ff9-9501-4f19-92cc-b232bb9b95ea\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTc0YTAxZmY5LTk1MDEtNGYxOS05MmNjLWIyMzJiYjliOTVlYSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:07.827Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTc0YTAxZmY5LTk1MDEtNGYxOS05MmNjLWIyMzJiYjliOTVlYSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:07.978Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "entity transaction history is indexed, complete, and snapshot-stable",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-7bc7082c-d0d7-4ad3-b9e6-05bd999b21f1\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTdiYzcwODJjLWQwZDctNGFkMy1iOWU2LTA1YmQ5OTliMjFmMSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:08.058Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTdiYzcwODJjLWQwZDctNGFkMy1iOWU2LTA1YmQ5OTliMjFmMSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:08.178Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "graph constraints reject invalid post-states across valid time",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-4ae9490c-3315-44f4-978c-214da5f6af59\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTRhZTk0OTBjLTMzMTUtNDRmNC05NzhjLTIxNGRhNWY2YWY1OSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:08.252Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTRhZTk0OTBjLTMzMTUtNDRmNC05NzhjLTIxNGRhNWY2YWY1OSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:08.358Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "dependency state is attribute-scoped and schedules temporal edges",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-58c13935-fbbc-42e3-9c27-a2288aab4445\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTU4YzEzOTM1LWZiYmMtNDJlMy05YzI3LWEyMjg4YWFiNDQ0NSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:08.447Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTU4YzEzOTM1LWZiYmMtNDJlMy05YzI3LWEyMjg4YWFiNDQ0NSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:08.585Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "derivation materialization uses indexed dependency freshness",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-6db58343-bfb2-4c99-b581-7124a52ae8e9\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTZkYjU4MzQzLWJmYjItNGM5OS1iNTgxLTcxMjRhNTJhZThlOSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:08.676Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTZkYjU4MzQzLWJmYjItNGM5OS1iNTgxLTcxMjRhNTJhZThlOSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:08.829Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "graph constraints agree across storage backends",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-4babcf45-d55e-485b-a076-b9d392177164\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTRiYWJjZjQ1LWQ1NWUtNDg1Yi1hMDc2LWI5ZDM5MjE3NzE2NCIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:08.919Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTRiYWJjZjQ1LWQ1NWUtNDg1Yi1hMDc2LWI5ZDM5MjE3NzE2NCIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:08.999Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "consumer checkpoints advance atomically and remain queryable",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-3b8d7443-98c7-4ce8-a10f-89c7c598db4f\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTNiOGQ3NDQzLTk4YzctNGNlOC1hMTBmLTg5YzdjNTk4ZGI0ZiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:09.104Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTNiOGQ3NDQzLTk4YzctNGNlOC1hMTBmLTg5YzdjNTk4ZGI0ZiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:09.275Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "retractByPattern respects entityType",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-1077bb89-aa78-47b7-96c3-056433b6e744\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTEwNzdiYjg5LWFhNzgtNDdiNy05NmMzLTA1NjQzM2I2ZTc0NCIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:09.388Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTEwNzdiYjg5LWFhNzgtNDdiNy05NmMzLTA1NjQzM2I2ZTc0NCIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:09.532Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "reserved Triplex namespaces reject ordinary writes atomically",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-94ac8e6a-e93b-421e-97df-4d9e1cea3e19\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTk0YWM4ZTZhLWU5M2ItNDIxZS05N2RmLTRkOWUxY2VhM2UxOSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:09.617Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTk0YWM4ZTZhLWU5M2ItNDIxZS05N2RmLTRkOWUxY2VhM2UxOSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:09.716Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "transaction journals cannot be retracted through ordinary writes",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-b939ee60-479c-425c-9836-da8233a76c47\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWI5MzllZTYwLTQ3OWMtNDI1Yy05ODM2LWRhODIzM2E3NmM0NyIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:09.824Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWI5MzllZTYwLTQ3OWMtNDI1Yy05ODM2LWRhODIzM2E3NmM0NyIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:09.909Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "direct and Datalog reads share one bitemporal basis",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-0da3d49a-6194-4766-8602-431fc2cf06ce\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTBkYTNkNDlhLTYxOTQtNDc2Ni04NjAyLTQzMWZjMmNmMDZjZSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:10.004Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTBkYTNkNDlhLTYxOTQtNDc2Ni04NjAyLTQzMWZjMmNmMDZjZSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:10.097Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "historical corrections preserve what was previously recorded",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-9a53dd4a-5ee2-4e19-9247-8cb52a0cc04f\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTlhNTNkZDRhLTVlZTItNGUxOS05MjQ3LThjYjUyYTBjYzA0ZiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:10.192Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTlhNTNkZDRhLTVlZTItNGUxOS05MjQ3LThjYjUyYTBjYzA0ZiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:10.303Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "batch entity reads preserve association, missing entries, and temporal basis",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-a595b544-d943-41a9-b1d6-cf3017d75015\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWE1OTViNTQ0LWQ5NDMtNDFhOS1iMWQ2LWNmMzAxN2Q3NTAxNSIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:10.400Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWE1OTViNTQ0LWQ5NDMtNDFhOS1iMWQ2LWNmMzAxN2Q3NTAxNSIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:10.464Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "retract is coherent across write and datalog paths",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-21806986-97bc-459c-a970-3c67188c2d62\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTIxODA2OTg2LTk3YmMtNDU5Yy1hOTcwLTNjNjcxODhjMmQ2MiIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:10.551Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLTIxODA2OTg2LTk3YmMtNDU5Yy1hOTcwLTNjNjcxODhjMmQ2MiIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:10.642Z"
+    },
+    {
+      "phase": "reopen",
+      "name": "paged queries use deterministic snapshot-stable cursors",
+      "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3-reopen-fcdee477-2ac3-442f-8aa3-3ac559049480\",0]",
+      "created": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWZjZGVlNDc3LTJhYzMtNDQyZi04YWEzLTNhYzU1OTA0OTQ4MCIsMF0",
+        "created": true,
+        "schemaHash": "b3e4166a85e0ec8b16dca34ddb2170c859bd3504b2973a06e2860ce04907830d"
+      },
+      "startedAt": "2026-11-09T00:45:10.758Z",
+      "status": "PASS",
+      "cleanup": {
+        "db": "s2-WyJ0cmlwbGV4LXNjb3BlLXYxIiwidGVzdCIsInRlc3QiLCJDWC1WREEwMS1jb25mb3JtYW5jZS1iODBkNzFhMi03MjljLTQ0MmYtOGRlMi00ZDA2NDA5OTZmYzMtcmVvcGVuLWZjZGVlNDc3LTJhYzMtNDQyZi04YWEzLTNhYzU1OTA0OTQ4MCIsMF0",
+        "deleted": true
+      },
+      "endedAt": "2026-11-09T00:45:10.902Z"
+    }
+  ],
+  "completed": true,
+  "endedAt": "2026-11-09T00:45:10.965Z"
+}

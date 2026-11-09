@@ -1,0 +1,51 @@
+{
+  "verdict": "FIX-FIRST",
+  "finding": {
+    "id": "F1",
+    "severity": "High",
+    "file": "packages/datomic/gateway/src/triplex/gateway/query.clj:36",
+    "reproduction": "CX-VDA01-native-7a3e1741-4fd4-4438-a8b5-91bb0b6926f9.json"
+  },
+  "conformance": {
+    "file": "CX-VDA01-conformance-b80d71a2-729c-442f-8de2-4d0640996fc3.json",
+    "current": 44,
+    "reopen": 44,
+    "completeSuite": true,
+    "cleaned": 89
+  },
+  "files": 63,
+  "preservation": [
+    {
+      "db": "s-5a377987b021d5401900564fbae6a1ee",
+      "status": 200,
+      "body": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    },
+    {
+      "db": "s-f43d78e756286da105c6aa52db4e63e5",
+      "status": 200,
+      "body": {
+        "t": {
+          "t": "long",
+          "v": "1001"
+        },
+        "position": {
+          "t": "long",
+          "v": "0"
+        },
+        "recordedAt": null,
+        "schemaHash": "f404f7ca897e549d80a2ec13890cc7fc6836f9cdb6f1735f28a804583b437d5d"
+      }
+    }
+  ]
+}

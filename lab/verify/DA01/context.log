@@ -1,0 +1,30 @@
+{
+  "at": "2026-11-09T00:42:16.108Z",
+  "expectedBuildInputs": "2e8f170abdbea1e926bf313d41ae77edceadd90a39f49929824f29b789b37634",
+  "scratch": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da01/lab/verify/DA01/context-scratch-UQVPaS",
+  "checks": [
+    {
+      "context": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da01/lab/verify/DA01/context-scratch-UQVPaS/fresh-0",
+      "files": 811,
+      "manifestSha256": "2b478fda7aa16f859b6e51a8ca617e82e826b47ea560d27e0fd9df3a2e5cd8d9",
+      "reusedRefused": true,
+      "extraFileRefused": true,
+      "symlinkRefused": true,
+      "emptyDirectoryRefused": true,
+      "changedBytesRefused": true
+    },
+    {
+      "context": "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-da01/lab/verify/DA01/context-scratch-UQVPaS/fresh-1",
+      "files": 811,
+      "manifestSha256": "2b478fda7aa16f859b6e51a8ca617e82e826b47ea560d27e0fd9df3a2e5cd8d9",
+      "reusedRefused": true,
+      "extraFileRefused": true,
+      "symlinkRefused": true,
+      "emptyDirectoryRefused": true,
+      "changedBytesRefused": true
+    }
+  ],
+  "imageRebuilt": false,
+  "reproducibleStaging": true,
+  "scratchRemoved": true
+}
