@@ -2071,3 +2071,21 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **3d23d208:** round A merged (21 conflicts listed), sweep workers and retention leases added, 10 SQLite and 33 harness tests pass. The preflight stopped correctly: W0's first reference position is 1, and the broker's first commit is 2048 (LSN * 1024 + ordinal; LSN 1 is the epoch frame). First-command ACK took 7.133 ms.
 - **Ruling Q101a (pending):** positions need not be equal; the seed manifest binds an order-preserving map from reference to native positions, and every consumer translates through it. Lane D's position-to-t map (Q89d) is the same idea.
 - **Lesson:** "receipt position equals reference position" held on XTDB by accident of dense numbering. Any assumption that one engine's identifiers equal the oracle's needs an explicit map.
+
+## 2026-11-09: CR-NS review FIX-FIRST: six ways the evaluator could grant a PASS it should not
+
+- **verify/CRNS 93d2af9c:** the original 145 tests pass, but six reviewer regressions fail: P1 accepts an empty read stream (R01); a checkpoint can advance beyond every source position (R02); the affected-set check pools consumer and epoch identities (R03); P4 throughput counts reads outside its window (R04); a loop label stands in for single-client execution (R05); removing every CR event skips the cross-check requirement (R06).
+- **Pattern:** four of six are "absence passes": an empty stream, a missing CR event, an unbounded window. **Lesson:** every bar needs a minimum-evidence floor (non-empty, inside the window, per identity) checked before its arithmetic.
+- **Next:** CX-CRNS round 2 waits for the independent Opus forgery review, still running, so one round fixes both sets.
+
+## 2026-11-09: RT01 live: G2 passes on XTDB; G6 catches a 29% commit regression from the stamp guard
+
+- **6f8170f1:** catalog bootstrap fixed; 1,106 product tests and live G2 pass. G6's A/A window was frozen first at 5.56%; the first fresh ten-fact A0 point measured p50 +29.25%, so the run stopped there.
+- **Likely cause:** the stamp guard adds a MAX(stamp) column to the existing ASSERT, doubling the history rows visited per guard. Avoiding an extra round trip did not avoid extra engine work. Round 6 reads the prior stamp from the marker row in the same CAS (O(1)).
+- **Lesson:** the preregistered A/A band did its job: without it, a 29% regression on the A0 control would have looked like host noise. G6 before merge (Q96b) is worth its slot hour.
+
+## 2026-11-09: the Opus forgery review found 29 more false-PASS paths in CR-NS, none in R44's F1-F20
+
+- **Opus review (lab/verify/CRNS-opus/ on the CRNS branch):** 29 forgeries accepted (10 high, 11 medium, 8 low); 21 reproduced as tests. The highs include: source content never compared with the offered command (a consistently lying source passes), a P3-only run skipping accounting and ACK-before-publication, no recompute ever checking resume, duplicate commits of one command, typed errors counted as latency for commands that later commit, duplicates hidden behind free-text epoch or consumer labels, offset order never checked against position order, and the P1 memo keyed without hops.
+- **Two reviewers, little overlap:** the Codex reviewer found 6, the Opus reviewer 29, and R44's own list of 20 covered none of the Opus findings. Writing the forgery list before reading the design (the Opus reviewer did) found the most.
+- **Lesson:** for the component that grants PASS, use both reviewers, and have one enumerate attacks from the code before reading the design's list. CX-CRNS round 2 fixes all 35 under one rule: a minimum-evidence floor before any arithmetic.
