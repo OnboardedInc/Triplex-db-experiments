@@ -51,6 +51,7 @@ export interface DatomicLogPage {
 // [EXP-DA00] Why: 256 readers plus writers must not queue on the HTTP agent (R16). Rejected: default pool limits.
 export class DatomicClient {
   readonly agent: http.Agent;
+  private lastCommit: { db: string; position: number; t: string } | undefined;
   readonly reachDiagnostics = { faults: 0, declines: {} as Record<string, number> };
   private readonly endpoint: URL;
   constructor(
@@ -79,6 +80,13 @@ export class DatomicClient {
     body?: unknown,
     timeoutMs = this.timeoutMs,
   ): Promise<T> {
+    // [EXP-DX1] Why: a known commit t lets lagging peers wait locally; no transactor round trip.
+    // Rejected: d/sync without t and the old ten-millisecond poll.
+    if (body && typeof body === "object" && this.lastCommit) {
+      const input = body as { basis?: { recordedPosition?: number }; position?: number };
+      if (path.includes(`/db/${this.lastCommit.db}/`) && (input.basis?.recordedPosition ?? input.position) === this.lastCommit.position)
+        body = { ...body, basisT: this.lastCommit.t };
+    }
     const bytes = body === undefined ? undefined : Buffer.from(stringifyExact(body));
     return new Promise<T>((resolve, reject) => {
       const req = http.request(
@@ -167,7 +175,7 @@ export class DatomicClient {
     const response = await this.request<{ rows: WireRow[] }>("POST", `/v1/db/${db}/read`, input);
     return response.rows.map(decodeRow);
   }
-  transact(
+  async transact(
     db: string,
     input: {
       sourceK: number;
@@ -179,11 +187,18 @@ export class DatomicClient {
       claims: readonly { commandId: string; txId: string; timestamp: number }[];
     },
   ): Promise<unknown> {
-    return this.request("POST", `/v1/db/${db}/transact`, {
+    const response = await this.request<{ t?: TaggedValue; position?: TaggedValue }>("POST", `/v1/db/${db}/transact`, {
       ...input,
       rows: input.rows.map(encodeRow),
       rowTexts: Object.fromEntries(input.rows.filter(r => input.newIds.includes(r.id) && r.retracted_at === null).map(r => [r.id, encodeRowText(r)])),
     });
+    if (response.t && response.position) {
+      const position = Number(validateTagged(response.position).v);
+      const t = validateTagged(response.t);
+      if (t.t !== "long" || position !== input.position) throw new TypeError("Commit basis mismatch");
+      this.lastCommit = { db, position, t: String(t.v) };
+    }
+    return response;
   }
   operation(db: string, operationId: string): Promise<{ status: "committed" | "absent" }> {
     return this.request("GET", `/v1/db/${db}/operation/${encodeURIComponent(operationId)}`);

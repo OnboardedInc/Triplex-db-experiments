@@ -28,3 +28,9 @@ The current declared domain rejects negative zero business-number values and mal
 - reach.test.ts: each accepted answer is deep-equal in content and BFS order to core BFS over actual by-entity reads at the identical resolved basis, in a freshly created UUID scope; declined answers must be undefined. Explicit one-request assertion and zero-fault assertion prevent a silent fallback from qualifying.
 - mutants.sh: each staged mutation requires a nonzero test exit AND an AssertionError answer mismatch, not a startup/transport error. Restores the source after every run series.
 - Report counts describe these diagnostic executions only. No scorecard, contract or semantic acceptance PASS is issued. Source copies are retained in evidence/DX-B1/source-M1 and the staged gateway; dependencies are bound by dependencies.sha256. No lab/acceptance file was edited.
+
+## M2 implementation checkpoint
+
+Read routes now use d/db; no-argument d/sync is restricted to connection startup and write paths. Position waiting polls every 1 ms, or waits locally with d/sync(conn,t). DatomicClient remembers its last acknowledged database/position/t and attaches basisT only for that exact database and position. Build passed. Added a client binding test and the suspended-transactor diagnostic script.
+
+At this checkpoint the stopped-transactor proof is still waiting for the shared PROTOCOL 0b measurement lock; client/read-pin tests are waiting for a heavy slot. These are pending, not successful observations. The M2 implementation is committed separately so M3 can progress while the diagnostic waits. Final validation below supersedes this pending status only if actually executed.

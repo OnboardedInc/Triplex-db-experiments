@@ -8,7 +8,15 @@
 ;; [EXP-DA00] Why: own bounded HTTP gateway on official Peer API (R29/Jepsen pattern). Rejected: undocumented peer-server wire protocol.
 (def base-uri (or (System/getenv "DATOMIC_BASE_URI") "datomic:dev://127.0.0.1:4334/"))
 (def connections (atom {}))
-(defn connection [uri] (or (@connections uri) (get (swap! connections #(if (contains? % uri) % (assoc % uri (d/connect uri)))) uri)))
+;; [EXP-DX1] Why: sync once when opening a peer; subsequent reads use pushed immutable db values.
+;; Rejected: no-argument sync on reads (contacts the transactor).
+(defn connection [uri]
+  (or (@connections uri)
+      (locking connections
+        (or (@connections uri)
+            (let [conn (d/connect uri) result (deref (d/sync conn) 2000 ::timeout)]
+              (when (= result ::timeout) (throw (ex-info "Initial sync deadline exceeded" {:status 503 :code "SyncTimeout"})))
+              (swap! connections assoc uri conn) conn)))))
 (defn sync-db [uri] (let [result (deref (d/sync (connection uri)) 2000 ::timeout)]
                      (when (= result ::timeout) (throw (ex-info "Sync deadline exceeded" {:status 503 :code "SyncTimeout"}))) result))
 (def scope-name scope/name-for)
@@ -47,7 +55,7 @@
         {:db name :deleted deleted})))
 (defn basis [base name]
   (when-not (re-matches #"(s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)" name) (codec/invalid "Invalid database name"))
-  (let [db (sync-db (str base name)) scope (stored-scope db)]
+  (let [db (d/db (connection (str base name))) scope (stored-scope db)]
     (when-not scope (throw (ex-info "Scope not initialized" {:status 409 :code "ScopeUninitialized"})))
     (let [entity (d/entity db [:triplex.scope/key scope])]
       {:t (codec/encode-value "long" (d/basis-t db))
@@ -63,7 +71,7 @@
   (try
     (cond
       (and (= :get request-method) (= "/health" uri))
-      (do (sync-db (str base-uri "tx2-health"))
+      (do (d/db (connection (str base-uri "tx2-health")))
           (response 200 {:datomicVersion "1.0.7745" :gatewaySourceHash (System/getenv "GATEWAY_SOURCE_SHA256")}))
       (and (= :post request-method) (= "/v1/db/create" uri))
       (response 200 (create-scope! base-uri (get (request-json body) "scope")))
@@ -79,7 +87,12 @@
         (response 200 (assoc (feed/log-page (connection (str base-uri name)) params) :database name)))
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/reach" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body)
-            db (sync-db (str base-uri name))]
+            conn (connection (str base-uri name))
+            db (storage/await-position (d/db conn) (get-in input ["basis" "recordedPosition"])
+                 (get input "basisWaitMs")
+                 (fn [remaining] (if-let [t (get input "basisT")]
+                                   (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
+                                   (d/db conn))))]
         {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
          :body (reach/response name db input)})
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
@@ -88,10 +101,12 @@
             conn (when-not (or (get input "handle") (= action "release")) (connection db-uri))
             ;; [EXP-DA01] Why: held queries need no transactor sync and must never substitute a new db between requests (Q89d). Rejected: unconditional per-request sync.
             db (when conn
-                 (storage/await-position (sync-db db-uri)
+                 (storage/await-position (if (#{"snapshot" "transact"} action) (sync-db db-uri) (d/db conn))
                    (if (= action "claim") (get input "position") (get-in input ["basis" "recordedPosition"]))
                    (get input "basisWaitMs")
-                   (fn [remaining] (deref (d/sync conn) remaining :triplex.gateway.storage/timeout))))]
+                   (fn [remaining] (if-let [t (get input "basisT")]
+                                     (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
+                                     (d/db conn)))))]
         (response 200
           (case action
             "snapshot" (storage/begin! name db)

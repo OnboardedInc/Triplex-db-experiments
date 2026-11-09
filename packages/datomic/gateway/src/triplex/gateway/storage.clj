@@ -172,7 +172,7 @@
         (if (<= p (head-position current)) current
           (let [remaining (quot (- deadline (System/nanoTime)) 1000000)]
             (when (<= remaining 0) (unavailable! "Requested position is beyond the available snapshot"))
-            (Thread/sleep (long (min 10 remaining)))
+            (Thread/sleep 1)
             (let [remaining (max 1 (quot (- deadline (System/nanoTime)) 1000000)) next (refresh remaining)]
               (when (= next ::timeout) (unavailable! "Requested position did not become available before the deadline"))
               (recur next))))))))
