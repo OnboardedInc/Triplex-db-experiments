@@ -2294,3 +2294,21 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Lesson:** CLOCK_BOOTTIME minus CLOCK_MONOTONIC is accumulated suspend time, often zero on a fresh VM, so no tolerance can tell the
   two apart by observation. Which clock a probe reads has to be proven from the program itself (its compiled helper calls), with
   observation kept only as a transport check that may honestly say INCONCLUSIVE.
+
+## 2026-11-09: HS01 round 2: 217 B per fact at 10k; P5 round B can seed again
+
+- **a9ebe759 (Sonnet):** retention by bytes (64 MiB tail at 10k; frames 140.10 to 15.25 B/fact), compact ids (core-generator ids as
+  integers with a 63-slot head dictionary, ULIDs as 16-byte blobs), and the round 1 finding fixed by guaranteed purge progress rather than
+  a frame-size cap. **10k W0: 217.06 B/fact, 0.970 GB** (predicted 220-250); both G9 bars pass (300 B, 1.4 GB). G6, G7, G8 (80 stops,
+  zero lost) pass. In review (CX-VHS01 round 2).
+- **The production caveat:** with ULID-shaped ids the same 10k store is 308.09 B/fact (1.377 GB), about 8 B over the bar. The next
+  levers are the entity dictionary storing every name twice (28.09 B/fact), numeric refs and booleans bound as 8-byte REAL, and R47's
+  one-record journal (journal is still 97.55 B/fact).
+- **What it unblocks:** P5 round B stopped at 10.85 GB partway through a 10k seed. At about 1 GB for 10k and an estimated 9.7 GB for
+  100k, P5B round 3 (Sonnet) now seeds 10k and screens B0-B2; 100k waits for a disk window.
+- **Lesson:** the W0 generator's ids are not production ids. Every size result should be reported on both, so a bar met on a test-only
+  id shape is not mistaken for a production result.
+- **Disk:** removing 15 finished worktrees (their two sets of untracked receipts saved to evidence/worktree-leftovers/) took free space
+  from 7.8 to 15 GiB.
+- **Merged since the last entry:** contract 0.4.0 (e09c2ff4). DF01 round 4 and G03 round 7a are accepted offline or in review; see
+  STATE.

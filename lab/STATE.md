@@ -380,3 +380,7 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   suspend time is near zero (a fresh VM). The 15 timestamps themselves are confirmed nsecs(monotonic). Orchestrator decision on F3: prove
   the clock from the compiled program (bpftrace's own dump: monotonic helper only), keep observation as a transport sanity check that
   reports INCONCLUSIVE when the clocks are not separable. Round 11 (Sonnet) running.
+- 2026-11-09 HS01 round 2 (Sonnet, a9ebe759): 217.06 B/fact at 10k W0 (G9 passes), 308.09 with ULID ids (diagnostic). In review
+  (CX-VHS01 round 2). P5B round 3 (Sonnet) merges main and HS01, seeds 10k, screens B0-B2; no 100k. HS01 round 3 (R47 journal record,
+  entity dictionary, integer binds) waits for the review. Removed 15 finished worktrees (receipts from int-q and verify-a01-0314 copied to
+  evidence/worktree-leftovers/); free 15 GiB.
