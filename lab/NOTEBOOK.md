@@ -1942,3 +1942,55 @@ Where each priority stands, from evidence so far (research probes and baselines;
 ## 2026-11-09: K01 G0 count fix accepted offline
 
 - **verify/K01 12a30d8 ACCEPT-OFFLINE:** the reviewer independently recomputed 61,384 expected rows; 468 tests and both TypeScript checks pass. The K01 live rerun (LIVE-round12) is next in the scale window after P5 A1.
+
+## 2026-11-09: RT01 round 4 (F7 fix) in review; disk housekeeping
+
+- **RT01 472c2c24:** journal reads use all valid time at the committed position cut; 1,096 tests pass; A0 and compact clock regressions pass. CX-VRT01 reviews round 4, including the pack verification the builder deferred for disk.
+- **Disk:** 4.8 GiB free before cleanup, 9.9 GiB after removing five finished worktrees.
+
+## 2026-11-09: P5 A1 stopped on the disk guard; FD01 round 2 FIX-FIRST; K01 live round 12 takes the slot
+
+- **P5 A1 (e283d83a):** stopped during seeding because host disk fell below 5 GiB. G0 never ran, so the K01 symptom was neither reproduced nor ruled out. The disk guard worked as designed. P5 A1 also needs K01's native G0 handoff, so it waits for K01's live rerun.
+- **FD01 round 2 review (verify/FD01 0fcaa911):** atomicity fixed (13/13, 900 crash trials, every split variant rejected). New R2-F1: two processes with different performance.now() origins and the same "host-monotonic" label passed, so a true 402.37 ms lag read as 122.35 ms. **Lesson:** a clock label is not a clock origin; cross-process intervals need one shared, origin-bound capture primitive. The ERESOLVE failure is missing offline npm metadata, not a peer-range defect. CX-FD01 round 3 fixes R2-F1.
+- **K01 live round 12 (CX-K01-R2) on xtdb-s1:** must capture actual COUNT results and the manifest before removing volumes.
+
+## 2026-11-09: QNODELAY round 4 FIX-FIRST; round 5 scoped to one reader function
+
+- **verify/QNODELAY 813fcf4e:** the stall result reproduces offline (120/240 keep-alive versus 0/240 no-delay); keep-alive stays default. Three medium gaps: one reader skips the parser (R4-F1), malformed but labeled timings reach EXP-QG1's summaries (R4-F2), and per-event mode does not bind a run's mode, so compare.mjs can merge both modes (R4-F3).
+- **Lesson:** a shared parser of metadata is not a shared reader of data. Round 5 makes one function the only way to read QLever latency data, returning a typed run with one mode, plus a test that fails on any other access. This is the fifth round of receipt hardening; the measured finding has been stable since round 2, so later rounds are limited to the reviewer's named findings.
+
+## 2026-11-09: K01 live round 12: count fix confirmed live, next stop is a lazily created table
+
+- **Confirmed live (3d334592):** tx_assertions COUNT = 61,384 on the engine, captured before cleanup, matching the source-derived expectation exactly.
+- **Next failure:** G0 queried tx_native_relation_attempts, which the adapter declares but XTDB 2 creates only on first insert; this seed never writes it.
+- **Lesson:** each full live run has found exactly one new G0 assumption about the engine (union integer type, journal rows, lazy table creation). Round 13 runs a small diagnostic smoke run that records every failure in order instead of stopping at the first, then fixes them all offline, before the next full run. Absence of a table is checked through the catalog, never by catching a planning error.
+
+## 2026-11-09: EXP-P2B round 1: in-memory commit latency misses P2 with no engine involved
+
+- **5d1ee8f9:** 140 tests pass; a 10-second in-memory diagnostic with 256 readers checked 194,153 reads with no content, receipt, feed-order, resume or clock errors. Read p99 9.80 ms; feed lag p99 35.23 ms.
+- **But** offer-to-ACK for 5-10 facts was p50 45.94 / p99 82.45 ms (9 commits), against p50 <= 10 / p99 <= 50 ms. P2Q measured p50 5.9 ms offline on lane Q.
+- **Hypothesis:** 256 readers sharing the broker's event loop. Round 2 splits latency by stage on one clock, varies reader count and placement, and raises the sample to 200 commits per band before any live XTDB run.
+
+## 2026-11-09: RT01 round A accepted offline
+
+- **verify/RT01 7222e7e9:** F7 fixed through Temporal.journalBasis(P), an explicit all-valid-time mode bound to a position and used by every journal, command and feed read, including KV. Five fresh cases with 40 clock samples match O-REPLAY 0.5.0; 55 explicit-valid-time cuts still filter correctly; public inputs cannot set the internal all-valid-time flag.
+- **Pack gate:** fails on the out-of-scope DuckDB package's declarations, not on RT01. Pack qualification for lab packages needs its own gate.
+- **Next:** live G2 and G6 on a slot; contract 0.4.0 after 0.3.14.
+
+## 2026-11-09: FD01 accepted offline; P3M and DI01 started; contract 0.3.14 FIX-FIRST
+
+- **FD01 ACCEPT-OFFLINE (verify/FD01 c20526eb):** 14 host tests, 11 bench tests, 900 crash observations; forged origins, reboot identity, worker threads, ACK substitution and wrong-position records are all refused. FD01 moves lab/bench/driver.ts and lab/bin/gate.mjs, so it merges through a contract (0.4.0, with Q98a-i; Q98j waits for Sam). Open: native publication-event integration, live P3.
+- **Started from R41:** EXP-P3M (CX-P3M, brief lab/experiments/EXP-P3M/BRIEF.md) on FD01; EXP-DI01 design check by an Opus planner before its builder.
+- **Contract 0.3.14 review (verify/A01-0314 7c8f1f99) FIX-FIRST:** every gate passed, but two broker regressions came from the merge: GS12F's optional valueDomain field was left out by INT-Q's broker adapter, so it silently used the fallback domain (integer range error mistyped; valid depth-128 JSON refused). **Lesson:** an optional field on a shared adapter interface turns a missing implementation into silent fallback behavior that no gate sees; required fields make the compiler find the gap. Round 2 makes it required.
+
+## 2026-11-09 06:28Z: hourly pass (NORTH-STAR reread first): usage 7%; the scorecard is still all OPEN; two researchers
+
+- **Learnings since 05:27Z:**
+  - **Accepted:** P2X2 (merged; native lane X P2 closed), INT-Q (50 process stops, zero acknowledged commits lost), K01's G0 count fix (confirmed live at 61,384), RT01 round A (F7 fixed), FD01 (atomicity and an origin-bound lag clock).
+  - **Live runs keep finding one engine assumption each.** K01 hit three in a row: the union integer type, journal rows in the count, and lazily created tables. Round 13 switches to a diagnostic smoke run that records every failure.
+  - **Merges create silent fallbacks.** Contract 0.3.14's gates all passed, but INT-Q's broker adapter left out GS12F's optional valueDomain field, so two typed refusals changed. A required field would have failed to compile.
+  - **A label is not a proof:** FD01's equal clock labels hid different clock origins (402 ms read as 122 ms); QNODELAY's per-event mode did not bind a run's mode. Both fixes bind the property to its source.
+  - **P2 is the priority with no passing number anywhere.** Native XTDB is closed (fresh p50 33 ms); P2B's broker in memory gave p50 46 ms with 256 readers, with no engine involved, which points at placement or the Node event loop.
+  - **The disk guard stopped P5 A1** below 5 GiB; housekeeping restored 9.8 GiB.
+- **Scorecard:** every P1-P5 cell is still OPEN. Each accepted result is offline or diagnostic; promotion waits on contract 0.4.0, G03's executing gate and live windows. That ordering needs a written critical path.
+- **Dispatched (Opus 5.5 high):** R42, P2 commit latency for a Node broker under 256 readers (placement, event-loop contention, SQLite fsync durability and cost on macOS and Linux); R43, the critical path from today's accepted work to the first PASS cell on the scorecard.
