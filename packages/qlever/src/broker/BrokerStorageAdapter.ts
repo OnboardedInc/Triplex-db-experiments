@@ -976,6 +976,21 @@ export const makeQleverBrokerStorageAdapter = (
       ),
     currentCommitPosition: () =>
       Effect.flatMap(current, (state) => Effect.succeed(state ? state.sourceK : broker.head())),
+    // [EXP-QH1-R4] Why: a public pull captures its record position once and reads every level at it (readBasis honors an explicit
+    // position). Outside a transaction and outside a withCurrentPull context that is the broker head now; inside such a context it is the
+    // context's own cut (the first read pins it, as readBasis does), so an explicit caller pin is not overridden. Inside a transaction
+    // it is undefined: reads already use the transaction's snapshot, and an explicit committed position would hide its staged rows.
+    // Rejected: currentCommitPosition here (inside a transaction it names the pre-transaction snapshot and visibleA0 hides staged rows).
+    pullPosition: () =>
+      Effect.flatMap(current, (state) =>
+        Effect.sync(() => {
+          if (state) return undefined;
+          const context = pullContext.getStore();
+          if (!context) return broker.head();
+          context.basis ??= broker.head();
+          return context.basis;
+        }),
+      ),
     claimCommand: (id, txId, timestamp) =>
       Effect.flatMap(required, (state) =>
         Effect.tryPromise({

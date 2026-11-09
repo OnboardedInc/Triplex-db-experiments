@@ -35,6 +35,12 @@ export interface StorageAdapterService {
     root: string,
     basis: ResolvedTemporalBasis,
   ) => Effect.Effect<import("../store/Triples.js").ReachResult | undefined, ReadError>;
+  // [EXP-QH1-R4] Why: a whole-pull read (Triples.reach) that falls back level by level must read every level at one exact record
+  // position, captured once at its start. Whether the adapter has such a position to offer depends on the caller's transaction:
+  // inside one, reads already use the transaction's snapshot and must still see its staged writes, which an explicit committed position
+  // would hide (QLever, A0 staged K+n). undefined from the method means "do not pin"; an absent method means the same.
+  // Rejected: always using currentCommitPosition (hides staged rows on adapters whose position is the pre-transaction one).
+  readonly pullPosition?: () => Effect.Effect<number | undefined, ReadError>;
   /** Optional exact-snapshot policy, propagated to public repository reads. */
   readonly snapshotReadPolicy?: import("./ReadSurface.js").SnapshotReadPolicy;
   // [CX-A01-0314-R2] Why: missing composition domains must fail compilation. Rejected: optional domains (silently admitted broker values against memory limits).
