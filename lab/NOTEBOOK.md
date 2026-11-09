@@ -2236,3 +2236,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Rejected:** trusting SQLite settings (per connection, overridable), and process kills as sync tests (the VM page cache survives a container kill; kill-after-ACK is a recovery test, Q108c). Enforcing durability for the candidate is not allowed (Q108d).
 - **Lesson:** "the writer says it synced" and "the setting says FULL" are both candidate claims. The only trustworthy durability evidence comes from below the candidate, here the guest kernel.
 - **R47 (journal format)** committed with rulings Q107a-c; Q107-S asked of Sam. DF01 round 4 (Sonnet) fixes the lane D feed emitting journal facts.
+
+## 2026-11-09: QH1 round 1: 302 pulls per CPU second against R46's 1,140-1,720 prediction
+
+- **65ffe2f2:** owner prefetch and whole-pull in the reader worker, a decoder fast path, H1 routing; 100,000 pulls with zero O-REPLAY mismatches; RQ01 route checks pass. Single-client 302.3 and four-client 323.5 pulls/CPU-second (baseline 172.5; bar 1,100). P2 p99 ratio 1.20x against 1.10x allowed. R46's decomposition gate was not completed.
+- **The gap:** R46 measured 4-6x in isolation; the real stack gave 1.75x. QH1 round 2 (Sonnet) decomposes per-pull CPU on the real stack, ABAB against R46's microbench path, before any further design change.
+- **DF01 round 4 (Sonnet, 302a7a63)** fixed the lane D feed emitting journal facts (real Datomic peer test; G0 1,279); in review.
+- **Lesson:** a microbench prediction holds only for the code path it measured; the gate that decomposes the real path has to come first, as R46 itself said.
