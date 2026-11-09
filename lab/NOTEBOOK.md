@@ -2222,3 +2222,10 @@ Where each priority stands, from evidence so far (research probes and baselines;
   predicted). At 509 B, 100k is about 23 GB, which still does not fit this disk next to everything else.
 - **Lesson:** a size prediction built on a prototype with substituted ids measured something the real generator does not produce. Prototype
   with the real id generator.
+
+## 2026-11-09: Sam's decisions; protocol v2 (Sonnet builders); observer accepted fail-closed
+
+- **Sam approved every pending recommendation** (Q106a-g; verbatim in lab/research/SAM-decisions-2026-11-09.md): NS/GS rung, quiet windows on his whole Mac (default colima VM now stopped), broker-backed lane X, erasure S1-S4, an opaque position token, tiered lane D tenancy, VM hardening H1/H2, the pre-commit hook (installed). He switched builders to Sonnet 5.5 at high (protocol v2) to use more Claude and less Codex.
+- **Disk guidance given:** about 60 GiB free for 100k on one lane at a time, about 150 GiB for several lanes plus evidence.
+- **OBS01 accepted offline,** with live P3 evidence refused until writer sync is independently witnessed; that witness is the next design item on the critical path.
+- **HS01 review:** one finding (a frame over 16 MiB stalls finite retention); round 2 is the first Sonnet builder.

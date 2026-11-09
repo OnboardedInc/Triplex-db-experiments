@@ -308,3 +308,8 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - Option to raise next (no action yet): with the default VM stopped, the Mac has 12 CPUs / 36 GiB; the triplex2 VM is 6 CPU / 12 GiB.
   Raising it (for example 10 CPU / 24 GiB, disk 120 GiB) would fit a 256-reader duet (Q100l) and 100k residents, but it restarts the VM
   and changes the pool sizes that slots.json pins, so it needs a contract step and a quiet moment.
+- 2026-11-09 OBS01 rounds 6-8 ACCEPT-OFFLINE (verify/OBS01-r7 cd6ac047): inode-bound watcher, refused file replacement and inverted decision
+  windows, decision versus publication stamps per Q100s. F2 (a writer with sync disabled) is closed fail-closed: the observer REFUSES live
+  durable/P3 evidence until the writer's synchronization is independently witnessed. **Open on the critical path:** a design for that
+  witness (for example the trusted broker wrapper or container setting the pragmas and attesting them, or syscall-level fsync evidence in
+  the VM). It joins G03 round 7's integration brief; an Opus design check goes first when a slot frees.
