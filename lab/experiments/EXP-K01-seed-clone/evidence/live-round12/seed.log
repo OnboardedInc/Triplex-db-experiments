@@ -1,0 +1,25 @@
+[xtdb-seed 06:02:27] seeding 500 subjects (20 accounts) into scope ns-xtdb-dev500-seed-ns-v2-0604cd31 at postgres://xtdb:xtdb@127.0.0.1:5471/xtdb through composition public
+[xtdb-seed 06:02:44] seed: 20 shared account worlds in 16.6 s
+[xtdb-seed 06:03:20] seed: 500 subjects in 53.2 s
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+PostgresError: Errors planning SQL statement:
+  - Table not found: tx_native_relation_attempts
+  - Column not found: scope_key
+    at ErrorResponse (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js:815:30)
+    at handle (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js:489:6)
+    at Socket.data (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/node_modules/.pnpm/postgres@3.4.9/node_modules/postgres/src/connection.js:324:9)
+    at Socket.emit (node:events:519:28)
+    at addChunk (node:internal/streams/readable:561:12)
+    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+    at Readable.push (node:internal/streams/readable:392:5)
+    at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+  severity: 'ERROR',
+  severity_local: 'ERROR',
+  code: '08P01',
+  detail: '{"category":"incorrect","code":"xtdb/sql-error","message":"Errors planning SQL statement:\\n  - Table not found: tx_native_relation_attempts\\n  - Column not found: scope_key","data":{"errors":[{"table-chain":["tx_native_relation_attempts"],"tx-db-name":null},{"chain":["scope_key"]}]}}'
+}
+
+Node.js v22.23.2

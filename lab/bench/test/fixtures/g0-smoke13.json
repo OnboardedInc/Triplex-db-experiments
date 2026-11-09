@@ -1,0 +1,170 @@
+{
+  "sourceCatalog": {
+    "tx_assertions": {
+      "_id": ":utf8",
+      "_system_from": ":instant",
+      "_system_to": "[:? :instant]",
+      "_valid_from": ":instant",
+      "_valid_to": "[:? :instant]",
+      "attribute": ":utf8",
+      "created_by": "[:? :utf8]",
+      "entity_id": ":utf8",
+      "entity_type": "[:? :utf8]",
+      "id": ":utf8",
+      "recorded_at": ":i64",
+      "recorded_position": ":i64",
+      "retract_tx_id": ":null",
+      "retracted_at": ":null",
+      "retracted_position": ":null",
+      "schema_version": ":i64",
+      "scope_key": ":utf8",
+      "tx_id": ":utf8",
+      "valid_from": ":i64",
+      "valid_to": ":null",
+      "value_boolean": ":null",
+      "value_datetime": "[:? :i64]",
+      "value_identity": ":utf8",
+      "value_json": "[:? :utf8]",
+      "value_number": "[:? :i64]",
+      "value_string": "[:? :utf8]",
+      "value_type": ":utf8"
+    },
+    "tx_attempts": {
+      "_id": ":utf8",
+      "_system_from": ":instant",
+      "_system_to": "[:? :instant]",
+      "_valid_from": ":instant",
+      "_valid_to": "[:? :instant]",
+      "attempt_id": ":utf8",
+      "operation_id": ":utf8",
+      "position": ":i64",
+      "scope_key": ":utf8"
+    },
+    "tx_claims": {
+      "_id": ":utf8",
+      "_system_from": ":instant",
+      "_system_to": "[:? :instant]",
+      "_valid_from": ":instant",
+      "_valid_to": "[:? :instant]",
+      "command_id": ":utf8",
+      "position": ":i64",
+      "recorded_at": ":i64",
+      "scope_key": ":utf8",
+      "tx_id": ":utf8"
+    },
+    "tx_constraint_generations": {
+      "_id": ":nothing",
+      "_system_from": ":instant",
+      "_system_to": "[:? :instant]",
+      "_valid_from": ":instant",
+      "_valid_to": "[:? :instant]",
+      "run_id": ":nothing",
+      "scope_key": ":nothing",
+      "source_k": ":nothing"
+    },
+    "tx_constraint_graphs": {
+      "_id": ":nothing",
+      "_system_from": ":instant",
+      "_system_to": "[:? :instant]",
+      "_valid_from": ":instant",
+      "_valid_to": "[:? :instant]",
+      "attribute": ":nothing",
+      "entity_id": ":nothing",
+      "entity_type": ":nothing",
+      "id": ":nothing",
+      "phase": ":nothing",
+      "run_id": ":nothing",
+      "scope_key": ":nothing",
+      "valid_from": ":nothing",
+      "valid_to": ":nothing",
+      "value_boolean": ":nothing",
+      "value_datetime": ":nothing",
+      "value_identity": ":nothing",
+      "value_json": ":nothing",
+      "value_number": ":nothing",
+      "value_string": ":nothing",
+      "value_type": ":nothing"
+    },
+    "tx_meta": {
+      "_id": ":utf8",
+      "_system_from": ":instant",
+      "_system_to": "[:? :instant]",
+      "_valid_from": ":instant",
+      "_valid_to": "[:? :instant]",
+      "position": ":i64",
+      "scope_key": ":utf8"
+    },
+    "tx_query_relations": {
+      "_id": ":nothing",
+      "_system_from": ":instant",
+      "_system_to": "[:? :instant]",
+      "_valid_from": ":instant",
+      "_valid_to": "[:? :instant]",
+      "arg1": ":nothing",
+      "arg2": ":nothing",
+      "depth": ":nothing",
+      "rule_name": ":nothing",
+      "run_id": ":nothing",
+      "scope_key": ":nothing"
+    }
+  },
+  "sourceCounts": {
+    "tx_assertions": {
+      "count": 19048
+    },
+    "tx_attempts": {
+      "count": 33
+    },
+    "tx_claims": {
+      "count": 33
+    },
+    "tx_constraint_generations": {
+      "count": 0
+    },
+    "tx_constraint_graphs": {
+      "count": 0
+    },
+    "tx_meta": {
+      "count": 1
+    },
+    "tx_native_relation_attempts": {
+      "absent": true,
+      "catalogCertified": true
+    },
+    "tx_native_relations": {
+      "absent": true,
+      "catalogCertified": true
+    },
+    "tx_query_generations": {
+      "absent": true,
+      "catalogCertified": true
+    },
+    "tx_query_members": {
+      "absent": true,
+      "catalogCertified": true
+    },
+    "tx_query_relations": {
+      "count": 0
+    }
+  },
+  "provenance": {
+    "catalog": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-K01-R2/round13/20261109T061737/observations/source-capture.json",
+    "catalogSha256": "528617acf102dc1888f6f403867f68a1d308a6000b7762c47511cdb2470e4d44",
+    "ledger": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-K01-R2/round13/20261109T061737/observations/ledger.json",
+    "ledgerSha256": "e342e743d872002edf6dd09623fe3a21822bd80cdbfb16c3f1b3df3307040c60"
+  },
+  "errors": [
+    {
+      "step": "golden",
+      "source": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-K01-R2/round13/20261109T061737/observations/golden.log",
+      "sha256": "9f068b409d6bc39053b31bc600419c0de72308decee618a6fe35eedeb892d591",
+      "bytes": "[K01] created tx2-golden-xtdb-2f501169; retained until manual golden-rm, including on qualification failure\n[lab] sha256File is not defined\nReferenceError: sha256File is not defined\n    at golden (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/bin/engine.mjs:730:66)\n"
+    },
+    {
+      "step": "fresh-freeze",
+      "source": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-K01-R2/round13/20261109T061737/observations/fresh-freeze.log",
+      "sha256": "f3d1aba18c16cfe67e38d9663fa2c31191392db149edbf48dfb07c6230144f4c",
+      "bytes": "export XTDB_URL='postgres://xtdb:xtdb@127.0.0.1:5471/xtdb'\nexport XTDB_INTEGRATION=1\nexport TRIPLEX_LAB_SLOT_OWNER='/Users/sam/projects/triplex-db-2/lab/locks/xtdb-s1/owner.json'\nexport DOCKER_HOST='unix:///Users/sam/.colima/triplex2/docker.sock'  # only for manual docker calls; never the default context\n[lab] tx2-xtdb-s1 ready (health=healthy pgwire=open); cap 3.50 GiB, 2 CPU, config 13f5a70b3665\n[lab] sha256File is not defined\nReferenceError: sha256File is not defined\n    at fresh (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/k01/lab/bin/engine.mjs:656:23)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n"
+    }
+  ]
+}

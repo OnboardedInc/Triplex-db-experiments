@@ -1,0 +1,148 @@
+TAP version 13
+# Subtest: captured failure bytes bind this absent-table fixture
+ok 1 - captured failure bytes bind this absent-table fixture
+  ---
+  duration_ms: 1.390541
+  type: 'test'
+  ...
+# Subtest: all declared tables and columns have explicit seed policies; catalog-certified absence pins
+ok 2 - all declared tables and columns have explicit seed policies; catalog-certified absence pins
+  ---
+  duration_ms: 8.859958
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_assertions
+ok 3 - catalog/table policy refuses wrong content: tx_assertions
+  ---
+  duration_ms: 0.417625
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_attempts
+ok 4 - catalog/table policy refuses wrong content: tx_attempts
+  ---
+  duration_ms: 0.294542
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_claims
+ok 5 - catalog/table policy refuses wrong content: tx_claims
+  ---
+  duration_ms: 0.411459
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_constraint_generations
+ok 6 - catalog/table policy refuses wrong content: tx_constraint_generations
+  ---
+  duration_ms: 0.34175
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_constraint_graphs
+ok 7 - catalog/table policy refuses wrong content: tx_constraint_graphs
+  ---
+  duration_ms: 3.770292
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_meta
+ok 8 - catalog/table policy refuses wrong content: tx_meta
+  ---
+  duration_ms: 0.502833
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_native_relation_attempts
+ok 9 - catalog/table policy refuses wrong content: tx_native_relation_attempts
+  ---
+  duration_ms: 0.951
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_native_relations
+ok 10 - catalog/table policy refuses wrong content: tx_native_relations
+  ---
+  duration_ms: 0.723375
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_query_generations
+ok 11 - catalog/table policy refuses wrong content: tx_query_generations
+  ---
+  duration_ms: 1.130583
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_query_members
+ok 12 - catalog/table policy refuses wrong content: tx_query_members
+  ---
+  duration_ms: 0.557125
+  type: 'test'
+  ...
+# Subtest: catalog/table policy refuses wrong content: tx_query_relations
+ok 13 - catalog/table policy refuses wrong content: tx_query_relations
+  ---
+  duration_ms: 0.523625
+  type: 'test'
+  ...
+# Subtest: absent nullable column and present NULL column agree; non-NULL refuses
+ok 14 - absent nullable column and present NULL column agree; non-NULL refuses
+  ---
+  duration_ms: 2.0915
+  type: 'test'
+  ...
+# Subtest: every required column requires catalog presence and an observed non-NULL value
+ok 15 - every required column requires catalog presence and an observed non-NULL value
+  ---
+  duration_ms: 19.749917
+  type: 'test'
+  ...
+# Subtest: catalog mutation, incomplete policy and unavailable inventory refuse
+ok 16 - catalog mutation, incomplete policy and unavailable inventory refuse
+  ---
+  duration_ms: 2.149125
+  type: 'test'
+  ...
+# Subtest: typed catalog rejects malformed/partial/duplicate/contradictory observations
+ok 17 - typed catalog rejects malformed/partial/duplicate/contradictory observations
+  ---
+  duration_ms: 0.480125
+  type: 'test'
+  ...
+# Subtest: captured command inputs reproduce the old count refusal, corrected count pins real public journal rows
+ok 18 - captured command inputs reproduce the old count refusal, corrected count pins real public journal rows
+  ---
+  duration_ms: 2084.863042
+  type: 'test'
+  ...
+# Subtest: retract/assert in one transaction retains the old physical row and journals both changes
+ok 19 - retract/assert in one transaction retains the old physical row and journals both changes
+  ---
+  duration_ms: 1.082416
+  type: 'test'
+  ...
+# Subtest: input partition count agrees with actual seed writer (1, 400)
+ok 20 - input partition count agrees with actual seed writer (1, 400)
+  ---
+  duration_ms: 42.563708
+  type: 'test'
+  ...
+# Subtest: input partition count agrees with actual seed writer (23, 400)
+ok 21 - input partition count agrees with actual seed writer (23, 400)
+  ---
+  duration_ms: 41.006125
+  type: 'test'
+  ...
+# Subtest: input partition count agrees with actual seed writer (21, 7)
+ok 22 - input partition count agrees with actual seed writer (21, 7)
+  ---
+  duration_ms: 68.664
+  type: 'test'
+  ...
+# Subtest: count oracle rejects missing or invalid partition inputs
+ok 23 - count oracle rejects missing or invalid partition inputs
+  ---
+  duration_ms: 0.215708
+  type: 'test'
+  ...
+1..23
+# tests 23
+# suites 0
+# pass 23
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2861.47875

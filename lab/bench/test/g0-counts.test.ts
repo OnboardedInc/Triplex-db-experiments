@@ -149,6 +149,8 @@ test("captured command inputs reproduce the old count refusal, corrected count p
       result: { ...seed, expectedAssertions: plan.business },
     };
     const expected = expectedN01(m);
+    // [EXP-K01-R13] Why: this storage spy tests row cardinality, not XTDB catalog/identity serialization; dedicated catalog controls cover the production policy. Rejected: fabricating native catalog evidence for this model.
+    delete expected.tables;
     const tables: any = Object.fromEntries(Object.keys(fields).map((t) => [t, []]));
     tables.tx_assertions = [...s.rows.values()];
     tables.tx_claims = Array.from({ length: plan.commands }, (_, i) => ({ position: i + 1 }));

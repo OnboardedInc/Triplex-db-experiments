@@ -1,0 +1,9 @@
+{
+  "root": "/Users/sam/projects/triplex-db-2/references/xtdb",
+  "head": "c6c19623d90c658c15400fb46dc056f3735ed57b",
+  "sources": {
+    "core/src/main/clojure/xtdb/information_schema.clj": "ea43725566e4e0274a9e98e5a84cb0430a05d4dd9aca198c79a484d0fa98faa5",
+    "core/src/main/kotlin/xtdb/indexer/Snapshot.kt": "5aeabdb7ba3650f03539149907b74de3756afd3db448925812f2fce58f659468",
+    "core/src/main/kotlin/xtdb/api/tx/OpenTx.kt": "e1f1c2d6b4a9262f6a93987311261d9b8a2133eb615eb6848fdb01a527714f4f"
+  }
+}

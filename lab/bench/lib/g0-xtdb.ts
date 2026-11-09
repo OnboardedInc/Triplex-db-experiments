@@ -1,3 +1,4 @@
+import { typedCatalog, type Catalog } from "./g0-catalog.ts";
 import { openWire } from "./g0-wire.ts";
 // [EXP-K01-R8] Why: read complete stored rows on the measured endpoint with deadlines. Rejected: omitting validation, receipt or side-table columns from the content gate.
 import { pathToFileURL } from "node:url";
@@ -32,7 +33,28 @@ export function expectedN01(m: any): Expected {
     scope: m.scope,
     position: m.result.lastPosition,
     world: "N01",
+    // [EXP-K01-R13] Why: the N01 seed writes only core tables; valid-to/retraction cells stay NULL, and value channels follow generator kinds. Rejected: querying absent side tables or silently ignoring unexpected side rows/column values.
+    tables: Object.fromEntries(
+      Object.entries(fields).map(([t, cols]) => [
+        t,
+        {
+          written: ["tx_assertions", "tx_claims", "tx_attempts", "tx_meta"].includes(t),
+          columns: Object.fromEntries(
+            cols.map((c) => [
+              c,
+              ["tx_assertions", "tx_claims", "tx_attempts", "tx_meta"].includes(t) &&
+                !(
+                  t === "tx_assertions" &&
+                  ["valid_to", "retracted_at", "retracted_position", "retract_tx_id"].includes(c)
+                ) &&
+                (c !== "value_boolean" || plan.valueKinds.includes("boolean")),
+            ]),
+          ),
+        },
+      ]),
+    ),
     counts: {
+      ...Object.fromEntries(Object.keys(fields).map((t) => [t, 0])),
       tx_assertions: plan.storedAssertions,
       tx_claims: m.result.commands,
       tx_attempts: m.result.commands,
@@ -58,38 +80,72 @@ export async function openG0(endpoint: string) {
       }),
     );
   const scopeKey = (scope: string) => DatabaseScope.test(scope);
+  let currentCatalog: Catalog | undefined;
+  const catalogValue = () => {
+    if (!currentCatalog) throw Error("G0 catalog not read");
+    return currentCatalog;
+  };
   const reader: Reader = {
     endpoint,
-    count: async (table, scope, signal) => {
+    catalog: async (signal) => {
+      currentCatalog = typedCatalog(
+        await query(
+          "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name",
+          [],
+          signal,
+        ),
+        await query(
+          "SELECT table_name,column_name,xt_type FROM information_schema.columns WHERE table_schema = 'public' ORDER BY table_name,column_name",
+          [],
+          signal,
+        ),
+      );
+      return currentCatalog;
+    },
+    count: async (table, scope, signal, allScopes = false) => {
+      // [EXP-K01-R13] Why: this complete typed catalog proves absence; written-table policy refuses it before counting. Rejected: catching a failed COUNT and returning zero.
+      if (!catalogValue()[table]) return 0;
       const r = await query(
-        `SELECT COUNT(*) AS n FROM ${table} FOR ALL VALID_TIME WHERE scope_key = ?`,
-        [scopeKey(scope)],
+        `SELECT COUNT(*) AS n FROM ${table} FOR ALL VALID_TIME${allScopes || !Object.hasOwn(catalogValue()[table], "scope_key") ? "" : " WHERE scope_key = ?"}`,
+        allScopes || !Object.hasOwn(catalogValue()[table], "scope_key") ? [] : [scopeKey(scope)],
         signal,
       );
       if (r.length !== 1 || !Number.isSafeInteger(Number(r[0].n))) throw Error("G0 invalid count");
       return Number(r[0].n);
     },
-    scopes: async (signal) =>
-      (
+    scopes: async (signal) => {
+      if (
+        !catalogValue().tx_meta ||
+        !Object.hasOwn(catalogValue().tx_meta, "scope_key") ||
+        !Object.hasOwn(catalogValue().tx_meta, "position")
+      )
+        throw Error("G0 missing scope catalog");
+      return (
         await query(
           "SELECT scope_key, position FROM tx_meta FOR ALL VALID_TIME ORDER BY scope_key",
           [],
           signal,
         )
-      ).map((r) => ({ scope_key: String(r.scope_key), position: Number(r.position) })),
+      ).map((r) => ({ scope_key: String(r.scope_key), position: Number(r.position) }));
+    },
     async *scan(table: Table, scope: string, signal: AbortSignal) {
-      const cols = fields[table];
+      const inventory = catalogValue()[table];
+      // [EXP-K01-R13] Why: an absent table has no rows only when certified by this read's catalog. Rejected: a stale catalog or an ignored SQL error as an empty scan.
+      if (!inventory) return;
+      const cols = fields[table].filter((c) => Object.hasOwn(inventory, c));
+      const scoped = Object.hasOwn(inventory, "scope_key");
       const pageSize = 4096;
       for (let offset = 0; ; offset += pageSize) {
         const rows = await bounded((s) =>
           wire.scan(
-            `SELECT * FROM ${table} FOR ALL VALID_TIME WHERE scope_key = ? ORDER BY ${cols.join(", ")} LIMIT ${pageSize} OFFSET ${offset}`,
-            [scopeKey(scope)],
+            `SELECT * FROM ${table} FOR ALL VALID_TIME${scoped ? " WHERE scope_key = ?" : ""}${cols.length ? ` ORDER BY ${cols.join(", ")}` : ""} LIMIT ${pageSize} OFFSET ${offset}`,
+            scoped ? [scopeKey(scope)] : [],
             AbortSignal.any([signal, s]),
           ),
         );
         // [EXP-K01-R8] Why: XTDB sparse SELECT * omits never-stored NULL columns; fill only declared NULLs and retain every returned column. Rejected: a fixed projection that drops dynamic bindings.
-        for (const row of rows) yield { ...Object.fromEntries(cols.map((c) => [c, null])), ...row };
+        for (const row of rows)
+          yield { ...Object.fromEntries(fields[table].map((c) => [c, null])), ...row };
         if (rows.length < pageSize) break;
       }
     },

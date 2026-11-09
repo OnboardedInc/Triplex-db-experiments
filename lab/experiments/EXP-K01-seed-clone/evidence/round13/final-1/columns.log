@@ -1,0 +1,598 @@
+TAP version 13
+# Subtest: independent inventory covers eleven tables and eighty-nine columns without exclusions
+ok 1 - independent inventory covers eleven tables and eighty-nine columns without exclusions
+  ---
+  duration_ms: 1.175083
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_generations._id
+ok 2 - independent SQL-reader clone mutation refuses tx_query_generations._id
+  ---
+  duration_ms: 7.855709
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_generations.scope_key
+ok 3 - independent SQL-reader clone mutation refuses tx_query_generations.scope_key
+  ---
+  duration_ms: 5.958917
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_generations.generation
+ok 4 - independent SQL-reader clone mutation refuses tx_query_generations.generation
+  ---
+  duration_ms: 6.748958
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_generations.source_position
+ok 5 - independent SQL-reader clone mutation refuses tx_query_generations.source_position
+  ---
+  duration_ms: 3.639
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_generations.row_count
+ok 6 - independent SQL-reader clone mutation refuses tx_query_generations.row_count
+  ---
+  duration_ms: 3.788458
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_generations.valid_at
+ok 7 - independent SQL-reader clone mutation refuses tx_query_generations.valid_at
+  ---
+  duration_ms: 3.386125
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_generations.recorded_at
+ok 8 - independent SQL-reader clone mutation refuses tx_query_generations.recorded_at
+  ---
+  duration_ms: 3.560584
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_generations.strategy
+ok 9 - independent SQL-reader clone mutation refuses tx_query_generations.strategy
+  ---
+  duration_ms: 3.432708
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_members._id
+ok 10 - independent SQL-reader clone mutation refuses tx_query_members._id
+  ---
+  duration_ms: 3.827375
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_members.scope_key
+ok 11 - independent SQL-reader clone mutation refuses tx_query_members.scope_key
+  ---
+  duration_ms: 2.566875
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_members.generation
+ok 12 - independent SQL-reader clone mutation refuses tx_query_members.generation
+  ---
+  duration_ms: 2.256333
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_members.ordinal
+ok 13 - independent SQL-reader clone mutation refuses tx_query_members.ordinal
+  ---
+  duration_ms: 2.363416
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions._id
+ok 14 - independent SQL-reader clone mutation refuses tx_assertions._id
+  ---
+  duration_ms: 2.808708
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.scope_key
+ok 15 - independent SQL-reader clone mutation refuses tx_assertions.scope_key
+  ---
+  duration_ms: 1.8565
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.id
+ok 16 - independent SQL-reader clone mutation refuses tx_assertions.id
+  ---
+  duration_ms: 2.597792
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.entity_id
+ok 17 - independent SQL-reader clone mutation refuses tx_assertions.entity_id
+  ---
+  duration_ms: 4.641667
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.attribute
+ok 18 - independent SQL-reader clone mutation refuses tx_assertions.attribute
+  ---
+  duration_ms: 2.364709
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.value_type
+ok 19 - independent SQL-reader clone mutation refuses tx_assertions.value_type
+  ---
+  duration_ms: 2.27075
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.value_string
+ok 20 - independent SQL-reader clone mutation refuses tx_assertions.value_string
+  ---
+  duration_ms: 2.73575
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.value_number
+ok 21 - independent SQL-reader clone mutation refuses tx_assertions.value_number
+  ---
+  duration_ms: 2.366666
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.value_boolean
+ok 22 - independent SQL-reader clone mutation refuses tx_assertions.value_boolean
+  ---
+  duration_ms: 2.691584
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.value_datetime
+ok 23 - independent SQL-reader clone mutation refuses tx_assertions.value_datetime
+  ---
+  duration_ms: 6.909084
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.value_json
+ok 24 - independent SQL-reader clone mutation refuses tx_assertions.value_json
+  ---
+  duration_ms: 2.266083
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.recorded_at
+ok 25 - independent SQL-reader clone mutation refuses tx_assertions.recorded_at
+  ---
+  duration_ms: 2.549125
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.recorded_position
+ok 26 - independent SQL-reader clone mutation refuses tx_assertions.recorded_position
+  ---
+  duration_ms: 2.200583
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.valid_from
+ok 27 - independent SQL-reader clone mutation refuses tx_assertions.valid_from
+  ---
+  duration_ms: 2.240625
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.valid_to
+ok 28 - independent SQL-reader clone mutation refuses tx_assertions.valid_to
+  ---
+  duration_ms: 2.166625
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.created_by
+ok 29 - independent SQL-reader clone mutation refuses tx_assertions.created_by
+  ---
+  duration_ms: 3.745875
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.retracted_at
+ok 30 - independent SQL-reader clone mutation refuses tx_assertions.retracted_at
+  ---
+  duration_ms: 2.601583
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.retracted_position
+ok 31 - independent SQL-reader clone mutation refuses tx_assertions.retracted_position
+  ---
+  duration_ms: 2.177583
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.retract_tx_id
+ok 32 - independent SQL-reader clone mutation refuses tx_assertions.retract_tx_id
+  ---
+  duration_ms: 2.243666
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.entity_type
+ok 33 - independent SQL-reader clone mutation refuses tx_assertions.entity_type
+  ---
+  duration_ms: 2.081333
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.schema_version
+ok 34 - independent SQL-reader clone mutation refuses tx_assertions.schema_version
+  ---
+  duration_ms: 2.190458
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.tx_id
+ok 35 - independent SQL-reader clone mutation refuses tx_assertions.tx_id
+  ---
+  duration_ms: 2.151459
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_assertions.value_identity
+ok 36 - independent SQL-reader clone mutation refuses tx_assertions.value_identity
+  ---
+  duration_ms: 3.454541
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_meta._id
+ok 37 - independent SQL-reader clone mutation refuses tx_meta._id
+  ---
+  duration_ms: 2.592416
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_meta.scope_key
+ok 38 - independent SQL-reader clone mutation refuses tx_meta.scope_key
+  ---
+  duration_ms: 1.438459
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_meta.position
+ok 39 - independent SQL-reader clone mutation refuses tx_meta.position
+  ---
+  duration_ms: 1.474167
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_claims._id
+ok 40 - independent SQL-reader clone mutation refuses tx_claims._id
+  ---
+  duration_ms: 2.123792
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_claims.scope_key
+ok 41 - independent SQL-reader clone mutation refuses tx_claims.scope_key
+  ---
+  duration_ms: 1.584584
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_claims.command_id
+ok 42 - independent SQL-reader clone mutation refuses tx_claims.command_id
+  ---
+  duration_ms: 2.102083
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_claims.tx_id
+ok 43 - independent SQL-reader clone mutation refuses tx_claims.tx_id
+  ---
+  duration_ms: 5.233375
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_claims.recorded_at
+ok 44 - independent SQL-reader clone mutation refuses tx_claims.recorded_at
+  ---
+  duration_ms: 2.012958
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_claims.position
+ok 45 - independent SQL-reader clone mutation refuses tx_claims.position
+  ---
+  duration_ms: 2.030792
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_attempts._id
+ok 46 - independent SQL-reader clone mutation refuses tx_attempts._id
+  ---
+  duration_ms: 2.221292
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_attempts.scope_key
+ok 47 - independent SQL-reader clone mutation refuses tx_attempts.scope_key
+  ---
+  duration_ms: 1.467042
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_attempts.operation_id
+ok 48 - independent SQL-reader clone mutation refuses tx_attempts.operation_id
+  ---
+  duration_ms: 2.153125
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_attempts.attempt_id
+ok 49 - independent SQL-reader clone mutation refuses tx_attempts.attempt_id
+  ---
+  duration_ms: 2.162125
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_attempts.position
+ok 50 - independent SQL-reader clone mutation refuses tx_attempts.position
+  ---
+  duration_ms: 3.739917
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_relations._id
+ok 51 - independent SQL-reader clone mutation refuses tx_query_relations._id
+  ---
+  duration_ms: 2.148625
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_relations.scope_key
+ok 52 - independent SQL-reader clone mutation refuses tx_query_relations.scope_key
+  ---
+  duration_ms: 2.076334
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_relations.run_id
+ok 53 - independent SQL-reader clone mutation refuses tx_query_relations.run_id
+  ---
+  duration_ms: 2.658792
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_relations.rule_name
+ok 54 - independent SQL-reader clone mutation refuses tx_query_relations.rule_name
+  ---
+  duration_ms: 2.345834
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_relations.arg1
+ok 55 - independent SQL-reader clone mutation refuses tx_query_relations.arg1
+  ---
+  duration_ms: 2.475083
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_relations.arg2
+ok 56 - independent SQL-reader clone mutation refuses tx_query_relations.arg2
+  ---
+  duration_ms: 4.089333
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_query_relations.depth
+ok 57 - independent SQL-reader clone mutation refuses tx_query_relations.depth
+  ---
+  duration_ms: 2.226209
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs._id
+ok 58 - independent SQL-reader clone mutation refuses tx_constraint_graphs._id
+  ---
+  duration_ms: 2.366667
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.scope_key
+ok 59 - independent SQL-reader clone mutation refuses tx_constraint_graphs.scope_key
+  ---
+  duration_ms: 2.258292
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.run_id
+ok 60 - independent SQL-reader clone mutation refuses tx_constraint_graphs.run_id
+  ---
+  duration_ms: 2.262833
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.phase
+ok 61 - independent SQL-reader clone mutation refuses tx_constraint_graphs.phase
+  ---
+  duration_ms: 2.596709
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.id
+ok 62 - independent SQL-reader clone mutation refuses tx_constraint_graphs.id
+  ---
+  duration_ms: 2.370625
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.entity_id
+ok 63 - independent SQL-reader clone mutation refuses tx_constraint_graphs.entity_id
+  ---
+  duration_ms: 5.897666
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.attribute
+ok 64 - independent SQL-reader clone mutation refuses tx_constraint_graphs.attribute
+  ---
+  duration_ms: 2.265416
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.entity_type
+ok 65 - independent SQL-reader clone mutation refuses tx_constraint_graphs.entity_type
+  ---
+  duration_ms: 2.092375
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.valid_from
+ok 66 - independent SQL-reader clone mutation refuses tx_constraint_graphs.valid_from
+  ---
+  duration_ms: 1.892
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.valid_to
+ok 67 - independent SQL-reader clone mutation refuses tx_constraint_graphs.valid_to
+  ---
+  duration_ms: 1.886042
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.value_type
+ok 68 - independent SQL-reader clone mutation refuses tx_constraint_graphs.value_type
+  ---
+  duration_ms: 1.850291
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.value_string
+ok 69 - independent SQL-reader clone mutation refuses tx_constraint_graphs.value_string
+  ---
+  duration_ms: 3.369917
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.value_number
+ok 70 - independent SQL-reader clone mutation refuses tx_constraint_graphs.value_number
+  ---
+  duration_ms: 1.896625
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.value_boolean
+ok 71 - independent SQL-reader clone mutation refuses tx_constraint_graphs.value_boolean
+  ---
+  duration_ms: 1.987708
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.value_datetime
+ok 72 - independent SQL-reader clone mutation refuses tx_constraint_graphs.value_datetime
+  ---
+  duration_ms: 2.404541
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.value_json
+ok 73 - independent SQL-reader clone mutation refuses tx_constraint_graphs.value_json
+  ---
+  duration_ms: 2.081291
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_graphs.value_identity
+ok 74 - independent SQL-reader clone mutation refuses tx_constraint_graphs.value_identity
+  ---
+  duration_ms: 1.960208
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_generations._id
+ok 75 - independent SQL-reader clone mutation refuses tx_constraint_generations._id
+  ---
+  duration_ms: 3.739917
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_generations.scope_key
+ok 76 - independent SQL-reader clone mutation refuses tx_constraint_generations.scope_key
+  ---
+  duration_ms: 2.207167
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_generations.run_id
+ok 77 - independent SQL-reader clone mutation refuses tx_constraint_generations.run_id
+  ---
+  duration_ms: 2.095708
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_constraint_generations.source_k
+ok 78 - independent SQL-reader clone mutation refuses tx_constraint_generations.source_k
+  ---
+  duration_ms: 1.884625
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relations._id
+ok 79 - independent SQL-reader clone mutation refuses tx_native_relations._id
+  ---
+  duration_ms: 1.746875
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relations.scope_key
+ok 80 - independent SQL-reader clone mutation refuses tx_native_relations.scope_key
+  ---
+  duration_ms: 1.921208
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relations.run_id
+ok 81 - independent SQL-reader clone mutation refuses tx_native_relations.run_id
+  ---
+  duration_ms: 1.880959
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relations.relation_name
+ok 82 - independent SQL-reader clone mutation refuses tx_native_relations.relation_name
+  ---
+  duration_ms: 5.484917
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relations.source
+ok 83 - independent SQL-reader clone mutation refuses tx_native_relations.source
+  ---
+  duration_ms: 2.042
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relations.target
+ok 84 - independent SQL-reader clone mutation refuses tx_native_relations.target
+  ---
+  duration_ms: 1.932959
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relations.depth
+ok 85 - independent SQL-reader clone mutation refuses tx_native_relations.depth
+  ---
+  duration_ms: 1.777042
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relation_attempts._id
+ok 86 - independent SQL-reader clone mutation refuses tx_native_relation_attempts._id
+  ---
+  duration_ms: 1.822875
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relation_attempts.scope_key
+ok 87 - independent SQL-reader clone mutation refuses tx_native_relation_attempts.scope_key
+  ---
+  duration_ms: 1.941208
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relation_attempts.run_id
+ok 88 - independent SQL-reader clone mutation refuses tx_native_relation_attempts.run_id
+  ---
+  duration_ms: 3.39375
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relation_attempts.attempt_id
+ok 89 - independent SQL-reader clone mutation refuses tx_native_relation_attempts.attempt_id
+  ---
+  duration_ms: 2.125583
+  type: 'test'
+  ...
+# Subtest: independent SQL-reader clone mutation refuses tx_native_relation_attempts.phase
+ok 90 - independent SQL-reader clone mutation refuses tx_native_relation_attempts.phase
+  ---
+  duration_ms: 2.01875
+  type: 'test'
+  ...
+# Subtest: SQL-reader preserves dynamic-add
+ok 91 - SQL-reader preserves dynamic-add
+  ---
+  duration_ms: 2.347458
+  type: 'test'
+  ...
+# Subtest: SQL-reader preserves dynamic-change
+ok 92 - SQL-reader preserves dynamic-change
+  ---
+  duration_ms: 2.509
+  type: 'test'
+  ...
+# Subtest: SQL-reader preserves dynamic-delete
+ok 93 - SQL-reader preserves dynamic-delete
+  ---
+  duration_ms: 2.63425
+  type: 'test'
+  ...
+# Subtest: SQL-reader preserves sparse-null-to-value
+ok 94 - SQL-reader preserves sparse-null-to-value
+  ---
+  duration_ms: 2.612083
+  type: 'test'
+  ...
+# Subtest: SQL-reader sparse NULL representation and row order are stable, but every table is freshly scanned
+ok 95 - SQL-reader sparse NULL representation and row order are stable, but every table is freshly scanned
+  ---
+  duration_ms: 4.305625
+  type: 'test'
+  ...
+# Subtest: SQL-reader clone refuses sign-of-zero change: negative-to-positive
+ok 96 - SQL-reader clone refuses sign-of-zero change: negative-to-positive
+  ---
+  duration_ms: 2.55425
+  type: 'test'
+  ...
+# Subtest: SQL-reader clone refuses sign-of-zero change: positive-to-negative
+ok 97 - SQL-reader clone refuses sign-of-zero change: positive-to-negative
+  ---
+  duration_ms: 1.841584
+  type: 'test'
+  ...
+# Subtest: SQL-reader clone refuses sign-of-zero change: side-binding
+ok 98 - SQL-reader clone refuses sign-of-zero change: side-binding
+  ---
+  duration_ms: 1.937208
+  type: 'test'
+  ...
+1..98
+# tests 98
+# suites 0
+# pass 98
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 637.757625

@@ -6,6 +6,7 @@ import vm from 'node:vm';
 import ts from 'typescript';
 import { test, after } from 'node:test';
 import { pathToFileURL } from 'node:url';
+import { typedCatalog } from '../../bench/lib/g0-catalog.ts';
 import { admitG0, readG0, bounded, fields } from '../../bench/lib/g0.ts';
 const root = path.resolve(import.meta.dirname, '../../..');
 const out = process.env.TX2_K01_COLUMNS_OUT ?? '/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VK01/round8/attempt-1/columns';
@@ -49,10 +50,12 @@ async function fixture() {
       assert.ok(options.signal instanceof AbortSignal);
       assert.equal(options.timeoutMs, 600_000);
       calls.push({ sql, params: structuredClone(params), aborted: options.signal.aborted });
+      if(sql.includes('FROM information_schema.tables'))return Object.keys(tables).sort().map(table_name=>({table_name}));
+      if(sql.includes('FROM information_schema.columns'))return Object.entries(tables).flatMap(([table_name,rows])=>declarations[table_name].map(column_name=>({table_name,column_name,xt_type:':utf8'})));
       const table = /FROM (tx_[a-z_]+)/.exec(sql)?.[1];
       assert.ok(table && tables[table], 'unexpected SQL: ' + sql);
       if (sql.startsWith('SELECT scope_key, position')) return tables[table].map(({ scope_key, position }) => ({ scope_key, position }));
-      const rows = tables[table].filter(row => row.scope_key === params[0]);
+      const rows = tables[table].filter(row => params.length===0 || row.scope_key === params[0]);
       if (sql.startsWith('SELECT COUNT(*)')) return [{ n: rows.length }];
       const projection = /^SELECT (.+?) FROM/.exec(sql)[1];
       const offset = Number(/OFFSET (\d+)/.exec(sql)[1]);
@@ -66,7 +69,7 @@ async function fixture() {
     if (url.endsWith('/packages/core/dist/runtime/index.js')) return { DatabaseScope: { test: scope => scope } };
     throw Error('unexpected import: ' + url);
   };
-  const open = vm.runInNewContext(javascript + ';openG0', { path, pathToFileURL, fields, bounded, fixtureImport, AbortSignal, Object, Number, String, openWire:async()=>({scan:(sql,params,signal)=>client.query(sql,params,undefined,{signal,timeoutMs:600000}),close:async()=>{}}) });
+  const open = vm.runInNewContext(javascript + ';openG0', { path, pathToFileURL, fields, typedCatalog, bounded, fixtureImport, AbortSignal, Object, Number, String, openWire:async()=>({scan:(sql,params,signal)=>client.query(sql,params,undefined,{signal,timeoutMs:600000}),close:async()=>{}}) });
   const handle = await open('offline-measured-endpoint');
   return { tables, calls, handle };
 }

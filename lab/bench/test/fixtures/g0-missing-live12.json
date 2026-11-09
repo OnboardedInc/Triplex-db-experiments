@@ -1,0 +1,8 @@
+{
+  "source": "lab/experiments/EXP-K01-seed-clone/evidence/live-round12/seed.log",
+  "sha256": "2ccf7632d1093a39d952981a4f5fee3e0e01de3d3cc6fe380bc43181ae128f0a",
+  "table": "tx_native_relation_attempts",
+  "column": "scope_key",
+  "capturedError": "Table not found: tx_native_relation_attempts",
+  "note": "Captured error, not a captured complete catalog. Catalog fixtures are explicit source-derived states."
+}
