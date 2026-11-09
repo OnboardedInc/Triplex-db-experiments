@@ -1,0 +1,70 @@
+{
+  "builderCommit": "1c10c826961f1fcc6278c11b343b6514528ec522",
+  "mergeCommit": "dcfefb0c017c310b3940f2381489fbead40da9ff",
+  "records": [
+    {
+      "path": "lab/bin/engine.mjs",
+      "builderSha256": "0aa404a41c3cbcce6eb59f2a95a5f8480314e4deec504744f677225cd7955072",
+      "currentSha256": "0aa404a41c3cbcce6eb59f2a95a5f8480314e4deec504744f677225cd7955072",
+      "baselineReceiptSha256": "0aa404a41c3cbcce6eb59f2a95a5f8480314e4deec504744f677225cd7955072",
+      "matchesBuilder": true,
+      "adversarialReceiptSha256": "0aa404a41c3cbcce6eb59f2a95a5f8480314e4deec504744f677225cd7955072"
+    },
+    {
+      "path": "lab/bin/owner-state.mjs",
+      "builderSha256": "8cf0c4be727bbdd03968415f0e11a85f822acdef061d555e4045d0080cb70ebb",
+      "currentSha256": "8cf0c4be727bbdd03968415f0e11a85f822acdef061d555e4045d0080cb70ebb",
+      "baselineReceiptSha256": "8cf0c4be727bbdd03968415f0e11a85f822acdef061d555e4045d0080cb70ebb",
+      "matchesBuilder": true,
+      "adversarialReceiptSha256": "8cf0c4be727bbdd03968415f0e11a85f822acdef061d555e4045d0080cb70ebb"
+    },
+    {
+      "path": "lab/bin/xtdb-log.mjs",
+      "builderSha256": "d251668c35b570120cc2c69c27b68af6d1854a0a80751b91b794f10329a2da62",
+      "currentSha256": "d251668c35b570120cc2c69c27b68af6d1854a0a80751b91b794f10329a2da62",
+      "baselineReceiptSha256": "d251668c35b570120cc2c69c27b68af6d1854a0a80751b91b794f10329a2da62",
+      "matchesBuilder": true,
+      "adversarialReceiptSha256": "d251668c35b570120cc2c69c27b68af6d1854a0a80751b91b794f10329a2da62"
+    },
+    {
+      "path": "lab/bin/lib.mjs",
+      "builderSha256": "355519608a64bc5ed5738bbae089482e11b4187b1baf0e1e941e599575127c6f",
+      "currentSha256": "355519608a64bc5ed5738bbae089482e11b4187b1baf0e1e941e599575127c6f",
+      "baselineReceiptSha256": null,
+      "matchesBuilder": true,
+      "adversarialReceiptSha256": "355519608a64bc5ed5738bbae089482e11b4187b1baf0e1e941e599575127c6f"
+    },
+    {
+      "path": "lab/bench/clone-check.ts",
+      "builderSha256": "4b51d2e6311dc1c0a2b02d7ce1770bffa46135a960921cb1ec2b3f0fda184836",
+      "currentSha256": "4b51d2e6311dc1c0a2b02d7ce1770bffa46135a960921cb1ec2b3f0fda184836",
+      "baselineReceiptSha256": "4b51d2e6311dc1c0a2b02d7ce1770bffa46135a960921cb1ec2b3f0fda184836",
+      "matchesBuilder": true,
+      "adversarialReceiptSha256": "4b51d2e6311dc1c0a2b02d7ce1770bffa46135a960921cb1ec2b3f0fda184836"
+    },
+    {
+      "path": "lab/bench/lib/clone.ts",
+      "builderSha256": "b62f5f0f0cb69c3b073f4393b020d28ced626ed186b3bf92d6799b5444154715",
+      "currentSha256": "b62f5f0f0cb69c3b073f4393b020d28ced626ed186b3bf92d6799b5444154715",
+      "baselineReceiptSha256": "b62f5f0f0cb69c3b073f4393b020d28ced626ed186b3bf92d6799b5444154715",
+      "matchesBuilder": true,
+      "adversarialReceiptSha256": "b62f5f0f0cb69c3b073f4393b020d28ced626ed186b3bf92d6799b5444154715"
+    },
+    {
+      "path": "lab/bench/lib/bulk.ts",
+      "builderSha256": "0e14cd1f0392cdaca3191aeee051b1c18e443742b55b8078d89c6fdf9d83c0df",
+      "currentSha256": "0e14cd1f0392cdaca3191aeee051b1c18e443742b55b8078d89c6fdf9d83c0df",
+      "baselineReceiptSha256": "0e14cd1f0392cdaca3191aeee051b1c18e443742b55b8078d89c6fdf9d83c0df",
+      "matchesBuilder": true,
+      "adversarialReceiptSha256": "0e14cd1f0392cdaca3191aeee051b1c18e443742b55b8078d89c6fdf9d83c0df"
+    },
+    {
+      "path": "lab/experiments/EXP-K01-seed-clone/round2-live.mjs",
+      "builderSha256": "a0afcb3ad9df3c330b44059753638a6b242650978dbd222a24ed95010cac48dc",
+      "currentSha256": "a0afcb3ad9df3c330b44059753638a6b242650978dbd222a24ed95010cac48dc",
+      "baselineReceiptSha256": "a0afcb3ad9df3c330b44059753638a6b242650978dbd222a24ed95010cac48dc",
+      "matchesBuilder": true,
+      "adversarialReceiptSha256": "a0afcb3ad9df3c330b44059753638a6b242650978dbd222a24ed95010cac48dc"
+    }
+  ]
+}

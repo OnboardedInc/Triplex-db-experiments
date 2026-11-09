@@ -1,0 +1,49 @@
+{
+  "at": "2026-11-09T00:22:24.241Z",
+  "head": "dcfefb0c017c310b3940f2381489fbead40da9ff",
+  "offlineOnly": true,
+  "hostDisk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 3193269,
+    "bavail": 3193269,
+    "files": 139316376,
+    "ffree": 127730760
+  },
+  "node": "v22.23.2",
+  "sources": {
+    "lab/bin/engine.mjs": "0aa404a41c3cbcce6eb59f2a95a5f8480314e4deec504744f677225cd7955072",
+    "lab/bin/owner-state.mjs": "8cf0c4be727bbdd03968415f0e11a85f822acdef061d555e4045d0080cb70ebb",
+    "lab/bin/xtdb-log.mjs": "d251668c35b570120cc2c69c27b68af6d1854a0a80751b91b794f10329a2da62",
+    "lab/bench/clone-check.ts": "4b51d2e6311dc1c0a2b02d7ce1770bffa46135a960921cb1ec2b3f0fda184836",
+    "lab/bench/lib/clone.ts": "b62f5f0f0cb69c3b073f4393b020d28ced626ed186b3bf92d6799b5444154715",
+    "lab/bench/lib/bulk.ts": "0e14cd1f0392cdaca3191aeee051b1c18e443742b55b8078d89c6fdf9d83c0df",
+    "lab/experiments/EXP-K01-seed-clone/round2-live.mjs": "a0afcb3ad9df3c330b44059753638a6b242650978dbd222a24ed95010cac48dc",
+    "lab/verify/K01/freshness.test.mjs": "7b2b0433a31cb65685a8e55e5d9149b7a64212591c849896f393f3dffa2461e9",
+    "lab/verify/K01/round4.test.mjs": "5c36fb2b8b3f9a2e3c9d4daadd2753532d7f0451cacdb0d03abe8cfcefcff171",
+    "lab/verify/K01/tail-fixtures.mjs": "29bec6c80a2330c88e5539e20517f96e5471a6aeb6e691cf22f7cc03fd512abd",
+    "lab/verify/K01/run-pass-audit-review.mjs": "5df862e18ffa5cfeeb99a7a491d793c127fb2797c88822d486d233c35db72103",
+    "lab/verify/K01/pass-audit-review.test.mjs": "08b3765ac311c4bc086907c00f306e752b7991ebdbd3e58e6bc92b149a38c15e",
+    "lab/bin/lib.mjs": "355519608a64bc5ed5738bbae089482e11b4187b1baf0e1e941e599575127c6f",
+    "lab/verify/K01/q83e-review.test.mjs": "2c6939d92c628d7a6a6da3253cc67d3f7783dff6124fd668169368c7eef46e7c",
+    "lab/verify/K01/round5.test.mjs": "51d1175ff1228b63f106226e097858b4ec46c76a002e65d0f4541a3128b6e73c",
+    "lab/verify/K01/offline.test.mjs": "c864874412124341d3ce33b4516a66a959ffdb47d204ad7019a32dfb55b76e12",
+    "lab/verify/K01/round3.test.mjs": "f99f45c8da60a576e9fd23126ba7e6fbd41095a0ca7d31bde65b799bff456fc5",
+    "lab/bench/test/clone.test.ts": "4a0fd68fe8c9c4d9582f0f331d156045e9d29252aa4346198d9d24ba4b7e9651"
+  },
+  "runs": [
+    {
+      "label": "pass-audit-review",
+      "args": [
+        "--test",
+        "lab/verify/K01/pass-audit-review.test.mjs"
+      ],
+      "exit": 1,
+      "signal": null,
+      "error": null,
+      "elapsedMs": 4162,
+      "sha256": "765be616bbf6df06d9ca5c391a904a3349cab69c8d58cd14bec2b6193db63bb3"
+    }
+  ]
+}

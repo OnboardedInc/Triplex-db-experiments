@@ -1,0 +1,34 @@
+{
+  "note": "Raw Node TAP contains whitespace-only assertion diff lines. Preserve their original bytes; authored source/report whitespace passes.",
+  "checks": [
+    {
+      "label": "full-commit-whitespace",
+      "args": [
+        "git",
+        "diff",
+        "--check",
+        "HEAD^",
+        "HEAD"
+      ],
+      "exit": 2,
+      "stdout": "lab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:29: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:31: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:55: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:57: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:81: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:83: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:112: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:114: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:143: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:145: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:174: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:176: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:206: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:208: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:232: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/development-1/pass-audit-review.log:234: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:29: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:31: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:55: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:57: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:93: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:95: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:115: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:117: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:147: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:149: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:173: trailing whitespace.\n+    \nlab/verify/K01/evidence/review-round4/pass-audit-review.log:175: trailing whitespace.\n+    \n",
+      "stderr": ""
+    },
+    {
+      "label": "authored-whitespace",
+      "args": [
+        "git",
+        "diff",
+        "--check",
+        "HEAD^",
+        "HEAD",
+        "--",
+        "lab/verify/K01",
+        ":(exclude)lab/verify/K01/evidence"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ]
+}
