@@ -1,0 +1,409 @@
+{
+  "head": "8fd292918694f31eb970312ee600c8dad3d1b84a",
+  "fixCommit": "a853fe42",
+  "historicalGateReceipts": [
+    {
+      "path": "lab/runs/G0/G0-datomic-20261109T105000Z-e204ff.json",
+      "head": "00589f842b99fe78fa9d2aff865d6b6202e8c2a6",
+      "runId": "G0-datomic-20261109T105000Z-e204ff",
+      "verdict": "FAIL",
+      "directInputReferences": [],
+      "contractTextReferences": [],
+      "sha256": "fcc69ecea4a8f2ee5b29ace7d65152e00115763056faa2f66d8005fabc3c4371"
+    },
+    {
+      "path": "lab/runs/G0/G0-datomic-20261109T110124Z-aa9447.json",
+      "head": "372ff80d0e085199679ab0695b3e73e0a6f62c03",
+      "runId": "G0-datomic-20261109T110124Z-aa9447",
+      "verdict": "PASS",
+      "directInputReferences": [],
+      "contractTextReferences": [],
+      "sha256": "c3bb3134441192a10ed7a59532c8016069ce3cd517f8a251747725bac4cdaacf"
+    },
+    {
+      "path": "lab/runs/G0/G0-datomic-20261109T111619Z-f95000.json",
+      "head": "739089ade52102bbaf020102674286e5e771b2b5",
+      "runId": "G0-datomic-20261109T111619Z-f95000",
+      "verdict": "PASS",
+      "directInputReferences": [],
+      "contractTextReferences": [],
+      "sha256": "e44ad81fc63f2aacadc9fbc55b1c36882613f21d611882b40e9c383aacd68fca"
+    },
+    {
+      "path": "lab/runs/G0/G0-qlever-20261109T110446Z-a34da8.json",
+      "head": "372ff80d0e085199679ab0695b3e73e0a6f62c03",
+      "runId": "G0-qlever-20261109T110446Z-a34da8",
+      "verdict": "FAIL",
+      "directInputReferences": [],
+      "contractTextReferences": [],
+      "sha256": "bb7ca36f96243eee697313356aa55beb71e4c19c06df536c863b688542f0ae98"
+    },
+    {
+      "path": "lab/runs/G0/G0-qlever-20261109T111950Z-63de7f.json",
+      "head": "739089ade52102bbaf020102674286e5e771b2b5",
+      "runId": "G0-qlever-20261109T111950Z-63de7f",
+      "verdict": "PASS",
+      "directInputReferences": [],
+      "contractTextReferences": [],
+      "sha256": "62170124d1dee9a1ca67de387b25188b7bc0ba8225dedf2495b1c31c0f91ef7a"
+    },
+    {
+      "path": "lab/runs/G0/G0-xtdb-20261109T104608Z-c3ecdc.json",
+      "head": "00589f842b99fe78fa9d2aff865d6b6202e8c2a6",
+      "runId": "G0-xtdb-20261109T104608Z-c3ecdc",
+      "verdict": "FAIL",
+      "directInputReferences": [],
+      "contractTextReferences": [],
+      "sha256": "d6e7b3d37c317e6d6c06e6d28682d026ebe9065ccac287bcacf923ed1d11d0c7"
+    },
+    {
+      "path": "lab/runs/G0/G0-xtdb-20261109T105752Z-eae749.json",
+      "head": "372ff80d0e085199679ab0695b3e73e0a6f62c03",
+      "runId": "G0-xtdb-20261109T105752Z-eae749",
+      "verdict": "PASS",
+      "directInputReferences": [],
+      "contractTextReferences": [],
+      "sha256": "862f4a785ae554957b51f2babbdeebf865c4e2ad8eea46011067917ff31963cd"
+    },
+    {
+      "path": "lab/runs/G0/G0-xtdb-20261109T111244Z-4d9d92.json",
+      "head": "739089ade52102bbaf020102674286e5e771b2b5",
+      "runId": "G0-xtdb-20261109T111244Z-4d9d92",
+      "verdict": "PASS",
+      "directInputReferences": [],
+      "contractTextReferences": [],
+      "sha256": "4bf6da00d0c37ea9142df305f43eb501357f6d6f010aff8ce9194938d23d5416"
+    }
+  ],
+  "semanticCommitReferences": [
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-O04i",
+        "subject",
+        "commit"
+      ],
+      "commit": "f195f30af618d3f9b0525a864e913824a315cc8c",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-O04i",
+        "commit"
+      ],
+      "commit": "5f348ca897b5a348f083e3a18642784a27187664",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-O03",
+        "subject",
+        "commit"
+      ],
+      "commit": "8cc2c26f6f17ed627a3ed608f1252fe0e240bb5b",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-O03",
+        "commit"
+      ],
+      "commit": "8f631ab51017f75243c243597474b04b124a8576",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-O04c",
+        "subject",
+        "commit"
+      ],
+      "commit": "a9c1327d4e1d6756696db6844e17008671d4a193",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-O04c",
+        "commit"
+      ],
+      "commit": "fa6c236a178760561d3e521c88bb45006cb521cb",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-D01-W0-1.1.1",
+        "subject",
+        "commit"
+      ],
+      "commit": "ada2e90337b7ab210dc302df01c81896fe546bcf",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-D01-W0-1.1.1",
+        "commit"
+      ],
+      "commit": "bee0b2525fa08c9b0131d6971ab3ec0cd9045778",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-D01e-W0-1.1.2",
+        "subject",
+        "commit"
+      ],
+      "commit": "fedfcdaee6f3ea188e96d9eec9671cbb0c623f5c",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-D01e-W0-1.1.2",
+        "commit"
+      ],
+      "commit": "d9021cfc8bf691094be4eafa825d3a10039ad7b6",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-D01c-O-DOMAIN",
+        "subject",
+        "commit"
+      ],
+      "commit": "5d1fd1a3a60c01e5b5fc5d210ea0b3098074e3b9",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-D01c-O-DOMAIN",
+        "commit"
+      ],
+      "commit": "7f05819226545a11c898299418b6c4d34b81cd03",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-O05-round4",
+        "subject",
+        "commit"
+      ],
+      "commit": "23e2273fc6b15b92821b318acd387f5484155d8a",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-O05-round4",
+        "commit"
+      ],
+      "commit": "3e3df9cb98a91b3b50192b79af1a0b908343cbcc",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "verifierRegistry",
+        "entries",
+        "V-O05-round4",
+        "briefProvenance",
+        "recoveryCommit"
+      ],
+      "commit": "4c9077ecb00b2d000d338911b41692aa8ce1b7aa",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "workloadRepins",
+        "packages/qualification/src/native/xtdb-workloads.ts",
+        "baseCommit"
+      ],
+      "commit": "f483fb644744da4cc7a7f9296214668e7d55bbf4",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "workloadRepins",
+        "packages/qualification/src/native/xtdb-workloads.ts",
+        "sourceCommit"
+      ],
+      "commit": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "workloadRepins",
+        "packages/qualification/src/native/qlever-workloads.ts",
+        "baseCommit"
+      ],
+      "commit": "f483fb644744da4cc7a7f9296214668e7d55bbf4",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "workloadRepins",
+        "packages/qualification/src/native/qlever-workloads.ts",
+        "sourceCommit"
+      ],
+      "commit": "b916d5dc809ffc07c57b53a38f1d1deb6bdeeb89",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "oraclePins",
+        "O-REPLAY",
+        "commit"
+      ],
+      "commit": "f195f30af618d3f9b0525a864e913824a315cc8c",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "oraclePins",
+        "O-REPLAY",
+        "previousPin",
+        "commit"
+      ],
+      "commit": "a9c1327d4e1d6756696db6844e17008671d4a193",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "oraclePins",
+        "O-DOMAIN",
+        "commit"
+      ],
+      "commit": "5d1fd1a3a60c01e5b5fc5d210ea0b3098074e3b9",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "oraclePins",
+        "O-OBS",
+        "commit"
+      ],
+      "commit": "23e2273fc6b15b92821b318acd387f5484155d8a",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "w0Pin",
+        "commit"
+      ],
+      "commit": "fedfcdaee6f3ea188e96d9eec9671cbb0c623f5c",
+      "inDefectiveInterval": false
+    },
+    {
+      "trail": [
+        "w0Pin",
+        "previousPin",
+        "commit"
+      ],
+      "commit": "ada2e90337b7ab210dc302df01c81896fe546bcf",
+      "inDefectiveInterval": false
+    }
+  ],
+  "badSemanticReferences": [],
+  "reusedDefectiveReceipts": [],
+  "evidenceInputsAuthoredInInterval": [
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-repin-review.json",
+      "introducedAt": "52f8c0d2b0f7d7cc3e4efb5fd255a133ce73a14e",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/QNODELAY-packages__qlever__experiments__native-entry.ts.diff",
+      "introducedAt": "52f8c0d2b0f7d7cc3e4efb5fd255a133ce73a14e",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/M01-repin-review.json",
+      "introducedAt": "c033c62816ed57b4a482784b2a1aae73d886a534",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-repin-review.json",
+      "introducedAt": "65940efa8cf570b73fb491ab78621735d0b497ff",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-lab__bin__test__claim-round2.test.mjs.diff",
+      "introducedAt": "65940efa8cf570b73fb491ab78621735d0b497ff",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-lab__bin__test__claim.test.mjs.diff",
+      "introducedAt": "65940efa8cf570b73fb491ab78621735d0b497ff",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__configured-entities-v1__oracle.mjs.diff",
+      "introducedAt": "65940efa8cf570b73fb491ab78621735d0b497ff",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__historical-assertion-metadata-v1__oracle.mjs.diff",
+      "introducedAt": "65940efa8cf570b73fb491ab78621735d0b497ff",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__historical-assertion-metadata-v2__oracle.mjs.diff",
+      "introducedAt": "65940efa8cf570b73fb491ab78621735d0b497ff",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/authority-review.json",
+      "introducedAt": "00589f842b99fe78fa9d2aff865d6b6202e8c2a6",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/DF01-image-review.json",
+      "introducedAt": "f3ed62112028440389710a86fbf5c82c2f91afda",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS_FINAL-repin-review.json",
+      "introducedAt": "00589f842b99fe78fa9d2aff865d6b6202e8c2a6",
+      "inDefectiveInterval": true
+    },
+    {
+      "path": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-FINAL-freeze-ham-reference.mjs.diff",
+      "introducedAt": "00589f842b99fe78fa9d2aff865d6b6202e8c2a6",
+      "inDefectiveInterval": true
+    }
+  ],
+  "qualificationBlockers": {
+    "rule": "every blocker stays until EXP-G03's executing gate exists; manifests, runners, the build spec, the frozen trace and A0 controls are pinned only through contract versions (RULINGS Q67a, Q65f)",
+    "list": [
+      "an executing gate.mjs OBL with obl-case.ts, a fault injector writing fault-witness/1 and the PAIR-0 paired-rounds runner (EXP-G03, after EXP-M01)",
+      "pinned case manifests (CS manifestSha256)",
+      "BUILD_SPEC",
+      "writerTrace.generator.frozen",
+      "A0_REGISTRY entries",
+      "a VERIFIER_REGISTRY entry per claimed obligation"
+    ]
+  },
+  "buildSpecArgv": null
+}

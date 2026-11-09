@@ -1,0 +1,65 @@
+[
+  {
+    "name": "late-image",
+    "expectedReason": "Q45a: O-CONTRACT runner pin is stale",
+    "caught": true,
+    "exitCode": 1,
+    "stdout": "CONTRACT INVALID:\nQ45a: DF01 image pin must follow reviewed identity chain\nQ45a: O-CONTRACT projection pin, diff or per-hunk workload note drift: lab/acceptance/oracle-contract.json\nQ45a: O-CONTRACT runner pin is stale; it must equal the hashes of build_contract.py and the rendered oracle-contract.json\nQ45a: oracleRunners.O-CONTRACT.sha256 disagrees with artifacts.oracle-contract.json\nQ61i: lab/config/slots.json lane images must agree with the contract's IMAGE_PINS\n",
+    "stderr": "",
+    "sourceSha256": "0025f784b3549c73b6384b1afcaa3101ac77696a2daa326caabedc74d916b82f"
+  },
+  {
+    "name": "late-projection-field",
+    "expectedReason": "Q45a: O-CONTRACT runner pin is stale",
+    "caught": true,
+    "exitCode": 1,
+    "stdout": "CONTRACT INVALID:\nQ45a: O-CONTRACT projection pin, diff or per-hunk workload note drift: lab/acceptance/oracle-contract.json\nQ45a: O-CONTRACT runner pin is stale; it must equal the hashes of build_contract.py and the rendered oracle-contract.json\nQ45a: oracleRunners.O-CONTRACT.sha256 disagrees with artifacts.oracle-contract.json\nQ55b: a log-source composition binding its log identity and durability configuration must be admitted (positive control)\n",
+    "stderr": "",
+    "sourceSha256": "36d973bf5d2d1e4e5016bbfd133c74c290286166e55683702bdd3b7ef2ea3c4d"
+  },
+  {
+    "name": "wrong-projection-hash",
+    "expectedReason": "Q45a: O-CONTRACT runner pin is stale",
+    "caught": true,
+    "exitCode": 1,
+    "stdout": "CONTRACT INVALID:\nQ45a: O-CONTRACT runner pin is stale; it must equal the hashes of build_contract.py and the rendered oracle-contract.json\nQ45a: oracleRunners.O-CONTRACT.sha256 disagrees with artifacts.oracle-contract.json\n",
+    "stderr": "",
+    "sourceSha256": "02b044e9ebd88bb7cfd22eb782be221bb5c887110dc085fcacb006fffa71a79c"
+  },
+  {
+    "name": "wrong-source-hash",
+    "expectedReason": "Q45a: O-CONTRACT runner pin is stale",
+    "caught": true,
+    "exitCode": 1,
+    "stdout": "CONTRACT INVALID:\nQ45a: O-CONTRACT runner pin is stale; it must equal the hashes of build_contract.py and the rendered oracle-contract.json\n",
+    "stderr": "",
+    "sourceSha256": "380f2f086ccf2c9dcd292ad47660c200f7933389b301ed67ba5a9a8b7012a582"
+  },
+  {
+    "name": "missing-runner-map",
+    "expectedReason": "Q45a: O-CONTRACT runner pin is stale",
+    "caught": true,
+    "exitCode": 1,
+    "stdout": "CONTRACT INVALID:\nQ45a: O-CONTRACT runner pin is stale; it must equal the hashes of build_contract.py and the rendered oracle-contract.json\nQ45a: oracleRunners.O-CONTRACT.sha256 disagrees with artifacts.oracle-contract.json\nQ75c: full runner hashes required, including COMPILED oracles\n",
+    "stderr": "",
+    "sourceSha256": "cefd0911cd3443e00b5eec086bd245eef815794265b5e277c17940189db98f05"
+  },
+  {
+    "name": "wrong-stage-hash",
+    "expectedReason": "Q45a: O-CONTRACT projection pin, diff or per-hunk workload note drift",
+    "caught": true,
+    "exitCode": 1,
+    "stdout": "CONTRACT INVALID:\nQ45a: O-CONTRACT projection pin, diff or per-hunk workload note drift: lab/acceptance/oracle-contract.json\n",
+    "stderr": "",
+    "sourceSha256": "2272df204bd4815018f39b42da6abcff30320ad1452f8961cfc68e92627aac78"
+  },
+  {
+    "name": "workload-note-flipped",
+    "expectedReason": "Q45a: O-CONTRACT projection pin, diff or per-hunk workload note drift",
+    "caught": true,
+    "exitCode": 1,
+    "stdout": "CONTRACT INVALID:\nQ45a: O-CONTRACT projection pin, diff or per-hunk workload note drift: lab/acceptance/oracle-contract.json\n",
+    "stderr": "",
+    "sourceSha256": "70958b5217763e059ac59bac52a98b1af867e9782aba6d2bba37e2b0a65f9cab"
+  }
+]

@@ -1,0 +1,336 @@
+{
+  "verdict": "ACCEPT",
+  "head": "8fd292918694f31eb970312ee600c8dad3d1b84a",
+  "candidate": "35cb04b5",
+  "candidateProductBytesIdentical": true,
+  "checkedAt": "2026-11-09T12:59:44.757325+00:00",
+  "commands": {
+    "verify": {
+      "head": "8fd292918694f31eb970312ee600c8dad3d1b84a",
+      "candidate": "35cb04b55309c35c5dd120ee05b5c0ac8e5ad7fa",
+      "startedAt": "2026-11-09T12:47:39.978467+00:00",
+      "endedAt": "2026-11-09T12:48:12.356910+00:00",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VA01-040-r2-verify",
+        "--poll-ms",
+        "100",
+        "--",
+        "python3",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-040/lab/verify/A01/r2/review.py",
+        "_admitted",
+        "python3",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-040/lab/acceptance/build_contract.py",
+        "--verify"
+      ],
+      "exitCode": 0,
+      "heavy": {
+        "slot": "4",
+        "sha256": "3e727db7b400aa8f8f29fada73e41f0b0add955a26356ef5588410dbee11792a",
+        "owner": {
+          "pid": 10796,
+          "label": "CX-VA01-040-r2-verify",
+          "at": "2026-11-09T12:48:11.673Z"
+        }
+      },
+      "toolSha256": "f405bb9667b63849ccb46691bfc9d550dddaa4e5dced7b5d72b3d1da2f948a5e",
+      "logSha256": "e55eb7df2c954d434ca3cd6001ade606cdf33f171ad9453661cc0cb1518b5898",
+      "inputsUnchanged": true,
+      "trackedDiffEmpty": true
+    },
+    "evaluator": {
+      "head": "8fd292918694f31eb970312ee600c8dad3d1b84a",
+      "candidate": "35cb04b55309c35c5dd120ee05b5c0ac8e5ad7fa",
+      "startedAt": "2026-11-09T12:48:12.452607+00:00",
+      "endedAt": "2026-11-09T12:51:10.133506+00:00",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VA01-040-r2-evaluator",
+        "--poll-ms",
+        "100",
+        "--",
+        "python3",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-040/lab/verify/A01/r2/review.py",
+        "_admitted",
+        "node",
+        "--test",
+        "lab/bin/test/claim.test.mjs",
+        "lab/bin/test/claim-round2.test.mjs"
+      ],
+      "exitCode": 0,
+      "heavy": {
+        "slot": "4",
+        "sha256": "83f9712505e2a87033828694f68e56ce49e3fbdbcc94caa8014a0751a1b93aa7",
+        "owner": {
+          "pid": 19458,
+          "label": "CX-VA01-040-r2-evaluator",
+          "at": "2026-11-09T12:48:13.618Z"
+        }
+      },
+      "toolSha256": "f405bb9667b63849ccb46691bfc9d550dddaa4e5dced7b5d72b3d1da2f948a5e",
+      "logSha256": "4f2714aca3388c880227e3332f49f42a1289dc6d015274ca4eddaec4538704a3",
+      "inputsUnchanged": true,
+      "trackedDiffEmpty": true
+    },
+    "tests": {
+      "head": "8fd292918694f31eb970312ee600c8dad3d1b84a",
+      "candidate": "35cb04b55309c35c5dd120ee05b5c0ac8e5ad7fa",
+      "startedAt": "2026-11-09T12:47:41.135545+00:00",
+      "endedAt": "2026-11-09T12:48:13.617856+00:00",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VA01-040-r2-tests",
+        "--poll-ms",
+        "100",
+        "--",
+        "python3",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-040/lab/verify/A01/r2/review.py",
+        "_admitted",
+        "python3",
+        "-I",
+        "-B",
+        "lab/experiments/EXP-A01-acceptance-contract/regressions/test040.py"
+      ],
+      "exitCode": 0,
+      "heavy": {
+        "slot": "4",
+        "sha256": "a99f9b87021454b11dc1fc137b779cf6aeebf68dc7d2fc7b2fa28d1c78327b63",
+        "owner": {
+          "pid": 11134,
+          "label": "CX-VA01-040-r2-tests",
+          "at": "2026-11-09T12:48:12.343Z"
+        }
+      },
+      "toolSha256": "f405bb9667b63849ccb46691bfc9d550dddaa4e5dced7b5d72b3d1da2f948a5e",
+      "logSha256": "50343b04108aff0a36508a385129d6979033a49ba350eb335bef9f96c3c0e2e3",
+      "inputsUnchanged": true,
+      "trackedDiffEmpty": true
+    },
+    "mutations": {
+      "head": "8fd292918694f31eb970312ee600c8dad3d1b84a",
+      "candidate": "35cb04b55309c35c5dd120ee05b5c0ac8e5ad7fa",
+      "startedAt": "2026-11-09T12:48:13.695935+00:00",
+      "endedAt": "2026-11-09T12:51:15.143799+00:00",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VA01-040-r2-mutations",
+        "--poll-ms",
+        "100",
+        "--",
+        "python3",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-040/lab/verify/A01/r2/review.py",
+        "_admitted",
+        "python3",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-040/lab/verify/A01/r2/review.py",
+        "mutations"
+      ],
+      "exitCode": 0,
+      "heavy": {
+        "slot": "4",
+        "sha256": "a9f1a6942d069a11aed8f550b67b5a82a1b43104308d0072862089170670ed24",
+        "owner": {
+          "pid": 20046,
+          "label": "CX-VA01-040-r2-mutations",
+          "at": "2026-11-09T12:51:10.186Z"
+        }
+      },
+      "toolSha256": "f405bb9667b63849ccb46691bfc9d550dddaa4e5dced7b5d72b3d1da2f948a5e",
+      "logSha256": "9948a484a06184e332dd92bc7f1b9e7c044e7041694c102e72e301232333e095",
+      "inputsUnchanged": true,
+      "trackedDiffEmpty": true
+    },
+    "audit-attempt2": {
+      "head": "8fd292918694f31eb970312ee600c8dad3d1b84a",
+      "candidate": "35cb04b55309c35c5dd120ee05b5c0ac8e5ad7fa",
+      "startedAt": "2026-11-09T12:52:30.079758+00:00",
+      "endedAt": "2026-11-09T12:52:37.533653+00:00",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VA01-040-r2-audit-attempt2",
+        "--poll-ms",
+        "100",
+        "--",
+        "python3",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-040/lab/verify/A01/r2/review.py",
+        "_admitted",
+        "python3",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-040/lab/verify/A01/r2/review.py",
+        "audit"
+      ],
+      "exitCode": 0,
+      "heavy": {
+        "slot": "4",
+        "sha256": "7c12c46015f7b3849e799e1e1d9f6afba1e00766338be936ce3c2e9682df6eb2",
+        "owner": {
+          "pid": 25833,
+          "label": "CX-VA01-040-r2-audit-attempt2",
+          "at": "2026-11-09T12:52:32.221Z"
+        }
+      },
+      "toolSha256": "efa360c9c56af085b197a1b58caeaffd83e8f861f9ff3742e43677ca18131562",
+      "logSha256": "630e34aaffb2afd5292322013076d319d6ba8e28e5fa43d6fb745156a0c62c18",
+      "inputsUnchanged": true,
+      "trackedDiffEmpty": true
+    },
+    "fresh-g0": {
+      "head": "8fd292918694f31eb970312ee600c8dad3d1b84a",
+      "candidate": "35cb04b55309c35c5dd120ee05b5c0ac8e5ad7fa",
+      "startedAt": "2026-11-09T12:51:35.097506+00:00",
+      "endedAt": "2026-11-09T12:55:31.850948+00:00",
+      "command": [
+        "node",
+        "lab/bin/heavy.mjs",
+        "--label",
+        "CX-VA01-040-r2-fresh-g0",
+        "--poll-ms",
+        "100",
+        "--",
+        "python3",
+        "-I",
+        "-B",
+        "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-a01-040/lab/verify/A01/r2/review.py",
+        "_admitted",
+        "node",
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "xtdb",
+        "--exp",
+        "CX-VA01-040-R2",
+        "--note",
+        "Independent F2 reproduction: empty W0 dist; no manual W0 build"
+      ],
+      "exitCode": 0,
+      "heavy": {
+        "slot": "3",
+        "sha256": "7d1bd2e619e76fa3489b2a921d10752b162a9dec5bd5256ea16d367f943c9b30",
+        "owner": {
+          "pid": 13106,
+          "label": "CX-VA01-040-r2-fresh-g0",
+          "at": "2026-11-09T12:51:35.146Z"
+        }
+      },
+      "toolSha256": "f405bb9667b63849ccb46691bfc9d550dddaa4e5dced7b5d72b3d1da2f948a5e",
+      "logSha256": "ea95abb2867d118c37507dbef2756bc3cfcb744d1072f05b24cbe458d227f16e",
+      "inputsUnchanged": true,
+      "trackedDiffEmpty": true
+    }
+  },
+  "evaluator": {
+    "tests": 108,
+    "pass": 108,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "contractTests": 16,
+  "newMutationsRejected": 7,
+  "freshG0": {
+    "runId": "G0-xtdb-20261109T125135Z-c026e9",
+    "counts": {
+      "executed": 1289,
+      "pass": 1289,
+      "fail": 0,
+      "skip": 140,
+      "expectedSkip": 140,
+      "unexpectedSkip": 0
+    },
+    "w0": {
+      "files": 52,
+      "bytes": 314097,
+      "sha256": "35a7ca1e2ec21e19b8e8d7e2bc9925b864d830d3afb5481443559af40fb4d983"
+    },
+    "heavyParentGrants": 9
+  },
+  "mainPendingRowsPreserved": 100,
+  "compiledRulings": [
+    "Q101a",
+    "Q104a",
+    "Q98a",
+    "Q98b",
+    "Q98c",
+    "Q98d",
+    "Q98e",
+    "Q98f",
+    "Q98g",
+    "Q98h",
+    "Q98i"
+  ],
+  "history": {
+    "unreferencedOldGateReceipts": 8,
+    "stillPinnedProvenanceFiles": 13,
+    "badSemanticCommitReferences": 0,
+    "reusedOldGateReceipts": 0,
+    "allObligationStatuses": "OPEN"
+  },
+  "builderManifestFilesVerified": 98,
+  "builderGatesReadOnly": [
+    {
+      "runId": "G0-datomic-20261109T122954Z-cc5a7b",
+      "counts": {
+        "executed": 1344,
+        "pass": 1344,
+        "fail": 0,
+        "skip": 66,
+        "expectedSkip": 66,
+        "unexpectedSkip": 0
+      },
+      "source": "a2b1271f7c302368c5a9b0eb12f597f04f17184d",
+      "independentlyRerun": false
+    },
+    {
+      "runId": "G0-qlever-20261109T123404Z-c62ee0",
+      "counts": {
+        "executed": 1513,
+        "pass": 1513,
+        "fail": 0,
+        "skip": 79,
+        "expectedSkip": 79,
+        "unexpectedSkip": 0
+      },
+      "source": "a2b1271f7c302368c5a9b0eb12f597f04f17184d",
+      "independentlyRerun": false
+    },
+    {
+      "runId": "G0-xtdb-20261109T122531Z-536e98",
+      "counts": {
+        "executed": 1289,
+        "pass": 1289,
+        "fail": 0,
+        "skip": 140,
+        "expectedSkip": 140,
+        "unexpectedSkip": 0
+      },
+      "source": "a2b1271f7c302368c5a9b0eb12f597f04f17184d",
+      "independentlyRerun": false
+    }
+  ],
+  "scope": "independent fix verification and one fresh offline G0; no live or performance qualification"
+}
