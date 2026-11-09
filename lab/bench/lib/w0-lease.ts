@@ -3,7 +3,7 @@ import path from "node:path";
 const lock = "/Users/sam/Claude/Projects/triplex-db-2/locks/measure";
 // [DX-H2] Why: the W0 seed can take several leases; release only between acknowledged commands.
 // Rejected: holding the global measurement lock across an unbounded seed or pausing an in-flight transaction.
-export async function measurementLease() {
+export async function measurementLease(onAbort?: () => Promise<void>) {
   let held = false,
     since = 0,
     timer: ReturnType<typeof setTimeout>;
@@ -16,7 +16,8 @@ export async function measurementLease() {
     fs.rmdirSync(lock);
   };
   const onExit = () => release("exit");
-  const onSignal = () => {
+  const onSignal = async () => {
+    await onAbort?.();
     release("signal");
     process.exit(128);
   };
@@ -37,7 +38,8 @@ export async function measurementLease() {
     }
     held = true;
     since = Date.now();
-    timer = setTimeout(() => {
+    timer = setTimeout(async () => {
+      await onAbort?.();
       console.error("measurement lease expired");
       process.exit(124);
     }, 870000);

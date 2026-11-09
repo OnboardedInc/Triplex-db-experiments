@@ -1,3 +1,4 @@
+import { inspect } from "node:util";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
@@ -36,7 +37,10 @@ test(
     const h = await openTriples("datomic", scope);
     const dir = fs.mkdtempSync(path.join(process.env.DXH2_TEST_DIR ?? os.tmpdir(), "dxh2-reader-"));
     try {
+      console.error("[DX-H2 reader] seed and full counts", { scope, dir });
+      fs.writeFileSync(path.join(dir, "binding.json"), JSON.stringify({ scope, N: 200 }));
       const seed = await seedW0(comp, 200, path.join(dir, "seed.ndjson"));
+      console.error("[DX-H2 reader] seed complete; checking all pages at two cuts");
       const mutation = await comp.transact(
         [
           {

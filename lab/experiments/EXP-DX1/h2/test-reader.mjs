@@ -5,9 +5,16 @@ import { measurementLease } from "../../../bench/lib/w0-lease.ts";
 // Rejected: invoking an engine-backed node:test gate without measurement exclusion.
 const dir = "/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H2/reader-tests";
 fs.mkdirSync(dir, { recursive: true });
-const lease = await measurementLease();
+let child;
+const lease = await measurementLease(async () => {
+  if (!child || child.exitCode !== null) return;
+  child.kill("SIGTERM");
+  const timer = setTimeout(() => child.kill("SIGKILL"), 3000);
+  await new Promise((resolve) => child.once("exit", resolve));
+  clearTimeout(timer);
+});
 try {
-  const child = spawn(process.execPath, ["--test", "lab/bench/test/w0-datomic.test.ts"], {
+  child = spawn(process.execPath, ["--test", "lab/bench/test/w0-datomic.test.ts"], {
     stdio: "inherit",
     env: {
       ...process.env,

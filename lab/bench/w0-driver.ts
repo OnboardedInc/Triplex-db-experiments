@@ -386,8 +386,9 @@ export async function runW0Driver(argv: string[]) {
     let position = 0,
       assertions = 0,
       retired = 0;
+    // [DX-H2] Why: smaller D pages bound transport cost without changing the complete G9 fold. Rejected: sampling counts.
     while (true) {
-      const f = await comp.feedPage(position, 1000);
+      const f = await comp.feedPage(position, lane === "datomic" ? 100 : 1000);
       if (!f.transactions.length) break;
       for (const tx of f.transactions) {
         position = tx.position;

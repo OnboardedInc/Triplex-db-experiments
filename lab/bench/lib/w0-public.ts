@@ -175,8 +175,15 @@ export function portableSweep(handle: TriplesHandle) {
       const position = Number(await handle.run(storage.currentCommitPosition()));
       const entities = new Set<string>();
       let after = 0;
+      // [DX-H2] Why: bounded Datomic feed responses fit its transport budget; still enumerate the entire journal.
+      // Rejected: accepting a partial feed or increasing the read timeout in a package.
       while (after < position) {
-        const page: any = await handle.run(handle.triples.transactions({ after, limit: 1000 }));
+        const page: any = await handle.run(
+          handle.triples.transactions({
+            after,
+            limit: handle.backend.name === "datomic" ? 100 : 1000,
+          }),
+        );
         const txs = page.transactions.filter((t: any) => t.position <= position);
         if (!txs.length) throw Error("store count enumeration has a feed gap");
         for (const tx of txs) for (const c of tx.changes) entities.add(c.entityId);

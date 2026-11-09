@@ -1,7 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
+import { sha256 } from "./w0-world.ts";
 import { Worker } from "node:worker_threads";
-import { generateTrace, traceDigest } from "./trace.ts";
+import { generateTrace } from "./trace.ts";
 import { applyW0Trace, percentile } from "./w0-traffic.ts";
 import type { CompositionHandle } from "./composition.ts";
 const pause = () => new Promise<void>((resolve) => setTimeout(resolve, 5));
@@ -73,7 +74,7 @@ export async function startW0Live(o: {
   const events = generateTrace({ seed: o.seed, subjects: o.N, durationS: o.offsetS + 900 })
     .filter((e) => e.atMs >= o.offsetS * 1000)
     .map((e) => ({ ...e, atMs: e.atMs - o.offsetS * 1000 }));
-  const eventOffers = new Map<string, number>();
+  let activeScheduled = 0;
   const namespaced: CompositionHandle = {
     ...o.comp,
     transactionByCommand: (id) => o.comp.transactionByCommand(o.id + ":" + id),
@@ -86,7 +87,7 @@ export async function startW0Live(o: {
       const row = {
         kind: "commit",
         started: begun,
-        scheduled: eventOffers.get(meta.commandId),
+        scheduled: activeScheduled,
         ms: now() - begun,
         ok: result.ok,
       };
@@ -101,9 +102,9 @@ export async function startW0Live(o: {
       while (!stopped && !failed && now() < start + event.atMs) await pause();
       if (stopped || failed) break;
       offered.push(event);
-      eventOffers.set("p5:trace:" + event.seq, start + event.atMs);
       serial = serial
         .then(async () => {
+          activeScheduled = start + event.atMs;
           const result = await applyW0Trace(namespaced, {
             ...event,
             atMs: event.atMs + o.offsetS * 1000,
@@ -157,8 +158,8 @@ export async function startW0Live(o: {
         duplicates: writes.filter((w) => w.duplicate).length,
         lostAckOffers: offered.filter((e) => e.ackLoss).length,
         corrections: offered.filter((e) => e.correction).length,
-        offeredTraceSha256: traceDigest(offered),
-        generatorTraceSha256: traceDigest(events),
+        offeredTraceSha256: sha256(JSON.stringify(offered)),
+        generatorTraceSha256: sha256(JSON.stringify(events)),
         seed: o.seed,
         offsetS: o.offsetS,
         failures: 0,
@@ -174,6 +175,13 @@ export async function startW0Live(o: {
 // [DX-H2] Why: compare the same frozen offer-time prefix and include slow ACKs beyond its end.
 // Rejected: comparing a 60-second baseline with a longer sweep containing a different burst segment.
 export function matchW0Live(baseline: any, sweep: any) {
+  if (
+    baseline.seed !== sweep.seed ||
+    baseline.offsetS !== sweep.offsetS ||
+    !baseline.generatorTraceSha256 ||
+    baseline.generatorTraceSha256 !== sweep.generatorTraceSha256
+  )
+    throw Error("live traffic generator binding mismatch");
   const ms = Math.min(baseline.windowMs, sweep.windowMs);
   const summary = (arm: any, kind: "read" | "commit") => {
     const samples = fs
