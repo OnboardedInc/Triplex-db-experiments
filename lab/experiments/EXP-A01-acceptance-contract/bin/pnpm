@@ -6,6 +6,10 @@ import path from 'node:path';
 import fs from 'node:fs';
 const root = path.resolve(import.meta.dirname, '../../../..');
 const args = process.argv.slice(2);
+// [EXP-A01-0313-R2] Why: main now passes the owned store in gate commands. Rejected: dropping arbitrary pnpm flags or accepting another store.
+if (args[0]?.startsWith('--config.store-dir=')) {
+  if (args.shift() !== '--config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store') throw new Error('Unexpected store');
+}
 const filters = [];
 while (args[0] === '--filter') { args.shift(); filters.push(args.shift()); }
 let result;

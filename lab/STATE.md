@@ -181,3 +181,12 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   Running: ER01-S scanners (CX-OBS01). Pending Sam: Q95-S (S1-S4).
 - Scale window OPEN (tx2-datomic-dev parked by the orchestrator, volume tx2-datomic-dev-data kept). Running in it: CX-QG1 on qlever-s1.
   Unpark for EXP-DA04 after the window.
+- Housekeeping rule: when a branch merges or its verdict is recorded, archive untracked and ignored files of its builder and reviewer
+  worktrees to /Users/sam/Claude/Projects/triplex-db-2/worktree-archive/ and git worktree remove them. Host disk 15 GiB free after 38 removals.
+- Note: agents whose worktree was archived and removed (CX-INT-XCJ, CX-X02-R3, CX-VX02-3, CX-VDA01, CX-VSQL01-2, CX-J01-R2, CX-VJ01-2,
+  CX-VC8-3 and the older ones in worktree-archive/INDEX.txt) cannot be resumed (codex needs its launch cwd); follow-up work on those
+  branches uses a fresh launch with a new worktree. CX-XRUN replaces CX-INT-XCJ for the XTDB exclusive reruns.
+- Scale window queue (one exclusive 3.5 GiB slot at a time; CX-XRUN holds xtdb-s1 now): next K01 live two-start and E1 per
+  .claude/worktrees/k01/lab/experiments/EXP-K01-seed-clone/LIVE-round10.md (K01 r10 e525760, 397 tests; offline review skipped in favor of the
+  live run because the remaining risk is native wire fidelity; an independent reviewer reads the live receipts after); then P5 A1 at 1k;
+  then G03's slot run; then RT01 live G2 conformance and the G6 latency comparison on one slot; then W02 live GS on xtdb; then unpark tx2-datomic-dev for EXP-DA04.

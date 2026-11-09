@@ -1764,3 +1764,81 @@ Where each priority stands, from evidence so far (research probes and baselines;
   on Sam, not on research. Next research candidates once a slot frees: lane X's single-writer composition (R37: A0 commit bars measure
   queueing), and QLever generations phase 2 design once QG1 phase 1 numbers exist.
 - **Scale window:** open, QG1 holds the only exclusive slot's turn.
+
+## 2026-11-09 03:11Z: disk fell to 5.9 GiB; 38 finished worktrees removed (15 GiB free now)
+- **Cause:** 59 agent worktrees held 93 GB (each a full checkout with node_modules). Heavy jobs refuse below 5 GiB, and G03's round 4 hit
+  that floor repeatedly.
+- **Done:** for 38 worktrees whose work is finished (merged, verdict recorded, or a paused old agent with a handoff), every untracked and
+  ignored file except node_modules, dist and caches (2.8 GB) was archived compressed (410 MB) to
+  /Users/sam/Claude/Projects/triplex-db-2/worktree-archive/ with INDEX.txt (worktree, branch, head, file count); then git worktree remove.
+  All branches and commits stay. Nine worktrees locked by this session's agent tool were left alone.
+- **Rule from now on:** when an experiment's branch merges or its verdict is recorded, its builder and reviewer worktrees are archived and
+  removed in the same orchestrator step.
+- **Also:** P5 round A review FIX-FIRST (G0 history coverage, traffic oracle checks, end counts, burst windows); the reviewer picked K01's
+  g0.ts as the one admission module, with P5's W0 reader under it, so P5 round 3 adopts it. GS12F round 3 (one bounds table) is in review.
+
+## 2026-11-09 03:12Z: EXP-QG1: a rebuild makes QLever reads up to 40x faster; delta cost grows with delta size and key layout
+- **Phase 0 (copy of qlever-dev's data on qlever-s1):** rebuild-index took 5.3 s and kept all eight sampled answers byte-identical. The C8
+  base SELECT went from 2,215 ms to 55 ms and the edge SELECT from 2,152 ms to 51 ms; point lookups from 175 to 305 ms down to 44 to 49 ms.
+  Upstream bug #3172 did not trigger. The shared resident was only inventoried and copied.
+- **Phase 1 (10M-triple built base, delta grown 0 to 1.6M changes):** cold joins grew 13 to 182 ms for monotonic keys (about 99 ms per
+  million changes) and 13 to 59 ms for spread keys (about 23 ms per million); rebuilds took 9 to 11 s and brought costs back to baseline.
+  16/16 C8 controls and 320/320 P4 content samples matched. The builder qualified no threshold (non-monotonic small samples, no exact block
+  counters, no frozen trace); the cost growth is clear, the exact rule is not yet.
+- **Separate concern for P4 on lane Q:** the 20-pull sample p99 is about 263 to 300 ms even with zero delta, against P4's 25 ms bar. That is
+  the A0 encoding's pull cost, not the delta, and needs its own look (R17's compact current-graph projection is the candidate).
+- **What it means:** the QLever lane is viable only with a rebuild loop; a rebuild costs seconds, so generations from the log (phase 2) are
+  the plan. Phase 2 waits for the broker (P2Q) to merge. Review CX-VQG1 is checking phases 0 and 1.
+
+## 2026-11-09 03:31Z: W02 and QG1 on main; contract 0.3.13 built; the scale window runs the XTDB exclusive reruns
+- **Merged:** QG1 phases 0-1 (diagnostic, with bounded-slot QLever startup in engine.mjs) and W02, the golden scenario harness v2 (with W01b).
+  W02's 26 missing-claim failures per lane are the list of O-DOMAIN checks still to build. Six W02 evidence files over 1 MB went to the
+  durable folder. Q87 gate 108/108 after each merge.
+- **Contract 0.3.13 built:** 494 mutations, evaluator 108/108, XTDB G0 1,218/1,218, Datomic G0 1,253/1,253; in review. It brings lane D's
+  adapter to main.
+- **Reviews:** GS12F round 2 found four more bounds-vs-codec mismatches (sparse arrays, XTDB journal depth, PostgreSQL fractional datetimes,
+  FoundationDB size limit) after 199 round trips and 759 typed rejections passed; P2Q round 9 built reads from one wrapped table and is
+  in review round 10.
+- **Scale window:** X02 and C8 G1/G2 and J01 compact-on G1 on xtdb-s1 (CX-INT-XCJ).
+
+## 2026-11-09 03:33Z: hourly pass: usage 5%; two researchers on the open P2 and P4 performance questions
+- **Learnings since the last pass:** a QLever rebuild cut scoped reads from about 2.2 s to 55 ms (QG1); the golden scenario harness now
+  catches all 33 planted faults and lists 26 missing domain checks per lane (W02); the erasure scanners refuse when they cannot read a byte
+  range instead of passing (ER01-S r2); one disk cleanup removed worktrees that two follow-ups still needed (fresh launches now).
+- **Research launched (Opus high):**
+  - **R39, lane X P2:** A0 sends every commit through one writer, so measured commit bars are queueing. What did P2X build, what is
+    XTDB's real commit floor for 10 facts with 256 readers, and the next brief.
+  - **R40, lane Q P4:** a QLever pull costs about 270 ms p99 on a built base with zero delta, against a 25 ms bar. Where the time goes and
+    which path (compact cur graph, broker host store, different encoding) can reach the bar.
+- **Priorities by evidence today:** P1 has its floor designed (RT01, Q89, Q90) and building; P2 and P4 have no lane meeting a bar yet; P3
+  has SQL01's feed checks; P5 has round A offline. R39 and R40 target the two weakest.
+
+## 2026-11-09 03:44Z: R39: no lane X commit has reached P2's 10 ms; the XTDB indexer is the floor; the broker is the shortest path
+- **P2X (per-subject CAS, never reviewed, 460 commits behind main):** 0 cross-subject conflicts with 16 writers (A0: 222 conflicts, 3,376
+  CAS rejections), 6 to 8x lower service time than A0 at about 20k history; best single-writer p50 42.6 ms, 31.3 ms of it the commit.
+- **Floor:** best 10-fact commit p50 16.4 ms with no readers; 77 to 290 ms service with 4 to 256 readers on the writer node. The serial
+  indexer is 59 to 90% of commit time in X05's engine metrics; fsync 1 to 2 ms; read-your-own-write adds nothing on the writer node.
+  85% of trace commands arrive in 55/s bursts, so one decider needs about 7 ms service or less.
+- **Rulings Q96a-c:** per-subject serial and cross-subject parallel composition, A0 single-flight only as a control; per-subject arms need a
+  decider-side stamp (RT01's client stamp is monotone only because A0 serializes); the broker (P2B) is the shortest path, and EXP-P2X2 runs
+  once on an exclusive slot, with its decision rule written in advance, to settle whether the native path is closed.
+
+## 2026-11-09 03:46Z: scale window: X02, C8 and J01 pass their exclusive reruns; K01 live starts
+- **CX-XRUN on xtdb-s1:** A0 G1 88/88 plus the suite, A0 G2 142/142, compact G1 88/88 plus the suite. J01's mode collector exited 1 on four
+  scopes that only rejected and never wrote; a classifier gap for J01 to fix later (those scopes have no mode to report), not a correctness
+  failure. Volumes removed, slot released.
+- **Next in the window:** K01's live two-start run and E1 (now), then EXP-P2X2, P5 A1, G03's slot run, RT01 live G2 and G6, W02 live GS.
+
+## 2026-11-09 03:47Z: R40: lane Q's 270 ms pull is seven requests and a keep-alive stall; serve current pulls from H1
+- **Where the time goes:** the A0 pull sends one SPARQL request per BFS level (7 for depth 6), each 31 to 37 ms: about 4.5 ms of
+  host-to-VM transport, a 41 to 45 ms keep-alive stall on 32% of requests (QLever never sets TCP_NODELAY; R17 found this and the fix was
+  never applied), and 12 to 18 ms of engine work for a 7-predicate star join over every assertion ever written. The delta is secondary.
+- **Options:** the cur graph 23 to 80 ms p50; H1 (the broker's SQLite store) about 1 to 2 ms p50 and 8 to 20 ms p99 by estimate, flat bytes
+  by construction, throughput per core the open risk (600 to 2,500 pulls per CPU second against 1,100); a bundle-per-root encoding about 6 ms
+  but up to 2,000 bundle rewrites per commit.
+- **Rulings Q97a-c:** current pulls come from H1 (EXP-QH1 after P2Q and SQL01 merge); QLever receipts record the connection mode, and earlier
+  QLever latencies are DIAGNOSTIC on this ground too; no multi-request QLever pull form is a P4 candidate.
+- **Started now:** EXP-QNODELAY (CX-QNODELAY) adds a connection-per-request mode to QleverClient and measures the stall, because it affects
+  every QLever read the lab has measured.
+- **Learning:** R17 found the stall weeks of plan time ago and nobody applied the fix. Research findings with a cheap fix now get a builder
+  in the same pass.

@@ -3,22 +3,55 @@
   "id": 18,
   "slug": "recruiter-dashboards",
   "title": "Recruiter dashboards",
-  "priorities": ["P1", "P4"],
-  "status": "spec",
+  "priorities": [
+    "P1",
+    "P4"
+  ],
+  "status": "runnable",
   "source": "lab/TARGETS.md section 6 row 18",
   "story": "\"Placements in this branch with an overdue I-9\" lists with filters, sort and paging at 256 concurrent readers.",
   "checked": "Answers come from maintained projections, match the oracle, and keep stable cursors while writes continue.",
   "seed": 20261118,
-  "yearOne": { "readers": 256 },
+  "yearOne": {
+    "readers": 256
+  },
   "params": {},
   "rungs": {
-    "10k": { "subjects": 600, "liveMs": 90000, "trace": { "subjects": 30, "factsPerSecond": 15 } }
+    "10k": {
+      "subjects": 120,
+      "liveMs": 30000,
+      "trace": {
+        "subjects": 15,
+        "factsPerSecond": 15
+      }
+    }
   },
-  "witnesses": { "positive": "placements whose Section 2 completes during the run (leave the overdue list)", "negative": "placements never written in the live phase (their list membership changes only by valid time)" },
-  "domain": ["which placements are overdue at a basis (W0 due rule; O-DOMAIN)"],
-  "bars": [
-    { "id": "P1.read.p99", "metric": "read.p99", "op": "<=", "value": 100, "unit": "ms", "source": "TARGETS section 1 P1" }
+  "witnesses": {
+    "positive": "placements whose Section 2 completes during the run (leave the overdue list)",
+    "negative": "placements never written in the live phase (their list membership changes only by valid time)"
+  },
+  "domain": [
+    "which placements are overdue at a basis (W0 due rule; O-DOMAIN)"
   ],
-  "faults": ["writes while a cursor is open (cursor stability)"],
-  "oracle": { "source": "O-REPLAY per-subject digests and an unchunked `find` case for the list's database part; O-DOMAIN for overdue", "gaps": ["maintained projections are not built in the triplex-public composition", "the unchunked find case is not generated yet (repository contract EXP-R01 not frozen)"] }
+  "bars": [
+    {
+      "id": "P1.read.p99",
+      "metric": "read.p99",
+      "op": "<=",
+      "value": 100,
+      "unit": "ms",
+      "source": "TARGETS section 1 P1"
+    }
+  ],
+  "faults": [
+    "writes while a cursor is open (cursor stability)"
+  ],
+  "oracle": {
+    "source": "O-REPLAY per-subject digests and an unchunked `find` case for the list's database part; O-DOMAIN for overdue",
+    "gaps": [
+      "maintained projections are not built in the triplex-public composition",
+      "the unchunked find case is not generated yet (repository contract EXP-R01 not frozen)"
+    ]
+  },
+  "rungNote": "Sized for a shared 2-CPU dev slot (measured 2026-11-07: about 0.1 to 1 commits/s under pinned readers): the rung is the 10k-subject background world; the live phase runs the fixed trace (15 facts/s, open loop) with a scaled scenario overlay. Year-one volumes wait for PLAN section 8 order 6."
 }

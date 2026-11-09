@@ -1,0 +1,37 @@
+{
+ "format": "tx2-gs-run/1",
+ "lane": "xtdb",
+ "rung": "10k",
+ "worldSize": 10000,
+ "runTag": "e06b9454",
+ "readers": 1,
+ "startedAt": "2026-11-08T21:25:20.756Z",
+ "slotOwner": {
+  "lane": "xtdb",
+  "slot": "dev",
+  "mode": "resident",
+  "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+  "holder": "worktree:/Users/sam/projects/triplex-db-2"
+ },
+ "profile": {
+  "readers": 1,
+  "readersTarget": 256,
+  "slotMode": "resident",
+  "reduced": true
+ },
+ "world": {
+  "scope": "gs-world-10k-s20261107-18ae8349",
+  "loaded": false,
+  "batches": 100,
+  "ms": 0,
+  "facts": 50000,
+  "positionAfter": 1426,
+  "expectedSha256": "84ee956e0581504a3a80081e7cc12ede7ff2fac0ccd31778851be619d1798692"
+ },
+ "scenarios": [],
+ "status": "RUNNING",
+ "endpoint": "postgres://xtdb:xtdb@127.0.0.1:5470/xtdb",
+ "queryPath": "xtdb-datalog",
+ "scope": "gs-world-10k-s20261107-18ae8349",
+ "composition": "triplex-public"
+}

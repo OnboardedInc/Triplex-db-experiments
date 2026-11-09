@@ -93,3 +93,35 @@ Contract pin-level counts remain **157 total / 40 closable / 117 blocked**. Dato
 Independent contract delta review remains outstanding. Q78e, Q86g, Q89/Q90, Q92, Q94a and Q95 remain pending; G03 executing-isolation pins remain deferred. Q91/Q93/Q94 policies are requirements for later implementations/qualification, not a claim that QG1, K01, W0-1.2 or P5 round C has qualified. The historical reviewer suite's obsolete null-image method remains a documented failure; all required current-version gates pass.
 
 No engine/container lifecycle, live Datomic/XTDB/QLever G1/G2, production durability probe, storage migration, tenant-isolation/erasure qualification, benchmark, root pnpm check, package publication, push or merge into actual main was performed. INT-D's prior unrelated unbuilt-CLI pack-check limitation is not resolved or relabelled by this task. Every failed gate attempt listed above is retained for the separate reviewer.
+
+## Round 2 — merge current main and retain all gate behavior
+
+North star: the P1–P5 correctness floor and Q87's actual merged-tree evaluator. Reviewer `verify/A01-0311` `d391885` accepted the standalone ruling/pin delta but returned FIX-FIRST because four real gate conflicts prevented merged-tree gates. This round merges current-at-dispatch main **`9a7996e2a242690edbc86417283d8c7348950adb`** into candidate **`6b8d2182d78e567cf8e385622c9a259e8892687a`**. This is newer than the review's reproduced cutoff `e90c1584`. No actual main checkout is edited.
+
+### Per-conflict resolution
+
+| Conflict hunk | Resolution and retained behavior |
+| --- | --- |
+| gate.mjs imports, prior line 26 | Keep **MAIN and LOCKS**. MAIN binds main's owned pnpm-store paths; LOCKS retains DA01's parent-heavy-grant observation. Preserve every other import. |
+| environment cleanup, prior line 45 | Union both parents: DATOMIC_INTEGRATION, DATOMIC_URL and DATOMIC_GATEWAY_URL remain cleared; W02's QLEVER_COMMIT_PATH and QLEVER_BROKER_DIR are also cleared. Existing live/admission variables and planner-plan cleanup remain. Extra explicitly owned values are applied only after cleanup. |
+| dry-run admission, prior line 725 | Use shared gateLanes: GS delegates to W02's GS_LANES (all three lanes), G0/G1 admit Datomic alongside XTDB/QLever, and G2/G4/NS/OBL retain their prior lane limits. Dry-run remains a plan, with no build, lock, engine or semantic PASS. |
+| executing admission, prior line 731 | Use the **same** gateLanes helper, so actual execution cannot diverge from dry-run. Datomic G0/G1 and W02 GS remain admitted; unsupported Datomic G2/G4/NS remain rejected. |
+
+Also reviewed the automatic merge: retained W02's GS driver, broker environment, refusals, diagnostics, fresh-scope metadata and W0 build/hash inclusion; retained DA01's Datomic build/tests, routes and parent-heavy grant body. Both parents had the identical Datomic PACKAGES entry; deduplicated it without changing its value. The entire gateGS body is byte-identical to main and the Run.step body is byte-identical to the prior candidate. QG1's bounded-memory/exclusive-copy QLever startup stays in engine.mjs alongside DA01's Datomic branches; no QG1 startup or resident operation is run here. Main's bounded heavy poll option is retained; no resource-pool limit changes.
+
+The version-local pnpm shim now recognizes main's explicit `--config.store-dir` prefix only when it equals the authorized store. It still runs the unchanged declared package scripts/installed Vitest and rejects another store or unknown command. This is command compatibility, not a weaker build or test.
+
+Main adds Q96a-c and Q97a-c pending rows. They remain pending, with no new compiled authority. Regenerated the conflicted ACCEPTANCE.md/obligations.json from the unchanged generator, updating pending hashes/transitive outputs; all six outputs verify byte-identical. Existing fifteen compiled rulings, R36 amendments/retirements, Q88, image/source/oracle pins and verifier provenance are unchanged. [merge-audit.json](evidence-0.3.13-round2/merge-audit.json), [original conflicts](evidence-0.3.13-round2/gate-conflicts.diff).
+
+Four new merge regressions check the complete lane matrix in both call sites, environment cleanup under inherited hostile/stale values, actual dry-run admission/refusal, and exact parent function preservation. First attempt passed 3/4: the dry-run subprocess used shared-main config, which has no unmerged lane D yet. The test now explicitly supplies **this worktree's TX2_CONFIG_DIR**, as the existing lab unit tests do. No gate admission or assertion changed; the raw first result is retained. The corrected merge suite passes 4/4 and the unchanged contract suite passes 18/18. G0 will use this same candidate config explicitly; no shared slot config is edited.
+
+### Round-2 PASS audit before source commit
+
+- **Lane admission / cleanEnv:** these only select an implemented route or refuse, and clean inherited variables. They grant no semantic PASS. Tests compare the actual lane set and cleaned content; each dry-run is a fresh child with explicit candidate config, exact lane and gate, and claims no engine slot.
+- **Imported W02 GS receipt path:** preserves main's exact gateGS body. Observed scenarios, bar checks, fresh domain comparisons, W0 in-process admission/start/end counts, QLever broker/base/delta checks and pre-0.4.0 refusals remain authoritative. The child writes a new run-specific report, and source/build/config/endpoint/slot plus raw report hashes stay bound. No live GS receipt is produced here.
+- **Imported QG1 engine path:** seed file hashes/effective startup bytes bind the captured copy and memory configuration; overrides require an exclusive QLever slot. These are startup/readiness requirements, not workload qualification; no lifecycle call is executed here. DA01's image/context/readiness and grant checks are preserved.
+- **G0 / verdictOf:** unchanged outcome conditions require real build/typecheck/test content, nonzero execution, zero failures and reviewed skips. Fresh unique run directories, exact merged source/lock/scripts/fixtures, rebuilt manifests and immutable raw/grant objects bind each attempt; G0 has slot null. Final artifacts and build preimages will be captured immediately after each G0 before another build can replace them.
+- **Generator, evaluator and mutation harness:** unchanged checks compare literal/current bytes and actual assertions/semantic invalid headers. Each round-2 output is newly named; the committed merged source and input hashes are recorded. Original 108 evaluator assertions and all 494 mutation controls remain intact.
+- **Final receipt aggregation:** rehash this round's exact logs, retained CAS/resource objects and built-file preimages, verify run IDs/times/source/lane/slot/counts, and separate historical round-1 evidence. A checksum or standalone earlier PASS cannot become a fresh merged-tree result. Independent reviewer acceptance is still required.
+
+Fresh committed-source gates and final receipts follow below. Historical round-1 results and failures remain unchanged.

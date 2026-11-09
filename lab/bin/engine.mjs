@@ -241,11 +241,39 @@ export function effectiveConfig(config, info) {
   // QLever: repo qlever-start.sh with the slot's query memory (-m). Port stays 7019 inside.
   const original = fs.readFileSync(path.join(CONFIG_DIR, 'qlever-start.sh'), 'utf8');
   if (!/ -m 2G /.test(original)) fail('CONFIG', 'qlever-start.sh no longer has "-m 2G"; update engine.mjs');
-  const script = original.replace(' -m 2G ', ` -m ${info.qleverMemory} `);
+  // [EXP-QG1] Why: an exclusive slot can boot an immutable captured index or N-Quads
+  // without mutating a running index. Rejected: docker cp over live index files (unsafe).
+  const seedFiles = info.qleverSeedDir ? Object.fromEntries(fs.readdirSync(info.qleverSeedDir)
+    .filter(name => name === 'seed.nq.gz' || /^triplex\.[a-zA-Z0-9._-]+$/.test(name))
+    .sort().map(name => [name, sha256(fs.readFileSync(path.join(info.qleverSeedDir, name)))])) : null;
+  if (seedFiles && !seedFiles['seed.nq.gz'] && !seedFiles['triplex.index.pso']) fail('CONFIG', 'seed has neither N-Quads nor a base index');
+  const seedDigest = seedFiles ? sha256(JSON.stringify(seedFiles)) : null;
+  const seedChecks = seedFiles ? Object.entries(seedFiles).map(([name, hash]) => `${hash}  ${name}`).join('\n') : '';
+  const seed = info.qleverSeedDir ? `if [[ -f /data/.qg1-seeded ]]; then
+  [[ "$(cat /data/.qg1-seeded)" = "${seedDigest}" ]] || { echo 'seed binding changed' >&2; exit 1; }
+else
+  [[ ! -f /data/triplex.index.pso ]] || { echo 'seed requires an empty index volume' >&2; exit 1; }
+  (cd /seed; sha256sum -c <<'QG1_SUMS'
+${seedChecks}
+QG1_SUMS
+  )
+  if [[ -f /seed/seed.nq.gz ]]; then
+    cd /data
+    printf '%s' '{"num-triples-per-batch":500000}' > /data/qg1-settings.json
+    gunzip -c /seed/seed.nq.gz | qlever-index -i triplex -f - -F nq -s /data/qg1-settings.json --stxxl-memory 512M --no-patterns
+  else
+    cp /seed/triplex.* /data/
+  fi
+  printf '%s' '${seedDigest}' > /data/.qg1-seeded
+fi
+` : '';
+  const script = original.replace('cd /data\n', `cd /data\n${seed}`).replace(' -m 2G ', ` -m ${info.qleverMemory} `);
+  const boundScript = info.qleverSeedDir ? script.replace(' --persist-updates ', ' --rebuild-keep-previous-index-dirs none --persist-updates ') : script;
   const file = path.join(dir, 'start.sh');
-  fs.writeFileSync(file, script);
+  fs.writeFileSync(file, boundScript);
   const effective = {
-    lane: 'qlever', slot: info.slot, image: info.laneConf.image, startScriptSha256: sha256(script),
+    ...(info.qleverSeedDir ? { seedDir: info.qleverSeedDir, seedFiles, seedDigest } : {}),
+    lane: 'qlever', slot: info.slot, image: info.laneConf.image, startScriptSha256: sha256(boundScript),
     sourceStartScriptSha256: sha256(original), qleverMemory: info.qleverMemory, memBytes: info.memBytes, cpus: info.cpus,
     publish: `127.0.0.1:${info.port}:7019`, volume: `${info.volume}:/data`, volumeInit: 'marker /data/.tx2-volume, chown -R 999:999 /data (image user qlever); no -w (start.sh does cd /data)', entrypoint: ['/bin/bash', '/config/start.sh'],
     health: "curl -fsS -o /dev/null 'http://127.0.0.1:7019/?query=SELECT%20*%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20LIMIT%201'",
@@ -271,7 +299,7 @@ function runArgs(info, eff, holder) {
       '-e', `GATEWAY_SOURCE_SHA256=${e.gatewaySourceSha256}`, info.laneConf.imageId];
   if (info.lane === 'xtdb')
     return [...common, '-e', `JDK_JAVA_OPTIONS=${info.javaOpts}`, '-v', `${eff.files.config}:/etc/xtdb/config.yaml:ro`, info.laneConf.image, ...e.cmd];
-  return [...common, '--platform', 'linux/arm64', '-v', `${eff.files.startScript}:/config/start.sh:ro`, '--entrypoint', '/bin/bash', info.laneConf.image, '/config/start.sh'];
+  return [...common, ...(info.qleverSeedDir ? ['-v', `${info.qleverSeedDir}:/seed:ro`] : []), '--platform', 'linux/arm64', '-v', `${eff.files.startScript}:/config/start.sh:ro`, '--entrypoint', '/bin/bash', info.laneConf.image, '/config/start.sh'];
 }
 
 const tcpOpen = port => new Promise(resolve => {
@@ -602,6 +630,19 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (!['up', 'down', 'logs'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
   const info = slotInfo(config, options.lane, options.slot);
+  // [EXP-QG1] Why: overrides never reach shared residents; effective bytes bind the run.
+  // Rejected: changing slots.json for everyone during a measurement window.
+  if (options['qlever-memory'] || options['qlever-seed-dir']) {
+    if (info.lane !== 'qlever' || info.mode !== 'exclusive') fail('USAGE', 'QLever overrides require an exclusive QLever slot');
+    if (options['qlever-memory']) {
+      if (options['qlever-memory'] !== '1000M') fail('USAGE', 'only the experiment memory override 1000M is allowed');
+      info.qleverMemory = options['qlever-memory'];
+    }
+    if (options['qlever-seed-dir']) {
+      info.qleverSeedDir = fs.realpathSync(options['qlever-seed-dir']);
+      if (!fs.statSync(info.qleverSeedDir).isDirectory()) fail('USAGE', 'seed must be a directory');
+    }
+  }
   if (options.follower) {
     const fol = followerInfo(config, info, options);
     if (command === 'up') return followerUp(config, info, fol, options);
