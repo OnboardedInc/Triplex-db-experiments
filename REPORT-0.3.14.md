@@ -112,3 +112,31 @@ Frozen source b9444df2 passed standalone verify, all 23 contract tests, all 519 
 The correction excludes `valueDomain` from that intermediate view, next to supportedValueTypes and other non-read fields. The final complete adapter still has a required QLever domain and is checked against QleverBrokerStorageAdapterService. No runtime predicate, error check, assertion, skip or timeout is weakened. QLever's explicit source typecheck now passes. The failed G0 receipt and exact raw/object/build bytes are retained as attempt1-G0-qlever, with build failure preserved; its 1,415 passing assertions are not treated as a gate PASS. Attempt-1 XTDB and Datomic captures, source snapshot and pin audit also remain separate. All required gates will be freshly rerun after this source correction.
 
 The adapter inventory above includes the internal KV transaction view for clarity; it returns KvBackendService and is not another StorageAdapterService implementation. Its domain behavior remains unchanged. FoundationDB therefore is not a newly affected StorageAdapter implementation.
+
+### Round-2 final result
+
+**F1 and F2 are fixed; the adapter-domain field is mandatory and the guessed TriplesLive fallback is removed. All requested builder gates pass on corrected frozen source `e96bfc3bb91f10d53d052a82fc0ed36a7cd3e614`, including main `833ea552be2abaa97c74a6864d392fea9351047b`. Independent round-2 review remains pending.** The final receipt/report commit changes evidence and documentation only.
+
+| Gate | Fresh corrected-source result | Receipt / execution label |
+| --- | --- | --- |
+| Standalone `build_contract.py --verify` | Six outputs byte-identical; separate invocation, exit 0 | r2b-verify-final |
+| Contract tests | 23/23, OK | r2b-contract-tests-final |
+| Contract mutations | 519/519 caught, zero misses; 607 catalog, 88 retired anchors | r2b-mutations-final |
+| Q87 evaluator, main included | 108/108; zero failures, skips, cancellations or todo; both required test files unchanged | r2b-evaluator-final |
+| Broker public integer/JSON/codec regressions | 19/19, real SQLite broker; exact receipts/readback and typed refusal | r2b-focused-final |
+| Public runtime TypeScript fixtures | tsc exit 0; missing-domain assignment requires an error | r2b-types-final |
+| XTDB offline G0 | 1,223/1,223; 140 expected skips, zero unexpected/failures, full scope | G0-xtdb-20261109T065103Z-3715a0 |
+| Datomic offline G0 | 1,258/1,258; 66 expected skips, zero unexpected/failures, full scope | G0-datomic-20261109T065358Z-1d6936 |
+| QLever offline G0 | 1,415/1,415; 79 expected skips, zero unexpected/failures, full scope; includes the 19 new broker cases | G0-qlever-20261109T070302Z-464c58 |
+
+Every final execution has `sourceStillMatches:true`, exact head/input hashes, fresh start/end timestamps and retained actual logs. All three G0s have slot null, zero executed-source diff bytes, no modified/untracked executed-source inputs, successful build/typecheck steps and complete expected skip accounting. Optional stash snapshots are not needed for these observations; source hashes and committed Git identities bind the runs. The final three build inventories were captured before the next build: XTDB 586 files/41 object references, Datomic 548/48, QLever 628/41. All raw/object/build bytes rehash against their receipts and manifests.
+
+The final QLever attempt explicitly cites the original FAIL through --previous; all earlier round-2 attempts remain separate and unchanged. Corrected-source retries for XTDB and Datomic cite their earlier attempt IDs and explain the new source. No test, assertion, skip inventory, timeout, compiler rule or gate verdict was relaxed. Shared heavy admission caused a long QLever wait; it remained queued through heavy.mjs and no extra slot/capacity bypass was introduced. All heavy commands started above 5 GiB free. No engine/container lifecycle or exclusive slot was used; no dependency install or version change was needed in round 2.
+
+Final aggregation audit: `evidence-0.3.14-round2/validate.py` checks actual contract/unittest/TAP/mutation/focused-test content, current source hashes, exact final head and main ancestry, timestamps after the frozen snapshot, exact offline slot/input bindings, every retained G0 object and build-manifest/file digest, and capture-before-next-build order. `seal.py` reruns that validation, checks each execution log digest, scopes retained files to this round's owned prefixes, rehashes all bytes and emits indexes/manifests. Its outputs record builder gate evidence only, not engine qualification or independent acceptance. This completes the observation-to-result audit for the final report commit.
+
+Evidence: [round-2 index](lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14-round2/INDEX.md), RUNS.json, validation-summary.json and split DURABLE-SHA256SUMS manifests. These seal 3,959 durable round-2 files, including original failures, at `/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/round2/` plus source-bound `r2-*`/`r2b-*` execution directories under its parent. Only small evidence/index/manifests are committed; no dependency caches or bulky raw output enter Git.
+
+The 247-path active pin graph has no moved source pin in round 2, so no re-pin pair exists. `lab/acceptance/` remains byte-identical to bed67f1f, with transitive hash `266e66f537cd27f462a01f6bf18c9ee7be3f3915bc5bdb61c03554a41d55a718`, version 0.3.14, all 54 held pending IDs intact, and no obligation closed.
+
+Open: independent review of these fixes. Not performed: live G1+/GS or performance/target-scale qualification, full root check, package packing, fresh standalone SQLite/PostgreSQL/Cloudflare/DuckDB/FoundationDB package gates, external backend/physical power-loss/erasure/tenant-isolation qualification, deployment or publishing. No main edit, merge into main or push. No required round-2 builder gate remains unrun.

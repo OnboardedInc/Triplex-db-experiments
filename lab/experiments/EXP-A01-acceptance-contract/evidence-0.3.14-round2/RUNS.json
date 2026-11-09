@@ -1,0 +1,236 @@
+[
+  {
+    "label": "r2-contract-tests-final",
+    "head": "b9444df2fed1e7a5e8577cd5789d9d56097ce183",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2-contract-tests-final-5f102b30-82cf-4ff0-920f-5d994382c918/receipt.json",
+    "sha256": "e6d477a8e04316c7a6c56271d242e31fb1a586a99535b276652339ebb2dd0995",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:37:57.427Z",
+    "end": "2026-11-09T06:37:57.985Z"
+  },
+  {
+    "label": "r2-evaluator-final",
+    "head": "b9444df2fed1e7a5e8577cd5789d9d56097ce183",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2-evaluator-final-4811d88b-9397-4c49-afa1-43b0914af472/receipt.json",
+    "sha256": "81d15cc21dbe74f9737d61b5c6978b4cd53c7e4e0f489e197eddc2962f5de9c8",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:37:58.142Z",
+    "end": "2026-11-09T06:40:45.320Z"
+  },
+  {
+    "label": "r2-focused-final",
+    "head": "b9444df2fed1e7a5e8577cd5789d9d56097ce183",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2-focused-final-f1d3e82a-6734-4d8e-bbdd-54c643eee721/receipt.json",
+    "sha256": "13a785a774121e4ac76b6b4b6fa7249fbc0d99b73ea28088cab1cd7a8976a410",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:38:29.628Z",
+    "end": "2026-11-09T06:39:19.088Z"
+  },
+  {
+    "label": "r2-g0-datomic-final",
+    "head": "b9444df2fed1e7a5e8577cd5789d9d56097ce183",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2-g0-datomic-final-3f00b247-875a-4b35-9779-188cc1efa13f/receipt.json",
+    "sha256": "c85976cf6768b191329e0e9426ce3d37c0176ad2f59a8c12b5ad948c51327e94",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:41:52.153Z",
+    "end": "2026-11-09T06:42:57.590Z"
+  },
+  {
+    "label": "r2-g0-qlever-final",
+    "head": "b9444df2fed1e7a5e8577cd5789d9d56097ce183",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2-g0-qlever-final-e188e9d0-3801-4c96-a914-32dc1e3e1589/receipt.json",
+    "sha256": "22d78c7f179fb337640270f4928dc2d8537d9e1949053a608e9cc41877f7a3b8",
+    "result": {
+      "code": 1,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:43:39.700Z",
+    "end": "2026-11-09T06:45:38.499Z"
+  },
+  {
+    "label": "r2-g0-xtdb-final",
+    "head": "b9444df2fed1e7a5e8577cd5789d9d56097ce183",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2-g0-xtdb-final-405f01d1-1a7c-4990-93d8-65aa2db6f10d/receipt.json",
+    "sha256": "49a7911fac162c6ead12b7e41c56c0d4ae002c799025c1b2decb2502daeef421",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:37:58.157Z",
+    "end": "2026-11-09T06:40:33.482Z"
+  },
+  {
+    "label": "r2-mutations-final",
+    "head": "b9444df2fed1e7a5e8577cd5789d9d56097ce183",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2-mutations-final-17fbc948-75e9-432d-bd5c-a6ee8d586df2/receipt.json",
+    "sha256": "b6417e2f69626d5f25a32c0e6be1f2c343f9988c7c6f9a71d32e0de219bc4c43",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:37:58.147Z",
+    "end": "2026-11-09T06:42:55.250Z"
+  },
+  {
+    "label": "r2-types-final",
+    "head": "b9444df2fed1e7a5e8577cd5789d9d56097ce183",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2-types-final-9635d769-bdd2-47a2-969d-5350656fa8eb/receipt.json",
+    "sha256": "3fadcc040aa5b05ffb3c8f2fbc758730208b0f8a3522481c76c219efa11ef3ec",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:39:19.287Z",
+    "end": "2026-11-09T06:39:21.371Z"
+  },
+  {
+    "label": "r2-verify-final",
+    "head": "b9444df2fed1e7a5e8577cd5789d9d56097ce183",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2-verify-final-e5f151d3-9cca-4f2f-a909-cc136ebe8342/receipt.json",
+    "sha256": "5587cffd6ff1662643691830c2545c32f5a782ee5a3cb4e29e9b476b34697e11",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:37:56.718Z",
+    "end": "2026-11-09T06:37:57.300Z"
+  },
+  {
+    "label": "r2b-contract-tests-final",
+    "head": "e96bfc3bb91f10d53d052a82fc0ed36a7cd3e614",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-contract-tests-final-780bee2b-0e23-48aa-836e-ed15dc717dd6/receipt.json",
+    "sha256": "24476aa2668d504b970898efddebf7951fd2dbf8be1c9564ef66a2a326c85217",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:47:57.694Z",
+    "end": "2026-11-09T06:47:58.301Z"
+  },
+  {
+    "label": "r2b-evaluator-final",
+    "head": "e96bfc3bb91f10d53d052a82fc0ed36a7cd3e614",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-evaluator-final-d4e8cd84-354a-46f6-aa3c-f8e6b018a0ed/receipt.json",
+    "sha256": "daf7191366ba70b9c44624379b811d810362e692707e45018ad795138cdf4eef",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:47:58.513Z",
+    "end": "2026-11-09T06:51:06.613Z"
+  },
+  {
+    "label": "r2b-focused-final",
+    "head": "e96bfc3bb91f10d53d052a82fc0ed36a7cd3e614",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-focused-final-a3cf2675-6081-4da0-a1af-7488fdfb4ffb/receipt.json",
+    "sha256": "0574f8c003db79d6663aea24f94800c5bc8795eb7e380b1edf870d21ae1c5aec",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:47:59.656Z",
+    "end": "2026-11-09T06:52:23.128Z"
+  },
+  {
+    "label": "r2b-g0-datomic-final",
+    "head": "e96bfc3bb91f10d53d052a82fc0ed36a7cd3e614",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-g0-datomic-final-b285b6e5-0dcd-46f2-a0e2-235b24934ca6/receipt.json",
+    "sha256": "08a39622e8706a553a76edf12d411feb7a8926452524b6f88562caa3b565d945",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:53:19.219Z",
+    "end": "2026-11-09T06:55:04.149Z"
+  },
+  {
+    "label": "r2b-g0-qlever-final",
+    "head": "e96bfc3bb91f10d53d052a82fc0ed36a7cd3e614",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-g0-qlever-final-3563e0bf-216e-4711-9148-31c87c97c5c6/receipt.json",
+    "sha256": "d9e7ed6f19319e9e068210a8b756f06348a22b5853ee9bbd409d3c9a567baa0d",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:56:08.855Z",
+    "end": "2026-11-09T07:05:27.083Z"
+  },
+  {
+    "label": "r2b-g0-xtdb-final",
+    "head": "e96bfc3bb91f10d53d052a82fc0ed36a7cd3e614",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-g0-xtdb-final-0259bd51-65ea-4758-a2e0-9bd3ff973255/receipt.json",
+    "sha256": "6028f75d037f1b9f101ccdc7557226020cd916f7c2e4ab2e2e3cac9b91009b3f",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:47:58.517Z",
+    "end": "2026-11-09T06:52:12.161Z"
+  },
+  {
+    "label": "r2b-mutations-final",
+    "head": "e96bfc3bb91f10d53d052a82fc0ed36a7cd3e614",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-mutations-final-cd473fce-c7f0-4ae0-8d1e-7ae22933eaae/receipt.json",
+    "sha256": "e6dd835934174bcf66bbd1011ca79481e5106bfd0302267e17704920fe84bd66",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:47:58.517Z",
+    "end": "2026-11-09T06:54:08.537Z"
+  },
+  {
+    "label": "r2b-types-final",
+    "head": "e96bfc3bb91f10d53d052a82fc0ed36a7cd3e614",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-types-final-269d730f-c0e5-4622-82a6-92b39ffd06d2/receipt.json",
+    "sha256": "95acc8796fc66ac11f1612c5aec872b07d59f0b7fe9da08f3613a4f858ce6238",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:52:23.392Z",
+    "end": "2026-11-09T06:52:57.423Z"
+  },
+  {
+    "label": "r2b-verify-final",
+    "head": "e96bfc3bb91f10d53d052a82fc0ed36a7cd3e614",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/r2b-verify-final-90bd610f-038f-4212-8181-22f21dde43e0/receipt.json",
+    "sha256": "7ee008c1c0230caff6db55f67b64d20645aa586ae8e2fa9374298320b42457b0",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true,
+    "start": "2026-11-09T06:47:56.946Z",
+    "end": "2026-11-09T06:47:57.556Z"
+  }
+]
