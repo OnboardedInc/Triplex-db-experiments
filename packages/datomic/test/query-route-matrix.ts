@@ -1,3 +1,4 @@
+import { canonicalQueryProperties } from "./canonical-query-properties.js";
 import { Effect } from "effect";
 import { expect } from "vitest";
 import type { ResolvedTemporalBasis } from "@triplex-build/triplex";
@@ -253,6 +254,7 @@ export async function queryRouteMatrix(
       });
   }
   const pinned = new Map<string, string[]>();
+  let propertyObservations = 0;
   let observations = 0,
     refusals = 0;
   for (const phase of ["before", "after"]) {
@@ -317,6 +319,20 @@ export async function queryRouteMatrix(
         }
       }
     }
+    propertyObservations += await canonicalQueryProperties(
+      client,
+      db,
+      scope,
+      phase,
+      bases.filter((c) => ["latest", "T", "TP", "P-physical", "P-interior"].includes(c.name)),
+      record,
+    );
   }
-  return { bases: bases.length, paths: paths.map((p) => p.name), observations, refusals };
+  return {
+    propertyObservations,
+    bases: bases.length,
+    paths: paths.map((p) => p.name),
+    observations,
+    refusals,
+  };
 }

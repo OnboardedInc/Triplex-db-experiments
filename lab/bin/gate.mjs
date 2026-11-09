@@ -400,7 +400,7 @@ async function gateG1(run, config) {
   if (run.options.cases) args.push('--cases', String(run.options.cases));
   const { result, step, bound } = await engineGate(run, config, { name: 'lab-conformance', queryPath: `${run.lane}-datalog`, args, timeoutMs: 45 * 60_000 });
   if (!bound) return result;
-  result.fixtures = fileHashes(run, ['packages/testkit/src/index.ts', 'packages/qualification/workloads/lab-conformance.ts', ...(run.lane === 'datomic' ? ['packages/testkit/src/routeEquivalence.ts', 'packages/testkit/src/routeHistory.ts', 'packages/datomic/test/route-equivalence.test.ts', 'packages/datomic/test/query-route-matrix.ts', ...fs.readdirSync(path.join(REPO, 'lab/oracles/replay')).filter(name => name.endsWith('.py')).map(name => `lab/oracles/replay/${name}`)] : [])], 'oracle-fixture');
+  result.fixtures = fileHashes(run, ['packages/testkit/src/index.ts', 'packages/qualification/workloads/lab-conformance.ts', ...(run.lane === 'datomic' ? ['packages/testkit/src/routeEquivalence.ts', 'packages/testkit/src/routeHistory.ts', 'packages/datomic/test/route-equivalence.test.ts', 'packages/datomic/test/query-route-matrix.ts', 'packages/datomic/test/canonical-query-properties.ts', ...fs.readdirSync(path.join(REPO, 'lab/oracles/replay')).filter(name => name.endsWith('.py')).map(name => `lab/oracles/replay/${name}`)] : [])], 'oracle-fixture');
   const report = readJson(output, null);
   if (!report) { run.reason('no G1 report written'); run.failure({ step: step.name, tail: step.tail }); return result; }
   run.store(output, 'raw-outcome');

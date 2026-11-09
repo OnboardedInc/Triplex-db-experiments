@@ -33,7 +33,7 @@ describe.skipIf(process.env["DATOMIC_INTEGRATION"] !== "1")("Datomic route equiv
     console.log(JSON.stringify({ kind: "datomic-test-db-created", scope, ...created }));
     const dir = path.resolve(
       process.env["DATOMIC_ROUTE_EVIDENCE_DIR"] ??
-        path.resolve(import.meta.dirname, "../../../lab/experiments/EXP-DA01/round4/oracle"),
+        path.resolve(import.meta.dirname, "../../../lab/experiments/EXP-DA01/round5/oracle"),
       `seed-${seed}-${randomUUID()}`,
     );
     fs.mkdirSync(dir, { recursive: true });

@@ -75,3 +75,16 @@ callers can use literal history attributes instead. This applies to vector and
 map EDN queries. Allowlisted functions cannot issue queries or pulls themselves.
 The required G1 fixture now also compares all query paths and basis families
 with history before and after retirement, retaining exact IDs and typed refusals.
+
+Native EDN is parsed exactly once into a canonical map; both classification and
+Peer execution receive that map. Repeated `:where` sections concatenate their
+clauses. Repeated `:in` and `:find` sections must agree exactly; conflicting ones
+refuse with `InvalidValue`. `:with` bindings are deduplicated. Map/list section
+values and supported nested logical clauses normalize recursively. Unknown
+sections, trailing queries, native `%` rules/rule invocations, pull patterns and
+non-variable projections cannot enter this closed gateway grammar and refuse
+before execution. Triplex rules still use the bounded frontier executor, and
+optional projections use pinned history pulls. Native route responses expose the
+chosen `history` or `live` route for qualification assertions. The G1 fixture
+also generates equivalent section layouts, clause orders and variable aliases,
+then checks exact IDs and routes; nested Triplex rules run through the same gate.

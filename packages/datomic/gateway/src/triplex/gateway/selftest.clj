@@ -1,6 +1,6 @@
 (ns triplex.gateway.selftest
   (:require [clojure.test :refer :all] [clojure.data.json :as json] [datomic.api :as d]
-            [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
+            [triplex.gateway.canonical :as canonical] [triplex.gateway.scope :as scope] [triplex.gateway.storage :as storage] [triplex.gateway.query :as query] [triplex.gateway.main :as gateway] [triplex.gateway.codec :as codec] [triplex.gateway.schema :as schema]))
 
 ;; [EXP-DA00] Why: execute actual Peer API and codec offline. Rejected: mocked Datomic (cannot prove schema installation).
 (deftest codec-vectors
@@ -91,7 +91,7 @@
         (let [tx (d/entity (gateway/sync-db uri) [:triplex.tx/operation-id "claim-operation"])]
           (is (= "claim-tx" (:triplex.tx/id tx)))
           (is (= 7.25 (:triplex.tx/recorded-at tx)))))
-      (is (thrown? Exception (query/check-query! '[:find ?x :where [(clojure.core/slurp "/etc/passwd") ?x]])))
+      (is (thrown? Exception (canonical/normalize '[:find ?x :in $ $rules :where [(clojure.core/slurp "/etc/passwd") ?x]])))
       (finally (storage/release! name handle) (gateway/delete-scope! base scope)))))
 ;; [EXP-DA01] Why: instrument actual Peer index calls so a correct row answer cannot hide a scope/commit scan (D-D4/D-D5). Rejected: asserting generated query text without exercising the engine.
 (deftest indexed-read-routes
@@ -145,7 +145,7 @@
               [:find ?x :in $ $rules :where [$rules "r" ?s ?x]]
               [:find ?x :in $ $rules :where (not-join [?x] [?f :f/id ?x])]
               {:find [?x] :in [$ $rules] :where [[?f :f/id ?x]]}]]
-    (is (= :f/subject (query/query-route q))))
+    (is (= :f/subject (query/query-route (canonical/normalize q)))))
   (doseq [q '[[:find ?f :in $ $rules :where [?f :f/live _]]
               [:find ?f :in $ $rules :where [(ground :f/live) ?a] [?f ?a _]]
               [:find ?f :in $ $rules :where [?a :db/ident :f/live] [?f ?a _]]
@@ -156,7 +156,35 @@
               [:find ?f :in $ $rules :where (not-join [?f] [?f ?a _])]
               [:find ?f :in $ $rules :where (or-join [?f] (and [?f ?a _]))]
               {:find [?f] :in [$ $rules] :where [[(ground :f/live) ?a] [?f ?a _]]}]]
-    (is (= :f/live (query/query-route q)))))
+    (is (= :f/live (query/query-route (canonical/normalize q))))))
+
+;; [EXP-DA01] Why: generated equivalent section layouts must have one canonical execution map and route proof; ambiguous inputs, rule calls and pull patterns refuse before Peer execution. Rejected: enumerating only the review's two duplicate strings.
+(deftest canonical-query-properties
+  (doseq [seed (range 96) attribute [:f/subject :f/live]]
+    (let [f (symbol (str "?fact" seed)) id (symbol (str "?id" seed))
+          patterns (if (even? seed) [[f :f/id id] [f attribute '_]] [[f attribute '_] [f :f/id id]])
+          clauses (conj (vec patterns) (list 'not-join [f] [f :f/id "never"]))
+          base {:find [id] :in '[$ $rules] :where clauses}
+          surfaces [base (update base :where #(apply list %))
+                    (vec (concat [:find id :in '$ '$rules :where] clauses))
+                    (vec (concat [:find id :in '$ '$rules :where (first clauses) :in '$ '$rules :find id :where] (rest clauses)))]]
+      (doseq [surface surfaces]
+        (let [q (canonical/parse (pr-str surface))]
+          (is (= (canonical/normalize base) q))
+          (is (= q (canonical/normalize q)))
+          (is (= attribute (query/query-route q)))))))
+  (doseq [text ["[:find ?id :in $ $rules :where [?f :f/id ?id] :where [?f :f/live _]]"
+                "[:find ?id :in $ $rules :where [?f :f/id ?id] :find ?id :where [?f :f/live _]]"]]
+    (is (= :f/live (query/query-route (canonical/parse text)))))
+  (doseq [text ["[:find ?id :in $ $rules :where [?f :f/id ?id] :in $rules $]"
+                "[:find ?id :in $ $rules :where [?f :f/id ?id] :find ?f]"
+                "[:find ?id :in $ $rules :rules [[(r ?f) [?f :f/live _]]] :where (r ?id)]"
+                "[:find (pull ?f [:f/live]) :in $ $rules :where [?f :f/id ?id]]"
+                "[:find ?id :in $ % :where (r ?id)]"
+                "[:find ?id :in $ $rules :where [?f :f/id ?id]] [:find ?other]"
+                "{:find [?id] :in [$ $rules] :where [[?f :f/id ?id]] :unknown []}"]]
+    (try (canonical/parse text) (is false "Unsupported/ambiguous query must refuse")
+         (catch clojure.lang.ExceptionInfo e (is (= "InvalidValue" (:code (ex-data e))))))))
 
 (defn -main [& _]
   (let [{:keys [fail error] :as result} (run-tests 'triplex.gateway.selftest)]
