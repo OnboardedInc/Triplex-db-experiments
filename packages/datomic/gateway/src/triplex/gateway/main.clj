@@ -64,10 +64,13 @@
 (defn response [status data] {:status status :headers {"Content-Type" "application/json; charset=utf-8"} :body (json/write-str data)})
 ;; [DX-B2-N3] Why: include UTF-8 encoding before the elapsed header is captured.
 ;; Rejected: timing the StringBuilder alone (response bytes are not ready yet).
+(def ^ThreadLocal request-parse-micros (ThreadLocal.))
 (defn timed [start response]
   (let [body (:body response)
         response (if (string? body) (assoc response :body (.getBytes ^String body "UTF-8")) response)]
-    (assoc-in response [:headers "x-tx2-gateway-micros"] (str (quot (- (System/nanoTime) start) 1000)))))
+    (-> response
+        (assoc-in [:headers "x-tx2-request-parse-micros"] (str (.get request-parse-micros)))
+        (assoc-in [:headers "x-tx2-gateway-micros"] (str (quot (- (System/nanoTime) start) 1000))))))
 (defn request-index! [name conn input]
   (let [wait-ms (get input "waitMs")]
     (when-not (and (integer? wait-ms) (<= 1 wait-ms 600000)) (codec/invalid "waitMs must be 1..600000"))
@@ -80,7 +83,8 @@
   (when-not body (codec/invalid "Missing JSON body"))
   (let [bytes (.readNBytes ^java.io.InputStream body 4194305)]
     (when (> (alength bytes) 4194304) (codec/invalid "Request too large"))
-    (json/read-str (String. bytes "UTF-8"))))
+    (let [start (System/nanoTime) input (json/read-str (String. bytes "UTF-8"))]
+      (.set request-parse-micros (quot (- (System/nanoTime) start) 1000)) input)))
 (defn handler [{:keys [request-method uri body query-string]}]
   (try
     (cond

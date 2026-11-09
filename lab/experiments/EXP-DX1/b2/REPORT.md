@@ -124,3 +124,11 @@ Component medians are not additive. The 2.81 ms staging median, begin HTTP wall 
 | 2,000 | 2,000 | 16 | 8.20 / 68.56 | Every new stamp visible |
 
 All 2,000 stamps matched their acknowledged commands at the exact returned internal position. Latency is higher than seed-only head pulls because the 200 hot worlds have accumulated live event entities. Raw witnesses bind each returned position to the expected and observed stamp.
+
+## N4 follow-up and N3 attribution
+
+The unfiltered v2 gateway was still parsing time bounds on scalar rows. Follow-up code parses bounds only for reference rows and uses primitive double bounds; no row filtering or traversal rule changed. Fresh read gate: 3 tests passed, 6,600 bases / 29,800 answer comparisons, expected 380 interior-position and 260 irregular declines, zero faults (readopt2-gate.log). A first return-hint placement produced AbstractMethodError; that failed attempt is retained in readopt-gate.log and was corrected before the successful gate.
+
+The 3,000-warm-up/1,000-profiled-command attribution probe (200 stamp/address subjects, real command shapes; not an N4 replacement) is in `commit-probe-1794263164056-63fdf750-e078-47ef-945f-5f339ef13025/`. Medians: total 16.47 ms; staging 2.56 ms = begin decoding 0.042 ms + tagged row encoding 1.181 ms + remaining core staging 1.264 ms. Request serialization 0.697 ms, gateway JSON parsing 0.201 ms, HTTP/transport remainder 1.735 ms. V8 CPU samples identify encodeRow/decodeRow and stringifyExact among the largest active leaves. The >1 ms local codec cost is addressed by direct scalar and stored-domain validation before row-text construction, preserving long-column signed-zero canonicalization. Codec/client/value-domain unit gate: 117 passed.
+
+Core staging lies in the unowned core transaction path; the task permits only named optional-member edits there. The >1 ms transport remainder is outside the gateway's parsed-request/response-ready interval. The alternative already-bundled Jackson parser prototype passed 10,023 assertions but was not integrated because the measured parser median is only 0.20 ms; its source and failed/successful unit attempts remain in durable evidence/parser-prototype and parser-unit*.log.

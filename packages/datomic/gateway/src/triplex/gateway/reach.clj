@@ -57,7 +57,7 @@
                  (when (and datom (= a (.a datom))) (dec (d/tx->t (.e datom))))))
           t (min (long (or pt (d/basis-t db))) (long (or rt (d/basis-t db))))]
       [(if (= t (d/basis-t db)) db (d/as-of db t)) (or p head) t])))
-(defn bits [^String text ^long start]
+(defn bits ^double [^String text ^long start]
   (Double/longBitsToDouble (Long/parseUnsignedLong text (int start) (int (+ start 16)) 16)))
  ;; [DX-B2-N2] Why: a session remembers only immutable entity revisions; concurrent references may retry full.
 ;; Rejected: a cache keyed only by entity (historical cuts need their own revision).
@@ -88,14 +88,17 @@
               (= a row-a)
               (let [^String text (.v datom)
                     start (+ 5 (Integer/parseInt text 1 5 16))
-                    from (bits text start) end (+ start 16)
-                    to (when-not (= \- (.charAt text (int end))) (bits text end))
-                    ref-start (+ end 20) ref-size (Integer/parseInt text (int (+ end 16)) (int ref-start) 16)]
+                    ref-start (+ start 36) ref-size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)]
                 (aset counts 0 (inc (aget counts 0)))
                 (when (> (aget counts 0) 100000) (decline! "row-budget"))
                 (.add texts text)
-                (when (and (pos? ref-size) (<= from valid) (or (nil? to) (> (double to) valid)))
-                  (.add refs (.substring text (int ref-start) (int (+ ref-start ref-size)))))))))))
+                ;; [DX-B2-N4] Why: inline rows are unfiltered; only references need valid-time decoding.
+                ;; Rejected: parsing every scalar row's double header on every cached pull.
+                (when (pos? ref-size)
+                  (let [from (bits text start) end (+ start 16)
+                        to (if (= \- (.charAt text (int end))) Double/POSITIVE_INFINITY (bits text end))]
+                    (when (and (<= from valid) (< valid to))
+                      (.add refs (.substring text (int ref-start) (int (+ ref-start ref-size)))))))))))))
     (when (and (pos? (.size texts)) (zero? (aget rev 0))) (decline! "missing-revision"))
     [eid (if (.isEmpty texts) 0 (aget rev 0)) texts refs]))
 (defn append-strings! [^StringBuilder out ^Iterable values]

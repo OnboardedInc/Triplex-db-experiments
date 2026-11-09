@@ -56,6 +56,9 @@ export interface DatomicRequestSample {
   readonly started: number;
   readonly finished: number;
   readonly responseBytes: number;
+  readonly requestBytes: number;
+  readonly serializeMicros: number;
+  readonly parseMicros: number;
   readonly gatewayMicros: number;
   readonly transactMicros: number;
   readonly waited: boolean;
@@ -67,6 +70,7 @@ export class DatomicClient {
   // Rejected: inferring gateway CPU or transact time from client wall latency.
   onRequest?: (sample: DatomicRequestSample) => void;
   readonly agent: http.Agent;
+  readonly commitDiagnostics = { beginDecodeMicros: 0, transactEncodeMicros: 0 };
   private lastCommit: { db: string; position: number; t: string } | undefined;
   reachSession = randomUUID();
   readonly reachCache = new Map<string, Map<string, CachedEntity>>();
@@ -115,7 +119,9 @@ export class DatomicClient {
       )
         body = { ...body, basisT: this.lastCommit.t };
     }
+    const serializeStart = performance.now();
     const bytes = body === undefined ? undefined : Buffer.from(stringifyExact(body));
+    const serializeMicros = (performance.now() - serializeStart) * 1000;
     return new Promise<T>((resolve, reject) => {
       const req = http.request(
         new URL(path, this.endpoint),
@@ -162,6 +168,9 @@ export class DatomicClient {
                   started,
                   finished: performance.now(),
                   responseBytes: size,
+                  requestBytes: bytes?.length ?? 0,
+                  serializeMicros,
+                  parseMicros: Number(res.headers["x-tx2-request-parse-micros"] ?? NaN),
                   gatewayMicros: Number(res.headers["x-tx2-gateway-micros"] ?? NaN),
                   transactMicros: Number(data["transactMicros"] ?? NaN),
                   waited: res.headers["x-tx2-waited"] === "true",
@@ -316,6 +325,7 @@ export class DatomicClient {
       ...(hint.commandId === undefined ? {} : { commandId: hint.commandId }),
       ids: hint.tripleIds ?? [],
     });
+    const decodeStart = performance.now();
     const p = validateTagged(response.position);
     const position = Number(p.v);
     if (
@@ -342,6 +352,7 @@ export class DatomicClient {
       if (!rows.has(row.id)) throw new TypeError("Unexpected prefetched row");
       rows.set(row.id, row);
     }
+    this.commitDiagnostics.beginDecodeMicros = (performance.now() - decodeStart) * 1000;
     return {
       handle: response.handle,
       position,
@@ -373,18 +384,21 @@ export class DatomicClient {
       release?: boolean;
     },
   ): Promise<unknown> {
+    const encodeStart = performance.now();
+    const body = {
+      ...input,
+      rows: input.rows.map(encodeRow),
+      rowTexts: Object.fromEntries(
+        input.rows
+          .filter((r) => input.newIds.includes(r.id) && r.retracted_at === null)
+          .map((r) => [r.id, encodeRowText(r)]),
+      ),
+    };
+    this.commitDiagnostics.transactEncodeMicros = (performance.now() - encodeStart) * 1000;
     const response = await this.request<{ t?: TaggedValue; position?: TaggedValue }>(
       "POST",
       `/v1/db/${db}/transact`,
-      {
-        ...input,
-        rows: input.rows.map(encodeRow),
-        rowTexts: Object.fromEntries(
-          input.rows
-            .filter((r) => input.newIds.includes(r.id) && r.retracted_at === null)
-            .map((r) => [r.id, encodeRowText(r)]),
-        ),
-      },
+      body,
     );
     if (response.t && response.position) {
       const p = validateTagged(response.position);

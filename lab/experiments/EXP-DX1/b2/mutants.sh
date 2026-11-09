@@ -25,7 +25,7 @@ import pathlib,sys
 root,stage=map(pathlib.Path,sys.argv[1:3]);mode=sys.argv[3]
 p=stage/'src/triplex/gateway'/('storage.clj' if mode in ['retraction','rev'] else 'reach.clj')
 if mode=='valid':
- old='(when (and (pos? ref-size) (<= from valid) (or (nil? to) (> (double to) valid)))';new='(when (pos? ref-size)'
+ old='(when (and (<= from valid) (< valid to))';new='(when true'
 elif mode=='retraction':
  old='(when text (.add out [:db/retract eid :triplex.entity/row text]))';new='(when false (.add out [:db/retract eid :triplex.entity/row text]))'
 elif mode=='recorded': old='r (get basis "recordedAt")';new='r nil'
