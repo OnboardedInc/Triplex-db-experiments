@@ -1,0 +1,56 @@
+{
+  "claim": "host offline unit review only; regression failures demonstrate findings; no VM or semantic acceptance",
+  "commands": [
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "lab/observer/test_syncwitness.py"
+      ],
+      "exit": 0,
+      "name": "builder-syncwitness",
+      "stderrSha256": "1d11418f2770e2f5411921dcd326a408322f16ef97b60f15998b2f7ea99b7992",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "lab/observer/test_vm.py"
+      ],
+      "exit": 0,
+      "name": "builder-vm",
+      "stderrSha256": "fe16fac436b5bc517cd6b685e8dfc2aad2c3cbfc1bbd7cecbe6e97b883e67259",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "argv": [
+        "python3",
+        "-B",
+        "lab/verify/CX-VOBS7/review_round9.py"
+      ],
+      "exit": 1,
+      "name": "reviewer",
+      "stderrSha256": "93f9aad474ece591ac98328db92a062898a82fd756adef30cd9872cad1ac7e9e",
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "designSha256": "3f13d4562ea508fbf5ac7c23a84560f692b93eee1c24722714b186bcd6a06b65",
+  "finishedNs": 1794228139538491000,
+  "head": "3403e187ec04c7bff50ffab03c88447233747528",
+  "sourceSha256": {
+    "lab/bin/sync-witness.mjs": "2e3fc0418783d63e88e92ba4d364c924753fb74de1a2c58d076b7711f706fb98",
+    "lab/observer/test_syncwitness.py": "515abbe5bbcd5a88c6c0e14e7dfcd5ddd82e90ae9ea08200b4991c99a0b5be8d",
+    "lab/observer/test_vm.py": "9c128c47999fcb00e46088a5cf22771f332be01711f4d8817956a4a5c603b531",
+    "lab/observer/vm_fixture.py": "785bf49d536290505c1a204caeb7f0d36b9d374874a1253943ef120318691578",
+    "lab/observer/vm_normalizer.py": "524eee87e9f5a4d1274265e0894da8374c0da6f37d39e3dcc95e0938098aeba8",
+    "lab/observer/vm_planted_writer.py": "18cf0f766e2b72a38576a7c65038adf6d1bfc3129842d16811f28723a29e784d",
+    "lab/observer/vm_syncwitness.bt": "5c9444e91297b200e815f22b3d84426cc9e7a493053f5e46bf33ddd40bd1b4d3",
+    "lab/observer/vm_syncwitness.py": "6c6aff0f154a88cf4b68440a36a5da90b13f8da6d0547566989bb0ca69c2ce3e",
+    "lab/observer/vm_watch.py": "c9aa9ec317940d73223bad80528905ad151f1780028be54faf3733e8b9e97bac",
+    "lab/verify/CX-VOBS7/review_round9.py": "00cf057e23989d73767caec1ca127c3b5ff078e39e43b0d5ca0d0ad939b374f6",
+    "lab/verify/CX-VOBS7/run_review.py": "2ee66c05868e7d2ddc967b56489b4446ca7a9a0617c480e654b1fd24a8f9406a"
+  },
+  "sourceUnchanged": true,
+  "startedNs": 1794228121088324000
+}

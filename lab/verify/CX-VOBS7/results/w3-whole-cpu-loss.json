@@ -1,0 +1,1 @@
+{"expected":"TRACE-INCOMPLETE","result":{"attachNs":1,"cpus":1,"detachNs":101,"events":1,"lostEvents":0},"trace":"SW1|B|1|1|7|1|7\nSW1|W|0|1|100|111|1|101|7|0|128\nSW1|Z|101\n\n@n[0]: 1\n@n[1]: 2\n"}

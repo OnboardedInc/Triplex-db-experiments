@@ -1,0 +1,61 @@
+test_checkpoint_and_mmap_codes (__main__.Controls.test_checkpoint_and_mmap_codes) ... ok
+test_every_direct_commit_gets_ack_and_visibility_checks (__main__.Controls.test_every_direct_commit_gets_ack_and_visibility_checks) ... ok
+test_first_qualifying_exit_with_extra_and_overlapping_syncs (__main__.Controls.test_first_qualifying_exit_with_extra_and_overlapping_syncs) ... ok
+test_sequence_gap_and_whole_cpu_loss_fail_in_main_parser (__main__.Controls.test_sequence_gap_and_whole_cpu_loss_fail_in_main_parser) ... ok
+test_sibling_foreign_failed_and_nonwaiting_syncs_never_cover (__main__.Controls.test_sibling_foreign_failed_and_nonwaiting_syncs_never_cover) ... ok
+test_sync_before_write_next_commit_sync_really_covers_previous (__main__.Controls.test_sync_before_write_next_commit_sync_really_covers_previous) ... ok
+test_detach_before_final_readback_must_refuse (__main__.Regressions.test_detach_before_final_readback_must_refuse) ... FAIL
+test_split_marker_then_frame_must_not_skip_visible_check (__main__.Regressions.test_split_marker_then_frame_must_not_skip_visible_check) ... FAIL
+test_syncfs_syscall_boundary_must_not_change_r48_D (__main__.Regressions.test_syncfs_syscall_boundary_must_not_change_r48_D) ... FAIL
+test_w1_compare_must_reject_global_unwitnessed_write (__main__.Regressions.test_w1_compare_must_reject_global_unwitnessed_write) ... FAIL
+test_w3_must_reject_loss_of_every_event_on_one_cpu (__main__.Regressions.test_w3_must_reject_loss_of_every_event_on_one_cpu) ... FAIL
+
+======================================================================
+FAIL: test_detach_before_final_readback_must_refuse (__main__.Regressions.test_detach_before_final_readback_must_refuse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round9.py", line 157, in test_detach_before_final_readback_must_refuse
+    self.fail('accepted witness ending before final readbacks')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: accepted witness ending before final readbacks
+
+======================================================================
+FAIL: test_split_marker_then_frame_must_not_skip_visible_check (__main__.Regressions.test_split_marker_then_frame_must_not_skip_visible_check)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round9.py", line 139, in test_split_marker_then_frame_must_not_skip_visible_check
+    self.fail('accepted split publication: second commit has D=11ms but published position U=10.55ms')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: accepted split publication: second commit has D=11ms but published position U=10.55ms
+
+======================================================================
+FAIL: test_syncfs_syscall_boundary_must_not_change_r48_D (__main__.Regressions.test_syncfs_syscall_boundary_must_not_change_r48_D)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round9.py", line 197, in test_syncfs_syscall_boundary_must_not_change_r48_D
+    self.assertEqual(v['perCommit'][0]['D'], 200, 'syscall return is not the ext4 sync exit required by R48')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 300 != 200 : syscall return is not the ext4 sync exit required by R48
+
+======================================================================
+FAIL: test_w1_compare_must_reject_global_unwitnessed_write (__main__.Regressions.test_w1_compare_must_reject_global_unwitnessed_write)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round9.py", line 170, in test_w1_compare_must_reject_global_unwitnessed_write
+    self.assertTrue(mismatch, 'W1 compare accepts FULL despite global UNWITNESSED-WRITE')
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: [] is not true : W1 compare accepts FULL despite global UNWITNESSED-WRITE
+
+======================================================================
+FAIL: test_w3_must_reject_loss_of_every_event_on_one_cpu (__main__.Regressions.test_w3_must_reject_loss_of_every_event_on_one_cpu)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round9.py", line 185, in test_w3_must_reject_loss_of_every_event_on_one_cpu
+    self.fail('W3 claims lostEvents=0 with CPU 1 dump count 2 and no CPU 1 records')
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: W3 claims lostEvents=0 with CPU 1 dump count 2 and no CPU 1 records
+
+----------------------------------------------------------------------
+Ran 11 tests in 0.047s
+
+FAILED (failures=5)

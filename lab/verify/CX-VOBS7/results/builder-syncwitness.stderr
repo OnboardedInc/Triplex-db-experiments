@@ -1,0 +1,23 @@
+test_kernel_dev_matches_glibc_and_mkdev (__main__.FormatCase.test_kernel_dev_matches_glibc_and_mkdev) ... ok
+test_trace_program_matches_the_parser_layout_and_records_no_content (__main__.FormatCase.test_trace_program_matches_the_parser_layout_and_records_no_content) ... ok
+test_checkpoint_unsynced_and_restart_generation (__main__.MatrixCase.test_checkpoint_unsynced_and_restart_generation) ... ok
+test_eleven_planted_modes_match_their_codes (__main__.MatrixCase.test_eleven_planted_modes_match_their_codes) ... ok
+test_failed_and_wrong_syncs_are_not_credited (__main__.MatrixCase.test_failed_and_wrong_syncs_are_not_credited) ... ok
+test_neighbor_sync_is_never_credited_even_beside_an_honest_writer (__main__.MatrixCase.test_neighbor_sync_is_never_credited_even_beside_an_honest_writer) ... ok
+test_out_of_order_file_is_accepted_but_regressed_time_is_not (__main__.MatrixCase.test_out_of_order_file_is_accepted_but_regressed_time_is_not) ... ok
+test_parser_fuzz_never_crashes_and_never_silently_changes_events (__main__.MatrixCase.test_parser_fuzz_never_crashes_and_never_silently_changes_events) ... ok
+test_trace_incomplete_rows_from_the_parser (__main__.MatrixCase.test_trace_incomplete_rows_from_the_parser) ... ok
+test_unwitnessed_write_rows (__main__.MatrixCase.test_unwitnessed_write_rows) ... ok
+test_consumer_lag_end_is_max_of_publication_and_durable (__main__.NormalizerCase.test_consumer_lag_end_is_max_of_publication_and_durable) ... ok
+test_each_normalizer_code_has_its_exact_fixture (__main__.NormalizerCase.test_each_normalizer_code_has_its_exact_fixture) ... ok
+test_full_witness_accepts_offline_and_vm_and_keeps_the_four_delay_brackets (__main__.NormalizerCase.test_full_witness_accepts_offline_and_vm_and_keeps_the_four_delay_brackets) ... ok
+test_round_8_f2_negatives_replayed_with_traces_still_refuse (__main__.NormalizerCase.test_round_8_f2_negatives_replayed_with_traces_still_refuse) ... ok
+test_trace_chunk_gap_utf8_and_missing_stream (__main__.NormalizerCase.test_trace_chunk_gap_utf8_and_missing_stream) ... ok
+test_vm_mode_without_a_witness_still_refuses_like_round_8 (__main__.NormalizerCase.test_vm_mode_without_a_witness_still_refuses_like_round_8) ... ok
+test_missing_detach_or_files_fail_the_run (__main__.WatchCase.test_missing_detach_or_files_fail_the_run) ... ok
+test_witness_files_domain_and_cgroup_binding_are_shipped (__main__.WatchCase.test_witness_files_domain_and_cgroup_binding_are_shipped) ... ok
+
+----------------------------------------------------------------------
+Ran 18 tests in 16.101s
+
+OK
