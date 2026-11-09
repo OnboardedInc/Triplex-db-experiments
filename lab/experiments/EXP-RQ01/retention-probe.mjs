@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-RQ01] Why: preserve CX-VRQ01's custom-cut wrong-answer witness in the measured receipt.
 // Rejected: a boundary flag without actual read outcomes (missed the custom-horizon defect).
 export const retentionProbe = async (api) => {

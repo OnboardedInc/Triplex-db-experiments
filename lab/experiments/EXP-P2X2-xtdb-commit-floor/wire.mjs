@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: F3 must prove one socket write, including extended-protocol parameter bytes.
 // Rejected: Promise.all(postgres queries) (the driver's 1KiB flush splits a command).
 import net from "node:net";

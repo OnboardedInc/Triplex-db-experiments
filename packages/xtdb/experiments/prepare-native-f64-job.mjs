@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Freeze a read-only public parameter probe; starts no process or engine. */
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";

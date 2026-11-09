@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters; dynamic record keys. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from 'node:assert/strict';
 import {nativeWebhookWrite,webhookCasePlan} from './webhook_cases.mjs';
 import {dependencyCasePlan,nativeDependencyWrite} from './dependency_cases.mjs';

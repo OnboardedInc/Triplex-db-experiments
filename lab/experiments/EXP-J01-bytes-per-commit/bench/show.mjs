@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01: print the essentials of an attribution output file (xtdb-attribution or qlever-attribution).
 // Usage: node show.mjs <output-file>...
 import fs from 'node:fs';

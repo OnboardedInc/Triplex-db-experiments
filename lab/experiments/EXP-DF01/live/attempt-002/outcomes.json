@@ -1,0 +1,23 @@
+{
+  "label": "DIAGNOSTIC",
+  "result": "DIAGNOSTIC-PASS",
+  "observedCommandExitCodes": {
+    "offlineFixture": 0,
+    "up": 0,
+    "conformance": 0,
+    "excision": 0,
+    "queuePreparation": 143,
+    "intentionalPeerStop": 0,
+    "resume": 0,
+    "deadlines": 0,
+    "regressions": 0,
+    "G1": 0,
+    "down": 0,
+    "fstrim": 0,
+    "dockerContext": 0
+  },
+  "queuePreparationExitExplanation": "Intentional SIGTERM to its identified diagnostic Peer after a real report was left queued; restart fault action, not a failed assertion.",
+  "regressionSignalEvent": "A SIGTERM intended to cancel the still-unadmitted wrapper raced with admission. No requeue/retry occurred; pnpm/Vitest continued, all 117 tests passed and command exited 0.",
+  "G1RunId": "G1-datomic-20261109T095731Z-d254a0",
+  "semanticFirstFailure": null
+}

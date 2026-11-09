@@ -1,0 +1,685 @@
+{
+  "target": "99d9641d4d6f385ab3b3fade7e9e78680a8850b4",
+  "priorInputSha256": "776631157120cb03fee31650f5f7d2325964a504b0bb95951628c209335def0b",
+  "pairedLegacyShapeUnchanged": true,
+  "pairedGrade": {
+    "grade": "GREEN",
+    "reasons": [],
+    "limits": {
+      "defaultRounds": 0.2759,
+      "maxRounds": 0.3902
+    },
+    "sdUsed": 0
+  },
+  "hardRuleHistory": [
+    {
+      "roundId": "R01",
+      "ruleIds": [
+        "vm-psi-mem-full"
+      ]
+    }
+  ],
+  "single": {
+    "measurementKind": "single-arm-sequential-aa",
+    "gradingContract": "single-q100k",
+    "statistic": "ln(p50_k/p50_k-1)",
+    "logRatios": [
+      {
+        "previous": "R02",
+        "current": "R03",
+        "d": 0
+      },
+      {
+        "previous": "R03",
+        "current": "R04",
+        "d": 0
+      },
+      {
+        "previous": "R04",
+        "current": "R05",
+        "d": 0
+      },
+      {
+        "previous": "R05",
+        "current": "R06",
+        "d": 0
+      },
+      {
+        "previous": "R06",
+        "current": "R07",
+        "d": 0
+      },
+      {
+        "previous": "R07",
+        "current": "R08",
+        "d": 0
+      },
+      {
+        "previous": "R08",
+        "current": "R09",
+        "d": 0
+      },
+      {
+        "previous": "R09",
+        "current": "R10",
+        "d": 0
+      },
+      {
+        "previous": "R10",
+        "current": "R11",
+        "d": 0
+      },
+      {
+        "previous": "R11",
+        "current": "R12",
+        "d": 0
+      }
+    ],
+    "hardRuleHistory": [
+      {
+        "roundId": "R01",
+        "ruleIds": [
+          "vm-psi-mem-full"
+        ]
+      }
+    ],
+    "exclusions": {
+      "R01": [
+        "vm-psi-mem-full"
+      ]
+    },
+    "problems": [],
+    "windowGrade": {
+      "grade": "RED",
+      "reasons": [
+        "R01: hard rules broken: vm-psi-mem-full"
+      ],
+      "limits": {
+        "defaultRounds": 0.275912341097126,
+        "maxRounds": 0.390198974805667
+      },
+      "sdUsed": null
+    },
+    "timingEligible": false
+  },
+  "clean": {
+    "measurementKind": "single-arm-sequential-aa",
+    "gradingContract": "single-q100k",
+    "statistic": "ln(p50_k/p50_k-1)",
+    "logRatios": [
+      {
+        "previous": "R01",
+        "current": "R02",
+        "d": 0
+      },
+      {
+        "previous": "R02",
+        "current": "R03",
+        "d": 0
+      },
+      {
+        "previous": "R03",
+        "current": "R04",
+        "d": 0
+      },
+      {
+        "previous": "R04",
+        "current": "R05",
+        "d": 0
+      },
+      {
+        "previous": "R05",
+        "current": "R06",
+        "d": 0
+      },
+      {
+        "previous": "R06",
+        "current": "R07",
+        "d": 0
+      },
+      {
+        "previous": "R07",
+        "current": "R08",
+        "d": 0
+      },
+      {
+        "previous": "R08",
+        "current": "R09",
+        "d": 0
+      },
+      {
+        "previous": "R09",
+        "current": "R10",
+        "d": 0
+      },
+      {
+        "previous": "R10",
+        "current": "R11",
+        "d": 0
+      },
+      {
+        "previous": "R11",
+        "current": "R12",
+        "d": 0
+      }
+    ],
+    "hardRuleHistory": [],
+    "exclusions": {},
+    "problems": [],
+    "windowGrade": {
+      "grade": "GREEN",
+      "reasons": [],
+      "limits": {
+        "defaultRounds": 0.275912341097126,
+        "maxRounds": 0.390198974805667
+      },
+      "sdUsed": 0
+    },
+    "timingEligible": true
+  },
+  "hardRuleTrials": [
+    {
+      "rule": "signals-missing",
+      "signal": 1,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "signals-missing"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "host-mem-pressure-critical",
+      "signal": 4,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "host-mem-pressure-critical"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "host-pageouts",
+      "signal": 20001,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "host-pageouts"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "vm-psi-mem-full",
+      "signal": 1.01,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "vm-psi-mem-full"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "arm-throttled",
+      "signal": 1.05,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "arm-throttled"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "arm-oom-kill",
+      "signal": 1,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "arm-oom-kill"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "arm-restart",
+      "signal": 1,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "arm-restart"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "arm-memory-max-events",
+      "signal": 51,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "arm-memory-max-events"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "neighbor-cpu",
+      "signal": 1.25,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "neighbor-cpu"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "calib-drift-host",
+      "signal": 2.1799999999999997,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "calib-drift-host"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "calib-drift-vm",
+      "signal": 2.1799999999999997,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "calib-drift-vm"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "calib-interference",
+      "signal": 3,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "calib-interference"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "hiccup",
+      "signal": 101,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "hiccup"
+          ]
+        }
+      ]
+    },
+    {
+      "rule": "client-elu",
+      "signal": 1.9,
+      "grade": "RED",
+      "history": [
+        {
+          "roundId": "R01",
+          "ruleIds": [
+            "client-elu"
+          ]
+        }
+      ]
+    }
+  ],
+  "shortPreflight": {
+    "measurementKind": "single-arm-sequential-aa",
+    "gradingContract": "single-q100k",
+    "statistic": "ln(p50_k/p50_k-1)",
+    "logRatios": [
+      {
+        "previous": "R01",
+        "current": "R02",
+        "d": 0
+      },
+      {
+        "previous": "R02",
+        "current": "R03",
+        "d": 0
+      }
+    ],
+    "hardRuleHistory": [],
+    "exclusions": {},
+    "problems": [],
+    "windowGrade": {
+      "grade": "UNGRADED",
+      "reasons": [
+        "s_d needs at least 3 usable rounds with identified p50 (2)"
+      ],
+      "limits": {
+        "defaultRounds": 0.275912341097126,
+        "maxRounds": 0.390198974805667
+      },
+      "sdUsed": null
+    },
+    "timingEligible": false
+  },
+  "missingHardSignal": {
+    "measurementKind": "single-arm-sequential-aa",
+    "gradingContract": "single-q100k",
+    "statistic": "ln(p50_k/p50_k-1)",
+    "logRatios": [
+      {
+        "previous": "R02",
+        "current": "R03",
+        "d": 0
+      },
+      {
+        "previous": "R03",
+        "current": "R04",
+        "d": 0
+      },
+      {
+        "previous": "R04",
+        "current": "R05",
+        "d": 0
+      },
+      {
+        "previous": "R05",
+        "current": "R06",
+        "d": 0
+      },
+      {
+        "previous": "R06",
+        "current": "R07",
+        "d": 0
+      },
+      {
+        "previous": "R07",
+        "current": "R08",
+        "d": 0
+      },
+      {
+        "previous": "R08",
+        "current": "R09",
+        "d": 0
+      },
+      {
+        "previous": "R09",
+        "current": "R10",
+        "d": 0
+      },
+      {
+        "previous": "R10",
+        "current": "R11",
+        "d": 0
+      },
+      {
+        "previous": "R11",
+        "current": "R12",
+        "d": 0
+      }
+    ],
+    "hardRuleHistory": [
+      {
+        "roundId": "R01",
+        "ruleIds": [
+          "signals-missing"
+        ]
+      }
+    ],
+    "exclusions": {
+      "R01": [
+        "signals-missing"
+      ]
+    },
+    "problems": [],
+    "windowGrade": {
+      "grade": "RED",
+      "reasons": [
+        "R01: hard rules broken: signals-missing"
+      ],
+      "limits": {
+        "defaultRounds": 0.275912341097126,
+        "maxRounds": 0.390198974805667
+      },
+      "sdUsed": null
+    },
+    "timingEligible": false
+  },
+  "softExclusion": {
+    "measurementKind": "single-arm-sequential-aa",
+    "gradingContract": "single-q100k",
+    "statistic": "ln(p50_k/p50_k-1)",
+    "logRatios": [
+      {
+        "previous": "R03",
+        "current": "R04",
+        "d": 0
+      },
+      {
+        "previous": "R04",
+        "current": "R05",
+        "d": 0
+      },
+      {
+        "previous": "R05",
+        "current": "R06",
+        "d": 0
+      },
+      {
+        "previous": "R06",
+        "current": "R07",
+        "d": 0
+      },
+      {
+        "previous": "R07",
+        "current": "R08",
+        "d": 0
+      },
+      {
+        "previous": "R08",
+        "current": "R09",
+        "d": 0
+      },
+      {
+        "previous": "R09",
+        "current": "R10",
+        "d": 0
+      },
+      {
+        "previous": "R10",
+        "current": "R11",
+        "d": 0
+      },
+      {
+        "previous": "R11",
+        "current": "R12",
+        "d": 0
+      }
+    ],
+    "hardRuleHistory": [],
+    "exclusions": {
+      "R02": [
+        "vm-psi-io-some"
+      ]
+    },
+    "problems": [],
+    "windowGrade": {
+      "grade": "AMBER",
+      "reasons": [
+        "1 usable rounds carried a soft (amber) noise signal"
+      ],
+      "limits": {
+        "defaultRounds": 0.275912341097126,
+        "maxRounds": 0.390198974805667
+      },
+      "sdUsed": 0
+    },
+    "timingEligible": false
+  },
+  "pairedGradeComparisons": 216,
+  "version2": {
+    "match": true,
+    "diffs": [],
+    "problems": [],
+    "verdict": null,
+    "primary": {
+      "metric": "commitAll",
+      "quantile": 0.5,
+      "claim": {
+        "kind": "superiority",
+        "target": 1.25
+      },
+      "decision": "EQUIVALENT_WITHIN_TARGET",
+      "decisive": true
+    },
+    "grade": "GREEN"
+  },
+  "changedHistory": {
+    "match": false,
+    "diffs": [
+      ".noise.hardRuleHistory.0: undefined vs {\"roundId\":\"R01\",\"ruleIds\":[\"vm-psi-mem-full\"]}"
+    ],
+    "problems": [],
+    "verdict": null,
+    "primary": {
+      "metric": "commitAll",
+      "quantile": 0.5,
+      "claim": {
+        "kind": "superiority",
+        "target": 1.25
+      },
+      "decision": "EQUIVALENT_WITHIN_TARGET",
+      "decisive": true
+    },
+    "grade": "GREEN"
+  },
+  "legacy": [
+    {
+      "path": "lab/experiments/EXP-M01-paired-measurement/receipts/PAIR-xtdb-20261108T010440Z-7fcef1.json",
+      "sha256": "8fae368bef229e16cacdc6e4d6293a367bb305bece1349ecb6d9c59f348f8204",
+      "original": {
+        "match": true,
+        "diffs": [],
+        "problems": [
+          "placement missing for an arm"
+        ],
+        "verdict": "INVALID",
+        "primary": {
+          "metric": "commitAll",
+          "quantile": 0.5,
+          "claim": {
+            "kind": "superiority",
+            "target": 1.25
+          },
+          "decision": "INCONCLUSIVE_NEED_MORE_ROUNDS",
+          "decisive": false
+        },
+        "grade": "INVALID"
+      },
+      "changedSample": {
+        "match": false,
+        "diffs": [
+          ".checks.calibration.ok: true vs false",
+          ".checks.calibration.problems.0: undefined vs \"R01: calib.hostDrift 0.9398040345821326 does not follow from its samples (93.98",
+          ".checks.calibration.problems.1: undefined vs \"R01: calib.interferenceMax 1.239500309185733 does not follow from its samples ("
+        ],
+        "problems": [
+          "R01: calib.hostDrift 0.9398040345821326 does not follow from its samples (93.98040345821326)",
+          "R01: calib.interferenceMax 1.239500309185733 does not follow from its samples (123.95003091857332)",
+          "placement missing for an arm"
+        ],
+        "verdict": "FAIL",
+        "primary": {
+          "metric": "commitAll",
+          "quantile": 0.5,
+          "claim": {
+            "kind": "superiority",
+            "target": 1.25
+          },
+          "decision": "INCONCLUSIVE_NEED_MORE_ROUNDS",
+          "decisive": false
+        },
+        "grade": "INVALID"
+      }
+    },
+    {
+      "path": "lab/experiments/EXP-M01-paired-measurement/rebase/PAIR-xtdb-20261109T070418Z-f081c3.json",
+      "sha256": "1c373f3ab96dd31828457350db13ca58f6e5fe9f7158eed4e1921d8e98758380",
+      "original": {
+        "match": true,
+        "diffs": [],
+        "problems": [
+          "placement missing for an arm"
+        ],
+        "verdict": "INVALID",
+        "primary": {
+          "metric": "commitAll",
+          "quantile": 0.5,
+          "claim": {
+            "kind": "superiority",
+            "target": 1.25
+          },
+          "decision": "NOT_ESTIMABLE",
+          "decisive": false
+        },
+        "grade": "INVALID"
+      },
+      "changedSample": {
+        "match": false,
+        "diffs": [
+          ".checks.calibration.ok: true vs false",
+          ".checks.calibration.problems.0: undefined vs \"R01: calib.hostDrift 0.9994851530198668 does not follow from its samples (99.94",
+          ".checks.calibration.problems.1: undefined vs \"R01: calib.interferenceMax 1.0133159169928951 does not follow from its samples "
+        ],
+        "problems": [
+          "R01: calib.hostDrift 0.9994851530198668 does not follow from its samples (99.94851530198669)",
+          "R01: calib.interferenceMax 1.0133159169928951 does not follow from its samples (101.33159169928952)",
+          "placement missing for an arm"
+        ],
+        "verdict": "FAIL",
+        "primary": {
+          "metric": "commitAll",
+          "quantile": 0.5,
+          "claim": {
+            "kind": "superiority",
+            "target": 1.25
+          },
+          "decision": "NOT_ESTIMABLE",
+          "decisive": false
+        },
+        "grade": "INVALID"
+      }
+    }
+  ]
+}

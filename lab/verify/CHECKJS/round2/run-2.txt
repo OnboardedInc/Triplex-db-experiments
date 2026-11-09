@@ -1,0 +1,22 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 17340 "CX-DI01-trace-r7", pid 13226 "CX-P2B-R3-ordered-matrices", pid 14637 "CX-A01-0314-R3-G0-X", pid 43188 "G0-xtdb-20261109T075058Z-c85519 vitest-testkit"
+[lab] heavy: waiting for one of 4 slots; held by pid 17340 "CX-DI01-trace-r7", pid 13226 "CX-P2B-R3-ordered-matrices", pid 14637 "CX-A01-0314-R3-G0-X", pid 43188 "G0-xtdb-20261109T075058Z-c85519 vitest-xtdb"
+baseline: exit=0
+plant-gs: exit=1
+plant-gs-manifest: exit=1
+plant-wire: exit=1
+plant-pack: exit=1
+plant-docs-markdown: exit=1
+plant-docs-llms: exit=1
+plant-engine: exit=1
+plant-engine-import: exit=1
+new-file-checker-missing: exit=1
+new-file-coverage-test-missing: exit=1
+update-manifest: exit=0
+new-file-now-checked-unbound: exit=1
+new-file-coverage-test-checked: exit=0
+new-file-checked-valid: exit=0
+new-file-coverage-test-excluded: exit=0
+new-file-explicitly-excluded: exit=0
+six-regressions: exit=0
+contract-pin-selfcheck: exit=1
+Review completed: lab/verify/CHECKJS/round2/evidence/2026-11-09T07-57-02-454Z

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated local values; unannotated dynamic parameters; unannotated destructured parameters; initially empty collections; dynamic record keys. Binding errors remain checked by lab/bin/checkjs.mjs.
 // lab/scenarios/lib/oracle.mjs: feed generated command streams to O-REPLAY and turn its answers into goldens.
 //
 // [EXP-W01] Why: golden means independent (BRIEF point of view). Every expected state comes from

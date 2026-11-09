@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 12: audit, what did we know on March 3 (TARGETS 6 row 12; erasure caveat in TARGETS 7 item 2).
 //
 // Audit subjects are onboarded valid from 2026-01-05. Right after setup the driver captures R_past. During the

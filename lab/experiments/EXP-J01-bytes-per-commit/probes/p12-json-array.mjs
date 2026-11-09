@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-J01] Why: F3's original JSON arm double-encoded ids; compare correctly bound
 // JSON arrays with that retained negative control. Rejected: inferring semantics from OID alone.
 import fs from 'node:fs';

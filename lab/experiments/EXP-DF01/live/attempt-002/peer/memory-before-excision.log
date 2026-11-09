@@ -1,0 +1,2 @@
+CONTAINER ID   NAME              CPU %     MEM USAGE / LIMIT    MEM %     NET I/O           BLOCK I/O    PIDS
+820da568d13a   tx2-datomic-dev   2.41%     667.7MiB / 2.75GiB   23.71%    8.16kB / 8.48kB   0B / 184kB   148

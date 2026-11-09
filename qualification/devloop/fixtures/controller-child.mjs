@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime error inspection. Binding errors remain checked by lab/bin/checkjs.mjs.
 import { spawn } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { join } from 'node:path';

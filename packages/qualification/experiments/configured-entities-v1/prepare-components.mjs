@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Metadata capture only. No recipe import, test, ConfigStore write or service. */
 import path from 'node:path';
 import { ROOT, pin, exclusiveJson, files } from '../../../../.runtime/experiments/xtdb-identity-handoff-v1/loop-v2/common.mjs';

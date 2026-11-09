@@ -1,0 +1,74 @@
+{
+  "format": "triplex-db-2/o-replay-case/1",
+  "caseId": "EXP-FD01/identities",
+  "defaultScope": "s",
+  "commands": [
+    {
+      "clock": 1000,
+      "meta": { "commandId": "c1" },
+      "operations": [
+        {
+          "op": "assert",
+          "ref": "first",
+          "entityId": "subject",
+          "attribute": ":a",
+          "value": { "type": "string", "value": "private-one" },
+          "validFrom": 0,
+          "validTo": 100
+        }
+      ]
+    },
+    {
+      "clock": 2000,
+      "meta": { "commandId": "c2" },
+      "operations": [
+        { "op": "retract", "target": "first" },
+        {
+          "op": "assert",
+          "ref": "second",
+          "entityId": "subject",
+          "attribute": ":a",
+          "value": { "type": "string", "value": "private-two" },
+          "validFrom": 10
+        }
+      ]
+    },
+    {
+      "clock": 3000,
+      "meta": { "commandId": "c1" },
+      "operations": [
+        {
+          "op": "assert",
+          "entityId": "subject",
+          "attribute": ":a",
+          "value": { "type": "string", "value": "duplicate" },
+          "validFrom": 0
+        }
+      ]
+    }
+  ],
+  "receipts": [
+    {
+      "command": 0,
+      "outcome": "committed",
+      "txId": "tx1",
+      "position": 1,
+      "instant": 1000,
+      "assertionIds": ["a1"]
+    },
+    {
+      "command": 1,
+      "outcome": "committed",
+      "txId": "tx2",
+      "position": 2,
+      "instant": 2000,
+      "assertionIds": [null, "a2"]
+    },
+    {
+      "command": 2,
+      "outcome": "rejected",
+      "error": { "_tag": "CommandAlreadyCommittedError", "transactionId": "tx1" }
+    }
+  ],
+  "queries": []
+}

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-F02 falsifier: exactness of every Triplex value kind on every wire path, both engines.
 //
 // Usage: node lab/falsifiers/wire/run.mjs [--out lab/experiments/EXP-F02-wire-exactness/results.json]

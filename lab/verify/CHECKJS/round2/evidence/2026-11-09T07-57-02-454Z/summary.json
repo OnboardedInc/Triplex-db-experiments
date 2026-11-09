@@ -1,0 +1,10 @@
+{
+  "reviewed": "f72cd5add3dd7e9f5f7874802a6c8b6292c9c26a",
+  "completedAt": "2026-11-09T08:01:07.704Z",
+  "assertionsCompleted": true,
+  "reviewedBytesUnchanged": true,
+  "plantedTargetsRejected": 8,
+  "newTrackedFileCoveredOrExcluded": true,
+  "sixTestsPassed": true,
+  "pinnedHelperCommentOnly": true
+}

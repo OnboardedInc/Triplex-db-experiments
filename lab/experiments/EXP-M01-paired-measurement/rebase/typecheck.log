@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 47592 "CX-M01R-memory-gate-r3", pid 1859 "CX-A01-0314-R2b-G0-Q", pid 63449 "CX-P2B-R3-step1b", pid 46702 "G0-qlever-20261109T070302Z-464c58 vitest-qlever"
+[lab] heavy: waiting for one of 4 slots; held by pid 47592 "CX-M01R-memory-gate-r3", pid 1859 "CX-A01-0314-R2b-G0-Q", pid 63449 "CX-P2B-R3-step1b", pid 46702 "G0-qlever-20261109T070302Z-464c58 vitest-qlever"

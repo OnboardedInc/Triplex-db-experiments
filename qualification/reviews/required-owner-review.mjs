@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Independent actual stopped-owner admission review; never changes canonical owners. */
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';

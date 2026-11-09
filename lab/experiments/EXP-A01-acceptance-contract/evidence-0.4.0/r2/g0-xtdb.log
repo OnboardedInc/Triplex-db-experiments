@@ -1,0 +1,4 @@
+[lab] G0-xtdb-20261109T122531Z-536e98: raw output runs/G0/G0-xtdb-20261109T122531Z-536e98
+PASS G0 xtdb scope=full executed=1289 pass=1289 fail=0 skip=140
+receipt: lab/runs/G0/G0-xtdb-20261109T122531Z-536e98.json
+exit 0

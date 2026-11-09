@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-built or optional package modules absent from this standalone project; runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Generate only an isolated TS adapter package with the ordinary Q build tools.
  * Inspiration: the reviewed ordinary Core generation and isolated A build's
  * before/after input checks. This adapts no engine, live export, source or loader.

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Independent retained-answer/provenance review, with no backend calls.
  * Packet expectations come from the immutable-event corpus, not native helper
  * code. Historical missing preimages remain partial reconstruction; a passing

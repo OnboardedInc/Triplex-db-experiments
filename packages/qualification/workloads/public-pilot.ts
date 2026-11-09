@@ -1,3 +1,4 @@
+import { latencyReceipt, connectionModeForBackend } from "../../../lab/receipts/latency.mjs";
 /** Bounded public-API pilot, never a scale or tail-latency qualification. */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -57,7 +58,8 @@ const output = path.resolve(
 );
 assert.ok(output.startsWith(path.join(root, "qualification") + path.sep));
 mkdirSync(path.dirname(output), { recursive: true });
-const report: Record<string, unknown> = {
+const report: Record<string, unknown> = latencyReceipt({
+  qleverConnectionMode: connectionModeForBackend(backend.name),
   format: "triplex-public-pilot/2",
   backend: backend.name,
   runId,
@@ -82,7 +84,7 @@ const report: Record<string, unknown> = {
     "Resource samples bracket operations and do not establish physical allocation peaks.",
     "This pilot runs read-only cells after ingestion; sustained ingestion is unqualified.",
   ],
-};
+});
 writeFileSync(output, JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
 const save = () => writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 const id = (index: number) => EntityId.make(`pilot:${String(index).padStart(8, "0")}`);
@@ -301,11 +303,14 @@ try {
   }
   save();
   console.log(
-    JSON.stringify({
-      result: report["status"],
-      output,
-      entities,
-      domainActiveFacts: entities * width,
-    }),
+    JSON.stringify(
+      latencyReceipt({
+        result: report["status"],
+        output,
+        entities,
+        domainActiveFacts: entities * width,
+        qleverConnectionMode: connectionModeForBackend(backend.name),
+      }),
+    ),
   );
 }

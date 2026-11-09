@@ -1,0 +1,10 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 91285 "CX-P3M-G0-final", pid 91400 "G0-xtdb-20261109T064553Z-98cb28 vitest-host", pid 93557 "CX-P2B-R3-step1", pid 10922 "CX-DI01-trace"
+[lab] heavy: waiting for one of 4 slots; held by pid 91285 "CX-P3M-G0-final", pid 91400 "G0-xtdb-20261109T064553Z-98cb28 vitest-host", pid 16427 "CX-A01-0314-R2b-evaluator", pid 10922 "CX-DI01-trace"
+[lab] heavy: waiting for one of 4 slots; held by pid 91285 "CX-P3M-G0-final", pid 91400 "G0-xtdb-20261109T064553Z-98cb28 vitest-host", pid 16427 "CX-A01-0314-R2b-evaluator", pid 10922 "CX-DI01-trace"
+[lab] heavy: waiting for one of 4 slots; held by pid 91285 "CX-P3M-G0-final", pid 91400 "G0-xtdb-20261109T064553Z-98cb28 vitest-host", pid 16427 "CX-A01-0314-R2b-evaluator", pid 10922 "CX-DI01-trace"
+[lab] heavy: waiting for one of 4 slots; held by pid 91285 "CX-P3M-G0-final", pid 91400 "G0-xtdb-20261109T064553Z-98cb28 vitest-testkit", pid 16427 "CX-A01-0314-R2b-evaluator", pid 16437 "CX-A01-0314-R2b-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 91285 "CX-P3M-G0-final", pid 91400 "G0-xtdb-20261109T064553Z-98cb28 vitest-testkit", pid 16427 "CX-A01-0314-R2b-evaluator", pid 16437 "CX-A01-0314-R2b-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 38815 "CX-DI01-lag", pid 52118 "CX-DI01-trace-r2", pid 16427 "CX-A01-0314-R2b-evaluator", pid 16437 "CX-A01-0314-R2b-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 16436 "CX-A01-0314-R2b-G0-X", pid 52118 "CX-DI01-trace-r2", pid 64945 "G0-xtdb-20261109T065103Z-3715a0 vitest-core", pid 16437 "CX-A01-0314-R2b-mutations"
+[lab] heavy: waiting for one of 4 slots; held by pid 16436 "CX-A01-0314-R2b-G0-X", pid 52118 "CX-DI01-trace-r2", pid 64945 "G0-xtdb-20261109T065103Z-3715a0 vitest-testkit", pid 16437 "CX-A01-0314-R2b-mutations"
+checkjs: 110 JavaScript roots checked; no diagnostics or suppressed binding errors

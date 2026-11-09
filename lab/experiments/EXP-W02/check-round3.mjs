@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing; Node overloads over dynamic option/result unions. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-W02-R3] Why: preserve fresh command bytes outside git, tied to source, builds and our heavy grant.
 // Rejected: counting intentional fail-closed scenario diagnostics as a green GS gate.
 import fs from 'node:fs';

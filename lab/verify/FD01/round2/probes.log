@@ -1,0 +1,608 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 17254 "CX-P5A-A1-G0", pid 30636 "CX-A01-0314-mutations", pid 39500 "CX-RT01-r4-final3", pid 40222 "CX-VFD01-R2-baseline"
+[lab] heavy: waiting for one of 4 slots; held by pid 17254 "CX-P5A-A1-G0", pid 30636 "CX-A01-0314-mutations", pid 39500 "CX-RT01-r4-final3", pid 40222 "CX-VFD01-R2-baseline"
+[lab] heavy: waiting for one of 4 slots; held by pid 17254 "CX-P5A-A1-G0", pid 30636 "CX-A01-0314-mutations", pid 39500 "CX-RT01-r4-final3", pid 40222 "CX-VFD01-R2-baseline"
+[lab] heavy: waiting for one of 4 slots; held by pid 17254 "CX-P5A-A1-G0", pid 30636 "CX-A01-0314-mutations", pid 70701 "CX-A01-0314-evaluator-final", pid 40222 "CX-VFD01-R2-baseline"
+{
+  "head": "b60cce1e5acd3f9bf3a3ae4f697271867692eac2",
+  "base": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VFD01/round2-a98211df-51b4-4de0-8b71-5feaf66dc6a9",
+  "slot": null,
+  "engines": false,
+  "atomic": [
+    {
+      "mode": "atomic",
+      "point": "after-commit",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "rejected": null
+    },
+    {
+      "mode": "atomic",
+      "point": "before-commit",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "atomic",
+      "point": "before-effect",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "atomic",
+      "point": "after-effect",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "atomic",
+      "point": "after-checkpoint",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-first-atomic",
+      "point": "after-commit",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-first-atomic",
+      "point": "before-commit",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-first-atomic",
+      "point": "before-effect",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-first-atomic",
+      "point": "after-effect",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-first-atomic",
+      "point": "after-checkpoint",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "rejected": null
+    },
+    {
+      "mode": "two-connections",
+      "point": "after-commit",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "rejected": null
+    },
+    {
+      "mode": "two-connections",
+      "point": "before-commit",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "rejected": "Error: Nonatomic consumer state before replay: before-commit"
+    },
+    {
+      "mode": "two-connections",
+      "point": "before-effect",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "two-connections",
+      "point": "after-effect",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "rejected": "Error: Nonatomic consumer state before replay: after-effect"
+    },
+    {
+      "mode": "two-connections",
+      "point": "after-checkpoint",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-first-split",
+      "point": "after-commit",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "rejected": "Error: Nonatomic consumer state before replay: after-commit"
+    },
+    {
+      "mode": "checkpoint-first-split",
+      "point": "before-commit",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-first-split",
+      "point": "before-effect",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-first-split",
+      "point": "after-effect",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "rejected": "Error: Nonatomic consumer state before replay: after-effect"
+    },
+    {
+      "mode": "checkpoint-first-split",
+      "point": "after-checkpoint",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "1"
+        }
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-deferred",
+      "point": "after-commit",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "0"
+        }
+      },
+      "rejected": "Error: Nonatomic consumer state before replay: after-commit"
+    },
+    {
+      "mode": "checkpoint-deferred",
+      "point": "before-commit",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-deferred",
+      "point": "before-effect",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-deferred",
+      "point": "after-effect",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": null
+    },
+    {
+      "mode": "checkpoint-deferred",
+      "point": "after-checkpoint",
+      "exit": 77,
+      "stderr": "",
+      "snapshot": {
+        "effects": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "affected": [
+          {
+            "epoch": "1",
+            "position": "1",
+            "subject": "subject"
+          }
+        ],
+        "checkpoint": {
+          "source": "generic/source",
+          "token": "0"
+        }
+      },
+      "rejected": "Error: Nonatomic consumer state before replay: after-checkpoint"
+    },
+    {
+      "mode": "both-begin-immediate",
+      "point": "after-commit",
+      "exit": 1,
+      "stderr": "file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-fd01/lab/verify/FD01/round2/atomic-child.mjs:21\n  a.exec('BEGIN IMMEDIATE'); b.exec('BEGIN IMMEDIATE');\n                               ^\n\nError: database is locked\n    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-fd01/lab/verify/FD01/round2/atomic-child.mjs:21:32\n    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)\n    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)\n    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {\n  code: 'ERR_SQLITE_ERROR',\n  errcode: 5,\n  errstr: 'database is locked'\n}\n\nNode.js v22.23.2\n",
+      "snapshot": {
+        "effects": [],
+        "affected": [],
+        "checkpoint": null
+      },
+      "rejected": "Error: Nonatomic consumer state before replay: after-commit"
+    }
+  ],
+  "lag": [
+    {
+      "case": "correct interval",
+      "lagMs": 200,
+      "audit": [
+        200
+      ],
+      "under250": true
+    },
+    {
+      "case": "correct interval",
+      "lagMs": 250,
+      "audit": [
+        250
+      ],
+      "under250": true
+    },
+    {
+      "case": "correct interval",
+      "lagMs": 260,
+      "audit": [
+        260
+      ],
+      "under250": false
+    },
+    {
+      "case": "correct interval",
+      "lagMs": 300,
+      "audit": [
+        300
+      ],
+      "under250": false
+    },
+    {
+      "case": "incorrect claim for 300ms true interval",
+      "lagMs": 1,
+      "error": "Error: Lag differs from source publication interval"
+    },
+    {
+      "case": "incorrect claim for 300ms true interval",
+      "lagMs": 200,
+      "error": "Error: Lag differs from source publication interval"
+    },
+    {
+      "case": "incorrect claim for 300ms true interval",
+      "lagMs": 260,
+      "error": "Error: Lag differs from source publication interval"
+    },
+    {
+      "case": "missing or distinct clock",
+      "error": "Error: Missing source publication instant"
+    },
+    {
+      "case": "missing or distinct clock",
+      "publication": {
+        "source": "generic/source",
+        "stream": "s",
+        "epoch": "1",
+        "position": "1",
+        "clock": "another-process-clock",
+        "atMonoMs": 100
+      },
+      "error": "Error: Publication clock/source/position mismatch"
+    },
+    {
+      "case": "later publication substitution",
+      "truePublication": 100,
+      "suppliedPublication": 200,
+      "trueKnown": 400,
+      "accepted": [
+        200
+      ]
+    },
+    {
+      "case": "same-label process clock skew",
+      "truePublication": 100,
+      "trueKnown": 400,
+      "reportedKnown": 300,
+      "accepted": [
+        200
+      ]
+    }
+  ],
+  "consumers": [
+    {
+      "mode": "correct",
+      "error": null,
+      "checkpoint": 1,
+      "lags": [
+        {
+          "at": 100,
+          "position": 1,
+          "lagMs": 300,
+          "lagFromAckMs": 200
+        }
+      ],
+      "truePublicationLagMs": 300
+    },
+    {
+      "mode": "late-map",
+      "error": null,
+      "checkpoint": 1,
+      "lags": [
+        {
+          "at": 200,
+          "position": 1,
+          "lagMs": 200,
+          "lagFromAckMs": 200
+        }
+      ],
+      "truePublicationLagMs": 300
+    },
+    {
+      "mode": "skew",
+      "error": null,
+      "checkpoint": 1,
+      "lags": [
+        {
+          "at": 100,
+          "position": 1,
+          "lagMs": 200,
+          "lagFromAckMs": 100
+        }
+      ],
+      "truePublicationLagMs": 300
+    },
+    {
+      "mode": "missing",
+      "error": "Error: Missing source publication instant",
+      "checkpoint": 0,
+      "lags": [],
+      "truePublicationLagMs": 300
+    }
+  ],
+  "sourceUnchanged": true
+}
+(node:92342) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)

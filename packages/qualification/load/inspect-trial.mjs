@@ -1,8 +1,9 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; dynamic record keys. Binding errors remain checked by lab/bin/checkjs.mjs.
+import { readLatencyRun } from "../../../lab/receipts/parse.ts";
+import { latencyReceipt } from "../../../lab/receipts/latency.mjs";
 /** Inspect failed diagnostic trials without converting them into acceptance. */
 import assert from "node:assert/strict";
-import { createReadStream } from "node:fs";
 import { writeFile } from "node:fs/promises";
-import { createInterface } from "node:readline";
 import path from "node:path";
 import { openContext, readState, loadJobManifest } from "../../../qualification/devloop/state.mjs";
 import { verifyAttempt } from "../../../qualification/devloop/evidence.mjs";
@@ -28,12 +29,8 @@ const duration = manifest.profile.endMilliseconds,
 let reads = 0,
   failedReads = 0,
   declaredRejects = 0;
-for await (const line of createInterface({
-  input: createReadStream(path.join(directory, manifest.evidence.events)),
-  crlfDelay: Infinity,
-})) {
-  if (!line.trim()) continue;
-  const event = JSON.parse(line);
+const timingRun = readLatencyRun(path.join(directory, manifest.evidence.events), { lane: manifest.queryPath, encoding: "ndjson", expectedWriter: "triplex-public-load-event/1" }).unwrap();
+for (const event of timingRun.records) {
   if (event.type === "read") {
     assert(
       Number.isFinite(event.startedMs) &&
@@ -80,7 +77,8 @@ const percentile = (values, fraction) => {
   return values[Math.min(values.length - 1, Math.ceil(values.length * fraction) - 1)];
 };
 const visibleInside = writes.filter((event) => event.visibleMs <= duration).length;
-const result = {
+const result = latencyReceipt({
+  qleverConnectionMode: timingRun.transportMode,
   format: "triplex-diagnostic-load-inspection/1",
   at: new Date().toISOString(),
   reference: option("--run"),
@@ -118,7 +116,7 @@ const result = {
   },
   qualification:
     "NOT_ACCEPTED_OR_PROMOTED; failed deadline/availability/liveness outcomes remain failures. Single-run small-fixture diagnostic only.",
-};
+});
 const output = path.resolve(root, option("--output"));
 assert(output.startsWith(path.join(root, "qualification/evidence") + path.sep));
 await writeFile(output, JSON.stringify(result, null, 2) + "\n", { flag: "wx" });

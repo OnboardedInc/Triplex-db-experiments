@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters; dynamic rest arguments; unannotated destructured parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Private application observer, SOURCE ONLY. Never sends HTTP or cancels work.
  * Admitted methods retain the original receiver/arguments/Promise/value/cause.
  * A later request is refused after uncertainty or the active absolute deadline.

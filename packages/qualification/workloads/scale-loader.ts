@@ -1,3 +1,9 @@
+import { readLatencyRun } from "../../../lab/receipts/parse.ts";
+import {
+  latencyReceipt,
+  connectionModeForBackend,
+  recordedConnectionMode,
+} from "../../../lab/receipts/latency.mjs";
 /** Public transactional scale loading with conservative, measured admission. */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
@@ -54,7 +60,7 @@ let observedBytesPerFact = phaseModel
   : Math.max(4096, calibration.observedOwnedDiskGrowthBytesPerDomainFact);
 const totalFacts = entities * width;
 const resumeFile = option("--resume", "");
-const prior = resumeFile ? JSON.parse(readFileSync(path.resolve(resumeFile), "utf8")) : null;
+const prior = resumeFile ? readLatencyRun(path.resolve(resumeFile)).unwrap().data : null;
 if (prior) {
   assert.equal(prior.factsPerEntity, width);
   assert.ok(prior.acknowledgedEntities < entities);
@@ -73,6 +79,12 @@ assert.equal(
 if (prior?.backend) assert.equal(prior.backend, backend.name);
 else if (prior)
   assert.equal(backend.name, "xtdb", "Legacy XTDB fixture cannot resume on another backend");
+if (prior && backend.name === "qlever")
+  assert.equal(
+    recordedConnectionMode(prior),
+    connectionModeForBackend(backend.name),
+    "resume cannot mix connection modes",
+  );
 const runId = prior?.runId ?? randomUUID();
 const scope = prior
   ? (prior.scope as DatabaseScope)
@@ -86,7 +98,8 @@ const output = path.resolve(
 );
 assert.ok(output.startsWith(path.join(root, "qualification") + path.sep));
 mkdirSync(path.dirname(output), { recursive: true });
-const report: Record<string, unknown> = {
+const report: Record<string, unknown> = latencyReceipt({
+  qleverConnectionMode: connectionModeForBackend(backend.name),
   format: "triplex-entity-scale-load/2",
   backend: backend.name,
   runId,
@@ -119,7 +132,7 @@ const report: Record<string, unknown> = {
     "A blocked estimate is a capacity-admission result, not proof of physical impossibility.",
     "Fixtures and failed outcomes are retained; no deletion or budget increase is attempted.",
   ],
-};
+});
 writeFileSync(output, JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
 const save = () => writeFileSync(output, JSON.stringify(report, null, 2) + "\n");
 const admissions: unknown[] = [];
@@ -277,12 +290,15 @@ const program = Effect.gen(function* () {
     report["loadElapsedMs"] = performance.now() - loadStarted;
     save();
     console.log(
-      JSON.stringify({
-        runId,
-        acknowledgedEntities: start + count,
-        requestedEntities: entities,
-        position: receipt.position,
-      }),
+      JSON.stringify(
+        latencyReceipt({
+          runId,
+          acknowledgedEntities: start + count,
+          requestedEntities: entities,
+          position: receipt.position,
+          qleverConnectionMode: connectionModeForBackend(backend.name),
+        }),
+      ),
     );
   }
   yield* verify;
@@ -346,10 +362,13 @@ try {
   report["adapterMemoryAtEnd"] = process.memoryUsage();
   save();
   console.log(
-    JSON.stringify({
-      result: report["status"],
-      output,
-      acknowledgedEntities: report["acknowledgedEntities"],
-    }),
+    JSON.stringify(
+      latencyReceipt({
+        result: report["status"],
+        output,
+        acknowledgedEntities: report["acknowledgedEntities"],
+        qleverConnectionMode: connectionModeForBackend(backend.name),
+      }),
+    ),
   );
 }

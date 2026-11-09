@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 probe 10: inserted triples per 10-fact command for QLever commit layouts, counted with the lane's
 // own encoder (packages/qlever/dist rdf.ts), no engine needed. Closes against the measured A0 (663) and
 // compact (447) counts, then counts the layouts that need read-path work (journal as one subject).

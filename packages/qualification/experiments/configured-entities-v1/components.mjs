@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Offline schema/descriptor/oracle gate. No backend factory is imported. */
 import assert from 'node:assert/strict';
 import { readFile, writeFile } from 'node:fs/promises';

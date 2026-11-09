@@ -25,7 +25,8 @@
   },
   "dependencies": {
     "@triplex-build/triplex": "workspace:^",
-    "better-sqlite3": "catalog:"
+    "better-sqlite3": "catalog:",
+    "undici": "catalog:"
   },
   "devDependencies": {
     "@triplex-build/triplex-testkit": "workspace:^",

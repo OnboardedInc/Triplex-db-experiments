@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-X05 live evidence for the second-writer guard, run once the writer and follower are up on a slot.
 // Non-destructive: it calls the same check engine.mjs runs before every XTDB docker run/start, with the bytes
 // a second read-write container would mount, and asks engine.mjs to take the writer down while the follower

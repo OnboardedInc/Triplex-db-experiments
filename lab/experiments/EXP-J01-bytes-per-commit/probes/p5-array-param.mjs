@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 probe 5: can the assertion-identity guard bind all new ids as ONE parameter (constant SQL
 // text, one Arrow column) instead of one parameter per id? Tries several XTDB 2.2 spellings with a
 // text[] or JSON parameter; each must reject when one id exists and pass when none does. Also sizes

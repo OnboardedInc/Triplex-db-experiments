@@ -1,0 +1,2 @@
+lab/bin/engine.mjs(661,14): error TS2304: Cannot find name 'cxVcheckjsDormantUnboundName'.
+CX-VCHECKJS overlay: {"target":"/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-checkjs/lab/bin/engine.mjs","mutation":"append","reads":2,"originalUnchanged":true}

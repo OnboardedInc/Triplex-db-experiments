@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [CX-A01-040] Why: integration adds this runtime protocol or command fixture to checkJs; dynamic JSON/message fields lack static record types. Binding errors remain checked by lab/bin/checkjs.mjs. Rejected: excluding current executable code.
 // Poll lab/bin/engine.mjs status until the shared QLever dev resident is healthy or the pool can admit a
 // 3.5 GiB QLever slot (it never starts or stops anything). Prints one line and exits.
 // usage: node wait-engine.mjs [maxMinutes=25]

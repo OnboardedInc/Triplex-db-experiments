@@ -1,0 +1,14 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 68005 "CX-P3M-G0-closed-worker", pid 99133 "CX-DI01-final-suite-r2", pid 63449 "CX-P2B-R3-step1b", pid 68019 "G0-xtdb-20261109T065302Z-48ed3e vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 68005 "CX-P3M-G0-closed-worker", pid 99133 "CX-DI01-final-suite-r2", pid 63449 "CX-P2B-R3-step1b", pid 68019 "G0-xtdb-20261109T065302Z-48ed3e vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 68005 "CX-P3M-G0-closed-worker", pid 99133 "CX-DI01-final-suite-r2", pid 63449 "CX-P2B-R3-step1b", pid 68019 "G0-xtdb-20261109T065302Z-48ed3e vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 68005 "CX-P3M-G0-closed-worker", pid 99133 "CX-DI01-final-suite-r2", pid 63449 "CX-P2B-R3-step1b", pid 68019 "G0-xtdb-20261109T065302Z-48ed3e vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 68005 "CX-P3M-G0-closed-worker", pid 99133 "CX-DI01-final-suite-r2", pid 63449 "CX-P2B-R3-step1b", pid 68019 "G0-xtdb-20261109T065302Z-48ed3e vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 68005 "CX-P3M-G0-closed-worker", pid 99133 "CX-DI01-final-suite-r2", pid 63449 "CX-P2B-R3-step1b", pid 68019 "G0-xtdb-20261109T065302Z-48ed3e vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 68005 "CX-P3M-G0-closed-worker", pid 99133 "CX-DI01-final-suite-r2", pid 63449 "CX-P2B-R3-step1b", pid 68019 "G0-xtdb-20261109T065302Z-48ed3e vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 68005 "CX-P3M-G0-closed-worker", pid 99133 "CX-DI01-final-suite-r2", pid 63449 "CX-P2B-R3-step1b", pid 68019 "G0-xtdb-20261109T065302Z-48ed3e vitest-testkit"
+Compared executable source in 104 existing JavaScript files; only gate.mjs adds a runtime check.
+checkjs-final: exit=0 signal=null
+tsc-final: exit=0 signal=null
+tests-final: exit=0 signal=null
+lab-tests: exit=0 signal=null
+Source hashes unchanged after validation; static checks and assertion-bearing test commands completed.

@@ -1,0 +1,55 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            Install the buildx component to build images with BuildKit:
+            https://docs.docker.com/go/buildx/
+
+Sending build context to Docker daemon  305.6MB
+Step 1/10 : FROM eclipse-temurin:21.0.13_9-jre-noble@sha256:0eda5830ed7b669abc246a8dc520ea8a23cab06f9a8d4b6964109e2f2394e46f
+ ---> 0eda5830ed7b
+Step 2/10 : RUN command -v taskset && command -v bash && java --list-modules | grep jdk.httpserver
+ ---> Using cache
+ ---> 1ed799f366b1
+Step 3/10 : ARG BUILD_INPUTS_SHA256
+ ---> Using cache
+ ---> 88ebd2a49c75
+Step 4/10 : LABEL tx2.build-inputs-sha256=$BUILD_INPUTS_SHA256
+ ---> Running in b28cc22eb582
+ ---> Removed intermediate container b28cc22eb582
+ ---> a26bd4e9b64d
+Step 5/10 : COPY datomic/ /opt/datomic/
+ ---> c06f633873f9
+Step 6/10 : COPY gateway/ /opt/gateway/
+ ---> 72040babaaba
+Step 7/10 : COPY config/ /config/
+ ---> 131958a9b70d
+Step 8/10 : ENV DATOMIC_EXT_CLASSPATH=/opt/gateway/src
+ ---> Running in 9d9ce2b74f8f
+ ---> Removed intermediate container 9d9ce2b74f8f
+ ---> daa49732b91c
+Step 9/10 : WORKDIR /opt/datomic
+ ---> Running in 246b6b5d90a0
+ ---> Removed intermediate container 246b6b5d90a0
+ ---> ab4ac99aa7e9
+Step 10/10 : ENTRYPOINT ["/bin/bash", "/config/entrypoint.sh"]
+ ---> Running in 40b27566af82
+ ---> Removed intermediate container 40b27566af82
+ ---> aecbac4c6712
+Successfully built aecbac4c6712
+Successfully tagged tx2-datomic:1.0.7745-da00
+{
+  "image": "tx2-datomic:1.0.7745-da00",
+  "imageId": "sha256:aecbac4c6712d70d17dfba7b50cabaaf727aef6b3e72ec1fe2000b5523b36bcf",
+  "buildInputsSha256": "3a010a2b0281d844e03869ca6300b6c459b498ec07d49c691fede848c4f2081f",
+  "configSource": [
+    "lab/config/datomic/transactor.properties",
+    "lab/config/datomic/entrypoint.sh"
+  ],
+  "containerPort": 8080,
+  "urlTemplate": "http://127.0.0.1:{port}",
+  "envVar": "DATOMIC_GATEWAY_URL",
+  "integrationEnv": {
+    "DATOMIC_INTEGRATION": "1"
+  },
+  "sourceInputsSha256": "e61673df76586d71b99898e03ffcb7d2160c97bc359a60b2cc2c0c3f5fc9b60e",
+  "imageSize": 371269804,
+  "receipt": "/Users/sam/projects/triplex-db-2/runs/engines/datomic-build/3a010a2b0281d844e03869ca6300b6c459b498ec07d49c691fede848c4f2081f-17645-1794217142570/build-receipt.json"
+}

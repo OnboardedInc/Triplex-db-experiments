@@ -1,3 +1,4 @@
+import { qleverLatencyReceipt, requireQleverConnectionMode } from "../../receipts/latency.mjs";
 import fs from "node:fs";
 import { createHash } from "node:crypto";
 import { openComposition } from "../../bench/lib/composition.ts";
@@ -60,7 +61,8 @@ const times = observations.map((x) => x.ms).sort((a, b) => a - b);
 fs.writeFileSync(
   output,
   JSON.stringify(
-    {
+    qleverLatencyReceipt({ writer: "qg1-p4/1",
+      qleverConnectionMode: requireQleverConnectionMode(process.env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive"),
       subjects: manifest.subjects,
       basis: { recordedPosition: manifest.result.lastPosition, validAt: SEED_VALID_FROM },
       sample: observations,
@@ -70,7 +72,7 @@ fs.writeFileSync(
         p99: times[Math.ceil(times.length * 0.99) - 1],
       },
       verdict: "DIAGNOSTIC: 20 same-generator checks, not independent P4 qualification",
-    },
+    }),
     null,
     2,
   ),

@@ -1,0 +1,24 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 22931 "CX-P5B-final-evidence-02", pid 20247 "CX-DI01-final-r5", pid 60523 "CX-NSR-G0-2", pid 73872 "G0-qlever-20261109T073033Z-9a41f5 vitest-host"
+[lab] heavy: waiting for one of 4 slots; held by pid 64012 "CX-RT01-live2-G6", pid 20247 "CX-DI01-final-r5", pid 60523 "CX-NSR-G0-2", pid 73872 "G0-qlever-20261109T073033Z-9a41f5 vitest-testkit"
+[lab] heavy: waiting for one of 4 slots; held by pid 64012 "CX-RT01-live2-G6", pid 20247 "CX-DI01-final-r5", pid 60523 "CX-NSR-G0-2", pid 73872 "G0-qlever-20261109T073033Z-9a41f5 vitest-qualification"
+node:fs:560
+  return binding.open(
+                 ^
+
+Error: ENOENT: no such file or directory, open '/Users/sam/projects/triplex-db-2/.claude/worktrees/df01/Users/sam/Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745/extracted/datomic-pro-1.0.7745/datomic-transactor-pro-1.0.7745.jar'
+    at Object.openSync (node:fs:560:18)
+    at Object.readFileSync (node:fs:444:35)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/df01/lab/experiments/EXP-DF01/run-clojure.mjs:18:91
+    at Array.map (<anonymous>)
+    at hashes (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/df01/lab/experiments/EXP-DF01/run-clojure.mjs:18:47)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/df01/lab/experiments/EXP-DF01/run-clojure.mjs:19:16
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/Users/sam/projects/triplex-db-2/.claude/worktrees/df01/Users/sam/Claude/Projects/triplex-db-2/downloads/datomic-pro-1.0.7745/extracted/datomic-pro-1.0.7745/datomic-transactor-pro-1.0.7745.jar'
+}
+
+Node.js v22.23.2

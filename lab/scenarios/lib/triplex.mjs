@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // lab/scenarios/lib/triplex.mjs: load Triplex's built public dist from lab/ (outside the pnpm workspace).
 //
 // [EXP-W01] Why: lab/ is not a workspace package, so bare specifiers do not resolve here. We import the

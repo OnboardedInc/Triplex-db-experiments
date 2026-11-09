@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-qnodelay/lab/verify/QNODELAY/round4/pin-audit.py", line 34, in <module>
+    walk(json.loads(text), file)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-qnodelay/lab/verify/QNODELAY/round4/pin-audit.py", line 22, in walk
+    walk(child, source, trail + '/' + key)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-qnodelay/lab/verify/QNODELAY/round4/pin-audit.py", line 22, in walk
+    walk(child, source, trail + '/' + key)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-qnodelay/lab/verify/QNODELAY/round4/pin-audit.py", line 17, in walk
+    if value.get(key) in changed and isinstance(value.get('sha256'), str):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: cannot use 'list' as a set element (unhashable type: 'list')

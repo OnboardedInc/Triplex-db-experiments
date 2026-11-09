@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] test callback receiver supplied with call/apply. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Eight authored pure callbacks, UNEXECUTED; no SDK/network/hold imports. */
 import assert from 'node:assert/strict';
 import test from 'node:test';

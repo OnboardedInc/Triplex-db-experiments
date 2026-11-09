@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: adapt R16 writer.mjs's exact six body statements; F3 changes only transport.
 // Rejected: a single INSERT proxy for the 10-fact command (omits guards, current state and outbox).
 import path from "node:path";

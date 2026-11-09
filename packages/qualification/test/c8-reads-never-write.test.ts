@@ -1,3 +1,6 @@
+// [EXP-QNODELAY] Why: C8 reports both direct-writer mode and the counting proxy
+// upstream mode. Rejected: implying the proxy inherits the client dispatcher.
+import { latencyReceipt, connectionModeForBackend } from "../../../lab/receipts/latency.mjs";
 /**
  * [EXP-C8] Contract C8 ("reads never mutate") at the engine boundary, on the shared dev residents.
  *
@@ -272,14 +275,14 @@ describe.skipIf(process.env["XTDB_INTEGRATION"] !== "1")("C8 on XTDB: reads neve
       const counts = expectNoWrites(counter);
       expect(readsDone).toBeGreaterThan(0);
       console.log(
-        JSON.stringify({
+        JSON.stringify(latencyReceipt({ qleverConnectionMode: null,
           c8: "xtdb",
           readWindow: result.reads,
           frontierRoundMs: result.roundMs.map(Math.round),
           load: { readers: READERS, ms: LOAD_MS, recursiveReadIterations: readsDone, proxy: counts },
           writerAlone: summarize(baseline),
           writerWithRecursiveReaders: summarize(loaded),
-        }),
+         })),
       );
 
       // Positive control: the same proxy sees a write when one is sent.
@@ -305,11 +308,11 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
     const timed = async <A>(phase: string, queryId: string, run: () => Promise<A>): Promise<A> => {
       const id = ++invocation;
       const started = performance.now();
-      const log = (event: string, error?: unknown) => console.log(JSON.stringify({
+      const log = (event: string, error?: unknown) => console.log(JSON.stringify(latencyReceipt({ qleverConnectionMode: connectionModeForBackend("qlever"), proxyUpstreamConnectionMode: "keep-alive",
         c8Timing: "qlever", phase, queryId, invocation: id, event,
         at: new Date().toISOString(), elapsedMs: performance.now() - started,
         ...(error === undefined ? {} : { error: String(error) }),
-      }));
+       })));
       log("start");
       try { const result = await run(); log("pass"); return result; }
       catch (error) { log("fail", error); throw error; }
@@ -317,12 +320,12 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
     const observe = (phase: string): Observe => (queryId, operation) => Effect.gen(function* () {
       const id = ++invocation;
       const started = performance.now();
-      console.log(JSON.stringify({ c8Timing: "qlever", phase, queryId, invocation: id, event: "start", at: new Date().toISOString(), elapsedMs: 0 }));
+      console.log(JSON.stringify(latencyReceipt({ qleverConnectionMode: connectionModeForBackend("qlever"), proxyUpstreamConnectionMode: "keep-alive",  c8Timing: "qlever", phase, queryId, invocation: id, event: "start", at: new Date().toISOString(), elapsedMs: 0  })));
       return yield* Effect.onExit(operation, (exit) => Effect.sync(() => {
-        console.log(JSON.stringify({ c8Timing: "qlever", phase, queryId, invocation: id,
+        console.log(JSON.stringify(latencyReceipt({ qleverConnectionMode: connectionModeForBackend("qlever"), proxyUpstreamConnectionMode: "keep-alive",  c8Timing: "qlever", phase, queryId, invocation: id,
           event: exit._tag === "Success" ? "pass" : "fail", at: new Date().toISOString(), elapsedMs: performance.now() - started,
           ...(exit._tag === "Failure" ? { error: String(exit.cause) } : {}),
-        }));
+         })));
       }));
     });
     const scope = DatabaseScope.test(`c8-qlever-${randomUUID()}`);
@@ -398,14 +401,14 @@ describe.skipIf(process.env["QLEVER_INTEGRATION"] !== "1")("C8 on QLever: reads 
       const counts = expectNoWrites(counter);
       expect(readsDone).toBeGreaterThan(0);
       console.log(
-        JSON.stringify({
+        JSON.stringify(latencyReceipt({ qleverConnectionMode: connectionModeForBackend("qlever"), proxyUpstreamConnectionMode: "keep-alive",
           c8: "qlever",
           readWindow: result.reads,
           frontierRoundMs: result.roundMs.map(Math.round),
           load: { readers: READERS, ms: LOAD_MS, recursiveReadIterations: readsDone, proxy: counts },
           writerAlone: summarize(baseline),
           writerWithRecursiveReaders: summarize(loaded),
-        }),
+         })),
       );
 
       // [INT-XCJ] Why: isolate shared-resident positive controls. Rejected: fixed graph (cross-run cleanup races).

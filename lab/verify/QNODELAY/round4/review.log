@@ -1,0 +1,277 @@
+(node:30701) ExperimentalWarning: Transform Types is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+{
+  "id": "47b3f3d6-fecb-435d-a7b4-899cd3e41e47",
+  "startedAt": "2026-11-09T05:47:46.990Z",
+  "classification": "OFFLINE READER QA; synthetic malformed cases and historical timings, no engine run",
+  "candidate": "4e235a1d2b7ec5e1360144cab05357a79ee127ad",
+  "reviewHead": "fcbece734e5fe6ddf513da264f9f57663daa2713",
+  "node": "v22.23.2",
+  "files": {
+    "count": 936
+  },
+  "commands": [
+    {
+      "label": "builder-tests",
+      "args": [
+        "--test",
+        "lab/receipts/parser.test.mjs",
+        "lab/receipts/readers.test.mjs"
+      ],
+      "status": 0,
+      "signal": null
+    },
+    {
+      "label": "declarations",
+      "args": [
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/receipts/tsconfig.json"
+      ],
+      "status": 0,
+      "signal": null
+    }
+  ],
+  "parserCases": [
+    {
+      "id": "missing-mode",
+      "outcome": "rejected",
+      "error": {
+        "name": "TypeError",
+        "message": "missing-mode: qleverConnectionMode must explicitly identify keep-alive or per-request (null only for a named non-QLever lane)",
+        "tag": null
+      }
+    },
+    {
+      "id": "invalid-mode",
+      "outcome": "rejected",
+      "error": {
+        "name": "TypeError",
+        "message": "invalid-mode: qleverConnectionMode must explicitly identify keep-alive or per-request (null only for a named non-QLever lane)",
+        "tag": null
+      }
+    },
+    {
+      "id": "seconds-labeled",
+      "outcome": "accepted",
+      "value": {
+        "lane": "qlever",
+        "qleverConnectionMode": "keep-alive",
+        "seconds": 0.042
+      }
+    },
+    {
+      "id": "numeric-string",
+      "outcome": "accepted",
+      "value": {
+        "lane": "qlever",
+        "qleverConnectionMode": "keep-alive",
+        "writer": "fixture",
+        "ms": "42"
+      }
+    },
+    {
+      "id": "malformed-string",
+      "outcome": "accepted",
+      "value": {
+        "lane": "qlever",
+        "qleverConnectionMode": "keep-alive",
+        "writer": "fixture",
+        "ms": "not-a-duration"
+      }
+    },
+    {
+      "id": "extra-field",
+      "outcome": "accepted",
+      "value": {
+        "lane": "qlever",
+        "qleverConnectionMode": "keep-alive",
+        "writer": "fixture",
+        "ms": 42,
+        "extra": {
+          "arbitrary": true
+        }
+      }
+    },
+    {
+      "id": "missing-timing",
+      "outcome": "accepted",
+      "value": {
+        "lane": "qlever",
+        "qleverConnectionMode": "keep-alive"
+      }
+    },
+    {
+      "id": "unknown-writer",
+      "outcome": "accepted",
+      "value": {
+        "lane": "qlever",
+        "qleverConnectionMode": "keep-alive",
+        "writer": "unregistered-new-writer",
+        "ms": 42,
+        "format": "unregistered/v999"
+      }
+    },
+    {
+      "id": "unknown-lane-null",
+      "outcome": "rejected",
+      "error": {
+        "name": "TypeError",
+        "message": "unknown-lane-null: qleverConnectionMode must explicitly identify keep-alive or per-request (null only for a named non-QLever lane)",
+        "tag": null
+      }
+    },
+    {
+      "id": "nested-missing-mode",
+      "outcome": "accepted",
+      "value": {
+        "lane": "qlever",
+        "qleverConnectionMode": "keep-alive",
+        "writer": "fixture",
+        "ms": 42,
+        "runs": [
+          {
+            "lane": "qlever",
+            "ms": 7
+          }
+        ]
+      }
+    },
+    {
+      "id": "nested-mixed-modes",
+      "outcome": "accepted",
+      "value": {
+        "lane": "qlever",
+        "qleverConnectionMode": "keep-alive",
+        "writer": "fixture",
+        "ms": 42,
+        "runs": [
+          {
+            "lane": "qlever",
+            "qleverConnectionMode": "per-request",
+            "ms": 1
+          }
+        ]
+      }
+    },
+    {
+      "id": "valid-json-text",
+      "outcome": "accepted",
+      "value": {
+        "lane": "qlever",
+        "qleverConnectionMode": "keep-alive",
+        "writer": "fixture",
+        "ms": 42
+      }
+    },
+    {
+      "id": "mixed-array",
+      "outcome": "accepted",
+      "value": [
+        {
+          "lane": "qlever",
+          "qleverConnectionMode": "keep-alive",
+          "writer": "fixture",
+          "ms": 42
+        },
+        {
+          "lane": "qlever",
+          "qleverConnectionMode": "per-request",
+          "writer": "fixture",
+          "ms": 1
+        }
+      ]
+    },
+    {
+      "id": "mixed-with-modeless",
+      "outcome": "rejected",
+      "error": {
+        "name": "TypeError",
+        "message": "latency receipts[1]: qleverConnectionMode must explicitly identify keep-alive or per-request (null only for a named non-QLever lane)",
+        "tag": null
+      }
+    },
+    {
+      "id": "invalid-nested-mode",
+      "outcome": "rejected",
+      "error": {
+        "name": "TypeError",
+        "message": "latency receipt: invalid nested qleverConnectionMode at $root.runs[0]",
+        "tag": null
+      }
+    },
+    {
+      "id": "actual-QG1-reader-string-timings",
+      "outcome": "accepted",
+      "value": {
+        "qleverConnectionMode": "keep-alive",
+        "p4QleverConnectionMode": "per-request",
+        "arm": "M",
+        "label": "N0",
+        "base": 1,
+        "delta": 0,
+        "rss": 1,
+        "c8Status": 0,
+        "p4Status": 0,
+        "p4Summary": {
+          "p50": "0.001",
+          "p99": "0.002"
+        },
+        "p4ContentChecks": {
+          "n": 1,
+          "matched": 1
+        },
+        "queries": {
+          "base": {
+            "qleverConnectionMode": "keep-alive",
+            "coldMs": "not-a-duration",
+            "warmMs": 1,
+            "rows": 1
+          }
+        }
+      }
+    }
+  ],
+  "stored": [
+    {
+      "label": "round2-labeled",
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/round2/live1/result.json",
+      "sha256": "0f0394502270a9cd05fa5bf39b2e53c0d3be13dff387156234f2c640f7c115de",
+      "outcome": "accepted-samples",
+      "parsed": 520,
+      "summary": {
+        "keep-alive": {
+          "n": 240,
+          "stalls": 120,
+          "p50": 13.671624999999949,
+          "p99": 49.35758399999986
+        },
+        "per-request": {
+          "n": 240,
+          "stalls": 0,
+          "p50": 4.347374999999374,
+          "p99": 7.760790999999699
+        }
+      }
+    },
+    {
+      "label": "round1-legacy",
+      "file": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt4/result.json",
+      "sha256": "b850a42dd32638e797a30954c8ff2cc4f7141fee00b38fd16e7b7bf6e25a136b",
+      "outcome": "rejected",
+      "error": {
+        "name": "TypeError",
+        "message": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-QNODELAY/attempt4/result.json[0]: qleverConnectionMode must explicitly identify keep-alive or per-request (null only for a named non-QLever lane)"
+      }
+    }
+  ],
+  "defaultChecks": {
+    "absent": "keep-alive",
+    "optIn": "per-request",
+    "explicitOverride": "keep-alive"
+  },
+  "sourcesUnchanged": true,
+  "runnerSha256": "909b2cc79f86c0ff000e6fb233e260ba8850dbe2fa77a9912076486d05185389",
+  "endedAt": "2026-11-09T05:48:01.633Z"
+}

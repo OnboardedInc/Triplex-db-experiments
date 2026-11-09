@@ -1,0 +1,42 @@
+[
+  {
+    "path": "lab/bench/README.md",
+    "oldSha256": "6a895bca395d47cc63171c6122f698a038f0d71fbc89f16d7400e9377366751a",
+    "newSha256": "21d40c2756b3b22c75c5b33d630cfef7ed04367e5bb14614dffddaafeb8fb8d2"
+  },
+  {
+    "path": "lab/bench/duet.ts",
+    "oldSha256": "61675cf875567e33fe42757709505275f98707a81858bb379e80f932682d939f",
+    "newSha256": "9654f49d077499225c5772ad1013436a5d0d5998294fe632c02a37935bebae7d"
+  },
+  {
+    "path": "lab/bench/lib/noise.ts",
+    "oldSha256": "88308c7478fa63398a653098c4afaba3b69f307880ad32b3e4d5923e3ea87f3e",
+    "newSha256": "5391f874926b46c8af366ee8ab929f2ce8e86c4cdc06075b696a3aecec195fb1"
+  },
+  {
+    "path": "lab/bench/lib/pair-analysis.ts",
+    "oldSha256": "e54174c3a4c4090af81c82c1afc597312a7ae64b7a80b0fb125c9951da30b76d",
+    "newSha256": "f42fb50cfa41f086a5182902a7912b9ea5f0f0afd961ef74ec7bd0a21ed03784"
+  },
+  {
+    "path": "lab/bench/lib/paired.ts",
+    "oldSha256": "2c68e427574173c5caaefcaed8322e761b718b2a32d79cf22297440167e8c70e",
+    "newSha256": "fb90bee1fd3e4ddc06827a458a5ead56af455b6f840a26f705a88092f713b78c"
+  },
+  {
+    "path": "lab/bin/gate.mjs",
+    "oldSha256": "0e96694a914f1b113dd6d9262bd3b4ade1fc7b94761597984a94396b5619186a",
+    "newSha256": "ac8011e0fe7fd06404bb9da8044409b8a2ba1b75405d0fc3aa5c0fc22df7c75b"
+  },
+  {
+    "path": "lab/bench/lib/single-analysis.ts",
+    "oldSha256": null,
+    "newSha256": "b001cb169c173ae0fbfe2926329d687e63f1f2ce14c37bb94386a6db0b8c8d9e"
+  },
+  {
+    "path": "lab/bench/test/single.test.ts",
+    "oldSha256": null,
+    "newSha256": "faf270c5440a626b37a77b38764b6d2db66d23eb2c30ab11c4ab4a567d43e372"
+  }
+]

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from 'node:assert/strict';
 
 const infinity=9223372036854775807n;

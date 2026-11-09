@@ -1,0 +1,47 @@
+[
+  {
+    "path": "lab/research/R22-noise-robust-benchmarking.md",
+    "revision": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+    "sha256": "2122406c1753587f0409daf380b225a56a7c0c9f091e3316be14612eb7fbd057"
+  },
+  {
+    "path": "lab/experiments/EXP-M01-paired-measurement/REPORT-rebase.md",
+    "revision": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+    "sha256": "43ccc59e8dd56b826641296aae299b9b34c2b43c1e5f74fdc0d204c6f9735fe6"
+  },
+  {
+    "path": "lab/experiments/EXP-M01-paired-measurement/RUNBOOK-rebase.md",
+    "revision": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+    "sha256": "de50f2218fba9f2d092a1f0e77bedfeafdeaefcf3b9ebdf148af19572faf8a60"
+  },
+  {
+    "path": "lab/config/noise.json",
+    "revision": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+    "sha256": "6f00fb518c71a95a2b25661efe7affcb9ed9838c4e36b6cb79a2231460fc8190"
+  },
+  {
+    "path": "pnpm-lock.yaml",
+    "revision": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+    "sha256": "fb4ce15c7b6672b86d8b833436c8c0e9f37a4abfff4214417aedad7cf8cd3da4"
+  },
+  {
+    "path": "lab/SCOPE.md",
+    "revision": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+    "sha256": "94527879db763dd6f3e7d233470250cd53b86f4fb594c8ade2aedc730cb14f96"
+  },
+  {
+    "path": "lab/NORTH-STAR.md",
+    "revision": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+    "sha256": "0176766d21385a37a0dea3091d7200f249901ce8a4eadd071acd56b2f70eb3e9"
+  },
+  {
+    "path": "lab/TARGETS.md",
+    "revision": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+    "sha256": "cb30ffeb776a7deb0c885be2968872bcebd7dc05cca1b2cfb5913b809a804d95"
+  },
+  {
+    "path": "/Users/sam/projects/triplex-db-2/lab/research/R44-ns-run-execution.md",
+    "lastPathCommit": "613ad05f89d922ffb82a65a85b24fa1473c5319d",
+    "sha256": "53764d9fcc8abd3f6d53f13afe0cbd6942f6e04ab839880bd9a60b4ff4ed7821"
+  }
+]

@@ -63,6 +63,19 @@ export class Histogram {
   recordMs(ms: number): void {
     this.recordUs(ms * 1000);
   }
+  /**
+   * HdrHistogram's recordValueWithExpectedInterval: record the value, then the samples a stalled closed loop
+   * never issued (value - k x interval while above the interval). Diagnostic only.
+   * [EXP-M01] Why (R22 section 2 "Coordinated omission", fix 4): closed-loop readers yield one slow sample per
+   * stall; this shows how much an open stream would have seen. Bars never use it: writers are already measured
+   * from their scheduled time and reads get an open-loop probe. Rejected: correcting the bar histograms (it
+   * invents samples from an assumed interval).
+   */
+  recordCorrectedUs(us: number, expectedIntervalUs: number): void {
+    this.recordUs(us);
+    if (!(expectedIntervalUs > 0) || us <= expectedIntervalUs) return;
+    for (let missing = us - expectedIntervalUs; missing >= expectedIntervalUs; missing -= expectedIntervalUs) this.recordUs(missing);
+  }
   merge(other: Histogram): this {
     for (let i = 0; i < SIZE; i++) if (other.counts[i]) this.counts[i] += other.counts[i];
     this.count += other.count;

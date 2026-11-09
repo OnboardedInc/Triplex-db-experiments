@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Unexecuted pure controls; actual SDK/driver cases require a separate grant. */
 import test from 'node:test';
 import assert from 'node:assert/strict';

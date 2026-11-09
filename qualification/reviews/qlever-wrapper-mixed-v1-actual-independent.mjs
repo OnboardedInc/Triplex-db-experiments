@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Retained mixed-case actual review. No SDK/facade/compiler/backend execution. */
 import assert from 'node:assert/strict';
 import {readFile,readdir,writeFile} from 'node:fs/promises';

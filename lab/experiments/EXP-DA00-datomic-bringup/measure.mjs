@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-DA00] Why: measure actual JVM RSS, creation costs and volume persistence. Rejected: R29 RSS estimates as acceptance evidence.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';

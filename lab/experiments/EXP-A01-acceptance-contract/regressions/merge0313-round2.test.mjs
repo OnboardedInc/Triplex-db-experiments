@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] Node overloads over dynamic option/result unions. Binding errors remain checked by lab/bin/checkjs.mjs.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';

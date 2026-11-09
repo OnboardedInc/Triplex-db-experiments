@@ -1,0 +1,3 @@
+# Preserve byte-exact command output, including emitted trailing spaces.
+*.log -whitespace
+*.tap -whitespace

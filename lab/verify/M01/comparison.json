@@ -1,0 +1,1342 @@
+{
+  "reviewed": "f45d479a313f2679db892ea8e773f0c6c0a27d76",
+  "main": "1a83095c97885e3865c88b3985ecddb036276881",
+  "config": {
+    "equal": true,
+    "slots": 12,
+    "followers": 16,
+    "verdictFixtures": 36,
+    "admissionFixtures": 5,
+    "normalized": "Only absolute generated config directory; no effective hashes or Docker arguments removed"
+  },
+  "dryRuns": [
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "xtdb",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "qlever",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G0",
+        "--lane",
+        "datomic",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G1",
+        "--lane",
+        "xtdb",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G1",
+        "--lane",
+        "qlever",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G1",
+        "--lane",
+        "datomic",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G2",
+        "--lane",
+        "xtdb",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G2",
+        "--lane",
+        "qlever",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G2",
+        "--lane",
+        "datomic",
+        "--dry-run"
+      ],
+      "code": 1,
+      "equal": true,
+      "usageNormalization": "Additive |PAIR in usage text"
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G4",
+        "--lane",
+        "xtdb",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G4",
+        "--lane",
+        "qlever",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "G4",
+        "--lane",
+        "datomic",
+        "--dry-run"
+      ],
+      "code": 1,
+      "equal": true,
+      "usageNormalization": "Additive |PAIR in usage text"
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "NS",
+        "--lane",
+        "xtdb",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "NS",
+        "--lane",
+        "qlever",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "NS",
+        "--lane",
+        "datomic",
+        "--dry-run"
+      ],
+      "code": 1,
+      "equal": true,
+      "usageNormalization": "Additive |PAIR in usage text"
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "GS",
+        "--lane",
+        "xtdb",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "GS",
+        "--lane",
+        "qlever",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "GS",
+        "--lane",
+        "datomic",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "OBL",
+        "--lane",
+        "xtdb",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "OBL",
+        "--lane",
+        "qlever",
+        "--dry-run"
+      ],
+      "code": 0,
+      "equal": true,
+      "usageNormalization": null
+    },
+    {
+      "args": [
+        "lab/bin/gate.mjs",
+        "OBL",
+        "--lane",
+        "datomic",
+        "--dry-run"
+      ],
+      "code": 1,
+      "equal": true,
+      "usageNormalization": "Additive |PAIR in usage text"
+    }
+  ],
+  "drivers": [
+    {
+      "profile": "baseline",
+      "equal": true,
+      "sourceHashes": {
+        "main": {
+          "lab/bench/driver.ts": "266e4185433169ae7294e6d20acaf46f3ce4add8041fe407d5deb6303ebb66cb",
+          "lab/bench/reader-worker.ts": "97b3b5439f47301ea9fd758a6edfb7923e1811fafabfcd38c499e0c9f7df057d",
+          "lab/bench/lib/bulk.ts": "4acb046a0cd2a6f065a802c635e42ae088904d96f3548370c2ceb34ef755e98f",
+          "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+          "lab/bench/lib/composition.ts": "ffb98e59ee6cc44932b47cb80412c09a2e2c810c2f0116ebb3d814ba5299df23",
+          "lab/bench/lib/evaluate.ts": "e47f87b57042bdc9c712f4a92fefbf0020f581e6ce6b966352fedd7088193d3d",
+          "lab/bench/lib/feed.ts": "935e7ce993c087e5b19f9eceafe71855a705c26161d24ef1d1ef2aa42951b4de",
+          "lab/bench/lib/g0.ts": "f26ada16b5f03316eb005eb94adc29a07ad0257f1426b6ec5f56fd433ff7deb4",
+          "lab/bench/lib/hist.ts": "dad68c421251334d768dcd8ebfb7817bab5f800190cfcf882f129a3dc0aa5d2a",
+          "lab/bench/lib/memory.ts": "22a6368f5d7369583f65ec17e59ed9031ded7fd85b4197bdd95f687d47b8a641",
+          "lab/bench/lib/model.ts": "252a8c1099b999936522b664eb96c7630ab95062d5626c217ebf27c66695a691",
+          "lab/bench/lib/observe.ts": "7a60e6e068ddbbf53d7dd9b1718df5ff25bacf8ea2b72b02cf93ded32a66597e",
+          "lab/bench/lib/oracle.ts": "ff7467e85fe4947e4efbaef2c5fd735ba9379208ca7f28509185b89f45a9d693",
+          "lab/bench/lib/phases.ts": "b2a144d7e95383ace5e1a7d35b0b44580fae671c475371fe83a1436895b75281",
+          "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+          "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+          "lab/bench/lib/scheduler.ts": "854bcc74c6cfc037ae5d0389f049fdb59fdedff6d4debceda1ad0e2b36bffe19",
+          "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+          "lab/bench/lib/sweep-process.ts": "e147f5abe0c5cca1989449d2cfe8ea6f1e97ef81c81254fe77f2db2ffaaae360",
+          "lab/bench/lib/sweep-recovery.ts": "11a92be5db1bfbb073f2030690bd7ddff039e58b537c083fdb7453b5a7ba3fa6",
+          "lab/bench/lib/sweep-worker.ts": "30184f5650057cdd3733c758389ff85b53da4cdf5ae02419c12943627514a526",
+          "lab/bench/lib/sweep.ts": "b10cdd3c9121a7c001a7b2c4da4a24545f6dd6b12542fc0acb072c329edb9b04",
+          "lab/bench/lib/trace.ts": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+          "lab/bench/lib/triplex.ts": "564e8f869b6b0a802557e95fea075680e7aed001dd4c3372ef7746e6332757fb",
+          "lab/bench/lib/w0-fingerprint.ts": "c41124d9f677f0b1620a9dfec2838cb01946447774a54b0fbfc99918491728fb",
+          "lab/bench/lib/w0-gates.ts": "a55835a785db54881aa5c057ab787451d9cc866e0689d74572c4690aa8447d33",
+          "lab/bench/lib/w0-outbox.ts": "c5d2b8ad2c5768084b29ac4ba01f548a43f82ac00ea5796b4cf7a51de4913291",
+          "lab/bench/lib/w0-public.ts": "1613e685b487c7794cdeb2941eb6b025540e1f33eeb5a7a4855712f4747c62ed",
+          "lab/bench/lib/w0-rounds.ts": "16c856f806dcf08db5ec996359024408828db25ac97511d079a13663a2e322c2",
+          "lab/bench/lib/w0-seed.ts": "6af3c8866edb3a5f935c54741c1f7021634ce09c660f7c3c43e49a4b6e0e0a8d",
+          "lab/bench/lib/w0-trace.ts": "28ffa1a0b29952058857d2ed117bc5cf62850a7fea3242c6f0133cf23cbcdc1d",
+          "lab/bench/lib/w0-traffic.ts": "237d7d84ac774025869d7952adb815132606a69524d0db0fa0ea17a0aa55dd50",
+          "lab/bench/lib/w0-world.ts": "fbef736a339772693d68d7bd86b48a1c1b778f657e26ddec2b0204936ee5ed5a",
+          "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3"
+        },
+        "reviewed": {
+          "lab/bench/driver.ts": "f5059d5838cc4b6ab208709685eeb3be3fd45e150418ed6777b2a83f503c8119",
+          "lab/bench/reader-worker.ts": "97b3b5439f47301ea9fd758a6edfb7923e1811fafabfcd38c499e0c9f7df057d",
+          "lab/bench/lib/bulk.ts": "4acb046a0cd2a6f065a802c635e42ae088904d96f3548370c2ceb34ef755e98f",
+          "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+          "lab/bench/lib/composition.ts": "ffb98e59ee6cc44932b47cb80412c09a2e2c810c2f0116ebb3d814ba5299df23",
+          "lab/bench/lib/evaluate.ts": "e47f87b57042bdc9c712f4a92fefbf0020f581e6ce6b966352fedd7088193d3d",
+          "lab/bench/lib/feed.ts": "935e7ce993c087e5b19f9eceafe71855a705c26161d24ef1d1ef2aa42951b4de",
+          "lab/bench/lib/g0.ts": "f26ada16b5f03316eb005eb94adc29a07ad0257f1426b6ec5f56fd433ff7deb4",
+          "lab/bench/lib/hist.ts": "983e89c62b6b73ec6730c2e8b0a3325d5528897a786e59ed02fb4e6814754aed",
+          "lab/bench/lib/memory.ts": "22a6368f5d7369583f65ec17e59ed9031ded7fd85b4197bdd95f687d47b8a641",
+          "lab/bench/lib/model.ts": "252a8c1099b999936522b664eb96c7630ab95062d5626c217ebf27c66695a691",
+          "lab/bench/lib/noise.ts": "88308c7478fa63398a653098c4afaba3b69f307880ad32b3e4d5923e3ea87f3e",
+          "lab/bench/lib/observe.ts": "7a60e6e068ddbbf53d7dd9b1718df5ff25bacf8ea2b72b02cf93ded32a66597e",
+          "lab/bench/lib/oracle.ts": "ff7467e85fe4947e4efbaef2c5fd735ba9379208ca7f28509185b89f45a9d693",
+          "lab/bench/lib/pair-analysis.ts": "e54174c3a4c4090af81c82c1afc597312a7ae64b7a80b0fb125c9951da30b76d",
+          "lab/bench/lib/paired.ts": "2c68e427574173c5caaefcaed8322e761b718b2a32d79cf22297440167e8c70e",
+          "lab/bench/lib/phases.ts": "b2a144d7e95383ace5e1a7d35b0b44580fae671c475371fe83a1436895b75281",
+          "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+          "lab/bench/lib/rounds.ts": "9be0cbe8ef79aa61b3fe78f7373ca958d0f7ff696049c02dcb53a777256e9da0",
+          "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+          "lab/bench/lib/scheduler.ts": "854bcc74c6cfc037ae5d0389f049fdb59fdedff6d4debceda1ad0e2b36bffe19",
+          "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+          "lab/bench/lib/sweep-process.ts": "e147f5abe0c5cca1989449d2cfe8ea6f1e97ef81c81254fe77f2db2ffaaae360",
+          "lab/bench/lib/sweep-recovery.ts": "11a92be5db1bfbb073f2030690bd7ddff039e58b537c083fdb7453b5a7ba3fa6",
+          "lab/bench/lib/sweep-worker.ts": "30184f5650057cdd3733c758389ff85b53da4cdf5ae02419c12943627514a526",
+          "lab/bench/lib/sweep.ts": "b10cdd3c9121a7c001a7b2c4da4a24545f6dd6b12542fc0acb072c329edb9b04",
+          "lab/bench/lib/trace.ts": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+          "lab/bench/lib/triplex.ts": "564e8f869b6b0a802557e95fea075680e7aed001dd4c3372ef7746e6332757fb",
+          "lab/bench/lib/w0-fingerprint.ts": "c41124d9f677f0b1620a9dfec2838cb01946447774a54b0fbfc99918491728fb",
+          "lab/bench/lib/w0-gates.ts": "a55835a785db54881aa5c057ab787451d9cc866e0689d74572c4690aa8447d33",
+          "lab/bench/lib/w0-outbox.ts": "c5d2b8ad2c5768084b29ac4ba01f548a43f82ac00ea5796b4cf7a51de4913291",
+          "lab/bench/lib/w0-public.ts": "1613e685b487c7794cdeb2941eb6b025540e1f33eeb5a7a4855712f4747c62ed",
+          "lab/bench/lib/w0-rounds.ts": "16c856f806dcf08db5ec996359024408828db25ac97511d079a13663a2e322c2",
+          "lab/bench/lib/w0-seed.ts": "6af3c8866edb3a5f935c54741c1f7021634ce09c660f7c3c43e49a4b6e0e0a8d",
+          "lab/bench/lib/w0-trace.ts": "28ffa1a0b29952058857d2ed117bc5cf62850a7fea3242c6f0133cf23cbcdc1d",
+          "lab/bench/lib/w0-traffic.ts": "237d7d84ac774025869d7952adb815132606a69524d0db0fa0ea17a0aa55dd50",
+          "lab/bench/lib/w0-world.ts": "fbef736a339772693d68d7bd86b48a1c1b778f657e26ddec2b0204936ee5ed5a",
+          "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3"
+        }
+      },
+      "reportHashes": {
+        "main": "889f3b3ba4d0da20f9d94a35fb3e5d4c59170b3cda10b8e834c647bf99682630",
+        "reviewed": "52e1029c5c1010edb2b7c421a27bd4d7d670685a542a666f2692774881901b54"
+      },
+      "invariants": {
+        "format": "tx2-ns-report/2",
+        "semantics": "TARGETS v2 sections 1.1, 2.1, 4.1",
+        "status": "DONE",
+        "config": {
+          "lane": "xtdb",
+          "rung": "dev:21",
+          "rungSubjects": 21,
+          "profile": "smoke",
+          "zeroReaders": true,
+          "matchDurationS": 5,
+          "baselineWrites": null,
+          "devOverrides": [
+            "subjects",
+            "max-readers",
+            "burst-multiplier",
+            "level-s",
+            "probe10-per-s"
+          ],
+          "composition": "memory",
+          "seed": "vm01r-offline",
+          "readerThreads": 1,
+          "seedBudgetS": 3600,
+          "seedBatchFacts": 400,
+          "writerMaxInFlight": 32,
+          "writerDeadlineMs": 30000,
+          "sweepConcurrency": 16,
+          "sweepMax": 100000,
+          "maxReaders": 1,
+          "burstMultiplier": 1,
+          "rateScale": 1,
+          "levelS": 0.05,
+          "oracleSampleSubjects": 1,
+          "oracleRate": 0.01,
+          "oracleMaxReads": 1,
+          "splitShare": 0.1,
+          "probe10PerS": 0,
+          "historySample": 1,
+          "p5Mutations": 10,
+          "oracleRoot": null,
+          "seedManifest": null,
+          "settleS": 2
+        },
+        "generator": {
+          "traceSha256": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+          "worldSha256": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+          "seed": "vm01r-offline"
+        },
+        "trace": {
+          "params": {
+            "steadyFactsPerS": 15,
+            "burstMultiplier": 1,
+            "burstDurationS": 60,
+            "burstPeriodS": 600,
+            "firstBurstAtS": 120,
+            "sizeClasses": [
+              {
+                "share": 0.6,
+                "min": 5,
+                "max": 10
+              },
+              {
+                "share": 0.3,
+                "min": 11,
+                "max": 25
+              },
+              {
+                "share": 0.1,
+                "min": 26,
+                "max": 50
+              }
+            ],
+            "writerMix": [
+              {
+                "kind": "person",
+                "share": 0.4
+              },
+              {
+                "kind": "system",
+                "share": 0.3
+              },
+              {
+                "kind": "agent",
+                "share": 0.1
+              },
+              {
+                "kind": "runtime",
+                "share": 0.2
+              }
+            ],
+            "systemDuplicateRate": 0.1,
+            "duplicateDelayMs": [
+              500,
+              5000
+            ],
+            "ackLossRate": 0.01,
+            "correctionRate": 0.01,
+            "correctionBackMs": 2592000000,
+            "activeShare": 0.02,
+            "activePickShare": 0.95,
+            "zipfS": 1.1,
+            "residencyS": 2000
+          },
+          "durationS": 7200,
+          "digest": "fc2ede2723f91fbb",
+          "generated": {
+            "commands": 7835,
+            "resends": 256,
+            "facts": 107637,
+            "corrections": 65,
+            "ackLoss": 84,
+            "burstCommands": 785,
+            "activeShare": 0.9523931078493938,
+            "distinctSubjects": 21,
+            "byKind": {
+              "system": 2338,
+              "person": 3240,
+              "runtime": 1529,
+              "agent": 728
+            }
+          },
+          "generatorSha256": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+          "seed": "vm01r-offline"
+        },
+        "seed": {
+          "plannedSubjects": 21,
+          "seededSubjects": 21,
+          "complete": true,
+          "commands": 33,
+          "assertions": 8567,
+          "expectedAssertions": 8567,
+          "assertionsMatchClosedForm": true,
+          "failureCount": 0,
+          "failures": []
+        },
+        "phases": [
+          {
+            "idx": 0,
+            "name": "warmup",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": false
+          },
+          {
+            "idx": 1,
+            "name": "baseline",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 2,
+            "name": "L1",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 3,
+            "name": "L4",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 4,
+            "name": "L16",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 5,
+            "name": "L64",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 6,
+            "name": "L256",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 7,
+            "name": "L1024",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 8,
+            "name": "recovery",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 9,
+            "name": "p4mix",
+            "readers": 0,
+            "mode": "weighted",
+            "measured": true
+          },
+          {
+            "idx": 10,
+            "name": "p4h1",
+            "readers": 0,
+            "mode": "sample",
+            "measured": true
+          },
+          {
+            "idx": 11,
+            "name": "grow3",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": false,
+            "history": {
+              "targetDepth": 3,
+              "reachedDepth": 3,
+              "subjects": 1,
+              "commands": 2,
+              "assertions": 4,
+              "failures": 0
+            }
+          },
+          {
+            "idx": 12,
+            "name": "p4h3",
+            "readers": 0,
+            "mode": "sample",
+            "measured": true
+          },
+          {
+            "idx": 13,
+            "name": "grow10",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": false,
+            "history": {
+              "targetDepth": 10,
+              "reachedDepth": 10,
+              "subjects": 1,
+              "commands": 7,
+              "assertions": 14,
+              "failures": 0
+            }
+          },
+          {
+            "idx": 14,
+            "name": "p4h10",
+            "readers": 0,
+            "mode": "sample",
+            "measured": true
+          },
+          {
+            "idx": 15,
+            "name": "presweep",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 16,
+            "name": "sweep",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 17,
+            "name": "tail",
+            "readers": 0,
+            "measured": false
+          }
+        ],
+        "correctness": {
+          "violations": 0,
+          "errors": 0,
+          "violationKinds": {}
+        },
+        "feed": {
+          "gaps": 0,
+          "visibleDuplicateEffects": 0,
+          "replayExact": true,
+          "replayMismatches": 0,
+          "crashes": [
+            {
+              "point": "before-effect",
+              "fired": true
+            },
+            {
+              "point": "after-effect",
+              "fired": true
+            },
+            {
+              "point": "after-checkpoint",
+              "fired": true
+            }
+          ],
+          "unreached": 0,
+          "orderViolations": 0,
+          "affectedMismatches": 0
+        },
+        "oracle": {
+          "status": "NOT-RUN",
+          "reason": "zero-reader baseline run"
+        },
+        "histograms": [
+          "L1.commit",
+          "L1.read",
+          "L1024.commit",
+          "L1024.read",
+          "L16.commit",
+          "L16.read",
+          "L256.commit",
+          "L256.read",
+          "L4.commit",
+          "L4.read",
+          "L64.commit",
+          "L64.read",
+          "baseline.commit",
+          "baseline.read",
+          "p4h1.commit",
+          "p4h1.read",
+          "p4h10.commit",
+          "p4h10.read",
+          "p4h3.commit",
+          "p4h3.read",
+          "p4mix.commit",
+          "p4mix.read",
+          "presweep.commit",
+          "presweep.read",
+          "recovery.commit",
+          "recovery.read",
+          "sweep.commit",
+          "sweep.read"
+        ],
+        "priorities": [
+          "P1",
+          "P2",
+          "P3",
+          "P4",
+          "P5"
+        ],
+        "pair": null
+      },
+      "writerCommands": [
+        {
+          "stream": "background",
+          "seq": 0,
+          "resend": false,
+          "facts": 19,
+          "burst": false,
+          "outcome": "committed",
+          "offsetMs": 937.092041015625
+        },
+        {
+          "stream": "background",
+          "seq": 1,
+          "resend": false,
+          "facts": 13,
+          "burst": false,
+          "outcome": "committed",
+          "offsetMs": 1678.72509765625
+        },
+        {
+          "stream": "background",
+          "seq": 0,
+          "resend": true,
+          "facts": 19,
+          "burst": false,
+          "outcome": "duplicate-returned-original",
+          "offsetMs": 2568.955078125
+        },
+        {
+          "stream": "background",
+          "seq": 2,
+          "resend": false,
+          "facts": 9,
+          "burst": false,
+          "outcome": "committed",
+          "offsetMs": 3037.23388671875
+        },
+        {
+          "stream": "background",
+          "seq": 3,
+          "resend": false,
+          "facts": 17,
+          "burst": false,
+          "outcome": "committed",
+          "offsetMs": 3848.304931640625
+        },
+        {
+          "stream": "background",
+          "seq": 4,
+          "resend": false,
+          "facts": 5,
+          "burst": false,
+          "outcome": "committed",
+          "offsetMs": 4519.0849609375
+        }
+      ],
+      "observations": {
+        "main": {
+          "reads": 5,
+          "writer": {
+            "offered": 6,
+            "completed": 6,
+            "expired": 0,
+            "notOffered": 8085,
+            "maxInFlightSeen": 1,
+            "pendingAtEnd": 0,
+            "offeredUntilTraceS": 5.00087158203125,
+            "overlays": {}
+          },
+          "feed": {
+            "target": 47,
+            "checkpointAtStop": 47,
+            "inFlightAtFeedTarget": 0
+          }
+        },
+        "reviewed": {
+          "reads": 5,
+          "writer": {
+            "offered": 6,
+            "completed": 6,
+            "expired": 0,
+            "notOffered": 8085,
+            "maxInFlightSeen": 1,
+            "pendingAtEnd": 0,
+            "offeredUntilTraceS": 5.00104638671875,
+            "overlays": {}
+          },
+          "feed": {
+            "target": 47,
+            "checkpointAtStop": 47,
+            "inFlightAtFeedTarget": 0
+          }
+        }
+      },
+      "excludedFromEquality": [
+        "wall timestamps and random scope/run IDs",
+        "new PAIR config fields (null)",
+        "source manifest additions and changed hashes",
+        "latency, goodput, CPU, ELU and histograms of real execution times",
+        "read sample totals and timing-dependent feed polling/retry counts",
+        "P5 overlay start offsets (triggered by phase entry, not frozen background trace)"
+      ]
+    },
+    {
+      "profile": "readers",
+      "equal": true,
+      "sourceHashes": {
+        "main": {
+          "lab/bench/driver.ts": "266e4185433169ae7294e6d20acaf46f3ce4add8041fe407d5deb6303ebb66cb",
+          "lab/bench/reader-worker.ts": "97b3b5439f47301ea9fd758a6edfb7923e1811fafabfcd38c499e0c9f7df057d",
+          "lab/bench/lib/bulk.ts": "4acb046a0cd2a6f065a802c635e42ae088904d96f3548370c2ceb34ef755e98f",
+          "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+          "lab/bench/lib/composition.ts": "ffb98e59ee6cc44932b47cb80412c09a2e2c810c2f0116ebb3d814ba5299df23",
+          "lab/bench/lib/evaluate.ts": "e47f87b57042bdc9c712f4a92fefbf0020f581e6ce6b966352fedd7088193d3d",
+          "lab/bench/lib/feed.ts": "935e7ce993c087e5b19f9eceafe71855a705c26161d24ef1d1ef2aa42951b4de",
+          "lab/bench/lib/g0.ts": "f26ada16b5f03316eb005eb94adc29a07ad0257f1426b6ec5f56fd433ff7deb4",
+          "lab/bench/lib/hist.ts": "dad68c421251334d768dcd8ebfb7817bab5f800190cfcf882f129a3dc0aa5d2a",
+          "lab/bench/lib/memory.ts": "22a6368f5d7369583f65ec17e59ed9031ded7fd85b4197bdd95f687d47b8a641",
+          "lab/bench/lib/model.ts": "252a8c1099b999936522b664eb96c7630ab95062d5626c217ebf27c66695a691",
+          "lab/bench/lib/observe.ts": "7a60e6e068ddbbf53d7dd9b1718df5ff25bacf8ea2b72b02cf93ded32a66597e",
+          "lab/bench/lib/oracle.ts": "ff7467e85fe4947e4efbaef2c5fd735ba9379208ca7f28509185b89f45a9d693",
+          "lab/bench/lib/phases.ts": "b2a144d7e95383ace5e1a7d35b0b44580fae671c475371fe83a1436895b75281",
+          "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+          "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+          "lab/bench/lib/scheduler.ts": "854bcc74c6cfc037ae5d0389f049fdb59fdedff6d4debceda1ad0e2b36bffe19",
+          "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+          "lab/bench/lib/sweep-process.ts": "e147f5abe0c5cca1989449d2cfe8ea6f1e97ef81c81254fe77f2db2ffaaae360",
+          "lab/bench/lib/sweep-recovery.ts": "11a92be5db1bfbb073f2030690bd7ddff039e58b537c083fdb7453b5a7ba3fa6",
+          "lab/bench/lib/sweep-worker.ts": "30184f5650057cdd3733c758389ff85b53da4cdf5ae02419c12943627514a526",
+          "lab/bench/lib/sweep.ts": "b10cdd3c9121a7c001a7b2c4da4a24545f6dd6b12542fc0acb072c329edb9b04",
+          "lab/bench/lib/trace.ts": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+          "lab/bench/lib/triplex.ts": "564e8f869b6b0a802557e95fea075680e7aed001dd4c3372ef7746e6332757fb",
+          "lab/bench/lib/w0-fingerprint.ts": "c41124d9f677f0b1620a9dfec2838cb01946447774a54b0fbfc99918491728fb",
+          "lab/bench/lib/w0-gates.ts": "a55835a785db54881aa5c057ab787451d9cc866e0689d74572c4690aa8447d33",
+          "lab/bench/lib/w0-outbox.ts": "c5d2b8ad2c5768084b29ac4ba01f548a43f82ac00ea5796b4cf7a51de4913291",
+          "lab/bench/lib/w0-public.ts": "1613e685b487c7794cdeb2941eb6b025540e1f33eeb5a7a4855712f4747c62ed",
+          "lab/bench/lib/w0-rounds.ts": "16c856f806dcf08db5ec996359024408828db25ac97511d079a13663a2e322c2",
+          "lab/bench/lib/w0-seed.ts": "6af3c8866edb3a5f935c54741c1f7021634ce09c660f7c3c43e49a4b6e0e0a8d",
+          "lab/bench/lib/w0-trace.ts": "28ffa1a0b29952058857d2ed117bc5cf62850a7fea3242c6f0133cf23cbcdc1d",
+          "lab/bench/lib/w0-traffic.ts": "237d7d84ac774025869d7952adb815132606a69524d0db0fa0ea17a0aa55dd50",
+          "lab/bench/lib/w0-world.ts": "fbef736a339772693d68d7bd86b48a1c1b778f657e26ddec2b0204936ee5ed5a",
+          "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3"
+        },
+        "reviewed": {
+          "lab/bench/driver.ts": "f5059d5838cc4b6ab208709685eeb3be3fd45e150418ed6777b2a83f503c8119",
+          "lab/bench/reader-worker.ts": "97b3b5439f47301ea9fd758a6edfb7923e1811fafabfcd38c499e0c9f7df057d",
+          "lab/bench/lib/bulk.ts": "4acb046a0cd2a6f065a802c635e42ae088904d96f3548370c2ceb34ef755e98f",
+          "lab/bench/lib/commands.ts": "6abe490726b867f0304a525d3963383a71ca75eca5ed65cad106c500e19ffce8",
+          "lab/bench/lib/composition.ts": "ffb98e59ee6cc44932b47cb80412c09a2e2c810c2f0116ebb3d814ba5299df23",
+          "lab/bench/lib/evaluate.ts": "e47f87b57042bdc9c712f4a92fefbf0020f581e6ce6b966352fedd7088193d3d",
+          "lab/bench/lib/feed.ts": "935e7ce993c087e5b19f9eceafe71855a705c26161d24ef1d1ef2aa42951b4de",
+          "lab/bench/lib/g0.ts": "f26ada16b5f03316eb005eb94adc29a07ad0257f1426b6ec5f56fd433ff7deb4",
+          "lab/bench/lib/hist.ts": "983e89c62b6b73ec6730c2e8b0a3325d5528897a786e59ed02fb4e6814754aed",
+          "lab/bench/lib/memory.ts": "22a6368f5d7369583f65ec17e59ed9031ded7fd85b4197bdd95f687d47b8a641",
+          "lab/bench/lib/model.ts": "252a8c1099b999936522b664eb96c7630ab95062d5626c217ebf27c66695a691",
+          "lab/bench/lib/noise.ts": "88308c7478fa63398a653098c4afaba3b69f307880ad32b3e4d5923e3ea87f3e",
+          "lab/bench/lib/observe.ts": "7a60e6e068ddbbf53d7dd9b1718df5ff25bacf8ea2b72b02cf93ded32a66597e",
+          "lab/bench/lib/oracle.ts": "ff7467e85fe4947e4efbaef2c5fd735ba9379208ca7f28509185b89f45a9d693",
+          "lab/bench/lib/pair-analysis.ts": "e54174c3a4c4090af81c82c1afc597312a7ae64b7a80b0fb125c9951da30b76d",
+          "lab/bench/lib/paired.ts": "2c68e427574173c5caaefcaed8322e761b718b2a32d79cf22297440167e8c70e",
+          "lab/bench/lib/phases.ts": "b2a144d7e95383ace5e1a7d35b0b44580fae671c475371fe83a1436895b75281",
+          "lab/bench/lib/rng.ts": "f9fe6c5d720bc5eff773f4b428874728e1760abb35ea9aa82804b2bf776d8f50",
+          "lab/bench/lib/rounds.ts": "9be0cbe8ef79aa61b3fe78f7373ca958d0f7ff696049c02dcb53a777256e9da0",
+          "lab/bench/lib/samples.ts": "7ae23e69d6430e295efe684b19ef576256010c0584e0bf342f4057c75ecdd009",
+          "lab/bench/lib/scheduler.ts": "854bcc74c6cfc037ae5d0389f049fdb59fdedff6d4debceda1ad0e2b36bffe19",
+          "lab/bench/lib/seed.ts": "c1b6ecc5fe2ca157d59253ffb6ad636fe4f2c296a5db6ad5a42849f87b7fdaf5",
+          "lab/bench/lib/sweep-process.ts": "e147f5abe0c5cca1989449d2cfe8ea6f1e97ef81c81254fe77f2db2ffaaae360",
+          "lab/bench/lib/sweep-recovery.ts": "11a92be5db1bfbb073f2030690bd7ddff039e58b537c083fdb7453b5a7ba3fa6",
+          "lab/bench/lib/sweep-worker.ts": "30184f5650057cdd3733c758389ff85b53da4cdf5ae02419c12943627514a526",
+          "lab/bench/lib/sweep.ts": "b10cdd3c9121a7c001a7b2c4da4a24545f6dd6b12542fc0acb072c329edb9b04",
+          "lab/bench/lib/trace.ts": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+          "lab/bench/lib/triplex.ts": "564e8f869b6b0a802557e95fea075680e7aed001dd4c3372ef7746e6332757fb",
+          "lab/bench/lib/w0-fingerprint.ts": "c41124d9f677f0b1620a9dfec2838cb01946447774a54b0fbfc99918491728fb",
+          "lab/bench/lib/w0-gates.ts": "a55835a785db54881aa5c057ab787451d9cc866e0689d74572c4690aa8447d33",
+          "lab/bench/lib/w0-outbox.ts": "c5d2b8ad2c5768084b29ac4ba01f548a43f82ac00ea5796b4cf7a51de4913291",
+          "lab/bench/lib/w0-public.ts": "1613e685b487c7794cdeb2941eb6b025540e1f33eeb5a7a4855712f4747c62ed",
+          "lab/bench/lib/w0-rounds.ts": "16c856f806dcf08db5ec996359024408828db25ac97511d079a13663a2e322c2",
+          "lab/bench/lib/w0-seed.ts": "6af3c8866edb3a5f935c54741c1f7021634ce09c660f7c3c43e49a4b6e0e0a8d",
+          "lab/bench/lib/w0-trace.ts": "28ffa1a0b29952058857d2ed117bc5cf62850a7fea3242c6f0133cf23cbcdc1d",
+          "lab/bench/lib/w0-traffic.ts": "237d7d84ac774025869d7952adb815132606a69524d0db0fa0ea17a0aa55dd50",
+          "lab/bench/lib/w0-world.ts": "fbef736a339772693d68d7bd86b48a1c1b778f657e26ddec2b0204936ee5ed5a",
+          "lab/bench/lib/world.ts": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3"
+        }
+      },
+      "reportHashes": {
+        "main": "863277ca1593b2f0baf8d9430ed878d729b6da5aff3e5d191b176e10f422fafd",
+        "reviewed": "e36d7c760ab5004b0ab1bc7f0a659beebab4923ac558f911ab93965c62d526a6"
+      },
+      "invariants": {
+        "format": "tx2-ns-report/2",
+        "semantics": "TARGETS v2 sections 1.1, 2.1, 4.1",
+        "status": "DONE",
+        "config": {
+          "lane": "xtdb",
+          "rung": "dev:21",
+          "rungSubjects": 21,
+          "profile": "smoke",
+          "zeroReaders": false,
+          "matchDurationS": null,
+          "baselineWrites": null,
+          "devOverrides": [
+            "subjects",
+            "max-readers",
+            "burst-multiplier",
+            "level-s",
+            "probe10-per-s"
+          ],
+          "composition": "memory",
+          "seed": "vm01r-offline",
+          "readerThreads": 1,
+          "seedBudgetS": 3600,
+          "seedBatchFacts": 400,
+          "writerMaxInFlight": 32,
+          "writerDeadlineMs": 30000,
+          "sweepConcurrency": 16,
+          "sweepMax": 100000,
+          "maxReaders": 1,
+          "burstMultiplier": 1,
+          "rateScale": 1,
+          "levelS": 0.05,
+          "oracleSampleSubjects": 1,
+          "oracleRate": 0.01,
+          "oracleMaxReads": 1,
+          "splitShare": 0.1,
+          "probe10PerS": 0,
+          "historySample": 1,
+          "p5Mutations": 10,
+          "oracleRoot": null,
+          "seedManifest": null,
+          "settleS": 2
+        },
+        "generator": {
+          "traceSha256": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+          "worldSha256": "866a7ac5523c6b4567e94c3be25427b665d88138d197635cbb8b20e1533315a3",
+          "seed": "vm01r-offline"
+        },
+        "trace": {
+          "params": {
+            "steadyFactsPerS": 15,
+            "burstMultiplier": 1,
+            "burstDurationS": 60,
+            "burstPeriodS": 600,
+            "firstBurstAtS": 120,
+            "sizeClasses": [
+              {
+                "share": 0.6,
+                "min": 5,
+                "max": 10
+              },
+              {
+                "share": 0.3,
+                "min": 11,
+                "max": 25
+              },
+              {
+                "share": 0.1,
+                "min": 26,
+                "max": 50
+              }
+            ],
+            "writerMix": [
+              {
+                "kind": "person",
+                "share": 0.4
+              },
+              {
+                "kind": "system",
+                "share": 0.3
+              },
+              {
+                "kind": "agent",
+                "share": 0.1
+              },
+              {
+                "kind": "runtime",
+                "share": 0.2
+              }
+            ],
+            "systemDuplicateRate": 0.1,
+            "duplicateDelayMs": [
+              500,
+              5000
+            ],
+            "ackLossRate": 0.01,
+            "correctionRate": 0.01,
+            "correctionBackMs": 2592000000,
+            "activeShare": 0.02,
+            "activePickShare": 0.95,
+            "zipfS": 1.1,
+            "residencyS": 2000
+          },
+          "durationS": 7200,
+          "digest": "fc2ede2723f91fbb",
+          "generated": {
+            "commands": 7835,
+            "resends": 256,
+            "facts": 107637,
+            "corrections": 65,
+            "ackLoss": 84,
+            "burstCommands": 785,
+            "activeShare": 0.9523931078493938,
+            "distinctSubjects": 21,
+            "byKind": {
+              "system": 2338,
+              "person": 3240,
+              "runtime": 1529,
+              "agent": 728
+            }
+          },
+          "generatorSha256": "201f721287b3d3f93e230dc310516369024bcba35cc9151f8c0f3ed3e7f342e4",
+          "seed": "vm01r-offline"
+        },
+        "seed": {
+          "plannedSubjects": 21,
+          "seededSubjects": 21,
+          "complete": true,
+          "commands": 33,
+          "assertions": 8567,
+          "expectedAssertions": 8567,
+          "assertionsMatchClosedForm": true,
+          "failureCount": 0,
+          "failures": []
+        },
+        "phases": [
+          {
+            "idx": 0,
+            "name": "warmup",
+            "readers": 1,
+            "mode": "mixed",
+            "measured": false
+          },
+          {
+            "idx": 1,
+            "name": "baseline",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 2,
+            "name": "L1",
+            "readers": 1,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 3,
+            "name": "L4",
+            "readers": 1,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 4,
+            "name": "L16",
+            "readers": 1,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 5,
+            "name": "L64",
+            "readers": 1,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 6,
+            "name": "L256",
+            "readers": 1,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 7,
+            "name": "L1024",
+            "readers": 1,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 8,
+            "name": "recovery",
+            "readers": 1,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 9,
+            "name": "p4mix",
+            "readers": 1,
+            "mode": "weighted",
+            "measured": true
+          },
+          {
+            "idx": 10,
+            "name": "p4h1",
+            "readers": 1,
+            "mode": "sample",
+            "measured": true
+          },
+          {
+            "idx": 11,
+            "name": "grow3",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": false,
+            "history": {
+              "targetDepth": 3,
+              "reachedDepth": 3,
+              "subjects": 1,
+              "commands": 2,
+              "assertions": 4,
+              "failures": 0
+            }
+          },
+          {
+            "idx": 12,
+            "name": "p4h3",
+            "readers": 1,
+            "mode": "sample",
+            "measured": true
+          },
+          {
+            "idx": 13,
+            "name": "grow10",
+            "readers": 0,
+            "mode": "mixed",
+            "measured": false,
+            "history": {
+              "targetDepth": 10,
+              "reachedDepth": 10,
+              "subjects": 1,
+              "commands": 7,
+              "assertions": 14,
+              "failures": 0
+            }
+          },
+          {
+            "idx": 14,
+            "name": "p4h10",
+            "readers": 1,
+            "mode": "sample",
+            "measured": true
+          },
+          {
+            "idx": 15,
+            "name": "presweep",
+            "readers": 1,
+            "mode": "mixed",
+            "measured": true
+          },
+          {
+            "idx": 16,
+            "name": "sweep",
+            "readers": 1,
+            "mode": "mixed",
+            "measured": true
+          }
+        ],
+        "correctness": {
+          "violations": 0,
+          "errors": 0,
+          "violationKinds": {}
+        },
+        "feed": {
+          "gaps": 0,
+          "visibleDuplicateEffects": 0,
+          "replayExact": true,
+          "replayMismatches": 0,
+          "crashes": [
+            {
+              "point": "before-effect",
+              "fired": true
+            },
+            {
+              "point": "after-effect",
+              "fired": true
+            },
+            {
+              "point": "after-checkpoint",
+              "fired": true
+            }
+          ],
+          "unreached": 0,
+          "orderViolations": 0,
+          "affectedMismatches": 0
+        },
+        "oracle": {
+          "status": "NOT-RUN",
+          "reason": "no --oracle-root (the gate extracts O-REPLAY from exp/O01-replay-oracle)"
+        },
+        "histograms": [
+          "L1.commit",
+          "L1.read",
+          "L1024.commit",
+          "L1024.read",
+          "L16.commit",
+          "L16.read",
+          "L256.commit",
+          "L256.read",
+          "L4.commit",
+          "L4.read",
+          "L64.commit",
+          "L64.read",
+          "baseline.commit",
+          "baseline.read",
+          "p4h1.commit",
+          "p4h1.read",
+          "p4h10.commit",
+          "p4h10.read",
+          "p4h3.commit",
+          "p4h3.read",
+          "p4mix.commit",
+          "p4mix.read",
+          "presweep.commit",
+          "presweep.read",
+          "recovery.commit",
+          "recovery.read",
+          "sweep.commit",
+          "sweep.read"
+        ],
+        "priorities": [
+          "P1",
+          "P2",
+          "P3",
+          "P4",
+          "P5"
+        ],
+        "pair": null
+      },
+      "writerCommands": [
+        {
+          "stream": "p5-mutation",
+          "seq": 5000000001,
+          "resend": false,
+          "facts": 6,
+          "burst": false,
+          "outcome": "committed"
+        },
+        {
+          "stream": "p5-mutation",
+          "seq": 5000000002,
+          "resend": false,
+          "facts": 6,
+          "burst": false,
+          "outcome": "committed"
+        },
+        {
+          "stream": "p5-mutation",
+          "seq": 5000000003,
+          "resend": false,
+          "facts": 6,
+          "burst": false,
+          "outcome": "committed"
+        },
+        {
+          "stream": "p5-mutation",
+          "seq": 5000000004,
+          "resend": false,
+          "facts": 6,
+          "burst": false,
+          "outcome": "committed"
+        },
+        {
+          "stream": "p5-mutation",
+          "seq": 5000000005,
+          "resend": false,
+          "facts": 6,
+          "burst": false,
+          "outcome": "committed"
+        },
+        {
+          "stream": "p5-mutation",
+          "seq": 5000000006,
+          "resend": false,
+          "facts": 6,
+          "burst": false,
+          "outcome": "committed"
+        },
+        {
+          "stream": "p5-mutation",
+          "seq": 5000000007,
+          "resend": false,
+          "facts": 6,
+          "burst": false,
+          "outcome": "committed"
+        }
+      ],
+      "observations": {
+        "main": {
+          "reads": 111,
+          "writer": {
+            "offered": 7,
+            "completed": 7,
+            "expired": 0,
+            "notOffered": 8091,
+            "maxInFlightSeen": 7,
+            "pendingAtEnd": 0,
+            "offeredUntilTraceS": 0.75334326171875,
+            "overlays": {
+              "p5-mutation": 7
+            }
+          },
+          "feed": {
+            "target": 49,
+            "checkpointAtStop": 49,
+            "inFlightAtFeedTarget": 0
+          }
+        },
+        "reviewed": {
+          "reads": 121,
+          "writer": {
+            "offered": 7,
+            "completed": 7,
+            "expired": 0,
+            "notOffered": 8091,
+            "maxInFlightSeen": 7,
+            "pendingAtEnd": 0,
+            "offeredUntilTraceS": 0.7455458984375,
+            "overlays": {
+              "p5-mutation": 7
+            }
+          },
+          "feed": {
+            "target": 49,
+            "checkpointAtStop": 49,
+            "inFlightAtFeedTarget": 0
+          }
+        }
+      },
+      "excludedFromEquality": [
+        "wall timestamps and random scope/run IDs",
+        "new PAIR config fields (null)",
+        "source manifest additions and changed hashes",
+        "latency, goodput, CPU, ELU and histograms of real execution times",
+        "read sample totals and timing-dependent feed polling/retry counts",
+        "P5 overlay start offsets (triggered by phase entry, not frozen background trace)"
+      ]
+    }
+  ]
+}

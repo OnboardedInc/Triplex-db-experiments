@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] runtime-populated records, option bags, or branch-specific union members; option bags inferred from defaults omit optional fields. Binding errors remain checked by lab/bin/checkjs.mjs.
 // EXP-J01 QLever attribution: triples per Triplex command, by source and by channel.
 //
 // Commits real commands (1, 10, 10, 10, 50 facts, each with a commandId) through the Triplex runtime on one

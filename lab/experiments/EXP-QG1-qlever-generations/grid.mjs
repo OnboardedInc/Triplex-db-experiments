@@ -1,3 +1,5 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] generated/optional runtime modules unavailable in standalone source checking; runtime-populated records, option bags, or branch-specific union members; dynamic collections, runtime Buffer-to-JSON coercion, or validated values without static narrowing. Binding errors remain checked by lab/bin/checkjs.mjs.
+import { qleverLatencyReceipt, requireQleverConnectionMode } from "../../receipts/latency.mjs";
 import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
@@ -26,19 +28,20 @@ const owner = JSON.parse(
 );
 if (owner.holder !== "CX-QG1") throw Error("not owned");
 const inspect = JSON.parse(docker(["inspect", "tx2-qlever-s1"]))[0];
-const binding = {
+const binding = qleverLatencyReceipt({
+  qleverConnectionMode: "keep-alive",
   owner,
   containerId: inspect.Id,
   image: inspect.Image,
   config: inspect.Config.Labels["tx2.config-sha256"],
   head: execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim(),
   sources: Object.fromEntries(
-    ["grid.mjs", "delta-count.mjs", "p4-sample.ts"].map((f) => [
+    ["grid.mjs", "delta-count.mjs", "p4-sample.ts", "../../receipts/latency.mjs"].map((f) => [
       f,
       hash(fs.readFileSync(new URL(f, import.meta.url))),
     ]),
   ),
-};
+});
 binding.serializerSha256 = hash(fs.readFileSync("packages/qlever/dist/rdf.js"));
 binding.lockSha256 = hash(fs.readFileSync("pnpm-lock.yaml"));
 binding.nodeVersion = process.version;
@@ -57,13 +60,14 @@ async function req(params, accept = "application/qlever-results+json") {
   });
   const raw = await r.text();
   fs.writeFileSync(path.join(out, `${id}.response`), raw);
-  save(`${id}.request.json`, {
+  save(`${id}.request.json`, qleverLatencyReceipt({ writer: "qg1-request/1",
+    qleverConnectionMode: "keep-alive",
     at,
     params,
     ms: performance.now() - t,
     status: r.status,
     sha256: hash(raw),
-  });
+  }));
   let data;
   try {
     data = JSON.parse(raw);
@@ -71,7 +75,7 @@ async function req(params, accept = "application/qlever-results+json") {
     data = null;
   }
   if (r.status !== 200) throw Error(`request ${id} HTTP ${r.status}: ${raw.slice(0, 300)}`);
-  return { id, ms: performance.now() - t, data };
+  return qleverLatencyReceipt({ writer: "qg1-request/1", qleverConnectionMode: "keep-alive", id, ms: performance.now() - t, data });
 }
 const seed = JSON.parse(fs.readFileSync(`${seedDir}/manifest.json`));
 const graph = seed.seedManifest.graphIri;
@@ -160,14 +164,15 @@ async function measure(label) {
     for (const cache of ["cold", "warm"]) {
       if (cache === "cold") await req({ cmd: "clear-cache" });
       const r = await req({ query });
-      results[name].push({
+      results[name].push(qleverLatencyReceipt({ writer: "qg1-sample/1",
+        qleverConnectionMode: r.qleverConnectionMode,
         cache,
         id: r.id,
         ms: r.ms,
         rows: r.data?.res?.length,
         answerSha256: hash(JSON.stringify(r.data?.res)),
         tree: r.data?.runtimeInformation?.query_execution_tree,
-      });
+      }));
     }
   }
   const env = {
@@ -209,14 +214,15 @@ async function measure(label) {
   );
   fs.writeFileSync(`${out}/${label}-p4.log`, (p4.stdout ?? "") + (p4.stderr ?? ""));
   const after = await state(label + "-after");
-  const summary = {
+  const summary = qleverLatencyReceipt({ writer: "qg1-cell/1",
+    qleverConnectionMode: "keep-alive",
     label,
     arm,
     binding,
     before,
     after,
     results,
-    p4: { status: p4.status, signal: p4.signal, error: p4.error?.message },
+    p4: { connectionMode: requireQleverConnectionMode(env.TRIPLEX_QLEVER_CONNECTION_MODE ?? "keep-alive"), status: p4.status, signal: p4.signal, error: p4.error?.message },
     c8: {
       status: control.status,
       signal: control.signal,
@@ -229,19 +235,20 @@ async function measure(label) {
       status: "UNAVAILABLE exact counters; runtime estimate gauge retained, includes base rows",
     },
     verdict: "DIAGNOSTIC: no production performance admission or P4/Q89i qualification",
-  };
+  });
   save(`${label}.json`, summary);
   summaries.push(summary);
   save("summary.json", summaries);
   console.log(
-    JSON.stringify({
+    JSON.stringify(qleverLatencyReceipt({
+      qleverConnectionMode: "keep-alive",
       label,
       arm,
       delta: before.deltaTriples.total,
       c8: control.status,
       baseMs: results.base[0].ms,
       joinMs: results.join[0].ms,
-    }),
+    })),
   );
 }
 for (const target of [0, 10000, 30000, 100000, 300000, 1000000, 1500000]) {
@@ -289,7 +296,7 @@ const before = await req({ query: queries.join });
 const rebuilt = await req({ cmd: "rebuild-index" });
 const after = await req({ query: queries.join });
 const f05after = await req({ query: f05query });
-save("f05.json", {
+save("f05.json", qleverLatencyReceipt({ writer: "qg1-f05/1", qleverConnectionMode: "keep-alive",
   before: f05before,
   after: f05after,
   expected: "after",
@@ -298,7 +305,7 @@ save("f05.json", {
     f05after.data?.res?.length === 1 &&
     f05after.data.res[0][0] === '"after"',
   verdict: "DIAGNOSTIC: literal guarded update/rebuild sample only",
-});
+}));
 save("rebuild.json", {
   before,
   rebuilt,

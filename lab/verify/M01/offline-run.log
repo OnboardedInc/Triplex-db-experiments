@@ -1,0 +1,38 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 1645 "CX-P2B-R3-step2-source-40", pid 33292 "G0-xtdb-20261109T071713Z-ae459c vitest-core", pid 94690 "CX-DI01-G0-r4", pid 30405 "CX-VA01-0314-g0-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 1645 "CX-P2B-R3-step2-source-40", pid 33292 "G0-xtdb-20261109T071713Z-ae459c vitest-testkit", pid 94690 "CX-DI01-G0-r4", pid 30405 "CX-VA01-0314-g0-xtdb"
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: main/readers [ns 07:19:17] seed: rung dev:21, 8567 live facts planned (20 accounts, mean world 129 facts)
+[ns 07:19:17] seed: 20 shared account worlds in 0.0 s
+[ns 07:19:17] seed: 21 subjects in 0.0 s
+[ns 07:19:17] trace: 8091 events over 7200s, digest fc2ede2723f91fbb, active-set share 0.952
+[ns 07:19:17] readers: 1 worker threads ready
+[ns 07:19:18] phase warmup: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase baseline: 0 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L1: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L4: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L16: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L64: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L256: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase L1024: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase recovery: 1 readers at trace 0s; writer pending 0
+[ns 07:19:18] phase p4mix: 1 readers at trace 0s; writer pending 0
+
+
+null !== 0
+
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-m01r/lab/verify/M01/run-offline.mjs:32:10
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: null,
+  expected: 0,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v22.23.2

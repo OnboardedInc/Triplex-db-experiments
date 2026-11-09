@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing; option bags inferred from defaults omit optional fields; lane-specific effective config fields are present on the Datomic branch; Node overloads and union-valued dynamic records; negative fixtures deliberately delete fields; Promise resolver used without a value. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Unit tests for lab/bin (EXP-000). Run: node --test lab/bin/test/
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
@@ -179,6 +180,102 @@ test('contract claims: full G2 on xtdb claims PKT.full142 for both XTDB lanes; s
   assert.match(contractClaims({ gate: 'G1', lane: 'xtdb', scope: 'full', contractFile: path.join(temp, 'none.json') }).reasons[0], /missing/);
 });
 
+// ---------------------------------------------------------------- EXP-M01: cpuset regime, measurement lease, PAIR verdicts
+
+test('cpuset regime: s1/s3 get --cpuset-cpus and no quota; quota slots keep their exact effective config shape (hash unchanged)', async () => {
+  const engine = await import('../engine.mjs');
+  const config = JSON.parse(fs.readFileSync(new URL('../../config/slots-pair.json', import.meta.url)));
+  const s1 = lib.slotInfo(config, 'xtdb', 's1'), s3 = lib.slotInfo(config, 'xtdb', 's3'), dev = lib.slotInfo(config, 'xtdb', 'dev'), s2 = lib.slotInfo(config, 'xtdb', 's2');
+  const e1 = engine.effectiveConfig(config, s1);
+  const follower = engine.followerInfo(config, s1, { 'cpuset-cpus': '4,5' });
+  const followerArgs = engine.runArgs(follower, engine.effectiveConfig(config, follower), 'h');
+  assert.equal(followerArgs[followerArgs.indexOf('--cpus') + 1], '2');
+  assert.equal(followerArgs[followerArgs.indexOf('--cpuset-cpus') + 1], '4,5');
+  assert.equal(e1.effective.regime, 'cpuset');
+  assert.equal(e1.effective.cpuset, '0-1');
+  assert.equal(engine.effectiveConfig(config, s3).effective.cpuset, '2-3');
+  // The pre-EXP-M01 key list, in order: JSON.stringify order is what the config hash covers.
+  const before = ['lane', 'slot', 'image', 'configYamlSha256', 'env', 'memBytes', 'cpus', 'publish', 'volume', 'cmd', 'health'];
+  for (const info of [dev, s2]) assert.deepEqual(Object.keys(engine.effectiveConfig(config, info).effective), before);
+  const q = engine.effectiveConfig(config, lib.slotInfo(config, 'qlever', 'dev')).effective;
+  assert.equal('regime' in q, false);
+  const a1 = engine.runArgs(s1, e1, 'h');
+  assert.equal(a1[a1.indexOf('--cpuset-cpus') + 1], '0-1');
+  assert.equal(a1.includes('--cpus'), false, 'no CFS quota in the cpuset regime');
+  const a2 = engine.runArgs(s2, engine.effectiveConfig(config, s2), 'h');
+  assert.equal(a2[a2.indexOf('--cpus') + 1], '2');
+  assert.equal(a2.includes('--cpuset-cpus'), false);
+  assert.throws(() => engine.effectiveConfig(config, { ...s1, cpuset: '0-2' }), /has 3 vCPUs, cpus is 2/);
+  const shared = [...engine.cpuList(s1.cpuset)].some(c => engine.cpuList(s3.cpuset).has(c));
+  assert.equal(shared, false, 'the duet pair never shares a vCPU');
+  const cg = engine.parseCgroup('max 100000\n0-1\n100\nusage_usec 5\nnr_periods 10\nnr_throttled 2\nthrottled_usec 7\n');
+  assert.deepEqual(cg, { cpuMax: 'max 100000', cpuset: '0-1', cpuWeight: 100, usageUsec: 5, nrPeriods: 10, nrThrottled: 2, throttledUsec: 7, throttledShare: 0.2 });
+});
+
+test('measurement lease waits for every heavy token, then holds them all; others wait until release (Q60h)', async () => {
+  const { acquireMeasureLease, readMeasureLease } = await import('../heavy-lock.mjs');
+  const busy = await acquireHeavy('someone else');
+  await assert.rejects(acquireMeasureLease('m01 test', { holder: 'tester', pollMs: 20, timeoutMs: 200 }), /heavy tokens still held/);
+  assert.equal(readMeasureLease(), null, 'a timed-out lease releases its directory and tokens');
+  busy();
+  const lease = await acquireMeasureLease('m01 test', { holder: 'tester', pollMs: 20 });
+  assert.equal(lease.tokens, 2);
+  assert.equal(readMeasureLease().holder, 'tester');
+  const { assertMeasureAdmission } = await import('../engine.mjs');
+  assert.throws(() => assertMeasureAdmission('other-holder'), /pool admission is frozen/);
+  assert.doesNotThrow(() => assertMeasureAdmission('tester'));
+  const mine = await acquireHeavy('lease holder build'); // the holder's own heavy steps pass at once
+  mine();
+  const script = `
+    process.env.TX2_LOCKS_DIR = ${JSON.stringify(path.join(temp, 'locks'))}; process.env.TX2_HEAVY_SLOTS = '2';
+    const { acquireHeavy } = await import(${JSON.stringify(new URL('../heavy-lock.mjs', import.meta.url).href)});
+    const release = await acquireHeavy('other agent', { pollMs: 20 }); console.log('GOT'); release();`;
+  let got = false;
+  const child = spawn(process.execPath, ['--input-type=module', '-e', script], { stdio: ['ignore', 'pipe', 'ignore'] });
+  child.stdout.on('data', d => { if (String(d).includes('GOT')) got = true; });
+  await lib.sleep(400);
+  assert.equal(got, false, 'no heavy token while the lease is held');
+  lease.release();
+  assert.equal(readMeasureLease(), null);
+  await new Promise(resolve => child.on('close', resolve));
+  assert.equal(got, true);
+  fs.mkdirSync(path.join(temp, 'locks', 'measure-lease'), { recursive: true });
+  fs.writeFileSync(path.join(temp, 'locks', 'measure-lease', 'owner.json'), JSON.stringify({ pid: 999999, holder: 'gone', label: 'x', at: 'y' }));
+  assert.equal(readMeasureLease().stale, true, 'a dead holder never freezes the pool');
+  const again = await acquireMeasureLease('after stale', { pollMs: 20 });
+  again.release();
+});
+
+test('PAIR verdicts: departures INVALID, RED or over a third excluded INVALID_NOISE, decisive PAIRED_DECIDED; identity fails closed', async () => {
+  const { pairVerdictOf, PAIR_DECISIVE } = await import('../receipt.mjs');
+  const { DECISIVE } = await import('../../bench/lib/paired.ts');
+  assert.deepEqual(PAIR_DECISIVE, [...DECISIVE]);
+  assert.equal(pairVerdictOf({ grade: 'GREEN', decision: 'EQUIVALENT_WITHIN_TARGET' }).verdict, 'PAIRED_DECIDED');
+  assert.equal(pairVerdictOf({ grade: 'AMBER', decision: 'FASTER_BY_TARGET' }).verdict, 'PAIRED_DECIDED');
+  assert.equal(pairVerdictOf({ grade: 'AMBER', decision: 'INCONCLUSIVE_NEED_MORE_ROUNDS' }).verdict, 'PAIRED_INCONCLUSIVE');
+  assert.equal(pairVerdictOf({ grade: 'RED', decision: 'FASTER' }).verdict, 'INVALID_NOISE');
+  assert.equal(pairVerdictOf({ grade: 'INVALID', decision: 'FASTER' }).verdict, 'INVALID_NOISE');
+  assert.equal(pairVerdictOf({ grade: 'GREEN', decision: 'FASTER', departures: ['arms are in the quota regime, not cpuset (Q60c)'] }).verdict, 'INVALID');
+  const receipt = { ...base(), gate: 'PAIR', counts: { executed: 8, skip: 0 }, pair: { mode: 'aa', rounds: 8, arms: { A: {}, B: {} } }, noise: {}, stats: {} };
+  const v = verdictOf(receipt);
+  assert.equal(v.verdict, 'FAIL');
+  assert.ok(v.reasons.includes('missing identity field pair.arms.A.placement.cpuMax') && v.reasons.includes('missing identity field pair.evidence.histograms.json'));
+});
+
+test('placement (Q67g): disjoint equal cpusets on two slots pass; shared, unequal, quota or same-slot placements do not', async () => {
+  const { placementProblems, PAIR_LOOKS } = await import('../receipt.mjs');
+  assert.deepEqual(PAIR_LOOKS, [8, 12, 18, 24]);
+  const arm = (slot, cpuset, extra = {}) => ({ slot, regime: 'cpuset', cpuset, cpuMax: 'max 100000', memCapBytes: 3758096384, cores: 2, ...extra });
+  assert.deepEqual(placementProblems(arm('s1', '0-1'), arm('s3', '2-3')), []);
+  assert.match(placementProblems(arm('s1', '0-1'), arm('s3', '0-1')).join(), /overlap/);
+  assert.match(placementProblems(arm('s1', '0-1'), arm('s1', '2-3')).join(), /both arms on slot s1/);
+  assert.match(placementProblems(arm('s1', '0-1'), arm('s3', '2-4', { cores: 3 })).join(), /capacity differs/);
+  assert.match(placementProblems(arm('s1', '0-1'), arm('s3', '2-3', { memCapBytes: 1 })).join(), /memory caps differ/);
+  assert.match(placementProblems(arm('s1', '0-1'), arm('s3', '2-3', { cpuMax: '200000 100000' })).join(), /CFS quota/);
+  const quota = (slot) => ({ slot, regime: 'quota', cpuset: '0-5', cpuMax: '200000 100000', memCapBytes: 1, cores: 2 });
+  assert.match(placementProblems(quota('s1'), quota('s2')).join(), /not cpuset/);
+});
+
 // ---------------------------------------------------------------- EXP-X05 second-writer guard and followers
 
 const writerYaml = fs.readFileSync(new URL('../../../xtdb-config.yaml', import.meta.url), 'utf8');
@@ -301,4 +398,20 @@ test('Datomic resident is parkable, pins separate JVM CPUs, and cannot coexist w
   const verdict = lib.admission({ config, reservations, running: [], request: { container: 'tx2-xtdb-s1', memBytes: 3.5 * GiB, diskForecastBytes: 0 }, diskUsedBytes: 0 });
   assert.equal(verdict.ok, false);
   assert.match(verdict.reasons.join(' '), /memory/);
+});
+
+// [EXP-M01R] Why: production requires heavy.mjs around the gate; its parent permit must not deadlock an all-token lease. Rejected: testing an unwrapped lease only.
+test('wrapped measurement borrows only the direct parent heavy token and releases the other tokens', async () => {
+  const script = `
+    const { acquireMeasureLease } = await import(${JSON.stringify(new URL('../heavy-lock.mjs', import.meta.url).href)});
+    const lease = await acquireMeasureLease('wrapped', { holder: 'wrapped', pollMs: 20, timeoutMs: 1000 });
+    console.log('TOKENS=' + lease.tokens); lease.release();`;
+  const child = spawn(process.execPath, [new URL('../heavy.mjs', import.meta.url).pathname, '--label', 'wrapped-test', '--', process.execPath, '--input-type=module', '-e', script], { stdio: ['ignore', 'pipe', 'pipe'] });
+  let out = '', err = '';
+  child.stdout.on('data', d => { out += d; });
+  child.stderr.on('data', d => { err += d; });
+  const code = await new Promise(resolve => child.on('close', resolve));
+  assert.equal(code, 0, err);
+  assert.match(out, /TOKENS=2/);
+  assert.equal(fs.readdirSync(path.join(temp, 'locks', 'heavy')).length, 0);
 });

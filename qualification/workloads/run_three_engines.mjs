@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing; Node accepts URL objects for dynamic import; TypeScript expects strings. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Bounded workload execution. Every database and failed receipt is retained.
 import assert from 'node:assert/strict';
 import {ingestWebhookDeliveries,initializeWebhookProjection,verifyWebhookReopen} from './webhook_cases.mjs';

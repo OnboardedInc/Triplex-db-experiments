@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated local values; unannotated dynamic parameters; initially empty collections. Binding errors remain checked by lab/bin/checkjs.mjs.
 // [EXP-P2X2] Why: exercise actual same-subject grouping, cross-subject concurrency and original receipts.
 // Rejected: relying only on the queue's fake executor tests before the ten-minute trace.
 import path from "node:path";

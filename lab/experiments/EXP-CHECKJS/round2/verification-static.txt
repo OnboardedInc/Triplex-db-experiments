@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 64012 "CX-RT01-live2-G6", pid 20247 "CX-DI01-final-r5", pid 60523 "CX-NSR-G0-2", pid 73872 "G0-qlever-20261109T073033Z-9a41f5 vitest-testkit"
+{"attempt":"/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-CHECKJS/round2/2026-11-09T07-35-45-049Z","checked":371,"excluded":78,"generated":116,"identical":242}
+checker: exit=0
+plain-tsc: exit=0
+coverage-and-plants: exit=0
+All local checks completed; source and compiler dependency bytes unchanged.

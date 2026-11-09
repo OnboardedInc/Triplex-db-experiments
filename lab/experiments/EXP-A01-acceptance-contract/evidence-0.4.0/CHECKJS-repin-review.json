@@ -1,0 +1,77 @@
+[
+  {
+    "path": "lab/bin/test/claim-round2.test.mjs",
+    "previousSha256": "6aef70bd2448a6b37dc040d19d9ee219a4e4e5fdf78c8094e1bb66ec45104be9",
+    "sha256": "4a5c65d1d26fd71996f8a0f6e8b765608d628abb74e69fbd7a4bf2348a22edc7",
+    "baseCommit": "c033c62816ed57b4a482784b2a1aae73d886a534",
+    "diff": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-lab__bin__test__claim-round2.test.mjs.diff",
+    "diffSha256": "8a985c3bfc17580ac89d40bb99838e8ebd83fb7d91c3161ea2049d96bd1d66d3",
+    "hunks": [
+      {
+        "header": "@@ -1,3 +1,4 @@",
+        "changesMeasuredWorkload": false,
+        "reason": "Comment-only checkJs directive; executable statements unchanged."
+      }
+    ]
+  },
+  {
+    "path": "lab/bin/test/claim.test.mjs",
+    "previousSha256": "62de70ed333c40f8662da5749179f985f9f8b961a6c10459a0dadfad5bceb476",
+    "sha256": "b8352b989fcf5857cb8f4a4a3d3766ed1f61f46ba6b0760f8568060f3b8f819f",
+    "baseCommit": "c033c62816ed57b4a482784b2a1aae73d886a534",
+    "diff": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-lab__bin__test__claim.test.mjs.diff",
+    "diffSha256": "d91ce1a545a842c7f840c651f88096319d5fa63910fd2429794ae2b645901387",
+    "hunks": [
+      {
+        "header": "@@ -1,3 +1,4 @@",
+        "changesMeasuredWorkload": false,
+        "reason": "Comment-only checkJs directive; executable statements unchanged."
+      }
+    ]
+  },
+  {
+    "path": "qualification/capacity/configured-entities-v1/oracle.mjs",
+    "previousSha256": "5e4f92bf74fde4504c309d2888cc234013ceb2fbfc8bca7c06fff51cea054cd3",
+    "sha256": "92c0378b8120aaa25fb7a16d8659aa1790141eba62aed8f7e7356213efe92e94",
+    "baseCommit": "c033c62816ed57b4a482784b2a1aae73d886a534",
+    "diff": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__configured-entities-v1__oracle.mjs.diff",
+    "diffSha256": "421422cf5d0643051bafa72f80270a9b1b13b009841e8301f4d13e060ee8a4f7",
+    "hunks": [
+      {
+        "header": "@@ -1,3 +1,4 @@",
+        "changesMeasuredWorkload": false,
+        "reason": "Comment-only checkJs directive; executable statements unchanged."
+      }
+    ]
+  },
+  {
+    "path": "qualification/capacity/historical-assertion-metadata-v1/oracle.mjs",
+    "previousSha256": "bc93f24c88365add1d215747cd95705a3c2a2b4fd1c6cdd7e347a014fb23b290",
+    "sha256": "bbd656760719b67a3435419121b0b7df909a99ea9c1aba22d85ea1363cb6b08f",
+    "baseCommit": "c033c62816ed57b4a482784b2a1aae73d886a534",
+    "diff": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__historical-assertion-metadata-v1__oracle.mjs.diff",
+    "diffSha256": "38466870a94edfa3666abeb16c41d9266c5f78b7bc7ca9e4f8f8eff1e929e32d",
+    "hunks": [
+      {
+        "header": "@@ -1,3 +1,4 @@",
+        "changesMeasuredWorkload": false,
+        "reason": "Comment-only checkJs directive; executable statements unchanged."
+      }
+    ]
+  },
+  {
+    "path": "qualification/capacity/historical-assertion-metadata-v2/oracle.mjs",
+    "previousSha256": "f661e8138d5194bbcbbe56eec9ec35f8766bc9938540192e7b0d92d04685721b",
+    "sha256": "5ce6612714b2b7742c46e0599617d472b4bf18a352806e5d44a44577878c9649",
+    "baseCommit": "c033c62816ed57b4a482784b2a1aae73d886a534",
+    "diff": "lab/experiments/EXP-A01-acceptance-contract/evidence-0.4.0/CHECKJS-qualification__capacity__historical-assertion-metadata-v2__oracle.mjs.diff",
+    "diffSha256": "81c053d13b42ca48d9ff24b9b4b090ee60efbee79c3afb80140a79f76db984b0",
+    "hunks": [
+      {
+        "header": "@@ -1,3 +1,4 @@",
+        "changesMeasuredWorkload": false,
+        "reason": "Comment-only checkJs directive; executable statements unchanged."
+      }
+    ]
+  }
+]

@@ -7,7 +7,7 @@ import {
   type RuntimeDefinition,
   MigrationError,
 } from "@triplex-build/triplex/runtime";
-import { makeQleverClient, type QleverClient } from "./QleverClient.js";
+import { makeQleverClient, type QleverClient, type QleverConnectionMode } from "./QleverClient.js";
 import { makeQleverStorageAdapter } from "./QleverStorageAdapter.js";
 import type { QleverCommitEncoding } from "./rdf.js";
 import { makeQleverQueryExecutor, type QleverQueryOptions } from "./QleverQueryExecutor.js";
@@ -23,6 +23,7 @@ import type {
 export interface QleverRuntimeOptions {
   readonly url: string;
   readonly accessToken?: string;
+  readonly connectionMode?: QleverConnectionMode;
   readonly maxRetries?: number;
   readonly resolutionTimeoutMs?: number;
   readonly admissionQueue?: boolean;
@@ -81,7 +82,11 @@ export const makeQleverRuntime = (
 ): RuntimeDefinition<MigrationError, never, StorageAdapter | QueryExecutor> => {
   const envBroker = input.broker ? undefined : brokerFromEnvironment();
   const options: QleverRuntimeOptions = envBroker ? { ...input, broker: envBroker } : input;
-  const clientOptions = options.accessToken ? { accessToken: options.accessToken } : {};
+  // [CX-A01-040] Why: preserve the broker fresh-connection path and opt-in native transport mode. Rejected: changing the default keep-alive treatment.
+  const clientOptions = {
+    ...(options.accessToken === undefined ? {} : { accessToken: options.accessToken }),
+    ...(options.connectionMode === undefined ? {} : { connectionMode: options.connectionMode }),
+  };
   const commitEncoding = commitEncodingOf(options.commitEncoding);
   const connection = Layer.effect(
     Connection,
@@ -148,6 +153,8 @@ export const makeQleverRuntime = (
 };
 export {
   makeQleverClient,
+  qleverConnectionModeOf,
+  type QleverConnectionMode,
   type QleverClient,
   type SparqlBinding,
   type SparqlTerm,

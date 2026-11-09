@@ -1,0 +1,24 @@
+// [CX-VM01R-R2] Why: execute the exact repaired command against a fresh pinned checkout. Rejected: reusing round-one dist (would conceal an incomplete package filter).
+import fs from 'node:fs';
+import path from 'node:path';
+import {spawnSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import assert from 'node:assert/strict';
+const here=import.meta.dirname, root=path.resolve(here,'../runtime/round2-clean');
+const target='99d9641d4d6f385ab3b3fade7e9e78680a8850b4';
+const env={...process.env,TX2_LOCKS_DIR:'/Users/sam/projects/triplex-db-2/lab/locks',TX2_CONFIG_DIR:root,NODE_OPTIONS:'--experimental-strip-types'};
+delete env.TX2_SLOTS_FILE;delete env.TX2_ENGINE_DIR;
+const git=(...args)=>spawnSync('git',args,{cwd:root,encoding:'utf8'}).stdout.trim();
+const sha=b=>createHash('sha256').update(b).digest('hex');
+const packages=['core','testkit','xtdb','qualification','w0'];
+const initial={head:git('rev-parse','HEAD'),status:git('status','--porcelain'),distAbsent:packages.every(p=>!fs.existsSync(path.join(root,'packages',p,'dist'))),nodeModulesAbsent:!fs.existsSync(path.join(root,'node_modules')),lockfileSha256:sha(fs.readFileSync(path.join(root,'pnpm-lock.yaml')))};
+assert.equal(initial.head,target);assert.equal(initial.status,'');assert.equal(initial.distAbsent,true);assert.equal(initial.nodeModulesAbsent,true);
+const disk=fs.statfsSync(root);assert.ok(disk.bavail*disk.bsize>=5*1024**3);
+const run=(name,args)=>{const file=path.join(here,`${name}.log`),fd=fs.openSync(file,'wx');const r=spawnSync(process.execPath,args,{cwd:root,env,stdio:['ignore',fd,fd]});fs.closeSync(fd);const result={args,status:r.status,signal:r.signal,error:r.error?.message,logSha256:sha(fs.readFileSync(file))};fs.writeFileSync(path.join(here,`${name}-result.json`),JSON.stringify(result,null,2)+'\n');assert.equal(r.status,0,`${name} failed; see ${file}`);return result;};
+const install=run('clean-install',['lab/bin/heavy.mjs','--label','CX-VM01R-R2-install','--','pnpm','--store-dir','/Users/sam/projects/triplex-db-2/.pnpm-store','install','--offline','--frozen-lockfile']);
+const runbook=fs.readFileSync(path.join(root,'lab/experiments/EXP-M01-paired-measurement/RUNBOOK-rebase.md'),'utf8');
+const command=runbook.split('\n').find(s=>s.startsWith('node lab/bin/heavy.mjs --label M01-window-build -- pnpm'));
+assert.ok(command);const build=run('clean-build',command.split(' ').slice(1));
+const final={head:git('rev-parse','HEAD'),status:git('status','--porcelain'),distPresent:packages.every(p=>fs.existsSync(path.join(root,'packages',p,'dist/index.js'))),lockfileSha256:sha(fs.readFileSync(path.join(root,'pnpm-lock.yaml')))};
+assert.equal(final.status,'');assert.equal(final.head,target);assert.equal(final.distPresent,true);assert.equal(final.lockfileSha256,initial.lockfileSha256);
+fs.writeFileSync(path.join(here,'clean-result.json'),JSON.stringify({target,initial,command,install,build,final,freeBytesBefore:disk.bavail*disk.bsize},null,2)+'\n');

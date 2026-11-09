@@ -1,0 +1,9 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 21092 "CX-VA01-0314-R3-mutations", pid 21091 "CX-VA01-0314-R3-g0-xtdb"
+[lab] heavy: waiting for one of 4 slots; held by pid 14392 "CX-DI01-trace-r9", pid 13226 "CX-P2B-R3-ordered-matrices", pid 22351 "G0-xtdb-20261109T082321Z-f33e39 build", pid 21091 "CX-VA01-0314-R3-g0-xtdb"
+03:29:16.983 [main] DEBUG org.eclipse.jetty.util.log -- Logging to Logger[org.eclipse.jetty.util.log] via org.eclipse.jetty.util.log.Slf4jLog
+03:29:16.988 [main] INFO org.eclipse.jetty.util.log -- Logging initialized @1303ms to org.eclipse.jetty.util.log.Slf4jLog
+Syntax error reading source at (round2_verify.clj:100:43).
+Unmatched delimiter: )
+
+Full report at:
+/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/clojure-9317525505856406644.edn

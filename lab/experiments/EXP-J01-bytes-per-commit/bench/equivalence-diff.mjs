@@ -1,9 +1,10 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
+import { readLatencyRun } from "../../../receipts/parse.ts";
 // EXP-J01: where two arms of a journal-equivalence raw file differ, surface by surface.
 // Usage: node equivalence-diff.mjs <raw.json> [surface]
-import fs from 'node:fs';
 
 const [file, only] = process.argv.slice(2);
-const arms = JSON.parse(fs.readFileSync(file, 'utf8'));
+const arms = readLatencyRun(file).unwrap().data.raw;
 const parsed = arms.map((a) => ({ encoding: a.encoding, reads: JSON.parse(a.reads) }));
 for (const surface of Object.keys(parsed[0].reads)) {
   if (only && surface !== only) continue;

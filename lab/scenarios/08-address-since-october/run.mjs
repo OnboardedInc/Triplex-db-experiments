@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated bigint arithmetic or intentional JavaScript boolean/number coercion. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 8: "address wrong since October" (TARGETS 6 row 8).
 //
 // Each corrected subject gets one retroactive valid-time correction: the open address assertion is retracted,

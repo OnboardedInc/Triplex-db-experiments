@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters; dynamic record keys; runtime error inspection. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** File metadata only. Never read database/WAL/log payload contents. */
 import assert from 'node:assert/strict';
 import { lstat, readdir } from 'node:fs/promises';

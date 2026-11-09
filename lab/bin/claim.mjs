@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-nocheck -- [EXP-CHECKJS] runtime-populated records, optional option bags, or branch-specific union members; runtime coercion (Buffer JSON), dynamic collections, or validated inputs without static narrowing; option bags inferred from defaults omit optional fields; cpuset helper is guarded at runtime before iteration; default no-op notification callback inferred with zero parameters; JavaScript accepts and ignores the message; Node overloads and union-valued dynamic records. Binding errors remain checked by lab/bin/checkjs.mjs.
 // lab/bin/claim.mjs admit   <claim.json> [--repo DIR] [--objects DIR] [--authority-ref main] [--json]
 // lab/bin/claim.mjs qualify <claim.json> [--repo DIR] [--authority-ref main] [--work DIR] [--offline-sut] [--json]
 //

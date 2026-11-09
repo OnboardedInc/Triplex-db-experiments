@@ -1,0 +1,9 @@
+#!/bin/sh
+# [CX-VP3M] Why: gate.mjs omits the explicit store for some pnpm subcommands.
+# Rejected: modifying global pnpm configuration or adding the option twice.
+for arg do
+  case "$arg" in
+    --config.store-dir=*|--store-dir) exec /opt/homebrew/bin/pnpm "$@" ;;
+  esac
+done
+exec /opt/homebrew/bin/pnpm --config.store-dir=/Users/sam/projects/triplex-db-2/.pnpm-store "$@"

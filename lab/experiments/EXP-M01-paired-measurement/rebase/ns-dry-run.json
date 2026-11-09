@@ -1,0 +1,1 @@
+{"dryRun":true,"gate":"NS","lane":"xtdb","slot":"dev","endpoint":"postgres://xtdb:xtdb@127.0.0.1:5470/xtdb","container":"tx2-xtdb-dev","mode":"resident","plan":null,"executes":true,"missing":null}

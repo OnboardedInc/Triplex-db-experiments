@@ -1,0 +1,29 @@
+{
+  "schema": "ns-sut/1",
+  "transport": "TCP; exactly one UTF-8 JSON request and response per connection; LF terminated",
+  "requestCapBytes": 1048576,
+  "responseCapBytes": 16777216,
+  "maxDepth": 64,
+  "request": ["schema", "runId", "id", "method", "params"],
+  "success": ["schema", "runId", "id", "ok=true", "result"],
+  "failure": ["schema", "runId", "id", "ok=false", "error={code:SUT-ERROR,message}"],
+  "broker": {
+    "commit": ["command"],
+    "feedPage": ["cursor"]
+  },
+  "readers": {
+    "read": ["request"],
+    "pull": ["request"]
+  },
+  "consumer": {
+    "consumerControl": ["action=start|step|stop|status|hook|release", "data"]
+  },
+  "rules": "Unknown keys/methods/actions, unsafe integers, nonfinite numbers, forbidden prototype keys, invalid UTF-8, extra lines, missing newline, depth/byte caps, timeout, foreign run/id all fail closed. Payloads are application JSON; answers stay untrusted.",
+  "answer-canonical/1": {
+    "input": "Only the parsed RPC success result (application answer); exclude the schema/runId/id/ok transport envelope. Do not strip application fields inside result.",
+    "encoding": "Recursive canonical JSON; object keys sorted by JavaScript UTF-16 code unit order (Array.sort without locale); arrays retain order; strings, booleans, null and finite JSON numbers use JSON.stringify spelling (negative zero becomes 0); no whitespace; UTF-8 bytes; RPC validateJson caps and value restrictions apply. Integer-looking keys are emitted in sorted order explicitly, not by object enumeration.",
+    "digest": "Lowercase SHA256 hex of these UTF-8 bytes, recorded as answerSha256 with answerEncoding=answer-canonical/1 for every read, RYOW, P4 and sweep pull. rawWireSha256 separately hashes the complete received RPC line, including LF and transport fields.",
+    "requestKey": "Same canonical encoding of the entire driver-sent params.request, captured before sending: all supplied subject, shape (including hops), basis, route and every additional field; no projection, no candidate echo. request retains the complete parsed object.",
+    "sampling": "answer-policy HR event binds answer-sampling/1: each loop retains its first answer and each zero-based sequence divisible by every (default 16); all non-loop pulls retain answers. Every read records sampled, sequence and loop where applicable. Sampled rows retain parsed answer, answerCanonical and responseBytes; every row retains both digests. Policy cannot depend on candidate content."
+  }
+}

@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 /** Private fixture assertion only. No transformation or metadata defaulting.
  * XTDB source XtdbStorageAdapter.ts448 writes schema_version:1; the public
  * Core row decoder exposes Some(1). This is the pinned adapter metadata default,

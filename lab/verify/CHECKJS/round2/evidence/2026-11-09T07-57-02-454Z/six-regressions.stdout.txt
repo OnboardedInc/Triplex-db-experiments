@@ -1,0 +1,46 @@
+TAP version 13
+# Subtest: dormant bindings fail despite file and line type-noise suppressions
+ok 1 - dormant bindings fail despite file and line type-noise suppressions
+  ---
+  duration_ms: 1167.011167
+  type: 'test'
+  ...
+# Subtest: ordinary project diagnostics still reject wrong arity
+ok 2 - ordinary project diagnostics still reject wrong arity
+  ---
+  duration_ms: 873.52925
+  type: 'test'
+  ...
+# Subtest: valid code passes and directives in runtime text stay byte-identical
+ok 3 - valid code passes and directives in runtime text stay byte-identical
+  ---
+  duration_ms: 756.640416
+  type: 'test'
+  ...
+# Subtest: project checks or explicitly excludes every tracked JavaScript file
+ok 4 - project checks or explicitly excludes every tracked JavaScript file
+  ---
+  duration_ms: 20.586875
+  type: 'test'
+  ...
+# Subtest: new staged JavaScript anywhere fails coverage until checked or explicitly excluded with a reason
+ok 5 - new staged JavaScript anywhere fails coverage until checked or explicitly excluded with a reason
+  ---
+  duration_ms: 2649.897417
+  type: 'test'
+  ...
+# Subtest: reviewer CLI probes reject GS launcher, CS-GS manifest, and engine dormant/import failures
+ok 6 - reviewer CLI probes reject GS launcher, CS-GS manifest, and engine dormant/import failures
+  ---
+  duration_ms: 28745.732916
+  type: 'test'
+  ...
+1..6
+# tests 6
+# suites 0
+# pass 6
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 34501.946292

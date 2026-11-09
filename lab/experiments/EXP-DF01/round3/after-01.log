@@ -1,0 +1,7 @@
+03:54:58.471 [main] DEBUG org.eclipse.jetty.util.log -- Logging to Logger[org.eclipse.jetty.util.log] via org.eclipse.jetty.util.log.Slf4jLog
+03:54:58.478 [main] INFO org.eclipse.jetty.util.log -- Logging initialized @1942ms to org.eclipse.jetty.util.log.Slf4jLog
+Syntax error reading source at (triplex/gateway/feed_test.clj:185:1).
+EOF while reading, starting at line 171
+
+Full report at:
+/var/folders/d5/9yczc0fd0ws2w_wl09gwlk8r0000gn/T/clojure-17284967174985726242.edn

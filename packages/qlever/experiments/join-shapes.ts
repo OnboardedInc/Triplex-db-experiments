@@ -1,3 +1,5 @@
+import { qleverLatencyReceipt } from "../../../lab/receipts/latency.mjs";
+import { qleverConnectionModeOf } from "../src/QleverClient.js";
 import { randomUUID } from "node:crypto";
 import { writeFile } from "node:fs/promises";
 import { Effect } from "effect";
@@ -81,7 +83,7 @@ try {
   await writeFile(
     output,
     JSON.stringify(
-      { kind: "parallel-query-shape-correctness", scope, expected, observations },
+      qleverLatencyReceipt({ qleverConnectionMode: qleverConnectionModeOf(), kind: "parallel-query-shape-correctness", scope, expected, observations }),
       null,
       2,
     ) + "\n",

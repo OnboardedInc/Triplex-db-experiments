@@ -1,0 +1,27 @@
+[ns 07:22:04] seed: rung dev:21, 8567 live facts planned (20 accounts, mean world 129 facts)
+[ns 07:22:04] seed: 20 shared account worlds in 0.1 s
+[ns 07:22:04] seed: 21 subjects in 0.1 s
+[ns 07:22:04] trace: 8091 events over 7200s, digest fc2ede2723f91fbb, active-set share 0.952
+[ns 07:22:05] phase warmup: 0 readers at trace 0s; writer pending 0
+[ns 07:22:05] phase baseline: 0 readers at trace 0s; writer pending 0
+[ns 07:22:05] phase L1: 0 readers at trace 0s; writer pending 0
+[ns 07:22:05] phase L4: 0 readers at trace 0s; writer pending 0
+[ns 07:22:05] phase L16: 0 readers at trace 0s; writer pending 0
+[ns 07:22:05] phase L64: 0 readers at trace 0s; writer pending 0
+[ns 07:22:05] phase L256: 0 readers at trace 0s; writer pending 0
+[ns 07:22:05] phase L1024: 0 readers at trace 0s; writer pending 0
+[ns 07:22:05] phase recovery: 0 readers at trace 0s; writer pending 0
+[ns 07:22:05] phase p4mix: 0 readers at trace 0s; writer pending 0
+[ns 07:22:05] phase p4h1: 0 readers at trace 1s; writer pending 0
+[ns 07:22:05] phase grow3: 0 readers at trace 1s; writer pending 0
+[ns 07:22:05] phase p4h3: 0 readers at trace 1s; writer pending 0
+[ns 07:22:06] feed: injected crash before-effect at checkpoint 33
+[ns 07:22:06] phase grow10: 0 readers at trace 1s; writer pending 0
+[ns 07:22:06] phase p4h10: 0 readers at trace 1s; writer pending 0
+[ns 07:22:06] phase presweep: 0 readers at trace 1s; writer pending 0
+[ns 07:22:06] phase sweep: 0 readers at trace 1s; writer pending 0
+[ns 07:22:06] phase tail: matching the ladder run's trace length (5s)
+[ns 07:22:08] feed: injected crash after-effect at checkpoint 33
+[ns 07:22:10] feed: injected crash after-checkpoint at checkpoint 47
+[ns 07:22:12] wind down: writer pending 0, feed checkpoint 47/47, final position 47
+[ns 07:22:12] report: runs/baseline-2/report.json

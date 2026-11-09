@@ -1,0 +1,17 @@
+(node:31201) ExperimentalWarning: SQLite is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+DatomicHttpError: Cannot invoke "java.lang.Number.doubleValue()" because "x" is null
+    at IncomingMessage.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/df01/packages/datomic/dist/DatomicClient.js:64:49)
+    at IncomingMessage.emit (node:events:531:35)
+    at endReadableNT (node:internal/streams/readable:1698:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  _tag: 'DatomicHttpError',
+  status: 400,
+  code: 'TransactionRejected'
+}
+
+Node.js v22.23.2

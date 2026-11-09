@@ -1,3 +1,4 @@
+// @ts-nocheck -- [EXP-CHECKJS-R2] mutable records inferred from their initial values; unannotated dynamic parameters. Binding errors remain checked by lab/bin/checkjs.mjs.
 // Scenario 2: form submit, person waiting (TARGETS section 6 row 2).
 import { BT, T, scenarioStream } from '../lib/gen.mjs';
 import { expectDomain } from '../lib/domain.mjs';
