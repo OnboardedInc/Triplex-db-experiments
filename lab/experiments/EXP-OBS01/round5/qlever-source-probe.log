@@ -1,0 +1,1 @@
+{"baseTripleCount":1,"deltaTripleCount":null,"statuses":[["/?cmd=stats",200],["/?cmd=dump-active-queries",200],["/metrics",404]]}

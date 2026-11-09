@@ -1,0 +1,8 @@
+{
+  "protocol": "OBS-FAULT-TRANSITIONS",
+  "verdict": "PASS",
+  "reasons": [],
+  "thresholds": {},
+  "sourceStrength": "direct",
+  "qualification": "screening-only"
+}

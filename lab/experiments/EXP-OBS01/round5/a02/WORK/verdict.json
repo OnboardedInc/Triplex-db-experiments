@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-WORK",
+  "verdict": "FAIL",
+  "reasons": [
+    "missing required field: rowsWritten"
+  ],
+  "thresholds": {},
+  "sourceStrength": "direct",
+  "qualification": "screening-only"
+}

@@ -1,0 +1,1 @@
+{"missingSources": {"X4-native": {"derivedFields": ["durableEvidenceObject", "t", "tCrash", "transition", "transitions", "variant"], "missing": []}}, "protocol": "OBS-FAULT-TRANSITIONS", "qualification": "screening-only", "reasons": [], "sourceStrength": "direct", "thresholds": {}, "verdict": "PASS"}

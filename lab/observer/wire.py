@@ -104,7 +104,7 @@ def pgwire_records(events):
                 if kind=='unknown': raise ValueError('unclassified SQL')
                 q={'connectionId':cid,'sql':sql,'tag':wire_tag(sql),'kind':kind,'tStart':at(begin+1),'tSent':at(pos),'rows':[]}
                 queries.append(q);pending.append(q)
-        pos=0;fields=[];qindex=0
+        pos=0;fields=[];field_types=[];qindex=0
         if ssl and server:
             if server[:1]!=b'N': raise ValueError('encrypted pgwire is not observable')
             pos=1
@@ -118,19 +118,25 @@ def pgwire_records(events):
             if typ=='K': backend[struct.unpack('!I',payload[:4])[0]]=cid
             if typ=='R' and struct.unpack('!I',payload[:4])[0]!=0: raise ValueError('authenticated/encrypted wire not supported')
             if typ=='T':
-                fields=[];n=struct.unpack('!H',payload[:2])[0];i=2
+                fields=[];field_types=[];n=struct.unpack('!H',payload[:2])[0];i=2
                 for _ in range(n):
-                    end=payload.index(b'\0',i);fields.append(payload[i:end].decode());i=end+19
+                    end=payload.index(b'\0',i);fields.append(payload[i:end].decode());field_types.append((struct.unpack_from('!I',payload,end+7)[0],struct.unpack_from('!h',payload,end+17)[0]));i=end+19
             if qindex>=len(pending):continue
             q=pending[qindex]
             if typ=='D':
                 n=struct.unpack('!H',payload[:2])[0];i=2;values=[]
-                for _ in range(n):
+                for column in range(n):
                     size=struct.unpack('!i',payload[i:i+4])[0];i+=4
                     if size==-1: values.append(None);continue
                     value=payload[i:i+size].decode();i+=size
-                    try:value=json.loads(value)
-                    except ValueError:pass
+                    # [EXP-OBS01] Why: PostgreSQL boolean text uses t/f, and a committed transaction must be type-checked.
+                    # Rejected: treating every textual t as True (would reinterpret an ordinary string column).
+                    if column<len(field_types) and field_types[column][0]==16:
+                        if field_types[column][1]!=0 or value not in ('t','f'):raise ValueError('invalid native boolean representation')
+                        value=value=='t'
+                    else:
+                        try:value=json.loads(value)
+                        except ValueError:pass
                     values.append(value)
                 q['rowsSeen']=q.get('rowsSeen',0)+1
                 if len(q['rows'])<256:q['rows'].append(dict(zip(fields,values)))
@@ -139,7 +145,7 @@ def pgwire_records(events):
                 if typ=='E':
                     error={v[:1].decode():v[1:].decode(errors='replace') for v in payload.split(b'\0') if v}
                     q['sqlstate']=error.get('C');q['error']=error.get('M')
-                qindex+=1;fields=[]
+                qindex+=1;fields=[];field_types=[]
         for q in pending:
             if 'tEnd' not in q and 'closedAt' not in c: raise ValueError('query still in flight at seal')
     for cancel in cancels:cancel['targetConnectionId']=backend.get(cancel['backendPid'])

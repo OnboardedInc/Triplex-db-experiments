@@ -1,0 +1,186 @@
+{
+  "runId": "obs01-r5-a03-fault-transitions",
+  "receiptId": "obs01-r5-a03-fault-transitions",
+  "keyId": "obs01-r5-a03-fault-transitions-key",
+  "engine": "xtdb",
+  "bundleSha256": "56962667e84fb9df70d101f5fa43c7bafa56854f5615b9189a81294818d93135",
+  "bridgeSha256": "90a711c820c9812733d6bcf276f9b5936b287079e1d54b681687f3c7c08c323c",
+  "clockMaxUncertaintyMs": 6.079369492828846,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "EI-query/xtdb/X4",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "8c6d92659ccd96df2ddd08ee21aac05f8dd5c9528644f4a3066a436adcc636fe",
+        "version": "3"
+      },
+      "normalizerFile": "X4-native.normalize.py",
+      "reader": "resident",
+      "sourceId": "X4",
+      "streamId": "X4-native",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a03-fault-transitions/code/X4-native.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/X4-native/chunks/00000000.hdr.json",
+          "headerSha256": "55bc5de4db6f526e135ef1ed00e6e3d1b5d16207b9b781d12ab1e9b13b08c4da",
+          "raw": "streams/X4-native/chunks/00000000-49526a13ae8761431839f26f9de747ba9b908dfc4935d9b00f7ed5e0ae623760.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000001.hdr.json",
+          "headerSha256": "615abad2f3fd1a5c2c616fd4dac0b6162c6e48be381b9ef9d168692d8a07ee92",
+          "raw": "streams/X4-native/chunks/00000001-93132284e9c294041e25f35919263c59704c025e9143ec482e04aba987bb8f59.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000002.hdr.json",
+          "headerSha256": "06439c0de0568ee747a340bfbcc4edf59a0779f69df76978605d3dd6bc25525b",
+          "raw": "streams/X4-native/chunks/00000002-4ffd5922351f3bab6b832d7fe839c1a7daf7656462003657216825d010b50b83.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000003.hdr.json",
+          "headerSha256": "65673af84ca8876868a034a5d04bce5da6f06da7c1209dc71a88aa16337649b8",
+          "raw": "streams/X4-native/chunks/00000003-fafc4d6912971e4abcb481ee045f30e75915abc00a9c3d02847ecf83983f665a.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000004.hdr.json",
+          "headerSha256": "d0b907551e171f723c0ce141ea838e45f161ef2a627389f568edcf843ba3739f",
+          "raw": "streams/X4-native/chunks/00000004-c7ac66222b0ff928c0d10ba8f7a5a09263407ba91b37b628d05f5080a6b33168.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000005.hdr.json",
+          "headerSha256": "3620745fc1d64f5e78150fa18f15a2d983e969c9c862e599c20289638a0f8d3f",
+          "raw": "streams/X4-native/chunks/00000005-95e3964f5f70da102bf8cb3ab76ff5fb087e9cd016f65ed63a4dfbda6dd36d1b.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000006.hdr.json",
+          "headerSha256": "e3b57a2ca4026a599660002021c42b8a9ee16e30d9d6eb96c7496447955191c9",
+          "raw": "streams/X4-native/chunks/00000006-44b5a859ec21e51416138d3bad772b67190e9911b0252c8035b49138b1dc49aa.bin"
+        },
+        {
+          "header": "streams/X4-native/chunks/00000007.hdr.json",
+          "headerSha256": "c6d59830c888e927e0ddae6ce8cbdbc379764ddd712f1ff5df8cd847ff85d598",
+          "raw": "streams/X4-native/chunks/00000007-aaf5484540bac2064a8a6a330a8b4192993a560504108afed2a394d1c53b9908.bin"
+        }
+      ]
+    },
+    {
+      "cadenceMs": 1000,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "HO/any/H8",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-source-audit",
+        "sha256": "238d4944beef822fd6c71875d93077a36b7ac438cac4b527188ef5a23b21f572",
+        "version": "1"
+      },
+      "normalizerFile": "normalize.py",
+      "reader": "resident",
+      "sourceId": "H8",
+      "streamId": "R5-context",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a03-fault-transitions/code/normalize.py",
+      "chunks": [
+        {
+          "header": "streams/R5-context/chunks/00000000.hdr.json",
+          "headerSha256": "ebaf3db5d1fab04612ae8fd6ebd590a663a63adad687b1ccfe51fe8e936488a7",
+          "raw": "streams/R5-context/chunks/00000000-e1948271e6b8f0b4c2bd752b2d84a52336fc076cf9e95ec56fe627afe5c472b7.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000001.hdr.json",
+          "headerSha256": "1790c29d48eabd5940855b7592c3d622b98f306d5545f03893d7dfd534b59eb7",
+          "raw": "streams/R5-context/chunks/00000001-5cee40563db1e15859d91e045281864fb32bac1766ec38043449ffdeaff68f80.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000002.hdr.json",
+          "headerSha256": "6d856a9bd52bee97d5609564c882cc5f00a28cf8035912ead1228b13313a3e16",
+          "raw": "streams/R5-context/chunks/00000002-3c80893f8ffcbb46f949fff889ca948d585b1aede791623f467ccdbc31b58fa1.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000003.hdr.json",
+          "headerSha256": "e3cd0e4d481aba1cd2ce394c6e65075b65e6862f4c69ed9778b002de0dd34203",
+          "raw": "streams/R5-context/chunks/00000003-ef6620bd16910aee974b5377c89f78b566b83a475c4fef9545e4af2332206ad6.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000004.hdr.json",
+          "headerSha256": "8e3add0eebc5a3004dffcd162b2d10ee133b4265604ef5ac5de6573ce7186d8d",
+          "raw": "streams/R5-context/chunks/00000004-4e0c469fa29909bbf3db6609a230f9d8a4aabbf9223e4f616527d121f84b4841.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000005.hdr.json",
+          "headerSha256": "01e988d10ce4e5be33dc15f1d0c9a52212e868745e7e7ea0d33214c1b75b9ef0",
+          "raw": "streams/R5-context/chunks/00000005-6cc010fb95d15795e5242311feb3bf09c1241aa43eb629c41df0cd08a5233f82.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000006.hdr.json",
+          "headerSha256": "66ed823f965ac28fec518d47778ee3a8b58644a70a787e1d5d2a8c1d7eb68c72",
+          "raw": "streams/R5-context/chunks/00000006-d8474f304fc3e6ac024cc891b9b771e661fbafc4bb03c0fc5f6ba4069ba02659.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000007.hdr.json",
+          "headerSha256": "a26d0fbeecd5413b1ef257b1b72eddc4d9de4f827337f903bb7999261dfcb269",
+          "raw": "streams/R5-context/chunks/00000007-98ff986807f7311c653d7bcd51d57efa178443a5a4a2fc915d4eb26b40806198.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000008.hdr.json",
+          "headerSha256": "d22e208d88273e2a5d442ceaeef57a7ba561b2b16b070bfe4dd53cf01639bbc2",
+          "raw": "streams/R5-context/chunks/00000008-0ff575875769a26e8be9006333dabd75e8a777b2e54df65c32dbe1cf7b90ae51.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000009.hdr.json",
+          "headerSha256": "34a418b30546f7500f5323a4362fa0d0f6bf452b45a0ea9bb034c2623ecdfcac",
+          "raw": "streams/R5-context/chunks/00000009-2cabf1637ba76ca3e5d7f11ed79f35c4d1c61cbdadd189f0f00afdd65bab13b9.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r5-a03-fault-transitions",
+      "streamId": "X4-native",
+      "seq": 7,
+      "headSha256": "c6d59830c888e927e0ddae6ce8cbdbc379764ddd712f1ff5df8cd847ff85d598",
+      "tMono": 125099876.670194
+    },
+    {
+      "runId": "obs01-r5-a03-fault-transitions",
+      "streamId": "R5-context",
+      "seq": 9,
+      "headSha256": "34a418b30546f7500f5323a4362fa0d0f6bf452b45a0ea9bb034c2623ecdfcac",
+      "tMono": 125099878.965374
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-FAULT-TRANSITIONS",
+  "obligation": "G1.found.unchanged44",
+  "case": "obs01-r5-a03-fault-transitions",
+  "witnessKind": "FAULT-TRANSITIONS",
+  "thresholdIds": [
+    "T-FAULT-REPS"
+  ],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "tCrash": 125099675.230369,
+    "variant": "engine-source"
+  },
+  "variant": "engine-source",
+  "transitionExpectations": {
+    "XT2-ENGINE-COMMITTED": {
+      "operationId": "obs01-r5-a03-fault-transitions",
+      "position": 742359911,
+      "facts": {
+        "committed": true,
+        "operationMarkerPresent": true,
+        "transaction": {
+          "operationId": "obs01-r5-a03-fault-transitions",
+          "position": 742359911
+        },
+        "marker": {
+          "operationId": "obs01-r5-a03-fault-transitions",
+          "position": 742359911,
+          "value": 1
+        }
+      }
+    }
+  }
+}

@@ -22,6 +22,7 @@ if p=='WORK':ctx.update(selectedThreshold=case['threshold'],witnessKind='reuse')
 if p=='MAINTENANCE':ctx['selectedThreshold']=case['threshold'];ctx['thresholdIds'].append(case['threshold'])
 authenticated,u=oracle.authenticate(root,ctx,key);entries=[];e={};diagnostics={}
 for sid,(meta,records) in authenticated.items():
+ if sid=='R5-context':continue
  entry={'kind':meta['kind'],'streamRefs':[sid],'records':records};entries.append(entry)
  for field,value in records.items():
   if field not in e:e[field]=value
@@ -45,7 +46,11 @@ def fallback(field):
  return None
 for field in oracle.CASE_FIELDS[p]:
  value=e[field] if field in e else fallback(field);ctx['bindings'][field]=value;e.setdefault(field,value)
-if p=='FAULT-TRANSITIONS':ctx.update(variant=case['variant'],transitionExpectations={})
+if p=='FAULT-TRANSITIONS':
+ ctx.update(variant=case['variant'],transitionExpectations={})
+ if case.get('nativePositionProfile')=='xtdb-system-time-join/1' and e.get('durableEvidenceObject'):
+  pos=e['durableEvidenceObject']['readbackPosition'];op=case['operationId']
+  ctx['transitionExpectations']={'XT2-ENGINE-COMMITTED':{'operationId':op,'position':pos,'facts':{'committed':True,'operationMarkerPresent':True,'transaction':{'operationId':op,'position':pos},'marker':{'operationId':op,'position':pos,'value':case['faultExpectedPayload']}}}}
 if p=='ERASURE-SCAN':ctx['scanInventory']=case['scanInventory']
 result,status=oracle.check(protocol,e,contract,ctx,root,key)
 negative=copy.deepcopy(ctx);negative['obligation']=next(o['id'] for o in contract['obligations'] if 'O-OBS' not in o['oracles']);negative_result,_=oracle.check(protocol,e,contract,negative,root,key)

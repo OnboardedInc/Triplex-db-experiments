@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-WATERMARK",
+  "verdict": "FAIL",
+  "reasons": [
+    "missing required field: servingIndex"
+  ],
+  "thresholds": {},
+  "sourceStrength": null,
+  "qualification": "screening-only"
+}

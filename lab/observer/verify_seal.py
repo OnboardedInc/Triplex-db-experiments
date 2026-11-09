@@ -2,6 +2,7 @@
 # [EXP-OBS01] Why: host witness/retention claims require verified bytes before they are published.
 # Rejected: checking only that seal.json exists, or trusting normalized output without rerunning the pinned decoder.
 import hashlib
+import base64
 import hmac
 import json
 from pathlib import Path
@@ -34,6 +35,17 @@ def verify(root,key,config,code):
             header=read(entry['header']);head=sha(header);h=signed(entry['header']);data=read(entry['raw'])
             if head!=entry['headerSha256'] or h['streamId']!=sid or h['seq']!=seq or h['prevHeaderSha256']!=previous or h['sha256']!=sha(data) or h['byteLength']!=len(data):raise ValueError('chunk integrity/chain mismatch')
             if not end<=h['tStartMono']<=h['tEndMono']:raise ValueError('chunk predates attempt or regresses')
+            for line in data.splitlines():
+                f=json.loads(line)
+                expected={'runId':config['runId'],'streamId':sid,'sourceId':stream['sourceId'],'engineContainerId':config['sut']['engineContainerId'],'caseSha256':sha(canonical(config.get('case',{}))),'runStartedMono':envelope['collector']['startedAtMono']}
+                if any(f.get(k)!=v for k,v in expected.items()) or f['tStartMono']!=h['tStartMono'] or f['tEndMono']!=h['tEndMono']:raise ValueError('source frame binding mismatch')
+                source=base64.b64decode(f['rawBase64'],validate=True)
+                if sha(source)!=f['rawSha256']:raise ValueError('raw source digest mismatch')
+                try:value=json.loads(source)
+                except (ValueError,UnicodeDecodeError):continue
+                if isinstance(value,dict):
+                    for event in [value]+value.get('wire',[]):
+                        if 'tMono' in event and not f['runStartedMono']<=event['tMono']<=f['tEndMono']:raise ValueError('stale/future embedded source event')
             end=h['tEndMono'];previous=head;raw.append(data)
         if seal['heads'][sid]!=previous:raise ValueError('final head mismatch')
         parser=code/stream.get('normalizerFile','normalize.py')

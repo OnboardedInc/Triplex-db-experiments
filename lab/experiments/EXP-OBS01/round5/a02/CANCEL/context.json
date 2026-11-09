@@ -1,0 +1,152 @@
+{
+  "runId": "obs01-r5-a02-cancel",
+  "receiptId": "obs01-r5-a02-cancel",
+  "keyId": "obs01-r5-a02-cancel-key",
+  "engine": "xtdb",
+  "bundleSha256": "c5f576cb617c4287b6522bcadeb0ce5b6b9db52ce43df38e97fa974778096531",
+  "bridgeSha256": "81dfbd006a44f8d2bf70c9a37039f8988d67661a946b93c0c901b0ceb19aabca",
+  "clockMaxUncertaintyMs": 5.615865498781204,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "TO/xtdb/T1",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "420b5249f54fc5951f2ba87221fdb46f6651bbbc3347e44fb27b43fc2c7296d1",
+        "version": "3"
+      },
+      "normalizerFile": "T1-wire.normalize.py",
+      "reader": "resident",
+      "sourceId": "T1",
+      "streamId": "T1-wire",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a02-cancel/code/T1-wire.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/T1-wire/chunks/00000000.hdr.json",
+          "headerSha256": "9522296d72c54848a508aaff979442078680eb73a0cc955b6a5e523fbc4c2ff4",
+          "raw": "streams/T1-wire/chunks/00000000-ac7fd7d6c7849074eacac17479d03e3f2efb1591347acfa025affd5fb98866a8.bin"
+        },
+        {
+          "header": "streams/T1-wire/chunks/00000001.hdr.json",
+          "headerSha256": "d6814338ebcb1235876164a3752374177ca89249580c74004452ce881c60c366",
+          "raw": "streams/T1-wire/chunks/00000001-07c2c7eed8ad107d31323476fbd3581d8c666064916493a1ed96ebb93658a55a.bin"
+        },
+        {
+          "header": "streams/T1-wire/chunks/00000002.hdr.json",
+          "headerSha256": "a9e4f8c6cf0c54c72c25872236b8cfb88125940f6c1d62dccf6f9e78126d09d2",
+          "raw": "streams/T1-wire/chunks/00000002-2a46fc25f370413d431d18085802f32c8e5d1e4b063809656283c9abd492d386.bin"
+        },
+        {
+          "header": "streams/T1-wire/chunks/00000003.hdr.json",
+          "headerSha256": "ab48c43d3255653228110bc6f175c53d82258212266d4fae3f9147f02ae93e42",
+          "raw": "streams/T1-wire/chunks/00000003-de9c1393914129b0e178d3b5d66b6234a36a71e49f463f1d5abbaacce13a8f18.bin"
+        }
+      ]
+    },
+    {
+      "cadenceMs": 1000,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "HO/any/H8",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-source-audit",
+        "sha256": "580e6c9f87c0244d3835cf37b9368be12597b429166aff3437009d4515fd273f",
+        "version": "1"
+      },
+      "normalizerFile": "normalize.py",
+      "reader": "resident",
+      "sourceId": "H8",
+      "streamId": "R5-context",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a02-cancel/code/normalize.py",
+      "chunks": [
+        {
+          "header": "streams/R5-context/chunks/00000000.hdr.json",
+          "headerSha256": "49a7c0ca8d6d948a129f96437a010da7c0cb78c84bc9e838c16527fe5b1c2b1b",
+          "raw": "streams/R5-context/chunks/00000000-f41db384489cf2285705ac69c7d848ce4edbe0f2b6eea96528b40afca23992e8.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000001.hdr.json",
+          "headerSha256": "a69703b8ac82c395b2f8b553f9b9f8adb9fd61a7847936913b49d195da6f1b0c",
+          "raw": "streams/R5-context/chunks/00000001-57480dee0f52e5b11cfc722eb2e5744ec8920ada27013aa76b0d816d20835835.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000002.hdr.json",
+          "headerSha256": "b774fec481b64cb3f009770ba1bab4ff427b0296706d43cee7245b980d265261",
+          "raw": "streams/R5-context/chunks/00000002-79b54d87520ecf71cdb1d5d179f3755d9059aa3b0f185335e6e7c9b85fbec849.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000003.hdr.json",
+          "headerSha256": "a67efb0432c98ce386171c46d4e10dfa7b5750196372c8a36cfce1312ca69928",
+          "raw": "streams/R5-context/chunks/00000003-bb29721879995fb6a250567a870e3f5fad3298cb6a8a15b775e21b603de0367a.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000004.hdr.json",
+          "headerSha256": "4f0d42e9e473b97b8dba78e6a3a219de8ef76ec6e5e69f61fed408ec43db987f",
+          "raw": "streams/R5-context/chunks/00000004-05378d9fb7a26941987ef0ffc8b943768279e167c50fc0f1585b42ac6226a9eb.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000005.hdr.json",
+          "headerSha256": "1ca07edbf40bd55c8bf539da998e39d118f497d9bab41da4349ccfd3f8e640eb",
+          "raw": "streams/R5-context/chunks/00000005-b231d92581901a3e717741925eb37ffbd478aaff5d939399005b20129cfaac9f.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000006.hdr.json",
+          "headerSha256": "73248768eafeee4d6c7b30271458011a3dd4abba209b4f01b261242de3879acd",
+          "raw": "streams/R5-context/chunks/00000006-9398c0652964ac966cf3af8fbd2d6466235867428c780bf04b5ef02f39fce036.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000007.hdr.json",
+          "headerSha256": "8dbe1e094cced5f6329de62204e4063509a38d7db6efdcdf489e91b50cbcd824",
+          "raw": "streams/R5-context/chunks/00000007-c965fb278d3708771d65594f940f7071cf4057946069bba94ab0c184900a4e88.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000008.hdr.json",
+          "headerSha256": "028a9e537e84dc87c724eb0664b79438109046dc40a5cdc7af905b558ea05363",
+          "raw": "streams/R5-context/chunks/00000008-368b84ce2b032122d0bce869c02d68df131e652b7f45420d535c8def6ed9ba4a.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000009.hdr.json",
+          "headerSha256": "fa585538d3dbed938f70c004a0639ac1090bd6eb91d6a1492f360a32620d1148",
+          "raw": "streams/R5-context/chunks/00000009-f515ef534ee07296018257b09217c86cc401ec704084341d2a487321d992ff68.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000010.hdr.json",
+          "headerSha256": "c8b2cfcab97c27595e2ac381330d21f564537a9b5fd3003fa95841a7f889bde0",
+          "raw": "streams/R5-context/chunks/00000010-45da4907d5d8fe89d03479d75d9e0c360e2f95980c8769d3f3e725713b3fb66a.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r5-a02-cancel",
+      "streamId": "T1-wire",
+      "seq": 3,
+      "headSha256": "ab48c43d3255653228110bc6f175c53d82258212266d4fae3f9147f02ae93e42",
+      "tMono": 124985592.058901
+    },
+    {
+      "runId": "obs01-r5-a02-cancel",
+      "streamId": "R5-context",
+      "seq": 10,
+      "headSha256": "c8b2cfcab97c27595e2ac381330d21f564537a9b5fd3003fa95841a7f889bde0",
+      "tMono": 124985600.148364
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-CANCEL",
+  "obligation": "G6.cancel.observed-drain",
+  "case": "obs01-r5-a02-cancel",
+  "witnessKind": "CANCEL",
+  "thresholdIds": [
+    "T-DRAIN-MS"
+  ],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "requestId": "cancel-r3",
+    "expectedError": "E-CANCELLED",
+    "connectionId": "5b3c1f2a5d8746178646eedb0b090b3d"
+  }
+}

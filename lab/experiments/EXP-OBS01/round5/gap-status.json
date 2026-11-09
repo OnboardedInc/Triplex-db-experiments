@@ -1,0 +1,150 @@
+[
+  {
+    "protocol": "OBS-CANCEL",
+    "runId": "obs01-r5-a03-cancel",
+    "verdict": "FAIL",
+    "recomputedFields": [
+      "callerError",
+      "connectionId",
+      "expectedError",
+      "requestId",
+      "reuseConnectionId",
+      "reuseQueryId",
+      "reuseResult",
+      "tCallerSettled",
+      "tCancelRequested",
+      "tReuseOk"
+    ],
+    "newRecomputedFields": [
+      "callerError",
+      "tCallerSettled"
+    ],
+    "remainingGapAndNeededChange": "transportAck, engineActiveSamples, tDrained and the second non-HR kind: enable X6 DEBUG/X7 exporter (or Q3 event log) and complete capture on an authorized engine profile; no such change made.",
+    "sourceTable": "SOURCES.md",
+    "sourceAudit": "source-audit-a03-verified.json"
+  },
+  {
+    "protocol": "OBS-PREABORT",
+    "runId": "obs01-r5-a01-preabort",
+    "verdict": "FAIL",
+    "recomputedFields": [],
+    "newRecomputedFields": [],
+    "remainingGapAndNeededChange": "Complete engineStatementLog/coverage plus agreeing T1: enable DEBUG parsed-statement source and route/capture all tested ingress; do not infer global absence from own traffic.",
+    "sourceTable": "SOURCES.md",
+    "sourceAudit": "source-audit-a03-verified.json"
+  },
+  {
+    "protocol": "OBS-NO-MUTATION",
+    "runId": "obs01-r5-a01-no-mutation",
+    "verdict": "FAIL",
+    "recomputedFields": [
+      "engineMutationCounterAfter",
+      "engineMutationCounterBefore"
+    ],
+    "newRecomputedFields": [],
+    "remainingGapAndNeededChange": "Second complete non-HR write inventory: enabled trace/statement source and validated full transport coverage are needed. Counter snapshots are reachable; NET_RAW alone would not enable the disabled engine witness.",
+    "sourceTable": "SOURCES.md",
+    "sourceAudit": "source-audit-a03-verified.json"
+  },
+  {
+    "protocol": "OBS-AVAILABILITY",
+    "runId": "obs01-r5-a04-availability",
+    "verdict": "FAIL",
+    "recomputedFields": [
+      "events",
+      "probes"
+    ],
+    "newRecomputedFields": [],
+    "remainingGapAndNeededChange": "Actual memory-failure tFailure is absent. A separate contained memory-fault case/engine is needed; unchanged native health and OOM counters are not a failure event.",
+    "sourceTable": "SOURCES.md",
+    "sourceAudit": "source-audit-a03-verified.json"
+  },
+  {
+    "protocol": "OBS-WORK",
+    "runId": "obs01-r5-a04-work",
+    "verdict": "FAIL",
+    "recomputedFields": [
+      "comparison",
+      "engineWorkUnits",
+      "operation",
+      "threshold"
+    ],
+    "newRecomputedFields": [],
+    "remainingGapAndNeededChange": "Attributed rowsWritten, triplesTouched and bytesWritten: enable suitable per-operation trace/counter profile and isolated accounting interval. Live file-backed X3 reads additionally need stable clone/snapshot or the R30 loader fix; no missing block was read.",
+    "sourceTable": "SOURCES.md",
+    "sourceAudit": "source-audit-a03-verified.json"
+  },
+  {
+    "protocol": "OBS-MAINTENANCE",
+    "runId": "obs01-r5-a04-maintenance",
+    "verdict": "FAIL",
+    "recomputedFields": [
+      "kind",
+      "threshold"
+    ],
+    "newRecomputedFields": [],
+    "remainingGapAndNeededChange": "Native tStart/tEnd plus durable consumer lagSamples: enable X6 maintenance events and supply the actual durable consumer checkpoint/publication surface. MsgId lag cannot be relabeled milliseconds.",
+    "sourceTable": "SOURCES.md",
+    "sourceAudit": "source-audit-a03-verified.json"
+  },
+  {
+    "protocol": "OBS-ERASURE-SCAN",
+    "runId": "obs01-r5-a04-erasure-scan",
+    "verdict": "FAIL",
+    "recomputedFields": [],
+    "newRecomputedFields": [],
+    "remainingGapAndNeededChange": "Full inventory/publication/controls/derived decoders, including host copies and freed blocks: supply read-only protected-store/freed-block snapshots and actual erasure/key-destruction exercise. Positive log-tail hits alone are not erasure proof.",
+    "sourceTable": "SOURCES.md",
+    "sourceAudit": "source-audit-a03-verified.json"
+  },
+  {
+    "protocol": "OBS-WATERMARK",
+    "runId": "obs01-r5-a01-watermark",
+    "verdict": "FAIL",
+    "recomputedFields": [],
+    "newRecomputedFields": [],
+    "remainingGapAndNeededChange": "Actual composition servingIndex, watermark/eligibility/route/wait: deploy/supply the actual observable router and same-snapshot marker endpoint. Native SELECT and process incarnation cannot invent that application surface.",
+    "sourceTable": "SOURCES.md",
+    "sourceAudit": "source-audit-a03-verified.json"
+  },
+  {
+    "protocol": "OBS-ACK-ORDER",
+    "runId": "obs01-r5-a03-ack-order",
+    "verdict": "FAIL",
+    "recomputedFields": [
+      "ackSender",
+      "commitPosition",
+      "tAck"
+    ],
+    "newRecomputedFields": [
+      "ackSender",
+      "commitPosition",
+      "tAck"
+    ],
+    "remainingGapAndNeededChange": "Original tSourcePublished, nested routed RYOW and independent publication kind: supply real composition router plus X7 publication or independently mounted broker-WAL source. A later readback is only an upper bound on visibility.",
+    "sourceTable": "SOURCES.md",
+    "sourceAudit": "source-audit-a03-verified.json"
+  },
+  {
+    "protocol": "OBS-FAULT-TRANSITIONS",
+    "runId": "obs01-r5-a03-fault-transitions",
+    "verdict": "PASS",
+    "recomputedFields": [
+      "durableEvidenceObject",
+      "t",
+      "tCrash",
+      "transition",
+      "transitions",
+      "variant"
+    ],
+    "newRecomputedFields": [
+      "durableEvidenceObject",
+      "t",
+      "transition",
+      "transitions"
+    ],
+    "remainingGapAndNeededChange": "None for the selected XT2 disposable-client-crash case; an engine-restart variant still requires a separately authorized isolated engine.",
+    "sourceTable": "SOURCES.md",
+    "sourceAudit": "source-audit-a03-verified.json"
+  }
+]

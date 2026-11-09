@@ -1,0 +1,21 @@
+{
+  "source": {
+    "kind": "TO/xtdb/T1",
+    "streamRefs": [
+      "T1-wire"
+    ],
+    "records": {}
+  },
+  "corroboration": [
+    {
+      "kind": "HO/any/H8",
+      "streamRefs": [
+        "H8-process"
+      ],
+      "records": {}
+    }
+  ],
+  "readId": "obs01-r5-a01-watermark-read",
+  "tReadStart": null,
+  "basisPosition": null
+}

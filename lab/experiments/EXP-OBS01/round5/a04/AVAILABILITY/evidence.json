@@ -1,0 +1,61 @@
+{
+  "probes": [
+    {
+      "kind": "write",
+      "outcome": "success",
+      "t": 125559506.128043
+    },
+    {
+      "kind": "read",
+      "outcome": "success",
+      "t": 125559646.650333
+    }
+  ],
+  "events": [],
+  "source": {
+    "kind": "HR/any/HR",
+    "streamRefs": [
+      "HR-probes"
+    ],
+    "records": {
+      "probes": [
+        {
+          "kind": "write",
+          "outcome": "success",
+          "t": 125559506.128043
+        },
+        {
+          "kind": "read",
+          "outcome": "success",
+          "t": 125559646.650333
+        }
+      ]
+    }
+  },
+  "corroboration": [
+    {
+      "kind": "HO/any/H8",
+      "streamRefs": [
+        "H8-process"
+      ],
+      "records": {
+        "events": []
+      }
+    },
+    {
+      "kind": "EI-metric/xtdb/X1.node.tx.latestCompletedTxId",
+      "streamRefs": [
+        "X1-metrics"
+      ],
+      "records": {}
+    },
+    {
+      "kind": "EI-query/xtdb/X2",
+      "streamRefs": [
+        "X2-health"
+      ],
+      "records": {}
+    }
+  ],
+  "tFailure": 125559361.153348
+}

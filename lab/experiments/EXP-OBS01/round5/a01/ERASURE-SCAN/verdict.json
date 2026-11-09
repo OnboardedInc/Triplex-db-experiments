@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-ERASURE-SCAN",
+  "verdict": "FAIL",
+  "reasons": [
+    "missing required field: inventoryEntry"
+  ],
+  "thresholds": {},
+  "sourceStrength": null,
+  "qualification": "screening-only"
+}

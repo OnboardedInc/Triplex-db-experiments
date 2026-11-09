@@ -1,0 +1,441 @@
+{
+  "runId": "obs01-r5-a04-work",
+  "receiptId": "obs01-r5-a04-work",
+  "keyId": "obs01-r5-a04-work-key",
+  "engine": "xtdb",
+  "bundleSha256": "905c106159e4de0aae6ef89dda4426eed24f40722642d7e1cab993428da70280",
+  "bridgeSha256": "eda60bfaf475e977895967503d1fcec1a00467918abe3b0d1a3b7dde6567e28f",
+  "clockMaxUncertaintyMs": 6.333540000021458,
+  "streams": [
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "EI-query/xtdb/X8",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "2149c937b3679ecb8ff91a5b31849516d56e3bb972121863d49b87a064d7e107",
+        "version": "3"
+      },
+      "normalizerFile": "X8-profile.normalize.py",
+      "reader": "resident",
+      "sourceId": "X8",
+      "streamId": "X8-profile",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a04-work/code/X8-profile.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/X8-profile/chunks/00000000.hdr.json",
+          "headerSha256": "4248c971591944215f8ac2bac55bd25d5681694d2bd4a23ca275a9fa75a30282",
+          "raw": "streams/X8-profile/chunks/00000000-423d7af8039ecbb0827322b6f71293a86057e5c85a557d70d2a862e3637dffd3.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000001.hdr.json",
+          "headerSha256": "1a661c6b8dc26c9df5f4b42fb01ded4e58f409edf8d5ea30689f1d1874d61522",
+          "raw": "streams/X8-profile/chunks/00000001-313ad449243d143493d543ef08411e75e98d4d6fb73c1c3c90d3a3d260845129.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000002.hdr.json",
+          "headerSha256": "cfeefe0c79558e016c3df8c11e4289865d98be44f9efcce31ff1edd59f16670c",
+          "raw": "streams/X8-profile/chunks/00000002-d03bba26133ac3cf168485dcab0d7d202882ce53d1f4378e77d14e8865ba6994.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000003.hdr.json",
+          "headerSha256": "7a14f7502c0b09332f769909501737595e6258f4d5d7a11edecb10a2bdb411b2",
+          "raw": "streams/X8-profile/chunks/00000003-895185c588abb8688b0b14d7021dd5665a3411ed4dee77c7af6e2c15134b0a2d.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000004.hdr.json",
+          "headerSha256": "b3dbdded965a3c22fb7024bf3336af671567fec6f5e4d1273e5afade575f9eda",
+          "raw": "streams/X8-profile/chunks/00000004-16da8299e3c374cf86570361db6272cfc3dc84b0304db3574ca672cbdd18109a.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000005.hdr.json",
+          "headerSha256": "24beb59e34c6b8d61376c10769e0e2a1fe43c15205b09f8129aa6671acc784d3",
+          "raw": "streams/X8-profile/chunks/00000005-92bc7c6a645f88e9ccd824215f6c065c69083cdbf26ecfa550ee95e7bfe54eca.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000006.hdr.json",
+          "headerSha256": "3eea6f54a0fc48f56e23e4456b1ceb035ede300e3de7f9af8b614afbcbc45f1d",
+          "raw": "streams/X8-profile/chunks/00000006-7bddf2febeddb84e6b4d306582289551ca305928ad7399d1aca01f909e938a44.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000007.hdr.json",
+          "headerSha256": "74e9bad5b8334b0c913e66e6d27baa5fe6c8deca3b7a14443f65941a93f414e6",
+          "raw": "streams/X8-profile/chunks/00000007-44916d63905a8cce347a07479a863e51c9e47a55b0b06ebf839ed9a25dc76b6e.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000008.hdr.json",
+          "headerSha256": "797a3a423ff2a9828e229ae7859be662dbae4442aee95edf7aa900b9e59b5152",
+          "raw": "streams/X8-profile/chunks/00000008-30eae0f7a41bb1e19fb64cb5a2e98052d75a2750a734c2c031597a65c059a541.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000009.hdr.json",
+          "headerSha256": "c4111c2fe64b2280a02c3628159a46ffcd72c4b1d0094a8a96aae3b80245cf99",
+          "raw": "streams/X8-profile/chunks/00000009-6d2190c38e49007edc2528142d550defc020b7f8bdbfa49ba223cc274f266aa9.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000010.hdr.json",
+          "headerSha256": "f964dab7f7d544dfb2106696987f0044b5d437efc1da279801c7315491b7f1e1",
+          "raw": "streams/X8-profile/chunks/00000010-5459541dd22d4895fbeb3641e2dd15af7fb4a8c30f387034413ca556c4aba79c.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000011.hdr.json",
+          "headerSha256": "01a18f5171fe606c974365482bbf2191f757a5d754cdb09837042e267995c5d2",
+          "raw": "streams/X8-profile/chunks/00000011-212fb1b90305f9b8d1642d2f7f04c99d03570d7dc355af7173bc8d1f98a60565.bin"
+        },
+        {
+          "header": "streams/X8-profile/chunks/00000012.hdr.json",
+          "headerSha256": "365b654530632c598a7c1dfa4d409dd62df2abd957ff7e9ececcc93c9a18ab93",
+          "raw": "streams/X8-profile/chunks/00000012-d284dfefff00bbc53476880dbe7ded0f33b0f4b98ebf1c553facf6b8270f7f86.bin"
+        }
+      ]
+    },
+    {
+      "cadenceMs": 1000,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "HO/any/H8",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-source-audit",
+        "sha256": "238d4944beef822fd6c71875d93077a36b7ac438cac4b527188ef5a23b21f572",
+        "version": "1"
+      },
+      "normalizerFile": "normalize.py",
+      "reader": "resident",
+      "sourceId": "H8",
+      "streamId": "R5-context",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a04-work/code/normalize.py",
+      "chunks": [
+        {
+          "header": "streams/R5-context/chunks/00000000.hdr.json",
+          "headerSha256": "cd284f414a20e6b9db3de673e2405ba7198e0ff924e54f3c4b5ace532e08afde",
+          "raw": "streams/R5-context/chunks/00000000-d9dc880c68d267f62d6c64fbe9b1d1366a91cf9124e1423db04f0484d75e592e.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000001.hdr.json",
+          "headerSha256": "d85dbe7adc4b75eaca18cc653fdbde247c8d405fd06b84c5751feec102c0c43b",
+          "raw": "streams/R5-context/chunks/00000001-d17caee91885e457650f6f805de4212f35c9a70e520b9537d10e3e64f5ed6a50.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000002.hdr.json",
+          "headerSha256": "50db669ac5b7a3dd32eb6cbf399e1bd1f58b99707a19a63e971844af33cfa5e2",
+          "raw": "streams/R5-context/chunks/00000002-0d68cbeb2e122fe4641186f10e4c016927bf2916d2a90da4c87d98644161a561.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000003.hdr.json",
+          "headerSha256": "9db0af483fc50dc232bfa94d8e928f71111a45af83c5bc5e8eeb6961c192c4c0",
+          "raw": "streams/R5-context/chunks/00000003-246a5faa44f3e4b97371fbb308f37cc60b97f2c870227ec98b8cb70bd68e6232.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000004.hdr.json",
+          "headerSha256": "e7cf275b0f16d5019a3cbbf4aca0aa3667ea57849fdc2adbc7470fceb1dfd151",
+          "raw": "streams/R5-context/chunks/00000004-64ebb994a3fa16b923bb99117921a29f248e2c98abf9185935630a24ec8dac15.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000005.hdr.json",
+          "headerSha256": "ab08e561ec17db61f624e5a8c9f522e3dd3a8795944dc99deafa1c524e08037d",
+          "raw": "streams/R5-context/chunks/00000005-112306d7d5aea8be6822ce7f418c972c40671f47997d23239fcf0f1d56586389.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000006.hdr.json",
+          "headerSha256": "33428938f075fc497a6f8c60a33faebb0553e59b44e7aec305c03a159a8e5478",
+          "raw": "streams/R5-context/chunks/00000006-6965224e6f63cc9a8144306dac23993ce761ce31eb498c8b491595f7e2f6297b.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000007.hdr.json",
+          "headerSha256": "21ec4c2068036b59aea9d8cb84abe923a6a2d29b877d3d00f01bf5acbe90325a",
+          "raw": "streams/R5-context/chunks/00000007-3ad6c56dda73926561813591161f0cdf790fe7b9e97e3d152503784fca35246a.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000008.hdr.json",
+          "headerSha256": "76d45e4ad09d27029d5053a6af6f6fdb01c9070c5ed682ad032059b3b8aca85e",
+          "raw": "streams/R5-context/chunks/00000008-ccb861febf48f1398669b973b131964d8b47a256365144f9c43f8d05272e28ad.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000009.hdr.json",
+          "headerSha256": "2e96be7dd235408a248c2adec899f4a5e156b9dcf8a12f5b632c118ab170de75",
+          "raw": "streams/R5-context/chunks/00000009-8b78bdfdbb7d25f053680e41a8001e7ead80e769d71edcdbbf3818a86a8a7657.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000010.hdr.json",
+          "headerSha256": "54144fa8fccdcfcf6bfce3173f3030f0664d58eb92699d13b0436162a7374a8d",
+          "raw": "streams/R5-context/chunks/00000010-12ac731e67e3dc8faf6b5e65e1d2deb8426adc3ad91c495845de0e873fa5f827.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000011.hdr.json",
+          "headerSha256": "312fe7f73f5c44497e8083d6c44317cc5850748917daceeb1fe14e78c90dad1a",
+          "raw": "streams/R5-context/chunks/00000011-ded429f4a56508e01648fb43edbc88919043ec2340b225a3ad8cd8ffac05205f.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000012.hdr.json",
+          "headerSha256": "1c8c5b509317752a37a04ae13e6e93e05fb93eaeb57c9c1772f52d5e2b25ddb7",
+          "raw": "streams/R5-context/chunks/00000012-28a9f8997295b2533ecffb46a6f7a52e92fa3b64714c512b1de933f6cdeddb1b.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000013.hdr.json",
+          "headerSha256": "51ee41705bc2f5ddbb6700883ed42c1bb9ff3862717dd6e8c1f8df9229702cb7",
+          "raw": "streams/R5-context/chunks/00000013-66b9c6ff8be28778381322da17529ae192d0fbd72a2915f7e3e2dcfb0942d625.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000014.hdr.json",
+          "headerSha256": "9eb18f2e1ec9102f7f02f7945a928780c536eefcddab7ebc5a13d713385265f5",
+          "raw": "streams/R5-context/chunks/00000014-e3a9c13dce7105c1d6ee2df449a9d53c1c5d1c3ebe84998e7cedfb240529336b.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000015.hdr.json",
+          "headerSha256": "0cddd15efd4b7e880ba2e58ca6596221f12347fb00998cb222768bad22152fbe",
+          "raw": "streams/R5-context/chunks/00000015-083b8cc321b5f1228d09a30af5554c47b0cd936f4fd4fff6ae58396d2658df1c.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000016.hdr.json",
+          "headerSha256": "1f0bcedba3990a7977118e161ccb02edd18f7fe83ca9c4ee53b9dc7eb3617027",
+          "raw": "streams/R5-context/chunks/00000016-6c5413c38f7725de51fa578efa5533b39b065c845357299a802df408009e1170.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000017.hdr.json",
+          "headerSha256": "4ac2e7aae8058cc9b3fc77bada7cd56eb697b3ba0b7358ac7974451b36285732",
+          "raw": "streams/R5-context/chunks/00000017-7c88bd4680c353563ce3dd1b2eeb1e67ba0fc7979d457222f10e9c2a588820df.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000018.hdr.json",
+          "headerSha256": "6880b0986cd79a7a289098df02e6966acb362131237d9f7778cb3cf4f12bb5bb",
+          "raw": "streams/R5-context/chunks/00000018-5f4ca4fea09e7c1fa62f4dfe8b6efb23cdf5ac7df748b6144f008f9c8a36548a.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000019.hdr.json",
+          "headerSha256": "42d4bda82afdd5dfed1235fb99e28c47e5fc2b5a21a57f25244dab0f7e8999bf",
+          "raw": "streams/R5-context/chunks/00000019-4fca646392538a86660d13a44b9abbc8bdd219b3e7afc11f77780758bdc906e8.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000020.hdr.json",
+          "headerSha256": "49da21c8d8ba60255d33eb18fcfc3b626284ad1194c59afdce89dc5981af04de",
+          "raw": "streams/R5-context/chunks/00000020-32501b213cbe62c4342d9366ca1ea839601981c796c38a6f7a718124d45d89e7.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000021.hdr.json",
+          "headerSha256": "59ada74177491cf997953e37f07fb72f98a682ba105d8fcccecec9fc0adf43e3",
+          "raw": "streams/R5-context/chunks/00000021-3fd61b5275148bcba118236816a7f43ea4fa30dbc81d59590543346243e1f132.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000022.hdr.json",
+          "headerSha256": "eeca0a2e4e957fc179a1820a982b48e752ba49165ac103d61ef07f9bac9b062e",
+          "raw": "streams/R5-context/chunks/00000022-5a73b6f198d2741a011e145fabea56fecafe08c741856af7b3b64511ab00b48e.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000023.hdr.json",
+          "headerSha256": "8d35fcbdbab7b3b55da2a50013ec42e35dcc631210a9e15ab970ea83a4ad62fa",
+          "raw": "streams/R5-context/chunks/00000023-0bb0027e13e67b038b417f61055c50c52c0095b95dbf9e8d9b810135bee069e2.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000024.hdr.json",
+          "headerSha256": "43ef6cb54e25ff6b07b483d1365699d6909c5902c5c50cedef8d7c0d8ca08cc7",
+          "raw": "streams/R5-context/chunks/00000024-626f36d620b6d68910ff0b473cd1d0cc2bfc9fb7e0c8b5787f2fe0a8d7f936da.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000025.hdr.json",
+          "headerSha256": "ddeb63a2b599ad78e5e5ae099b2889600630a8bc1d0377a37f7757a9a5f2dfcc",
+          "raw": "streams/R5-context/chunks/00000025-0f7fa94649a73293cf98adf42644bfcaaa9b47f5d72b6f40a64d79d7966c5823.bin"
+        },
+        {
+          "header": "streams/R5-context/chunks/00000026.hdr.json",
+          "headerSha256": "bf7bcab828604a49ed589d2fd4085e279252b00a4ddd9a9fba050437f63b7678",
+          "raw": "streams/R5-context/chunks/00000026-033b151450eeeb9b5957faeb268f3a335a7891eb61ccd5a7b5b193606adc6009.bin"
+        }
+      ]
+    },
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "EI-table/xtdb/X3",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "54d432cc5f206380b797bfcb35f553eff7236853a37c6d1af048b14d7ae42c78",
+        "version": "3"
+      },
+      "normalizerFile": "X3-tables.normalize.py",
+      "reader": "resident",
+      "sourceId": "X3",
+      "streamId": "X3-tables",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a04-work/code/X3-tables.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/X3-tables/chunks/00000000.hdr.json",
+          "headerSha256": "7263bda9894c938b2746047f33e64710ea7da722d1a6ac4401508f6976ed9ac1",
+          "raw": "streams/X3-tables/chunks/00000000-253bfabe9d3b7b10ba1416070bec67d4153d546a12540f6fc42191e85868d31e.bin"
+        },
+        {
+          "header": "streams/X3-tables/chunks/00000001.hdr.json",
+          "headerSha256": "f808667ded955bf5c817da633537e50a68c8f04a5573f595c1902cb69c81d4b7",
+          "raw": "streams/X3-tables/chunks/00000001-e5b795be8104efec8b79f690526c6f343d39d7c161e93f24bd3b2d56a887f045.bin"
+        },
+        {
+          "header": "streams/X3-tables/chunks/00000002.hdr.json",
+          "headerSha256": "b5fff15b355c15c11a49f60f4f1c3401cc7bf9ec6e4d58c073dded5c3f451b0c",
+          "raw": "streams/X3-tables/chunks/00000002-ac51d0cddf8d7a1ba32cadd40b3ec9a50dd79169ca64515efaee56755f8b3113.bin"
+        },
+        {
+          "header": "streams/X3-tables/chunks/00000003.hdr.json",
+          "headerSha256": "1c9c0d7b75ae6eee902fd1564320c03db8b3694a1f67548c973e9f8beadcb2f5",
+          "raw": "streams/X3-tables/chunks/00000003-fa84c3e4640c5075289d708771b6cd9f50e82c685b089c5de6159642e3c532da.bin"
+        },
+        {
+          "header": "streams/X3-tables/chunks/00000004.hdr.json",
+          "headerSha256": "11222fc51d49b4ea313266f9c3c9cff0f0d633b7e59e6190a2e1e171aa92e694",
+          "raw": "streams/X3-tables/chunks/00000004-56ec3a7d0612b05f3c3ac295c56edc1410eeea3d777739755a7599035556f8b3.bin"
+        },
+        {
+          "header": "streams/X3-tables/chunks/00000005.hdr.json",
+          "headerSha256": "bf217db3a08fa041b8f60917ba03a7ce6fd4ee86a7f594fd57fccf36a3945503",
+          "raw": "streams/X3-tables/chunks/00000005-acca7430a3dd85dccf507e11683e0952d10b35ee63a47288c9c525a32dcd3010.bin"
+        },
+        {
+          "header": "streams/X3-tables/chunks/00000006.hdr.json",
+          "headerSha256": "948c7d3d5e3a2ee2055dc19be4c2860b9e7644cffe0108968410e00a04fdbb9f",
+          "raw": "streams/X3-tables/chunks/00000006-cf874d20a0f14d04c1dcf42dc9a61e819cc368244d66f11f5688050cd62011d9.bin"
+        },
+        {
+          "header": "streams/X3-tables/chunks/00000007.hdr.json",
+          "headerSha256": "94c989578e090e8bb9878922bf09aa900debc9152cf3a58c86ba342e03e7cef2",
+          "raw": "streams/X3-tables/chunks/00000007-f2e2009730628cd5b65c9d0b6951d8a6584cda5a5d5fce3a2d905bc9a8284bb6.bin"
+        },
+        {
+          "header": "streams/X3-tables/chunks/00000008.hdr.json",
+          "headerSha256": "8ddb0e052ad5fb7567c5b427618819be486f7d8fef3bb1cc693a4d478fc8eb7d",
+          "raw": "streams/X3-tables/chunks/00000008-b93ebec105492a0aecd9f9ca4c4c56c0e40727f468785c163f38479fefc530d4.bin"
+        },
+        {
+          "header": "streams/X3-tables/chunks/00000009.hdr.json",
+          "headerSha256": "f50abceb7a4b2f7f0bddd9719ca398335430a6ac6bf4fd1589a7aba875585277",
+          "raw": "streams/X3-tables/chunks/00000009-ae36cfc55e3b8d24ef3d1d5c1431477e325c2128a2df0ee32f9dc00460bab421.bin"
+        }
+      ]
+    },
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "HO/any/H1",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "56459b6cc81b732f4b2751a19c3e28983b4ff828b27b25ab568e919c384c164f",
+        "version": "3"
+      },
+      "normalizerFile": "H1-io.normalize.py",
+      "reader": "resident",
+      "sourceId": "H1",
+      "streamId": "H1-io",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a04-work/code/H1-io.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/H1-io/chunks/00000000.hdr.json",
+          "headerSha256": "b38da0dc057c026c8a8522fcab9e8b5bd20e9dafcc8613dd48c708a693c6bf58",
+          "raw": "streams/H1-io/chunks/00000000-7f5ecc7d3f2e9dabd38a6eae6e207936f4aa20d1621484c9d379e11ce7aa90ab.bin"
+        },
+        {
+          "header": "streams/H1-io/chunks/00000001.hdr.json",
+          "headerSha256": "eac398e7db23eec6551b26ed6e43801c28605190d6f55d7fa6b0d013be6dfdc6",
+          "raw": "streams/H1-io/chunks/00000001-2d87453fe736a9d66092840650e8bcb47e132c3b3d03602dd058633b0f954776.bin"
+        },
+        {
+          "header": "streams/H1-io/chunks/00000002.hdr.json",
+          "headerSha256": "95535acc4a7735ea299d7a55e464854756570b7869f9567761068d8d08a695bd",
+          "raw": "streams/H1-io/chunks/00000002-8cd10c70278baced4ef1b0e9ec375323940434c194afacf36668ee63cbb7258c.bin"
+        },
+        {
+          "header": "streams/H1-io/chunks/00000003.hdr.json",
+          "headerSha256": "3b5ffcfbeafe64729b7c6f1bf32b5ada2eddf432784d9b1632b1f02977991238",
+          "raw": "streams/H1-io/chunks/00000003-17a97d4a50f5e7821c9829b84aedbca7ce648d02128a83ea0163fc2725c27903.bin"
+        }
+      ]
+    },
+    {
+      "cadenceMs": 100,
+      "endpoint": "resident:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "kind": "HO/any/H3",
+      "method": "capture",
+      "normalizer": {
+        "id": "obs01-resident-protocol",
+        "sha256": "101502d84db5cc7fcd25329b3a2b8ff29aa92d34ecd3b52c236a0f0ef4f530bc",
+        "version": "3"
+      },
+      "normalizerFile": "H3-files.normalize.py",
+      "reader": "resident",
+      "sourceId": "H3",
+      "streamId": "H3-files",
+      "normalizerPath": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a04-work/code/H3-files.normalize.py",
+      "chunks": [
+        {
+          "header": "streams/H3-files/chunks/00000000.hdr.json",
+          "headerSha256": "4013095d3bddd78c4c6db01184926166c52c21c0d56b85298739a6875694ecff",
+          "raw": "streams/H3-files/chunks/00000000-5dd43ee0c2444fc894be5584230070862835554dc270896c4bca6ff64d4b5a76.bin"
+        },
+        {
+          "header": "streams/H3-files/chunks/00000001.hdr.json",
+          "headerSha256": "92479ad071c9766b4352128af8f26213f135fe85d3dda861c067fdd5c77fa8f7",
+          "raw": "streams/H3-files/chunks/00000001-5b9bdcdc654e6cbd8f1234675c01c49a64df836f84493805638c3a963bb3ceeb.bin"
+        },
+        {
+          "header": "streams/H3-files/chunks/00000002.hdr.json",
+          "headerSha256": "d30fbf0b3838e66e148b116aedc45318fd864a200f048fcc99bc17500d33c773",
+          "raw": "streams/H3-files/chunks/00000002-3c7d7585b0beeacbbff655ab518c19d52c7c999f05aa2e2e38fe64bd7d0ec4d9.bin"
+        },
+        {
+          "header": "streams/H3-files/chunks/00000003.hdr.json",
+          "headerSha256": "a2b229d61c70a80d0f6413db8b62f818d62703ac6cc2e4dbaa83c8bd1f36c6d8",
+          "raw": "streams/H3-files/chunks/00000003-0eb43fab043221d238a120df08fca2551b551861da8f470d2b8d93a1f84aa049.bin"
+        }
+      ]
+    }
+  ],
+  "witnessHeads": [
+    {
+      "runId": "obs01-r5-a04-work",
+      "streamId": "X8-profile",
+      "seq": 12,
+      "headSha256": "365b654530632c598a7c1dfa4d409dd62df2abd957ff7e9ececcc93c9a18ab93",
+      "tMono": 125351596.141445
+    },
+    {
+      "runId": "obs01-r5-a04-work",
+      "streamId": "R5-context",
+      "seq": 26,
+      "headSha256": "bf7bcab828604a49ed589d2fd4085e279252b00a4ddd9a9fba050437f63b7678",
+      "tMono": 125351606.0878
+    },
+    {
+      "runId": "obs01-r5-a04-work",
+      "streamId": "X3-tables",
+      "seq": 9,
+      "headSha256": "f50abceb7a4b2f7f0bddd9719ca398335430a6ac6bf4fd1589a7aba875585277",
+      "tMono": 125351598.726045
+    },
+    {
+      "runId": "obs01-r5-a04-work",
+      "streamId": "H1-io",
+      "seq": 3,
+      "headSha256": "3b5ffcfbeafe64729b7c6f1bf32b5ada2eddf432784d9b1632b1f02977991238",
+      "tMono": 125351601.55273
+    },
+    {
+      "runId": "obs01-r5-a04-work",
+      "streamId": "H3-files",
+      "seq": 3,
+      "headSha256": "a2b229d61c70a80d0f6413db8b62f818d62703ac6cc2e4dbaa83c8bd1f36c6d8",
+      "tMono": 125351603.570284
+    }
+  ],
+  "format": "obs-context/1",
+  "protocol": "OBS-WORK",
+  "obligation": "G8.reuse.positive-witness",
+  "case": "obs01-r5-a04-work",
+  "witnessKind": "reuse",
+  "thresholdIds": [
+    "T-REUSE-AVOIDED"
+  ],
+  "contractSha256": "fe730f89a779c44201f02b8987e0079aa0f713c3fbca35761c321546c682e4fb",
+  "bindings": {
+    "operation": "native-projection"
+  },
+  "selectedThreshold": "T-REUSE-AVOIDED"
+}

@@ -1,0 +1,34 @@
+{
+  "ackSender": "xtdb-dev",
+  "tAck": 125096535.061091,
+  "commitPosition": 742358188,
+  "source": {
+    "kind": "DR/any/H6",
+    "streamRefs": [
+      "H6-files"
+    ],
+    "records": {}
+  },
+  "corroboration": [
+    {
+      "kind": "HR/any/HR",
+      "streamRefs": [
+        "HR-probes"
+      ],
+      "records": {
+        "ackSender": "xtdb-dev",
+        "tAck": 125096535.061091
+      }
+    },
+    {
+      "kind": "EI-table/xtdb/X3",
+      "streamRefs": [
+        "X3-tables"
+      ],
+      "records": {
+        "commitPosition": 742358188
+      }
+    }
+  ],
+  "sourceOfTruth": "xtdb-dev"
+}

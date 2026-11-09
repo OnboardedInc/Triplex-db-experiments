@@ -1,0 +1,13 @@
+{
+  "X4-native": {
+    "missing": [],
+    "derivedFields": [
+      "durableEvidenceObject",
+      "t",
+      "tCrash",
+      "transition",
+      "transitions",
+      "variant"
+    ]
+  }
+}

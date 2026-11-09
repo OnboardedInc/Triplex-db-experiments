@@ -1,0 +1,26 @@
+{
+  "kind": "compaction",
+  "threshold": "NS-P3-LAG-P99-MS",
+  "source": {
+    "kind": "EI-metric/xtdb/X1.node.tx.latestCompletedTxId",
+    "streamRefs": [
+      "X1-metrics"
+    ],
+    "records": {
+      "kind": "compaction",
+      "threshold": "NS-P3-LAG-P99-MS"
+    }
+  },
+  "corroboration": [
+    {
+      "kind": "EI-table/xtdb/X3",
+      "streamRefs": [
+        "X3-tables"
+      ],
+      "records": {
+        "kind": "compaction",
+        "threshold": "NS-P3-LAG-P99-MS"
+      }
+    }
+  ]
+}

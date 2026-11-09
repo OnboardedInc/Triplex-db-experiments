@@ -37,13 +37,14 @@ export async function residentObserver(config,info,opts){
   const spec=JSON.parse(fs.readFileSync(opts.spec,'utf8'));if(!spec.resident||!Array.isArray(spec.sources))fail('USAGE','resident case/source specification required');
   if(spec.runId!==id)fail('REFUSED','case must name this fresh run');
   spec.engineContainerId=engine.Id;
-  if(!/^obs01r[34]_[a-z0-9_]+$/.test(spec.relation)||!Number.isSafeInteger(spec.population?.n)||spec.population.n<1||spec.population.n>64||spec.population.width!==1)fail('REFUSED','resident probes require an owned relation and tiny width-1 population');
+  if(!/^obs01r[345]_[a-z0-9_]+$/.test(spec.relation)||!Number.isSafeInteger(spec.population?.n)||spec.population.n<1||spec.population.n>64||spec.population.width!==1)fail('REFUSED','resident probes require an owned relation and tiny width-1 population');
   if(spec.sources.some(([sid,kind])=>!/^[-A-Za-z0-9_]+$/.test(sid)||!/^[-A-Za-z0-9]+\/(xtdb|any)\/[A-Za-z0-9_.]+$/.test(kind)))fail('REFUSED','unsafe stream metadata');
   atomicJson(path.join(dir,'case.json'),spec);
   for(const file of fs.readdirSync(path.join(REPO,'lab/observer')).filter(n=>n.endsWith('.py')))fs.copyFileSync(path.join(REPO,'lab/observer',file),path.join(code,file));
   for(const file of ['engine.mjs','resident-observer.mjs','lib.mjs'])fs.copyFileSync(path.join(REPO,'lab/bin',file),path.join(code,file));
   const streams=spec.sources.map(([sid,kind])=>{
-   const sourceId=kind.split('/').at(-1),normalizerFile=sid+'.normalize.py';
+   const sourceId=kind.split('/').at(-1),normalizerFile=sid==='R5-context'?'normalize.py':sid+'.normalize.py';
+   if(sid==='R5-context')return {streamId:sid,sourceId,kind,endpoint:'resident:'+engine.Id,method:'capture',reader:'resident',cadenceMs:1000,normalizerFile,normalizer:{id:'obs01-source-audit',version:'1',sha256:sha256(fs.readFileSync(path.join(code,normalizerFile)))}};
    const result=spawnSync('python3',['-I','-B',path.join(code,'compile_protocol.py'),path.join(dir,'case.json'),sourceId,path.join(code,normalizerFile)],{encoding:'utf8'});
    if(result.status!==0)fail('REFUSED','parser compile: '+result.stderr);
    return {streamId:sid,sourceId,kind,endpoint:'resident:'+engine.Id,method:'capture',reader:'resident',cadenceMs:100,normalizerFile,normalizer:{id:'obs01-resident-protocol',version:'3',sha256:sha256(fs.readFileSync(path.join(code,normalizerFile)))}};

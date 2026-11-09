@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-CANCEL",
+  "verdict": "FAIL",
+  "reasons": [
+    "missing required field: transportAck"
+  ],
+  "thresholds": {},
+  "sourceStrength": null,
+  "qualification": "screening-only"
+}

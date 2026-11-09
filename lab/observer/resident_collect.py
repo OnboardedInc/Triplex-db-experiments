@@ -17,9 +17,10 @@ import uuid
 
 def load(name):
  spec=importlib.util.spec_from_file_location(name,Path(__file__).with_name(name+'.py'));m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
-c=load('collector');pg=load('pgclient')
+c=load('collector');pg=load('pgclient');reachable=load('reachable_sources')
 signal.alarm(60)
-config=json.loads(Path('/config.json').read_bytes());bundle=c.Bundle('/obs/bundle',config,Path('/run/key').read_bytes());protocol=config['case']['protocol'].removeprefix('OBS-');case=config['case'];streams={s['sourceId'].split('.')[0]:s['streamId'] for s in config['streams']}
+config=json.loads(Path('/config.json').read_bytes());bundle=c.Bundle('/obs/bundle',config,Path('/run/key').read_bytes());protocol=config['case']['protocol'].removeprefix('OBS-');case=config['case'];streams={s['sourceId'].split('.')[0]:s['streamId'] for s in config['streams'] if s['streamId']!='R5-context'}
+if any(s['streamId']=='R5-context' for s in config['streams']):streams['R5']='R5-context'
 engine_cg=next(x[3:] for x in Path('/proc/1/cgroup').read_text().splitlines() if x.startswith('0::'))
 if config['sut']['engineContainerId'] not in engine_cg:raise ValueError('resident cgroup identity mismatch')
 observer_cg=next(x[3:] for x in Path('/proc/self/cgroup').read_text().splitlines() if x.startswith('0::'))
@@ -33,14 +34,18 @@ def session(phase,sql):
  wire=[{'event':'open','connectionId':cid,'enginePort':5432,'tMono':start}]
  def capture(direction,data):wire.append({'event':'data','connectionId':cid,'direction':direction,'data':base64.b64encode(data).decode(),'tMono':c.mono()})
  p=pg.Pg(5432,wire_callback=capture)
- try:p.query(sql)
+ rows=[]
+ try:rows=p.query(sql)
  except Exception as e:error=str(e)
  try:p.close()
  except OSError:pass
  wire.append({'event':'close','connectionId':cid,'tMono':c.mono()})
  value={'event':'native-session','phase':phase,'observationId':cid,'wire':wire}
  for root in ('X4','X8','T1','HR'):append(root,value)
+ if phase.startswith(('system-','publication-','fault-position-')):append('X3',value)
+ append('R5',value)
  if error:errors.append({'phase':phase,'error':error})
+ return rows
 def sockets():
  append('H4',{'event':'sockets','files':{name:base64.b64encode(Path('/proc/net/'+name).read_bytes()).decode() for name in ('tcp','tcp6')}})
 def lifecycle():
@@ -67,6 +72,7 @@ if 'H6' in streams:
   with marker.open('rb') as fp:prefix=fp.read(65536)
   append('H6',{'event':'file-bytes','location':str(marker),'phase':'baseline','tMono':c.mono(),'truncated':marker.stat().st_size>len(prefix),'bytes':base64.b64encode(prefix).decode()})
 try:
+ if case.get('round')==5:reachable.collect('before',case,append,session,c.http_raw,engine_cg)
  if protocol=='NO-MUTATION':metric();time.sleep(.05);session('read-control','SELECT 1 AS n');time.sleep(.05);metric()
  elif protocol=='PREABORT':session('read-control','SELECT 1 AS n')
  elif protocol=='CONNECTIONS':
@@ -80,16 +86,19 @@ try:
   for _ in range(3):append('H1',c.read_source(source));time.sleep(.05)
  elif protocol=='AVAILABILITY':
   session('availability-failure',"SELECT CAST('not-a-number' AS BIGINT) AS n")
-  time.sleep(.1);session('availability-write',"INSERT INTO "+relation+" (_id,n) VALUES ('availability',1)");time.sleep(.1);session('availability-read','SELECT COUNT(*) AS n FROM '+relation)
+  time.sleep(.1);session('availability-write',"INSERT INTO "+relation+" (_id,n) VALUES ('availability',1)");time.sleep(.1);session('availability-read',('SELECT n FROM '+relation+" WHERE _id='availability'") if case.get('round')==5 else 'SELECT COUNT(*) AS n FROM '+relation)
  elif protocol=='CANCEL':
   session('seed',"INSERT INTO "+relation+" (_id,n) VALUES "+','.join("('cancel-"+str(i)+"',"+str(i)+")" for i in range(32)))
   cid=uuid.uuid4().hex;wire=[{'event':'open','connectionId':cid,'enginePort':5432,'tMono':c.mono()}]
   def capture(direction,data):wire.append({'event':'data','connectionId':cid,'direction':direction,'data':base64.b64encode(data).decode(),'tMono':c.mono()})
   target=pg.Pg(5432,wire_callback=capture)
   def query():
-   try:target.query('/*obs:'+case['requestId']+'*/ SELECT a.n AS a,b.n AS b,c.n AS c FROM '+relation+' a,'+relation+' b,'+relation+' c LIMIT 256')
+   # [EXP-OBS01] Why: bounded aggregate work permits cancellation without retaining thousands of row-message events.
+   # Rejected: large streamed result capture (sidecar memory amplification) or an unbounded cross product.
+   sql='/*obs:'+case['requestId']+'*/ SELECT '+('SUM(a.n+b.n+c.n+d.n) AS total FROM '+','.join(relation+' '+a for a in 'abcd') if case.get('round')==5 else 'a.n AS a,b.n AS b,c.n AS c FROM '+relation+' a,'+relation+' b,'+relation+' c LIMIT 256')
+   try:target.query(sql)
    except Exception as e:errors.append({'phase':'cancel-target','error':str(e)})
-  thread=threading.Thread(target=query,daemon=True);thread.start();time.sleep(.05)
+  thread=threading.Thread(target=query,daemon=True);thread.start();time.sleep(.1 if case.get('round')==5 else .05)
   cancel_id=uuid.uuid4().hex;packet=struct.pack('!IIII',16,80877102,target.pid,target.secret);t=c.mono()
   with socket.create_connection(('127.0.0.1',5432),timeout=3) as connection:connection.sendall(packet)
   cancel_wire=[{'event':'open','connectionId':cancel_id,'enginePort':5432,'tMono':t},{'event':'data','connectionId':cancel_id,'direction':'client','data':base64.b64encode(packet).decode(),'tMono':t},{'event':'close','connectionId':cancel_id,'tMono':c.mono()}]
@@ -111,9 +120,17 @@ try:
   raw=child.stdout.readline()
   if not raw:raise ValueError('fault client failed before committing')
   wire=[{'event':'open','connectionId':'fault-client','enginePort':5432,'tMono':c.mono()}]+json.loads(raw)
+  join_sql="SELECT m.operation_id, m.n, m._system_from AS marker_time, t._id AS position, t.system_time, t.committed FROM "+relation+" m JOIN xt.txs t ON m._system_from = t.system_time WHERE m._id = 'fault'"
+  if case.get('round')==5:session('fault-position-before',join_sql);time.sleep(max(.1,(2*uncertainty+10)/1000))
   child.kill();child.wait(timeout=5);t=c.mono();wire.append({'event':'close','connectionId':'fault-client','tMono':t})
   append('X4',{'event':'native-session','phase':'commit','observationId':'fault-client','wire':wire});append('X4',{'event':'process-event','kind':'client-crash','tMono':t,'pid':child.pid,'returncode':child.returncode})
-  time.sleep(.1);session('fault-readback','SELECT operation_id,n FROM '+relation+" WHERE _id='fault'")
+  time.sleep(max(.1,(2*uncertainty+10)/1000));session('fault-readback',join_sql if case.get('round')==5 else 'SELECT operation_id,n FROM '+relation+" WHERE _id='fault'")
+ elif protocol=='ACK-ORDER' and case.get('round')==5:
+  session('commit',"INSERT INTO "+relation+" (_id,operation_id,n) VALUES ('ack','"+case['operationId']+"',1)")
+  session('publication-readback',"SELECT m.operation_id, m.n, m._system_from AS marker_time, t._id AS position, t.system_time, t.committed FROM "+relation+" m JOIN xt.txs t ON m._system_from = t.system_time WHERE m._id = 'ack'")
+ elif protocol=='ERASURE-SCAN' and case.get('round')==5:
+  session('canary-write',"INSERT INTO "+relation+" (_id,canary) VALUES ('control','"+case['runId']+"')")
+  session('canary-readback','SELECT canary FROM '+relation+" WHERE _id='control'");reachable.positive_hits(case,append)
  elif protocol=='SCRATCH':
   session('seed',"INSERT INTO "+relation+" (_id,n) VALUES ('scratch',1)");session('count-before','SELECT COUNT(*) AS n FROM '+relation);time.sleep(.05);session('count-after','SELECT COUNT(*) AS n FROM '+relation)
  elif protocol=='SCALE-COUNT':
@@ -136,11 +153,16 @@ try:
  elif protocol=='WORK':
   session('seed',"INSERT INTO "+relation+" (_id,n) VALUES ('work',1)")
   session('work-comparison','EXPLAIN ANALYZE SELECT * FROM '+relation);session('work-candidate','EXPLAIN ANALYZE SELECT n FROM '+relation)
+ elif case.get('round')==5 and protocol=='MAINTENANCE':
+  time.sleep(1)
+ elif case.get('round')==5 and protocol=='WATERMARK':
+  session('native-control','SELECT 1 AS n')
  else:
   # Read-only resident probes retain actual native facts without inventing composition or physical witnesses.
   session('native-control','SELECT 1 AS n')
   if 'X1' in streams:metric()
   for root in streams:append(root,{'event':'source-unavailable','reason':case['missingSource']})
+ if case.get('round')==5:reachable.collect('after',case,append,session,c.http_raw,engine_cg)
 except Exception as e:errors.append({'error':str(e)})
 lifecycle()
 for root in streams:append(root,{'event':'end','tMono':c.mono()})

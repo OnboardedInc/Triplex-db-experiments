@@ -1,7 +1,7 @@
 // [EXP-OBS01] Why: collect one fresh resident bundle per protocol and retain exact evaluator inputs.
 // Rejected: reusing old bundles, changing dev residents, or silently substituting an undelegated obligation.
 import fs from 'node:fs';import path from 'node:path';import {inspect} from '../bin/lib.mjs';import {randomBytes} from 'node:crypto';import {spawnSync,execFileSync} from 'node:child_process';
-const round=process.env.OBS01_ROUND??'3';if(!['3','4'].includes(round))throw new Error('unknown report round');
+const round=process.env.OBS01_ROUND??'3';if(!['3','4','5'].includes(round))throw new Error('unknown report round');
 const repo=path.resolve(import.meta.dirname,'../..'),base=path.join(repo,'lab/experiments/EXP-OBS01/round'+round),attempt=process.argv[2]??'a01';
 if(!/^[a-z0-9_-]+$/.test(attempt))throw new Error('unsafe attempt');
 const rows=[
@@ -25,7 +25,9 @@ for(const [protocol,obligation,sources] of rows){
  if(selected&&!selected.split(',').includes(protocol))continue;
  const id=`obs01-r${round}-${attempt}-${protocol.toLowerCase()}`,dir=path.join(base,attempt,protocol);fs.mkdirSync(dir,{recursive:true});
  const key=path.join(repo,'runs/OBS01',id+'.key');fs.writeFileSync(key,randomBytes(32),{flag:'wx',mode:0o600});
+ if(round==='5'){sources.push(['R5-context','HO/any/H8']);const extra={AVAILABILITY:[['X1-metrics','EI-metric/xtdb/X1.node.tx.latestCompletedTxId'],['X2-health','EI-query/xtdb/X2']],WORK:[['X3-tables','EI-table/xtdb/X3'],['H1-io','HO/any/H1'],['H3-files','HO/any/H3']],MAINTENANCE:[['X3-tables','EI-table/xtdb/X3']],WATERMARK:[['H8-process','HO/any/H8']], 'ACK-ORDER':[['X3-tables','EI-table/xtdb/X3']]};sources.push(...(extra[protocol]??[]));}
  const spec={resident:true,protocol:'OBS-'+protocol,runId:id,obligation,sources,relation:'obs01r'+round+'_'+attempt.replaceAll('-','_')+'_'+protocol.toLowerCase().replaceAll('-','_'),
+  round:Number(round),nativePositionProfile:round==='5'?'xtdb-system-time-join/1':null,faultExpectedPayload:1,
   population:{generator:'configured-entities-v1',n:8,width:1},requestId:'cancel-r3',reuseQueryId:'reuse-r3',expectedError:'E-CANCELLED',
   pools:[{label:'resident-pgwire',port:5432,max:100000}],forecast:{memory:3221225472,disk:20000000000},envelope:{memory:3221225472,disk:20000000000,owners:[]},
   operation:'native-projection',comparisonOperation:'native-full-scan',threshold:protocol==='WORK'?'T-REUSE-AVOIDED':'NS-P3-LAG-P99-MS',kind:'compaction',

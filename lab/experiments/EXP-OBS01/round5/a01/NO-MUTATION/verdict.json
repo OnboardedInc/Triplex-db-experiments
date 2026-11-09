@@ -1,0 +1,10 @@
+{
+  "protocol": "OBS-NO-MUTATION",
+  "verdict": "FAIL",
+  "reasons": [
+    "two independent agreeing kinds required"
+  ],
+  "thresholds": {},
+  "sourceStrength": null,
+  "qualification": "screening-only"
+}

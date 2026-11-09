@@ -1,0 +1,141 @@
+{
+  "ownReservations": [],
+  "ownContainers": [],
+  "attempts": [
+    {
+      "runId": "obs01-r5-a01-availability",
+      "sealFilePresent": false,
+      "retentionPublished": false,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "container-stderr.txt",
+      "terminalAuditFileSha256": "fccb862d59f55cae6549a11d92b7086bcdb865018914244ef902fd8651359c37"
+    },
+    {
+      "runId": "obs01-r5-a01-cancel",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "66bb219ee72c0e2a39bc8cac91ea31c5a32247bd423a29b447866dc032d729be"
+    },
+    {
+      "runId": "obs01-r5-a01-erasure-scan",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "17786ba92e2ae966acd008e39cddcca4ad288433a49761979812d5162ddd8647"
+    },
+    {
+      "runId": "obs01-r5-a01-maintenance",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "20b3c80b54735aff5e8a5e6f70efd22f7f170ebdbf14e768e8f8b0de9d2440c2"
+    },
+    {
+      "runId": "obs01-r5-a01-no-mutation",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "cc606dd178bcce67eafd01c33da901dcbcf0b80829b385da8dde26ae344a65cd"
+    },
+    {
+      "runId": "obs01-r5-a01-preabort",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "ae385c9f9cbe64a8ac63e88aed61431f0fe4551422e70087a53c974f8871a855"
+    },
+    {
+      "runId": "obs01-r5-a01-watermark",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "58823c377d91b6a2c694797281a52ef6177a6782346fcac589c9a2ff17c1c7e6"
+    },
+    {
+      "runId": "obs01-r5-a02-ack-order",
+      "sealFilePresent": false,
+      "retentionPublished": false,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "container-stderr.txt",
+      "terminalAuditFileSha256": "c70ac5f874b91d0d8077262ab59d28520d4f9598689026ad48ce0c03b04b5a88"
+    },
+    {
+      "runId": "obs01-r5-a02-availability",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "142184dd1c3a535693e9d166d48724054adec1757a44ba0a8e2a7b30981dd593"
+    },
+    {
+      "runId": "obs01-r5-a02-cancel",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "1e34c34c0dee4e3c4abca03a9851b937080fecfdee487f8f6319e0a512c2528e"
+    },
+    {
+      "runId": "obs01-r5-a02-fault-transitions",
+      "sealFilePresent": false,
+      "retentionPublished": false,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "container-stderr.txt",
+      "terminalAuditFileSha256": "ae52ca06db09b335a9ee5b9e2ba185988e76c94333637600ce181d71b6971e5e"
+    },
+    {
+      "runId": "obs01-r5-a02-work",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "3b57f3b8188416648fac23453f5543669595317d33597e016c57902a99d5614f"
+    },
+    {
+      "runId": "obs01-r5-a03-ack-order",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "0633922b919db249ce5a1cc5eb6d58bb1d32481300d45a6867c7125b95d05e7f"
+    },
+    {
+      "runId": "obs01-r5-a03-cancel",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "5cac1855b9d520136472a0d4eb8a5e3a8049da0299cb5f616f6299ae847823e2"
+    },
+    {
+      "runId": "obs01-r5-a03-fault-transitions",
+      "sealFilePresent": true,
+      "retentionPublished": true,
+      "identityUnchanged": true,
+      "observerRemovalObserved": true,
+      "terminalAuditFile": "integrity.stdout.json",
+      "terminalAuditFileSha256": "23a9ea3fd7e4e1f5f4d128beb7bb6746496de3088b7e4f5ba1cf2a7ad8aa574e"
+    }
+  ]
+}

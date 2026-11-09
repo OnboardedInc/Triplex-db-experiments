@@ -1,0 +1,130 @@
+{
+  "durableEvidenceObject": {
+    "readbackOperationId": "obs01-r5-a03-fault-transitions",
+    "readbackPosition": 742359911,
+    "record": {
+      "facts": {
+        "committed": true,
+        "marker": {
+          "operationId": "obs01-r5-a03-fault-transitions",
+          "position": 742359911,
+          "value": 1
+        },
+        "operationMarkerPresent": true,
+        "transaction": {
+          "operationId": "obs01-r5-a03-fault-transitions",
+          "position": 742359911
+        }
+      },
+      "operationId": "obs01-r5-a03-fault-transitions",
+      "position": 742359911,
+      "t": 125099516.860218,
+      "transition": "XT2-ENGINE-COMMITTED"
+    },
+    "sha256": "e9d2d319f7400d9e01f7a7b72173bda6d4fb87d84bdfcf02a88c1e6c37501140",
+    "tReadBack": 125099825.318013
+  },
+  "t": 125099516.860218,
+  "tCrash": 125099675.230369,
+  "transition": "XT2-ENGINE-COMMITTED",
+  "transitions": [
+    {
+      "durableEvidenceObject": {
+        "readbackOperationId": "obs01-r5-a03-fault-transitions",
+        "readbackPosition": 742359911,
+        "record": {
+          "facts": {
+            "committed": true,
+            "marker": {
+              "operationId": "obs01-r5-a03-fault-transitions",
+              "position": 742359911,
+              "value": 1
+            },
+            "operationMarkerPresent": true,
+            "transaction": {
+              "operationId": "obs01-r5-a03-fault-transitions",
+              "position": 742359911
+            }
+          },
+          "operationId": "obs01-r5-a03-fault-transitions",
+          "position": 742359911,
+          "t": 125099516.860218,
+          "transition": "XT2-ENGINE-COMMITTED"
+        },
+        "sha256": "e9d2d319f7400d9e01f7a7b72173bda6d4fb87d84bdfcf02a88c1e6c37501140",
+        "tReadBack": 125099825.318013
+      },
+      "t": 125099516.860218,
+      "transition": "XT2-ENGINE-COMMITTED"
+    }
+  ],
+  "variant": "engine-source",
+  "source": {
+    "kind": "EI-query/xtdb/X4",
+    "streamRefs": [
+      "X4-native"
+    ],
+    "records": {
+      "durableEvidenceObject": {
+        "readbackOperationId": "obs01-r5-a03-fault-transitions",
+        "readbackPosition": 742359911,
+        "record": {
+          "facts": {
+            "committed": true,
+            "marker": {
+              "operationId": "obs01-r5-a03-fault-transitions",
+              "position": 742359911,
+              "value": 1
+            },
+            "operationMarkerPresent": true,
+            "transaction": {
+              "operationId": "obs01-r5-a03-fault-transitions",
+              "position": 742359911
+            }
+          },
+          "operationId": "obs01-r5-a03-fault-transitions",
+          "position": 742359911,
+          "t": 125099516.860218,
+          "transition": "XT2-ENGINE-COMMITTED"
+        },
+        "sha256": "e9d2d319f7400d9e01f7a7b72173bda6d4fb87d84bdfcf02a88c1e6c37501140",
+        "tReadBack": 125099825.318013
+      },
+      "t": 125099516.860218,
+      "tCrash": 125099675.230369,
+      "transition": "XT2-ENGINE-COMMITTED",
+      "transitions": [
+        {
+          "durableEvidenceObject": {
+            "readbackOperationId": "obs01-r5-a03-fault-transitions",
+            "readbackPosition": 742359911,
+            "record": {
+              "facts": {
+                "committed": true,
+                "marker": {
+                  "operationId": "obs01-r5-a03-fault-transitions",
+                  "position": 742359911,
+                  "value": 1
+                },
+                "operationMarkerPresent": true,
+                "transaction": {
+                  "operationId": "obs01-r5-a03-fault-transitions",
+                  "position": 742359911
+                }
+              },
+              "operationId": "obs01-r5-a03-fault-transitions",
+              "position": 742359911,
+              "t": 125099516.860218,
+              "transition": "XT2-ENGINE-COMMITTED"
+            },
+            "sha256": "e9d2d319f7400d9e01f7a7b72173bda6d4fb87d84bdfcf02a88c1e6c37501140",
+            "tReadBack": 125099825.318013
+          },
+          "t": 125099516.860218,
+          "transition": "XT2-ENGINE-COMMITTED"
+        }
+      ],
+      "variant": "engine-source"
+    }
+  }
+}

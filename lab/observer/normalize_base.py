@@ -69,6 +69,9 @@ def decode(raw):
     if text.lstrip().startswith('{'):
         # Raw thread or log-tail snapshots: validate payload encodings, preserving exact bytes.
         value = json.loads(text)
+        if value.get('event') == 'health-http':
+            body=http_body(base64.b64decode(value['response'],validate=True))
+            return {'health':{'alive':body==b'Alive.','bodyBase64':base64.b64encode(body).decode()}}
         if value.get('event') == 'qlever-index-state':
             stats=json.loads(http_body(base64.b64decode(value['statsHttp'],validate=True)))
             metrics=prometheus(http_body(base64.b64decode(value['metricsHttp'],validate=True)))

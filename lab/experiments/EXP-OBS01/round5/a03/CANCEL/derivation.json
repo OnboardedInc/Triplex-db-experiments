@@ -1,0 +1,19 @@
+{
+  "T1-wire": {
+    "missing": [
+      "independent drain and transport acknowledgement required"
+    ],
+    "derivedFields": [
+      "callerError",
+      "connectionId",
+      "expectedError",
+      "requestId",
+      "reuseConnectionId",
+      "reuseQueryId",
+      "reuseResult",
+      "tCallerSettled",
+      "tCancelRequested",
+      "tReuseOk"
+    ]
+  }
+}

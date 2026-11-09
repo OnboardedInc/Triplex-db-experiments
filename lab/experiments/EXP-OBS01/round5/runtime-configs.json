@@ -1,0 +1,33 @@
+{
+  "claim": "diagnostic current configuration reachability; not an obs-bundle or performance receipt",
+  "residents": {
+    "tx2-xtdb-dev": {
+      "id": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+      "startedAt": "2026-11-07T19:39:01.589983918Z",
+      "jvmOptions": [
+        "JDK_JAVA_OPTIONS=-Xmx1500m -XX:MaxDirectMemorySize=1g"
+      ],
+      "configs": [
+        {
+          "destination": "/etc/xtdb/config.yaml",
+          "source": "/Users/sam/projects/triplex-db-2/runs/engines/xtdb-dev/config.yaml",
+          "sha256": "f6e1248ebb09af8a6959d67d15e0355a0be4c3783d8c3fc97ba97b00c7b3e379",
+          "text": "server:\n  host: 0.0.0.0\n  port: 5432\nlog: !Local\n  path: /var/lib/xtdb/log\nstorage: !Local\n  path: /var/lib/xtdb/buffers\nmemoryCache:\n  maxSizeBytes: 536870912\nhealthz:\n  host: 0.0.0.0\n  port: 8080\n"
+        }
+      ]
+    },
+    "tx2-qlever-dev": {
+      "id": "a809fb6cb3ba858da2984c65fcea810bce9833627c930c7070e33e6e39a3f826",
+      "startedAt": "2026-11-07T22:06:14.751906646Z",
+      "jvmOptions": [],
+      "configs": [
+        {
+          "destination": "/config/start.sh",
+          "source": "/Users/sam/projects/triplex-db-2/runs/engines/qlever-dev/start.sh",
+          "sha256": "13a4f9102323c8c31fc0c093b3fe64e068691afd5cead0018e936075e3422736",
+          "text": "#!/bin/bash\nset -euo pipefail\ncd /data\nif [[ ! -f triplex.index.pso ]]; then\n  # This bootstrap graph belongs only to this independent development server.\n  printf '<urn:triplex:bootstrap> <urn:triplex:format> \"1\" .\\n' > bootstrap.nt\n  qlever-index -i triplex -f bootstrap.nt -F nt --stxxl-memory 512M --no-patterns\nfi\n# [EXP-002] R8 6.1 server knobs: -j 4 (a rebuild holds one query thread; -j 16 on 2 CPUs only queues),\n# cache 512M / single entry 128M (inside -m), default timeout 10s for requests that carry none (the\n# SDK always sends its own), planner threshold 1 (the homebase F setting; planner memory is outside\n# -m), no unbounded metrics/resource logs next to the index. lab/bin/engine.mjs substitutes -m per slot.\nexec qlever-server -i triplex -p 7019 -j 4 -m 2000M -c 512M -e 128M -s 10s --persist-updates --no-patterns --no-access-check --no-metrics-log --no-resource-usage-log --set-runtime-parameter query-planning-budget=1\n"
+        }
+      ]
+    }
+  }
+}

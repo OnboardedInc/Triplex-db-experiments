@@ -1,0 +1,2169 @@
+[
+  {
+    "protocol": "OBS-CANCEL",
+    "runId": "obs01-r5-a03-cancel",
+    "verdict": "FAIL",
+    "reasons": [
+      "missing required field: transportAck"
+    ],
+    "auditFramesSha256": "993195fe9ef8d80c7f5239c4e8a2d511f53105fdb779ec572eda03b68aec3aa1",
+    "decoderSha256": "238d4944beef822fd6c71875d93077a36b7ac438cac4b527188ef5a23b21f572",
+    "sources": [
+      {
+        "name": "engine-process",
+        "stage": "before",
+        "tMono": 125133307.349333,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "trace-log-availability",
+        "stage": "before",
+        "tMono": 125133316.474305,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "engine-config:/etc/xtdb/config.yaml",
+        "stage": "before",
+        "tMono": 125133318.735569,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/config.yaml'",
+        "sha256": null
+      },
+      {
+        "name": "engine-config:/etc/xtdb/log4j2.xml",
+        "stage": "before",
+        "tMono": 125133322.669092,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/log4j2.xml'",
+        "sha256": null
+      },
+      {
+        "name": "X1",
+        "stage": "before",
+        "tMono": 125133422.446276,
+        "status": "response-retained",
+        "sha256": "64f5ea8db8cce6c112fe180b5ead5431ee4a6f22f060cb2dff5be53c5661c858",
+        "error": null,
+        "gauges": [
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11287"
+          },
+          {
+            "name": "node_tx_await_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26320.003330896"
+          },
+          {
+            "name": "node_tx_await_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.006207162"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11287"
+          },
+          {
+            "name": "node_tx_execute_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26506.876701255"
+          },
+          {
+            "name": "node_tx_execute_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0098456"
+          },
+          {
+            "name": "node_tx_lag_MsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_latestCompletedTxId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42359911E8"
+          },
+          {
+            "name": "node_tx_latestProcessedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42359911E8"
+          },
+          {
+            "name": "node_tx_latestSubmittedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42359911E8"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0"
+          },
+          {
+            "name": "node_tx_submit_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "pgwire_cancelled_connections_total",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "5192.0"
+          }
+        ]
+      },
+      {
+        "name": "X2",
+        "stage": "before",
+        "tMono": 125133432.563878,
+        "status": "response-retained",
+        "sha256": "6016a84aa5f0ed527e1690afd621f46eb0a1a9047f133c43ff6d55f7e1e3752b",
+        "error": null,
+        "alive": true
+      },
+      {
+        "name": "X1",
+        "stage": "after",
+        "tMono": 125133747.455106,
+        "status": "response-retained",
+        "sha256": "019750da7735ba0bff1b5e6f4606129334069dec8e54dc152d44cc56d43b2622",
+        "error": null,
+        "gauges": [
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11288"
+          },
+          {
+            "name": "node_tx_await_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26320.005151574"
+          },
+          {
+            "name": "node_tx_await_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.006207162"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11288"
+          },
+          {
+            "name": "node_tx_execute_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26506.879608273"
+          },
+          {
+            "name": "node_tx_execute_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0098456"
+          },
+          {
+            "name": "node_tx_lag_MsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_latestCompletedTxId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.4236165E8"
+          },
+          {
+            "name": "node_tx_latestProcessedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.4236165E8"
+          },
+          {
+            "name": "node_tx_latestSubmittedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.4236165E8"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0"
+          },
+          {
+            "name": "node_tx_submit_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "pgwire_cancelled_connections_total",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "5193.0"
+          }
+        ]
+      },
+      {
+        "name": "X2",
+        "stage": "after",
+        "tMono": 125133772.843884,
+        "status": "response-retained",
+        "sha256": "8e404f6a60aebb5761b6f976dc118752e752001f1899175da1e72ff57ed8c98e",
+        "error": null,
+        "alive": true
+      }
+    ],
+    "nativeQueries": [
+      {
+        "phase": "seed",
+        "sql": "INSERT INTO obs01r5_a03_cancel (_id,n) VALUES ('cancel-0',0),('cancel-1',1),('cancel-2',2),('cancel-3',3),('cancel-4',4),('cancel-5',5),('cancel-6',6),('cancel-7',7),('cancel-8',8),('cancel-9',9),('cancel-10',10),('cancel-11',11),('cancel-12',12),('cancel-13',13),('cancel-14',14),('cancel-15',15),('cancel-16',16),('cancel-17',17),('cancel-18',18),('cancel-19',19),('cancel-20',20),('cancel-21',21),('cancel-22',22),('cancel-23',23),('cancel-24',24),('cancel-25',25),('cancel-26',26),('cancel-27',27),('cancel-28',28),('cancel-29',29),('cancel-30',30),('cancel-31',31)",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": null,
+        "columns": []
+      }
+    ],
+    "positiveScans": [],
+    "claim": "source reachability and positive observations only; no additional semantic verdict"
+  },
+  {
+    "protocol": "OBS-PREABORT",
+    "runId": "obs01-r5-a01-preabort",
+    "verdict": "FAIL",
+    "reasons": [
+      "missing required field: engineStatementLog"
+    ],
+    "auditFramesSha256": "73b5011759e42bf75f77fe9a8f508fe8a27bd8d96b0bb76b38db744002fe59f3",
+    "decoderSha256": "ed94e81f52a36a360d0a118bf6e123b12c77f6a551c4ff821ee597c130bb65c6",
+    "sources": [
+      {
+        "name": "engine-process",
+        "stage": "before",
+        "tMono": 124846403.742274,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "trace-log-availability",
+        "stage": "before",
+        "tMono": 124846410.919979,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "engine-config:/etc/xtdb/config.yaml",
+        "stage": "before",
+        "tMono": 124846415.463587,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/config.yaml'",
+        "sha256": null
+      },
+      {
+        "name": "engine-config:/etc/xtdb/log4j2.xml",
+        "stage": "before",
+        "tMono": 124846419.283607,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/log4j2.xml'",
+        "sha256": null
+      }
+    ],
+    "nativeQueries": [
+      {
+        "phase": "read-control",
+        "sql": "SELECT 1 AS n",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "n"
+        ]
+      }
+    ],
+    "positiveScans": [],
+    "claim": "source reachability and positive observations only; no additional semantic verdict"
+  },
+  {
+    "protocol": "OBS-NO-MUTATION",
+    "runId": "obs01-r5-a01-no-mutation",
+    "verdict": "FAIL",
+    "reasons": [
+      "two independent agreeing kinds required"
+    ],
+    "auditFramesSha256": "626e019a4623c96ab7aba6e66f03b53725296babe3b7580a8be2710176149690",
+    "decoderSha256": "ed94e81f52a36a360d0a118bf6e123b12c77f6a551c4ff821ee597c130bb65c6",
+    "sources": [
+      {
+        "name": "engine-process",
+        "stage": "before",
+        "tMono": 124848808.219113,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "trace-log-availability",
+        "stage": "before",
+        "tMono": 124848811.745382,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "engine-config:/etc/xtdb/config.yaml",
+        "stage": "before",
+        "tMono": 124848815.04015,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/config.yaml'",
+        "sha256": null
+      },
+      {
+        "name": "engine-config:/etc/xtdb/log4j2.xml",
+        "stage": "before",
+        "tMono": 124848817.516455,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/log4j2.xml'",
+        "sha256": null
+      },
+      {
+        "name": "X1",
+        "stage": "before",
+        "tMono": 124848848.603705,
+        "status": "response-retained",
+        "sha256": "ca0f00f2913450768ef699f206fcccf32e5179dcbd336043f178ece75cee6456",
+        "error": null
+      },
+      {
+        "name": "X2",
+        "stage": "before",
+        "tMono": 124848853.423397,
+        "status": "response-retained",
+        "sha256": "3def5435d829bc8142db6d334846561db84a8a89f99c13584b6dc08ff150eac8",
+        "error": null
+      },
+      {
+        "name": "X1",
+        "stage": "after",
+        "tMono": 124849000.839771,
+        "status": "response-retained",
+        "sha256": "db52466d74c862706857d5213d78cd34c37973279ac21958a0db13dd93ffdb6f",
+        "error": null
+      },
+      {
+        "name": "X2",
+        "stage": "after",
+        "tMono": 124849004.720375,
+        "status": "response-retained",
+        "sha256": "3def5435d829bc8142db6d334846561db84a8a89f99c13584b6dc08ff150eac8",
+        "error": null
+      }
+    ],
+    "nativeQueries": [
+      {
+        "phase": "read-control",
+        "sql": "SELECT 1 AS n",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "n"
+        ]
+      }
+    ],
+    "positiveScans": [],
+    "claim": "source reachability and positive observations only; no additional semantic verdict"
+  },
+  {
+    "protocol": "OBS-AVAILABILITY",
+    "runId": "obs01-r5-a02-availability",
+    "verdict": "FAIL",
+    "reasons": [
+      "required fields not recomputed from raw bytes"
+    ],
+    "auditFramesSha256": "1811ebd620bee543d03d5e35f18ec128bb7a3ba20bdb610afce6602178606f25",
+    "decoderSha256": "580e6c9f87c0244d3835cf37b9368be12597b429166aff3437009d4515fd273f",
+    "sources": [
+      {
+        "name": "engine-process",
+        "stage": "before",
+        "tMono": 124895311.400799,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "trace-log-availability",
+        "stage": "before",
+        "tMono": 124895315.807323,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "engine-config:/etc/xtdb/config.yaml",
+        "stage": "before",
+        "tMono": 124895325.471793,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/config.yaml'",
+        "sha256": null
+      },
+      {
+        "name": "engine-config:/etc/xtdb/log4j2.xml",
+        "stage": "before",
+        "tMono": 124895328.237725,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/log4j2.xml'",
+        "sha256": null
+      },
+      {
+        "name": "X1",
+        "stage": "before",
+        "tMono": 124895370.935292,
+        "status": "response-retained",
+        "sha256": "a625f1272d3be98b34897f3e862d7ce0eebf0c630cb21a7661aa25b14c9a5956",
+        "error": null
+      },
+      {
+        "name": "X2",
+        "stage": "before",
+        "tMono": 124895376.104446,
+        "status": "response-retained",
+        "sha256": "7abb61133cf9895763063b59f7d16a0fa5df1cadc5798a3308056e9b248cacca",
+        "error": null
+      },
+      {
+        "name": "X1",
+        "stage": "after",
+        "tMono": 124895691.277177,
+        "status": "response-retained",
+        "sha256": "4745f72cc969364bebf9f8402a0c547dc29bc22b41d56122421ab2701bd90c41",
+        "error": null
+      },
+      {
+        "name": "X2",
+        "stage": "after",
+        "tMono": 124895709.367693,
+        "status": "response-retained",
+        "sha256": "7abb61133cf9895763063b59f7d16a0fa5df1cadc5798a3308056e9b248cacca",
+        "error": null
+      }
+    ],
+    "nativeQueries": [
+      {
+        "phase": "availability-failure",
+        "sql": "SELECT CAST('not-a-number' AS BIGINT) AS n",
+        "outcome": "error",
+        "sqlstate": "08P01",
+        "error": "For input string: \"not-a-number\"",
+        "rowsSeen": null,
+        "columns": []
+      },
+      {
+        "phase": "availability-write",
+        "sql": "INSERT INTO obs01r5_a02_availability (_id,n) VALUES ('availability',1)",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": null,
+        "columns": []
+      },
+      {
+        "phase": "availability-read",
+        "sql": "SELECT COUNT(*) AS n FROM obs01r5_a02_availability",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "n"
+        ]
+      }
+    ],
+    "positiveScans": [],
+    "claim": "source reachability and positive observations only; no additional semantic verdict"
+  },
+  {
+    "protocol": "OBS-WORK",
+    "runId": "obs01-r5-a04-work",
+    "verdict": "FAIL",
+    "reasons": [
+      "missing required field: rowsWritten"
+    ],
+    "auditFramesSha256": "93cd4ab2854162a76ca97019b83c36fe482e2a5a55414577be6f4233a32f0bae",
+    "decoderSha256": "238d4944beef822fd6c71875d93077a36b7ac438cac4b527188ef5a23b21f572",
+    "sources": [
+      {
+        "name": "engine-process",
+        "stage": "before",
+        "tMono": 125350953.608508,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "trace-log-availability",
+        "stage": "before",
+        "tMono": 125350957.648201,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "engine-config:/etc/xtdb/config.yaml",
+        "stage": "before",
+        "tMono": 125350960.091258,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/config.yaml'",
+        "sha256": null
+      },
+      {
+        "name": "engine-config:/etc/xtdb/log4j2.xml",
+        "stage": "before",
+        "tMono": 125350962.349939,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/log4j2.xml'",
+        "sha256": null
+      },
+      {
+        "name": "X1",
+        "stage": "before",
+        "tMono": 125350998.024081,
+        "status": "response-retained",
+        "sha256": "a6815dfd55107570d0539f1f20893fabd607f1e07ddeeb9f52d6b7cd5530bdc8",
+        "error": null,
+        "gauges": [
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11288"
+          },
+          {
+            "name": "node_tx_await_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26320.005151574"
+          },
+          {
+            "name": "node_tx_await_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11288"
+          },
+          {
+            "name": "node_tx_execute_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26506.879608273"
+          },
+          {
+            "name": "node_tx_execute_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_lag_MsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_latestCompletedTxId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.4236165E8"
+          },
+          {
+            "name": "node_tx_latestProcessedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.4236165E8"
+          },
+          {
+            "name": "node_tx_latestSubmittedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.4236165E8"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0"
+          },
+          {
+            "name": "node_tx_submit_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "pgwire_cancelled_connections_total",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "5193.0"
+          }
+        ]
+      },
+      {
+        "name": "X2",
+        "stage": "before",
+        "tMono": 125351011.788793,
+        "status": "response-retained",
+        "sha256": "0384adda7675570244ddc0766aeaa8f00c2e7d3f038b116671c9149f66331d77",
+        "error": null,
+        "alive": true
+      },
+      {
+        "name": "block-file-read-gap",
+        "stage": "before",
+        "tMono": 125351214.334282,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "cgroup-io",
+        "stage": "before",
+        "tMono": 125351217.178925,
+        "owner": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+        "attribution": "whole shared engine, not measured-operation work",
+        "ioStat": "253:0 rbytes=204800 wbytes=0 rios=8 wios=0 dbytes=0 dios=0\n253:16 rbytes=1736888320 wbytes=10219483136 rios=30638 wios=903120 dbytes=0 dios=0\n"
+      },
+      {
+        "name": "engine-files",
+        "stage": "before",
+        "tMono": 125351317.392725,
+        "fileCount": 4506,
+        "coverage": "engine volume only; not host copies or freed blocks",
+        "error": null
+      },
+      {
+        "name": "X1",
+        "stage": "after",
+        "tMono": 125351399.719829,
+        "status": "response-retained",
+        "sha256": "9363e2e8927714e54c3fd21cd1548ea2439015824a9dc455b07ffc3f3d1b1c19",
+        "error": null,
+        "gauges": [
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11289"
+          },
+          {
+            "name": "node_tx_await_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26320.008782305"
+          },
+          {
+            "name": "node_tx_await_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.003630731"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11289"
+          },
+          {
+            "name": "node_tx_execute_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26506.885331809"
+          },
+          {
+            "name": "node_tx_execute_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.005723536"
+          },
+          {
+            "name": "node_tx_lag_MsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_latestCompletedTxId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42364357E8"
+          },
+          {
+            "name": "node_tx_latestProcessedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42364357E8"
+          },
+          {
+            "name": "node_tx_latestSubmittedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42364357E8"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0"
+          },
+          {
+            "name": "node_tx_submit_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "pgwire_cancelled_connections_total",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "5193.0"
+          }
+        ]
+      },
+      {
+        "name": "X2",
+        "stage": "after",
+        "tMono": 125351409.773434,
+        "status": "response-retained",
+        "sha256": "0384adda7675570244ddc0766aeaa8f00c2e7d3f038b116671c9149f66331d77",
+        "error": null,
+        "alive": true
+      },
+      {
+        "name": "block-file-read-gap",
+        "stage": "after",
+        "tMono": 125351514.692597,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "cgroup-io",
+        "stage": "after",
+        "tMono": 125351517.55649,
+        "owner": "d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c",
+        "attribution": "whole shared engine, not measured-operation work",
+        "ioStat": "253:0 rbytes=204800 wbytes=0 rios=8 wios=0 dbytes=0 dios=0\n253:16 rbytes=1736888320 wbytes=10219503616 rios=30638 wios=903125 dbytes=0 dios=0\n"
+      },
+      {
+        "name": "engine-files",
+        "stage": "after",
+        "tMono": 125351566.629384,
+        "fileCount": 4506,
+        "coverage": "engine volume only; not host copies or freed blocks",
+        "error": null
+      }
+    ],
+    "nativeQueries": [
+      {
+        "phase": "system-before-xt-txs",
+        "sql": "SELECT _id, committed, system_time FROM xt.txs LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "_id",
+          "committed",
+          "system_time"
+        ]
+      },
+      {
+        "phase": "system-before-xt-live_tables",
+        "sql": "SELECT * FROM xt.live_tables LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "row_count",
+          "schema_name",
+          "table_name"
+        ]
+      },
+      {
+        "phase": "system-before-xt-trie_stats",
+        "sql": "SELECT * FROM xt.trie_stats LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "data_file_size",
+          "level",
+          "recency",
+          "row_count",
+          "schema_name",
+          "table_name",
+          "temporal_metadata",
+          "trie_key",
+          "trie_state"
+        ]
+      },
+      {
+        "phase": "system-before-xt-source_log_msgs",
+        "sql": "SELECT msg_id, log_timestamp, msg_type FROM xt.source_log_msgs WHERE msg_id = 742361650 LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "log_timestamp",
+          "msg_id",
+          "msg_type"
+        ]
+      },
+      {
+        "phase": "seed",
+        "sql": "INSERT INTO obs01r5_a04_work (_id,n) VALUES ('work',1)",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": null,
+        "columns": []
+      },
+      {
+        "phase": "work-comparison",
+        "sql": "EXPLAIN ANALYZE SELECT * FROM obs01r5_a04_work",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 3,
+        "columns": [
+          "attributes",
+          "depth",
+          "op",
+          "page_count",
+          "pushdowns",
+          "row_count",
+          "self_time",
+          "time_to_first_page",
+          "total_time"
+        ]
+      },
+      {
+        "phase": "work-candidate",
+        "sql": "EXPLAIN ANALYZE SELECT n FROM obs01r5_a04_work",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 3,
+        "columns": [
+          "attributes",
+          "depth",
+          "op",
+          "page_count",
+          "pushdowns",
+          "row_count",
+          "self_time",
+          "time_to_first_page",
+          "total_time"
+        ]
+      },
+      {
+        "phase": "system-after-xt-txs",
+        "sql": "SELECT _id, committed, system_time FROM xt.txs LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "_id",
+          "committed",
+          "system_time"
+        ]
+      },
+      {
+        "phase": "system-after-xt-live_tables",
+        "sql": "SELECT * FROM xt.live_tables LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "row_count",
+          "schema_name",
+          "table_name"
+        ]
+      },
+      {
+        "phase": "system-after-xt-trie_stats",
+        "sql": "SELECT * FROM xt.trie_stats LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "data_file_size",
+          "level",
+          "recency",
+          "row_count",
+          "schema_name",
+          "table_name",
+          "temporal_metadata",
+          "trie_key",
+          "trie_state"
+        ]
+      },
+      {
+        "phase": "system-after-xt-source_log_msgs",
+        "sql": "SELECT msg_id, log_timestamp, msg_type FROM xt.source_log_msgs WHERE msg_id = 742364357 LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "log_timestamp",
+          "msg_id",
+          "msg_type"
+        ]
+      }
+    ],
+    "positiveScans": [],
+    "claim": "source reachability and positive observations only; no additional semantic verdict"
+  },
+  {
+    "protocol": "OBS-MAINTENANCE",
+    "runId": "obs01-r5-a04-maintenance",
+    "verdict": "FAIL",
+    "reasons": [
+      "missing required field: tStart"
+    ],
+    "auditFramesSha256": "943ce7dc9ea0177ea8eaf39225a27bf6a659317fd6e02d585a44ed1af082649d",
+    "decoderSha256": "238d4944beef822fd6c71875d93077a36b7ac438cac4b527188ef5a23b21f572",
+    "sources": [
+      {
+        "name": "engine-process",
+        "stage": "before",
+        "tMono": 125355249.4693,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "trace-log-availability",
+        "stage": "before",
+        "tMono": 125355253.674993,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "engine-config:/etc/xtdb/config.yaml",
+        "stage": "before",
+        "tMono": 125355256.205634,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/config.yaml'",
+        "sha256": null
+      },
+      {
+        "name": "engine-config:/etc/xtdb/log4j2.xml",
+        "stage": "before",
+        "tMono": 125355258.136688,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/log4j2.xml'",
+        "sha256": null
+      },
+      {
+        "name": "X1",
+        "stage": "before",
+        "tMono": 125355276.185052,
+        "status": "response-retained",
+        "sha256": "7f5816a0e5af274884cc5e03de6b76484cfbc0095e323d9ef19e206879f38ae6",
+        "error": null,
+        "gauges": [
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11289"
+          },
+          {
+            "name": "node_tx_await_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26320.008782305"
+          },
+          {
+            "name": "node_tx_await_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.003630731"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11289"
+          },
+          {
+            "name": "node_tx_execute_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26506.885331809"
+          },
+          {
+            "name": "node_tx_execute_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.005723536"
+          },
+          {
+            "name": "node_tx_lag_MsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_latestCompletedTxId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42364357E8"
+          },
+          {
+            "name": "node_tx_latestProcessedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42364357E8"
+          },
+          {
+            "name": "node_tx_latestSubmittedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42364357E8"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0"
+          },
+          {
+            "name": "node_tx_submit_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "pgwire_cancelled_connections_total",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "5193.0"
+          }
+        ]
+      },
+      {
+        "name": "X2",
+        "stage": "before",
+        "tMono": 125355285.099359,
+        "status": "response-retained",
+        "sha256": "9604d6f0ba51046b132100ecf259d3032525c5b37caf8bf7d3f584c20717c647",
+        "error": null,
+        "alive": true
+      },
+      {
+        "name": "block-file-read-gap",
+        "stage": "before",
+        "tMono": 125355324.892986,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "X1",
+        "stage": "after",
+        "tMono": 125356338.513482,
+        "status": "response-retained",
+        "sha256": "07504dfe1263cc1f88789bbfa63963e54ccc751be9323e23df6e3c32c61812a6",
+        "error": null,
+        "gauges": [
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_await_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11289"
+          },
+          {
+            "name": "node_tx_await_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26320.008782305"
+          },
+          {
+            "name": "node_tx_await_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.003630731"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_execute_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "11289"
+          },
+          {
+            "name": "node_tx_execute_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "26506.885331809"
+          },
+          {
+            "name": "node_tx_execute_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.005723536"
+          },
+          {
+            "name": "node_tx_lag_MsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_latestCompletedTxId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42364357E8"
+          },
+          {
+            "name": "node_tx_latestProcessedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42364357E8"
+          },
+          {
+            "name": "node_tx_latestSubmittedMsgId",
+            "labels": "{db=\"xtdb\",node_id=\"bc487d5b\"}",
+            "value": "7.42364357E8"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.75\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.85\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.95\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.98\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.99\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds",
+            "labels": "{node_id=\"bc487d5b\",quantile=\"0.999\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_count",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0"
+          },
+          {
+            "name": "node_tx_submit_seconds_sum",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "node_tx_submit_seconds_max",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "0.0"
+          },
+          {
+            "name": "pgwire_cancelled_connections_total",
+            "labels": "{node_id=\"bc487d5b\"}",
+            "value": "5193.0"
+          }
+        ]
+      },
+      {
+        "name": "X2",
+        "stage": "after",
+        "tMono": 125356346.789909,
+        "status": "response-retained",
+        "sha256": "44440ec7cc736e96bb6c8c01961d422bc42507d1f3a6f6bd15fee0fd58f7b0d8",
+        "error": null,
+        "alive": true
+      },
+      {
+        "name": "block-file-read-gap",
+        "stage": "after",
+        "tMono": 125356388.866551,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      }
+    ],
+    "nativeQueries": [
+      {
+        "phase": "system-before-xt-txs",
+        "sql": "SELECT _id, committed, system_time FROM xt.txs LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "_id",
+          "committed",
+          "system_time"
+        ]
+      },
+      {
+        "phase": "system-before-xt-live_tables",
+        "sql": "SELECT * FROM xt.live_tables LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "row_count",
+          "schema_name",
+          "table_name"
+        ]
+      },
+      {
+        "phase": "system-before-xt-trie_stats",
+        "sql": "SELECT * FROM xt.trie_stats LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "data_file_size",
+          "level",
+          "recency",
+          "row_count",
+          "schema_name",
+          "table_name",
+          "temporal_metadata",
+          "trie_key",
+          "trie_state"
+        ]
+      },
+      {
+        "phase": "system-before-xt-source_log_msgs",
+        "sql": "SELECT msg_id, log_timestamp, msg_type FROM xt.source_log_msgs WHERE msg_id = 742364357 LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "log_timestamp",
+          "msg_id",
+          "msg_type"
+        ]
+      },
+      {
+        "phase": "system-after-xt-txs",
+        "sql": "SELECT _id, committed, system_time FROM xt.txs LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "_id",
+          "committed",
+          "system_time"
+        ]
+      },
+      {
+        "phase": "system-after-xt-live_tables",
+        "sql": "SELECT * FROM xt.live_tables LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "row_count",
+          "schema_name",
+          "table_name"
+        ]
+      },
+      {
+        "phase": "system-after-xt-trie_stats",
+        "sql": "SELECT * FROM xt.trie_stats LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "data_file_size",
+          "level",
+          "recency",
+          "row_count",
+          "schema_name",
+          "table_name",
+          "temporal_metadata",
+          "trie_key",
+          "trie_state"
+        ]
+      },
+      {
+        "phase": "system-after-xt-source_log_msgs",
+        "sql": "SELECT msg_id, log_timestamp, msg_type FROM xt.source_log_msgs WHERE msg_id = 742364357 LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "log_timestamp",
+          "msg_id",
+          "msg_type"
+        ]
+      }
+    ],
+    "positiveScans": [],
+    "claim": "source reachability and positive observations only; no additional semantic verdict"
+  },
+  {
+    "protocol": "OBS-ERASURE-SCAN",
+    "runId": "obs01-r5-a04-erasure-scan",
+    "verdict": "FAIL",
+    "reasons": [
+      "missing required field: inventoryEntry"
+    ],
+    "auditFramesSha256": "a89862a4d3260a71b15c24df3f1b5f3882e5321549258e9ffb5365655c0d3e34",
+    "decoderSha256": "238d4944beef822fd6c71875d93077a36b7ac438cac4b527188ef5a23b21f572",
+    "sources": [
+      {
+        "name": "engine-process",
+        "stage": "before",
+        "tMono": 125358556.517352,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "trace-log-availability",
+        "stage": "before",
+        "tMono": 125358559.965791,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "engine-config:/etc/xtdb/config.yaml",
+        "stage": "before",
+        "tMono": 125358562.405473,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/config.yaml'",
+        "sha256": null
+      },
+      {
+        "name": "engine-config:/etc/xtdb/log4j2.xml",
+        "stage": "before",
+        "tMono": 125358564.787363,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/log4j2.xml'",
+        "sha256": null
+      },
+      {
+        "name": "engine-files",
+        "stage": "before",
+        "tMono": 125358627.677845,
+        "fileCount": 4506,
+        "coverage": "engine volume only; not host copies or freed blocks",
+        "error": null
+      },
+      {
+        "name": "engine-files",
+        "stage": "after",
+        "tMono": 125358852.920645,
+        "fileCount": 4506,
+        "coverage": "engine volume only; not host copies or freed blocks",
+        "error": null
+      }
+    ],
+    "nativeQueries": [
+      {
+        "phase": "canary-write",
+        "sql": "INSERT INTO obs01r5_a04_erasure_scan (_id,canary) VALUES ('control','obs01-r5-a04-erasure-scan')",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": null,
+        "columns": []
+      },
+      {
+        "phase": "canary-readback",
+        "sql": "SELECT canary FROM obs01r5_a04_erasure_scan WHERE _id='control'",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "canary"
+        ]
+      }
+    ],
+    "positiveScans": [
+      {
+        "canary": "obs01-r5-a04-erasure-scan",
+        "bytesExamined": 16777216,
+        "positiveLocations": [
+          "/engine/log/REPLICA_LOG",
+          "/engine/log/LOG"
+        ],
+        "coverage": "bounded tails; positive hits only; no absence/erasure assertion"
+      }
+    ],
+    "claim": "source reachability and positive observations only; no additional semantic verdict"
+  },
+  {
+    "protocol": "OBS-WATERMARK",
+    "runId": "obs01-r5-a01-watermark",
+    "verdict": "FAIL",
+    "reasons": [
+      "missing required field: servingIndex"
+    ],
+    "auditFramesSha256": "38bd2f865c4e736812295eb508d5d75e89fb5f83b3a8d0c6557c813f986e497a",
+    "decoderSha256": "ed94e81f52a36a360d0a118bf6e123b12c77f6a551c4ff821ee597c130bb65c6",
+    "sources": [
+      {
+        "name": "engine-process",
+        "stage": "before",
+        "tMono": 124862019.017565,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "trace-log-availability",
+        "stage": "before",
+        "tMono": 124862024.838972,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "engine-config:/etc/xtdb/config.yaml",
+        "stage": "before",
+        "tMono": 124862029.908791,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/config.yaml'",
+        "sha256": null
+      },
+      {
+        "name": "engine-config:/etc/xtdb/log4j2.xml",
+        "stage": "before",
+        "tMono": 124862033.725687,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/log4j2.xml'",
+        "sha256": null
+      }
+    ],
+    "nativeQueries": [
+      {
+        "phase": "native-control",
+        "sql": "SELECT 1 AS n",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "n"
+        ]
+      }
+    ],
+    "positiveScans": [],
+    "claim": "source reachability and positive observations only; no additional semantic verdict"
+  },
+  {
+    "protocol": "OBS-ACK-ORDER",
+    "runId": "obs01-r5-a03-ack-order",
+    "verdict": "FAIL",
+    "reasons": [
+      "missing required field: tSourcePublished"
+    ],
+    "auditFramesSha256": "5a5ce1ee977725e1847d55e668036ed086f195e442fb8ec387c8e518cad28caf",
+    "decoderSha256": "238d4944beef822fd6c71875d93077a36b7ac438cac4b527188ef5a23b21f572",
+    "sources": [
+      {
+        "name": "engine-process",
+        "stage": "before",
+        "tMono": 125096460.651649,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "trace-log-availability",
+        "stage": "before",
+        "tMono": 125096464.255879,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "engine-config:/etc/xtdb/config.yaml",
+        "stage": "before",
+        "tMono": 125096467.143271,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/config.yaml'",
+        "sha256": null
+      },
+      {
+        "name": "engine-config:/etc/xtdb/log4j2.xml",
+        "stage": "before",
+        "tMono": 125096469.115782,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/log4j2.xml'",
+        "sha256": null
+      }
+    ],
+    "nativeQueries": [
+      {
+        "phase": "system-before-xt-txs",
+        "sql": "SELECT _id, committed, system_time FROM xt.txs LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "_id",
+          "committed",
+          "system_time"
+        ]
+      },
+      {
+        "phase": "commit",
+        "sql": "INSERT INTO obs01r5_a03_ack_order (_id,operation_id,n) VALUES ('ack','obs01-r5-a03-ack-order',1)",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": null,
+        "columns": []
+      },
+      {
+        "phase": "publication-readback",
+        "sql": "SELECT m.operation_id, m.n, m._system_from AS marker_time, t._id AS position, t.system_time, t.committed FROM obs01r5_a03_ack_order m JOIN xt.txs t ON m._system_from = t.system_time WHERE m._id = 'ack'",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "committed",
+          "marker_time",
+          "n",
+          "operation_id",
+          "position",
+          "system_time"
+        ],
+        "rows": [
+          {
+            "operation_id": "obs01-r5-a03-ack-order",
+            "n": 1,
+            "marker_time": "2026-11-09 01:15:45.764004+00:00",
+            "position": 742358188,
+            "system_time": "2026-11-09 01:15:45.764004+00:00",
+            "committed": true
+          }
+        ]
+      },
+      {
+        "phase": "system-after-xt-txs",
+        "sql": "SELECT _id, committed, system_time FROM xt.txs LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "_id",
+          "committed",
+          "system_time"
+        ]
+      }
+    ],
+    "positiveScans": [],
+    "claim": "source reachability and positive observations only; no additional semantic verdict"
+  },
+  {
+    "protocol": "OBS-FAULT-TRANSITIONS",
+    "runId": "obs01-r5-a03-fault-transitions",
+    "verdict": "PASS",
+    "reasons": [],
+    "auditFramesSha256": "ac2e637de68cb3304bdbf30f91c3c780d59da2ee6e9007bf31f0757fad954087",
+    "decoderSha256": "238d4944beef822fd6c71875d93077a36b7ac438cac4b527188ef5a23b21f572",
+    "sources": [
+      {
+        "name": "engine-process",
+        "stage": "before",
+        "tMono": 125099388.496953,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "trace-log-availability",
+        "stage": "before",
+        "tMono": 125099400.689234,
+        "scope": "raw process/listener/config context; not protocol acceptance"
+      },
+      {
+        "name": "engine-config:/etc/xtdb/config.yaml",
+        "stage": "before",
+        "tMono": 125099403.853253,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/config.yaml'",
+        "sha256": null
+      },
+      {
+        "name": "engine-config:/etc/xtdb/log4j2.xml",
+        "stage": "before",
+        "tMono": 125099405.682431,
+        "readable": false,
+        "error": "[Errno 13] Permission denied: '/proc/1/root/etc/xtdb/log4j2.xml'",
+        "sha256": null
+      }
+    ],
+    "nativeQueries": [
+      {
+        "phase": "system-before-xt-txs",
+        "sql": "SELECT _id, committed, system_time FROM xt.txs LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "_id",
+          "committed",
+          "system_time"
+        ]
+      },
+      {
+        "phase": "fault-position-before",
+        "sql": "SELECT m.operation_id, m.n, m._system_from AS marker_time, t._id AS position, t.system_time, t.committed FROM obs01r5_a03_fault_transitions m JOIN xt.txs t ON m._system_from = t.system_time WHERE m._id = 'fault'",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "committed",
+          "marker_time",
+          "n",
+          "operation_id",
+          "position",
+          "system_time"
+        ],
+        "rows": [
+          {
+            "operation_id": "obs01-r5-a03-fault-transitions",
+            "n": 1,
+            "marker_time": "2026-11-09 01:15:48.749291+00:00",
+            "position": 742359911,
+            "system_time": "2026-11-09 01:15:48.749291+00:00",
+            "committed": true
+          }
+        ]
+      },
+      {
+        "phase": "fault-readback",
+        "sql": "SELECT m.operation_id, m.n, m._system_from AS marker_time, t._id AS position, t.system_time, t.committed FROM obs01r5_a03_fault_transitions m JOIN xt.txs t ON m._system_from = t.system_time WHERE m._id = 'fault'",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 1,
+        "columns": [
+          "committed",
+          "marker_time",
+          "n",
+          "operation_id",
+          "position",
+          "system_time"
+        ],
+        "rows": [
+          {
+            "operation_id": "obs01-r5-a03-fault-transitions",
+            "n": 1,
+            "marker_time": "2026-11-09 01:15:48.749291+00:00",
+            "position": 742359911,
+            "system_time": "2026-11-09 01:15:48.749291+00:00",
+            "committed": true
+          }
+        ]
+      },
+      {
+        "phase": "system-after-xt-txs",
+        "sql": "SELECT _id, committed, system_time FROM xt.txs LIMIT 4",
+        "outcome": "success",
+        "sqlstate": null,
+        "error": null,
+        "rowsSeen": 4,
+        "columns": [
+          "_id",
+          "committed",
+          "system_time"
+        ]
+      }
+    ],
+    "positiveScans": [],
+    "claim": "source reachability and positive observations only; no additional semantic verdict"
+  }
+]

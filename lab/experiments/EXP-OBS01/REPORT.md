@@ -608,7 +608,7 @@ still needs the QG1 threshold and touched-block sampler on the qualified built-b
 
 Live Datomic verification, NS-scale clock/overhead qualification and complete physical erasure coverage
 were not run. The exact deferred driver/clock/overhead/erasure commands remain in
-`lab/observer/DEFERRED.md`; no microtrace is substituted for those exercises.
+`lab/experiments/EXP-OBS01/round3/SCALE-WINDOW.md`; no microtrace is substituted for those exercises.
 
 ### PASS audit required by preamble 9a
 
@@ -673,3 +673,171 @@ The archive compared **2,014 source/copied files**, all matched, with **2,015 ma
 `round4/archive.log` retains the heavy-wrapper copy verification. Original run directories remain retained.
 The report and archive receipt are committed after this archival snapshot; the archive contains the actual
 collection code and evidence, not a retroactively invented pre-run Git anchor. No merge or push was performed.
+
+## Round 5 — 2026-11-09 UTC, continuation of ca1c598
+
+North star: the independent correctness-evidence floor for P1–P5, under `lab/SCOPE.md`, `lab/NORTH-STAR.md`
+and `lab/TARGETS.md`. This round worked through **all ten** remaining failures. The initial per-protocol field,
+source-kind and reachability table was written first in **`round5/SOURCES.md`**. It cites the pinned protocol
+handlers by line number and R27's protocol/source rows. The exact consumer README is retained as
+`round5/PROTOCOL-pinned.md`. Observed refinements are appended below the initial table, not presented as
+pre-run knowledge.
+
+### Result and exact evidence
+
+Ten selected real XTDB bundles re-screen against unchanged O-OBS **23e2273** and the exact retained 0.3.12
+contract: **1 PASS, 9 FAIL, 0 REFUSED**. All **20 context negatives REFUSED**. The new PASS is the declared
+**XT2-ENGINE-COMMITTED disposable-client-crash** case. It is not an engine-restart/power-loss test or complete
+commit-protocol qualification. The previous four passing protocols were not re-collected this round.
+
+Authoritative final evidence:
+
+- `round5/cli-results-a03.json`: ten actual selected CLI exits plus twenty negative-context exits.
+- `round5/gap-status.json`: exact recomputed/new fields and each remaining required change/input.
+- `round5/source-audit-a03-verified.json`: **70 source-read observations and 36 native queries** across the
+  ten selected bundles. The audit re-authenticates each entire bundle with the pinned consumer/key/context,
+  checks case/engine bindings, then decodes actual bytes. It is a reachability report, not an additional verdict.
+- `round5/summary-a03.json`, `cleanup-final-a03.json`, `gate-selected.log`, and each attempt's context,
+  evidence, derivation, actual CLI stdout/stderr and collector logs. Earlier cohorts remain separate.
+
+The pins remain `round3/pins.json`: oracle file SHA256
+`668136f3c99e09b5332363bb6beaac7f177d07ef7718eb59b2b801faeedcb2cb`; contract file SHA256
+`8bb4b393a2b1636eea00a0609d04a28b54adaecdc5d2f9ffd6d582edb2fe935c`. No oracle, contract, threshold or context
+guard was weakened. This builder's screens still require independent reviewer recollection.
+
+### What was collected for each protocol, and where work stopped
+
+| Protocol / selected attempt | Reachable source implemented and actual result | Remaining gap; change/input needed, not made |
+| --- | --- | --- |
+| CANCEL / a03 | T1 captures targeted native CancelRequest, **SQLSTATE 57014 / E-CANCELLED**, actual caller settlement and successful reuse on the same backend connection. X1 cancel/completed gauges and X2 health are retained as supplementary context. Bounded aggregate work avoids large result-message amplification. | FAIL on `transportAck`; independent `engineActiveSamples`, `tDrained` and second non-HR source remain missing. Enable X6 DEBUG/X7 tracing with complete capture, or a qualified Q3/Q4/T2 profile. An incrementing cancel counter alone does not prove drain. |
+| PREABORT / a01 | Own T1 control traffic plus actual process/listener/source-access inspection retained. No tested preaborted statement was sent by the observer. | FAIL on `engineStatementLog`. Complete parsed-statement coverage needs enabled X6 (or Q3) and a validated complete ingress boundary. Own traffic cannot prove global absence. No logging flag or capture capability was changed. |
+| NO-MUTATION / a01 | X1 completed-transaction snapshots cover db tags; the observed rebased delta is 0. Own T1 requests and X2 response bytes are retained. | FAIL: two independent agreeing kinds required. A second complete write inventory needs enabled engine witness plus complete capture; no inference from only the observer's SELECT, file sizes or submitted-message gauge. |
+| AVAILABILITY / a04 | HR write ACK and read of the exact own marker/payload, X1 before/after gauges, actual X2 `Alive.` responses, H8 PID incarnation and OOM counters. Successful HR probes require matching query and expected read content, not just SQL success. | FAIL: no engine-bound memory-failure instant. The invalid-cast diagnostic is not a memory failure. A separately contained memory-fault case/engine is needed; shared-resident OOM/restart was not attempted. |
+| WORK / a04 | X8 actual scan-row profiles; X3 `xt.txs`, `xt.live_tables`, `xt.trie_stats`, bounded `xt.source_log_msgs`; raw H1 cgroup `io.stat` and H3 allocated-file inventory before/after. All final system-table queries succeed. | FAIL on `rowsWritten`; attributed `triplesTouched` and `bytesWritten` also absent. Shared counter/net-row/file deltas cannot be attributed to this query or zero-filled. Need suitable per-operation tracing/counters and isolated accounting. File-backed block reads need the stable snapshot/engine fix described below. |
+| MAINTENANCE / a04 | Same reachable X3 catalog/bounded-log sources plus X1 completed/processed/submitted positions and MsgId lag, before/after a real observation interval. | FAIL on `tStart`; native start/end logging and an actual durable publication/checkpoint consumer are absent. Enable X6 maintenance events and supply that consumer surface. MsgId lag is not milliseconds; no resident maintenance/rebuild was induced. |
+| ERASURE-SCAN / a04 | Complete metadata enumeration of the mounted engine volume, own canary native write/readback, and bounded positive scans. Fresh canary bytes are found in **both `/engine/log/LOG` and `/engine/log/REPLICA_LOG`**. | FAIL on `inventoryEntry`: full protected-copy/freed-block inventory, actual publication, complete same-method controls/derived decoding and erasure/key-destruction exercise are absent. Need read-only protected-store/freed-block snapshots plus the actual exercise. Tail hits are positive evidence only; missing hits are never absence. |
+| WATERMARK / a01 | Actual native T1 destination/traffic and H8 engine incarnation/process information. | FAIL on `servingIndex`: actual composition route, same-snapshot marker/eligibility and wait boundaries are not exposed by SELECT 1. Supply the real observable router/index endpoint and its evaluator input. An engine restart or fabricated metadata row cannot create that application witness. |
+| ACK-ORDER / a03 | Actual native INSERT ACK in HR; X3 joins own marker `_system_from` to committed `xt.txs.system_time`, recovering **native commitPosition**, and verifies operation ID and payload. | FAIL on `tSourcePublished`: original publication instant, actual source/RYOW route and independent publication kind remain absent. Need real composition route plus X7 completion or independent broker-WAL publication observer. Native assigned system time is retained; a later read completion is not substituted for original publication. |
+| FAULT-TRANSITIONS / a03 | Native transaction/marker join before and after killing **only the disposable observer client**, with operation ID, payload 1, committed BOOL, matching native position/time and actual wire commit/crash/read ordering. Position **742359911** survives the client crash. | **PASS, screening only**, for the declared XT2 transition. No engine crash, restart, power loss, log-source transition series or whole application recovery claim was exercised. Those variants need separately authorized isolated fault cases. |
+
+This is not a claim that nine protocols are now complete. Reachable raw providers were implemented and
+re-screened even when they could not establish the remaining required field. The full field lists and precise
+source-kind/independence requirements are in `SOURCES.md`; the table above states what the selected bytes
+actually establish. Disabled engine sources, unexposed application surfaces and unsafe live storage reads
+were stopped at their specific gaps, with the needed change named rather than made.
+
+### Source details and corrections found during the pass
+
+**X3 predicates and R30 safety.** Initial unbounded log/block-table probes were rejected by XTDB's analyzer
+with explicit required-bound errors. Those failures remain. The corrected log query uses the exact observed
+`node.tx.latestProcessedMsgId` as a **point-query position only**, never a mutation counter. `xt.txs`,
+`xt.live_tables`, `xt.trie_stats` and bounded source-log reads succeed in both final WORK and MAINTENANCE cases.
+
+I did not proceed to file-backed `xt.block_files`/`xt.table_block_files` reads. R30 Q4 sections 4.1–4.2 document
+that live GC can delete even a just-listed block, leaving a missing-file loader that hangs and can poison later
+reads. A stable read-only clone/snapshot or corrected engine loader is needed. No guessed index, missing block,
+freeze, clone, engine change or VM change was attempted. File metadata and safe catalog facts remain useful
+context, but do not become per-operation work units.
+
+**Native types and content.** Real pgwire BOOL OID 16 sends `t`/`f`. The decoder now uses RowDescription's
+type and format, validates the representation and keeps ordinary text `t` as text. The first ACK/FAULT
+attempts rejected this representation before a seal; their raw bytes/errors are preserved. The live retry
+proves a real committed native transaction, not an aliased business `n` presented as a position. Before and
+after joins must return exactly one matching row; query SQL, own relation, operation ID, integer payload,
+committed BOOL, native position and equal marker/transaction system time are checked. A changed/empty/wrong
+query or pre-crash readback cannot emit the transition witness.
+
+The evaluator expectation fixes the marker payload **1** and operation ID from the case. The engine-assigned
+position is late-bound from authenticated native readback, and then pinned in `transitionExpectations`;
+it is not a preselected engine sequence number. Expectations for the concrete transaction/marker facts are
+constructed independently from that case payload, not copied wholesale from an observed `facts` object.
+Only XT2 is declared in this diagnostic case; a passing screen does not imply untested transitions.
+
+**Health and availability.** X2 returned HTTP 200 with plaintext `Alive.`. Treating that as Prometheus caused
+the first AVAILABILITY collector to refuse normalization; a tagged raw-HTTP health decoder fixes it. The
+final availability read verifies `_id='availability'` via the exact expected query and returns `n=1`; a wrong
+value, boolean masquerading as 1, different query, incomplete reply or error is not marked successful. The
+actual failure remains an invalid-cast diagnostic, so no memory-failure recovery PASS is claimed.
+
+**Publication time.** R27 identifies `xt.txs.system_time` as a candidate engine-source timestamp; it is now
+collected and bound to the actual marker. This round has not qualified that assigned transaction timestamp
+as the instant at which the source became durably published/readable. The old conditional mapping from a
+later observer read's completion to `tSourcePublished` was removed for every profile. The latter is only an
+upper bound on visibility and could reverse an ACK-order judgment. A completion/publication witness remains
+required, rather than inventing timing from the readback.
+
+**Physical source access.** The mounted engine volume has roughly 4,500 entries in this case; inventories
+are explicitly limited to that volume. The final bounded scan examines 16 MiB of file tails, prioritizing log
+files and recently modified buffers, and retains actual positive-hit bytes/offsets. It does not scan all bytes,
+decode Arrow/FSST/freed blocks, establish erasure publication, or qualify absence. The observer cannot read
+`/proc/1/root/etc/xtdb/*` with its current capabilities; actual permission errors are retained. Host-side mounted
+configuration files and JVM options were read separately in `runtime-configs.json`. Capabilities/mounts were
+not expanded. Historical host configuration bytes are not asserted to be the live JVM's parsed state.
+
+**QLever alternative checked.** `qlever-source-probe.json` is an explicitly diagnostic **host reachability
+probe, not an obs-bundle or timing receipt**. On the unchanged resident, stats and active-query endpoints return
+200, `/metrics` returns 404, the base has **1 triple**, and delta/touched-block counts remain unavailable/null.
+The startup configuration retains disabled metrics/event logs. Q91a timing remains DIAGNOSTIC. No QLever bundle,
+--enable-metrics change, query-event-log enablement, cache clear, --fresh reset or rebuild was performed.
+
+**Retained first failures.** Three a01 native cases were refused before sidecar start because two own batches
+overlapped CPU 5; they were retried only after the other batch ended. Health decoding and native BOOL decoding
+failures are retained under their original attempts. Earlier CANCEL cases settled successfully; a03's bounded
+aggregate is actually cancelled and reused. No old key/run/context was adopted as a fresh result. The final
+selection is a03 CANCEL/ACK/FAULT; a04 AVAILABILITY/WORK/MAINTENANCE/ERASURE; a01 PREABORT/NO-MUTATION/WATERMARK.
+
+### PASS audit (preamble 9a)
+
+The round-4 audit remains the enumeration for unchanged collector, clock, witness, retention, archive and
+legacy diagnostic paths. The following completes that audit for every new or changed round-5 path producing
+protocol fields, PASS/verdict or receipt-like success. None may promote an auxiliary snapshot into acceptance.
+
+| Path | Content check | Freshness check | Exact binding and claim boundary |
+| --- | --- | --- | --- |
+| `reachable_sources.py:collect`, `file_inventory`, `positive_hits`; `resident_collect.py:session` and new branches | Actual raw HTTP, procfs, catalog/log replies, I/O/file metadata and positive bytes retained; positive hits contain the exact own canary. Bounds/errors/incomplete coverage stay explicit. No net-row/global-I/O zero fill or negative physical scan verdict. | New engine-managed sidecar/run/key; real before/after reads and native query/crash timestamps; no reused attempt bytes. | Native engine network/PID namespace and verified slot volume; source/case/run/engine-bound frames. Auxiliary `R5-context` is never selected as protocol corroboration or a second independence kind. |
+| `wire.py:pgwire_records`, health decoder and generated `normalize.py` | BOOL requires OID 16, text format and exact t/f; ordinary text is preserved. Health status/body are decoded from retained raw HTTP, not a declared healthy label. | Values come from current signed sample bytes; embedded source times remain attempt-bound. | Pinned per-attempt standalone decoder; actual native result columns and source IDs. Type decoding itself emits no protocol PASS. |
+| `protocol_extra.py:derive_extra` CANCEL | Actual SQLSTATE maps to E-CANCELLED; every settled native success/error also records its true settlement/error (success has no fabricated cancellation). Same-connection successful reuse reconstructed from native replies. | Targeted CancelRequest and settlement/reuse times from this transcript. | Backend PID correlation, actual connection/tag and case request/reuse IDs; no inferred ACK, active-query absence or drain instant. |
+| `derive_extra/derive_resident` AVAILABILITY | HR success requires exact own SQL, complete native reply and expected read payload/type. X1/X2 cannot invent HR probes or an engine failure. H8 uses actual OOM/incarnation observations. | Probe/failure/lifecycle events are from this attempt; no OOM delta means no engine failure time. | Private relation, expected `_id`/payload and observed engine; invalid-cast is not relabeled a memory-failure event. FAIL remains. |
+| `derive_extra` ACK-ORDER | Native position is accepted only from the exact transaction/marker join with committed native BOOL, matching times, operation ID and expected integer payload. HR ACK is actual successful native INSERT response. | This attempt's commit and later source readback; read completion is never original publication time. | Exact relation/operation/query/native position and source streams. Missing publication/route/independent kind keep FAIL; no copied CR metadata or fabricated publication. |
+| `derive_extra` FAULT-TRANSITIONS; `check_round3.py` expectation construction | Exact INSERT and native join SQL; unique successful complete rows; actual committed BOOL, known payload/operation, same native position/system time before/after; digest over concrete transaction/marker facts. Expected payload comes from the evaluator case. | Actual pre-crash native join, observer-client exit, post-crash readback ordered around the real commit; stale/pre-crash readback refuses. | Case relation/operation, engine-assigned native position, exact variant/declared XT2, case expectations, decoder/key/bundle/context. Only the declared disposable-client-crash case receives screening PASS. |
+| `verify_seal.py:verify`, host retention/witness publication | HMAC/chain/raw digest/normalizer recomputation plus new **every-frame** run/stream/source/engine/case binding check, including auxiliary streams. | Frame anchor/header bounds and embedded event times checked before host publication; correctly re-signed old-attempt frame is rejected in regression. | Current exact config/envelope/key and pinned parser. Host receipt claims integrity/recomputability, not semantic PASS. |
+| `check_round3.py`, `screen_cli_round3.mjs` | Unmodified pinned O-OBS authenticates/recomputes and applies exact context/semantic rules. Actual CLI verdict/exit must agree; negative cases require context contradiction. | Explicit fresh named attempts; new exclusive output screen IDs preserve previous cohorts. | Same pinned oracle/contract hashes, delegated obligation/protocol/thresholds and actual run/key/context paths. Only O-OBS's screening verdict is reported. |
+| `audit_round5.py` | Re-authenticates each full bundle, decodes actual bytes, checks positive-hit content and records actual native outcomes/columns; no extra semantic verdict. | Reads exact selected cohort and its signed attempt frames; no new workload claim from replay. | Pinned consumer hash, external key/context, matching case/run/engine, raw-frame and decoder digests. `source-audit-a03-verified.json` is authoritative; earlier unauthenticated diagnostic audits remain separate. |
+| `summarize_round4.mjs` round-5 mode | Saved actual CLI stdout/exit and 10/20 denominators checked; before/after container identity/config/mount/start and removal receipts checked. File-presence and terminal-error hashes are labeled as such. | Final selected cohort plus current own reservation/container inspection. | Exact screen/attempt/run prefixes; summary counts existing verdicts only and never treats a seal file as PASS. |
+| `probe_resident_q_sources.mjs`, `runtime-configs.json` | Actual read-only HTTP status/body hashes and container/config inspection; base/delta unknown values stay null. No timing or semantic success inferred. | Live requests/inspection, same container ID/start checked around Q probes. | Explicit resident endpoint/container and host-readable config-file hashes. Diagnostic host reachability only, not independent obs-bundle evidence. |
+| `archive_round3.py` round-5 mode and gates/tests | Archive compares all copied source bytes/readback hashes and manifest; unit positives require known fixture contents, negatives alter query/payload/position/type/time. | New archive directory; selected final no-owned-resource receipt; fresh test/attempt directories. | Selected round/cohort prefix, exact copied sources/keys/witnesses; archive equality and passing assertions are not semantic acceptance. |
+
+The new live PASS satisfies content, freshness and binding for **its declared narrow claim**. It does not
+prove engine-restart durability, full transition-series coverage, source publication ordering or the nine
+failed protocols. All other added observations remain partial facts or diagnostics.
+
+### Gates, retention and unperformed work
+
+**49 Python + 10 Node tests pass** in `round5/gate-selected.log` (59 total). New checks cover native bool
+typing, health decoding, exact availability content, wrong native transaction/marker position/payload/time,
+stale/pre-crash readback, and correctly signed frames from another attempt. Actual source collection,
+fingerprint/audit and engine-dependent screening run through `heavy.mjs`; host free space was above 5 GiB.
+No package/public API changed, so pnpm/root package gates were not run.
+
+`cleanup-final-a03.json` covers **19 actual sidecar attempts**, including unsealed first failures, with zero
+own containers/reservations and unchanged resident identity/config/host configuration/mount set/start time.
+Three additional pre-admission CPU refusals have driver receipts but no started sidecar directory. No
+exclusive slot, volume, resident lifecycle/configuration change, observer capability expansion or VM change
+was made. Own tiny `obs01r5_*` diagnostic relations remain. All prior failures and actual per-attempt source
+copies/keys remain retained; no unrelated data was deleted.
+
+Nine complete protocol claims remain blocked at the table's named source/input boundaries. No disabled
+logging/tracing/metrics flag, live block-file read, unprovided composition router, unsafe memory fault,
+protected-store mount or freed-block/crypto-shredding exercise was silently substituted. Datomic, NS-scale
+clock/overhead and full physical erasure qualification were not run. The exact deferred scale-window commands
+remain in `lab/experiments/EXP-OBS01/round3/SCALE-WINDOW.md`. No oracle change, merge or push was performed.
+
+All nineteen actual attempts, three pre-admission driver failures, exact per-attempt parsers/controllers,
+private evaluator keys, source/CLI audits and own host witness lines were copied to
+`/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01/round5-host/`. **3,061 source/copied files match**;
+the manifest contains **3,062 entries**, with SHA256
+**14f7d930b2343436f5ca6e31c6e7fb04fc669e5c655184e79e86fac3f589034a** for `SHA256SUMS.json`.
+`round5/archive.log` retains the actual heavy-wrapper verification. The archive also checks host free space
+again when admitted, before starting its fingerprint/copy. Original evidence remains in place; keys are
+outside bundles and Git. This report/receipt is committed after the snapshot; actual per-attempt source
+preimages remain authoritative, with no retroactive pre-run Git anchor.

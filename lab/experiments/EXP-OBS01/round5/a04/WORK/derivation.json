@@ -1,0 +1,48 @@
+{
+  "X8-profile": {
+    "missing": [
+      "work-candidate lacks rowsWritten",
+      "work-candidate lacks triplesTouched",
+      "work-candidate lacks bytesWritten",
+      "work-comparison lacks rowsWritten",
+      "work-comparison lacks triplesTouched",
+      "work-comparison lacks bytesWritten"
+    ],
+    "derivedFields": [
+      "comparison",
+      "engineWorkUnits",
+      "operation",
+      "threshold"
+    ]
+  },
+  "X3-tables": {
+    "missing": [
+      "work-candidate native profiler absent",
+      "work-comparison native profiler absent"
+    ],
+    "derivedFields": [
+      "operation",
+      "threshold"
+    ]
+  },
+  "H1-io": {
+    "missing": [
+      "work-candidate native profiler absent",
+      "work-comparison native profiler absent"
+    ],
+    "derivedFields": [
+      "operation",
+      "threshold"
+    ]
+  },
+  "H3-files": {
+    "missing": [
+      "work-candidate native profiler absent",
+      "work-comparison native profiler absent"
+    ],
+    "derivedFields": [
+      "operation",
+      "threshold"
+    ]
+  }
+}

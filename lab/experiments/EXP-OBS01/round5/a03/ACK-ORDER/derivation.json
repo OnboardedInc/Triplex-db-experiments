@@ -1,0 +1,31 @@
+{
+  "H6-files": {
+    "missing": [
+      "atomic source/index eligibility and route readback absent",
+      "successful native commit response absent",
+      "second independent non-HR publication/route witness required"
+    ],
+    "derivedFields": []
+  },
+  "HR-probes": {
+    "missing": [
+      "atomic source/index eligibility and route readback absent",
+      "later observer readback does not timestamp original publication",
+      "second independent non-HR publication/route witness required"
+    ],
+    "derivedFields": [
+      "ackSender",
+      "tAck"
+    ]
+  },
+  "X3-tables": {
+    "missing": [
+      "atomic source/index eligibility and route readback absent",
+      "successful native commit response absent",
+      "second independent non-HR publication/route witness required"
+    ],
+    "derivedFields": [
+      "commitPosition"
+    ]
+  }
+}

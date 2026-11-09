@@ -79,6 +79,17 @@ class CollectorTests(unittest.TestCase):
         (self.root/'seal.json').unlink()
         with self.assertRaises(FileNotFoundError):verifier.verify(self.root,self.keyfile,config,HERE)
 
+    def test_signed_source_frame_from_another_attempt_refuses(self):
+        verifier=module('verify_seal',HERE/'verify_seal.py');config=Path(self.tmp.name)/'config.json';config.write_bytes(collector.canonical(self.bundle.config))
+        entry=self.bundle.entries['memory'][0];data=json.loads((self.root/entry['raw']).read_bytes());data['runId']='old-attempt';raw=collector.canonical(data)+b'\n';(self.root/entry['raw']).write_bytes(raw)
+        previous=None
+        for e in self.bundle.entries['memory']:
+            header=json.loads((self.root/e['header']).read_bytes());header.pop('hmac');payload=(self.root/e['raw']).read_bytes();header.update(sha256=collector.sha(payload),byteLength=len(payload),prevHeaderSha256=previous)
+            (self.root/e['header']).write_bytes(collector.canonical(self.bundle.signed(header))+b'\n');previous=e['headerSha256']=collector.sha((self.root/e['header']).read_bytes())
+        (self.root/'index.json').write_bytes(collector.canonical(self.bundle.entries))
+        (self.root/'seal.json').write_bytes(collector.canonical(self.bundle.signed({'runId':'test','heads':{'memory':previous}})))
+        with self.assertRaisesRegex(ValueError,'frame binding mismatch'):verifier.verify(self.root,self.keyfile,config,HERE)
+
     def test_corrupted_raw_rejected(self):
         (self.root / self.bundle.entries['memory'][0]['raw']).write_bytes(b'changed')
         with self.assertRaises(Exception): self.authenticate()

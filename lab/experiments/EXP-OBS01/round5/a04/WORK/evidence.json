@@ -1,0 +1,64 @@
+{
+  "comparison": {
+    "engineWorkUnits": {
+      "rowsScanned": 1
+    },
+    "operation": "native-full-scan"
+  },
+  "engineWorkUnits": {
+    "rowsScanned": 1
+  },
+  "operation": "native-projection",
+  "threshold": "T-REUSE-AVOIDED",
+  "source": {
+    "kind": "EI-query/xtdb/X8",
+    "streamRefs": [
+      "X8-profile"
+    ],
+    "records": {
+      "comparison": {
+        "engineWorkUnits": {
+          "rowsScanned": 1
+        },
+        "operation": "native-full-scan"
+      },
+      "engineWorkUnits": {
+        "rowsScanned": 1
+      },
+      "operation": "native-projection",
+      "threshold": "T-REUSE-AVOIDED"
+    }
+  },
+  "corroboration": [
+    {
+      "kind": "EI-table/xtdb/X3",
+      "streamRefs": [
+        "X3-tables"
+      ],
+      "records": {
+        "operation": "native-projection",
+        "threshold": "T-REUSE-AVOIDED"
+      }
+    },
+    {
+      "kind": "HO/any/H1",
+      "streamRefs": [
+        "H1-io"
+      ],
+      "records": {
+        "operation": "native-projection",
+        "threshold": "T-REUSE-AVOIDED"
+      }
+    },
+    {
+      "kind": "HO/any/H3",
+      "streamRefs": [
+        "H3-files"
+      ],
+      "records": {
+        "operation": "native-projection",
+        "threshold": "T-REUSE-AVOIDED"
+      }
+    }
+  ]
+}

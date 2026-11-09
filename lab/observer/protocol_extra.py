@@ -70,7 +70,15 @@ def derive_extra(parsed,spec,root):
         if failures:output['tFailure']=failures[0]['tEnd']
         else:absent('no observed failure')
         output['events']=[{'kind':e['kind'],'t':e['tMono']} for e in events if e.get('event')=='process-event']
-        output['probes']=[{'kind':q['kind'],'t':q['tEnd'],'outcome':q['outcome']} for q in queries if q['phase'] in ('availability-read','availability-write') and 'tEnd' in q and q['kind'] in ('read','write')]
+        output['probes']=[{'kind':q['kind'],'t':q['tEnd'],'outcome':'success' if q['outcome']=='success' else 'failure'} for q in queries if q['phase'] in ('availability-read','availability-write') and 'tEnd' in q and q['kind'] in ('read','write')]
+        if spec.get('round')==5:
+            output['probes']=[]
+            for q in queries:
+                if q['phase'] not in ('availability-read','availability-write') or 'tEnd' not in q:continue
+                expected="INSERT INTO "+spec['relation']+" (_id,n) VALUES ('availability',1)" if q['phase']=='availability-write' else 'SELECT n FROM '+spec['relation']+" WHERE _id='availability'"
+                correct=q['sql']==expected and not q.get('incompleteReply') and q.get('outcome')=='success'
+                if q['phase']=='availability-read':correct=correct and q['rows']==[{'n':1}] and type(q['rows'][0]['n']) is int
+                output['probes'].append({'kind':q['kind'],'t':q['tEnd'],'outcome':'success' if correct else 'failure'})
     elif protocol=='WORK':
         output.update(operation=spec['operation'],threshold=spec['threshold'])
         units={}
@@ -122,6 +130,9 @@ def derive_extra(parsed,spec,root):
             if len(cancel)==1:output['tCancelRequested']=cancel[0]['t']
             else:absent('unique targeted CancelRequest absent')
             if target.get('sqlstate')=='57014':output.update(callerError='E-CANCELLED',tCallerSettled=target['tEnd'])
+            elif target.get('outcome') in ('success','error'):
+                output.update(tCallerSettled=target['tEnd'],callerError=None if target['outcome']=='success' else 'PG-'+target.get('sqlstate','UNKNOWN'))
+                absent('native query settled without the expected cancellation error')
             else:absent('native cancellation outcome absent')
             reuse=[q for q in qs if q['connectionId']==cid and q.get('tag')==spec['reuseQueryId'] and q.get('outcome')=='success']
             if len(reuse)==1:
@@ -161,13 +172,23 @@ def derive_extra(parsed,spec,root):
         else:absent('atomic source/index eligibility and route readback absent')
         if protocol=='WATERMARK' and route:output=route
         if protocol=='ACK-ORDER':
+            if spec.get('nativePositionProfile')=='xtdb-system-time-join/1' and any(q['phase']=='publication-readback' and q.get('outcome')=='success' and len(q.get('rows',[]))==1 for q in queries):
+                q=one_native(queries,'publication-readback');row=q['rows'][0]
+                expected_sql="SELECT m.operation_id, m.n, m._system_from AS marker_time, t._id AS position, t.system_time, t.committed FROM "+spec['relation']+" m JOIN xt.txs t ON m._system_from = t.system_time WHERE m._id = 'ack'"
+                if q['sql']!=expected_sql or row.get('operation_id')!=spec['operationId'] or type(row.get('n')) is not int or row['n']!=spec['faultExpectedPayload'] or row.get('committed') is not True or not row.get('marker_time') or row['marker_time']!=row.get('system_time'):raise ValueError('publication native transaction/marker binding mismatch')
+                output['commitPosition']=exact_nonnegative(row['position'])
             commits=[q for q in queries if q['phase']=='commit' and q.get('outcome')=='success' and q['kind']=='write']
             if len(commits)==1:
                 output.update(tAck=commits[0]['tEnd'],ackSender=spec['sourceOfTruth'],sourceOfTruth=spec['sourceOfTruth'])
                 if phase('publication-readback'):
+                    if not any(q['phase']=='publication-readback' and q.get('outcome')=='success' and len(q.get('rows',[]))==1 for q in queries):
+                        absent('native publication join returned no successful unique row');return output,missing
                     publication=one_native(queries,'publication-readback');row=row_native(queries,'publication-readback')
                     if 'position' not in row:absent('native commit-position mapping absent');return output,missing
-                    output.update(commitPosition=exact_nonnegative(row['position']),tSourcePublished=publication['tEnd'])
+                    output.update(commitPosition=exact_nonnegative(row['position']))
+                    # [EXP-OBS01] Why: a later successful read bounds visibility but cannot timestamp original publication.
+                    # Rejected: using observer read completion as tSourcePublished (can reverse ACK ordering).
+                    absent('later observer readback does not timestamp original publication')
             else:absent('successful native commit response absent')
             if route:
                 if not spec.get('routeStreamId'):absent('independently authenticated nested WATERMARK stream absent')
@@ -181,14 +202,27 @@ def derive_extra(parsed,spec,root):
         else:absent('observer-witnessed client crash absent')
         output['variant']=spec['variant']
         if phase('fault-readback') and phase('commit') and crashes:
+            if spec.get('nativePositionProfile')=='xtdb-system-time-join/1' and any(not any(q['phase']==p and q.get('outcome')=='success' and len(q.get('rows',[]))==1 for q in queries) for p in ('fault-position-before','fault-readback')):
+                absent('native position joins unavailable; raw SQL errors/empty replies retained');return output,missing
             row=row_native(queries,'fault-readback');commit=[q for q in queries if q['phase']=='commit' and q.get('outcome')=='success']
             if len(commit)!=1:raise ValueError('fault readback has no observed commit')
             if row.get('operation_id')!=spec['operationId']:raise ValueError('fault operation marker mismatch')
-            if 'position' not in row or not commit[0]['rows']:
+            native_join=spec.get('nativePositionProfile')=='xtdb-system-time-join/1'
+            if native_join:
+                before=row_native(queries,'fault-position-before')
+                expected_sql="SELECT m.operation_id, m.n, m._system_from AS marker_time, t._id AS position, t.system_time, t.committed FROM "+spec['relation']+" m JOIN xt.txs t ON m._system_from = t.system_time WHERE m._id = 'fault'"
+                for phase_name,observed in [('fault-position-before',before),('fault-readback',row)]:
+                    q=one_native(queries,phase_name)
+                    if q['sql']!=expected_sql or observed.get('committed') is not True or observed.get('operation_id')!=spec['operationId'] or type(observed.get('n')) is not int or observed.get('n')!=spec['faultExpectedPayload'] or not observed.get('marker_time') or observed.get('marker_time')!=observed.get('system_time'):raise ValueError('native transaction/marker content or query binding mismatch')
+                if before!=row:raise ValueError('post-crash marker/transaction changed')
+                expected_write="INSERT INTO "+spec['relation']+" (_id,operation_id,n) VALUES ('fault','"+spec['operationId']+"',1)"
+                if commit[0]['sql']!=expected_write or not commit[0]['tEnd']<one_native(queries,'fault-position-before')['tStart']<crashes[-1]['tMono']<one_native(queries,'fault-readback')['tStart']:raise ValueError('native transition content/freshness mismatch')
+            if 'position' not in row or (not native_join and not commit[0]['rows']):
                 absent('native transaction position is absent from commit/marker readback');return output,missing
             position=exact_nonnegative(row['position']);operation=spec['operationId'];t=commit[0]['tEnd']
-            if commit[0]['rows']!=[{'position':position}]:raise ValueError('native commit position is not bound to readback marker')
+            if not native_join and commit[0]['rows']!=[{'position':position}]:raise ValueError('native commit position is not bound to readback marker')
             facts={'committed':True,'operationMarkerPresent':True,'transaction':{'operationId':operation,'position':position},'marker':{'operationId':operation,'position':position}}
+            if native_join:facts['marker']['value']=row['n']
             record={'transition':'XT2-ENGINE-COMMITTED','t':t,'operationId':operation,'position':position,'facts':facts}
             raw=json.dumps(record,sort_keys=True,separators=(',',':'),ensure_ascii=True).encode()
             obj={'sha256':hashlib.sha256(raw).hexdigest(),'record':record,'tReadBack':one_native(queries,'fault-readback')['tEnd'],'readbackOperationId':operation,'readbackPosition':position}
@@ -238,6 +272,7 @@ def derive_resident(parsed,spec,root):
                 if failure:records['tFailure']=failure['tMono']
                 else:missing.append('no observed OOM-counter increase; failure time unavailable')
             else:missing.append('engine process/cgroup lifecycle observations absent')
+        if protocol=='AVAILABILITY' and root in ('X1','X2'):records={}
         if root=='HR':records={k:v for k,v in records.items() if k in {'tCancelRequested','tCallerSettled','callerError','expectedError','tDeadline','tAck','ackSender','probes'}}
         return records,missing
     queries=native_sessions(parsed)

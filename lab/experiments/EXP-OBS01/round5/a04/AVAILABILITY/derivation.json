@@ -1,0 +1,28 @@
+{
+  "HR-probes": {
+    "missing": [],
+    "derivedFields": [
+      "probes"
+    ]
+  },
+  "H8-process": {
+    "missing": [
+      "no observed failure"
+    ],
+    "derivedFields": [
+      "events"
+    ]
+  },
+  "X1-metrics": {
+    "missing": [
+      "no observed failure"
+    ],
+    "derivedFields": []
+  },
+  "X2-health": {
+    "missing": [
+      "no observed failure"
+    ],
+    "derivedFields": []
+  }
+}

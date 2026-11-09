@@ -7,10 +7,15 @@ import os
 from pathlib import Path
 import shutil
 round_id=os.environ.get('OBS01_ROUND','3')
-if round_id not in ('3','4'):raise ValueError('unknown report round')
+if round_id not in ('3','4','5'):raise ValueError('unknown report round')
 repo=Path(__file__).resolve().parents[2];base=repo/('lab/experiments/EXP-OBS01/round'+round_id);source=Path('/Users/sam/projects/triplex-db-2/runs/engines/observers');target=Path('/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01')/('round'+round_id+'-host')
+capacity=os.statvfs(target.parent)
+if capacity.f_bavail*capacity.f_frsize<5*1024**3:raise ValueError('host free space below 5 GiB; do not begin archival fingerprint job')
 prefix='obs01-r'+round_id+'-'
-cleanup=json.loads((base/'cleanup-final.json').read_bytes())
+cohort=os.environ.get('OBS01_SCREEN_ID','final')
+if not all(c.isalnum() or c in '_-' for c in cohort):raise ValueError('unsafe cohort')
+suffix='-'+cohort if round_id=='5' and cohort!='final' else ''
+cleanup=json.loads((base/('cleanup-final'+suffix+'.json')).read_bytes())
 if cleanup['ownReservations'] or cleanup['ownContainers']:raise ValueError('owned resident observers still active')
 target.mkdir(mode=0o700,exist_ok=False);pairs=[]
 def copy_tree(src,dst):

@@ -1,0 +1,7 @@
+[lab] DOCKER: docker run --name tx2-obs-resident-obs01-r5-a02-ack-order --label tx2.managed-by=lab/bin/engine.mjs --label tx2.holder=CX-OBS01-R5 --label tx2.role=observer --network container:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c --pid container:d69450c65946c500305a88116b2d3a9abc646c2802f6299d71595ef86283eb3c --cgroupns host --read-only --cap-drop ALL --cap-add DAC_READ_SEARCH --security-opt no-new-privileges --memory 134217728 --memory-swap 134217728 --cpus 1 --cpuset-cpus 5 -v tx2-xtdb-dev-data:/engine:ro -v /sys/fs/cgroup:/sys/fs/cgroup:ro -v /Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a02-ack-order/code:/collector:ro -v /Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a02-ack-order/config.json:/config.json:ro -v /Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/runs/OBS01/obs01-r5-a02-ack-order.key:/run/key:ro -v /Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r5-a02-ack-order/output:/obs --entrypoint python3 python@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 -I -B /collector/resident_collect.py failed: Traceback (most recent call last):
+  File "/collector/resident_collect.py", line 175, in <module>
+    c.atomic(Path('/obs/probe-errors.json'),c.canonical(errors)+b'\n');bundle.seal()
+                                                                       ~~~~~~~~~~~^^
+  File "/collector/collector.py", line 113, in seal
+    raise ValueError('normalizer refused source '+sid)
+ValueError: normalizer refused source HR-probes
