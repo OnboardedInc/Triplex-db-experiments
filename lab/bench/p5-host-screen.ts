@@ -14,6 +14,7 @@ import { openMappedHost } from "./lib/host-store.ts";
 import { generateTrace } from "./lib/trace.ts";
 import { applyW0Trace, percentile, waitUntil } from "./lib/w0-traffic.ts";
 import { runW0Sweep, subjectList } from "./lib/sweep.ts";
+import { recoverSweep } from "./lib/sweep-recovery.ts";
 import { readW0Fingerprint } from "./lib/w0-fingerprint.ts";
 import { reachableRows, worldOf } from "./lib/w0-world.ts";
 import { publishRecords } from "./lib/w0-outbox.ts";
@@ -66,6 +67,9 @@ const sourceFiles = [
   "lab/bench/lib/sweep-worker.ts",
   "lab/bench/lib/w0-traffic.ts",
   "lab/bench/lib/w0-outbox.ts",
+  "lab/bench/lib/host-row.ts",
+  "lab/bench/lib/sweep-process.ts",
+  "lab/bench/lib/sweep-recovery.ts",
   "lab/bench/lib/w0-world.ts",
   "lab/bench/lib/position-map.ts",
   "lab/bench/lib/evaluate.ts",
@@ -306,9 +310,10 @@ async function activationArm(name: string, W: number) {
           changeTargets.some((c: any) => c.op !== "assert" || !want.has(c.entityId) || !["p5/state", "p5/deliveries"].includes(c.attribute))
         )
           throw Error("G-JNL journal triples differ from the expected set for page " + i);
-        // transactionsForEntity resolves the same transaction from an outbox entity (the :_tx/changed-entity channel).
-        const byEntity = await h.api.transactionsForEntity([...want][0]!, { limit: 5 });
-        if (!byEntity.transactions.some((t: any) => t.txId === txId)) throw Error("G-JNL transactionsForEntity missed the activation commit");
+        // The reverse channel: a value match on :_tx/changed-entity from an outbox entity finds the same transaction. (core's transactionsForEntity is a Datalog query, and the mapped host's
+        // query executor is a detached replica that returns nothing, so the Datalog route is not exercised by this harness.)
+        const reverse = await h.api.match({ attribute: ":_tx/changed-entity", value: { type: "ref", value: [...want][0]! } });
+        if (!reverse.some((t: any) => t.entityId === txId)) throw Error("G-JNL reverse :_tx/changed-entity match missed the activation commit");
         gJnl.pagesChecked++;
       }
       const journalExpected = 4 * pubLog.length + 3 * N,
@@ -389,6 +394,44 @@ async function activationArm(name: string, W: number) {
     };
   } finally {
     oracle.close();
+    await comp.close();
+  }
+}
+
+// ---------------------------------------------------------------- recovery arm (G-REC: real SIGKILL of the sweep controller process at three points)
+async function recoveryArm(name: string) {
+  const arm = await openArm(name),
+    { dst } = arm,
+    comp = arm.h.comp;
+  try {
+    await loadW0Pins();
+    const act = await comp.transact(
+      [{ op: "assert", entityId: "p5:tenant", attribute: "p5/activation", value: { type: "string", value: "R2" }, validFrom: V_W0 }],
+      { commandId: name + ":activate" },
+    );
+    if (!act.ok || act.value.position !== seedBasis + 1) throw Error("activation position mismatch");
+    const basis = { position: act.value.position, validAt: V_W0 },
+      activations = [{ tx: basis.position, from: W0.POPULATION_VALID_TIME, release: W0.R2.hash }];
+    const t0 = performance.now();
+    // The store owner (this process, with the position map) stays up; the sweep controller is a child process that is SIGKILLed: before publish (page read), after the publication commit before the cursor write, after the cursor write.
+    const result = await recoverSweep({
+      comp,
+      subjects: subjectList(N),
+      basis,
+      scope,
+      cursor: path.join(dst, "cursor.json"),
+      sweepId: name,
+      release: "R2",
+      activations,
+      seed: "p5n-r1-recovery:" + scope,
+      stops: 3,
+      workers: 2,
+      phases: ["read", "publish", "checkpoint"],
+    });
+    const t1 = performance.now();
+    requireFingerprint(await readW0Fingerprint(comp, N, { position: seedBasis, validAt: V_W0 }, new AbortController().signal), expected, N);
+    return { ...result, wallS: (t1 - t0) / 1000, fpAfter: { status: "FINGERPRINT-MATCH-AFTER-RECOVERY", wallS: (performance.now() - t1) / 1000 } };
+  } finally {
     await comp.close();
   }
 }
@@ -490,7 +533,8 @@ async function latencyArm(name: string, withSweep: boolean, seed: string, oldCut
         cursor: path.join(dst, `cursor-${k}.json`),
         workers: LAT_WORKERS,
         activations: [{ tx: basis.position, from: W0.POPULATION_VALID_TIME, release: W0.RELEASES_BY_NAME.get(release)!.hash }],
-        readThroughOwner: true,
+        readThroughOwner: !DIRECT,
+        directReads: DIRECT,
         // Publication yields to queued live commits, as in the round A arm; the wait is recorded, never hidden.
         beforePublish: async () => {
           const w = performance.now();
@@ -557,6 +601,12 @@ try {
       save();
       console.log(JSON.stringify({ arm: "act-W" + W, wallMs: report.activation["W" + W].wallMs }));
     }
+  }
+  if (flag("recovery")) {
+    if (free() < FLOOR + 1024 ** 3) throw Error("RESOURCE-ABORT: host disk below 5 GiB plus margin");
+    report.recovery = await recoveryArm("recovery");
+    save();
+    console.log(JSON.stringify({ arm: "recovery", status: report.recovery.status }));
   }
   if (!flag("skip-lat")) {
     const rng = new Rng(seedOf("p5b-r3:" + scope));

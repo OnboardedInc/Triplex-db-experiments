@@ -26,7 +26,8 @@ process.on("message", async (m: any) => {
       ...m.options,
       comp,
       composition: "memory",
-      workers: 1,
+      // [EXP-P5N] Why: the recovery gate exercises the pipelined publisher, so the child may run more than one worker. Rejected: forcing 1 (a single worker never has a page queued behind another's publication).
+      workers: m.options.workers ?? 1,
       onPage: async (records, page) => {
         await rpc("publish", [records, page]);
       },

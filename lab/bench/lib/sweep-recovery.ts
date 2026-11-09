@@ -17,6 +17,9 @@ export async function recoverSweep(o: {
   seed: string;
   stops?: number;
   validate?: (records: readonly any[]) => Promise<void>;
+  /** [EXP-P5N] Child worker count (pipelined publisher) and kill phases; the default keeps the earlier two-phase schedule. */
+  workers?: number;
+  phases?: readonly ("read" | "publish" | "checkpoint")[];
 }) {
   if (!o.activations?.length)
     throw new Error("G4 publication requires activation/reconcile records");
@@ -32,7 +35,12 @@ export async function recoverSweep(o: {
   while (targets.size < count) targets.add(rng.int(pages));
   const schedule = [...targets]
     .sort((a, b) => a - b)
-    .map((page, i) => ({ page, phase: i % 2 ? "checkpoint" : "publish" }));
+    .map((page, i) => ({
+      page,
+      // [EXP-P5N] Why: three kill points: after a page is read and before it is evaluated and published ("read"), after the publication commit and before the cursor write ("publish"),
+      // after the cursor write ("checkpoint"). Rejected: the earlier alternation (no kill before publish).
+      phase: o.phases ? o.phases[i % o.phases.length]! : i % 2 ? "checkpoint" : "publish",
+    }));
   const expectedDeliveries = new Map<string, string>();
   const pageDeliveries = new Map<number, string>();
   const expected = new Map<string, string>(),
@@ -52,6 +60,7 @@ export async function recoverSweep(o: {
     cursor: o.cursor,
     release: o.release ?? "R2",
     activations: o.activations,
+    ...(o.workers ? { workers: o.workers } : {}),
   };
   const run = async (stop?: { page: number; phase: string }, reference = false) => {
     const child = fork(new URL("./sweep-process.ts", import.meta.url), [], {
@@ -79,7 +88,14 @@ export async function recoverSweep(o: {
       if (m.type !== "rpc") return;
       try {
         let value: any;
-        if (m.method === "sweepPage") value = await o.comp.sweepPage(m.args[0], m.args[1]);
+        if (m.method === "sweepPage") {
+          if (!reference && stop?.phase === "read" && o.subjects.indexOf(m.args[0][0]) === stop.page * 64) {
+            stopped = true;
+            child.kill("SIGKILL");
+            return;
+          }
+          value = await o.comp.sweepPage(m.args[0], m.args[1]);
+        }
         else if (m.method === "publish") {
           const [records, page] = m.args;
           await o.validate?.(records);
