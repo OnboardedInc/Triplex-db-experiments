@@ -439,3 +439,12 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
 - 2026-11-09 DI01 ACCEPT-OFFLINE (verify/DI01 9661d368, CX-VDI01 round 3): typed BasisNotAvailable everywhere, state unchanged on refusal,
   same-page recovery; DI01 18/18, evaluator 108, lab PACK, --verify. Joins contract 0.4.1 at exp/DI01-dependency-index b256d60c with the
   verify branch. Live backend retention and the 100k lag benchmark not rerun.
+- 2026-11-09 R50 (critical-path refresh) committed 83afb7ed. First PASS cell unchanged: NS.P3 on the broker source (C3, and C5 via Q106c).
+  Orchestrator decisions taken from it: (D2) run P3 on the broker with H1 reader workers serving the readers role (Q99c+Q105a) at a 10k
+  rung, so no engine slot, QLever replica or resident parking is needed; Sam is told plainly that SQLite in the broker, not an engine,
+  would win the first PASS. Cut contract 0.4.1 without the witness pin (witness pin goes in 0.4.2 after W0). Stop: OBS01 parser hardening
+  (done, Q109a), QH1 micro-steps after round 3 (about 640 pulls/CPU-s is the ceiling of R46's list; next is an Opus P4 brief), P5B after
+  its running 10k arm (1-worker 10k activation 92.7 s, about 930 s extrapolated at 100k vs 100 s; next is an Opus P5 brief), HS01 round 4
+  until Q107-S, RT01 XTDB G6 during busy hours. Next after G03 7c: G03 round 8 in two worktrees (grant plus measure_single; H1 reader
+  provider plus CR-NS ingestion), which also checks whether VM images meet NSR's Node 24 target and FD01's SQLite >= 3.51.3 floor (a second
+  download for Sam if not). Disk: archiving settled evidence toward 25 GiB free.
