@@ -1,0 +1,13 @@
+{
+  "format": "er01-s-diagnostic-test-summary/1",
+  "command": "node lab/bin/heavy.mjs --label CX-OBS01-ER01-S -- python3 -B lab/observer/erasure/test_scanners.py",
+  "observed": "FAILED (failures=1, errors=3)",
+  "tests": 23,
+  "elapsedSeconds": 25.041,
+  "failures": [
+    "D AAD assertion/type and plaintext-digest mutations were REFUSED by the global P/D/EI binding guard before per-scan output; three tests incorrectly looked up a D row and raised StopIteration.",
+    "Stale-old-epoch backup fixture also removed its live control. K correctly returned REFUSED, while the test expected FAIL. Preserve the live control to isolate the residual-key finding."
+  ],
+  "scope": "Diagnostic summary of the first console run, not a complete raw transcript or immutable source-bound receipt. Source edits occurred while that command was queued; final retained gate freezes and hashes its source files.",
+  "rerunReason": "Correct test fixtures/assertions for stronger refusal behavior; retain a final source-bound gate. No scanner check weakened."
+}
