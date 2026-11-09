@@ -1,0 +1,1 @@
+Test-development trial, not final acceptance. The down-function extraction used a nonexistent end marker, so its control and defect cases did not run; other seven desired-behavior assertions failed as recorded. Exact executed test bytes match the receipt. The final test fixes the extraction marker and supplies a complete schema-shaped AttachDatabase config.

@@ -1,0 +1,34 @@
+{
+  "basis": "Actual completed exec sessions 10403 and 62671; exit statuses returned by the tool, no historical execution inferred.",
+  "runs": [
+    {
+      "command": [
+        "pnpm",
+        "--store-dir",
+        "/Users/sam/projects/triplex-db-2/.pnpm-store",
+        "install",
+        "--offline",
+        "--frozen-lockfile",
+        "--ignore-scripts"
+      ],
+      "heavyLabel": "CX-VK01-round3-offline-deps",
+      "exit": 0,
+      "output": "deps-install.log",
+      "outputSha256": "516bb8f5b83e077da845b2218e3f5fcd9bbe24cbf2781093e78ccaaa9f88cfd2"
+    },
+    {
+      "command": [
+        "node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "lab/bench/tsconfig.json"
+      ],
+      "heavyLabel": "CX-VK01-round3-types",
+      "exit": 0,
+      "output": "types.log",
+      "outputSha256": "70aad6136e12cc36dba281ba64784ecaa94fd6a9e91df109ef51e120d657d232"
+    }
+  ],
+  "lockSha256": "b2b3e6e8cdfb18df6d235a8724611ee4fe637426c722a5de34326346b3cb6500"
+}

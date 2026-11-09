@@ -1,0 +1,344 @@
+TAP version 13
+# (node:20878) ExperimentalWarning: stripTypeScriptTypes is an experimental feature and might change at any time
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: Q83e: schema-derived maintenance and cut encodings qualify distinct F/M/T
+ok 1 - Q83e: schema-derived maintenance and cut encodings qualify distinct F/M/T
+  ---
+  duration_ms: 1.443625
+  type: 'test'
+  ...
+# Subtest: Q83e: Tx at interval position 1/5 refuses with unchanged observed T
+ok 2 - Q83e: Tx at interval position 1/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.323667
+  type: 'test'
+  ...
+# Subtest: Q83e: Tx at interval position 2/5 refuses with unchanged observed T
+ok 3 - Q83e: Tx at interval position 2/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.166458
+  type: 'test'
+  ...
+# Subtest: Q83e: Tx at interval position 3/5 refuses with unchanged observed T
+ok 4 - Q83e: Tx at interval position 3/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.154916
+  type: 'test'
+  ...
+# Subtest: Q83e: Tx at interval position 4/5 refuses with unchanged observed T
+ok 5 - Q83e: Tx at interval position 4/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.55225
+  type: 'test'
+  ...
+# Subtest: Q83e: Tx at interval position 5/5 refuses with unchanged observed T
+ok 6 - Q83e: Tx at interval position 5/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.152917
+  type: 'test'
+  ...
+# Subtest: Q83e: LegacyTx at interval position 1/5 refuses with unchanged observed T
+ok 7 - Q83e: LegacyTx at interval position 1/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.120542
+  type: 'test'
+  ...
+# Subtest: Q83e: LegacyTx at interval position 2/5 refuses with unchanged observed T
+ok 8 - Q83e: LegacyTx at interval position 2/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.06475
+  type: 'test'
+  ...
+# Subtest: Q83e: LegacyTx at interval position 3/5 refuses with unchanged observed T
+ok 9 - Q83e: LegacyTx at interval position 3/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.279584
+  type: 'test'
+  ...
+# Subtest: Q83e: LegacyTx at interval position 4/5 refuses with unchanged observed T
+ok 10 - Q83e: LegacyTx at interval position 4/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.310208
+  type: 'test'
+  ...
+# Subtest: Q83e: LegacyTx at interval position 5/5 refuses with unchanged observed T
+ok 11 - Q83e: LegacyTx at interval position 5/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.123625
+  type: 'test'
+  ...
+# Subtest: Q83e: AttachDatabase at interval position 1/5 refuses with unchanged observed T
+ok 12 - Q83e: AttachDatabase at interval position 1/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.055958
+  type: 'test'
+  ...
+# Subtest: Q83e: AttachDatabase at interval position 2/5 refuses with unchanged observed T
+ok 13 - Q83e: AttachDatabase at interval position 2/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.049875
+  type: 'test'
+  ...
+# Subtest: Q83e: AttachDatabase at interval position 3/5 refuses with unchanged observed T
+ok 14 - Q83e: AttachDatabase at interval position 3/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.04825
+  type: 'test'
+  ...
+# Subtest: Q83e: AttachDatabase at interval position 4/5 refuses with unchanged observed T
+ok 15 - Q83e: AttachDatabase at interval position 4/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.0545
+  type: 'test'
+  ...
+# Subtest: Q83e: AttachDatabase at interval position 5/5 refuses with unchanged observed T
+ok 16 - Q83e: AttachDatabase at interval position 5/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.051833
+  type: 'test'
+  ...
+# Subtest: Q83e: DetachDatabase at interval position 1/5 refuses with unchanged observed T
+ok 17 - Q83e: DetachDatabase at interval position 1/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.043417
+  type: 'test'
+  ...
+# Subtest: Q83e: DetachDatabase at interval position 2/5 refuses with unchanged observed T
+ok 18 - Q83e: DetachDatabase at interval position 2/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.042
+  type: 'test'
+  ...
+# Subtest: Q83e: DetachDatabase at interval position 3/5 refuses with unchanged observed T
+ok 19 - Q83e: DetachDatabase at interval position 3/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.046666
+  type: 'test'
+  ...
+# Subtest: Q83e: DetachDatabase at interval position 4/5 refuses with unchanged observed T
+ok 20 - Q83e: DetachDatabase at interval position 4/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.049291
+  type: 'test'
+  ...
+# Subtest: Q83e: DetachDatabase at interval position 5/5 refuses with unchanged observed T
+ok 21 - Q83e: DetachDatabase at interval position 5/5 refuses with unchanged observed T
+  ---
+  duration_ms: 0.053917
+  type: 'test'
+  ...
+# Subtest: Q83e: ambiguous protobuf oneof refuses (tx-first)
+ok 22 - Q83e: ambiguous protobuf oneof refuses (tx-first)
+  ---
+  duration_ms: 0.228583
+  type: 'test'
+  ...
+# Subtest: Q83e: ambiguous protobuf oneof refuses (tx-last)
+ok 23 - Q83e: ambiguous protobuf oneof refuses (tx-last)
+  ---
+  duration_ms: 0.045708
+  type: 'test'
+  ...
+# Subtest: R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (empty-body)
+not ok 24 - R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (empty-body)
+  ---
+  duration_ms: 0.421042
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:85:4'
+  failureType: 'testCodeFailure'
+  error: 'the cut anchor is not recognized as a cut by the pinned XTDB codec'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:90:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (unknown-field-1)
+not ok 25 - R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (unknown-field-1)
+  ---
+  duration_ms: 0.159291
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:85:4'
+  failureType: 'testCodeFailure'
+  error: 'the cut anchor is not recognized as a cut by the pinned XTDB codec'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:90:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (wrong-wire-for-field-2)
+not ok 26 - R3-F1: a FlushBlock that XTDB decodes to null is not a cut anchor (wrong-wire-for-field-2)
+  ---
+  duration_ms: 0.075709
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:85:4'
+  failureType: 'testCodeFailure'
+  error: 'the cut anchor is not recognized as a cut by the pinned XTDB codec'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:90:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R3-F1: invalid nested TrieMetadata bytes must not qualify as maintenance
+not ok 27 - R3-F1: invalid nested TrieMetadata bytes must not qualify as maintenance
+  ---
+  duration_ms: 0.113583
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:93:1'
+  failureType: 'testCodeFailure'
+  error: 'nested invalid protobuf was not validated'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:100:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: Q83e: T is read independently; a changing application gauge refuses even with stable M
+ok 28 - Q83e: T is read independently; a changing application gauge refuses even with stable M
+  ---
+  duration_ms: 2.939791
+  type: 'test'
+  ...
+# Subtest: control: C1 is recomputed from the golden/copy evidence (clean)
+ok 29 - control: C1 is recomputed from the golden/copy evidence (clean)
+  ---
+  duration_ms: 2.79625
+  type: 'test'
+  ...
+# Subtest: R3-F2: C1 is recomputed from the golden/copy evidence (different-observed)
+not ok 30 - R3-F2: C1 is recomputed from the golden/copy evidence (different-observed)
+  ---
+  duration_ms: 1.243042
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:144:94'
+  failureType: 'testCodeFailure'
+  error: 'the old PASS bit overrode the current expected/observed hashes'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:153:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R3-F2: C1 is recomputed from the golden/copy evidence (wrong-expected)
+not ok 31 - R3-F2: C1 is recomputed from the golden/copy evidence (wrong-expected)
+  ---
+  duration_ms: 2.008875
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:144:94'
+  failureType: 'testCodeFailure'
+  error: 'the old PASS bit overrode the current expected/observed hashes'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:153:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: R3-F2: C1 is recomputed from the golden/copy evidence (missing-hashes)
+not ok 32 - R3-F2: C1 is recomputed from the golden/copy evidence (missing-hashes)
+  ---
+  duration_ms: 1.163709
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:144:94'
+  failureType: 'testCodeFailure'
+  error: 'the old PASS bit overrode the current expected/observed hashes'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:153:15)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: control: down invalidates verification before removing the current container
+ok 33 - control: down invalidates verification before removing the current container
+  ---
+  duration_ms: 25.181792
+  type: 'test'
+  ...
+# Subtest: R3-F3: down invalidates verification before removing the current container
+not ok 34 - R3-F3: down invalidates verification before removing the current container
+  ---
+  duration_ms: 26.600125
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:200:39'
+  failureType: 'testCodeFailure'
+  error: |-
+    PASS was published after the current container was removed
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/verify-k01/lab/verify/K01/q83e-review.test.mjs:203:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: cleanup variation: golden creation UUID is checked before removal (true)
+ok 35 - cleanup variation: golden creation UUID is checked before removal (true)
+  ---
+  duration_ms: 1.475167
+  type: 'test'
+  ...
+# Subtest: cleanup variation: golden creation UUID is checked before removal (false)
+ok 36 - cleanup variation: golden creation UUID is checked before removal (false)
+  ---
+  duration_ms: 0.722333
+  type: 'test'
+  ...
+1..36
+# tests 36
+# suites 0
+# pass 28
+# fail 8
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 192.389

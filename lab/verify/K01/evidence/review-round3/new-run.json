@@ -1,0 +1,48 @@
+{
+  "at": "2026-11-08T23:56:49.291Z",
+  "head": "6ad85278d8ad4658ba00f17d2b4d076e84fbcd55",
+  "reviewedBuilder": "9254ec3",
+  "phase": "new",
+  "offlineOnly": true,
+  "node": "v22.23.2",
+  "disk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 3423979,
+    "bavail": 3423979,
+    "files": 148443501,
+    "ffree": 136959160
+  },
+  "sources": {
+    "lab/bin/engine.mjs": "4f8dc979f14e52f66d43fac57d23266974fd2a033d93c0286122aed49d6c3d97",
+    "lab/bin/owner-state.mjs": "8cf0c4be727bbdd03968415f0e11a85f822acdef061d555e4045d0080cb70ebb",
+    "lab/bin/xtdb-log.mjs": "c94d2a7cee9d9549d88bb497cb7a34c9027fd6736116df036765bbd0a649d427",
+    "lab/bench/clone-check.ts": "b38a78e3e24397ff49f80e62f790ba31a7120ac97df3e0d92e622213cab73c42",
+    "lab/bench/lib/clone.ts": "b62f5f0f0cb69c3b073f4393b020d28ced626ed186b3bf92d6799b5444154715",
+    "lab/bench/lib/bulk.ts": "4dada29f8fce93803bd399458896999aabcd46f6506929c372387febcac70790",
+    "lab/experiments/EXP-K01-seed-clone/round2-live.mjs": "a0afcb3ad9df3c330b44059753638a6b242650978dbd222a24ed95010cac48dc",
+    "lab/verify/K01/offline.test.mjs": "c864874412124341d3ce33b4516a66a959ffdb47d204ad7019a32dfb55b76e12",
+    "lab/verify/K01/freshness.test.mjs": "76471f4164817d4c7c48d491425f54582c9987fbbbefb2dcfa649909689971f3",
+    "lab/verify/K01/round3.test.mjs": "cc4cfb42e4a26b5ad5fe323c71311a3772002df82db24ae839441e9da79c1c87",
+    "lab/verify/K01/round4.test.mjs": "adbd071903cd568a78d029c069f1b5f62faa49226e2641bc26ddd651fb7413bf",
+    "lab/verify/K01/tail-fixtures.mjs": "006fcfce065b64927dc43ba470eafb868b6d6ef01732e6c2bbefe069ed4844ba",
+    "lab/bench/test/clone.test.ts": "f12cef124c3a2cd04d7cfcd657e65ab1cb143476b15e63cd036f3d281c7d6ec1",
+    "lab/verify/K01/run-review-round3.mjs": "92f41de4cad4e9021c97ab6ffbf0ff517fad49534c70e8170fe2de6f6a47ac03",
+    "lab/verify/K01/q83e-review.test.mjs": "6e7f1d1cbe311d30bf193729223f96ffb52f14854a3adf010f8462394d5e901a"
+  },
+  "runs": [
+    {
+      "label": "new",
+      "args": [
+        "--test",
+        "lab/verify/K01/q83e-review.test.mjs"
+      ],
+      "exit": 1,
+      "signal": null,
+      "error": null,
+      "ms": 224,
+      "sha256": "d2ea3f14f5c7548f6d2f385d526c6fb83df3ad537a91b87bb57cc193de17e8fc"
+    }
+  ]
+}

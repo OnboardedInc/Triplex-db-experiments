@@ -1,0 +1,145 @@
+{
+  "at": "2026-11-08T23:48:20.493Z",
+  "head": "6ad85278d8ad4658ba00f17d2b4d076e84fbcd55",
+  "reviewedBuilder": "9254ec3",
+  "phase": "existing",
+  "offlineOnly": true,
+  "node": "v22.23.2",
+  "disk": {
+    "type": 25,
+    "bsize": 4096,
+    "blocks": 120699413,
+    "bfree": 3530541,
+    "bavail": 3530541,
+    "files": 152574726,
+    "ffree": 141221640
+  },
+  "sources": {
+    "lab/bin/engine.mjs": "4f8dc979f14e52f66d43fac57d23266974fd2a033d93c0286122aed49d6c3d97",
+    "lab/bin/owner-state.mjs": "8cf0c4be727bbdd03968415f0e11a85f822acdef061d555e4045d0080cb70ebb",
+    "lab/bin/xtdb-log.mjs": "c94d2a7cee9d9549d88bb497cb7a34c9027fd6736116df036765bbd0a649d427",
+    "lab/bench/clone-check.ts": "b38a78e3e24397ff49f80e62f790ba31a7120ac97df3e0d92e622213cab73c42",
+    "lab/bench/lib/clone.ts": "b62f5f0f0cb69c3b073f4393b020d28ced626ed186b3bf92d6799b5444154715",
+    "lab/bench/lib/bulk.ts": "4dada29f8fce93803bd399458896999aabcd46f6506929c372387febcac70790",
+    "lab/experiments/EXP-K01-seed-clone/round2-live.mjs": "a0afcb3ad9df3c330b44059753638a6b242650978dbd222a24ed95010cac48dc",
+    "lab/verify/K01/offline.test.mjs": "c864874412124341d3ce33b4516a66a959ffdb47d204ad7019a32dfb55b76e12",
+    "lab/verify/K01/freshness.test.mjs": "76471f4164817d4c7c48d491425f54582c9987fbbbefb2dcfa649909689971f3",
+    "lab/verify/K01/round3.test.mjs": "cc4cfb42e4a26b5ad5fe323c71311a3772002df82db24ae839441e9da79c1c87",
+    "lab/verify/K01/round4.test.mjs": "adbd071903cd568a78d029c069f1b5f62faa49226e2641bc26ddd651fb7413bf",
+    "lab/verify/K01/tail-fixtures.mjs": "006fcfce065b64927dc43ba470eafb868b6d6ef01732e6c2bbefe069ed4844ba",
+    "lab/bench/test/clone.test.ts": "f12cef124c3a2cd04d7cfcd657e65ab1cb143476b15e63cd036f3d281c7d6ec1",
+    "lab/verify/K01/run-review-round3.mjs": "92f41de4cad4e9021c97ab6ffbf0ff517fad49534c70e8170fe2de6f6a47ac03"
+  },
+  "runs": [
+    {
+      "label": "baseline-41",
+      "args": [
+        "--test",
+        "lab/bin/test/lab.test.mjs",
+        "lab/bench/test/bench.test.ts",
+        "lab/bench/test/clone.test.ts"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "ms": 1029,
+      "sha256": "1d388e97dc65f476087db407f7f6423005d80c0d09d60baccd52efe5b4048f81"
+    },
+    {
+      "label": "original-21",
+      "args": [
+        "--test",
+        "lab/verify/K01/offline.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "ms": 148,
+      "sha256": "b45d0cafe6ebaeaf0b19eeffe66f9686472692f327aa27a03ba0665ec7d928d2"
+    },
+    {
+      "label": "round3-23",
+      "args": [
+        "--test",
+        "lab/verify/K01/round3.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "ms": 118,
+      "sha256": "5e3d43858fe4491f5f57c0115635dc2db2286c13af9c8c55f221b5ca4f00fcc4"
+    },
+    {
+      "label": "freshness-14",
+      "args": [
+        "--test",
+        "lab/verify/K01/freshness.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "ms": 135,
+      "sha256": "2f91dd21bc5d650d9e076b8812925f775cabeb7daf740f2f4fdc1907642053e9"
+    },
+    {
+      "label": "round4-35",
+      "args": [
+        "--test",
+        "lab/verify/K01/round4.test.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "ms": 480,
+      "sha256": "e4b3e4df7bbc1388cbc6e2f9485176baf50a6aa24d2cd59c67d71885f1255f2a"
+    },
+    {
+      "label": "syntax-0",
+      "args": [
+        "--check",
+        "lab/bin/engine.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "ms": 29,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-1",
+      "args": [
+        "--check",
+        "lab/bin/xtdb-log.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "ms": 26,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-2",
+      "args": [
+        "--check",
+        "lab/bin/owner-state.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "ms": 25,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "syntax-3",
+      "args": [
+        "--check",
+        "lab/experiments/EXP-K01-seed-clone/round2-live.mjs"
+      ],
+      "exit": 0,
+      "signal": null,
+      "error": null,
+      "ms": 26,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}
