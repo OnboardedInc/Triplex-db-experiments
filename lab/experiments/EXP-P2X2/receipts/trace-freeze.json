@@ -1,0 +1,10 @@
+{
+  "seed": "EXP-P2X2-v1",
+  "subjects": 10000,
+  "durationS": 600,
+  "digest": "2fa1ecb1255fcf515f67985e3e0e371f385e551b87aee120ab0fdb147cc138d2",
+  "offers": 4027,
+  "originals": 3896,
+  "resends": 131,
+  "ackLoss": 37
+}

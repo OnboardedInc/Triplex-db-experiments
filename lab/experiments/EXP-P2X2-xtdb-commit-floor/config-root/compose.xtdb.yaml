@@ -1,0 +1,24 @@
+name: triplex-xtdb
+services:
+  xtdb:
+    image: ghcr.io/xtdb/xtdb:2.2.0@sha256:a6a426505b95a36e4e0e1d0de88efcf4220cb6bde8f1f5e594b0a1f92a948a77
+    container_name: triplex-xtdb-local
+    cpus: 4
+    mem_limit: 8g
+    memswap_limit: 8g
+    environment:
+      JDK_JAVA_OPTIONS: "-Xmx3g -XX:MaxDirectMemorySize=2g"
+    command: ["-f", "/etc/xtdb/config.yaml"]
+    ports:
+      - "127.0.0.1:5442:5432"
+    volumes:
+      - ./xtdb-config.yaml:/etc/xtdb/config.yaml:ro
+      - ./.xtdb/data:/var/lib/xtdb
+    restart: "no"
+    healthcheck:
+      # XTDB 2.2's endpoint accepts GET; the image's --spider sends HEAD (405).
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive"]
+      interval: 30s
+      timeout: 3s
+      start_period: 15s
+      retries: 3
