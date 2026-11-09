@@ -1,0 +1,1 @@
+{"trace": "same native single-triple update, 30 warmup, 150 measured", "p50": 2.113166, "p99": 3.491875, "readback": "{\"head\":{\"vars\":[\"n\"]},\"results\":{\"bindings\":[{\"n\":{\"datatype\":\"http://www.w3.org/2001/XMLSchema#int\",\"type\":\"literal\",\"value\":\"1\"}}]},\"meta\":{\"query-time-ms\":0,\"result-size-total\":1}}"}

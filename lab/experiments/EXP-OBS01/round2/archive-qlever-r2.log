@@ -1,0 +1,3 @@
+[lab] waiting for pool lock (held by pid 66886)
+{"archived":"tx2-qlever-s3-data","destination":"/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01/round2-qlever-volume","sha256":"c141b39eaa0d48abdda2aef40950e8135b2302e08cca50fce65ff6c4faf35b07"}
+[lab] tx2-qlever-s3 removed; volume tx2-qlever-s3-data removed; reservation and slot lock released

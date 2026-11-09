@@ -1,0 +1,5 @@
+export XTDB_URL='postgres://xtdb:xtdb@127.0.0.1:5473/xtdb'
+export XTDB_INTEGRATION=1
+export TRIPLEX_LAB_SLOT_OWNER='/Users/sam/projects/triplex-db-2/lab/locks/xtdb-s3/owner.json'
+export DOCKER_HOST='unix:///Users/sam/.colima/triplex2/docker.sock'  # only for manual docker calls; never the default context
+[lab] tx2-xtdb-s3 ready (health=healthy pgwire=open); cap 1.50 GiB, 1 CPU, config a432d531e68a

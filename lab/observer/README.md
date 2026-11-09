@@ -5,8 +5,8 @@ North star: an independent evidence floor for P1–P5; goals and targets remain 
 Source design: R27 sections 2–7, 9–10; Q82a–e. Consumer pinned to O-OBS round 2 `463703d`.
 
 This is collection and authenticated source decoding. It does **not** issue an O-OBS semantic PASS.
-The evaluator must supply its own case context and reviewed protocol normalizers; the included
-normalizer produces source samples, not the full protocol fields. Acceptance requires independent
+The evaluator supplies its own case context and frozen protocol specifications. The default
+normalizer produces source samples; the round 2 compiler also derives five protocol record shapes. Acceptance requires independent
 verifier recollection. A shared macOS user can still read another process's key.
 
 ## Start, witness, stop, retain
@@ -52,13 +52,16 @@ it does not select a protocol, case, contract, expected result or threshold. The
 Clock samples record actual host send/receive and VM observer times. RTT above 2 ms is rejected and recorded outside the bundle.
 An empty bridge refuses in O-OBS; rejected samples are never replaced by manufactured zero-RTT samples.
 `observer-bridge --lane ... --slot ... --holder ...` performs an additional sample, and
-`observer-witness` performs an additional host witness. The HTTP clock endpoint is read-only.
+`observer-witness` performs an additional host witness. The persistent nonce clock endpoint is read-only; `/clock` remains available for diagnostic comparisons.
+Send time is taken after connect and immediately before the nonce write; reply time is taken after the complete, nonce-checked reply.
+The interval midpoint and half-RTT remain conservative bounds, not exact clock synchronization.
 
 ## Sources and representation
 
 - All lanes: H1 engine cgroup v2 memory/current/peak/stat/events, CPU and I/O; H4 IPv4/IPv6 socket tables.
 - XTDB: X1 healthz `/metrics`, preserving every gauge and every database label, including completed transaction IDs.
-  XTDB has no active-query listing (R27 4.2); X6 logs/X7 spans and query diagnostics are not implemented here.
+  XTDB has no active-query listing (R27 4.2). X6 tails the slot-only DEBUG log; X7 retains raw OTLP protobuf spans.
+  Optional observer-only commands collect finish-block replies and read-only count-query transcripts.
 - QLever: Q1 `/metrics`, Q4 active-query dump at 250 ms, Q3 event log tail with inode/offset/rotation tracking.
   Default index is `triplex`, overridable by safe `--index-name`.
 - Datomic source planning: D1 metrics-callback JSONL from `--transactor-metrics` relative to the read-only engine
@@ -67,7 +70,7 @@ An empty bridge refuses in O-OBS; rejected samples are never replaced by manufac
   requires an orchestrator-provided lane/slot config and a preconfigured metrics callback. No D3 peer is provided.
 
 The observer shares the engine's PID/network namespaces and host cgroup namespace. Engine data/cgroups/code/config/key
-are mounted read-only. Only its private `/obs` output is writable; root filesystem is read-only, capabilities are dropped,
+are mounted read-only. Only its private `/obs` output is writable; root filesystem is read-only, all capabilities except `DAC_READ_SEARCH` are dropped,
 and no Docker socket is mounted. The SUT container receives neither the output mount nor the run key.
 
 An `obs-bundle/1` has envelope, dense per-stream chunk headers, per-stream exact-header-byte SHA256 chains,
@@ -95,3 +98,55 @@ The gate extracts the consumer directly with `git show 463703d:...` into this wo
 then checks real collector output through its `authenticate()` and exercises corruption, omission, parser/key,
 clock, repeat-run and resource-budget boundaries. Synthetic fixtures are transport tests, not vendor probes.
 No package contracts changed, so package builds and `pnpm check` are outside this gate's scope.
+
+
+## Round 2: transport and protocol records
+
+Observed exclusive slots publish their normal engine port through the observer's transparent TCP proxy
+(18090 inside the shared netns). The native measured port is unpublished. The additional read-only XTDB port
+cannot mutate the database. This prevents a host adapter from bypassing T1/T2 to call native admin writes.
+`--diagnostic-direct` publishes an explicit native bypass for A/A cost measurements; those profiles cannot
+establish the transport completeness floor. Neither the proxy nor the OTLP endpoint accepts arbitrary evidence
+records: they record actual forwarded TCP bytes or the engine's vendor span payloads. Vendor spans remain
+engine assertions and need independent transport/kernel corroboration where required.
+
+`--observation-features all|none|logs|spans` controls slot-only source configuration; the default is `all`.
+`--observer-streams` selects a source subset for isolated overhead diagnostics. `--enable-probes` adds private
+host-tooling commands: `observer-command --action finish-block`, `--action count --relation NAME --label LABEL`,
+and `--action scan --marker TEXT`. Commands are written to the observer-only mount; the SUT has no command path.
+Counts run in an explicit read-only transaction and retain the complete wire transcript. The byte scanner
+records file names, sizes, SHA256 and hit counts. It does not decode compressed vocabularies or freed blocks.
+The single added read/search capability reads engine-owned 0600 files through a **read-only mount**; it grants
+no write override. Observer logs, spans, proxy captures and archives are additional erasure inventory locations.
+
+An evaluator can pass `--protocol-spec /absolute/spec.json`, mapping stream IDs to a protocol specification.
+The observer compiles and snapshots a separate standalone parser per selected stream **before** starting collection.
+Retention records the external parser path/hash. O-OBS replays those exact parsers against authenticated raw chunks.
+Case fields select the relation, observation window, expected control inventory, declared owners and resource envelope;
+observed counters, statements, counts, sockets and peaks always come from raw source bytes.
+
+| Protocol | Implemented derivation | Boundary |
+| --- | --- | --- |
+| NO-MUTATION | X1/Q1 exact counter delta plus independent T1/T2 write classification | Counter incarnation/labels must match; successful read control required; TLS/unknown client frames refuse |
+| PREABORT | X6/Q3 statement starts and T1/T2 request starts | Frozen exact controls once each; unexpected statements, log gaps and ambiguous background queries refuse |
+| SCRATCH | X4 observer read-only before/after counts | Exact integer result and successful complete reply; unresolved outcomes refuse |
+| CONNECTIONS | H4 IPv4+IPv6 server sockets by declared port | Engine baseline and close bound supplied by evaluator; does not discover all application owners |
+| RESOURCE | H1 engine cgroup memory peak and allocated file blocks | Engine-only diagnostic; sampled disk is a lower bound and does not prove full application cost |
+
+The remaining nine protocol names explicitly refuse incomplete sources. In particular, CANCEL cannot infer caller
+ACK/reuse from a cancel frame; WORK cannot infer zero writes/bytes from scan rows; ACK-ORDER/WATERMARK/FAULT-TRANSITIONS
+need composition-specific independent publication/route witnesses. ERASURE-SCAN needs per-location controls, encoding-aware
+and freed-block coverage. No protocol record is accepted as a client-authored pass-through.
+
+The wire decoder preserves fully parsed client requests if a cancelled server reply is truncated, records
+`serverDecodeError`, and never interprets that truncation as successful cancellation. Independent count queries reject
+incomplete replies. SQL classification adapts EXP-C8's conservative offline mechanism, while respecting quoted literals.
+The OTLP decoder follows the pinned [trace schema](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.5.0/opentelemetry/proto/trace/v1/trace.proto)
+and [common schema](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.5.0/opentelemetry/proto/common/v1/common.proto).
+Integer attributes and fixed64 timestamps remain exact Python integers. XTDB span SQL can omit comments, so request tags
+alone do not establish span correlation.
+
+`engine.mjs archive-volume --lane LANE --slot SLOT --holder HOLDER --destination /absolute/archive --remove-volume`
+requires the holder's retained, quiescent volume. A pool-admitted utility reads it through a read-only mount, creates a TAR
+and per-file SHA256 inventory, reads the archive back, compares a second source scan, then optionally removes that owned
+volume through the ordinary engine teardown path. First-failure source/evidence remains in the archive.

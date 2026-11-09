@@ -1,0 +1,56 @@
+{
+  "Q1-metrics": {
+    "protocol": "OBS-NO-MUTATION",
+    "window": {
+      "offsetMs": 5000,
+      "durationMs": 4000
+    },
+    "requiredTags": [
+      "read-control"
+    ]
+  },
+  "Q3-events": {
+    "protocol": "OBS-PREABORT",
+    "window": {
+      "offsetMs": 5000,
+      "durationMs": 800
+    },
+    "requestId": "preaborted-never-issued",
+    "targetQuery": "SELECT ?s WHERE { ?s <urn:never-issued> ?v }",
+    "controls": {
+      "read-control": "SELECT ?n WHERE { ?s <urn:obs01:p> ?n } LIMIT 1"
+    },
+    "backgroundQueries": [
+      "SELECT * WHERE { ?s ?p ?o } LIMIT 1"
+    ]
+  },
+  "T2-wire": {
+    "protocols": [
+      {
+        "protocol": "OBS-NO-MUTATION",
+        "window": {
+          "offsetMs": 5000,
+          "durationMs": 4000
+        },
+        "requiredTags": [
+          "read-control"
+        ]
+      },
+      {
+        "protocol": "OBS-PREABORT",
+        "window": {
+          "offsetMs": 5000,
+          "durationMs": 800
+        },
+        "requestId": "preaborted-never-issued",
+        "targetQuery": "SELECT ?s WHERE { ?s <urn:never-issued> ?v }",
+        "controls": {
+          "read-control": "SELECT ?n WHERE { ?s <urn:obs01:p> ?n } LIMIT 1"
+        },
+        "backgroundQueries": [
+          "SELECT * WHERE { ?s ?p ?o } LIMIT 1"
+        ]
+      }
+    ]
+  }
+}

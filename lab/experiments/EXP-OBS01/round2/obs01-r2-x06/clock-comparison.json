@@ -1,0 +1,700 @@
+{
+  "summary": {
+    "legacy-http": {
+      "samples": 40,
+      "min": 0.7114160060882568,
+      "p50": 1.0604159832000732,
+      "p99": 4.596166014671326,
+      "rejected": 1
+    },
+    "nonce-tcp": {
+      "samples": 40,
+      "min": 0.2760000228881836,
+      "p50": 0.4212080240249634,
+      "p99": 0.9732919931411743,
+      "rejected": 0
+    }
+  },
+  "rows": [
+    {
+      "method": "legacy-http",
+      "send": 811244859.247,
+      "receive": 811244863.843166,
+      "observerMono": 119065436.656135,
+      "rttMs": 4.596166014671326
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244865.318083,
+      "receive": 811244866.291375,
+      "observerMono": 119065440.354323,
+      "nonce": "df9545fe4f960a76",
+      "uncertaintyMs": 0.48664599657058716,
+      "offsetMs": -692179425.450406,
+      "rttMs": 0.9732919931411743
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244866.381,
+      "receive": 811244868.342458,
+      "observerMono": 119065442.123417,
+      "rttMs": 1.9614579677581787
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244868.370541,
+      "receive": 811244868.953625,
+      "observerMono": 119065443.179089,
+      "nonce": "82ab6b795cb6f754",
+      "uncertaintyMs": 0.2915419936180115,
+      "offsetMs": -692179425.482994,
+      "rttMs": 0.583083987236023
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244868.991708,
+      "receive": 811244870.342958,
+      "observerMono": 119065444.306346,
+      "rttMs": 1.3512499332427979
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244870.362875,
+      "receive": 811244870.86075,
+      "observerMono": 119065445.120517,
+      "nonce": "fe4f9379dc6abb04",
+      "uncertaintyMs": 0.2489374876022339,
+      "offsetMs": -692179425.4912955,
+      "rttMs": 0.4978749752044678
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244870.895875,
+      "receive": 811244872.101416,
+      "observerMono": 119065446.234066,
+      "rttMs": 1.2055410146713257
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244872.119,
+      "receive": 811244872.527916,
+      "observerMono": 119065446.796819,
+      "nonce": "b748b3bdaa37880b",
+      "uncertaintyMs": 0.20445799827575684,
+      "offsetMs": -692179425.526639,
+      "rttMs": 0.40891599655151367
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244872.551291,
+      "receive": 811244873.547708,
+      "observerMono": 119065447.648449,
+      "rttMs": 0.9964170455932617
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244873.565166,
+      "receive": 811244874.0265,
+      "observerMono": 119065448.326578,
+      "nonce": "9a0a9e6c03d5d6ee",
+      "uncertaintyMs": 0.23066699504852295,
+      "offsetMs": -692179425.469255,
+      "rttMs": 0.4613339900970459
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244874.05325,
+      "receive": 811244874.995791,
+      "observerMono": 119065449.174916,
+      "rttMs": 0.9425410032272339
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244875.013291,
+      "receive": 811244875.56,
+      "observerMono": 119065449.804295,
+      "nonce": "f673231936846e64",
+      "uncertaintyMs": 0.2733544707298279,
+      "offsetMs": -692179425.4823503,
+      "rttMs": 0.5467089414596558
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244875.590625,
+      "receive": 811244876.651041,
+      "observerMono": 119065450.817467,
+      "rttMs": 1.0604159832000732
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244876.668541,
+      "receive": 811244877.095833,
+      "observerMono": 119065451.351304,
+      "nonce": "b765c1ef8f20afda",
+      "uncertaintyMs": 0.21364599466323853,
+      "offsetMs": -692179425.5308828,
+      "rttMs": 0.42729198932647705
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244877.172083,
+      "receive": 811244878.459083,
+      "observerMono": 119065452.560352,
+      "rttMs": 1.2869999408721924
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244878.477458,
+      "receive": 811244878.958541,
+      "observerMono": 119065453.268773,
+      "nonce": "839d962d4bf0ddbb",
+      "uncertaintyMs": 0.2405415177345276,
+      "offsetMs": -692179425.4492265,
+      "rttMs": 0.4810830354690552
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244878.984125,
+      "receive": 811244880.822791,
+      "observerMono": 119065454.736532,
+      "rttMs": 1.8386659622192383
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244880.880375,
+      "receive": 811244881.445083,
+      "observerMono": 119065455.672704,
+      "nonce": "ec334771216cb23a",
+      "uncertaintyMs": 0.2823539972305298,
+      "offsetMs": -692179425.490025,
+      "rttMs": 0.5647079944610596
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244881.511958,
+      "receive": 811244882.584708,
+      "observerMono": 119065456.754835,
+      "rttMs": 1.0727499723434448
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244882.606125,
+      "receive": 811244883.043958,
+      "observerMono": 119065457.275796,
+      "nonce": "e213b761d6dd5b42",
+      "uncertaintyMs": 0.21891647577285767,
+      "offsetMs": -692179425.5492456,
+      "rttMs": 0.43783295154571533
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244883.067416,
+      "receive": 811244884.128416,
+      "observerMono": 119065458.349136,
+      "rttMs": 1.0609999895095825
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244884.182333,
+      "receive": 811244884.603541,
+      "observerMono": 119065458.843889,
+      "nonce": "c32dd87f29137b05",
+      "uncertaintyMs": 0.2106040120124817,
+      "offsetMs": -692179425.549048,
+      "rttMs": 0.4212080240249634
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244884.619916,
+      "receive": 811244885.741541,
+      "observerMono": 119065459.826603,
+      "rttMs": 1.1216250658035278
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244885.753375,
+      "receive": 811244886.132666,
+      "observerMono": 119065460.473732,
+      "nonce": "b9fc904264a6d6e8",
+      "uncertaintyMs": 0.18964546918869019,
+      "offsetMs": -692179425.4692886,
+      "rttMs": 0.37929093837738037
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244886.143333,
+      "receive": 811244886.86375,
+      "observerMono": 119065461.090569,
+      "rttMs": 0.7204170227050781
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244886.874166,
+      "receive": 811244887.157958,
+      "observerMono": 119065461.509988,
+      "nonce": "ed79358f90b117cd",
+      "uncertaintyMs": 0.14189600944519043,
+      "offsetMs": -692179425.5060741,
+      "rttMs": 0.28379201889038086
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244887.172375,
+      "receive": 811244887.949208,
+      "observerMono": 119065462.197825,
+      "rttMs": 0.7768330574035645
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244887.9585,
+      "receive": 811244888.238708,
+      "observerMono": 119065462.582619,
+      "nonce": "dd9021f7e6d08b66",
+      "uncertaintyMs": 0.1401039958000183,
+      "offsetMs": -692179425.515985,
+      "rttMs": 0.2802079916000366
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244888.250125,
+      "receive": 811244888.969875,
+      "observerMono": 119065463.235831,
+      "rttMs": 0.719749927520752
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244888.979541,
+      "receive": 811244889.275833,
+      "observerMono": 119065463.617042,
+      "nonce": "abf2f2c09e7741f7",
+      "uncertaintyMs": 0.14814603328704834,
+      "offsetMs": -692179425.5106449,
+      "rttMs": 0.2962920665740967
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244889.34325,
+      "receive": 811244890.054666,
+      "observerMono": 119065464.306212,
+      "rttMs": 0.7114160060882568
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244890.067791,
+      "receive": 811244890.343791,
+      "observerMono": 119065464.684048,
+      "nonce": "907d91b4a887d896",
+      "uncertaintyMs": 0.1380000114440918,
+      "offsetMs": -692179425.521743,
+      "rttMs": 0.2760000228881836
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244890.35475,
+      "receive": 811244891.127208,
+      "observerMono": 119065465.365302,
+      "rttMs": 0.7724579572677612
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244891.138375,
+      "receive": 811244891.62075,
+      "observerMono": 119065465.871305,
+      "nonce": "e8b1c0626bc01cf1",
+      "uncertaintyMs": 0.2411874532699585,
+      "offsetMs": -692179425.5082575,
+      "rttMs": 0.482374906539917
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244891.639,
+      "receive": 811244893.192375,
+      "observerMono": 119065467.062603,
+      "rttMs": 1.5533748865127563
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244893.216166,
+      "receive": 811244893.77475,
+      "observerMono": 119065468.013859,
+      "nonce": "cb1a849cb6b1a298",
+      "uncertaintyMs": 0.2792919874191284,
+      "offsetMs": -692179425.481599,
+      "rttMs": 0.5585839748382568
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244893.798916,
+      "receive": 811244895.209375,
+      "observerMono": 119065469.276366,
+      "rttMs": 1.410459041595459
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244895.2325,
+      "receive": 811244895.686583,
+      "observerMono": 119065469.962954,
+      "nonce": "ee65deb4672378bc",
+      "uncertaintyMs": 0.22704154253005981,
+      "offsetMs": -692179425.4965875,
+      "rttMs": 0.45408308506011963
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244895.706208,
+      "receive": 811244896.873791,
+      "observerMono": 119065470.983418,
+      "rttMs": 1.1675829887390137
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244896.89,
+      "receive": 811244897.402916,
+      "observerMono": 119065471.61163,
+      "nonce": "c7ad14443ae2b987",
+      "uncertaintyMs": 0.25645798444747925,
+      "offsetMs": -692179425.534828,
+      "rttMs": 0.5129159688949585
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244897.424541,
+      "receive": 811244898.461708,
+      "observerMono": 119065472.618427,
+      "rttMs": 1.037166953086853
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244898.479708,
+      "receive": 811244899.077083,
+      "observerMono": 119065473.254973,
+      "nonce": "82d83b151d051cd0",
+      "uncertaintyMs": 0.29868751764297485,
+      "offsetMs": -692179425.5234225,
+      "rttMs": 0.5973750352859497
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244899.097041,
+      "receive": 811244900.414666,
+      "observerMono": 119065474.555022,
+      "rttMs": 1.3176250457763672
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244900.433791,
+      "receive": 811244900.906791,
+      "observerMono": 119065475.162234,
+      "nonce": "8da7ad8464c59858",
+      "uncertaintyMs": 0.23649996519088745,
+      "offsetMs": -692179425.508057,
+      "rttMs": 0.4729999303817749
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244900.932541,
+      "receive": 811244902.068125,
+      "observerMono": 119065476.186656,
+      "rttMs": 1.1355839967727661
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244902.0895,
+      "receive": 811244902.499,
+      "observerMono": 119065476.82816,
+      "nonce": "e52842e1c2a46311",
+      "uncertaintyMs": 0.20475000143051147,
+      "offsetMs": -692179425.46609,
+      "rttMs": 0.40950000286102295
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244902.517041,
+      "receive": 811244903.496583,
+      "observerMono": 119065477.65979,
+      "rttMs": 0.9795420169830322
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244903.512166,
+      "receive": 811244903.923375,
+      "observerMono": 119065478.218335,
+      "nonce": "8193692e334f8967",
+      "uncertaintyMs": 0.20560449361801147,
+      "offsetMs": -692179425.4994355,
+      "rttMs": 0.41120898723602295
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244903.944,
+      "receive": 811244904.795875,
+      "observerMono": 119065479.016465,
+      "rttMs": 0.8518749475479126
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244904.808625,
+      "receive": 811244905.18325,
+      "observerMono": 119065479.517717,
+      "nonce": "e9a459b9612e4f9d",
+      "uncertaintyMs": 0.18731248378753662,
+      "offsetMs": -692179425.4782205,
+      "rttMs": 0.37462496757507324
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244905.198166,
+      "receive": 811244906.103458,
+      "observerMono": 119065480.32293,
+      "rttMs": 0.9052920341491699
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244906.115833,
+      "receive": 811244906.468333,
+      "observerMono": 119065480.769516,
+      "nonce": "819e76c9103163f1",
+      "uncertaintyMs": 0.17624998092651367,
+      "offsetMs": -692179425.522567,
+      "rttMs": 0.35249996185302734
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244906.484625,
+      "receive": 811244907.568375,
+      "observerMono": 119065481.70348,
+      "rttMs": 1.0837500095367432
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244907.588083,
+      "receive": 811244907.9645,
+      "observerMono": 119065482.265108,
+      "nonce": "c5d1db242072eb24",
+      "uncertaintyMs": 0.1882084608078003,
+      "offsetMs": -692179425.5111835,
+      "rttMs": 0.3764169216156006
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244907.987916,
+      "receive": 811244908.815291,
+      "observerMono": 119065483.036863,
+      "rttMs": 0.827375054359436
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244908.831708,
+      "receive": 811244909.220666,
+      "observerMono": 119065483.532282,
+      "nonce": "a516f30b521ade3e",
+      "uncertaintyMs": 0.1944790482521057,
+      "offsetMs": -692179425.493905,
+      "rttMs": 0.3889580965042114
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244909.238,
+      "receive": 811244910.312708,
+      "observerMono": 119065484.422121,
+      "rttMs": 1.0747079849243164
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244910.329333,
+      "receive": 811244910.787958,
+      "observerMono": 119065485.04625,
+      "nonce": "c275c71c3f26b81f",
+      "uncertaintyMs": 0.22931253910064697,
+      "offsetMs": -692179425.5123955,
+      "rttMs": 0.45862507820129395
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244910.810375,
+      "receive": 811244911.836333,
+      "observerMono": 119065486.00713,
+      "rttMs": 1.0259580612182617
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244911.854708,
+      "receive": 811244912.239833,
+      "observerMono": 119065486.539675,
+      "nonce": "89d277bebaaeb464",
+      "uncertaintyMs": 0.1925625205039978,
+      "offsetMs": -692179425.5075955,
+      "rttMs": 0.3851250410079956
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244912.257083,
+      "receive": 811244913.271166,
+      "observerMono": 119065487.43868,
+      "rttMs": 1.014082908630371
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244913.286916,
+      "receive": 811244913.6985,
+      "observerMono": 119065488.024767,
+      "nonce": "9c78025da2805c4f",
+      "uncertaintyMs": 0.20579200983047485,
+      "offsetMs": -692179425.4679409,
+      "rttMs": 0.4115840196609497
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244913.713,
+      "receive": 811244914.55575,
+      "observerMono": 119065488.750938,
+      "rttMs": 0.8427499532699585
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244914.572083,
+      "receive": 811244914.991208,
+      "observerMono": 119065489.336775,
+      "nonce": "ae72f5cfbbfb6c21",
+      "uncertaintyMs": 0.2095624804496765,
+      "offsetMs": -692179425.4448705,
+      "rttMs": 0.419124960899353
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244915.008708,
+      "receive": 811244915.86825,
+      "observerMono": 119065490.108612,
+      "rttMs": 0.8595420122146606
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244915.879541,
+      "receive": 811244916.239625,
+      "observerMono": 119065490.53074,
+      "nonce": "de2fd97cca37d35a",
+      "uncertaintyMs": 0.18004196882247925,
+      "offsetMs": -692179425.5288429,
+      "rttMs": 0.3600839376449585
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244916.252333,
+      "receive": 811244917.345875,
+      "observerMono": 119065491.488954,
+      "rttMs": 1.0935419797897339
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244917.363208,
+      "receive": 811244917.733,
+      "observerMono": 119065492.055957,
+      "nonce": "c56e24671d91c4ee",
+      "uncertaintyMs": 0.18489599227905273,
+      "offsetMs": -692179425.4921471,
+      "rttMs": 0.36979198455810547
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244917.748958,
+      "receive": 811244918.762666,
+      "observerMono": 119065492.978754,
+      "rttMs": 1.0137079954147339
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244918.779083,
+      "receive": 811244919.139791,
+      "observerMono": 119065493.43459,
+      "nonce": "a5cdbc507a076f8f",
+      "uncertaintyMs": 0.18035399913787842,
+      "offsetMs": -692179425.524847,
+      "rttMs": 0.36070799827575684
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244919.19175,
+      "receive": 811244919.98975,
+      "observerMono": 119065494.230386,
+      "rttMs": 0.7979999780654907
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244920.004333,
+      "receive": 811244920.474125,
+      "observerMono": 119065494.724806,
+      "nonce": "9c76ce41d390f5c7",
+      "uncertaintyMs": 0.2348960041999817,
+      "offsetMs": -692179425.514423,
+      "rttMs": 0.4697920083999634
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244920.49175,
+      "receive": 811244921.597458,
+      "observerMono": 119065495.701187,
+      "rttMs": 1.1057080030441284
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244921.611125,
+      "receive": 811244922.116833,
+      "observerMono": 119065496.33344,
+      "nonce": "bc36fe8c84d628ac",
+      "uncertaintyMs": 0.25285398960113525,
+      "offsetMs": -692179425.530539,
+      "rttMs": 0.5057079792022705
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244922.281791,
+      "receive": 811244923.499625,
+      "observerMono": 119065497.566406,
+      "rttMs": 1.2178339958190918
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244923.522333,
+      "receive": 811244924.04375,
+      "observerMono": 119065498.335785,
+      "nonce": "805cea11a98892f5",
+      "uncertaintyMs": 0.2607085108757019,
+      "offsetMs": -692179425.4472564,
+      "rttMs": 0.5214170217514038
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244924.073375,
+      "receive": 811244925.117291,
+      "observerMono": 119065499.255874,
+      "rttMs": 1.0439159870147705
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244925.1365,
+      "receive": 811244925.5075,
+      "observerMono": 119065499.843794,
+      "nonce": "b6b13a3a9da85e0e",
+      "uncertaintyMs": 0.18550002574920654,
+      "offsetMs": -692179425.478206,
+      "rttMs": 0.3710000514984131
+    },
+    {
+      "method": "legacy-http",
+      "send": 811244925.523708,
+      "receive": 811244926.486708,
+      "observerMono": 119065500.694841,
+      "rttMs": 0.9630000591278076
+    },
+    {
+      "method": "nonce-tcp",
+      "send": 811244926.499541,
+      "receive": 811244926.814041,
+      "observerMono": 119065501.152843,
+      "nonce": "a7e157609d02f2a1",
+      "uncertaintyMs": 0.15724998712539673,
+      "offsetMs": -692179425.503948,
+      "rttMs": 0.31449997425079346
+    }
+  ]
+}

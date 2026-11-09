@@ -1,0 +1,63 @@
+{
+  "coverage": {
+    "from": 120134760.972421,
+    "maxGapMs": 0,
+    "segments": [
+      {
+        "from": 120134760.972421,
+        "to": 120135560.972421
+      }
+    ],
+    "to": 120135560.972421
+  },
+  "engineStatementLog": [],
+  "requestId": "preaborted-never-issued",
+  "engineMutationCounterAfter": 0,
+  "engineMutationCounterBefore": 0,
+  "source": {
+    "kind": "EI-log/xtdb/X6",
+    "streamRefs": [
+      "X6-log"
+    ],
+    "records": {
+      "coverage": {
+        "from": 120134760.972421,
+        "maxGapMs": 0,
+        "segments": [
+          {
+            "from": 120134760.972421,
+            "to": 120135560.972421
+          }
+        ],
+        "to": 120135560.972421
+      },
+      "engineStatementLog": [],
+      "requestId": "preaborted-never-issued"
+    }
+  },
+  "corroboration": [
+    {
+      "kind": "TO/xtdb/T1",
+      "streamRefs": [
+        "T1-wire"
+      ],
+      "records": {
+        "coverage": {
+          "from": 120134760.972421,
+          "maxGapMs": 0,
+          "segments": [
+            {
+              "from": 120134760.972421,
+              "to": 120135560.972421
+            }
+          ],
+          "to": 120135560.972421
+        },
+        "engineMutationCounterAfter": 0,
+        "engineMutationCounterBefore": 0,
+        "engineStatementLog": [],
+        "requestId": "preaborted-never-issued"
+      }
+    }
+  ]
+}

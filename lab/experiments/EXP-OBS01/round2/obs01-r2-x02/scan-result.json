@@ -1,0 +1,182 @@
+{
+  "canary": "obs01-r2-canary",
+  "event": "scan",
+  "files": [
+    {
+      "bytes": 183,
+      "hits": 0,
+      "location": "/engine/buffers/v06/blocks/b00.binpb",
+      "sha256": "982eca0dd4910dfdff80a64ce4ff6324559f69e9dccbda7b55d9968b83541c0b"
+    },
+    {
+      "bytes": 185,
+      "hits": 0,
+      "location": "/engine/buffers/v06/blocks/b01.binpb",
+      "sha256": "526d3fae98ca1c5bbf25ef9b3297e3e83f0a4175dfa8d35e136a2dda7b7854ae"
+    },
+    {
+      "bytes": 25015,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/blocks/b00.binpb",
+      "sha256": "c3399d410f0814344636d6165d0c3b3f4ad7d8648fb389c44ac10964b9a6377e"
+    },
+    {
+      "bytes": 25105,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/blocks/b01.binpb",
+      "sha256": "a632eb8a05fa49d08f8b3bf944ecd32468fd320d3a6e77ee47430202b31c37fa"
+    },
+    {
+      "bytes": 12654,
+      "hits": 120,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l00-rc-b00.arrow",
+      "sha256": "743ed389877e073bc98d4e43d053b09b3c224e6f5ad233d018fc4fd342902395"
+    },
+    {
+      "bytes": 12654,
+      "hits": 120,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l00-rc-b01.arrow",
+      "sha256": "890f75758097fb2e29cb29da7880ee5abe8a0131ac11c119539d4f59967beff2"
+    },
+    {
+      "bytes": 12654,
+      "hits": 120,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-r20261109-b01.arrow",
+      "sha256": "e6d3a1663c7854b719d39fdb470d7815653ae521fffacc6ae927f4a3ed4dd18e"
+    },
+    {
+      "bytes": 12654,
+      "hits": 120,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-rc-b00.arrow",
+      "sha256": "e6d3a1663c7854b719d39fdb470d7815653ae521fffacc6ae927f4a3ed4dd18e"
+    },
+    {
+      "bytes": 12654,
+      "hits": 120,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-rc-b01.arrow",
+      "sha256": "7d3cdd63e0dc759846f1c708c20d85e39bc28e044fd63781a4969ed86d4698bc"
+    },
+    {
+      "bytes": 5494,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l00-rc-b00.arrow",
+      "sha256": "ad95b29afcb0073259e652c35adfbcb2a0f66b9361dfc6c4aed12e7bae8d7895"
+    },
+    {
+      "bytes": 5494,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l00-rc-b01.arrow",
+      "sha256": "73d5fb3836abd23f15511f49419a893a6db26eaae01eceb1b7c11812fac87e3f"
+    },
+    {
+      "bytes": 7278,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-r20261109-b01.arrow",
+      "sha256": "1ec77c6572d274e0bbc188ff02e64a50073618ffff39e85b3cd766a7531392c5"
+    },
+    {
+      "bytes": 7278,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-rc-b00.arrow",
+      "sha256": "1ec77c6572d274e0bbc188ff02e64a50073618ffff39e85b3cd766a7531392c5"
+    },
+    {
+      "bytes": 7278,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-rc-b01.arrow",
+      "sha256": "b0faf4ae409683e9b070ae17caf5fc4daa4bc847ccf163b1fc1338e172880e0c"
+    },
+    {
+      "bytes": 225,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$role_membership/blocks/b00.binpb",
+      "sha256": "95b83b99d7a21d25b995348c14e2a7846c69f857bccb926ce8294736a5991a44"
+    },
+    {
+      "bytes": 225,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$role_membership/blocks/b01.binpb",
+      "sha256": "95b83b99d7a21d25b995348c14e2a7846c69f857bccb926ce8294736a5991a44"
+    },
+    {
+      "bytes": 41818,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$txs/blocks/b00.binpb",
+      "sha256": "bd102b16849112abd24ba6651f38761ac045f11edd381635eba1ef334b2bd197"
+    },
+    {
+      "bytes": 41907,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$txs/blocks/b01.binpb",
+      "sha256": "6fa7b0c0456f8fbe1e077293c8cd8d4de2b2a5364b9a36794f62b36fbc8077a9"
+    },
+    {
+      "bytes": 2894,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$txs/data/l00-rc-b00.arrow",
+      "sha256": "5f488d6456f460ee6e1305f0cb3ac8de6a3ab4165ff6afdab48cf25344c4698c"
+    },
+    {
+      "bytes": 2894,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$txs/data/l00-rc-b01.arrow",
+      "sha256": "2a68159b206a957ad6b1d205cd67d52134287e7d9edbb9605bb4c659684a47e3"
+    },
+    {
+      "bytes": 2894,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$txs/data/l01-rc-b00.arrow",
+      "sha256": "5b76adccf03b723e446ead41248cb3663efaee8d826e704961ad33aeb68cbfde"
+    },
+    {
+      "bytes": 2958,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$txs/data/l01-rc-b01.arrow",
+      "sha256": "fc69b0a34154fdb8c5f3471ac4938db68646caa2a0e3f6858b962b7931a394d6"
+    },
+    {
+      "bytes": 4670,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$txs/meta/l00-rc-b00.arrow",
+      "sha256": "459bbf0e663bea1776357b6aa9f3bf0627b0e2c6db5de665504d9b7e71f2dca9"
+    },
+    {
+      "bytes": 4670,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$txs/meta/l00-rc-b01.arrow",
+      "sha256": "a9bffc13973935fedb2bcb88a7c3a4a9c9224da6a52793761e70f07fbbec4084"
+    },
+    {
+      "bytes": 4670,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$txs/meta/l01-rc-b00.arrow",
+      "sha256": "459bbf0e663bea1776357b6aa9f3bf0627b0e2c6db5de665504d9b7e71f2dca9"
+    },
+    {
+      "bytes": 4718,
+      "hits": 0,
+      "location": "/engine/buffers/v06/tables/xt$txs/meta/l01-rc-b01.arrow",
+      "sha256": "7a8e8beb9bac0c534c1a10c85d85ddec228cbe3385fc56c5fe034bb783412bbf"
+    },
+    {
+      "bytes": 18305,
+      "hits": 240,
+      "location": "/engine/log/LOG",
+      "sha256": "f988ac9be2bbd7447c91b46eeb61f15a93eaf30406956c7640ca5a3270698d1f"
+    },
+    {
+      "bytes": 190565,
+      "hits": 240,
+      "location": "/engine/log/REPLICA_LOG",
+      "sha256": "309c0f5cca9a6ac06eea122446f704e9e8c510d3d2916bad99c6dee5c8b15c76"
+    },
+    {
+      "bytes": 18569,
+      "hits": 240,
+      "location": "/engine/observer-engine.log",
+      "sha256": "b34d3ff32e88752f615d1b4cbfa86e9399d6228f5a30a896eee38ef8139d3b89"
+    }
+  ],
+  "scanMethod": "literal-byte-scan/1",
+  "tFound": 118364168.340661
+}

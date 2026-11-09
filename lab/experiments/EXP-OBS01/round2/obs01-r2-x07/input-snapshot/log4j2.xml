@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- [EXP-OBS01] Why: synchronous escaped records preserve SQL/cancel coverage. Rejected: asynchronous log dropping. -->
+<Configuration status="WARN">
+  <Appenders>
+    <Console name="console" target="SYSTEM_OUT"><PatternLayout alwaysWriteExceptions="false" pattern="%d{UNIX_MILLIS}|%level|%logger|%enc{%msg}{JSON}%n"/></Console>
+    <File name="observer" fileName="/var/lib/xtdb/observer-engine.log" append="true" immediateFlush="true"><PatternLayout alwaysWriteExceptions="false" pattern="%d{UNIX_MILLIS}|%level|%logger|%enc{%msg}{JSON}%n"/></File>
+  </Appenders>
+  <Loggers>
+    <Logger name="xtdb.pgwire" level="DEBUG"/><Logger name="xtdb.compactor" level="DEBUG"/><Logger name="xtdb.indexer" level="DEBUG"/>
+    <Logger name="xtdb" level="INFO"/><Logger name="org.apache.kafka" level="ERROR"/><Logger name="org.apache.arrow" level="WARN"/>
+    <Root level="INFO"><AppenderRef ref="console"/><AppenderRef ref="observer"/></Root>
+  </Loggers>
+</Configuration>

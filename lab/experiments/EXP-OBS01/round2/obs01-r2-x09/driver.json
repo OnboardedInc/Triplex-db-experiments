@@ -1,0 +1,76 @@
+[
+  {
+    "probe": "P3",
+    "phase": "open-four",
+    "t": 120131360.693878
+  },
+  {
+    "probe": "P3",
+    "phase": "closed-four",
+    "t": 120132765.786857
+  },
+  {
+    "readControl": [
+      {
+        "n": 121
+      }
+    ],
+    "t": 120135010.78009
+  },
+  {
+    "probe": "P4",
+    "callerError": [
+      "pgwire closed"
+    ],
+    "reuse": {
+      "error": "pgwire closed"
+    },
+    "t": 120137708.655395
+  },
+  {
+    "probe": "P5",
+    "rows": [
+      {
+        "row_count": 121,
+        "pushdowns": null,
+        "time_to_first_page": "PT0.001854S",
+        "page_count": 2,
+        "self_time": "PT0.000046S",
+        "attributes": null,
+        "depth": "->",
+        "op": "project",
+        "total_time": "PT0.00191S"
+      },
+      {
+        "row_count": 121,
+        "pushdowns": null,
+        "time_to_first_page": "PT0.001824S",
+        "page_count": 2,
+        "self_time": "PT0.000063S",
+        "attributes": null,
+        "depth": "  ->",
+        "op": "rename",
+        "total_time": "PT0.001864S"
+      },
+      {
+        "row_count": 121,
+        "pushdowns": null,
+        "time_to_first_page": "PT0.001776S",
+        "page_count": 2,
+        "self_time": "PT0.001801S",
+        "attributes": {
+          "scan_db": "xtdb",
+          "scan_source": "public.obs01_r2",
+          "scan_files_pruned": 0,
+          "scan_files_used": 2,
+          "scan_pages_pruned": 0,
+          "scan_pages_used": 3,
+          "scan_rows_read": 961
+        },
+        "depth": "    ->",
+        "op": "scan",
+        "total_time": "PT0.001801S"
+      }
+    ]
+  }
+]

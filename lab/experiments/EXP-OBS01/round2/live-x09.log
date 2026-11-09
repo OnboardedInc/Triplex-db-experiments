@@ -1,0 +1,3 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 46869 "CX-VP2Q-4-r7-live"
+[lab] heavy: waiting for one of 4 slots; held by pid 72798 "CX-A01-0312-mutations-merged", pid 72799 "CX-A01-0312-evaluator-merged", pid 37317 "CX-G03-r3-claim-suites2", pid 46869 "CX-VP2Q-4-r7-live"
+{"id":"obs01-r2-x09","destination":"/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/experiments/EXP-OBS01/round2/obs01-r2-x09"}

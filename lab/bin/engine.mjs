@@ -18,7 +18,8 @@
 // the small read-only config file is bind-mounted.
 // Rejected: docker compose per slot (project labels and a second config source of truth);
 // a daemon (no process to babysit with at most 10 agents).
-import { observerUp, observerDown, observerWatch, observerWitness, observerImage, observerBridge, observerRetain } from './observer.mjs';
+import { archiveVolume } from './archive-volume.mjs';
+import { observerUp, observerDown, observerWatch, observerWitness, observerImage, observerBridge, observerRetain, observerCommand } from './observer.mjs';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import net from 'node:net';
@@ -68,14 +69,14 @@ export function assertSingleWriter(info, eff) {
 /** Effective engine configuration: the bytes the container actually runs with. */
 export function effectiveConfig(config, info) {
   if (info.observationSources) {
-    const clockPort = info.port + 10000;
-    if (config.forbiddenPorts.includes(clockPort) || clockPort > 65535 || config.reservedPortRanges.some(r => clockPort >= r.from && clockPort <= r.to))
+    const ports = [info.port+14000, info.port+10000, info.port+11000, ...(info.lane==='xtdb' ? [info.port+12000] : [])];
+    if (ports.some(clockPort => config.forbiddenPorts.includes(clockPort) || clockPort > 65535 || config.reservedPortRanges.some(r => clockPort >= r.from && clockPort <= r.to)))
       fail('REFUSED', 'observer clock forward collides with a protected port');
   }
   const dir = path.join(ENGINE_DIR, `${info.lane}-${info.slot}${info.role === 'follower' ? '-ro' : ''}`);
   fs.mkdirSync(dir, { recursive: true });
   // [EXP-X05] A cpuset joins the effective config only when given, so every existing slot keeps its hash.
-  const pin = info.cpusetCpus ? { cpusetCpus: info.cpusetCpus } : {};
+  const pin = { ...(info.cpusetCpus ? { cpusetCpus: info.cpusetCpus } : {}), ...(info.diagnosticDirect ? { diagnosticDirect:true } : {}) };
   if (info.role === 'follower') {
     const yaml = fs.readFileSync(info.configFile);
     const file = path.join(dir, 'config.yaml');
@@ -92,31 +93,40 @@ export function effectiveConfig(config, info) {
   if (info.lane === 'xtdb') {
     // Unchanged repo xtdb-config.yaml (pgwire 5432, healthz 8080, local log and storage under
     // /var/lib/xtdb, 512 MiB memory cache). Heap and direct memory come from the slot.
-    const yaml = fs.readFileSync(path.join(CONFIG_DIR, 'xtdb-config.yaml'));
+    let yaml = fs.readFileSync(path.join(CONFIG_DIR, 'xtdb-config.yaml'));
+    if (info.observationSources) {
+      const tracing = ['all','spans'].includes(info.observationFeatures ?? 'all');
+      yaml = Buffer.from(yaml.toString().replace('port: 5432', 'port: 5432\n  readOnlyPort: 5433') + (tracing ? '\ntracer:\n  enabled: true\n  endpoint: http://127.0.0.1:4318/v1/traces\n' : ''));
+    }
     const file = path.join(dir, 'config.yaml');
     fs.writeFileSync(file, yaml);
+    const logConfig = path.join(dir, 'log4j2.xml');
+    const logging = info.observationSources && ['all','logs'].includes(info.observationFeatures ?? 'all');
+    if (logging) fs.copyFileSync(path.join(REPO, 'lab/observer/log4j2.xml'), logConfig);
     const effective = {
+      ...(info.observationSources ? { observationFeatures: info.observationFeatures ?? 'all', ...(logging ? {logConfigSha256: sha256(fs.readFileSync(logConfig))} : {}), observerProxyPublish: `127.0.0.1:${info.port + 11000}:18090`, readOnlyPublish: `127.0.0.1:${info.port + 12000}:5433` } : {}),
       lane: 'xtdb', slot: info.slot, image: info.laneConf.image, configYamlSha256: sha256(yaml),
-      env: { JDK_JAVA_OPTIONS: info.javaOpts }, memBytes: info.memBytes, cpus: info.cpus, ...pin,
+      env: { JDK_JAVA_OPTIONS: info.javaOpts + (logging ? ' -Dlog4j2.configurationFile=/etc/xtdb/log4j2.xml' : '') }, memBytes: info.memBytes, cpus: info.cpus, ...pin,
       ...(info.observationSources ? { observerClockPublish: `127.0.0.1:${info.port + 10000}:18080` } : {}),
-      publish: `127.0.0.1:${info.port}:5432`, volume: `${info.volume}:/var/lib/xtdb`, cmd: ['-f', '/etc/xtdb/config.yaml'],
+      publish: `127.0.0.1:${info.port}:${info.observationSources ? 18090 : 5432}`, volume: `${info.volume}:/var/lib/xtdb`, cmd: ['-f', '/etc/xtdb/config.yaml'],
       health: 'wget -q -O /dev/null http://127.0.0.1:8080/healthz/alive',
     };
-    return { effective, sha256: sha256(JSON.stringify(effective)), files: { config: file } };
+    return { effective, sha256: sha256(JSON.stringify(effective)), files: { config: file, ...(logging ? { logConfig } : {}) } };
   }
   // QLever: repo qlever-start.sh with the slot's query memory (-m). Port stays 7019 inside.
   const original = fs.readFileSync(path.join(CONFIG_DIR, 'qlever-start.sh'), 'utf8');
   if (!/ -m 2G /.test(original)) fail('CONFIG', 'qlever-start.sh no longer has "-m 2G"; update engine.mjs');
   let script = original.replace(' -m 2G ', ` -m ${info.qleverMemory} `);
   // [EXP-OBS01] Why: protocol slots need Q1/Q3; rejected: altering shared dev residents.
-  if (info.observationSources) script = script.replace('--no-metrics-log', '--enable-metrics');
+  if (info.observationSources) script = script.replace('--no-metrics-log', ['all','logs'].includes(info.observationFeatures ?? 'all') ? '--enable-metrics' : '--enable-metrics --no-metrics-log');
   const file = path.join(dir, 'start.sh');
   fs.writeFileSync(file, script);
   const effective = {
     lane: 'qlever', slot: info.slot, image: info.laneConf.image, startScriptSha256: sha256(script),
+    ...(info.observationSources ? { observationFeatures: info.observationFeatures ?? 'all' } : {}),
     sourceStartScriptSha256: sha256(original), qleverMemory: info.qleverMemory, memBytes: info.memBytes, cpus: info.cpus, ...pin,
-    ...(info.observationSources ? { observerClockPublish: `127.0.0.1:${info.port + 10000}:18080` } : {}),
-    publish: `127.0.0.1:${info.port}:7019`, volume: `${info.volume}:/data`, volumeInit: 'marker /data/.tx2-volume, chown -R 999:999 /data (image user qlever); no -w (start.sh does cd /data)', entrypoint: ['/bin/bash', '/config/start.sh'],
+    ...(info.observationSources ? { observerClockPublish: `127.0.0.1:${info.port + 10000}:18080`, observerProxyPublish: `127.0.0.1:${info.port + 11000}:18090` } : {}),
+    publish: `127.0.0.1:${info.port}:${info.observationSources ? 18090 : 7019}`, volume: `${info.volume}:/data`, volumeInit: 'marker /data/.tx2-volume, chown -R 999:999 /data (image user qlever); no -w (start.sh does cd /data)', entrypoint: ['/bin/bash', '/config/start.sh'],
     health: "curl -fsS -o /dev/null 'http://127.0.0.1:7019/?query=SELECT%20*%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D%20LIMIT%201'",
   };
   return { effective, sha256: sha256(JSON.stringify(effective)), files: { startScript: file } };
@@ -127,15 +137,16 @@ function runArgs(info, eff, holder) {
   const common = [
     'run', '-d', '--name', info.container, '--restart', 'no',
     '--label', `tx2.lane=${info.lane}`, '--label', `tx2.slot=${info.slot}`, '--label', `tx2.config-sha256=${eff.sha256}`,
+    ...(e.observationFeatures ? ['--label',`tx2.observation-features=${e.observationFeatures}`] : []),
     '--label', `tx2.holder=${holder}`, '--label', 'tx2.managed-by=lab/bin/engine.mjs',
     ...(info.role === 'follower' ? ['--label', 'tx2.role=follower', '--label', `tx2.follows=${info.writer}`, '--label', `tx2.follower-profile=${info.profile ?? 'default'}`] : []),
     '--memory', String(info.memBytes), '--memory-swap', String(info.memBytes), '--cpus', String(info.cpus),
     ...(e.cpusetCpus ? ['--cpuset-cpus', e.cpusetCpus] : []),
-    '-p', e.publish, ...(e.observerClockPublish ? ['-p', e.observerClockPublish] : []), '-v', e.volume,
+    '-p', e.publish, ...(e.observerClockPublish ? ['-p', e.observerClockPublish] : []), ...(e.observerProxyPublish ? ['-p',e.observerProxyPublish] : []), ...(e.readOnlyPublish ? ['-p',e.readOnlyPublish] : []), ...(info.diagnosticDirect ? ['-p',`127.0.0.1:${info.port+14000}:${info.lane==='xtdb' ? 5432 : 7019}`] : []), '-v', e.volume,
     '--health-cmd', e.health, '--health-interval', '5s', '--health-timeout', '3s', '--health-start-period', '20s', '--health-retries', '3',
   ];
   if (info.lane === 'xtdb')
-    return [...common, '-e', `JDK_JAVA_OPTIONS=${info.javaOpts}`, '-v', `${eff.files.config}:/etc/xtdb/config.yaml:ro`, info.laneConf.image, ...e.cmd];
+    return [...common, '-e', `JDK_JAVA_OPTIONS=${e.env.JDK_JAVA_OPTIONS}`, ...(eff.files.logConfig ? ['-v', `${eff.files.logConfig}:/etc/xtdb/log4j2.xml:ro`] : []), '-v', `${eff.files.config}:/etc/xtdb/config.yaml:ro`, info.laneConf.image, ...e.cmd];
   return [...common, '--platform', 'linux/arm64', '-v', `${eff.files.startScript}:/config/start.sh:ro`, '--entrypoint', '/bin/bash', info.laneConf.image, '/config/start.sh'];
 }
 
@@ -153,11 +164,15 @@ export async function probe(info) {
   if (!c?.State.Running) return { ok: false, why: `container ${c ? c.State.Status : 'absent'}` };
   if (info.lane === 'xtdb') {
     const health = c.State.Health?.Status;
-    const open = await tcpOpen(info.port);
+    const nativeBinding=c.HostConfig.PortBindings?.['5432/tcp']?.find(b=>b.HostIp==='127.0.0.1');
+    const open = nativeBinding ? await tcpOpen(Number(nativeBinding.HostPort)) : true;
     return { ok: health === 'healthy' && open, why: `health=${health} pgwire=${open ? 'open' : 'closed'}` };
   }
+  if (!c.HostConfig.PortBindings?.['7019/tcp']) return { ok:c.State.Health?.Status==='healthy', why:`internal engine health=${c.State.Health?.Status}` };
+  const nativePort=c.HostConfig.PortBindings['7019/tcp'].find(b=>b.HostIp==='127.0.0.1')?.HostPort;
+  if(!nativePort) return {ok:false,why:'native port is not bound to loopback'};
   try {
-    const response = await fetch(`${info.endpoint}/?query=${encodeURIComponent('SELECT * WHERE { ?s ?p ?o } LIMIT 1')}`,
+    const response = await fetch(`http://127.0.0.1:${nativePort}/?query=${encodeURIComponent('SELECT * WHERE { ?s ?p ?o } LIMIT 1')}`,
       { headers: { Accept: 'application/sparql-results+json' }, signal: AbortSignal.timeout(5000) });
     return { ok: response.ok, why: `sparql HTTP ${response.status}` };
   } catch (error) { return { ok: false, why: `sparql ${error.cause?.code ?? error.message}` }; }
@@ -460,9 +475,20 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
   if (command === 'status') return status(config);
   if (command === 'observer-image') return observerImage(options);
   if (command === 'observer-retain') return observerRetain(options);
-  if (!['up', 'down', 'logs', 'observer-up', 'observer-down', 'observer-watch', 'observer-witness', 'observer-bridge'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
+  if (!['up', 'down', 'logs', 'observer-up', 'observer-down', 'observer-watch', 'observer-witness', 'observer-bridge', 'observer-command', 'archive-volume'].includes(command)) fail('USAGE', 'usage: engine.mjs up|down|status|logs --lane xtdb|qlever --slot dev|s1|s2|s3 [--fresh] [--follower] [--cpuset-cpus LIST]');
   if (!options.lane || !options.slot) fail('USAGE', '--lane and --slot are required');
   const info = slotInfo(config, options.lane, options.slot);
+  if (command === 'archive-volume') {
+    if (info.mode !== 'exclusive' || readOwner(info)) fail('REFUSED', 'archive only an unheld exclusive slot');
+    acquireSlot(info, defaultHolder(options), 'EXP-OBS01-archive');
+    try {
+      await archiveVolume(config, info, options);
+      if (options['remove-volume']) return await down(config, info, options);
+    } finally {
+      if (readOwner(info)?.holder === defaultHolder(options)) releaseSlot(info);
+    }
+    return;
+  }
   if (command === 'logs' && options.observer) {
     spawnSync('docker', dockerArgs(['logs', '--tail', String(options.tail ?? 200), `tx2-obs-${info.lane}-${info.slot}`]), { stdio: 'inherit' });
     return;
@@ -471,12 +497,16 @@ if (import.meta.url === `file://${process.argv[1]}`) main(async () => {
     if (command === 'observer-up') return observerUp(config, info, options);
     if (command === 'observer-down') return observerDown(info, options);
     if (command === 'observer-watch') return observerWatch(info, options);
+    if (command === 'observer-command') return observerCommand(info,options);
     if (command === 'observer-witness') return observerWitness(info, options);
     return observerBridge(info, options);
   }
   if (options['observation-sources']) {
     if (info.mode !== 'exclusive') fail('REFUSED', 'observation sources only on exclusive slots');
     info.observationSources = true;
+    info.observationFeatures = options['observation-features'] ?? 'all';
+    if (!['all','none','logs','spans'].includes(info.observationFeatures)) fail('USAGE','unknown observation feature profile');
+    info.diagnosticDirect = Boolean(options['diagnostic-direct']);
   }
   if (options.follower) {
     const fol = followerInfo(config, info, options);

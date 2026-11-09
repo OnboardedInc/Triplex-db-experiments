@@ -22,14 +22,7 @@ def request(method, target, body=None, headers=None):
         return {'status': response.status, 'body': data.decode('utf8')}
     finally: conn.close()
 
-def main():
-    out = Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
-    metrics = request('GET', '/metrics')
-    (out/'p1-metrics.json').write_text(json.dumps(metrics,indent=2)+'\n')
-    triples = ' '.join(f'<urn:obs01:s{i}> <urn:obs01:p> {i} .' for i in range(180))
-    update = request('POST', '/', f'INSERT DATA {{ {triples} }}', {'Content-Type':'application/sparql-update', 'Query-Id':'obs01-seed'})
-    (out/'seed.json').write_text(json.dumps(update,indent=2)+'\n')
-    if update['status'] != 200: raise ValueError('seed update failed')
+def cancellation(out):
     query = 'SELECT ?a ?c ?e WHERE { ?a <urn:obs01:p> ?b . ?c <urn:obs01:p> ?d . ?e <urn:obs01:p> ?f . FILTER(?b < 120 && ?d < 120 && ?f < 120) } ORDER BY ?e ?c ?a'
     result = {}
     def run():
@@ -56,6 +49,17 @@ def main():
     (out/'p6-query-result.json').write_text(json.dumps(result,indent=2)+'\n')
     after=request('GET', '/?cmd=dump-active-queries')
     (out/'p6-active-after.json').write_text(json.dumps(after,indent=2)+'\n')
-    print(json.dumps({'P1':metrics['status'], 'P6':{'before':active,'query':result,'after':after}}))
+    return {'before':active,'query':result,'after':after}
+
+def main():
+    out = Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
+    metrics = request('GET', '/metrics')
+    (out/'p1-metrics.json').write_text(json.dumps(metrics,indent=2)+'\n')
+    triples = ' '.join(f'<urn:obs01:s{i}> <urn:obs01:p> {i} .' for i in range(180))
+    update = request('POST', '/', f'INSERT DATA {{ {triples} }}', {'Content-Type':'application/sparql-update', 'Query-Id':'obs01-seed'})
+    (out/'seed.json').write_text(json.dumps(update,indent=2)+'\n')
+    if update['status'] != 200: raise ValueError('seed update failed')
+    cancellation_result=cancellation(out)
+    print(json.dumps({'P1':metrics['status'],'P6':cancellation_result}))
 
 if __name__ == '__main__': main()

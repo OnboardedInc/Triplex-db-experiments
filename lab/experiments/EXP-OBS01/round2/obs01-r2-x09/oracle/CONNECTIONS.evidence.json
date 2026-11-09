@@ -1,0 +1,994 @@
+{
+  "baseline": {
+    "readonly": 0
+  },
+  "engineConnectionSamples": [
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120129840.683175
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120129981.453442
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120130190.509868
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120130308.658779
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120130423.218784
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120130536.421653
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120130654.156602
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120130760.27512
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120130950.640429
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120131341.558008
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120131445.872427
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120131549.414256
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120131653.301713
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120131766.557583
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120131871.241337
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120131978.66124
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120132080.773474
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120132224.604391
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120132332.728133
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120132442.93631
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120132544.310954
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120132650.808182
+    },
+    {
+      "count": 2,
+      "label": "readonly",
+      "t": 120132752.994166
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120132934.177147
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120133082.938439
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120133184.189498
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120133305.655227
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120133415.305481
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120133520.055236
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120133640.682333
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120133739.994834
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120133857.216194
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120133960.449978
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120134100.606405
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120134202.954014
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120134320.719295
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120134427.813653
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120134536.807693
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120134647.383955
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120134757.756757
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120134893.777608
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120135004.05795
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120135124.442377
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120135228.472917
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120135340.503108
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120135440.747783
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120135546.653505
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120135668.332693
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120135776.122015
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120135896.079605
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120136157.46859
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120136470.677677
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120136746.657367
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120136965.679288
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120137180.828634
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120137384.411342
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120137540.233982
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120137708.671895
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120138031.142849
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120138188.293
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120138293.601674
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120138410.038567
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120138516.320833
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120138654.621993
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120138766.443389
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120138893.683205
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120139010.512101
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120139116.364113
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120139222.317209
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120139392.659928
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120139502.025886
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120139607.604063
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120139709.422166
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120139829.18292
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120139948.57042
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120140090.760944
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120140224.572982
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120140328.372184
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120140442.850852
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120140551.279885
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120140660.378424
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120140762.281903
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120140869.667677
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120140984.296137
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120141095.729945
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120141206.928917
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120141308.3301
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120141437.026011
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120141559.903248
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120141662.458523
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120141789.394669
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120141893.414582
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120141999.268968
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120142112.984253
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120142213.161549
+    },
+    {
+      "count": 0,
+      "label": "readonly",
+      "t": 120142334.541815
+    }
+  ],
+  "poolDeclarations": [
+    {
+      "label": "readonly",
+      "max": 2
+    }
+  ],
+  "tClose": 120132760.972421,
+  "source": {
+    "kind": "HO/any/H4",
+    "streamRefs": [
+      "H4-all"
+    ],
+    "records": {
+      "baseline": {
+        "readonly": 0
+      },
+      "engineConnectionSamples": [
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120129840.683175
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120129981.453442
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120130190.509868
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120130308.658779
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120130423.218784
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120130536.421653
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120130654.156602
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120130760.27512
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120130950.640429
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120131341.558008
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120131445.872427
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120131549.414256
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120131653.301713
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120131766.557583
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120131871.241337
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120131978.66124
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120132080.773474
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120132224.604391
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120132332.728133
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120132442.93631
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120132544.310954
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120132650.808182
+        },
+        {
+          "count": 2,
+          "label": "readonly",
+          "t": 120132752.994166
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120132934.177147
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120133082.938439
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120133184.189498
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120133305.655227
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120133415.305481
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120133520.055236
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120133640.682333
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120133739.994834
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120133857.216194
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120133960.449978
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120134100.606405
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120134202.954014
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120134320.719295
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120134427.813653
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120134536.807693
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120134647.383955
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120134757.756757
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120134893.777608
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120135004.05795
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120135124.442377
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120135228.472917
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120135340.503108
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120135440.747783
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120135546.653505
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120135668.332693
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120135776.122015
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120135896.079605
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120136157.46859
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120136470.677677
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120136746.657367
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120136965.679288
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120137180.828634
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120137384.411342
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120137540.233982
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120137708.671895
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120138031.142849
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120138188.293
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120138293.601674
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120138410.038567
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120138516.320833
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120138654.621993
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120138766.443389
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120138893.683205
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120139010.512101
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120139116.364113
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120139222.317209
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120139392.659928
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120139502.025886
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120139607.604063
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120139709.422166
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120139829.18292
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120139948.57042
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120140090.760944
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120140224.572982
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120140328.372184
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120140442.850852
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120140551.279885
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120140660.378424
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120140762.281903
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120140869.667677
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120140984.296137
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120141095.729945
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120141206.928917
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120141308.3301
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120141437.026011
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120141559.903248
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120141662.458523
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120141789.394669
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120141893.414582
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120141999.268968
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120142112.984253
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120142213.161549
+        },
+        {
+          "count": 0,
+          "label": "readonly",
+          "t": 120142334.541815
+        }
+      ],
+      "poolDeclarations": [
+        {
+          "label": "readonly",
+          "max": 2
+        }
+      ],
+      "tClose": 120132760.972421
+    }
+  }
+}

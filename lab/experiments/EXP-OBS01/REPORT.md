@@ -130,3 +130,187 @@ Remaining work before this can serve the full requested floor:
 5. Resolve the >2 ms bridge RTT under competing work and the lack of systemwide CPU exclusion without changing the shared residents.
 6. Independent reviewer recollection and source/resource/case review are mandatory. The current code is ready for that review as a
    collection foundation; it is not ready to promote P1–P5 claims.
+
+## Round 2 — 2026-11-08/09, continuation of 6946d91
+
+### Result and remaining boundary
+
+Added XTDB X6 DEBUG logs, X7 raw OTLP spans, independent bidirectional T1/T2 transport capture,
+observer-only read-only count/finish-block/scanner commands, five source-derived protocol normalizers,
+and a lower-overhead nonce clock transport. **This remains partial protocol coverage, not O-OBS closure.**
+The unmodified pinned consumer `463703d` authenticates fresh XTDB and QLever bundles and screens the
+implemented protocol records. No acceptance contract, oracle code, public package or resident engine
+configuration changed. No production promotion, full NS workload result or independent recollection is claimed.
+Live Datomic was **skipped as instructed**; no D container was touched this round.
+
+The default standalone parser is reproducibly assembled from `normalize_base.py`, `otlp.py` and `wire.py`.
+`compile_protocol.py` snapshots a standalone per-stream parser with the evaluator's frozen case specification
+before collection. Raw timestamps, requests, counts and metrics are derived from captured bytes; case JSON
+cannot supply observed counters or acknowledgements. Source/parser/controller/configuration preimages remain
+with each attempt. Runs used actual modified working bytes, not a fabricated pre-run Git anchor.
+
+### Collection and integrity changes
+
+- Observed exclusive XTDB profiles enable a read-only port, synchronous escaped DEBUG file log and local
+  OTLP receiver; QLever profiles enable Q1/Q3. Feature-isolated A/A profiles are explicit and hashed.
+- The normal measured host engine port forwards through the observer proxy. Native measured ports are
+  unpublished; an explicit `--diagnostic-direct` bypass exists only for overhead arms. Those arms cannot
+  establish transport completeness. The SUT receives neither the output/key mount nor command queue.
+- T1 reconstructs plaintext pgwire startup, simple/extended statements, cancel targeting and replies;
+  T2 reconstructs HTTP/SPARQL/admin calls and WebSocket cancel frames. Unknown client protocols and TLS
+  refuse. A truncated cancelled server reply preserves parsed client classification with an explicit
+  `serverDecodeError`; independent count replies still refuse truncation. Truncation never implies CANCEL success.
+- Raw OTLP protobuf, exact integer attributes and fixed64 nanoseconds are retained/decoded using the
+  [v1.5.0 trace schema](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.5.0/opentelemetry/proto/trace/v1/trace.proto)
+  and [common schema](https://github.com/open-telemetry/opentelemetry-proto/blob/v1.5.0/opentelemetry/proto/common/v1/common.proto).
+  X6 tracks inode/byte offsets and refuses discontinuities. Frame `sourceMono` preserves sampling time when
+  concurrent capture callbacks require serialized header intervals.
+- Observer startup now waits for source/listener readiness. The capability policy supersedes round 1's
+  “all capabilities dropped”: it adds only `DAC_READ_SEARCH`, needed for engine-owned 0600 Arrow files,
+  while engine data remains mounted read-only. Root filesystem remains read-only; no Docker socket is mounted.
+- Private host-tool commands retain complete read-only pgwire count transcripts, finish-block HTTP replies,
+  and literal scanner file SHA256/size/hit inventories. Scanner capabilities do not include FSST decoding,
+  freed blocks, live heaps or complete erasure inventory.
+
+### Consumer screening and gates
+
+`round2/final-gate.log`: **14 existing Python + 8 round-2 Python + 9 Node tests pass**, through `heavy.mjs`.
+Tests cover real consumer authentication, tampering/omission/key/parser/clock boundaries, exact OTLP decoding,
+SQL literal/comment classification, client-address separation, truncated-backend handling, strict PREABORT
+control inventories, feature/profile planning and the real persistent-clock transport. Source-normalizer
+regeneration reproduced SHA256 `62159b6ab9122d2709aebac8296b9043a9af5c30dcf0beff4adac1d656a78596`.
+A review found and fixed a follower-profile JVM-setting regression; its regression test passes.
+
+Fresh source bundle **obs01-r2-x09** seals and authenticates. The evaluator diagnostic case screens:
+
+| Protocol | Result | Limit |
+| --- | --- | --- |
+| NO-MUTATION | PASS | X1 completed-ID delta agrees with T1 classified requests in the frozen window |
+| PREABORT | PASS | X6/T1 agree; exact control inventory present once; unexpected statements refuse |
+| SCRATCH | PASS | Independent X4 read-only counts agree; no unresolved-outcome path tested |
+| CONNECTIONS | PASS | H4 read-only pool releases within pinned `T-CONN-RELEASE-MS=5000` |
+| RESOURCE | PASS | H1 covers only the declared engine owner; cgroup peak is conservative memory, sampled disk a lower bound |
+
+The initial CONNECTIONS screen failed because the diagnostic evaluator context omitted the threshold;
+`protocol-check-threshold/` retains the explicit corrected context and verdict. Source bytes were unchanged.
+Removing the second independent kind **FAILS** NO-MUTATION. Intentional-write attempt **x03 FAILS**
+NO-MUTATION (source disagreement at window boundary) and SCRATCH (changed count); PREABORT passes its separate
+quiet window. These are diagnostic cases using a contract obligation identifier, not execution/closure of G3.
+Evidence: `round2/protocol-verdicts-x09-threshold.log`, `obs01-r2-x09/protocol-check-threshold/`,
+`round2/protocol-verdicts-x03.log` and corresponding evaluator records.
+
+Fresh QLever **obs01-r2-q01** seals and authenticates; **NO-MUTATION and PREABORT PASS** using Q1/T2
+and Q3/T2 respectively. Removing transport corroboration FAILS. Evidence: `round2/protocol-verdicts-q01.log`
+and `obs01-r2-q01/protocol-check/`. This clears the former empty-clock authentication failure for a fresh
+run, without changing the failed round-1 q02 bundle or weakening the clock gate.
+
+The other **9 of 14** protocol derivations explicitly refuse incomplete facts. CANCEL still needs independently
+bound caller ACK/reuse/transport outcome fields; WORK lacks complete write/byte units; ACK-ORDER, WATERMARK
+and FAULT-TRANSITIONS need composition-specific publication/route evidence. AVAILABILITY, SCALE-COUNT,
+MAINTENANCE and ERASURE-SCAN also lack complete source mappings. Physical erasure, full application ownership,
+TLS transport, multi-owner resource closure and live Datomic remain unverified. `pnpm check`, package builds
+and full NS gates were not run: no package contracts changed, and focused lab gates cover this tooling change.
+
+### R27 probe outcomes this round
+
+| Probe | Observed outcome | Evidence / qualification |
+| --- | --- | --- |
+| P1 | Q1 emits update started/finished counters with `--enable-metrics`; fresh bundle authenticated | q01 raw Q1 and protocol check; resident unchanged |
+| P2 | Completed-ID gauge changes on seed writes; finish-block advances submitted message position independently | x02/x09 X1 and finish-block reply; IDs are non-dense, delta is not transaction count |
+| P3 | H4 sees 2 RW + 2 RO established connections while active-connections gauge reports 2 | x02/x09 source-summary; confirms R27 caveat |
+| P4 | Normal query spans and scan children collected. CancelRequest correlates to backend PID; native log records cancellation, but cancelled query span is missing and same-connection reuse fails | x09: 4 query spans, 8 scan spans; log cancel-received→cancelled 3 ms, caller sees `pgwire closed`; **expected cancelled-span/reuse claim not established** |
+| P5 | EXPLAIN ANALYZE JSON reports exact scan rows; x09 scan rows 961 vs latest logical rows 121 | Retained history accumulated across attempts; do not equate physical scanned rows to latest-result rows |
+| P6 | QLever query present before cancel, Q3 `end/status=cancelled`, HTTP 429 manually cancelled, active list empty afterwards | q01 Q3/Q4/T2 and driver receipts; no full CANCEL protocol PASS |
+| P7 | XTDB canary found in Arrow buffers and log copies. QLever canary query succeeds after rebuild but literal scan finds **zero** in all compressed vocabulary files | q01 finds copies in old update-triples and metrics log; vocabulary declared **blind**, no erasure verdict; Datomic skipped |
+| P8 | Nonce transport improves margin; offset intervals agree, but p99 under 2 ms is not universal | Diagnostic traffic only, **NS-load probe unrun**; details below |
+| P9 | All five observer components exercised on small bracketed native writer traces | Diagnostic only, **not** a full NS writer-cost qualification; proxy exceeds 5%, details below |
+
+### Clock diagnosis
+
+The old implementation timed an entire new HTTP exchange, including connection setup and HTTP work.
+Its 2.27/2.75 ms rejected samples were conservative uncertainty failures, **not proof of a wrong clock domain**.
+Those old failures did not retain complete raw timing tuples, so their exact offsets cannot be recovered.
+The new persistent nonce exchange timestamps send **after connection establishment**, echoes a unique nonce,
+and retains send/receive/VM times even on a >2 ms rejection. Midpoint/half-RTT correlation and the 2 ms gate
+are unchanged; no clocks, acknowledgements or zero-RTT samples are invented.
+
+`round2/clock-analysis.json` intersects feasible offset intervals `[observerMono-receive, observerMono-send]`
+for both methods. They overlap in the successful comparisons, consistent with the same kernel clock domain.
+In x03, HTTP p99 was 6.414 ms (4/40 rejected) vs nonce 1.241 ms (0/40). In x09, HTTP p99 was 7.738 ms
+(31/40 rejected) vs nonce 2.183 ms (1/40). In fresh q01, HTTP p99 was 8.403 ms (10/40 rejected) vs nonce
+3.735 ms (1/40). q01's actual watcher retained 12 accepted samples, RTT 0.477–1.811 ms; x09 retained 11,
+0.739–1.249 ms. Both fresh bundles authenticate, but **NS-load p99 margin remains unqualified**. If such
+load cannot meet it, R27's VM-local harness clock is still the fallback; this change does not pretend otherwise.
+
+### First failures retained
+
+x01: scanner could not read engine uid-owned files; fixed with read/search capability on RO data. x04: proxy
+readiness race; fixed by explicit ready receipt. x05/x07: native cancellation closes the pgwire connection,
+not successful reuse. x06: diagnostic driver spun on a closed clock socket; only its confirmed owned PID was
+terminated, source retained, then EOF handling, clock idle timeout and subprocess limits were corrected.
+x07: evaluator window began before first socket observation; the next attempt uses a covered window.
+x08: native cancellation produced a truncated backend payload; client-request evidence now remains usable,
+while counts and cancellation success remain strict. Their raw failures and unsealed bundles remain archived.
+
+### Observer cost diagnostics (P9)
+
+Each arm executes 30 warmup and 150 measured identical native commits, pinned engine CPU 2 and observer CPU 5.
+Shared residents remain unpinned. Existing slot history grows across XTDB arms, and baseline drift remains visible;
+this is a diagnostic trace, not a controlled full NS workload or SDK cost comparison.
+
+| XTDB arm | p99 ms | Ratio to mean bracketing p99 |
+| --- | --- | --- |
+| Baseline before | 20.364 | 0.886 |
+| H1 memory-current at 10 Hz | 18.985 | 0.826 |
+| T1 proxy hop | 31.996 | **1.392** |
+| X6 DEBUG | 18.291 | 0.796 |
+| X7 spans | 23.651 | 1.029 |
+| Baseline after | 25.621 | 1.114 |
+
+QLever Q3-log p99 is **11.398 ms**, versus baseline before 7.556 and after 3.492 ms, ratio **2.063** to
+their mean. This does not qualify the 5% budget. Below-baseline arms do not prove free observation either.
+Treat observers as protocol-run tools until a controlled writer trace establishes acceptable cost. Raw latency
+arrays, readbacks, configuration and teardown receipts are retained under `round2/overhead/` and
+`round2/overhead-qlever/`; no latency samples were discarded.
+
+The QLever trace repeats identical `INSERT DATA`, so after its first insertion it is idempotent. Its timings
+measure native update-path/logging work, **not sustained visible writer progress**. XTDB repeatedly versions
+one fixed identifier. Neither trace qualifies the frozen writer floor or predicts application goodput.
+
+### Preservation, release and cleanup
+
+Before releasing s1 for K01, copied and read-back verified the original volume contents, source archive,
+observer bundles, failed attempts, private evaluator keys, profiles and witness lines into
+`/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01/`:
+
+| Archive | SHA256 |
+| --- | --- |
+| round1-xtdb-volume TAR | `524922651e2e38b7854675db158e426fbea646929ff2e933ac421c285a02869a` |
+| round1-qlever-volume TAR | `19b6912731f5cd25d9ca4e54f8518f0f3ee4ea2e75e5581c5efefba47237398b` |
+| round1-host SHA256SUMS.json | `fa4c0529e81bbf16cb89f576ecc9edd6002e08bf16955c2aba7ed853d1ae641e` |
+| round2-xtdb-volume TAR | `ca3723bcd4761d6abfe55b0478a74fe38965eedbaaa6250e0cc0d4242adc2e58` |
+| round2-qlever-volume TAR | `c141b39eaa0d48abdda2aef40950e8135b2302e08cca50fce65ff6c4faf35b07` |
+| round2-host SHA256SUMS.json | `6e6920a251eb5eed3bbab16986abab9bbf5353c394f95f1932ed5758eae00ec4` |
+
+Volume archiving uses a pool-admitted utility started only by `engine.mjs`, holder-checked quiescent volumes,
+read-only source mounts, a per-file SHA256 manifest, TAR readback and a second source scan. Only after those
+checks did `engine.mjs ... --remove-volume` remove these four owned disposable volumes and release slot locks.
+The original round-1 host archive has 13,251 entries; an additional source-vs-copy comparison verifies 13,171
+immutable run/key/profile files. Round-2 host archive compares **55,696 original/copied files**, with 55,697
+manifest entries. Keys stay private (directory 0700, files 0600) outside bundles and Git. Retained working
+source snapshots are actual byte preimages; `source-6946d91.tar` is the original Git archive. Final archive
+receipt emission and this final report occur after the host snapshot and remain committed here.
+
+Receipts: `round2/archive-{xtdb,qlever,host}.log`, `archive-source-comparison.json`,
+`archive-{xtdb,qlever,host}-r2.log`, `attempt-inventory.json`, `cleanup-status.log`, `cleanup-owned.json`.
+The final owned-resource check records **all eight named engine/observer containers absent, all four owned
+s1/s3 volumes absent, zero CX-OBS01 reservations and zero CX-OBS01 retained volumes**. Other holders' volumes
+and all dev residents were left alone. s1 was not reused after its initial archive/release; later probes used s3.
+
+### Handoff
+
+The independent reviewer should recollect and replay the source-bound cases, test wire/parser omissions and
+window ambiguity, and challenge the declared ownership/coverage limits. Outstanding implementation questions
+are complete independent CANCEL/ACK/publication bindings, WORK units, application-wide resource ownership,
+encoding-aware/freed-block erasure coverage, and NS-load clock/cost behavior. Datomic waits for the separate
+lane owner as instructed. No merge or push was performed.

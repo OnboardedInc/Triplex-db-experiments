@@ -1,0 +1,21 @@
+{
+  "at": "2026-11-09T00:04:45.333Z",
+  "containers": {
+    "tx2-xtdb-s1": false,
+    "tx2-qlever-s1": false,
+    "tx2-xtdb-s3": false,
+    "tx2-qlever-s3": false,
+    "tx2-obs-xtdb-s1": false,
+    "tx2-obs-qlever-s1": false,
+    "tx2-obs-xtdb-s3": false,
+    "tx2-obs-qlever-s3": false
+  },
+  "volumes": {
+    "tx2-xtdb-s1-data": false,
+    "tx2-qlever-s1-data": false,
+    "tx2-xtdb-s3-data": false,
+    "tx2-qlever-s3-data": false
+  },
+  "ownReservations": [],
+  "ownRetained": []
+}

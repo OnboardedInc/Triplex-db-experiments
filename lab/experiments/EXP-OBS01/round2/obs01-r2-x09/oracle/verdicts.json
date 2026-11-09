@@ -1,0 +1,54 @@
+{
+  "NO-MUTATION": {
+    "protocol": "OBS-NO-MUTATION",
+    "verdict": "PASS",
+    "reasons": [],
+    "thresholds": {},
+    "sourceStrength": "direct",
+    "qualification": "screening-only"
+  },
+  "single-kind-negative": {
+    "protocol": "OBS-NO-MUTATION",
+    "verdict": "FAIL",
+    "reasons": [
+      "two independent agreeing kinds required"
+    ],
+    "thresholds": {},
+    "sourceStrength": null,
+    "qualification": "screening-only"
+  },
+  "PREABORT": {
+    "protocol": "OBS-PREABORT",
+    "verdict": "PASS",
+    "reasons": [],
+    "thresholds": {},
+    "sourceStrength": "direct",
+    "qualification": "screening-only"
+  },
+  "SCRATCH": {
+    "protocol": "OBS-SCRATCH",
+    "verdict": "PASS",
+    "reasons": [],
+    "thresholds": {},
+    "sourceStrength": "direct",
+    "qualification": "screening-only"
+  },
+  "RESOURCE": {
+    "protocol": "OBS-RESOURCE",
+    "verdict": "PASS",
+    "reasons": [],
+    "thresholds": {},
+    "sourceStrength": "indirect",
+    "qualification": "screening-only"
+  },
+  "CONNECTIONS": {
+    "protocol": "OBS-CONNECTIONS",
+    "verdict": "FAIL",
+    "reasons": [
+      "threshold not selected by evaluator case"
+    ],
+    "thresholds": {},
+    "sourceStrength": "indirect",
+    "qualification": "screening-only"
+  }
+}

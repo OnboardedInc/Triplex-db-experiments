@@ -1,0 +1,3881 @@
+{
+  "run": "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r2-x09",
+  "qualification": "diagnostic-only",
+  "streams": {
+    "H1-cpu-stat": 96,
+    "H1-io-stat": 96,
+    "H1-memory-current": 96,
+    "H1-memory-events": 96,
+    "H1-memory-peak": 96,
+    "H1-memory-stat": 96,
+    "H1-resources": 13,
+    "H4-all": 96,
+    "H4-tcp": 96,
+    "H4-tcp6": 96,
+    "H6-scans": 98,
+    "T1-wire": 248,
+    "X1-metrics": 42,
+    "X2-probes": 98,
+    "X4-queries": 99,
+    "X6-log": 42,
+    "X7-spans": 127
+  },
+  "metrics": [
+    {
+      "t": 120129936.710483,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "56449.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65782.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120130244.891034,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "56449.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65782.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120130579.25368,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "56449.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65782.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120130856.800098,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "56449.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120131384.501578,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "2.0"
+      }
+    },
+    {
+      "t": 120131636.416196,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "2.0"
+      }
+    },
+    {
+      "t": 120131894.557492,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "2.0"
+      }
+    },
+    {
+      "t": 120132171.351944,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "2.0"
+      }
+    },
+    {
+      "t": 120132480.372333,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "2.0"
+      }
+    },
+    {
+      "t": 120132782.736708,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "2.0"
+      }
+    },
+    {
+      "t": 120133119.167201,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120133366.581572,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120133672.260057,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120134013.210754,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120134305.707836,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120134573.543419,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120134840.237367,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120135099.910838,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120135379.942189,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120135652.599853,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120135985.889567,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120136282.086302,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120136606.653609,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120137032.232971,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120137472.532956,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120137870.442585,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "1.0"
+      }
+    },
+    {
+      "t": 120138121.119686,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120138424.185352,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120138690.757629,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120138944.677799,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120139247.539837,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120139524.009071,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120139776.385561,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120140123.520927,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120140382.511055,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "74754.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120140683.044322,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "74869.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120140938.543503,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "74869.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120141234.690066,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "74869.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120141492.919979,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "74869.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120141744.64267,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "74869.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120142028.47842,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "74869.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    },
+    {
+      "t": 120142286.851958,
+      "values": {
+        "node_tx_latestCompletedTxId{db=\"xtdb\",node_id=\"2320557d\"}": "65897.0",
+        "node_tx_latestSubmittedMsgId{db=\"xtdb\",node_id=\"2320557d\"}": "74869.0",
+        "pgwire_active_connections{node_id=\"2320557d\"}": "0.0"
+      }
+    }
+  ],
+  "connectionSamples": [
+    {
+      "t": 120129840.683175,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120129981.453442,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120130190.509868,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120130308.658779,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120130423.218784,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120130536.421653,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120130654.156602,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120130760.27512,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120130950.640429,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120131341.558008,
+      "counts": {
+        "5432": 2,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120131445.872427,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120131549.414256,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120131653.301713,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120131766.557583,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120131871.241337,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120131978.66124,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120132080.773474,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120132224.604391,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120132332.728133,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120132442.93631,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120132544.310954,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120132650.808182,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120132752.994166,
+      "counts": {
+        "5432": 2,
+        "5433": 2
+      }
+    },
+    {
+      "t": 120132934.177147,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120133082.938439,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120133184.189498,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120133305.655227,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120133415.305481,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120133520.055236,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120133640.682333,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120133739.994834,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120133857.216194,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120133960.449978,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120134100.606405,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120134202.954014,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120134320.719295,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120134427.813653,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120134536.807693,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120134647.383955,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120134757.756757,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120134893.777608,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120135004.05795,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120135124.442377,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120135228.472917,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120135340.503108,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120135440.747783,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120135546.653505,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120135668.332693,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120135776.122015,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120135896.079605,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120136157.46859,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120136470.677677,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120136746.657367,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120136965.679288,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120137180.828634,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120137384.411342,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120137540.233982,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120137708.671895,
+      "counts": {
+        "5432": 1,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120138031.142849,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120138188.293,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120138293.601674,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120138410.038567,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120138516.320833,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120138654.621993,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120138766.443389,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120138893.683205,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120139010.512101,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120139116.364113,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120139222.317209,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120139392.659928,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120139502.025886,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120139607.604063,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120139709.422166,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120139829.18292,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120139948.57042,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120140090.760944,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120140224.572982,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120140328.372184,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120140442.850852,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120140551.279885,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120140660.378424,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120140762.281903,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120140869.667677,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120140984.296137,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120141095.729945,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120141206.928917,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120141308.3301,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120141437.026011,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120141559.903248,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120141662.458523,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120141789.394669,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120141893.414582,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120141999.268968,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120142112.984253,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120142213.161549,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    },
+    {
+      "t": 120142334.541815,
+      "counts": {
+        "5432": 0,
+        "5433": 0
+      }
+    }
+  ],
+  "querySpans": [
+    {
+      "traceId": "a0a240ea6fa8fa25104423482fe560b5",
+      "spanId": "c8ccebed6cf5d80f",
+      "parentSpanId": "",
+      "name": "xtdb.query",
+      "startUnixNs": 1794181980414495404,
+      "endUnixNs": 1794181980505787380,
+      "attributes": {
+        "query.text": "SELECT COUNT(*) AS n FROM obs01_r2"
+      },
+      "startMono": 120131177.32559846,
+      "endMono": 120131268.61734651
+    },
+    {
+      "traceId": "36d5860d72d8bf2a8a509b0c0d7b819e",
+      "spanId": "19b9d191758b9ef0",
+      "parentSpanId": "",
+      "name": "xtdb.query",
+      "startUnixNs": 1794181984223129617,
+      "endUnixNs": 1794181984238236577,
+      "attributes": {
+        "query.text": "SELECT COUNT(*) AS n FROM obs01_r2"
+      },
+      "startMono": 120134985.96023703,
+      "endMono": 120135001.06717062
+    },
+    {
+      "traceId": "98c4ab7107bc39fe6bf47c630e3cd593",
+      "spanId": "5db28ecbfb36b5ed",
+      "parentSpanId": "",
+      "name": "xtdb.query",
+      "startUnixNs": 1794181986962966899,
+      "endUnixNs": 1794181987044018162,
+      "attributes": {
+        "query.text": "EXPLAIN ANALYZE SELECT * FROM obs01_r2"
+      },
+      "startMono": 120137725.79565209,
+      "endMono": 120137806.84692162
+    },
+    {
+      "traceId": "3fdee12f91812ba5e2786841d3f80647",
+      "spanId": "498d0b352beea230",
+      "parentSpanId": "",
+      "name": "xtdb.query",
+      "startUnixNs": 1794181989262893259,
+      "endUnixNs": 1794181989275085069,
+      "attributes": {
+        "query.text": "SELECT COUNT(*) AS n FROM obs01_r2"
+      },
+      "startMono": 120140025.7238183,
+      "endMono": 120140037.9154687
+    }
+  ],
+  "scanSpans": [
+    {
+      "traceId": "a0a240ea6fa8fa25104423482fe560b5",
+      "spanId": "cade406a986216fc",
+      "parentSpanId": "c8ccebed6cf5d80f",
+      "name": "query.cursor.scan.obs01_r2",
+      "startUnixNs": 1794181980465611125,
+      "endUnixNs": 1794181980495853000,
+      "attributes": {
+        "cursor.type": "scan",
+        "cursor.total_time_ms": "29",
+        "cursor.time_to_first_page_ms": "29",
+        "cursor.page_count": "2",
+        "cursor.row_count": "121",
+        "scan_db": "xtdb",
+        "scan_source": "public.obs01_r2",
+        "scan_files_pruned": "0",
+        "scan_files_used": "2",
+        "scan_pages_pruned": "0",
+        "scan_pages_used": "3",
+        "scan_rows_read": "961"
+      },
+      "startMono": 120131228.44042505,
+      "endMono": 120131258.68236841
+    },
+    {
+      "traceId": "4c82fe88617deea9ab5765a8ce81253d",
+      "spanId": "e25dc84ab4b9d6cb",
+      "parentSpanId": "91fb2f39e2f59408",
+      "name": "query.cursor.scan.obs01_r2",
+      "startUnixNs": 1794181982225661172,
+      "endUnixNs": 1794181982236313000,
+      "attributes": {
+        "cursor.type": "scan",
+        "cursor.total_time_ms": "4",
+        "cursor.time_to_first_page_ms": "4",
+        "cursor.page_count": "2",
+        "cursor.row_count": "121",
+        "scan_db": "xtdb",
+        "scan_source": "public.obs01_r2",
+        "scan_files_pruned": "0",
+        "scan_files_used": "2",
+        "scan_pages_pruned": "0",
+        "scan_pages_used": "3",
+        "scan_rows_read": "961"
+      },
+      "startMono": 120132988.4899007,
+      "endMono": 120132999.14175616
+    },
+    {
+      "traceId": "4c82fe88617deea9ab5765a8ce81253d",
+      "spanId": "f392dba4450546f7",
+      "parentSpanId": "91fb2f39e2f59408",
+      "name": "query.cursor.scan.obs01_r2",
+      "startUnixNs": 1794181982207614354,
+      "endUnixNs": 1794181982236301000,
+      "attributes": {
+        "cursor.type": "scan",
+        "cursor.total_time_ms": "9",
+        "cursor.time_to_first_page_ms": "9",
+        "cursor.page_count": "2",
+        "cursor.row_count": "121",
+        "scan_db": "xtdb",
+        "scan_source": "public.obs01_r2",
+        "scan_files_pruned": "0",
+        "scan_files_used": "2",
+        "scan_pages_pruned": "0",
+        "scan_pages_used": "3",
+        "scan_rows_read": "961"
+      },
+      "startMono": 120132970.44518411,
+      "endMono": 120132999.13170755
+    },
+    {
+      "traceId": "36d5860d72d8bf2a8a509b0c0d7b819e",
+      "spanId": "f4b98d9566b54d84",
+      "parentSpanId": "19b9d191758b9ef0",
+      "name": "query.cursor.scan.obs01_r2",
+      "startUnixNs": 1794181984229759381,
+      "endUnixNs": 1794181984232973000,
+      "attributes": {
+        "cursor.type": "scan",
+        "cursor.total_time_ms": "2",
+        "cursor.time_to_first_page_ms": "2",
+        "cursor.page_count": "2",
+        "cursor.row_count": "121",
+        "scan_db": "xtdb",
+        "scan_source": "public.obs01_r2",
+        "scan_files_pruned": "0",
+        "scan_files_used": "2",
+        "scan_pages_pruned": "0",
+        "scan_pages_used": "3",
+        "scan_rows_read": "961"
+      },
+      "startMono": 120134992.59011486,
+      "endMono": 120134995.80373791
+    },
+    {
+      "traceId": "dee6fc990a85f977e81c5b62aac9df12",
+      "spanId": "f3dd55197ddf0e5c",
+      "parentSpanId": "a0ff29cfe68ba1db",
+      "name": "query.cursor.scan.obs01_r2",
+      "startUnixNs": 1794181985122146580,
+      "endUnixNs": 1794181985343257000,
+      "attributes": {
+        "cursor.type": "scan",
+        "cursor.total_time_ms": "1",
+        "cursor.time_to_first_page_ms": "1",
+        "cursor.page_count": "2",
+        "cursor.row_count": "121",
+        "scan_db": "xtdb",
+        "scan_source": "public.obs01_r2",
+        "scan_files_pruned": "0",
+        "scan_files_used": "2",
+        "scan_pages_pruned": "0",
+        "scan_pages_used": "3",
+        "scan_rows_read": "961"
+      },
+      "startMono": 120135884.97421524,
+      "endMono": 120136106.08481094
+    },
+    {
+      "traceId": "dee6fc990a85f977e81c5b62aac9df12",
+      "spanId": "cf1efb47ceacb1dd",
+      "parentSpanId": "a0ff29cfe68ba1db",
+      "name": "query.cursor.scan.obs01_r2",
+      "startUnixNs": 1794181985123994263,
+      "endUnixNs": 1794181985343263000,
+      "attributes": {
+        "cursor.type": "scan",
+        "cursor.total_time_ms": "5",
+        "cursor.time_to_first_page_ms": "5",
+        "cursor.page_count": "2",
+        "cursor.row_count": "121",
+        "scan_db": "xtdb",
+        "scan_source": "public.obs01_r2",
+        "scan_files_pruned": "0",
+        "scan_files_used": "2",
+        "scan_pages_pruned": "0",
+        "scan_pages_used": "3",
+        "scan_rows_read": "961"
+      },
+      "startMono": 120135886.82515128,
+      "endMono": 120136106.09370597
+    },
+    {
+      "traceId": "98c4ab7107bc39fe6bf47c630e3cd593",
+      "spanId": "f83799e6472cd643",
+      "parentSpanId": "5db28ecbfb36b5ed",
+      "name": "query.cursor.scan.obs01_r2",
+      "startUnixNs": 1794181986975046459,
+      "endUnixNs": 1794181986976965000,
+      "attributes": {
+        "cursor.type": "scan",
+        "cursor.total_time_ms": "1",
+        "cursor.time_to_first_page_ms": "1",
+        "cursor.page_count": "2",
+        "cursor.row_count": "121",
+        "scan_db": "xtdb",
+        "scan_source": "public.obs01_r2",
+        "scan_files_pruned": "0",
+        "scan_files_used": "2",
+        "scan_pages_pruned": "0",
+        "scan_pages_used": "3",
+        "scan_rows_read": "961"
+      },
+      "startMono": 120137737.87498489,
+      "endMono": 120137739.79368606
+    },
+    {
+      "traceId": "3fdee12f91812ba5e2786841d3f80647",
+      "spanId": "5855cfa1a67d318b",
+      "parentSpanId": "498d0b352beea230",
+      "name": "query.cursor.scan.obs01_r2",
+      "startUnixNs": 1794181989267749508,
+      "endUnixNs": 1794181989269052000,
+      "attributes": {
+        "cursor.type": "scan",
+        "cursor.total_time_ms": "0",
+        "cursor.time_to_first_page_ms": "0",
+        "cursor.page_count": "2",
+        "cursor.row_count": "121",
+        "scan_db": "xtdb",
+        "scan_source": "public.obs01_r2",
+        "scan_files_pruned": "0",
+        "scan_files_used": "2",
+        "scan_pages_pruned": "0",
+        "scan_pages_used": "3",
+        "scan_rows_read": "961"
+      },
+      "startMono": 120140030.58021185,
+      "endMono": 120140031.88270208
+    }
+  ],
+  "wire": {
+    "queries": [
+      {
+        "connectionId": "881860c52e384d2f8cc26fa5fb7c53fd",
+        "sql": "/*obs:seed*/ INSERT INTO obs01_r2 (_id,n,canary) VALUES ('obs01-r2-0', 0, 'obs01-r2-canary'),('obs01-r2-1', 1, 'obs01-r2-canary'),('obs01-r2-2', 2, 'obs01-r2-canary'),('obs01-r2-3', 3, 'obs01-r2-canary'),('obs01-r2-4', 4, 'obs01-r2-canary'),('obs01-r2-5', 5, 'obs01-r2-canary'),('obs01-r2-6', 6, 'obs01-r2-canary'),('obs01-r2-7', 7, 'obs01-r2-canary'),('obs01-r2-8', 8, 'obs01-r2-canary'),('obs01-r2-9', 9, 'obs01-r2-canary'),('obs01-r2-10', 10, 'obs01-r2-canary'),('obs01-r2-11', 11, 'obs01-r2-canary'),('obs01-r2-12', 12, 'obs01-r2-canary'),('obs01-r2-13', 13, 'obs01-r2-canary'),('obs01-r2-14', 14, 'obs01-r2-canary'),('obs01-r2-15', 15, 'obs01-r2-canary'),('obs01-r2-16', 16, 'obs01-r2-canary'),('obs01-r2-17', 17, 'obs01-r2-canary'),('obs01-r2-18', 18, 'obs01-r2-canary'),('obs01-r2-19', 19, 'obs01-r2-canary'),('obs01-r2-20', 20, 'obs01-r2-canary'),('obs01-r2-21', 21, 'obs01-r2-canary'),('obs01-r2-22', 22, 'obs01-r2-canary'),('obs01-r2-23', 23, 'obs01-r2-canary'),('obs01-r2-24', 24, 'obs01-r2-canary'),('obs01-r2-25', 25, 'obs01-r2-canary'),('obs01-r2-26', 26, 'obs01-r2-canary'),('obs01-r2-27', 27, 'obs01-r2-canary'),('obs01-r2-28', 28, 'obs01-r2-canary'),('obs01-r2-29', 29, 'obs01-r2-canary'),('obs01-r2-30', 30, 'obs01-r2-canary'),('obs01-r2-31', 31, 'obs01-r2-canary'),('obs01-r2-32', 32, 'obs01-r2-canary'),('obs01-r2-33', 33, 'obs01-r2-canary'),('obs01-r2-34', 34, 'obs01-r2-canary'),('obs01-r2-35', 35, 'obs01-r2-canary'),('obs01-r2-36', 36, 'obs01-r2-canary'),('obs01-r2-37', 37, 'obs01-r2-canary'),('obs01-r2-38', 38, 'obs01-r2-canary'),('obs01-r2-39', 39, 'obs01-r2-canary'),('obs01-r2-40', 40, 'obs01-r2-canary'),('obs01-r2-41', 41, 'obs01-r2-canary'),('obs01-r2-42', 42, 'obs01-r2-canary'),('obs01-r2-43', 43, 'obs01-r2-canary'),('obs01-r2-44', 44, 'obs01-r2-canary'),('obs01-r2-45', 45, 'obs01-r2-canary'),('obs01-r2-46', 46, 'obs01-r2-canary'),('obs01-r2-47', 47, 'obs01-r2-canary'),('obs01-r2-48', 48, 'obs01-r2-canary'),('obs01-r2-49', 49, 'obs01-r2-canary'),('obs01-r2-50', 50, 'obs01-r2-canary'),('obs01-r2-51', 51, 'obs01-r2-canary'),('obs01-r2-52', 52, 'obs01-r2-canary'),('obs01-r2-53', 53, 'obs01-r2-canary'),('obs01-r2-54', 54, 'obs01-r2-canary'),('obs01-r2-55', 55, 'obs01-r2-canary'),('obs01-r2-56', 56, 'obs01-r2-canary'),('obs01-r2-57', 57, 'obs01-r2-canary'),('obs01-r2-58', 58, 'obs01-r2-canary'),('obs01-r2-59', 59, 'obs01-r2-canary'),('obs01-r2-60', 60, 'obs01-r2-canary'),('obs01-r2-61', 61, 'obs01-r2-canary'),('obs01-r2-62', 62, 'obs01-r2-canary'),('obs01-r2-63', 63, 'obs01-r2-canary'),('obs01-r2-64', 64, 'obs01-r2-canary'),('obs01-r2-65', 65, 'obs01-r2-canary'),('obs01-r2-66', 66, 'obs01-r2-canary'),('obs01-r2-67', 67, 'obs01-r2-canary'),('obs01-r2-68', 68, 'obs01-r2-canary'),('obs01-r2-69', 69, 'obs01-r2-canary'),('obs01-r2-70', 70, 'obs01-r2-canary'),('obs01-r2-71', 71, 'obs01-r2-canary'),('obs01-r2-72', 72, 'obs01-r2-canary'),('obs01-r2-73', 73, 'obs01-r2-canary'),('obs01-r2-74', 74, 'obs01-r2-canary'),('obs01-r2-75', 75, 'obs01-r2-canary'),('obs01-r2-76', 76, 'obs01-r2-canary'),('obs01-r2-77', 77, 'obs01-r2-canary'),('obs01-r2-78', 78, 'obs01-r2-canary'),('obs01-r2-79', 79, 'obs01-r2-canary'),('obs01-r2-80', 80, 'obs01-r2-canary'),('obs01-r2-81', 81, 'obs01-r2-canary'),('obs01-r2-82', 82, 'obs01-r2-canary'),('obs01-r2-83', 83, 'obs01-r2-canary'),('obs01-r2-84', 84, 'obs01-r2-canary'),('obs01-r2-85', 85, 'obs01-r2-canary'),('obs01-r2-86', 86, 'obs01-r2-canary'),('obs01-r2-87', 87, 'obs01-r2-canary'),('obs01-r2-88', 88, 'obs01-r2-canary'),('obs01-r2-89', 89, 'obs01-r2-canary'),('obs01-r2-90', 90, 'obs01-r2-canary'),('obs01-r2-91', 91, 'obs01-r2-canary'),('obs01-r2-92', 92, 'obs01-r2-canary'),('obs01-r2-93', 93, 'obs01-r2-canary'),('obs01-r2-94', 94, 'obs01-r2-canary'),('obs01-r2-95', 95, 'obs01-r2-canary'),('obs01-r2-96', 96, 'obs01-r2-canary'),('obs01-r2-97', 97, 'obs01-r2-canary'),('obs01-r2-98', 98, 'obs01-r2-canary'),('obs01-r2-99', 99, 'obs01-r2-canary'),('obs01-r2-100', 100, 'obs01-r2-canary'),('obs01-r2-101', 101, 'obs01-r2-canary'),('obs01-r2-102', 102, 'obs01-r2-canary'),('obs01-r2-103', 103, 'obs01-r2-canary'),('obs01-r2-104', 104, 'obs01-r2-canary'),('obs01-r2-105', 105, 'obs01-r2-canary'),('obs01-r2-106', 106, 'obs01-r2-canary'),('obs01-r2-107', 107, 'obs01-r2-canary'),('obs01-r2-108', 108, 'obs01-r2-canary'),('obs01-r2-109', 109, 'obs01-r2-canary'),('obs01-r2-110', 110, 'obs01-r2-canary'),('obs01-r2-111', 111, 'obs01-r2-canary'),('obs01-r2-112', 112, 'obs01-r2-canary'),('obs01-r2-113', 113, 'obs01-r2-canary'),('obs01-r2-114', 114, 'obs01-r2-canary'),('obs01-r2-115', 115, 'obs01-r2-canary'),('obs01-r2-116', 116, 'obs01-r2-canary'),('obs01-r2-117', 117, 'obs01-r2-canary'),('obs01-r2-118', 118, 'obs01-r2-canary'),('obs01-r2-119', 119, 'obs01-r2-canary')",
+        "tag": "seed",
+        "kind": "write",
+        "tStart": 120130168.718601,
+        "tSent": 120130168.718601,
+        "rows": [],
+        "tEnd": 120130875.955176,
+        "commandComplete": "INSERT 0 0",
+        "outcome": "success"
+      },
+      {
+        "connectionId": "67cc21a0c5b649d0b3dd6756da716b16",
+        "sql": "/*obs:cancel-control*/ SELECT a.n AS a,b.n AS b,c.n AS c FROM obs01_r2 a, obs01_r2 b, obs01_r2 c LIMIT $1",
+        "tag": "cancel-control",
+        "kind": "read",
+        "tStart": 120132841.711537,
+        "tSent": 120132841.711537,
+        "rows": [
+          {
+            "a": 1,
+            "b": 1,
+            "c": 1
+          }
+        ],
+        "rowsSeen": 1,
+        "tEnd": 120133024.423447,
+        "commandComplete": "SELECT 1",
+        "outcome": "success"
+      },
+      {
+        "connectionId": "67cc21a0c5b649d0b3dd6756da716b16",
+        "sql": "/*obs:read-control*/ SELECT COUNT(*) AS n FROM obs01_r2",
+        "tag": "read-control",
+        "kind": "read",
+        "tStart": 120134968.964947,
+        "tSent": 120134968.964947,
+        "rows": [
+          {
+            "n": 121
+          }
+        ],
+        "rowsSeen": 1,
+        "tEnd": 120135001.448762,
+        "commandComplete": "SELECT 1",
+        "outcome": "success"
+      },
+      {
+        "connectionId": "67cc21a0c5b649d0b3dd6756da716b16",
+        "sql": "/*obs:cancel-control*/ SELECT a.n AS a,b.n AS b,c.n AS c FROM obs01_r2 a, obs01_r2 b, obs01_r2 c LIMIT $1",
+        "tag": "cancel-control",
+        "kind": "read",
+        "tStart": 120135864.89026,
+        "tSent": 120135864.89026,
+        "rows": [
+          {
+            "a": 1,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 52
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 110
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 14
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 57
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 116
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 58
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 0
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 72
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 48
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 43
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 38
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 23
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 82
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 18
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 27
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 89
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 31
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 19
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 65
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 81
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 108
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 4
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 85
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 109
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 15
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 20
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 24
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 51
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 50
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 32
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 76
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 71
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 41
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 98
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 66
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 44
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 105
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 86
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 61
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 56
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 53
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 11
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 17
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 101
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 36
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 16
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 39
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 12
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 54
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 29
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 96
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 95
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 6
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 74
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 73
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 37
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 80
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 10
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 92
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 100
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 113
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 112
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 25
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 69
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 102
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 40
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 94
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 118
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 47
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 97
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 42
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 84
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 99
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 119
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 93
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 117
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 111
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 13
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 78
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 59
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 7
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 75
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 77
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 28
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 60
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 104
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 91
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 8
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 22
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 68
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 90
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 87
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 79
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 106
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 45
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 55
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 33
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 88
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 5
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 114
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 21
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 103
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 63
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 26
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 34
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 83
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 30
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 49
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 64
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 46
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 3
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 107
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 62
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 35
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 115
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 70
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 67
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 9
+          },
+          {
+            "a": 2,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 52,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 110,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 14,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 57,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 116,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 58,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 0,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 72,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 48,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 43,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 38,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 23,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 82,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 18,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 27,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 89,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 31,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 19,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 65,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 81,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 108,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 4,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 85,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 109,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 15,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 20,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 24,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 51,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 50,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 32,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 76,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 71,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 41,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 98,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 66,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 44,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 105,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 86,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 61,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 56,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 53,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 11,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 17,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 101,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 36,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 16,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 39,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 12,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 54,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 29,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 96,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 95,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 6,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 74,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 73,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 37,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 80,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 10,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 92,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 100,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 113,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 112,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 25,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 69,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 102,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 40,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 94,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 118,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 47,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 97,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 42,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 84,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 99,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 1,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 119,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 93,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 117,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 111,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 13,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 78,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 59,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 7,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 75,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 77,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 28,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 60,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 104,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 91,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 8,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 22,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 68,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 90,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 87,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 79,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 106,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 45,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 55,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 33,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 88,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 5,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 114,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 21,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 103,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 63,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 26,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 34,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 83,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 30,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 49,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 64,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 46,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 3,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 107,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 62,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 35,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 115,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 70,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 67,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 9,
+            "b": 1,
+            "c": 1
+          },
+          {
+            "a": 2,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 52,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 110,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 14,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 57,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 116,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 58,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 0,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 72,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 48,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 43,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 38,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 23,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 82,
+            "b": 1,
+            "c": 2
+          },
+          {
+            "a": 18,
+            "b": 1,
+            "c": 2
+          }
+        ],
+        "rowsSeen": 273652
+      },
+      {
+        "connectionId": "67cc21a0c5b649d0b3dd6756da716b16",
+        "sql": "/*obs:reuse-control*/ SELECT 1 AS n",
+        "tag": "reuse-control",
+        "kind": "read",
+        "tStart": 120137630.255946,
+        "tSent": 120137630.255946,
+        "rows": []
+      },
+      {
+        "connectionId": "b16521a9e96248d1856b5b1a23e447bc",
+        "sql": "EXPLAIN ANALYZE SELECT * FROM obs01_r2",
+        "tag": null,
+        "kind": "read",
+        "tStart": 120137710.591078,
+        "tSent": 120137710.591078,
+        "rows": [
+          {
+            "row_count": 121,
+            "pushdowns": null,
+            "time_to_first_page": "PT0.001854S",
+            "page_count": 2,
+            "self_time": "PT0.000046S",
+            "attributes": null,
+            "depth": "->",
+            "op": "project",
+            "total_time": "PT0.00191S"
+          },
+          {
+            "row_count": 121,
+            "pushdowns": null,
+            "time_to_first_page": "PT0.001824S",
+            "page_count": 2,
+            "self_time": "PT0.000063S",
+            "attributes": null,
+            "depth": "  ->",
+            "op": "rename",
+            "total_time": "PT0.001864S"
+          },
+          {
+            "row_count": 121,
+            "pushdowns": null,
+            "time_to_first_page": "PT0.001776S",
+            "page_count": 2,
+            "self_time": "PT0.001801S",
+            "attributes": {
+              "scan_db": "xtdb",
+              "scan_source": "public.obs01_r2",
+              "scan_files_pruned": 0,
+              "scan_files_used": 2,
+              "scan_pages_pruned": 0,
+              "scan_pages_used": 3,
+              "scan_rows_read": 961
+            },
+            "depth": "    ->",
+            "op": "scan",
+            "total_time": "PT0.001801S"
+          }
+        ],
+        "rowsSeen": 3,
+        "tEnd": 120137807.851352,
+        "commandComplete": "EXPLAIN 3",
+        "outcome": "success"
+      }
+    ],
+    "cancels": [
+      {
+        "backendPid": 5,
+        "t": 120135968.415379,
+        "connectionId": "9a8b708d50824031b6473feb23104941",
+        "targetConnectionId": "67cc21a0c5b649d0b3dd6756da716b16"
+      }
+    ],
+    "connections": [
+      {
+        "connectionId": "881860c52e384d2f8cc26fa5fb7c53fd",
+        "clientAddress": [
+          "172.17.0.1",
+          51406
+        ],
+        "enginePort": 5432,
+        "tMono": 120130080.115397,
+        "upstreamPort": 34804,
+        "closedAt": 120130893.069612
+      },
+      {
+        "connectionId": "32177bdbcc6b436e957f7a0e5da55cf6",
+        "clientAddress": [
+          "172.17.0.1",
+          51414
+        ],
+        "enginePort": 5432,
+        "tMono": 120131294.497613,
+        "upstreamPort": 34830,
+        "closedAt": 120132781.583282
+      },
+      {
+        "connectionId": "49a77bb8fc2c42c1950bf200f93db9c1",
+        "clientAddress": [
+          "172.17.0.1",
+          51428
+        ],
+        "enginePort": 5432,
+        "tMono": 120131322.665474,
+        "upstreamPort": 34834,
+        "closedAt": 120132775.405396
+      },
+      {
+        "connectionId": "67cc21a0c5b649d0b3dd6756da716b16",
+        "clientAddress": [
+          "172.17.0.1",
+          45658
+        ],
+        "enginePort": 5432,
+        "tMono": 120132771.412571,
+        "upstreamPort": 39210,
+        "closedAt": 120137642.504757,
+        "serverDecodeError": "truncated server message"
+      },
+      {
+        "connectionId": "9a8b708d50824031b6473feb23104941",
+        "clientAddress": [
+          "172.17.0.1",
+          45664
+        ],
+        "enginePort": 5432,
+        "tMono": 120135947.1752,
+        "upstreamPort": 39216,
+        "closedAt": 120136491.776312
+      },
+      {
+        "connectionId": "b16521a9e96248d1856b5b1a23e447bc",
+        "clientAddress": [
+          "172.17.0.1",
+          45670
+        ],
+        "enginePort": 5432,
+        "tMono": 120137630.842325,
+        "upstreamPort": 39218,
+        "closedAt": 120137906.23451
+      }
+    ]
+  },
+  "engineStatements": [
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:seed*/ INSERT INTO obs01_r2 (_id,n,canary) VALUES ('obs01-r2-0', 0, 'obs01-r2-canary'),('obs01-r2-1', 1, 'obs01-r2-canary'),('obs01-r2-2', 2, 'obs01-r2-canary'),('obs01-r2-3', 3, 'obs01-r2-canary'),('obs01-r2-4', 4, 'obs01-r2-canary'),('obs01-r2-5', 5, 'obs01-r2-canary'),('obs01-r2-6', 6, 'obs01-r2-canary'),('obs01-r2-7', 7, 'obs01-r2-canary'),('obs01-r2-8', 8, 'obs01-r2-canary'),('obs01-r2-9', 9, 'obs01-r2-canary'),('obs01-r2-10', 10, 'obs01-r2-canary'),('obs01-r2-11', 11, 'obs01-r2-canary'),('obs01-r2-12', 12, 'obs01-r2-canary'),('obs01-r2-13', 13, 'obs01-r2-canary'),('obs01-r2-14', 14, 'obs01-r2-canary'),('obs01-r2-15', 15, 'obs01-r2-canary'),('obs01-r2-16', 16, 'obs01-r2-canary'),('obs01-r2-17', 17, 'obs01-r2-canary'),('obs01-r2-18', 18, 'obs01-r2-canary'),('obs01-r2-19', 19, 'obs01-r2-canary'),('obs01-r2-20', 20, 'obs01-r2-canary'),('obs01-r2-21', 21, 'obs01-r2-canary'),('obs01-r2-22', 22, 'obs01-r2-canary'),('obs01-r2-23', 23, 'obs01-r2-canary'),('obs01-r2-24', 24, 'obs01-r2-canary'),('obs01-r2-25', 25, 'obs01-r2-canary'),('obs01-r2-26', 26, 'obs01-r2-canary'),('obs01-r2-27', 27, 'obs01-r2-canary'),('obs01-r2-28', 28, 'obs01-r2-canary'),('obs01-r2-29', 29, 'obs01-r2-canary'),('obs01-r2-30', 30, 'obs01-r2-canary'),('obs01-r2-31', 31, 'obs01-r2-canary'),('obs01-r2-32', 32, 'obs01-r2-canary'),('obs01-r2-33', 33, 'obs01-r2-canary'),('obs01-r2-34', 34, 'obs01-r2-canary'),('obs01-r2-35', 35, 'obs01-r2-canary'),('obs01-r2-36', 36, 'obs01-r2-canary'),('obs01-r2-37', 37, 'obs01-r2-canary'),('obs01-r2-38', 38, 'obs01-r2-canary'),('obs01-r2-39', 39, 'obs01-r2-canary'),('obs01-r2-40', 40, 'obs01-r2-canary'),('obs01-r2-41', 41, 'obs01-r2-canary'),('obs01-r2-42', 42, 'obs01-r2-canary'),('obs01-r2-43', 43, 'obs01-r2-canary'),('obs01-r2-44', 44, 'obs01-r2-canary'),('obs01-r2-45', 45, 'obs01-r2-canary'),('obs01-r2-46', 46, 'obs01-r2-canary'),('obs01-r2-47', 47, 'obs01-r2-canary'),('obs01-r2-48', 48, 'obs01-r2-canary'),('obs01-r2-49', 49, 'obs01-r2-canary'),('obs01-r2-50', 50, 'obs01-r2-canary'),('obs01-r2-51', 51, 'obs01-r2-canary'),('obs01-r2-52', 52, 'obs01-r2-canary'),('obs01-r2-53', 53, 'obs01-r2-canary'),('obs01-r2-54', 54, 'obs01-r2-canary'),('obs01-r2-55', 55, 'obs01-r2-canary'),('obs01-r2-56', 56, 'obs01-r2-canary'),('obs01-r2-57', 57, 'obs01-r2-canary'),('obs01-r2-58', 58, 'obs01-r2-canary'),('obs01-r2-59', 59, 'obs01-r2-canary'),('obs01-r2-60', 60, 'obs01-r2-canary'),('obs01-r2-61', 61, 'obs01-r2-canary'),('obs01-r2-62', 62, 'obs01-r2-canary'),('obs01-r2-63', 63, 'obs01-r2-canary'),('obs01-r2-64', 64, 'obs01-r2-canary'),('obs01-r2-65', 65, 'obs01-r2-canary'),('obs01-r2-66', 66, 'obs01-r2-canary'),('obs01-r2-67', 67, 'obs01-r2-canary'),('obs01-r2-68', 68, 'obs01-r2-canary'),('obs01-r2-69', 69, 'obs01-r2-canary'),('obs01-r2-70', 70, 'obs01-r2-canary'),('obs01-r2-71', 71, 'obs01-r2-canary'),('obs01-r2-72', 72, 'obs01-r2-canary'),('obs01-r2-73', 73, 'obs01-r2-canary'),('obs01-r2-74', 74, 'obs01-r2-canary'),('obs01-r2-75', 75, 'obs01-r2-canary'),('obs01-r2-76', 76, 'obs01-r2-canary'),('obs01-r2-77', 77, 'obs01-r2-canary'),('obs01-r2-78', 78, 'obs01-r2-canary'),('obs01-r2-79', 79, 'obs01-r2-canary'),('obs01-r2-80', 80, 'obs01-r2-canary'),('obs01-r2-81', 81, 'obs01-r2-canary'),('obs01-r2-82', 82, 'obs01-r2-canary'),('obs01-r2-83', 83, 'obs01-r2-canary'),('obs01-r2-84', 84, 'obs01-r2-canary'),('obs01-r2-85', 85, 'obs01-r2-canary'),('obs01-r2-86', 86, 'obs01-r2-canary'),('obs01-r2-87', 87, 'obs01-r2-canary'),('obs01-r2-88', 88, 'obs01-r2-canary'),('obs01-r2-89', 89, 'obs01-r2-canary'),('obs01-r2-90', 90, 'obs01-r2-canary'),('obs01-r2-91', 91, 'obs01-r2-canary'),('obs01-r2-92', 92, 'obs01-r2-canary'),('obs01-r2-93', 93, 'obs01-r2-canary'),('obs01-r2-94', 94, 'obs01-r2-canary'),('obs01-r2-95', 95, 'obs01-r2-canary'),('obs01-r2-96', 96, 'obs01-r2-canary'),('obs01-r2-97', 97, 'obs01-r2-canary'),('obs01-r2-98', 98, 'obs01-r2-canary'),('obs01-r2-99', 99, 'obs01-r2-canary'),('obs01-r2-100', 100, 'obs01-r2-canary'),('obs01-r2-101', 101, 'obs01-r2-canary'),('obs01-r2-102', 102, 'obs01-r2-canary'),('obs01-r2-103', 103, 'obs01-r2-canary'),('obs01-r2-104', 104, 'obs01-r2-canary'),('obs01-r2-105', 105, 'obs01-r2-canary'),('obs01-r2-106', 106, 'obs01-r2-canary'),('obs01-r2-107', 107, 'obs01-r2-canary'),('obs01-r2-108', 108, 'obs01-r2-canary'),('obs01-r2-109', 109, 'obs01-r2-canary'),('obs01-r2-110', 110, 'obs01-r2-canary'),('obs01-r2-111', 111, 'obs01-r2-canary'),('obs01-r2-112', 112, 'obs01-r2-canary'),('obs01-r2-113', 113, 'obs01-r2-canary'),('obs01-r2-114', 114, 'obs01-r2-canary'),('obs01-r2-115', 115, 'obs01-r2-canary'),('obs01-r2-116', 116, 'obs01-r2-canary'),('obs01-r2-117', 117, 'obs01-r2-canary'),('obs01-r2-118', 118, 'obs01-r2-canary'),('obs01-r2-119', 119, 'obs01-r2-canary')",
+      "tMono": 118244935.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 118246221.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 118246234.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 118246527.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:read-control*/ SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 118250025.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:cancel-control*/ SELECT a.n,b.n,c.n FROM obs01_r2 a, obs01_r2 b, obs01_r2 c",
+      "tMono": 118250075.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Cancel request received for connection {:cid 8}",
+      "tMono": 118250287.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:reuse-control*/ SELECT 1 AS n",
+      "tMono": 118250343.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: EXPLAIN ANALYZE SELECT * FROM obs01_r2",
+      "tMono": 118250396.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 118255089.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 118255090.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 118255114.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:seed*/ INSERT INTO obs01_r2 (_id,n,canary) VALUES ('obs01-r2-0', 0, 'obs01-r2-canary'),('obs01-r2-1', 1, 'obs01-r2-canary'),('obs01-r2-2', 2, 'obs01-r2-canary'),('obs01-r2-3', 3, 'obs01-r2-canary'),('obs01-r2-4', 4, 'obs01-r2-canary'),('obs01-r2-5', 5, 'obs01-r2-canary'),('obs01-r2-6', 6, 'obs01-r2-canary'),('obs01-r2-7', 7, 'obs01-r2-canary'),('obs01-r2-8', 8, 'obs01-r2-canary'),('obs01-r2-9', 9, 'obs01-r2-canary'),('obs01-r2-10', 10, 'obs01-r2-canary'),('obs01-r2-11', 11, 'obs01-r2-canary'),('obs01-r2-12', 12, 'obs01-r2-canary'),('obs01-r2-13', 13, 'obs01-r2-canary'),('obs01-r2-14', 14, 'obs01-r2-canary'),('obs01-r2-15', 15, 'obs01-r2-canary'),('obs01-r2-16', 16, 'obs01-r2-canary'),('obs01-r2-17', 17, 'obs01-r2-canary'),('obs01-r2-18', 18, 'obs01-r2-canary'),('obs01-r2-19', 19, 'obs01-r2-canary'),('obs01-r2-20', 20, 'obs01-r2-canary'),('obs01-r2-21', 21, 'obs01-r2-canary'),('obs01-r2-22', 22, 'obs01-r2-canary'),('obs01-r2-23', 23, 'obs01-r2-canary'),('obs01-r2-24', 24, 'obs01-r2-canary'),('obs01-r2-25', 25, 'obs01-r2-canary'),('obs01-r2-26', 26, 'obs01-r2-canary'),('obs01-r2-27', 27, 'obs01-r2-canary'),('obs01-r2-28', 28, 'obs01-r2-canary'),('obs01-r2-29', 29, 'obs01-r2-canary'),('obs01-r2-30', 30, 'obs01-r2-canary'),('obs01-r2-31', 31, 'obs01-r2-canary'),('obs01-r2-32', 32, 'obs01-r2-canary'),('obs01-r2-33', 33, 'obs01-r2-canary'),('obs01-r2-34', 34, 'obs01-r2-canary'),('obs01-r2-35', 35, 'obs01-r2-canary'),('obs01-r2-36', 36, 'obs01-r2-canary'),('obs01-r2-37', 37, 'obs01-r2-canary'),('obs01-r2-38', 38, 'obs01-r2-canary'),('obs01-r2-39', 39, 'obs01-r2-canary'),('obs01-r2-40', 40, 'obs01-r2-canary'),('obs01-r2-41', 41, 'obs01-r2-canary'),('obs01-r2-42', 42, 'obs01-r2-canary'),('obs01-r2-43', 43, 'obs01-r2-canary'),('obs01-r2-44', 44, 'obs01-r2-canary'),('obs01-r2-45', 45, 'obs01-r2-canary'),('obs01-r2-46', 46, 'obs01-r2-canary'),('obs01-r2-47', 47, 'obs01-r2-canary'),('obs01-r2-48', 48, 'obs01-r2-canary'),('obs01-r2-49', 49, 'obs01-r2-canary'),('obs01-r2-50', 50, 'obs01-r2-canary'),('obs01-r2-51', 51, 'obs01-r2-canary'),('obs01-r2-52', 52, 'obs01-r2-canary'),('obs01-r2-53', 53, 'obs01-r2-canary'),('obs01-r2-54', 54, 'obs01-r2-canary'),('obs01-r2-55', 55, 'obs01-r2-canary'),('obs01-r2-56', 56, 'obs01-r2-canary'),('obs01-r2-57', 57, 'obs01-r2-canary'),('obs01-r2-58', 58, 'obs01-r2-canary'),('obs01-r2-59', 59, 'obs01-r2-canary'),('obs01-r2-60', 60, 'obs01-r2-canary'),('obs01-r2-61', 61, 'obs01-r2-canary'),('obs01-r2-62', 62, 'obs01-r2-canary'),('obs01-r2-63', 63, 'obs01-r2-canary'),('obs01-r2-64', 64, 'obs01-r2-canary'),('obs01-r2-65', 65, 'obs01-r2-canary'),('obs01-r2-66', 66, 'obs01-r2-canary'),('obs01-r2-67', 67, 'obs01-r2-canary'),('obs01-r2-68', 68, 'obs01-r2-canary'),('obs01-r2-69', 69, 'obs01-r2-canary'),('obs01-r2-70', 70, 'obs01-r2-canary'),('obs01-r2-71', 71, 'obs01-r2-canary'),('obs01-r2-72', 72, 'obs01-r2-canary'),('obs01-r2-73', 73, 'obs01-r2-canary'),('obs01-r2-74', 74, 'obs01-r2-canary'),('obs01-r2-75', 75, 'obs01-r2-canary'),('obs01-r2-76', 76, 'obs01-r2-canary'),('obs01-r2-77', 77, 'obs01-r2-canary'),('obs01-r2-78', 78, 'obs01-r2-canary'),('obs01-r2-79', 79, 'obs01-r2-canary'),('obs01-r2-80', 80, 'obs01-r2-canary'),('obs01-r2-81', 81, 'obs01-r2-canary'),('obs01-r2-82', 82, 'obs01-r2-canary'),('obs01-r2-83', 83, 'obs01-r2-canary'),('obs01-r2-84', 84, 'obs01-r2-canary'),('obs01-r2-85', 85, 'obs01-r2-canary'),('obs01-r2-86', 86, 'obs01-r2-canary'),('obs01-r2-87', 87, 'obs01-r2-canary'),('obs01-r2-88', 88, 'obs01-r2-canary'),('obs01-r2-89', 89, 'obs01-r2-canary'),('obs01-r2-90', 90, 'obs01-r2-canary'),('obs01-r2-91', 91, 'obs01-r2-canary'),('obs01-r2-92', 92, 'obs01-r2-canary'),('obs01-r2-93', 93, 'obs01-r2-canary'),('obs01-r2-94', 94, 'obs01-r2-canary'),('obs01-r2-95', 95, 'obs01-r2-canary'),('obs01-r2-96', 96, 'obs01-r2-canary'),('obs01-r2-97', 97, 'obs01-r2-canary'),('obs01-r2-98', 98, 'obs01-r2-canary'),('obs01-r2-99', 99, 'obs01-r2-canary'),('obs01-r2-100', 100, 'obs01-r2-canary'),('obs01-r2-101', 101, 'obs01-r2-canary'),('obs01-r2-102', 102, 'obs01-r2-canary'),('obs01-r2-103', 103, 'obs01-r2-canary'),('obs01-r2-104', 104, 'obs01-r2-canary'),('obs01-r2-105', 105, 'obs01-r2-canary'),('obs01-r2-106', 106, 'obs01-r2-canary'),('obs01-r2-107', 107, 'obs01-r2-canary'),('obs01-r2-108', 108, 'obs01-r2-canary'),('obs01-r2-109', 109, 'obs01-r2-canary'),('obs01-r2-110', 110, 'obs01-r2-canary'),('obs01-r2-111', 111, 'obs01-r2-canary'),('obs01-r2-112', 112, 'obs01-r2-canary'),('obs01-r2-113', 113, 'obs01-r2-canary'),('obs01-r2-114', 114, 'obs01-r2-canary'),('obs01-r2-115', 115, 'obs01-r2-canary'),('obs01-r2-116', 116, 'obs01-r2-canary'),('obs01-r2-117', 117, 'obs01-r2-canary'),('obs01-r2-118', 118, 'obs01-r2-canary'),('obs01-r2-119', 119, 'obs01-r2-canary')",
+      "tMono": 118352597.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 118352798.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 118352799.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 118352845.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:read-control*/ SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 118357751.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:cancel-control*/ SELECT a.n,b.n,c.n FROM obs01_r2 a, obs01_r2 b, obs01_r2 c",
+      "tMono": 118357800.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:reuse-control*/ SELECT 1 AS n",
+      "tMono": 118357865.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Cancel request received for connection {:cid 15}",
+      "tMono": 118357875.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: EXPLAIN ANALYZE SELECT * FROM obs01_r2",
+      "tMono": 118357899.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 118362827.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 118362829.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 118362851.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:seed*/ INSERT INTO obs01_r2 (_id,n,canary) VALUES ('obs01-r2-0', 0, 'obs01-r2-canary'),('obs01-r2-1', 1, 'obs01-r2-canary'),('obs01-r2-2', 2, 'obs01-r2-canary'),('obs01-r2-3', 3, 'obs01-r2-canary'),('obs01-r2-4', 4, 'obs01-r2-canary'),('obs01-r2-5', 5, 'obs01-r2-canary'),('obs01-r2-6', 6, 'obs01-r2-canary'),('obs01-r2-7', 7, 'obs01-r2-canary'),('obs01-r2-8', 8, 'obs01-r2-canary'),('obs01-r2-9', 9, 'obs01-r2-canary'),('obs01-r2-10', 10, 'obs01-r2-canary'),('obs01-r2-11', 11, 'obs01-r2-canary'),('obs01-r2-12', 12, 'obs01-r2-canary'),('obs01-r2-13', 13, 'obs01-r2-canary'),('obs01-r2-14', 14, 'obs01-r2-canary'),('obs01-r2-15', 15, 'obs01-r2-canary'),('obs01-r2-16', 16, 'obs01-r2-canary'),('obs01-r2-17', 17, 'obs01-r2-canary'),('obs01-r2-18', 18, 'obs01-r2-canary'),('obs01-r2-19', 19, 'obs01-r2-canary'),('obs01-r2-20', 20, 'obs01-r2-canary'),('obs01-r2-21', 21, 'obs01-r2-canary'),('obs01-r2-22', 22, 'obs01-r2-canary'),('obs01-r2-23', 23, 'obs01-r2-canary'),('obs01-r2-24', 24, 'obs01-r2-canary'),('obs01-r2-25', 25, 'obs01-r2-canary'),('obs01-r2-26', 26, 'obs01-r2-canary'),('obs01-r2-27', 27, 'obs01-r2-canary'),('obs01-r2-28', 28, 'obs01-r2-canary'),('obs01-r2-29', 29, 'obs01-r2-canary'),('obs01-r2-30', 30, 'obs01-r2-canary'),('obs01-r2-31', 31, 'obs01-r2-canary'),('obs01-r2-32', 32, 'obs01-r2-canary'),('obs01-r2-33', 33, 'obs01-r2-canary'),('obs01-r2-34', 34, 'obs01-r2-canary'),('obs01-r2-35', 35, 'obs01-r2-canary'),('obs01-r2-36', 36, 'obs01-r2-canary'),('obs01-r2-37', 37, 'obs01-r2-canary'),('obs01-r2-38', 38, 'obs01-r2-canary'),('obs01-r2-39', 39, 'obs01-r2-canary'),('obs01-r2-40', 40, 'obs01-r2-canary'),('obs01-r2-41', 41, 'obs01-r2-canary'),('obs01-r2-42', 42, 'obs01-r2-canary'),('obs01-r2-43', 43, 'obs01-r2-canary'),('obs01-r2-44', 44, 'obs01-r2-canary'),('obs01-r2-45', 45, 'obs01-r2-canary'),('obs01-r2-46', 46, 'obs01-r2-canary'),('obs01-r2-47', 47, 'obs01-r2-canary'),('obs01-r2-48', 48, 'obs01-r2-canary'),('obs01-r2-49', 49, 'obs01-r2-canary'),('obs01-r2-50', 50, 'obs01-r2-canary'),('obs01-r2-51', 51, 'obs01-r2-canary'),('obs01-r2-52', 52, 'obs01-r2-canary'),('obs01-r2-53', 53, 'obs01-r2-canary'),('obs01-r2-54', 54, 'obs01-r2-canary'),('obs01-r2-55', 55, 'obs01-r2-canary'),('obs01-r2-56', 56, 'obs01-r2-canary'),('obs01-r2-57', 57, 'obs01-r2-canary'),('obs01-r2-58', 58, 'obs01-r2-canary'),('obs01-r2-59', 59, 'obs01-r2-canary'),('obs01-r2-60', 60, 'obs01-r2-canary'),('obs01-r2-61', 61, 'obs01-r2-canary'),('obs01-r2-62', 62, 'obs01-r2-canary'),('obs01-r2-63', 63, 'obs01-r2-canary'),('obs01-r2-64', 64, 'obs01-r2-canary'),('obs01-r2-65', 65, 'obs01-r2-canary'),('obs01-r2-66', 66, 'obs01-r2-canary'),('obs01-r2-67', 67, 'obs01-r2-canary'),('obs01-r2-68', 68, 'obs01-r2-canary'),('obs01-r2-69', 69, 'obs01-r2-canary'),('obs01-r2-70', 70, 'obs01-r2-canary'),('obs01-r2-71', 71, 'obs01-r2-canary'),('obs01-r2-72', 72, 'obs01-r2-canary'),('obs01-r2-73', 73, 'obs01-r2-canary'),('obs01-r2-74', 74, 'obs01-r2-canary'),('obs01-r2-75', 75, 'obs01-r2-canary'),('obs01-r2-76', 76, 'obs01-r2-canary'),('obs01-r2-77', 77, 'obs01-r2-canary'),('obs01-r2-78', 78, 'obs01-r2-canary'),('obs01-r2-79', 79, 'obs01-r2-canary'),('obs01-r2-80', 80, 'obs01-r2-canary'),('obs01-r2-81', 81, 'obs01-r2-canary'),('obs01-r2-82', 82, 'obs01-r2-canary'),('obs01-r2-83', 83, 'obs01-r2-canary'),('obs01-r2-84', 84, 'obs01-r2-canary'),('obs01-r2-85', 85, 'obs01-r2-canary'),('obs01-r2-86', 86, 'obs01-r2-canary'),('obs01-r2-87', 87, 'obs01-r2-canary'),('obs01-r2-88', 88, 'obs01-r2-canary'),('obs01-r2-89', 89, 'obs01-r2-canary'),('obs01-r2-90', 90, 'obs01-r2-canary'),('obs01-r2-91', 91, 'obs01-r2-canary'),('obs01-r2-92', 92, 'obs01-r2-canary'),('obs01-r2-93', 93, 'obs01-r2-canary'),('obs01-r2-94', 94, 'obs01-r2-canary'),('obs01-r2-95', 95, 'obs01-r2-canary'),('obs01-r2-96', 96, 'obs01-r2-canary'),('obs01-r2-97', 97, 'obs01-r2-canary'),('obs01-r2-98', 98, 'obs01-r2-canary'),('obs01-r2-99', 99, 'obs01-r2-canary'),('obs01-r2-100', 100, 'obs01-r2-canary'),('obs01-r2-101', 101, 'obs01-r2-canary'),('obs01-r2-102', 102, 'obs01-r2-canary'),('obs01-r2-103', 103, 'obs01-r2-canary'),('obs01-r2-104', 104, 'obs01-r2-canary'),('obs01-r2-105', 105, 'obs01-r2-canary'),('obs01-r2-106', 106, 'obs01-r2-canary'),('obs01-r2-107', 107, 'obs01-r2-canary'),('obs01-r2-108', 108, 'obs01-r2-canary'),('obs01-r2-109', 109, 'obs01-r2-canary'),('obs01-r2-110', 110, 'obs01-r2-canary'),('obs01-r2-111', 111, 'obs01-r2-canary'),('obs01-r2-112', 112, 'obs01-r2-canary'),('obs01-r2-113', 113, 'obs01-r2-canary'),('obs01-r2-114', 114, 'obs01-r2-canary'),('obs01-r2-115', 115, 'obs01-r2-canary'),('obs01-r2-116', 116, 'obs01-r2-canary'),('obs01-r2-117', 117, 'obs01-r2-canary'),('obs01-r2-118', 118, 'obs01-r2-canary'),('obs01-r2-119', 119, 'obs01-r2-canary')",
+      "tMono": 118511854.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 118511997.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 118511998.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 118512038.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:read-control*/ SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 118517005.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:deliberate-mutation*/ INSERT INTO obs01_r2 (_id,n,canary) VALUES ('negative-control', 1, 'obs01-r2-canary')",
+      "tMono": 118517053.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:cancel-control*/ SELECT a.n,b.n,c.n FROM obs01_r2 a, obs01_r2 b, obs01_r2 c",
+      "tMono": 118517121.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:reuse-control*/ SELECT 1 AS n",
+      "tMono": 118517211.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Cancel request received for connection {:cid 24}",
+      "tMono": 118517218.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: EXPLAIN ANALYZE SELECT * FROM obs01_r2",
+      "tMono": 118517233.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 118522048.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 118522049.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 118522066.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:seed*/ INSERT INTO obs01_r2 (_id,n,canary) VALUES ('obs01-r2-0', 0, 'obs01-r2-canary'),('obs01-r2-1', 1, 'obs01-r2-canary'),('obs01-r2-2', 2, 'obs01-r2-canary'),('obs01-r2-3', 3, 'obs01-r2-canary'),('obs01-r2-4', 4, 'obs01-r2-canary'),('obs01-r2-5', 5, 'obs01-r2-canary'),('obs01-r2-6', 6, 'obs01-r2-canary'),('obs01-r2-7', 7, 'obs01-r2-canary'),('obs01-r2-8', 8, 'obs01-r2-canary'),('obs01-r2-9', 9, 'obs01-r2-canary'),('obs01-r2-10', 10, 'obs01-r2-canary'),('obs01-r2-11', 11, 'obs01-r2-canary'),('obs01-r2-12', 12, 'obs01-r2-canary'),('obs01-r2-13', 13, 'obs01-r2-canary'),('obs01-r2-14', 14, 'obs01-r2-canary'),('obs01-r2-15', 15, 'obs01-r2-canary'),('obs01-r2-16', 16, 'obs01-r2-canary'),('obs01-r2-17', 17, 'obs01-r2-canary'),('obs01-r2-18', 18, 'obs01-r2-canary'),('obs01-r2-19', 19, 'obs01-r2-canary'),('obs01-r2-20', 20, 'obs01-r2-canary'),('obs01-r2-21', 21, 'obs01-r2-canary'),('obs01-r2-22', 22, 'obs01-r2-canary'),('obs01-r2-23', 23, 'obs01-r2-canary'),('obs01-r2-24', 24, 'obs01-r2-canary'),('obs01-r2-25', 25, 'obs01-r2-canary'),('obs01-r2-26', 26, 'obs01-r2-canary'),('obs01-r2-27', 27, 'obs01-r2-canary'),('obs01-r2-28', 28, 'obs01-r2-canary'),('obs01-r2-29', 29, 'obs01-r2-canary'),('obs01-r2-30', 30, 'obs01-r2-canary'),('obs01-r2-31', 31, 'obs01-r2-canary'),('obs01-r2-32', 32, 'obs01-r2-canary'),('obs01-r2-33', 33, 'obs01-r2-canary'),('obs01-r2-34', 34, 'obs01-r2-canary'),('obs01-r2-35', 35, 'obs01-r2-canary'),('obs01-r2-36', 36, 'obs01-r2-canary'),('obs01-r2-37', 37, 'obs01-r2-canary'),('obs01-r2-38', 38, 'obs01-r2-canary'),('obs01-r2-39', 39, 'obs01-r2-canary'),('obs01-r2-40', 40, 'obs01-r2-canary'),('obs01-r2-41', 41, 'obs01-r2-canary'),('obs01-r2-42', 42, 'obs01-r2-canary'),('obs01-r2-43', 43, 'obs01-r2-canary'),('obs01-r2-44', 44, 'obs01-r2-canary'),('obs01-r2-45', 45, 'obs01-r2-canary'),('obs01-r2-46', 46, 'obs01-r2-canary'),('obs01-r2-47', 47, 'obs01-r2-canary'),('obs01-r2-48', 48, 'obs01-r2-canary'),('obs01-r2-49', 49, 'obs01-r2-canary'),('obs01-r2-50', 50, 'obs01-r2-canary'),('obs01-r2-51', 51, 'obs01-r2-canary'),('obs01-r2-52', 52, 'obs01-r2-canary'),('obs01-r2-53', 53, 'obs01-r2-canary'),('obs01-r2-54', 54, 'obs01-r2-canary'),('obs01-r2-55', 55, 'obs01-r2-canary'),('obs01-r2-56', 56, 'obs01-r2-canary'),('obs01-r2-57', 57, 'obs01-r2-canary'),('obs01-r2-58', 58, 'obs01-r2-canary'),('obs01-r2-59', 59, 'obs01-r2-canary'),('obs01-r2-60', 60, 'obs01-r2-canary'),('obs01-r2-61', 61, 'obs01-r2-canary'),('obs01-r2-62', 62, 'obs01-r2-canary'),('obs01-r2-63', 63, 'obs01-r2-canary'),('obs01-r2-64', 64, 'obs01-r2-canary'),('obs01-r2-65', 65, 'obs01-r2-canary'),('obs01-r2-66', 66, 'obs01-r2-canary'),('obs01-r2-67', 67, 'obs01-r2-canary'),('obs01-r2-68', 68, 'obs01-r2-canary'),('obs01-r2-69', 69, 'obs01-r2-canary'),('obs01-r2-70', 70, 'obs01-r2-canary'),('obs01-r2-71', 71, 'obs01-r2-canary'),('obs01-r2-72', 72, 'obs01-r2-canary'),('obs01-r2-73', 73, 'obs01-r2-canary'),('obs01-r2-74', 74, 'obs01-r2-canary'),('obs01-r2-75', 75, 'obs01-r2-canary'),('obs01-r2-76', 76, 'obs01-r2-canary'),('obs01-r2-77', 77, 'obs01-r2-canary'),('obs01-r2-78', 78, 'obs01-r2-canary'),('obs01-r2-79', 79, 'obs01-r2-canary'),('obs01-r2-80', 80, 'obs01-r2-canary'),('obs01-r2-81', 81, 'obs01-r2-canary'),('obs01-r2-82', 82, 'obs01-r2-canary'),('obs01-r2-83', 83, 'obs01-r2-canary'),('obs01-r2-84', 84, 'obs01-r2-canary'),('obs01-r2-85', 85, 'obs01-r2-canary'),('obs01-r2-86', 86, 'obs01-r2-canary'),('obs01-r2-87', 87, 'obs01-r2-canary'),('obs01-r2-88', 88, 'obs01-r2-canary'),('obs01-r2-89', 89, 'obs01-r2-canary'),('obs01-r2-90', 90, 'obs01-r2-canary'),('obs01-r2-91', 91, 'obs01-r2-canary'),('obs01-r2-92', 92, 'obs01-r2-canary'),('obs01-r2-93', 93, 'obs01-r2-canary'),('obs01-r2-94', 94, 'obs01-r2-canary'),('obs01-r2-95', 95, 'obs01-r2-canary'),('obs01-r2-96', 96, 'obs01-r2-canary'),('obs01-r2-97', 97, 'obs01-r2-canary'),('obs01-r2-98', 98, 'obs01-r2-canary'),('obs01-r2-99', 99, 'obs01-r2-canary'),('obs01-r2-100', 100, 'obs01-r2-canary'),('obs01-r2-101', 101, 'obs01-r2-canary'),('obs01-r2-102', 102, 'obs01-r2-canary'),('obs01-r2-103', 103, 'obs01-r2-canary'),('obs01-r2-104', 104, 'obs01-r2-canary'),('obs01-r2-105', 105, 'obs01-r2-canary'),('obs01-r2-106', 106, 'obs01-r2-canary'),('obs01-r2-107', 107, 'obs01-r2-canary'),('obs01-r2-108', 108, 'obs01-r2-canary'),('obs01-r2-109', 109, 'obs01-r2-canary'),('obs01-r2-110', 110, 'obs01-r2-canary'),('obs01-r2-111', 111, 'obs01-r2-canary'),('obs01-r2-112', 112, 'obs01-r2-canary'),('obs01-r2-113', 113, 'obs01-r2-canary'),('obs01-r2-114', 114, 'obs01-r2-canary'),('obs01-r2-115', 115, 'obs01-r2-canary'),('obs01-r2-116', 116, 'obs01-r2-canary'),('obs01-r2-117', 117, 'obs01-r2-canary'),('obs01-r2-118', 118, 'obs01-r2-canary'),('obs01-r2-119', 119, 'obs01-r2-canary')",
+      "tMono": 118765557.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 118765996.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 118765998.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 118766149.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:cancel-control*/ SELECT a.n AS a,b.n AS b,c.n AS c FROM obs01_r2 a, obs01_r2 b, obs01_r2 c LIMIT $1",
+      "tMono": 118767127.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:read-control*/ SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 118770165.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Cancel request received for connection {:cid 32}",
+      "tMono": 118770935.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Query cancelled",
+      "tMono": 118770935.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "error processing message:  query cancelled during execution",
+      "tMono": 118770939.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:seed*/ INSERT INTO obs01_r2 (_id,n,canary) VALUES ('obs01-r2-0', 0, 'obs01-r2-canary'),('obs01-r2-1', 1, 'obs01-r2-canary'),('obs01-r2-2', 2, 'obs01-r2-canary'),('obs01-r2-3', 3, 'obs01-r2-canary'),('obs01-r2-4', 4, 'obs01-r2-canary'),('obs01-r2-5', 5, 'obs01-r2-canary'),('obs01-r2-6', 6, 'obs01-r2-canary'),('obs01-r2-7', 7, 'obs01-r2-canary'),('obs01-r2-8', 8, 'obs01-r2-canary'),('obs01-r2-9', 9, 'obs01-r2-canary'),('obs01-r2-10', 10, 'obs01-r2-canary'),('obs01-r2-11', 11, 'obs01-r2-canary'),('obs01-r2-12', 12, 'obs01-r2-canary'),('obs01-r2-13', 13, 'obs01-r2-canary'),('obs01-r2-14', 14, 'obs01-r2-canary'),('obs01-r2-15', 15, 'obs01-r2-canary'),('obs01-r2-16', 16, 'obs01-r2-canary'),('obs01-r2-17', 17, 'obs01-r2-canary'),('obs01-r2-18', 18, 'obs01-r2-canary'),('obs01-r2-19', 19, 'obs01-r2-canary'),('obs01-r2-20', 20, 'obs01-r2-canary'),('obs01-r2-21', 21, 'obs01-r2-canary'),('obs01-r2-22', 22, 'obs01-r2-canary'),('obs01-r2-23', 23, 'obs01-r2-canary'),('obs01-r2-24', 24, 'obs01-r2-canary'),('obs01-r2-25', 25, 'obs01-r2-canary'),('obs01-r2-26', 26, 'obs01-r2-canary'),('obs01-r2-27', 27, 'obs01-r2-canary'),('obs01-r2-28', 28, 'obs01-r2-canary'),('obs01-r2-29', 29, 'obs01-r2-canary'),('obs01-r2-30', 30, 'obs01-r2-canary'),('obs01-r2-31', 31, 'obs01-r2-canary'),('obs01-r2-32', 32, 'obs01-r2-canary'),('obs01-r2-33', 33, 'obs01-r2-canary'),('obs01-r2-34', 34, 'obs01-r2-canary'),('obs01-r2-35', 35, 'obs01-r2-canary'),('obs01-r2-36', 36, 'obs01-r2-canary'),('obs01-r2-37', 37, 'obs01-r2-canary'),('obs01-r2-38', 38, 'obs01-r2-canary'),('obs01-r2-39', 39, 'obs01-r2-canary'),('obs01-r2-40', 40, 'obs01-r2-canary'),('obs01-r2-41', 41, 'obs01-r2-canary'),('obs01-r2-42', 42, 'obs01-r2-canary'),('obs01-r2-43', 43, 'obs01-r2-canary'),('obs01-r2-44', 44, 'obs01-r2-canary'),('obs01-r2-45', 45, 'obs01-r2-canary'),('obs01-r2-46', 46, 'obs01-r2-canary'),('obs01-r2-47', 47, 'obs01-r2-canary'),('obs01-r2-48', 48, 'obs01-r2-canary'),('obs01-r2-49', 49, 'obs01-r2-canary'),('obs01-r2-50', 50, 'obs01-r2-canary'),('obs01-r2-51', 51, 'obs01-r2-canary'),('obs01-r2-52', 52, 'obs01-r2-canary'),('obs01-r2-53', 53, 'obs01-r2-canary'),('obs01-r2-54', 54, 'obs01-r2-canary'),('obs01-r2-55', 55, 'obs01-r2-canary'),('obs01-r2-56', 56, 'obs01-r2-canary'),('obs01-r2-57', 57, 'obs01-r2-canary'),('obs01-r2-58', 58, 'obs01-r2-canary'),('obs01-r2-59', 59, 'obs01-r2-canary'),('obs01-r2-60', 60, 'obs01-r2-canary'),('obs01-r2-61', 61, 'obs01-r2-canary'),('obs01-r2-62', 62, 'obs01-r2-canary'),('obs01-r2-63', 63, 'obs01-r2-canary'),('obs01-r2-64', 64, 'obs01-r2-canary'),('obs01-r2-65', 65, 'obs01-r2-canary'),('obs01-r2-66', 66, 'obs01-r2-canary'),('obs01-r2-67', 67, 'obs01-r2-canary'),('obs01-r2-68', 68, 'obs01-r2-canary'),('obs01-r2-69', 69, 'obs01-r2-canary'),('obs01-r2-70', 70, 'obs01-r2-canary'),('obs01-r2-71', 71, 'obs01-r2-canary'),('obs01-r2-72', 72, 'obs01-r2-canary'),('obs01-r2-73', 73, 'obs01-r2-canary'),('obs01-r2-74', 74, 'obs01-r2-canary'),('obs01-r2-75', 75, 'obs01-r2-canary'),('obs01-r2-76', 76, 'obs01-r2-canary'),('obs01-r2-77', 77, 'obs01-r2-canary'),('obs01-r2-78', 78, 'obs01-r2-canary'),('obs01-r2-79', 79, 'obs01-r2-canary'),('obs01-r2-80', 80, 'obs01-r2-canary'),('obs01-r2-81', 81, 'obs01-r2-canary'),('obs01-r2-82', 82, 'obs01-r2-canary'),('obs01-r2-83', 83, 'obs01-r2-canary'),('obs01-r2-84', 84, 'obs01-r2-canary'),('obs01-r2-85', 85, 'obs01-r2-canary'),('obs01-r2-86', 86, 'obs01-r2-canary'),('obs01-r2-87', 87, 'obs01-r2-canary'),('obs01-r2-88', 88, 'obs01-r2-canary'),('obs01-r2-89', 89, 'obs01-r2-canary'),('obs01-r2-90', 90, 'obs01-r2-canary'),('obs01-r2-91', 91, 'obs01-r2-canary'),('obs01-r2-92', 92, 'obs01-r2-canary'),('obs01-r2-93', 93, 'obs01-r2-canary'),('obs01-r2-94', 94, 'obs01-r2-canary'),('obs01-r2-95', 95, 'obs01-r2-canary'),('obs01-r2-96', 96, 'obs01-r2-canary'),('obs01-r2-97', 97, 'obs01-r2-canary'),('obs01-r2-98', 98, 'obs01-r2-canary'),('obs01-r2-99', 99, 'obs01-r2-canary'),('obs01-r2-100', 100, 'obs01-r2-canary'),('obs01-r2-101', 101, 'obs01-r2-canary'),('obs01-r2-102', 102, 'obs01-r2-canary'),('obs01-r2-103', 103, 'obs01-r2-canary'),('obs01-r2-104', 104, 'obs01-r2-canary'),('obs01-r2-105', 105, 'obs01-r2-canary'),('obs01-r2-106', 106, 'obs01-r2-canary'),('obs01-r2-107', 107, 'obs01-r2-canary'),('obs01-r2-108', 108, 'obs01-r2-canary'),('obs01-r2-109', 109, 'obs01-r2-canary'),('obs01-r2-110', 110, 'obs01-r2-canary'),('obs01-r2-111', 111, 'obs01-r2-canary'),('obs01-r2-112', 112, 'obs01-r2-canary'),('obs01-r2-113', 113, 'obs01-r2-canary'),('obs01-r2-114', 114, 'obs01-r2-canary'),('obs01-r2-115', 115, 'obs01-r2-canary'),('obs01-r2-116', 116, 'obs01-r2-canary'),('obs01-r2-117', 117, 'obs01-r2-canary'),('obs01-r2-118', 118, 'obs01-r2-canary'),('obs01-r2-119', 119, 'obs01-r2-canary')",
+      "tMono": 119063913.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 119064527.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 119064531.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 119064728.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:cancel-control*/ SELECT a.n AS a,b.n AS b,c.n AS c FROM obs01_r2 a, obs01_r2 b, obs01_r2 c LIMIT $1",
+      "tMono": 119065416.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:read-control*/ SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 119068884.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Cancel request received for connection {:cid 5}",
+      "tMono": 119069562.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Query cancelled",
+      "tMono": 119069563.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "error processing message:  query cancelled during execution",
+      "tMono": 119069643.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:seed*/ INSERT INTO obs01_r2 (_id,n,canary) VALUES ('obs01-r2-0', 0, 'obs01-r2-canary'),('obs01-r2-1', 1, 'obs01-r2-canary'),('obs01-r2-2', 2, 'obs01-r2-canary'),('obs01-r2-3', 3, 'obs01-r2-canary'),('obs01-r2-4', 4, 'obs01-r2-canary'),('obs01-r2-5', 5, 'obs01-r2-canary'),('obs01-r2-6', 6, 'obs01-r2-canary'),('obs01-r2-7', 7, 'obs01-r2-canary'),('obs01-r2-8', 8, 'obs01-r2-canary'),('obs01-r2-9', 9, 'obs01-r2-canary'),('obs01-r2-10', 10, 'obs01-r2-canary'),('obs01-r2-11', 11, 'obs01-r2-canary'),('obs01-r2-12', 12, 'obs01-r2-canary'),('obs01-r2-13', 13, 'obs01-r2-canary'),('obs01-r2-14', 14, 'obs01-r2-canary'),('obs01-r2-15', 15, 'obs01-r2-canary'),('obs01-r2-16', 16, 'obs01-r2-canary'),('obs01-r2-17', 17, 'obs01-r2-canary'),('obs01-r2-18', 18, 'obs01-r2-canary'),('obs01-r2-19', 19, 'obs01-r2-canary'),('obs01-r2-20', 20, 'obs01-r2-canary'),('obs01-r2-21', 21, 'obs01-r2-canary'),('obs01-r2-22', 22, 'obs01-r2-canary'),('obs01-r2-23', 23, 'obs01-r2-canary'),('obs01-r2-24', 24, 'obs01-r2-canary'),('obs01-r2-25', 25, 'obs01-r2-canary'),('obs01-r2-26', 26, 'obs01-r2-canary'),('obs01-r2-27', 27, 'obs01-r2-canary'),('obs01-r2-28', 28, 'obs01-r2-canary'),('obs01-r2-29', 29, 'obs01-r2-canary'),('obs01-r2-30', 30, 'obs01-r2-canary'),('obs01-r2-31', 31, 'obs01-r2-canary'),('obs01-r2-32', 32, 'obs01-r2-canary'),('obs01-r2-33', 33, 'obs01-r2-canary'),('obs01-r2-34', 34, 'obs01-r2-canary'),('obs01-r2-35', 35, 'obs01-r2-canary'),('obs01-r2-36', 36, 'obs01-r2-canary'),('obs01-r2-37', 37, 'obs01-r2-canary'),('obs01-r2-38', 38, 'obs01-r2-canary'),('obs01-r2-39', 39, 'obs01-r2-canary'),('obs01-r2-40', 40, 'obs01-r2-canary'),('obs01-r2-41', 41, 'obs01-r2-canary'),('obs01-r2-42', 42, 'obs01-r2-canary'),('obs01-r2-43', 43, 'obs01-r2-canary'),('obs01-r2-44', 44, 'obs01-r2-canary'),('obs01-r2-45', 45, 'obs01-r2-canary'),('obs01-r2-46', 46, 'obs01-r2-canary'),('obs01-r2-47', 47, 'obs01-r2-canary'),('obs01-r2-48', 48, 'obs01-r2-canary'),('obs01-r2-49', 49, 'obs01-r2-canary'),('obs01-r2-50', 50, 'obs01-r2-canary'),('obs01-r2-51', 51, 'obs01-r2-canary'),('obs01-r2-52', 52, 'obs01-r2-canary'),('obs01-r2-53', 53, 'obs01-r2-canary'),('obs01-r2-54', 54, 'obs01-r2-canary'),('obs01-r2-55', 55, 'obs01-r2-canary'),('obs01-r2-56', 56, 'obs01-r2-canary'),('obs01-r2-57', 57, 'obs01-r2-canary'),('obs01-r2-58', 58, 'obs01-r2-canary'),('obs01-r2-59', 59, 'obs01-r2-canary'),('obs01-r2-60', 60, 'obs01-r2-canary'),('obs01-r2-61', 61, 'obs01-r2-canary'),('obs01-r2-62', 62, 'obs01-r2-canary'),('obs01-r2-63', 63, 'obs01-r2-canary'),('obs01-r2-64', 64, 'obs01-r2-canary'),('obs01-r2-65', 65, 'obs01-r2-canary'),('obs01-r2-66', 66, 'obs01-r2-canary'),('obs01-r2-67', 67, 'obs01-r2-canary'),('obs01-r2-68', 68, 'obs01-r2-canary'),('obs01-r2-69', 69, 'obs01-r2-canary'),('obs01-r2-70', 70, 'obs01-r2-canary'),('obs01-r2-71', 71, 'obs01-r2-canary'),('obs01-r2-72', 72, 'obs01-r2-canary'),('obs01-r2-73', 73, 'obs01-r2-canary'),('obs01-r2-74', 74, 'obs01-r2-canary'),('obs01-r2-75', 75, 'obs01-r2-canary'),('obs01-r2-76', 76, 'obs01-r2-canary'),('obs01-r2-77', 77, 'obs01-r2-canary'),('obs01-r2-78', 78, 'obs01-r2-canary'),('obs01-r2-79', 79, 'obs01-r2-canary'),('obs01-r2-80', 80, 'obs01-r2-canary'),('obs01-r2-81', 81, 'obs01-r2-canary'),('obs01-r2-82', 82, 'obs01-r2-canary'),('obs01-r2-83', 83, 'obs01-r2-canary'),('obs01-r2-84', 84, 'obs01-r2-canary'),('obs01-r2-85', 85, 'obs01-r2-canary'),('obs01-r2-86', 86, 'obs01-r2-canary'),('obs01-r2-87', 87, 'obs01-r2-canary'),('obs01-r2-88', 88, 'obs01-r2-canary'),('obs01-r2-89', 89, 'obs01-r2-canary'),('obs01-r2-90', 90, 'obs01-r2-canary'),('obs01-r2-91', 91, 'obs01-r2-canary'),('obs01-r2-92', 92, 'obs01-r2-canary'),('obs01-r2-93', 93, 'obs01-r2-canary'),('obs01-r2-94', 94, 'obs01-r2-canary'),('obs01-r2-95', 95, 'obs01-r2-canary'),('obs01-r2-96', 96, 'obs01-r2-canary'),('obs01-r2-97', 97, 'obs01-r2-canary'),('obs01-r2-98', 98, 'obs01-r2-canary'),('obs01-r2-99', 99, 'obs01-r2-canary'),('obs01-r2-100', 100, 'obs01-r2-canary'),('obs01-r2-101', 101, 'obs01-r2-canary'),('obs01-r2-102', 102, 'obs01-r2-canary'),('obs01-r2-103', 103, 'obs01-r2-canary'),('obs01-r2-104', 104, 'obs01-r2-canary'),('obs01-r2-105', 105, 'obs01-r2-canary'),('obs01-r2-106', 106, 'obs01-r2-canary'),('obs01-r2-107', 107, 'obs01-r2-canary'),('obs01-r2-108', 108, 'obs01-r2-canary'),('obs01-r2-109', 109, 'obs01-r2-canary'),('obs01-r2-110', 110, 'obs01-r2-canary'),('obs01-r2-111', 111, 'obs01-r2-canary'),('obs01-r2-112', 112, 'obs01-r2-canary'),('obs01-r2-113', 113, 'obs01-r2-canary'),('obs01-r2-114', 114, 'obs01-r2-canary'),('obs01-r2-115', 115, 'obs01-r2-canary'),('obs01-r2-116', 116, 'obs01-r2-canary'),('obs01-r2-117', 117, 'obs01-r2-canary'),('obs01-r2-118', 118, 'obs01-r2-canary'),('obs01-r2-119', 119, 'obs01-r2-canary')",
+      "tMono": 119800974.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 119801596.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 119801606.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 119801808.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:cancel-control*/ SELECT a.n AS a,b.n AS b,c.n AS c FROM obs01_r2 a, obs01_r2 b, obs01_r2 c LIMIT $1",
+      "tMono": 119802468.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:read-control*/ SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 119805462.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Cancel request received for connection {:cid 5}",
+      "tMono": 119806913.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Query cancelled",
+      "tMono": 119806914.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "error processing message:  query cancelled during execution",
+      "tMono": 119806914.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: EXPLAIN ANALYZE SELECT * FROM obs01_r2",
+      "tMono": 119808332.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 119810564.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 119810564.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 119810579.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:seed*/ INSERT INTO obs01_r2 (_id,n,canary) VALUES ('obs01-r2-0', 0, 'obs01-r2-canary'),('obs01-r2-1', 1, 'obs01-r2-canary'),('obs01-r2-2', 2, 'obs01-r2-canary'),('obs01-r2-3', 3, 'obs01-r2-canary'),('obs01-r2-4', 4, 'obs01-r2-canary'),('obs01-r2-5', 5, 'obs01-r2-canary'),('obs01-r2-6', 6, 'obs01-r2-canary'),('obs01-r2-7', 7, 'obs01-r2-canary'),('obs01-r2-8', 8, 'obs01-r2-canary'),('obs01-r2-9', 9, 'obs01-r2-canary'),('obs01-r2-10', 10, 'obs01-r2-canary'),('obs01-r2-11', 11, 'obs01-r2-canary'),('obs01-r2-12', 12, 'obs01-r2-canary'),('obs01-r2-13', 13, 'obs01-r2-canary'),('obs01-r2-14', 14, 'obs01-r2-canary'),('obs01-r2-15', 15, 'obs01-r2-canary'),('obs01-r2-16', 16, 'obs01-r2-canary'),('obs01-r2-17', 17, 'obs01-r2-canary'),('obs01-r2-18', 18, 'obs01-r2-canary'),('obs01-r2-19', 19, 'obs01-r2-canary'),('obs01-r2-20', 20, 'obs01-r2-canary'),('obs01-r2-21', 21, 'obs01-r2-canary'),('obs01-r2-22', 22, 'obs01-r2-canary'),('obs01-r2-23', 23, 'obs01-r2-canary'),('obs01-r2-24', 24, 'obs01-r2-canary'),('obs01-r2-25', 25, 'obs01-r2-canary'),('obs01-r2-26', 26, 'obs01-r2-canary'),('obs01-r2-27', 27, 'obs01-r2-canary'),('obs01-r2-28', 28, 'obs01-r2-canary'),('obs01-r2-29', 29, 'obs01-r2-canary'),('obs01-r2-30', 30, 'obs01-r2-canary'),('obs01-r2-31', 31, 'obs01-r2-canary'),('obs01-r2-32', 32, 'obs01-r2-canary'),('obs01-r2-33', 33, 'obs01-r2-canary'),('obs01-r2-34', 34, 'obs01-r2-canary'),('obs01-r2-35', 35, 'obs01-r2-canary'),('obs01-r2-36', 36, 'obs01-r2-canary'),('obs01-r2-37', 37, 'obs01-r2-canary'),('obs01-r2-38', 38, 'obs01-r2-canary'),('obs01-r2-39', 39, 'obs01-r2-canary'),('obs01-r2-40', 40, 'obs01-r2-canary'),('obs01-r2-41', 41, 'obs01-r2-canary'),('obs01-r2-42', 42, 'obs01-r2-canary'),('obs01-r2-43', 43, 'obs01-r2-canary'),('obs01-r2-44', 44, 'obs01-r2-canary'),('obs01-r2-45', 45, 'obs01-r2-canary'),('obs01-r2-46', 46, 'obs01-r2-canary'),('obs01-r2-47', 47, 'obs01-r2-canary'),('obs01-r2-48', 48, 'obs01-r2-canary'),('obs01-r2-49', 49, 'obs01-r2-canary'),('obs01-r2-50', 50, 'obs01-r2-canary'),('obs01-r2-51', 51, 'obs01-r2-canary'),('obs01-r2-52', 52, 'obs01-r2-canary'),('obs01-r2-53', 53, 'obs01-r2-canary'),('obs01-r2-54', 54, 'obs01-r2-canary'),('obs01-r2-55', 55, 'obs01-r2-canary'),('obs01-r2-56', 56, 'obs01-r2-canary'),('obs01-r2-57', 57, 'obs01-r2-canary'),('obs01-r2-58', 58, 'obs01-r2-canary'),('obs01-r2-59', 59, 'obs01-r2-canary'),('obs01-r2-60', 60, 'obs01-r2-canary'),('obs01-r2-61', 61, 'obs01-r2-canary'),('obs01-r2-62', 62, 'obs01-r2-canary'),('obs01-r2-63', 63, 'obs01-r2-canary'),('obs01-r2-64', 64, 'obs01-r2-canary'),('obs01-r2-65', 65, 'obs01-r2-canary'),('obs01-r2-66', 66, 'obs01-r2-canary'),('obs01-r2-67', 67, 'obs01-r2-canary'),('obs01-r2-68', 68, 'obs01-r2-canary'),('obs01-r2-69', 69, 'obs01-r2-canary'),('obs01-r2-70', 70, 'obs01-r2-canary'),('obs01-r2-71', 71, 'obs01-r2-canary'),('obs01-r2-72', 72, 'obs01-r2-canary'),('obs01-r2-73', 73, 'obs01-r2-canary'),('obs01-r2-74', 74, 'obs01-r2-canary'),('obs01-r2-75', 75, 'obs01-r2-canary'),('obs01-r2-76', 76, 'obs01-r2-canary'),('obs01-r2-77', 77, 'obs01-r2-canary'),('obs01-r2-78', 78, 'obs01-r2-canary'),('obs01-r2-79', 79, 'obs01-r2-canary'),('obs01-r2-80', 80, 'obs01-r2-canary'),('obs01-r2-81', 81, 'obs01-r2-canary'),('obs01-r2-82', 82, 'obs01-r2-canary'),('obs01-r2-83', 83, 'obs01-r2-canary'),('obs01-r2-84', 84, 'obs01-r2-canary'),('obs01-r2-85', 85, 'obs01-r2-canary'),('obs01-r2-86', 86, 'obs01-r2-canary'),('obs01-r2-87', 87, 'obs01-r2-canary'),('obs01-r2-88', 88, 'obs01-r2-canary'),('obs01-r2-89', 89, 'obs01-r2-canary'),('obs01-r2-90', 90, 'obs01-r2-canary'),('obs01-r2-91', 91, 'obs01-r2-canary'),('obs01-r2-92', 92, 'obs01-r2-canary'),('obs01-r2-93', 93, 'obs01-r2-canary'),('obs01-r2-94', 94, 'obs01-r2-canary'),('obs01-r2-95', 95, 'obs01-r2-canary'),('obs01-r2-96', 96, 'obs01-r2-canary'),('obs01-r2-97', 97, 'obs01-r2-canary'),('obs01-r2-98', 98, 'obs01-r2-canary'),('obs01-r2-99', 99, 'obs01-r2-canary'),('obs01-r2-100', 100, 'obs01-r2-canary'),('obs01-r2-101', 101, 'obs01-r2-canary'),('obs01-r2-102', 102, 'obs01-r2-canary'),('obs01-r2-103', 103, 'obs01-r2-canary'),('obs01-r2-104', 104, 'obs01-r2-canary'),('obs01-r2-105', 105, 'obs01-r2-canary'),('obs01-r2-106', 106, 'obs01-r2-canary'),('obs01-r2-107', 107, 'obs01-r2-canary'),('obs01-r2-108', 108, 'obs01-r2-canary'),('obs01-r2-109', 109, 'obs01-r2-canary'),('obs01-r2-110', 110, 'obs01-r2-canary'),('obs01-r2-111', 111, 'obs01-r2-canary'),('obs01-r2-112', 112, 'obs01-r2-canary'),('obs01-r2-113', 113, 'obs01-r2-canary'),('obs01-r2-114', 114, 'obs01-r2-canary'),('obs01-r2-115', 115, 'obs01-r2-canary'),('obs01-r2-116', 116, 'obs01-r2-canary'),('obs01-r2-117', 117, 'obs01-r2-canary'),('obs01-r2-118', 118, 'obs01-r2-canary'),('obs01-r2-119', 119, 'obs01-r2-canary')",
+      "tMono": 119954400.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 119955070.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 119955080.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 119955326.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:cancel-control*/ SELECT a.n AS a,b.n AS b,c.n AS c FROM obs01_r2 a, obs01_r2 b, obs01_r2 c LIMIT $1",
+      "tMono": 119956209.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:read-control*/ SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 119959138.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Cancel request received for connection {:cid 5}",
+      "tMono": 119960817.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Query cancelled",
+      "tMono": 119960820.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "error processing message:  query cancelled during execution",
+      "tMono": 119960823.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: EXPLAIN ANALYZE SELECT * FROM obs01_r2",
+      "tMono": 119962065.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 119964251.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 119964257.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 119964276.8302191
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:seed*/ INSERT INTO obs01_r2 (_id,n,canary) VALUES ('obs01-r2-0', 0, 'obs01-r2-canary'),('obs01-r2-1', 1, 'obs01-r2-canary'),('obs01-r2-2', 2, 'obs01-r2-canary'),('obs01-r2-3', 3, 'obs01-r2-canary'),('obs01-r2-4', 4, 'obs01-r2-canary'),('obs01-r2-5', 5, 'obs01-r2-canary'),('obs01-r2-6', 6, 'obs01-r2-canary'),('obs01-r2-7', 7, 'obs01-r2-canary'),('obs01-r2-8', 8, 'obs01-r2-canary'),('obs01-r2-9', 9, 'obs01-r2-canary'),('obs01-r2-10', 10, 'obs01-r2-canary'),('obs01-r2-11', 11, 'obs01-r2-canary'),('obs01-r2-12', 12, 'obs01-r2-canary'),('obs01-r2-13', 13, 'obs01-r2-canary'),('obs01-r2-14', 14, 'obs01-r2-canary'),('obs01-r2-15', 15, 'obs01-r2-canary'),('obs01-r2-16', 16, 'obs01-r2-canary'),('obs01-r2-17', 17, 'obs01-r2-canary'),('obs01-r2-18', 18, 'obs01-r2-canary'),('obs01-r2-19', 19, 'obs01-r2-canary'),('obs01-r2-20', 20, 'obs01-r2-canary'),('obs01-r2-21', 21, 'obs01-r2-canary'),('obs01-r2-22', 22, 'obs01-r2-canary'),('obs01-r2-23', 23, 'obs01-r2-canary'),('obs01-r2-24', 24, 'obs01-r2-canary'),('obs01-r2-25', 25, 'obs01-r2-canary'),('obs01-r2-26', 26, 'obs01-r2-canary'),('obs01-r2-27', 27, 'obs01-r2-canary'),('obs01-r2-28', 28, 'obs01-r2-canary'),('obs01-r2-29', 29, 'obs01-r2-canary'),('obs01-r2-30', 30, 'obs01-r2-canary'),('obs01-r2-31', 31, 'obs01-r2-canary'),('obs01-r2-32', 32, 'obs01-r2-canary'),('obs01-r2-33', 33, 'obs01-r2-canary'),('obs01-r2-34', 34, 'obs01-r2-canary'),('obs01-r2-35', 35, 'obs01-r2-canary'),('obs01-r2-36', 36, 'obs01-r2-canary'),('obs01-r2-37', 37, 'obs01-r2-canary'),('obs01-r2-38', 38, 'obs01-r2-canary'),('obs01-r2-39', 39, 'obs01-r2-canary'),('obs01-r2-40', 40, 'obs01-r2-canary'),('obs01-r2-41', 41, 'obs01-r2-canary'),('obs01-r2-42', 42, 'obs01-r2-canary'),('obs01-r2-43', 43, 'obs01-r2-canary'),('obs01-r2-44', 44, 'obs01-r2-canary'),('obs01-r2-45', 45, 'obs01-r2-canary'),('obs01-r2-46', 46, 'obs01-r2-canary'),('obs01-r2-47', 47, 'obs01-r2-canary'),('obs01-r2-48', 48, 'obs01-r2-canary'),('obs01-r2-49', 49, 'obs01-r2-canary'),('obs01-r2-50', 50, 'obs01-r2-canary'),('obs01-r2-51', 51, 'obs01-r2-canary'),('obs01-r2-52', 52, 'obs01-r2-canary'),('obs01-r2-53', 53, 'obs01-r2-canary'),('obs01-r2-54', 54, 'obs01-r2-canary'),('obs01-r2-55', 55, 'obs01-r2-canary'),('obs01-r2-56', 56, 'obs01-r2-canary'),('obs01-r2-57', 57, 'obs01-r2-canary'),('obs01-r2-58', 58, 'obs01-r2-canary'),('obs01-r2-59', 59, 'obs01-r2-canary'),('obs01-r2-60', 60, 'obs01-r2-canary'),('obs01-r2-61', 61, 'obs01-r2-canary'),('obs01-r2-62', 62, 'obs01-r2-canary'),('obs01-r2-63', 63, 'obs01-r2-canary'),('obs01-r2-64', 64, 'obs01-r2-canary'),('obs01-r2-65', 65, 'obs01-r2-canary'),('obs01-r2-66', 66, 'obs01-r2-canary'),('obs01-r2-67', 67, 'obs01-r2-canary'),('obs01-r2-68', 68, 'obs01-r2-canary'),('obs01-r2-69', 69, 'obs01-r2-canary'),('obs01-r2-70', 70, 'obs01-r2-canary'),('obs01-r2-71', 71, 'obs01-r2-canary'),('obs01-r2-72', 72, 'obs01-r2-canary'),('obs01-r2-73', 73, 'obs01-r2-canary'),('obs01-r2-74', 74, 'obs01-r2-canary'),('obs01-r2-75', 75, 'obs01-r2-canary'),('obs01-r2-76', 76, 'obs01-r2-canary'),('obs01-r2-77', 77, 'obs01-r2-canary'),('obs01-r2-78', 78, 'obs01-r2-canary'),('obs01-r2-79', 79, 'obs01-r2-canary'),('obs01-r2-80', 80, 'obs01-r2-canary'),('obs01-r2-81', 81, 'obs01-r2-canary'),('obs01-r2-82', 82, 'obs01-r2-canary'),('obs01-r2-83', 83, 'obs01-r2-canary'),('obs01-r2-84', 84, 'obs01-r2-canary'),('obs01-r2-85', 85, 'obs01-r2-canary'),('obs01-r2-86', 86, 'obs01-r2-canary'),('obs01-r2-87', 87, 'obs01-r2-canary'),('obs01-r2-88', 88, 'obs01-r2-canary'),('obs01-r2-89', 89, 'obs01-r2-canary'),('obs01-r2-90', 90, 'obs01-r2-canary'),('obs01-r2-91', 91, 'obs01-r2-canary'),('obs01-r2-92', 92, 'obs01-r2-canary'),('obs01-r2-93', 93, 'obs01-r2-canary'),('obs01-r2-94', 94, 'obs01-r2-canary'),('obs01-r2-95', 95, 'obs01-r2-canary'),('obs01-r2-96', 96, 'obs01-r2-canary'),('obs01-r2-97', 97, 'obs01-r2-canary'),('obs01-r2-98', 98, 'obs01-r2-canary'),('obs01-r2-99', 99, 'obs01-r2-canary'),('obs01-r2-100', 100, 'obs01-r2-canary'),('obs01-r2-101', 101, 'obs01-r2-canary'),('obs01-r2-102', 102, 'obs01-r2-canary'),('obs01-r2-103', 103, 'obs01-r2-canary'),('obs01-r2-104', 104, 'obs01-r2-canary'),('obs01-r2-105', 105, 'obs01-r2-canary'),('obs01-r2-106', 106, 'obs01-r2-canary'),('obs01-r2-107', 107, 'obs01-r2-canary'),('obs01-r2-108', 108, 'obs01-r2-canary'),('obs01-r2-109', 109, 'obs01-r2-canary'),('obs01-r2-110', 110, 'obs01-r2-canary'),('obs01-r2-111', 111, 'obs01-r2-canary'),('obs01-r2-112', 112, 'obs01-r2-canary'),('obs01-r2-113', 113, 'obs01-r2-canary'),('obs01-r2-114', 114, 'obs01-r2-canary'),('obs01-r2-115', 115, 'obs01-r2-canary'),('obs01-r2-116', 116, 'obs01-r2-canary'),('obs01-r2-117', 117, 'obs01-r2-canary'),('obs01-r2-118', 118, 'obs01-r2-canary'),('obs01-r2-119', 119, 'obs01-r2-canary')",
+      "tMono": 120130186.83020853
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 120131008.83022408
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 120131018.83022408
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 120131275.83022408
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:cancel-control*/ SELECT a.n AS a,b.n AS b,c.n AS c FROM obs01_r2 a, obs01_r2 b, obs01_r2 c LIMIT $1",
+      "tMono": 120132855.83035359
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: /*obs:read-control*/ SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 120134975.8304032
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Cancel request received for connection {:cid 5}",
+      "tMono": 120136487.82985242
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Query cancelled",
+      "tMono": 120136490.82985242
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "error processing message:  query cancelled during execution",
+      "tMono": 120136491.82985242
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: EXPLAIN ANALYZE SELECT * FROM obs01_r2",
+      "tMono": 120137715.83022629
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: BEGIN READ ONLY",
+      "tMono": 120140023.83023664
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: SELECT COUNT(*) AS n FROM obs01_r2",
+      "tMono": 120140023.83023664
+    },
+    {
+      "level": "DEBUG",
+      "logger": "xtdb.pgwire",
+      "message": "Interpreting SQL: ROLLBACK",
+      "tMono": 120140040.83023664
+    }
+  ],
+  "clock": {
+    "samples": 11,
+    "rttMs": [
+      1.2494580745697021,
+      0.8176250457763672,
+      0.8013749122619629,
+      0.9205000400543213,
+      0.7389171123504639,
+      1.0621670484542847,
+      1.1029999256134033,
+      1.004917025566101,
+      1.1475419998168945,
+      0.8718339204788208,
+      0.7547919750213623
+    ]
+  },
+  "scans": [
+    {
+      "canary": "obs01-r2-canary",
+      "event": "scan",
+      "files": [
+        {
+          "bytes": 183,
+          "hits": 0,
+          "location": "/engine/buffers/v06/blocks/b00.binpb",
+          "sha256": "982eca0dd4910dfdff80a64ce4ff6324559f69e9dccbda7b55d9968b83541c0b"
+        },
+        {
+          "bytes": 185,
+          "hits": 0,
+          "location": "/engine/buffers/v06/blocks/b01.binpb",
+          "sha256": "526d3fae98ca1c5bbf25ef9b3297e3e83f0a4175dfa8d35e136a2dda7b7854ae"
+        },
+        {
+          "bytes": 186,
+          "hits": 0,
+          "location": "/engine/buffers/v06/blocks/b02.binpb",
+          "sha256": "004529f09d4c1cad98f7b56aed9f9718cfb955795bd87e332dc6cab1dd18cd01"
+        },
+        {
+          "bytes": 186,
+          "hits": 0,
+          "location": "/engine/buffers/v06/blocks/b03.binpb",
+          "sha256": "6770496b9a4653a116cc674d1831ef1ca69175baf61f14a12202da170d535cd4"
+        },
+        {
+          "bytes": 186,
+          "hits": 0,
+          "location": "/engine/buffers/v06/blocks/b04.binpb",
+          "sha256": "699a6c0ac852424c5308272438fae911a41579e61da044a36159056d650105a9"
+        },
+        {
+          "bytes": 185,
+          "hits": 0,
+          "location": "/engine/buffers/v06/blocks/b05.binpb",
+          "sha256": "243f65de25fa7a566582a0f7cc60a24a1b889cd9e2b29fdb3d1bdb441e96e15b"
+        },
+        {
+          "bytes": 25015,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/blocks/b00.binpb",
+          "sha256": "c3399d410f0814344636d6165d0c3b3f4ad7d8648fb389c44ac10964b9a6377e"
+        },
+        {
+          "bytes": 25105,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/blocks/b01.binpb",
+          "sha256": "a632eb8a05fa49d08f8b3bf944ecd32468fd320d3a6e77ee47430202b31c37fa"
+        },
+        {
+          "bytes": 25238,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/blocks/b02.binpb",
+          "sha256": "1f3dcbcbec2493626cf5181e8e4122e523e3e9f50e9860002c30d0ecc5940380"
+        },
+        {
+          "bytes": 25358,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/blocks/b03.binpb",
+          "sha256": "976f36d35335769efd195c4e2441bf89b7922ae38ee849314cc28bd8d5436e40"
+        },
+        {
+          "bytes": 25474,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/blocks/b04.binpb",
+          "sha256": "639aa465c09a9c978d45e01db03e5de2d7827ab5608df6d2323e5410afa82adf"
+        },
+        {
+          "bytes": 25484,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/blocks/b05.binpb",
+          "sha256": "a9177e020e41026808f10a392940159a64e89dc559a9ef6d090ac4a05cac1f13"
+        },
+        {
+          "bytes": 12654,
+          "hits": 120,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l00-rc-b00.arrow",
+          "sha256": "743ed389877e073bc98d4e43d053b09b3c224e6f5ad233d018fc4fd342902395"
+        },
+        {
+          "bytes": 12654,
+          "hits": 120,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l00-rc-b01.arrow",
+          "sha256": "890f75758097fb2e29cb29da7880ee5abe8a0131ac11c119539d4f59967beff2"
+        },
+        {
+          "bytes": 12750,
+          "hits": 121,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l00-rc-b02.arrow",
+          "sha256": "d44c09bd0e7db6901912b316ba95d830b6eaef0a8963255a34245ea4871586ce"
+        },
+        {
+          "bytes": 33550,
+          "hits": 360,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l00-rc-b03.arrow",
+          "sha256": "63189881ca1bf81cca62521199596991dce4bdca900a3c8e0afba91d0d2b52c4"
+        },
+        {
+          "bytes": 12654,
+          "hits": 120,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l00-rc-b04.arrow",
+          "sha256": "feb2329c8d33ad30127c78d972ad25e052b6ed8fdd5fba2b835083ca7b4402a0"
+        },
+        {
+          "bytes": 12654,
+          "hits": 120,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l00-rc-b05.arrow",
+          "sha256": "5ef92441544a3ff07ed8ab11a672323aa9465cbc13b40bcdb7fe721e2f79c246"
+        },
+        {
+          "bytes": 12654,
+          "hits": 120,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-r20261109-b01.arrow",
+          "sha256": "e6d3a1663c7854b719d39fdb470d7815653ae521fffacc6ae927f4a3ed4dd18e"
+        },
+        {
+          "bytes": 12654,
+          "hits": 120,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-r20261109-b02.arrow",
+          "sha256": "7d3cdd63e0dc759846f1c708c20d85e39bc28e044fd63781a4969ed86d4698bc"
+        },
+        {
+          "bytes": 33550,
+          "hits": 360,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-r20261109-b03.arrow",
+          "sha256": "499bc6d895f71292427486ddc1df5e742d5f0c3b5be62efd39dc7a0c3f5b2bbf"
+        },
+        {
+          "bytes": 12654,
+          "hits": 120,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-r20261109-b04.arrow",
+          "sha256": "dcd6b7afe749ae432c930a8be247f480b4d2ce0ecbd9ced60a14c412661776bc"
+        },
+        {
+          "bytes": 12654,
+          "hits": 120,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-r20261109-b05.arrow",
+          "sha256": "8553d3a3998ecd1c6e86bdd84205469b5693c29d688fd822d9e10c3f107247b5"
+        },
+        {
+          "bytes": 12654,
+          "hits": 120,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-rc-b00.arrow",
+          "sha256": "e6d3a1663c7854b719d39fdb470d7815653ae521fffacc6ae927f4a3ed4dd18e"
+        },
+        {
+          "bytes": 12654,
+          "hits": 120,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-rc-b01.arrow",
+          "sha256": "7d3cdd63e0dc759846f1c708c20d85e39bc28e044fd63781a4969ed86d4698bc"
+        },
+        {
+          "bytes": 12750,
+          "hits": 121,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-rc-b02.arrow",
+          "sha256": "2ac9eee2ee2cb3d93cfe4df1db74db2027da0527d2a08c67fa92997713cf9de3"
+        },
+        {
+          "bytes": 12750,
+          "hits": 121,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-rc-b03.arrow",
+          "sha256": "970d0e10de9364be4bf670ff3ba6119e53e84de5bb4166ca885179975f15ddc6"
+        },
+        {
+          "bytes": 12750,
+          "hits": 121,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-rc-b04.arrow",
+          "sha256": "a839597a9ae6713aaf53950b788f5de1196f71f960f60942400222a9b37838d8"
+        },
+        {
+          "bytes": 12750,
+          "hits": 121,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l01-rc-b05.arrow",
+          "sha256": "a0f48423fecaf84c13135cf223f723bd6405b77e3e6027d4ba90f40e5bfd6aa7"
+        },
+        {
+          "bytes": 64902,
+          "hits": 720,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/data/l02-r20261109-b04.arrow",
+          "sha256": "ad3a6876b9ff9e8f9594cc8f5cb7a88ac83a6984630da4728f28bf177fe8883a"
+        },
+        {
+          "bytes": 5494,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l00-rc-b00.arrow",
+          "sha256": "ad95b29afcb0073259e652c35adfbcb2a0f66b9361dfc6c4aed12e7bae8d7895"
+        },
+        {
+          "bytes": 5494,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l00-rc-b01.arrow",
+          "sha256": "73d5fb3836abd23f15511f49419a893a6db26eaae01eceb1b7c11812fac87e3f"
+        },
+        {
+          "bytes": 5510,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l00-rc-b02.arrow",
+          "sha256": "5b344a59a3877cc7b135cec4a1ad82daa22b6a016807b91f8b3792d874be4192"
+        },
+        {
+          "bytes": 5494,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l00-rc-b03.arrow",
+          "sha256": "0901065a32eacfeccdf226378c6187a5e58983a6e9d81c99bcd787ba6c8c3331"
+        },
+        {
+          "bytes": 5494,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l00-rc-b04.arrow",
+          "sha256": "80a2f5c8289e09068653f954091d5292dc1915ef0bbafe3eabb1d135afe3174e"
+        },
+        {
+          "bytes": 5494,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l00-rc-b05.arrow",
+          "sha256": "7d148ffdce2f2d2304b55588ec49e43fe3c79f2c2d33a4cb81d61aac420413b8"
+        },
+        {
+          "bytes": 7278,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-r20261109-b01.arrow",
+          "sha256": "1ec77c6572d274e0bbc188ff02e64a50073618ffff39e85b3cd766a7531392c5"
+        },
+        {
+          "bytes": 7278,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-r20261109-b02.arrow",
+          "sha256": "b0faf4ae409683e9b070ae17caf5fc4daa4bc847ccf163b1fc1338e172880e0c"
+        },
+        {
+          "bytes": 7278,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-r20261109-b03.arrow",
+          "sha256": "77cb8469b1c133af2c16a9cbe7f9155cc9797dcf5e5c9b4af5f3627b5cd741ab"
+        },
+        {
+          "bytes": 7278,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-r20261109-b04.arrow",
+          "sha256": "21d50ef40b5d564619b3fa9860421583f2fbbed15ad23b4d4ae300340aded003"
+        },
+        {
+          "bytes": 7278,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-r20261109-b05.arrow",
+          "sha256": "c446cd61dc9bef6d8cc2b764456a2397593fd7ecb92d5a808254a0da8fd80d98"
+        },
+        {
+          "bytes": 7278,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-rc-b00.arrow",
+          "sha256": "1ec77c6572d274e0bbc188ff02e64a50073618ffff39e85b3cd766a7531392c5"
+        },
+        {
+          "bytes": 7278,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-rc-b01.arrow",
+          "sha256": "b0faf4ae409683e9b070ae17caf5fc4daa4bc847ccf163b1fc1338e172880e0c"
+        },
+        {
+          "bytes": 7294,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-rc-b02.arrow",
+          "sha256": "9a50e0489a51a87164cbbb2999b084edc6b9aa3166883970ef9a2d804f780d06"
+        },
+        {
+          "bytes": 7294,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-rc-b03.arrow",
+          "sha256": "0d5e91bf04bad25d4e45749a85ae38e29205b42e8e13272588e7ef41a15eb475"
+        },
+        {
+          "bytes": 7294,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-rc-b04.arrow",
+          "sha256": "7222aa9c78bdb9bb5416142df3f444e6267e4041144bc0444621e23253e5e800"
+        },
+        {
+          "bytes": 7294,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l01-rc-b05.arrow",
+          "sha256": "967ff606f5d73ca60684a0d6a03dbbaa7bd97b98418fa4227d6be41b38ae34f7"
+        },
+        {
+          "bytes": 7278,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/public$obs01_r2/meta/l02-r20261109-b04.arrow",
+          "sha256": "0e5c66daf6b8c74225f6a3b8cdb87a7f7dcea93b81b97a74e289192d4ff74e4e"
+        },
+        {
+          "bytes": 225,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$role_membership/blocks/b00.binpb",
+          "sha256": "95b83b99d7a21d25b995348c14e2a7846c69f857bccb926ce8294736a5991a44"
+        },
+        {
+          "bytes": 225,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$role_membership/blocks/b01.binpb",
+          "sha256": "95b83b99d7a21d25b995348c14e2a7846c69f857bccb926ce8294736a5991a44"
+        },
+        {
+          "bytes": 225,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$role_membership/blocks/b02.binpb",
+          "sha256": "95b83b99d7a21d25b995348c14e2a7846c69f857bccb926ce8294736a5991a44"
+        },
+        {
+          "bytes": 225,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$role_membership/blocks/b03.binpb",
+          "sha256": "95b83b99d7a21d25b995348c14e2a7846c69f857bccb926ce8294736a5991a44"
+        },
+        {
+          "bytes": 225,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$role_membership/blocks/b04.binpb",
+          "sha256": "95b83b99d7a21d25b995348c14e2a7846c69f857bccb926ce8294736a5991a44"
+        },
+        {
+          "bytes": 225,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$role_membership/blocks/b05.binpb",
+          "sha256": "95b83b99d7a21d25b995348c14e2a7846c69f857bccb926ce8294736a5991a44"
+        },
+        {
+          "bytes": 41818,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/blocks/b00.binpb",
+          "sha256": "bd102b16849112abd24ba6651f38761ac045f11edd381635eba1ef334b2bd197"
+        },
+        {
+          "bytes": 41907,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/blocks/b01.binpb",
+          "sha256": "6fa7b0c0456f8fbe1e077293c8cd8d4de2b2a5364b9a36794f62b36fbc8077a9"
+        },
+        {
+          "bytes": 41935,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/blocks/b02.binpb",
+          "sha256": "7dba3448038915ae6ab85d56d3af4e1c87a6b8ed67958a7595f68c33e937b435"
+        },
+        {
+          "bytes": 41964,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/blocks/b03.binpb",
+          "sha256": "76c6b2f6fe892d0a97f444686af5c0b1665b26c75ec02923ebc71cce98e5e818"
+        },
+        {
+          "bytes": 41992,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/blocks/b04.binpb",
+          "sha256": "3c6ab06b11c3d1f0f5ea87924d82d14f026004f9766b09240875370051bbce1f"
+        },
+        {
+          "bytes": 42020,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/blocks/b05.binpb",
+          "sha256": "bd5880ba753ad97fe98068d860d7a23b7982c5389b5de7266b697d13748a2542"
+        },
+        {
+          "bytes": 2894,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l00-rc-b00.arrow",
+          "sha256": "5f488d6456f460ee6e1305f0cb3ac8de6a3ab4165ff6afdab48cf25344c4698c"
+        },
+        {
+          "bytes": 2894,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l00-rc-b01.arrow",
+          "sha256": "2a68159b206a957ad6b1d205cd67d52134287e7d9edbb9605bb4c659684a47e3"
+        },
+        {
+          "bytes": 2958,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l00-rc-b02.arrow",
+          "sha256": "379e2b7c643b965e8d29897941391f0673dc66dcb5f2f41d1c3c51c188711007"
+        },
+        {
+          "bytes": 3022,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l00-rc-b03.arrow",
+          "sha256": "8ef20c124859943691c2304fe933019c674fc7127f7763574f1265c19fcbc710"
+        },
+        {
+          "bytes": 2894,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l00-rc-b04.arrow",
+          "sha256": "c6e67a96fc7929dd67bdd22b0794366b6981294cba6a3d3dd41a5a06f244a104"
+        },
+        {
+          "bytes": 2894,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l00-rc-b05.arrow",
+          "sha256": "97b90ef0a509efe4f2a96621563d17c4884b692f2124f3107fbcb9357a5b880d"
+        },
+        {
+          "bytes": 2894,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l01-rc-b00.arrow",
+          "sha256": "5b76adccf03b723e446ead41248cb3663efaee8d826e704961ad33aeb68cbfde"
+        },
+        {
+          "bytes": 2958,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l01-rc-b01.arrow",
+          "sha256": "fc69b0a34154fdb8c5f3471ac4938db68646caa2a0e3f6858b962b7931a394d6"
+        },
+        {
+          "bytes": 3086,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l01-rc-b02.arrow",
+          "sha256": "9c3ef2d1ed9dc9ef9e1d49560a6bdd2c6fc3c76e49510b3eac7bbb6ff38e9b1e"
+        },
+        {
+          "bytes": 3278,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l01-rc-b03.arrow",
+          "sha256": "5d4907a6ca31cb8a51b847b69e1c16470d355c48ddf7a6a1d2258a1c4ff8b2e6"
+        },
+        {
+          "bytes": 3342,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l01-rc-b04.arrow",
+          "sha256": "dee59648a6472d1d64a6a549c138069595513e12108e34af9355fcd5faf29a9e"
+        },
+        {
+          "bytes": 3414,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/data/l01-rc-b05.arrow",
+          "sha256": "1cdaf91436deb1a70880aeb747dca00b9eceb8f42e3b50758c395c8a17b613a3"
+        },
+        {
+          "bytes": 4670,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l00-rc-b00.arrow",
+          "sha256": "459bbf0e663bea1776357b6aa9f3bf0627b0e2c6db5de665504d9b7e71f2dca9"
+        },
+        {
+          "bytes": 4670,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l00-rc-b01.arrow",
+          "sha256": "a9bffc13973935fedb2bcb88a7c3a4a9c9224da6a52793761e70f07fbbec4084"
+        },
+        {
+          "bytes": 4702,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l00-rc-b02.arrow",
+          "sha256": "a0d2de8769af66b5b3fb8e632172e3108413715129e2de9d489dc36ccd39d0df"
+        },
+        {
+          "bytes": 4758,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l00-rc-b03.arrow",
+          "sha256": "51a89a4d0e7bee73c14cf3eaf6e325835ad84e05994cfc2119885aa3a4ec8e4b"
+        },
+        {
+          "bytes": 4670,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l00-rc-b04.arrow",
+          "sha256": "5ce94d87bbc8c249cce2dcf80f43063fbf32b97a393a6ca6d73828080537490c"
+        },
+        {
+          "bytes": 4670,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l00-rc-b05.arrow",
+          "sha256": "0ccbf1029a4c15629c8446e21fb4a25a4cc3115c390d11a31a3fe7a9a8e17812"
+        },
+        {
+          "bytes": 4670,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l01-rc-b00.arrow",
+          "sha256": "459bbf0e663bea1776357b6aa9f3bf0627b0e2c6db5de665504d9b7e71f2dca9"
+        },
+        {
+          "bytes": 4718,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l01-rc-b01.arrow",
+          "sha256": "7a8e8beb9bac0c534c1a10c85d85ddec228cbe3385fc56c5fe034bb783412bbf"
+        },
+        {
+          "bytes": 4790,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l01-rc-b02.arrow",
+          "sha256": "9d56051ed12bcb69737d814c798495fe691c2614b6babc9df1354cf4394d0746"
+        },
+        {
+          "bytes": 4902,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l01-rc-b03.arrow",
+          "sha256": "5b8e9869a977af2c190876020d2ad019fa7e15f3d5b4f8b1dd2cd9db28328cc0"
+        },
+        {
+          "bytes": 4926,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l01-rc-b04.arrow",
+          "sha256": "7a8fedf83164ca71e1b29bf45e426f3d4d940dd59228f41f8293e02cd4eb9e27"
+        },
+        {
+          "bytes": 4966,
+          "hits": 0,
+          "location": "/engine/buffers/v06/tables/xt$txs/meta/l01-rc-b05.arrow",
+          "sha256": "6645cf4e87be812e0666ab5bf529525fd7481329689be40f4c61d9839c4dc2ac"
+        },
+        {
+          "bytes": 75097,
+          "hits": 961,
+          "location": "/engine/log/LOG",
+          "sha256": "ccb24b67f181cb111aac1483f32a26c54f3284dfebfca5e57b19187a2bc35d23"
+        },
+        {
+          "bytes": 566967,
+          "hits": 961,
+          "location": "/engine/log/REPLICA_LOG",
+          "sha256": "33f7404e7b1f8286a296d906848f139941b74ca1e6497eb070889f3400298619"
+        },
+        {
+          "bytes": 75902,
+          "hits": 961,
+          "location": "/engine/observer-engine.log",
+          "sha256": "9328e21128ee54dbc8e713382230f005d09af9fe2bbb470f920449819c2d2df9"
+        }
+      ],
+      "scanMethod": "literal-byte-scan/1",
+      "tFound": 120141407.750849
+    }
+  ]
+}

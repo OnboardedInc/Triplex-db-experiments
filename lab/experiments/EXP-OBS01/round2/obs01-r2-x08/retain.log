@@ -1,0 +1,11 @@
+[lab] ENOENT: ENOENT: no such file or directory, open '/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r2-x08/output/bundle/seal.json'
+Error: ENOENT: no such file or directory, open '/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r2-x08/output/bundle/seal.json'
+    at Object.readFileSync (node:fs:440:20)
+    at readJson (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/bin/lib.mjs:46:30)
+    at observerRetain (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/bin/observer.mjs:293:16)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/bin/engine.mjs:477:45
+    at main (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/bin/lib.mjs:504:3)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/bin/engine.mjs:471:54
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)

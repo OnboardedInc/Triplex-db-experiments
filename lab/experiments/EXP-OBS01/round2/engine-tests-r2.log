@@ -1,0 +1,52 @@
+TAP version 13
+# Subtest: requires disjoint CPU pinning
+ok 1 - requires disjoint CPU pinning
+  ---
+  duration_ms: 0.784583
+  type: 'test'
+  ...
+# Subtest: requires evaluator key, immutable image and safe identities
+ok 2 - requires evaluator key, immutable image and safe identities
+  ---
+  duration_ms: 0.758083
+  type: 'test'
+  ...
+# Subtest: output budget is bounded before admission
+ok 3 - output budget is bounded before admission
+  ---
+  duration_ms: 2.627208
+  type: 'test'
+  ...
+# Subtest: XTDB completed transaction source and host sources are collected
+ok 4 - XTDB completed transaction source and host sources are collected
+  ---
+  duration_ms: 1.014
+  type: 'test'
+  ...
+# Subtest: Datomic plans independent thread and callback samples
+ok 5 - Datomic plans independent thread and callback samples
+  ---
+  duration_ms: 1.818125
+  type: 'test'
+  ...
+# Subtest: protected clock ports are refused
+ok 6 - protected clock ports are refused
+  ---
+  duration_ms: 0.29475
+  type: 'test'
+  ...
+# Subtest: QLever profile is opt-in and resident script remains unchanged
+ok 7 - QLever profile is opt-in and resident script remains unchanged
+  ---
+  duration_ms: 1.683291
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 87.7775

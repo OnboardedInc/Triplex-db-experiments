@@ -1,0 +1,20 @@
+{
+  "countAfter": 120,
+  "countBefore": 120,
+  "relation": "obs01_r2",
+  "resolutionReceipts": [],
+  "unknownOutcomes": [],
+  "source": {
+    "kind": "EI-query/xtdb/X4",
+    "streamRefs": [
+      "X4-queries"
+    ],
+    "records": {
+      "countAfter": 120,
+      "countBefore": 120,
+      "relation": "obs01_r2",
+      "resolutionReceipts": [],
+      "unknownOutcomes": []
+    }
+  }
+}

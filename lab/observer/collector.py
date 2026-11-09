@@ -13,8 +13,13 @@ import socket
 import sys
 import subprocess
 import threading
+import importlib.util
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+
+spec = importlib.util.spec_from_file_location('capture', Path(__file__).with_name('capture.py'))
+capture = importlib.util.module_from_spec(spec); spec.loader.exec_module(capture)
 
 MAX_READ = 8 * 1024 * 1024
 
@@ -49,6 +54,8 @@ class Bundle:
         self.root, self.config, self.key = Path(root), config, key
         self.root.mkdir(parents=True, exist_ok=False)
         self.written = 0
+        self.sealed = False
+        self.ends = {}
         self.heads, self.entries = {}, {s['streamId']: [] for s in config['streams']}
         self.lock = threading.Lock()
         self.envelope = {k: config[k] for k in ('runId', 'receiptId', 'keyId', 'collector', 'sut', 'streams')}
@@ -64,7 +71,9 @@ class Bundle:
     def append(self, sid, payload, start, real):
         # [EXP-OBS01] Why: retain exact source bytes by hash as well as lossless sample framing.
         # Rejected: computed counters alone (cannot rerun a source parser).
+        source_mono = start
         with self.lock:
+            if self.sealed: raise ValueError('append after seal')
             self.written += len(payload) * 4 + 16384
             if self.written > self.config.get('maxBundleBytes', 64 * 1024 * 1024):
                 raise ValueError('bundle byte budget exhausted; retain unsealed evidence')
@@ -73,8 +82,9 @@ class Bundle:
             obj = self.root / 'objects' / (digest + '.bin')
             if not obj.exists():
                 write_new(obj, payload)
-            end = mono()
-            frame = canonical({'tStartMono': start, 'tEndMono': end, 'rawSha256': digest,
+            start = max(start, self.ends.get(sid, start))
+            end = mono(); self.ends[sid] = end
+            frame = canonical({'tStartMono': start, 'tEndMono': end, 'tStartReal': real, 'sourceMono': source_mono, 'runStartedMono': self.envelope['collector']['startedAtMono'], 'rawSha256': digest,
                                'rawBase64': base64.b64encode(payload).decode()}) + b'\n'
             raw_path = f'streams/{sid}/chunks/{seq:08d}-{sha(frame)}.bin'
             hdr_path = f'streams/{sid}/chunks/{seq:08d}.hdr.json'
@@ -94,10 +104,15 @@ class Bundle:
                 raise ValueError('cannot seal an empty stream')
             for sid, entries in self.entries.items():
                 raw = b''.join((self.root / entry['raw']).read_bytes() for entry in entries)
-                parser = Path(__file__).with_name('normalize.py')
-                result = subprocess.run([sys.executable, '-I', '-B', str(parser)], input=raw, capture_output=True, timeout=30, check=True)
+                stream = next(s for s in self.config['streams'] if s['streamId']==sid)
+                parser = Path(__file__).with_name(stream.get('normalizerFile','normalize.py'))
+                result = subprocess.run([sys.executable, '-I', '-B', str(parser)], input=raw, capture_output=True, timeout=30)
+                if result.returncode:
+                    write_new(self.root / 'failures' / (sid+'.stderr'), result.stderr)
+                    raise ValueError('normalizer refused source '+sid)
                 write_new(self.root / 'normalized/sources' / (sid + '.json'), result.stdout)
             write_new(self.root / 'seal.json', canonical(self.signed({'runId': self.config['runId'], 'heads': self.heads})) + b'\n')
+            self.sealed = True
 
 def processes():
     result = []
@@ -156,6 +171,18 @@ def read_source(source):
         if len(data) > MAX_READ:
             raise ValueError('file exceeds bounded sample')
         return data
+    if kind == 'sockets':
+        return canonical({'event':'sockets','files':{name:base64.b64encode(Path('/proc/net/'+name).read_bytes()).decode() for name in ('tcp','tcp6')}})
+    if kind == 'resource':
+        cg=source['endpoint'];files={}
+        for name in ('memory.current','memory.peak','memory.max'):
+            files[name]=base64.b64encode(Path(cg,name).read_bytes()).decode()
+        disk=[];seen=set()
+        for p in Path('/engine').rglob('*'):
+            st=p.lstat();key=(st.st_dev,st.st_ino)
+            if key in seen:continue
+            seen.add(key);disk.append({'path':str(p),'blocks':st.st_blocks,'inode':st.st_ino})
+        return canonical({'event':'resource','files':files,'diskFiles':disk,'owner':source['owner']})
     if kind == 'threads':
         # [EXP-OBS01] Why: CPU comes from procfs, never a gateway counter; names are only labels.
         # Rejected: gateway-reported drain (gateway is the system under test).
@@ -191,7 +218,7 @@ def run(config_path, key_path, output):
         raise ValueError('engine cgroup identity cannot be bound')
     for stream in config['streams']:
         if stream['sourceId'] == 'H1':
-            stream['endpoint'] = '/sys/fs/cgroup' + cg + '/' + stream['endpoint'].rsplit('/', 1)[1]
+            stream['endpoint'] = '/sys/fs/cgroup' + cg if stream['reader']=='resource' else '/sys/fs/cgroup' + cg + '/' + stream['endpoint'].rsplit('/', 1)[1]
     bundle = Bundle(output, config, Path(key_path).read_bytes())
     bundle.envelope['collector']['configSha256'] = original_config_sha
     bundle.envelope['sut']['enginePids'] = [p for p in processes() if p['pid'] != os.getpid()]
@@ -203,19 +230,42 @@ def run(config_path, key_path, output):
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     signal.signal(signal.SIGINT, lambda *_: stop.set())
     # The clock endpoint only reads a clock; it cannot write records or accept caller timestamps.
-    server = ThreadingHTTPServer(('0.0.0.0', config['clockPort']), ClockHandler)
+    server = capture.ClockServer(('0.0.0.0', config['clockPort']), capture.ClockPeer)
     server.daemon_threads = True
     threading.Thread(target=server.serve_forever, daemon=True).start()
+    servers = [server]
+    for stream in config['streams']:
+        if stream['method'] != 'capture': continue
+        sid = stream['streamId']
+        def record(value, sid=sid):
+            bundle.append(sid, canonical(value), mono(), time.time_ns()/1e6)
+        record({'event':'start','tMono':mono()})
+        if stream['reader'] == 'wire':
+            servers.append(capture.start_proxy(18090, 5432 if config['sut']['lane']=='xtdb' else 7019, record))
+        elif stream['reader'] == 'otlp': servers.append(capture.start_otlp(4318, record))
     due = {s['streamId']: 0 for s in config['streams']}
     tails = {}
     try:
         while not stop.is_set():
+            for command_path in sorted((bundle.root.parent/'commands').glob('*.json')):
+                result_path=bundle.root.parent/'results'/command_path.name
+                if result_path.exists():continue
+                try:
+                    command_spec=importlib.util.spec_from_file_location('commands',Path(__file__).with_name('commands.py'))
+                    command_module=importlib.util.module_from_spec(command_spec);command_spec.loader.exec_module(command_module)
+                    sid,value=command_module.execute(json.loads(command_path.read_bytes()),config['sut']['lane'])
+                    bundle.append(sid,canonical(value),mono(),time.time_ns()/1e6)
+                    write_new(result_path,canonical(value)+b'\n')
+                except Exception as error:
+                    write_new(result_path,canonical({'error':str(error)})+b'\n')
             for stream in config['streams']:
                 sid = stream['streamId']
                 if mono() < due[sid]:
                     continue
                 start, real = mono(), time.time_ns() / 1_000_000
-                if stream['method'] == 'tail':
+                if stream['method'] == 'capture':
+                    payload = canonical({'event':'heartbeat','tMono':mono()})
+                elif stream['method'] == 'tail':
                     p = Path(stream['endpoint'])
                     st = p.stat()
                     old_inode, offset = tails.get(sid, (st.st_ino, 0))
@@ -232,6 +282,8 @@ def run(config_path, key_path, output):
                     payload = read_source(stream)
                 bundle.append(sid, payload, start, real)
                 due[sid] = start + stream['cadenceMs']
+            if not (bundle.root/'ready.json').exists():
+                atomic(bundle.root/'ready.json',canonical({'ready':True,'tMono':mono()})+b'\n')
             stop.wait(.01)
     except Exception as error:
         write_new(bundle.root / 'failure.json', canonical({'error': str(error), 'tMono': mono()}) + b'\n')
@@ -239,7 +291,7 @@ def run(config_path, key_path, output):
     else:
         bundle.seal()
     finally:
-        server.shutdown()
+        for service in servers: service.shutdown(); service.server_close()
 
 if __name__ == '__main__':
     if len(sys.argv) == 3 and sys.argv[1] == 'clock':

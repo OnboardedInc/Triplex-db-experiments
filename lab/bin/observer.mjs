@@ -3,8 +3,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
-import http from 'node:http';
-import { createHmac } from 'node:crypto';
+import { ClockSampler } from './observer-clock.mjs';
+const clockSamplers = new Map();
+import { randomUUID, createHmac } from 'node:crypto';
 import {
   ENGINE_DIR, REPO, admission, appendEvent, atomicJson, cpusetOverlap, defaultHolder, docker,
   dockerArgs, fail, inspect, listTx2Containers, parseCpuset, readJson, readOwner, reconcile, sha256, sleep,
@@ -64,9 +65,12 @@ export function observerPlan(config, info, engine, opts) {
   if (!volume) fail('REFUSED', 'engine slot volume is not mounted');
   const cgroup = opts.engineCgroup ?? `/sys/fs/cgroup/docker/${engineId}`;
   const streams = ['memory.current', 'memory.peak', 'memory.stat', 'memory.events', 'cpu.stat', 'io.stat'].map(file => source(`H1.${file}`, 'HO/any/H1', `${cgroup}/${file}`));
+  streams.push(source('H1.resources','HO/any/H1',cgroup,'scrape','resource',{cadenceMs:1000,owner:engine.Id}), source('H4.all','HO/any/H4','/proc/net','scrape','sockets'));
   streams.push(source('H4.tcp', 'HO/any/H4', '/proc/net/tcp'), source('H4.tcp6', 'HO/any/H4', '/proc/net/tcp6'));
-  if (info.lane === 'xtdb') streams.push(source('X1.metrics', 'EI-metric/xtdb/X1.node.tx.latestCompletedTxId', 'http://127.0.0.1:8080/metrics', 'scrape', 'http', { cadenceMs: 250 }));
+  const features=engine.Config.Labels['tx2.observation-features'] ?? 'all';
+  if (info.lane === 'xtdb') streams.push(source('X6.log', 'EI-log/xtdb/X6', '/engine/observer-engine.log', 'tail'), source('X7.spans', 'EI-trace/xtdb/X7', 'http://127.0.0.1:4318/v1/traces', 'capture', 'otlp'), source('T1.wire','TO/xtdb/T1','tcp://127.0.0.1:18090','capture','wire'), source('X1.metrics', 'EI-metric/xtdb/X1.node.tx.latestCompletedTxId', 'http://127.0.0.1:8080/metrics', 'scrape', 'http', { cadenceMs: 250 }));
   if (info.lane === 'qlever') {
+    streams.push(source('T2.wire','TO/qlever/T2','tcp://127.0.0.1:18090','capture','wire'));
     streams.push(source('Q1.metrics', 'EI-metric/qlever/Q1', 'http://127.0.0.1:7019/metrics', 'scrape', 'http', { cadenceMs: 250 }));
     streams.push(source('Q4.active', 'EI-query/qlever/Q4', 'http://127.0.0.1:7019/?cmd=dump-active-queries', 'query', 'http', { cadenceMs: 250 }));
     const log = safeId(opts['index-name'] ?? 'triplex', 'index-name');
@@ -81,9 +85,17 @@ export function observerPlan(config, info, engine, opts) {
       fail('USAGE', '--transactor-metrics requires a relative metrics-callback file inside the engine volume');
     streams.push(source('D1.metrics', 'EI-metric/datomic/D1', `/engine/${metrics}`, 'tail'));
   }
+  if (opts['enable-probes']) {
+    streams.push(source('H6.scans','HO/any/H6','observer-private-commands','capture','commands'));
+    if (info.lane==='xtdb') streams.push(source('X2.probes','EI-query/xtdb/X2','http://127.0.0.1:8080/system/finish-block','capture','commands'), source('X4.queries','EI-query/xtdb/X4','pgwire://127.0.0.1:5432','capture','commands'));
+  }
+  const selected = opts['observer-streams'] ? String(opts['observer-streams']).split(',') : null;
+  const enabledStreams=streams.filter(s=>!(s.sourceId==='X6' && !['all','logs'].includes(features)) && !(s.sourceId==='X7' && !['all','spans'].includes(features)) && !(s.sourceId==='Q3' && !['all','logs'].includes(features)) && (!selected || selected.includes(s.streamId)));
+  if (selected && (enabledStreams.length!==selected.length || !selected.length)) fail('REFUSED','unknown/disabled observer stream selection');
+  if (!enabledStreams.length) fail('REFUSED','empty observer stream inventory');
   const collectorSource = fs.readFileSync(path.join(SOURCE, 'collector.py'));
-  const plan = { runId, receiptId, keyId, streams, maxUncertaintyMs: 1, clockPort: 18080, maxBundleBytes,
-    collector: { imageDigest: opts.image, sourceSha256: sha256(collectorSource), configSha256: '', containerId: name, cgroupPath: '', cpuset },
+  const plan = { runId, receiptId, keyId, streams:enabledStreams, maxUncertaintyMs: 1, clockPort: 18080, maxBundleBytes,
+    collector: { dependencies: Object.fromEntries(['capture.py','commands.py','pgclient.py'].map(name=>[name,sha256(fs.readFileSync(path.join(SOURCE,name)))])), imageDigest: opts.image, sourceSha256: sha256(collectorSource), configSha256: '', containerId: name, cgroupPath: '', cpuset },
     sut: { lane: info.lane, engineContainerId: engineId, engineImageDigest: engine.Image, engineConfigSha256: engine.Config.Labels['tx2.config-sha256'], enginePids: [] } };
   plan.collector.configSha256 = sha256(canonical({ ...plan, collector: { ...plan.collector, configSha256: '' } }));
   return { name, dir, key, keyFingerprint: sha256(fs.readFileSync(key)), cpuset, volume: volume.Name, plan };
@@ -121,17 +133,31 @@ export async function observerUp(config, info, opts) {
   try {
     fs.mkdirSync(plan.dir, { recursive: true, mode: 0o700 });
     const codeDir = path.join(plan.dir, 'code'); fs.mkdirSync(codeDir);
-    for (const name of ['collector.py', 'normalize.py']) fs.copyFileSync(path.join(SOURCE, name), path.join(codeDir, name));
+    for (const name of ['collector.py', 'normalize.py', 'capture.py', 'commands.py', 'pgclient.py']) fs.copyFileSync(path.join(SOURCE, name), path.join(codeDir, name));
     // [EXP-OBS01] Why: preserve controller bytes as well as sampler bytes for independent replay.
     // Rejected: reconstructing an old attempt from a later working tree.
+    if (opts['protocol-spec']) {
+      const policies=JSON.parse(fs.readFileSync(opts['protocol-spec'],'utf8'));
+      atomicJson(path.join(plan.dir,'protocol-spec.json'),policies);
+      for (const stream of plan.plan.streams) if (policies[stream.streamId]) {
+        const specFile=path.join(plan.dir,`${stream.streamId}.case.json`);
+        atomicJson(specFile,policies[stream.streamId]);
+        const normalizerFile=`${stream.streamId}.normalize.py`;
+        const output=path.join(codeDir,normalizerFile);
+        const compiled=spawnSync('python3',['-I','-B',path.join(SOURCE,'compile_protocol.py'),specFile,stream.sourceId,output],{encoding:'utf8'});
+        if (compiled.status!==0) fail('REFUSED',`normalizer compilation failed: ${compiled.stderr}`);
+        stream.normalizer={id:'obs01-protocol',version:'2',sha256:sha256(fs.readFileSync(output))};
+        stream.normalizerFile=normalizerFile;
+      }
+    }
     const tooling = {};
-    for (const name of ['engine.mjs', 'observer.mjs', 'lib.mjs']) {
+    for (const name of ['engine.mjs', 'observer.mjs', 'observer-clock.mjs', 'archive-volume.mjs', 'lib.mjs']) {
       const bytes = fs.readFileSync(path.join(REPO, 'lab/bin', name));
       fs.writeFileSync(path.join(codeDir, name), bytes); tooling[name] = sha256(bytes);
     }
     atomicJson(path.join(plan.dir, 'tooling-manifest.json'), { node: process.version, files: tooling });
     const engineInputs = [];
-    for (const mount of engine.Mounts.filter(m => ['/config/start.sh', '/etc/xtdb/config.yaml'].includes(m.Destination))) {
+    for (const mount of engine.Mounts.filter(m => ['/config/start.sh', '/etc/xtdb/config.yaml', '/etc/xtdb/log4j2.xml'].includes(m.Destination))) {
       const bytes = fs.readFileSync(mount.Source);
       const name = `engine-input-${engineInputs.length}.bin`;
       fs.writeFileSync(path.join(plan.dir, name), bytes);
@@ -141,7 +167,7 @@ export async function observerUp(config, info, opts) {
     plan.plan.sut.engineConfigInputsSha256 = sha256(canonical(engineInputs));
     fs.writeFileSync(path.join(plan.dir, 'config.json'), canonical(plan.plan) + '\n');
     const args = ['run', '-d', '--name', plan.name, '--restart', 'no', '--label', 'tx2.managed-by=lab/bin/engine.mjs', '--label', 'tx2.role=observer', '--label', `tx2.holder=${defaultHolder(opts)}`,
-      '--network', `container:${engine.Id}`, '--pid', `container:${engine.Id}`, '--cgroupns', 'host', '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--read-only',
+      '--network', `container:${engine.Id}`, '--pid', `container:${engine.Id}`, '--cgroupns', 'host', '--cap-drop', 'ALL', '--cap-add','DAC_READ_SEARCH', '--security-opt', 'no-new-privileges', '--read-only',
       '--memory', String(MEMORY), '--memory-swap', String(MEMORY), '--cpus', '1', '--cpuset-cpus', plan.cpuset,
       '-v', '/sys/fs/cgroup:/sys/fs/cgroup:ro', '-v', `${plan.volume}:/engine:ro`, '-v', `${codeDir}:/collector:ro`,
       '-v', `${path.join(plan.dir, 'config.json')}:/config.json:ro`, '-v', `${plan.key}:/run/key:ro`, '-v', `${plan.dir}/output:/obs`,
@@ -150,6 +176,11 @@ export async function observerUp(config, info, opts) {
     const id = docker(args);
     atomicJson(stateFile(info), { name: plan.name, dir: plan.dir, key: plan.key, runId: plan.plan.runId, holder: defaultHolder(opts), containerId: id });
     await withPool(async ledger => { Object.assign(ledger.reservations.find(r => r.container === plan.name), { state: 'running', pid: null }); });
+    const ready=path.join(plan.dir,'output/bundle/ready.json');
+    for (let attempt=0; !fs.existsSync(ready); attempt++) {
+      if (attempt>=300 || !inspect(plan.name)?.State.Running) fail('REFUSED','observer failed before source/proxy readiness; retain its attempt and stop through observer-down');
+      await sleep(100);
+    }
     appendEvent({ event: 'observer-start', container: plan.name, runId: plan.plan.runId });
     const log = fs.openSync(path.join(plan.dir, 'watch.log'), 'a');
     const child = spawn(process.execPath, [path.join(REPO, 'lab/bin/engine.mjs'), 'observer-watch', '--lane', info.lane, '--slot', info.slot, '--holder', defaultHolder(opts)], { detached: true, stdio: ['ignore', log, log], env: process.env });
@@ -197,7 +228,7 @@ export async function observerWatch(info, opts) {
     }
     if (!c.State.Running) return;
     try { await observerBridge(info, opts); }
-    catch (error) { fs.appendFileSync(path.join(initial.dir, 'bridge-rejections.jsonl'), JSON.stringify({ at: new Date().toISOString(), error: error.message }) + '\n'); }
+    catch (error) { fs.appendFileSync(path.join(initial.dir, 'bridge-rejections.jsonl'), JSON.stringify({ at: new Date().toISOString(), error: error.message, sample: error.sample ?? null }) + '\n'); }
     await sleep(1000);
   }
 }
@@ -233,22 +264,14 @@ export function observerImage(opts) {
 export async function observerBridge(info, opts) {
   ownerCheck(info, opts);
   const state = readJson(stateFile(info));
-  const send = Number(process.hrtime.bigint()) / 1e6;
-  const { observerMono } = await new Promise((resolve, reject) => {
-    const req = http.get({ hostname: '127.0.0.1', port: info.port + 10000, path: '/clock', timeout: 2000 }, response => {
-      let body = '';
-      response.on('data', chunk => { body += chunk; if (body.length > 4096) req.destroy(new Error('oversized clock reply')); });
-      response.on('end', () => {
-        try { if (response.statusCode !== 200) throw new Error('clock endpoint failed'); resolve(JSON.parse(body)); }
-        catch (error) { reject(error); }
-      });
-    });
-    req.on('timeout', () => req.destroy(new Error('clock endpoint timeout'))); req.on('error', reject);
-  });
-  const receive = Number(process.hrtime.bigint()) / 1e6;
-  const sample = { send, receive, observerMono };
+  const port = info.port + 10000;
+  if (!clockSamplers.has(port)) clockSamplers.set(port, new ClockSampler(port));
+  const sample = await clockSamplers.get(port).sample();
+  const { send, receive } = sample;
   // [EXP-OBS01] Why: refuse imprecise samples. Rejected: inventing a zero-RTT VM bridge.
-  if (receive - send > 2) fail('REFUSED', `clock bridge RTT ${receive - send}ms exceeds 2ms`);
+  if (receive - send > 2) {
+    const error = new Error(`clock bridge RTT ${receive - send}ms exceeds 2ms`); error.sample=sample; throw error;
+  }
   await withDirLock(path.join(ROOT, 'bridge.lock'), async () => {
     const current = readJson(stateFile(info), null);
     if (current?.runId !== state.runId || current.stopping) fail('REFUSED', 'observer stopped while clock sample was in flight');
@@ -279,8 +302,24 @@ export function observerRetain(opts) {
   const retention = { runId, receiptId: envelope.receiptId, keyId: envelope.keyId, engine: envelope.sut.lane,
     bundleSha256: sha256(fs.readFileSync(path.join(root, 'bundle.json'))),
     bridgeSha256: sha256(fs.readFileSync(path.join(root, 'clock/bridge.jsonl'))),
-    streams: envelope.streams.map(s => ({ ...s, normalizerPath: path.join(dir, 'code/normalize.py'), chunks: index[s.streamId] })),
+    streams: envelope.streams.map(s => ({ ...s, normalizerPath: path.join(dir, 'code', s.normalizerFile ?? 'normalize.py'), chunks: index[s.streamId] })),
     witnessHeads: witnesses, clockMaxUncertaintyMs: envelope.clock.maxUncertaintyMs };
   atomicJson(path.join(dir, 'retention.json'), retention);
   console.log(JSON.stringify({ retention: path.join(dir, 'retention.json'), bundle: root }));
+}
+
+export async function observerCommand(info,opts) {
+  ownerCheck(info,opts);const state=readJson(stateFile(info));
+  const allowed=['finish-block','scan','count'];
+  if(!allowed.includes(opts.action))fail('REFUSED','unknown observer action');
+  const id=randomUUID();const directory=path.join(state.dir,'output/commands');fs.mkdirSync(directory,{recursive:true});
+  const command={action:opts.action,canary:opts.canary,relation:opts.relation,label:opts.label};
+  atomicJson(path.join(directory,id+'.json'),command);
+  const result=path.join(state.dir,'output/results',id+'.json');
+  for(let attempt=0;attempt<600;attempt++){
+    if(fs.existsSync(result)){const value=readJson(result);if(value.error)fail('REFUSED',value.error);console.log(JSON.stringify(value));return;}
+    if(!inspect(state.name)?.State.Running)fail('REFUSED','observer stopped during command');
+    await sleep(100);
+  }
+  fail('REFUSED','observer command timed out; retain command and partial evidence');
 }

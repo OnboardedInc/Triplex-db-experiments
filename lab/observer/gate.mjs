@@ -9,7 +9,7 @@ for (const name of ['observe.py', 'gates.py', 'gates_round2.py']) {
   const bytes = execFileSync('git', ['show', `463703d:lab/acceptance/oracle/${name}`], { cwd: repo });
   fs.writeFileSync(path.join(oracle, name), bytes);
 }
-for (const [command, args] of [['python3', ['-I', '-B', 'lab/observer/test_collector.py']], [process.execPath, ['--test', 'lab/observer/test_engine.mjs']]]) {
+for (const [command, args] of [['python3', ['-I', '-B', 'lab/observer/test_collector.py']], ['python3', ['-I', '-B', 'lab/observer/test_round2.py']], [process.execPath, ['--test', 'lab/observer/test_engine.mjs', 'lab/observer/test_clock.mjs']]]) {
   const result = spawnSync(command, args, { cwd: repo, stdio: 'inherit', env: { ...process.env, TX2_ENGINE_DIR: path.join(repo, 'runs/OBS01/test-engines') } });
   if (result.status !== 0) process.exit(result.status ?? 1);
 }

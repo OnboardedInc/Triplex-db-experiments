@@ -1,0 +1,4 @@
+{
+  "status": 200,
+  "body": "{\n    \"message\": \"Index successfully rebuilt and swapped in\",\n    \"previous-index-dir\": \"previous.2026-11-09T00:00:38Z\"\n}"
+}

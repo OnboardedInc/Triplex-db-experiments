@@ -1,0 +1,77 @@
+{
+  "obs01-r2-x04": {
+    "stopped": true,
+    "sealed": false,
+    "retention": false
+  },
+  "obs01-r2-x03": {
+    "stopped": true,
+    "sealed": true,
+    "retention": true
+  },
+  "obs01-r2-aa-proxy": {
+    "stopped": true,
+    "sealed": true,
+    "retention": false
+  },
+  "obs01-r2-aa-spans": {
+    "stopped": true,
+    "sealed": true,
+    "retention": false
+  },
+  "obs01-r2-x02": {
+    "stopped": true,
+    "sealed": true,
+    "retention": true
+  },
+  "obs01-r2-x05": {
+    "stopped": true,
+    "sealed": false,
+    "retention": false
+  },
+  "obs01-r2-x07": {
+    "stopped": true,
+    "sealed": false,
+    "retention": false
+  },
+  "obs01-r2-x09": {
+    "stopped": true,
+    "sealed": true,
+    "retention": true
+  },
+  "obs01-r2-x08": {
+    "stopped": true,
+    "sealed": false,
+    "retention": false
+  },
+  "obs01-r2-x06": {
+    "stopped": true,
+    "sealed": false,
+    "retention": false
+  },
+  "obs01-r2-aa-host": {
+    "stopped": true,
+    "sealed": true,
+    "retention": false
+  },
+  "obs01-r2-x01": {
+    "stopped": true,
+    "sealed": false,
+    "retention": false
+  },
+  "obs01-r2-aa-qlever-query-log": {
+    "stopped": true,
+    "sealed": true,
+    "retention": false
+  },
+  "obs01-r2-q01": {
+    "stopped": true,
+    "sealed": true,
+    "retention": true
+  },
+  "obs01-r2-aa-debug": {
+    "stopped": true,
+    "sealed": true,
+    "retention": false
+  }
+}

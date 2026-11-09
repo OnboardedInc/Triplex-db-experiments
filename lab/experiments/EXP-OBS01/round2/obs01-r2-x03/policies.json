@@ -1,0 +1,57 @@
+{
+  "X1-metrics": {
+    "protocol": "OBS-NO-MUTATION",
+    "window": {
+      "offsetMs": 5000,
+      "durationMs": 4000
+    },
+    "requiredTags": [
+      "read-control"
+    ]
+  },
+  "T1-wire": {
+    "protocols": [
+      {
+        "protocol": "OBS-NO-MUTATION",
+        "window": {
+          "offsetMs": 5000,
+          "durationMs": 4000
+        },
+        "requiredTags": [
+          "read-control"
+        ]
+      },
+      {
+        "protocol": "OBS-PREABORT",
+        "window": {
+          "offsetMs": 5000,
+          "durationMs": 4000
+        },
+        "requestId": "preaborted-never-issued",
+        "controlTags": [
+          "read-control"
+        ]
+      }
+    ]
+  },
+  "X6-log": {
+    "protocol": "OBS-PREABORT",
+    "window": {
+      "offsetMs": 5000,
+      "durationMs": 4000
+    },
+    "requestId": "preaborted-never-issued",
+    "controlTags": [
+      "read-control"
+    ]
+  },
+  "X4-queries": {
+    "protocol": "OBS-SCRATCH",
+    "window": {
+      "offsetMs": 5000,
+      "durationMs": 4000
+    },
+    "relation": "obs01_r2",
+    "unknownOutcomes": []
+  }
+}

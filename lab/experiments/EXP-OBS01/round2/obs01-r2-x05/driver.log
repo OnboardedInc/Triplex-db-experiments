@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/probe_round2.py", line 69, in <module>
+    if worker.is_alive():raise ValueError('cancel did not drain in ten seconds')
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: cancel did not drain in ten seconds

@@ -1,0 +1,20 @@
+{
+  "scope": "native single-row diagnostic only; shared residents remain unpinned",
+  "summary": {
+    "baseline-after": {
+      "p50": 2.113166,
+      "p99": 3.491875,
+      "ratioToBracketedBaseline": 0.6321279869659666
+    },
+    "baseline-before": {
+      "p50": 2.735584,
+      "p99": 7.556125,
+      "ratioToBracketedBaseline": 1.3678720130340332
+    },
+    "query-log": {
+      "p50": 2.414334,
+      "p99": 11.39825,
+      "ratioToBracketedBaseline": 2.063405141202028
+    }
+  }
+}

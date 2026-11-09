@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/probe_round2.py", line 66, in <module>
+    command('scan',canary='obs01-r2-canary')
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/probe_round2.py", line 38, in command
+    if result.returncode:raise ValueError(result.stderr)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: [lab] REFUSED: [Errno 13] Permission denied: '/engine/buffers/v06/blocks/b00.binpb'
+

@@ -1,0 +1,40 @@
+{
+  "NO-MUTATION": {
+    "protocol": "OBS-NO-MUTATION",
+    "verdict": "FAIL",
+    "reasons": [
+      "source disagreement: engineMutationCounterAfter"
+    ],
+    "thresholds": {},
+    "sourceStrength": null,
+    "qualification": "screening-only"
+  },
+  "single-kind-negative": {
+    "protocol": "OBS-NO-MUTATION",
+    "verdict": "FAIL",
+    "reasons": [
+      "two independent agreeing kinds required"
+    ],
+    "thresholds": {},
+    "sourceStrength": null,
+    "qualification": "screening-only"
+  },
+  "PREABORT": {
+    "protocol": "OBS-PREABORT",
+    "verdict": "PASS",
+    "reasons": [],
+    "thresholds": {},
+    "sourceStrength": "direct",
+    "qualification": "screening-only"
+  },
+  "SCRATCH": {
+    "protocol": "OBS-SCRATCH",
+    "verdict": "FAIL",
+    "reasons": [
+      "scratch relation count changed"
+    ],
+    "thresholds": {},
+    "sourceStrength": "direct",
+    "qualification": "screening-only"
+  }
+}

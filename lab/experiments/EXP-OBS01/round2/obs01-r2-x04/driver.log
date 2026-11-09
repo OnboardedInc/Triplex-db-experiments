@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/probe_round2.py", line 45, in <module>
+    seed=pg.Pg(16473)
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/pgclient.py", line 17, in __init__
+    typ, data = self.message()
+                ~~~~~~~~~~~~^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/pgclient.py", line 33, in message
+    typ = self.read(1); size = struct.unpack('!I', self.read(4))[0]
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/pgclient.py", line 29, in read
+    if not chunk: raise ValueError('pgwire closed')
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: pgwire closed

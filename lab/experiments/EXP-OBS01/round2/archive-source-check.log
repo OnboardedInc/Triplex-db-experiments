@@ -1,0 +1,4 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 33681 "CX-VSQL01-r2b-unit"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 33681 "CX-VSQL01-r2b-unit"
+[lab] heavy: waiting for one of 4 slots; held by pid 39926 "CX-P2Q-R6-suites", pid 33691 "CX-VSQL01-r2b-semantic", pid 54104 "CX-OBS01-R2-x06", pid 90885 "DA01-r2-G0-basis"
+{"allMatched": true, "sourceFilesCompared": 13171, "archive": "/Users/sam/Claude/Projects/triplex-db-2/evidence/OBS01/round1-host"}

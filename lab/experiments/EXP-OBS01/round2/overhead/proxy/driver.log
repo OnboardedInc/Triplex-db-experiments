@@ -1,0 +1,1 @@
+{"trace": "same single-row native SQL commit repeated; 30 warmup, 150 measured", "p50": 17.886042, "p99": 31.995708, "countReadback": [{"n": 1}]}

@@ -1,0 +1,35 @@
+{
+  "scope": "native single-row diagnostic only; shared residents remain unpinned",
+  "summary": {
+    "baseline-after": {
+      "p50": 10.423084,
+      "p99": 25.620625,
+      "ratioToBracketedBaseline": 1.1143227692428672
+    },
+    "baseline-before": {
+      "p50": 9.172375,
+      "p99": 20.363583,
+      "ratioToBracketedBaseline": 0.885677230757133
+    },
+    "debug": {
+      "p50": 9.588458,
+      "p99": 18.290958,
+      "ratioToBracketedBaseline": 0.7955321531252643
+    },
+    "host": {
+      "p50": 10.19625,
+      "p99": 18.984583,
+      "ratioToBracketedBaseline": 0.8257001186146341
+    },
+    "proxy": {
+      "p50": 17.886042,
+      "p99": 31.995708,
+      "ratioToBracketedBaseline": 1.3915954799091028
+    },
+    "spans": {
+      "p50": 11.399291,
+      "p99": 23.651,
+      "ratioToBracketedBaseline": 1.0286574904149703
+    }
+  }
+}

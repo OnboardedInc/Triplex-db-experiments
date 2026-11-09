@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r2-x01/code/T1-wire.normalize.py", line 551, in <module>
+    print(json.dumps(protocol_normalize(sys.stdin.buffer.read(),SPEC,SOURCE_ID),sort_keys=True,separators=(',', ':'),allow_nan=False))
+                     ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r2-x01/code/T1-wire.normalize.py", line 473, in protocol_normalize
+    for key,value in protocol_normalize(data,item,source_id).items():
+                     ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r2-x01/code/T1-wire.normalize.py", line 477, in protocol_normalize
+    parsed=normalize(data);protocol=spec['protocol'].removeprefix('OBS-');root=source_id.split('.')[0]
+  File "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r2-x01/code/T1-wire.normalize.py", line 124, in normalize
+    if engine_ports=={5432}:result['wire']=pgwire_records(events)
+                                           ~~~~~~~~~~~~~~^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r2-x01/code/T1-wire.normalize.py", line 297, in pgwire_records
+    data,at=wire_bytes(c['client']);server,sat=wire_bytes(c['engine']);pos=0;prepared={};portals={};pending=[]
+            ~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/runs/engines/observers/obs01-r2-x01/code/T1-wire.normalize.py", line 287, in wire_bytes
+    for data,t in segments: raw+=data;ends.append((len(raw),t))
+        ^^^^^^
+ValueError: too many values to unpack (expected 2)

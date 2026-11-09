@@ -1,0 +1,52 @@
+{
+  "engineMutationCounterAfter": 0,
+  "engineMutationCounterBefore": 0,
+  "coverage": {
+    "from": 120134760.972421,
+    "maxGapMs": 0,
+    "segments": [
+      {
+        "from": 120134760.972421,
+        "to": 120135560.972421
+      }
+    ],
+    "to": 120135560.972421
+  },
+  "engineStatementLog": [],
+  "requestId": "preaborted-never-issued",
+  "counterSource": {
+    "kind": "EI-metric/xtdb/X1.node.tx.latestCompletedTxId",
+    "streamRefs": [
+      "X1-metrics"
+    ],
+    "records": {
+      "engineMutationCounterAfter": 0,
+      "engineMutationCounterBefore": 0
+    }
+  },
+  "corroboration": [
+    {
+      "kind": "TO/xtdb/T1",
+      "streamRefs": [
+        "T1-wire"
+      ],
+      "records": {
+        "coverage": {
+          "from": 120134760.972421,
+          "maxGapMs": 0,
+          "segments": [
+            {
+              "from": 120134760.972421,
+              "to": 120135560.972421
+            }
+          ],
+          "to": 120135560.972421
+        },
+        "engineMutationCounterAfter": 0,
+        "engineMutationCounterBefore": 0,
+        "engineStatementLog": [],
+        "requestId": "preaborted-never-issued"
+      }
+    }
+  ]
+}

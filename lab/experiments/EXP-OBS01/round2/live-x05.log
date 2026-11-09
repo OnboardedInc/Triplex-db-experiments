@@ -1,0 +1,14 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 69596 "CX-VSQL01-r2-final-live", pid 2651 "CX-G03-r3-smoke", pid 55759 "CX-VSQL01-r2-final-semantic"
+[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 69596 "CX-VSQL01-r2-final-live", pid 2651 "CX-G03-r3-smoke", pid 55759 "CX-VSQL01-r2-final-semantic"
+file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/run_round2.mjs:16
+function call(args,label,command=process.execPath){const result=spawnSync(command,args,{cwd:repo,encoding:'utf8'});fs.writeFileSync(path.join(destination,label+'.log'),(result.stdout??'')+(result.stderr??''));if(result.status!==0)throw new Error(label+' failed '+result.status);return result.stdout;}
+                                                                                                                                                                                                                                            ^
+
+Error: driver failed 1
+    at call (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/run_round2.mjs:16:237)
+    at file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/observer/run_round2.mjs:19:6
+    at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v22.23.2

@@ -33,7 +33,7 @@ test('output budget is bounded before admission', () => {
 test('XTDB completed transaction source and host sources are collected', () => {
   const p = observerPlan(config, info, engine, opts);
   assert.equal(p.plan.streams.find(s => s.streamId === 'X1-metrics').sourceId, 'X1.node.tx.latestCompletedTxId');
-  assert.equal(p.plan.streams.filter(s => s.kind === 'HO/any/H1').length, 6);
+  assert.equal(p.plan.streams.filter(s => s.kind === 'HO/any/H1').length, 7);
 });
 test('Datomic plans independent thread and callback samples', () => {
   const d = { ...info, lane: 'datomic', container: 'tx2-datomic-s1', volume: 'tx2-datomic-s1-data' };
@@ -61,5 +61,10 @@ test('QLever profile is opt-in and resident script remains unchanged', () => {
   assert.equal(observed.effective.observerClockPublish, '127.0.0.1:17073:18080');
   // Restore the stopped slot's effective config bytes after inspecting the variant.
   effectiveConfig(config, q);
+});
+test('follower effective config keeps its own JVM settings without observer logging', () => {
+  const file=path.join(tmp,'follower.yaml');fs.writeFileSync(file,'server:\n  port: 5432\n');
+  const follower={...info,role:'follower',writer:info.container,configFile:file,configSource:'fixture',javaOpts:'-Xmx256m'};
+  assert.equal(effectiveConfig(config,follower).effective.env.JDK_JAVA_OPTIONS,'-Xmx256m');
 });
 test.after(() => fs.rmSync(tmp, { recursive: true }));

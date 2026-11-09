@@ -1,0 +1,78 @@
+[
+  {
+    "probe": "P3",
+    "phase": "open-four",
+    "t": 118352928.481096
+  },
+  {
+    "probe": "P3",
+    "phase": "closed-four",
+    "t": 118353431.783434
+  },
+  {
+    "readControl": [
+      {
+        "n": 120
+      }
+    ],
+    "t": 118357779.273913
+  },
+  {
+    "probe": "P4",
+    "callerError": [
+      "VERROR\u0000SERROR\u0000C08P01\u0000MErrors planning SQL statement:\n  - Duplicate column projection: n\u0000D{\"category\":\"incorrect\",\"code\":\"xtdb/sql-error\",\"message\":\"Errors planning SQL statement:\\n  - Duplicate column projection: n\",\"data\":{\"errors\":[{\"col-sym\":\"n\"}]}}\u0000\u0000"
+    ],
+    "reuse": [
+      {
+        "n": 1
+      }
+    ],
+    "t": 118357883.250106
+  },
+  {
+    "probe": "P5",
+    "rows": [
+      {
+        "row_count": 120,
+        "pushdowns": null,
+        "time_to_first_page": "PT0.002038S",
+        "page_count": 1,
+        "self_time": "PT0.000051S",
+        "attributes": null,
+        "depth": "->",
+        "op": "project",
+        "total_time": "PT0.002073S"
+      },
+      {
+        "row_count": 120,
+        "pushdowns": null,
+        "time_to_first_page": "PT0.001998S",
+        "page_count": 1,
+        "self_time": "PT0.00005S",
+        "attributes": null,
+        "depth": "  ->",
+        "op": "rename",
+        "total_time": "PT0.002022S"
+      },
+      {
+        "row_count": 120,
+        "pushdowns": null,
+        "time_to_first_page": "PT0.001954S",
+        "page_count": 1,
+        "self_time": "PT0.001972S",
+        "attributes": {
+          "scan_db": "xtdb",
+          "scan_source": "public.obs01_r2",
+          "scan_files_pruned": 0,
+          "scan_files_used": 1,
+          "scan_pages_pruned": 0,
+          "scan_pages_used": 2,
+          "scan_rows_read": 240
+        },
+        "depth": "    ->",
+        "op": "scan",
+        "total_time": "PT0.001972S"
+      }
+    ]
+  }
+]

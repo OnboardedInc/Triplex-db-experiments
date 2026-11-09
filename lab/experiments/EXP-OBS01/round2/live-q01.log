@@ -1,0 +1,8 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 12081 "CX-A01-0312-evaluator-final", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 72800 "CX-A01-0312-ancillary-merged"
+[lab] heavy: waiting for one of 4 slots; held by pid 12081 "CX-A01-0312-evaluator-final", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 72800 "CX-A01-0312-ancillary-merged"
+[lab] heavy: waiting for one of 4 slots; held by pid 12081 "CX-A01-0312-evaluator-final", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 72800 "CX-A01-0312-ancillary-merged"
+[lab] heavy: waiting for one of 4 slots; held by pid 12081 "CX-A01-0312-evaluator-final", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 50880 "CX-INT-XCJ-C8-fixed-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 12081 "CX-A01-0312-evaluator-final", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 50880 "CX-INT-XCJ-C8-fixed-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 49341 "CX-RQ01-bound-gate-r4", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 50880 "CX-INT-XCJ-C8-fixed-G0"
+[lab] heavy: waiting for one of 4 slots; held by pid 73825 "G0-xtdb-20261108T235816Z-506037 build", pid 12080 "CX-A01-0312-mutations-final2", pid 37317 "CX-G03-r3-claim-suites2", pid 50880 "CX-INT-XCJ-C8-fixed-G0"
+{"id":"obs01-r2-q01","dir":"/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/experiments/EXP-OBS01/round2/obs01-r2-q01"}

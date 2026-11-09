@@ -1,0 +1,91 @@
+{
+  "X1-metrics": {
+    "protocol": "OBS-NO-MUTATION",
+    "window": {
+      "offsetMs": 5000,
+      "durationMs": 4000
+    },
+    "requiredTags": [
+      "read-control"
+    ]
+  },
+  "T1-wire": {
+    "protocols": [
+      {
+        "protocol": "OBS-NO-MUTATION",
+        "window": {
+          "offsetMs": 5000,
+          "durationMs": 4000
+        },
+        "requiredTags": [
+          "read-control"
+        ]
+      },
+      {
+        "protocol": "OBS-PREABORT",
+        "window": {
+          "offsetMs": 5000,
+          "durationMs": 4000
+        },
+        "requestId": "preaborted-never-issued",
+        "controlTags": [
+          "read-control"
+        ]
+      }
+    ]
+  },
+  "X6-log": {
+    "protocol": "OBS-PREABORT",
+    "window": {
+      "offsetMs": 5000,
+      "durationMs": 4000
+    },
+    "requestId": "preaborted-never-issued",
+    "controlTags": [
+      "read-control"
+    ]
+  },
+  "X4-queries": {
+    "protocol": "OBS-SCRATCH",
+    "window": {
+      "offsetMs": 5000,
+      "durationMs": 4000
+    },
+    "relation": "obs01_r2",
+    "unknownOutcomes": []
+  },
+  "H1-resources": {
+    "protocol": "OBS-RESOURCE",
+    "window": {
+      "offsetMs": 5000,
+      "durationMs": 4000
+    },
+    "obligation": "G3.recursion.read-only-frontier",
+    "forecast": {
+      "memory": 1610612736,
+      "disk": 1073741824
+    },
+    "envelope": {
+      "memory": 1610612736,
+      "disk": 1073741824,
+      "owners": [
+        "c0b318fab6e4adf7b74223882447e3544d75530af82157ba816e6a729db40874"
+      ]
+    }
+  },
+  "H4-all": {
+    "protocol": "OBS-CONNECTIONS",
+    "window": {
+      "offsetMs": 100,
+      "durationMs": 11000
+    },
+    "pools": [
+      {
+        "label": "readonly",
+        "port": 5433,
+        "max": 2
+      }
+    ],
+    "closeOffsetMs": 3000
+  }
+}
