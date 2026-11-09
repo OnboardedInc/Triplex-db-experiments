@@ -1,6 +1,6 @@
 # Contract 0.3.13
 
-**Result: candidate built; all requested gates pass on `c3ea3537`. Independent review pending.**
+**Latest result: round-2 merged-tree gates pass on `2ec12111` (main `9a7996e2` included). Independent delta review pending.**
 
 North star: the correctness floor for P1–P5: named-cut reads, atomic writes, content-bound seed reuse and valid golden-scenario evidence. Goals and targets: lab/SCOPE.md, lab/NORTH-STAR.md, lab/TARGETS.md. Builder CX-A01-0312; independent review remains required.
 
@@ -125,3 +125,40 @@ Four new merge regressions check the complete lane matrix in both call sites, en
 - **Final receipt aggregation:** rehash this round's exact logs, retained CAS/resource objects and built-file preimages, verify run IDs/times/source/lane/slot/counts, and separate historical round-1 evidence. A checksum or standalone earlier PASS cannot become a fresh merged-tree result. Independent reviewer acceptance is still required.
 
 Fresh committed-source gates and final receipts follow below. Historical round-1 results and failures remain unchanged.
+
+### Round-2 final gates and handoff
+
+**All requested gates pass on the committed merged tree `2ec12111466f53718e1c8420f112402883981c28`.** Its parents are the reviewed candidate `6b8d2182d78e567cf8e385622c9a259e8892687a` and current-at-dispatch main `9a7996e2a242690edbc86417283d8c7348950adb`. Main is an actual ancestor; no standalone result substitutes for Q87. The final receipt commit changes only this report and round-2 evidence/index/tooling. [Source and hashes](evidence-0.3.13-round2/source-and-hashes.json), [validation summary](evidence-0.3.13-round2/validation-summary.json).
+
+| Gate | Fresh merged-tree result | Evidence |
+| --- | --- | --- |
+| Generator --verify | All six outputs byte-identical, including after Q47d restored its temporary changes | [verify-final.txt](evidence-0.3.13-round2/verify-final.txt) |
+| Contract tests | **18/18 PASS** | [contract-tests-committed.txt](evidence-0.3.13-round2/contract-tests-committed.txt) |
+| Merge plus existing GS policy tests | **7/7 PASS** (4 merge, 3 policy) | [js-tests-committed.tap](evidence-0.3.13-round2/js-tests-committed.tap) |
+| Contract mutations | **494/494 caught**, zero misses; catalog 582, retired anchors 88; unchanged controls | [negtest.txt](evidence-0.3.13-round2/negtest.txt) |
+| Required Q87 evaluator | **108/108 PASS**, zero failures/skips/cancellations/todo; no assertion changed | [evaluator.tap](evidence-0.3.13-round2/evaluator.tap) |
+| XTDB G0 | **1218/1218 PASS**, 137 expected skips, zero failures/unexpected skips; scope full | [receipt](evidence-0.3.13-round2/G0-xtdb-receipt.json), [command log](evidence-0.3.13-round2/G0-xtdb.log) |
+| Datomic G0 | **1253/1253 PASS**, 66 expected skips, zero failures/unexpected skips; scope full | [receipt](evidence-0.3.13-round2/G0-datomic-receipt.json), [command log](evidence-0.3.13-round2/G0-datomic.log) |
+| Pending authority | Q47d PASS, both prohibited controls detected and outputs restored | [q47d.txt](evidence-0.3.13-round2/q47d.txt) |
+
+XTDB run `G0-xtdb-20261109T035923Z-2980c9` and Datomic run `G0-datomic-20261109T040114Z-8dc16e` each name the exact merge head, slot null, zero executed-source diff bytes and no modified/untracked executed-source inputs. Both retain their prior round-1 run IDs through `--previous`, with explicit new-merge reasons. Both have all steps exit zero, no step timeouts, reasons or first failures. Optional Git stash snapshots remain null; out-of-scope evidence makes the overall tree dirty at collection, so no clean-tree snapshot is claimed. The explicit executable-source identity and retained bytes bind the results.
+
+All long commands used heavy.mjs and were admitted above 5 GiB free. G0s ran sequentially after this task's evaluator/mutation suites completed, with TX2_CONFIG_DIR set to this worktree, the owned pnpm-store shim, and all live integration/commit-encoding flags unset. No engine/container or slot lifecycle action was run. There were **no round-2 required-gate failures or reruns**; the first dry-run regression's shared-config mistake remains visible separately and was fixed before the source commit. No test, assertion, timeout or skip inventory was weakened.
+
+The new pending rows change the transitive contract hash to **`7c67653511b51fb041c3d3115e90f90d347c041ae091f142762889d0afd485e7`**. Generator SHA-256 stays **`07c98812ec83fe8a7e32dd09418d40522b48b3dc53e2d5f3df6f7007288d98e5`**. Exactly **50 pending IDs** remain: the former 44 plus Q96a-c/Q97a-c, with every previous raw row and duplicate retained. Existing compiled rulings and explicit image/source/oracle pins are unchanged; no additional contract version or policy promotion was introduced.
+
+### Round-2 immutable retention and final PASS audit
+
+`capture-g0.py` observes each new receipt's exact source/lane/run ID/slot and requires zero executable-source drift. It copies actual fresh raw bytes and CAS object preimages, compares every build-manifest path/length/SHA and package-list digest, and verifies the copied bytes before recording capture metadata. Each durable leaf is create-only, so an older successful capture cannot be reused. The capture records the actual receipt verdict without relabelling it. It grants byte-retention proof only, never live engine qualification.
+
+`validate.py` separately checks actual TAP/unittest/semantic-mutation/--verify/Q47d content; receipt source, experiment, lane, slot, timings, step results and exact counts; every immutable object reference and build byte; matching manifests; and current source hashes. It requires each G0 to begin after this attempt's source snapshot and capture to follow its receipt, and requires XTDB capture to finish before Datomic starts. It revalidates these explicitly named historical attempts; it does not manufacture a fresh run or a new acceptance verdict from saved PASS text. This completes the aggregation boundary in the pre-commit audit above.
+
+Captured **566 XTDB and 528 Datomic build files** immediately after their own G0s, before subsequent builds could replace declarations. All **41 XTDB and 48 Datomic object references**, including immutable parent-heavy-grant preimages rather than today's live lock files, also match. No build-overwrite limitation or recapture is needed this round.
+
+Raw output, complete build preimages and immutable objects total **13,281,925 bytes / 1,221 files** and stay outside Git at:
+
+`/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0312/contract-0.3.13-round2/`
+
+The repo retains the [short index](evidence-0.3.13-round2/INDEX.md), separate [XTDB manifest](evidence-0.3.13-round2/G0-xtdb-SHA256SUMS) and [Datomic manifest](evidence-0.3.13-round2/G0-datomic-SHA256SUMS), small receipts/capture metadata and a SHA256SUMS for local evidence. Every retained byte was rehashed; original round-1 and reviewer evidence is unchanged.
+
+**Open handoff:** independent round-2 delta acceptance remains required. Reviewer F1's four conflicts are resolved with both parents' behavior retained, and Q87 now has actual merged-tree evidence. No live QLever/XTDB/Datomic G1/G2/GS, QG1 startup, image rebuild, storage migration, durability/tenancy/erasure qualification, benchmark, root pnpm check, package publication, push or merge into actual main was performed. All held rulings remain pending; the separate implementation/qualification work and historical unrelated CLI pack limitation remain outside this fix.
