@@ -1,0 +1,38 @@
+[
+  {
+    "id": "xtdb-a0",
+    "before": {
+      "rows": []
+    },
+    "elapsed": 0.6102920000000154,
+    "afterRows": 1,
+    "receiptInstant": 1000.001
+  },
+  {
+    "id": "xtdb-compact",
+    "before": {
+      "rows": []
+    },
+    "elapsed": 0.19654099999996788,
+    "afterRows": 1,
+    "receiptInstant": 1000.001
+  },
+  {
+    "id": "qlever-a0",
+    "before": {
+      "rows": []
+    },
+    "elapsed": 0.4338339999999903,
+    "afterRows": 1,
+    "receiptInstant": 1000.001
+  },
+  {
+    "id": "qlever-compact",
+    "before": {
+      "rows": []
+    },
+    "elapsed": 0.09670900000003257,
+    "afterRows": 1,
+    "receiptInstant": 1000.001
+  }
+]

@@ -1,0 +1,262 @@
+{
+  "scenarios": 80,
+  "matches": 50,
+  "mismatches": [
+    {
+      "lane": "qlever",
+      "route": "Storage.getByEntities",
+      "mode": "pending-near",
+      "observed": {
+        "success": {}
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Storage.getByEntities",
+      "mode": "pending-near",
+      "observed": {
+        "success": {}
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Storage.getByEntity",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Storage.getByEntity",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Storage.query",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Storage.query",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.entities",
+      "mode": "pending-near",
+      "observed": {
+        "success": [
+          []
+        ]
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.entities",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.entity",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.entity",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.match",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.match",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "QueryExecutor.execute",
+      "mode": "pending-near",
+      "observed": {
+        "success": {
+          "results": []
+        }
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "QueryExecutor.execute",
+      "mode": "pending-near",
+      "observed": {
+        "success": {
+          "results": []
+        }
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "QueryExecutor.executePage",
+      "mode": "pending-near",
+      "observed": {
+        "success": {
+          "results": []
+        }
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "QueryExecutor.executePage",
+      "mode": "pending-near",
+      "observed": {
+        "success": {
+          "results": []
+        }
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.getByEntities",
+      "mode": "pending-near",
+      "observed": {
+        "success": {}
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.getByEntities",
+      "mode": "pending-near",
+      "observed": {
+        "success": {}
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.getByEntity",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.getByEntity",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.query",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.query",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.entities",
+      "mode": "pending-near",
+      "observed": {
+        "success": [
+          []
+        ]
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.entities",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.entity",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.entity",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.match",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.match",
+      "mode": "pending-near",
+      "observed": {
+        "success": []
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.queryAll",
+      "mode": "pending-near",
+      "observed": {
+        "success": {
+          "results": []
+        }
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.queryAll",
+      "mode": "pending-near",
+      "observed": {
+        "success": {
+          "results": []
+        }
+      }
+    }
+  ]
+}

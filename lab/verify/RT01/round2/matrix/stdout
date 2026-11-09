@@ -1,0 +1,116 @@
+{
+  "scenarios": 510,
+  "matches": 500,
+  "mismatches": [
+    {
+      "lane": "qlever",
+      "route": "Triples.transactionsForEntity",
+      "mode": "near",
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 1
+        }
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.transactionsForEntity",
+      "mode": "near",
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 1
+        }
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.transactionsForEntity",
+      "mode": "near",
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 2
+        }
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.transactionsForEntity",
+      "mode": "near",
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 2
+        }
+      }
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.transactionsForEntity",
+      "mode": "sentinel-index",
+      "observed": {
+        "tag": "ReadError",
+        "sameObject": false,
+        "causeTag": "BasisNotAvailable",
+        "message": "Failed to query entity transaction index: BasisNotAvailable: review-r2/basis-refusal"
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.transactionsForEntity",
+      "mode": "near",
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 1
+        }
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.transactionsForEntity",
+      "mode": "near",
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 1
+        }
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.transactionsForEntity",
+      "mode": "near",
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 2
+        }
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.transactionsForEntity",
+      "mode": "near",
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 2
+        }
+      }
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.transactionsForEntity",
+      "mode": "sentinel-index",
+      "observed": {
+        "tag": "ReadError",
+        "sameObject": false,
+        "causeTag": "BasisNotAvailable",
+        "message": "Failed to query entity transaction index: BasisNotAvailable: review-r2/basis-refusal"
+      }
+    }
+  ]
+}

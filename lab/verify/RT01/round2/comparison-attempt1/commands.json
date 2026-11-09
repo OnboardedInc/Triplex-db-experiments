@@ -1,0 +1,18 @@
+[
+  {
+    "runner": "oracle-compare.py",
+    "exit": 1
+  },
+  {
+    "runner": "compare-routes.py",
+    "exit": 0
+  },
+  {
+    "runner": "compare-single.py",
+    "exit": 0
+  },
+  {
+    "runner": "compare-pending.py",
+    "exit": 0
+  }
+]

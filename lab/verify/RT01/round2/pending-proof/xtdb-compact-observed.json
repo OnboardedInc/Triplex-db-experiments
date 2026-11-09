@@ -1,0 +1,177 @@
+{
+  "seed": {
+    "txId": "_tx/00GRTCFP000000000000000001",
+    "position": 1,
+    "instant": 1000,
+    "stagedAt": 1000,
+    "triples": [
+      {
+        "id": "00V9ABAN000000000000000001",
+        "entityId": "seed",
+        "attribute": ":value",
+        "value": {
+          "type": "string",
+          "value": "value"
+        },
+        "recordedAt": 1000,
+        "validFrom": 1000,
+        "validTo": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "createdBy": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "retractedAt": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "entityType": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "schemaVersion": {
+          "_id": "Option",
+          "_tag": "Some",
+          "value": 1
+        },
+        "txId": {
+          "_id": "Option",
+          "_tag": "Some",
+          "value": "_tx/00GRTCFP000000000000000001"
+        },
+        "retractTxId": {
+          "_id": "Option",
+          "_tag": "None"
+        }
+      }
+    ],
+    "retracted": 0
+  },
+  "basis": {
+    "validAt": 1000,
+    "recordedAt": 1000.001
+  },
+  "before": {
+    "rows": []
+  },
+  "elapsed": 0.19654099999996788,
+  "later": {
+    "txId": "_tx/00GRTCFP000000000000000002",
+    "position": 2,
+    "instant": 1000.001,
+    "stagedAt": 1000,
+    "triples": [
+      {
+        "id": "00V9ABAN000000000000000005",
+        "entityId": "later",
+        "attribute": ":value",
+        "value": {
+          "type": "string",
+          "value": "value"
+        },
+        "recordedAt": 1000.001,
+        "validFrom": 1000,
+        "validTo": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "createdBy": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "retractedAt": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "entityType": {
+          "_id": "Option",
+          "_tag": "None"
+        },
+        "schemaVersion": {
+          "_id": "Option",
+          "_tag": "Some",
+          "value": 1
+        },
+        "txId": {
+          "_id": "Option",
+          "_tag": "Some",
+          "value": "_tx/00GRTCFP000000000000000002"
+        },
+        "retractTxId": {
+          "_id": "Option",
+          "_tag": "None"
+        }
+      }
+    ],
+    "retracted": 0
+  },
+  "after": [
+    {
+      "id": "00V9ABAN000000000000000005",
+      "entityId": "later",
+      "attribute": ":value",
+      "value": {
+        "type": "string",
+        "value": "value"
+      },
+      "recordedAt": 1000.001,
+      "validFrom": 1000,
+      "validTo": {
+        "_id": "Option",
+        "_tag": "None"
+      },
+      "createdBy": {
+        "_id": "Option",
+        "_tag": "None"
+      },
+      "retractedAt": {
+        "_id": "Option",
+        "_tag": "None"
+      },
+      "entityType": {
+        "_id": "Option",
+        "_tag": "None"
+      },
+      "schemaVersion": {
+        "_id": "Option",
+        "_tag": "Some",
+        "value": 1
+      },
+      "txId": {
+        "_id": "Option",
+        "_tag": "Some",
+        "value": "_tx/00GRTCFP000000000000000002"
+      },
+      "retractTxId": {
+        "_id": "Option",
+        "_tag": "None"
+      }
+    }
+  ],
+  "operations": [
+    [
+      {
+        "op": "assert",
+        "entityId": "seed",
+        "attribute": ":value",
+        "value": {
+          "type": "string",
+          "value": "value"
+        }
+      }
+    ],
+    [
+      {
+        "op": "assert",
+        "entityId": "later",
+        "attribute": ":value",
+        "value": {
+          "type": "string",
+          "value": "value"
+        }
+      }
+    ]
+  ]
+}

@@ -1,0 +1,953 @@
+{
+  "scenarios": 80,
+  "observations": 80,
+  "matches": 50,
+  "mismatches": [
+    {
+      "lane": "qlever",
+      "route": "Storage.getByEntities",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": {}
+      },
+      "elapsedMs": 0.17616700000007768,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Storage.getByEntities",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": {}
+      },
+      "elapsedMs": 0.048959000000195374,
+      "cuts": 1,
+      "answers": 0,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": true
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Storage.getByEntity",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 0.16608300000007148,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Storage.getByEntity",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 0.06337499999972351,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Storage.query",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 0.04608300000018062,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Storage.query",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 0.04508299999997689,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.entities",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": [
+          []
+        ]
+      },
+      "elapsedMs": 2.6787910000000466,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.entities",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 2.4641249999999673,
+      "cuts": 1,
+      "answers": 0,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": true
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.entity",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 2.69991600000003,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.entity",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 2.9453750000000127,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.match",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 0.5563329999999951,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.match",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 0.45158399999996846,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "QueryExecutor.execute",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": {
+          "results": []
+        }
+      },
+      "elapsedMs": 15.555957999999976,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "QueryExecutor.execute",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": {
+          "results": []
+        }
+      },
+      "elapsedMs": 15.631124999999997,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "QueryExecutor.executePage",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": {
+          "results": []
+        }
+      },
+      "elapsedMs": 15.525915999999995,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "QueryExecutor.executePage",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": {
+          "results": []
+        }
+      },
+      "elapsedMs": 15.543874999999957,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.getByEntities",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": {}
+      },
+      "elapsedMs": 11.941082999999992,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.getByEntities",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": {}
+      },
+      "elapsedMs": 8.038374999999974,
+      "cuts": 1,
+      "answers": 0,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": true
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.getByEntity",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 11.952249999999992,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.getByEntity",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 11.815666000000022,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.query",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 11.951542000000018,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Storage.query",
+      "kind": "TP",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 11.96550000000002,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.entities",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": [
+          []
+        ]
+      },
+      "elapsedMs": 10.778624999999977,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.entities",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 2.424541999999974,
+      "cuts": 1,
+      "answers": 0,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": true
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.entity",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 10.712625000000003,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.entity",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 11.207333000000006,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.match",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 10.757000000000005,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.match",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": []
+      },
+      "elapsedMs": 10.665625000000034,
+      "cuts": 1,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.queryAll",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": {
+          "results": []
+        }
+      },
+      "elapsedMs": 16.123333000000002,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.queryAll",
+      "kind": "T",
+      "mode": "pending-near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "success": {
+          "results": []
+        }
+      },
+      "elapsedMs": 16.327375000000018,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    }
+  ]
+}

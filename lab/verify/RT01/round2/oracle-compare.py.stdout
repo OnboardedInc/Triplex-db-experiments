@@ -1,0 +1,4 @@
+qlever-a0 {'validDefaultMatches': True, 'journalMatches': True, 'hydratedTransactionsMatch': True, 'nestedJournalMatches': True, 'nestedHydratedMatches': True}
+qlever-compact {'validDefaultMatches': True, 'journalMatches': True, 'hydratedTransactionsMatch': True, 'nestedJournalMatches': True, 'nestedHydratedMatches': True}
+xtdb-a0 {'validDefaultMatches': True, 'journalMatches': True, 'hydratedTransactionsMatch': True, 'nestedJournalMatches': True, 'nestedHydratedMatches': True}
+xtdb-compact {'validDefaultMatches': True, 'journalMatches': True, 'hydratedTransactionsMatch': True, 'nestedJournalMatches': True, 'nestedHydratedMatches': True}

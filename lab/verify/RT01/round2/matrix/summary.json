@@ -1,0 +1,347 @@
+{
+  "scenarios": 510,
+  "observations": 510,
+  "matches": 500,
+  "mismatches": [
+    {
+      "lane": "qlever",
+      "route": "Triples.transactionsForEntity",
+      "kind": "snapshot",
+      "mode": "near",
+      "scopeHead": 0,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedPosition": 1
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedPosition"
+      },
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 1
+        }
+      },
+      "elapsedMs": 0.7787920000009763,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.transactionsForEntity",
+      "kind": "snapshot",
+      "mode": "near",
+      "scopeHead": 0,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedPosition": 1
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedPosition"
+      },
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 1
+        }
+      },
+      "elapsedMs": 3.3170829999999114,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.transactionsForEntity",
+      "kind": "snapshot",
+      "mode": "near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedPosition": 2
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedPosition"
+      },
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 2
+        }
+      },
+      "elapsedMs": 0.8361660000009579,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.transactionsForEntity",
+      "kind": "snapshot",
+      "mode": "near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedPosition": 2
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedPosition"
+      },
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 2
+        }
+      },
+      "elapsedMs": 1.9364999999997963,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "qlever",
+      "route": "Triples.transactionsForEntity",
+      "kind": "snapshot",
+      "mode": "sentinel-index",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "tag": "ReadError",
+        "sameObject": false,
+        "causeTag": "BasisNotAvailable",
+        "message": "Failed to query entity transaction index: BasisNotAvailable: review-r2/basis-refusal"
+      },
+      "elapsedMs": 0.6659999999992579,
+      "cuts": 2,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": true,
+        "deadlineMatches": true,
+        "identityMatches": false,
+        "noPrematureAnswer": true
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.transactionsForEntity",
+      "kind": "snapshot",
+      "mode": "near",
+      "scopeHead": 0,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedPosition": 1
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedPosition"
+      },
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 1
+        }
+      },
+      "elapsedMs": 0.7679579999999078,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.transactionsForEntity",
+      "kind": "snapshot",
+      "mode": "near",
+      "scopeHead": 0,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedPosition": 1
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedPosition"
+      },
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 1
+        }
+      },
+      "elapsedMs": 2.7821250000001783,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.transactionsForEntity",
+      "kind": "snapshot",
+      "mode": "near",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedPosition": 2
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedPosition"
+      },
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 2
+        }
+      },
+      "elapsedMs": 0.7801249999997708,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.transactionsForEntity",
+      "kind": "snapshot",
+      "mode": "near",
+      "scopeHead": 1,
+      "emptyInput": true,
+      "basis": {
+        "validAt": 1000,
+        "recordedPosition": 2
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedPosition"
+      },
+      "observed": {
+        "success": {
+          "transactions": [],
+          "snapshotPosition": 2
+        }
+      },
+      "elapsedMs": 0.5082079999997404,
+      "cuts": 1,
+      "answers": 2,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": false,
+        "deadlineMatches": false,
+        "identityMatches": true,
+        "noPrematureAnswer": false
+      },
+      "matches": false
+    },
+    {
+      "lane": "xtdb",
+      "route": "Triples.transactionsForEntity",
+      "kind": "snapshot",
+      "mode": "sentinel-index",
+      "scopeHead": 1,
+      "emptyInput": false,
+      "basis": {
+        "validAt": 1000,
+        "recordedAt": 1000.001
+      },
+      "expected": {
+        "tag": "BasisNotAvailable",
+        "axis": "recordedAt"
+      },
+      "observed": {
+        "tag": "ReadError",
+        "sameObject": false,
+        "causeTag": "BasisNotAvailable",
+        "message": "Failed to query entity transaction index: BasisNotAvailable: review-r2/basis-refusal"
+      },
+      "elapsedMs": 0.4014580000002752,
+      "cuts": 2,
+      "answers": 1,
+      "writes": 0,
+      "checks": {
+        "tagMatches": false,
+        "metadataMatches": true,
+        "deadlineMatches": true,
+        "identityMatches": false,
+        "noPrematureAnswer": true
+      },
+      "matches": false
+    }
+  ]
+}

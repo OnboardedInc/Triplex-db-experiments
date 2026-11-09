@@ -1,0 +1,377 @@
+{
+  "binding": {
+    "product": "2ade6e755cc2877e36569da6f8f44ece22229cf0",
+    "records": {
+      "packages": "17eb9e60abb60ad89c634c677b42aef3dc8b4cdb861e6cdc182e81b07591ae22",
+      "reproductions": "9741f14ff50aa6a5e3629cfd65ca12f793d5d826aee663e86fb14e72615c8841",
+      "matrix": "80ab7e19623becb3bac2de440117097ce6e9d21c1fc13c88356027520346455d",
+      "pending": "9b1965873b1b9a1a75c5b08716e16e33f869f3acb1a046dbd4cc6119bf780369",
+      "pending-proof": "5087ab589c541dba1c836af01e9e94bbe18184dbd640f8ccaaeb5fbfabbf58ce"
+    },
+    "oracleCommit": "fed510ecf5137873d5dab1ad192f0e54f8ed0955",
+    "bindingsSha256": "0dd9795202878058f1e16824f48cc4db684e45e108e47855c46d2315212d34a8"
+  },
+  "at": "2026-11-09T04:29:38.276646+00:00",
+  "oracleCommit": "fed510e",
+  "executions": [
+    {
+      "case": "journal-single.case.json",
+      "caseSha256": "9514973f9d9da82e4822b79d165f801318ca42276a2dce4d5163771236edfa73",
+      "exit": 0
+    },
+    {
+      "case": "qlever-a0-nested.case.json",
+      "caseSha256": "101f639caf0b528df7b4d3b0234ee4d1211bde88a791014d5805a937faf38238",
+      "exit": 0
+    },
+    {
+      "case": "qlever-a0.case.json",
+      "caseSha256": "f8ffe6eb9c698df52426286c518cb793c5f9480d6d176b52a7e55e57c449fef9",
+      "exit": 0
+    },
+    {
+      "case": "qlever-compact-nested.case.json",
+      "caseSha256": "bfc1b9008cfa8b661dbb22a9b37e59e1855b82c6aa16fc2909553ecf23275c74",
+      "exit": 0
+    },
+    {
+      "case": "qlever-compact.case.json",
+      "caseSha256": "c09708c3fd91fb958763876f20acd32534c15eca829006bc35213de45ef162ea",
+      "exit": 0
+    },
+    {
+      "case": "xtdb-a0-nested.case.json",
+      "caseSha256": "4e5996f8bf34960ea31a529411d3ef2293b90eb52c9caf57424bdb141234edcd",
+      "exit": 0
+    },
+    {
+      "case": "xtdb-a0.case.json",
+      "caseSha256": "ff12f556e16e806eab3bf45f99e1819d60ce6240c49f01aa74308f1e4cccf80a",
+      "exit": 0
+    },
+    {
+      "case": "xtdb-compact-nested.case.json",
+      "caseSha256": "de855f621ce74974917d602e5c29b33d6c868e6c80a7a0fcfa1501187975fc56",
+      "exit": 0
+    },
+    {
+      "case": "xtdb-compact.case.json",
+      "caseSha256": "a27c8b62983d9eb25073dbebcc8e097c1a63b04869931d988b3fa27aa22fdd8d",
+      "exit": 0
+    }
+  ],
+  "results": [
+    {
+      "lane": "qlever-a0",
+      "receiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "nestedReceiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "validDefaultMatches": true,
+      "journalMatches": true,
+      "hydratedTransactionsMatch": true,
+      "nestedJournalMatches": true,
+      "nestedHydratedMatches": true,
+      "nestedObserved": [
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/change",
+          "value": {
+            "op": "retract",
+            "tripleId": "00V9ABAN00000000000000000C",
+            "entityId": "nested:one",
+            "attribute": ":value",
+            "entityType": "Subject",
+            "value": {
+              "type": "string",
+              "value": "first"
+            },
+            "validFrom": 800,
+            "assertionTxId": "_tx/00GRTCFP000000000000000004",
+            "retractionTxId": "_tx/00GRTCFP000000000000000005"
+          },
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        },
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/changed-entity",
+          "value": "nested:one",
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        }
+      ],
+      "nestedExpected": [
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/change",
+          "value": {
+            "op": "retract",
+            "tripleId": "00V9ABAN00000000000000000C",
+            "entityId": "nested:one",
+            "attribute": ":value",
+            "entityType": "Subject",
+            "value": {
+              "type": "string",
+              "value": "first"
+            },
+            "validFrom": 800,
+            "assertionTxId": "_tx/00GRTCFP000000000000000004",
+            "retractionTxId": "_tx/00GRTCFP000000000000000005"
+          },
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        },
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/changed-entity",
+          "value": "nested:one",
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        }
+      ],
+      "negativeControls": {
+        "validDefaultChangedRejected": true,
+        "journalDefaultChangedRejected": true
+      }
+    },
+    {
+      "lane": "qlever-compact",
+      "receiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "nestedReceiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "validDefaultMatches": true,
+      "journalMatches": true,
+      "hydratedTransactionsMatch": true,
+      "nestedJournalMatches": true,
+      "nestedHydratedMatches": true,
+      "nestedObserved": [
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/change",
+          "value": {
+            "op": "retract",
+            "tripleId": "00V9ABAN00000000000000000C",
+            "entityId": "nested:one",
+            "attribute": ":value",
+            "entityType": "Subject",
+            "value": {
+              "type": "string",
+              "value": "first"
+            },
+            "validFrom": 800,
+            "assertionTxId": "_tx/00GRTCFP000000000000000004",
+            "retractionTxId": "_tx/00GRTCFP000000000000000005"
+          },
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        },
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/changed-entity",
+          "value": "nested:one",
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        }
+      ],
+      "nestedExpected": [
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/change",
+          "value": {
+            "op": "retract",
+            "tripleId": "00V9ABAN00000000000000000C",
+            "entityId": "nested:one",
+            "attribute": ":value",
+            "entityType": "Subject",
+            "value": {
+              "type": "string",
+              "value": "first"
+            },
+            "validFrom": 800,
+            "assertionTxId": "_tx/00GRTCFP000000000000000004",
+            "retractionTxId": "_tx/00GRTCFP000000000000000005"
+          },
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        },
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/changed-entity",
+          "value": "nested:one",
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        }
+      ],
+      "negativeControls": {
+        "validDefaultChangedRejected": true,
+        "journalDefaultChangedRejected": true
+      }
+    },
+    {
+      "lane": "xtdb-a0",
+      "receiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "nestedReceiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "validDefaultMatches": true,
+      "journalMatches": true,
+      "hydratedTransactionsMatch": true,
+      "nestedJournalMatches": true,
+      "nestedHydratedMatches": true,
+      "nestedObserved": [
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/change",
+          "value": {
+            "op": "retract",
+            "tripleId": "00V9ABAN00000000000000000C",
+            "entityId": "nested:one",
+            "attribute": ":value",
+            "entityType": "Subject",
+            "value": {
+              "type": "string",
+              "value": "first"
+            },
+            "validFrom": 800,
+            "assertionTxId": "_tx/00GRTCFP000000000000000004",
+            "retractionTxId": "_tx/00GRTCFP000000000000000005"
+          },
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        },
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/changed-entity",
+          "value": "nested:one",
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        }
+      ],
+      "nestedExpected": [
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/change",
+          "value": {
+            "op": "retract",
+            "tripleId": "00V9ABAN00000000000000000C",
+            "entityId": "nested:one",
+            "attribute": ":value",
+            "entityType": "Subject",
+            "value": {
+              "type": "string",
+              "value": "first"
+            },
+            "validFrom": 800,
+            "assertionTxId": "_tx/00GRTCFP000000000000000004",
+            "retractionTxId": "_tx/00GRTCFP000000000000000005"
+          },
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        },
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/changed-entity",
+          "value": "nested:one",
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        }
+      ],
+      "negativeControls": {
+        "validDefaultChangedRejected": true,
+        "journalDefaultChangedRejected": true
+      }
+    },
+    {
+      "lane": "xtdb-compact",
+      "receiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "nestedReceiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "validDefaultMatches": true,
+      "journalMatches": true,
+      "hydratedTransactionsMatch": true,
+      "nestedJournalMatches": true,
+      "nestedHydratedMatches": true,
+      "nestedObserved": [
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/change",
+          "value": {
+            "op": "retract",
+            "tripleId": "00V9ABAN00000000000000000C",
+            "entityId": "nested:one",
+            "attribute": ":value",
+            "entityType": "Subject",
+            "value": {
+              "type": "string",
+              "value": "first"
+            },
+            "validFrom": 800,
+            "assertionTxId": "_tx/00GRTCFP000000000000000004",
+            "retractionTxId": "_tx/00GRTCFP000000000000000005"
+          },
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        },
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/changed-entity",
+          "value": "nested:one",
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        }
+      ],
+      "nestedExpected": [
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/change",
+          "value": {
+            "op": "retract",
+            "tripleId": "00V9ABAN00000000000000000C",
+            "entityId": "nested:one",
+            "attribute": ":value",
+            "entityType": "Subject",
+            "value": {
+              "type": "string",
+              "value": "first"
+            },
+            "validFrom": 800,
+            "assertionTxId": "_tx/00GRTCFP000000000000000004",
+            "retractionTxId": "_tx/00GRTCFP000000000000000005"
+          },
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        },
+        {
+          "entityId": "_tx/00GRTCFP000000000000000005",
+          "attribute": ":_tx/changed-entity",
+          "value": "nested:one",
+          "validFrom": 800,
+          "recordedAt": 1000.003
+        }
+      ],
+      "negativeControls": {
+        "validDefaultChangedRejected": true,
+        "journalDefaultChangedRejected": true
+      }
+    }
+  ]
+}

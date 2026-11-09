@@ -1,0 +1,428 @@
+[
+  {
+    "lane": "xtdb",
+    "routes": [
+      {
+        "id": "Triples.entity",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.entities",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.entityPage",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.match",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.dependencyState",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.queryAll",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.queryAll+echo",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.query",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.queryPage",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.transactionsForEntity",
+        "kind": "snapshot"
+      },
+      {
+        "id": "Storage.getByEntity",
+        "kind": "TP"
+      },
+      {
+        "id": "Storage.getByEntities",
+        "kind": "TP"
+      },
+      {
+        "id": "Storage.query",
+        "kind": "TP"
+      },
+      {
+        "id": "Storage.dependencyState",
+        "kind": "TP"
+      },
+      {
+        "id": "QueryExecutor.execute",
+        "kind": "TP"
+      },
+      {
+        "id": "QueryExecutor.executePage",
+        "kind": "TP"
+      },
+      {
+        "id": "Temporal.queryIntervals",
+        "kind": "TP"
+      },
+      {
+        "id": "Native.select",
+        "kind": "TP"
+      },
+      {
+        "id": "Triples.get",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.history",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.transaction",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.transactionByCommand",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.transactions",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.currentPosition",
+        "kind": "none"
+      },
+      {
+        "id": "Storage.getById",
+        "kind": "none"
+      },
+      {
+        "id": "Storage.history",
+        "kind": "none"
+      },
+      {
+        "id": "Storage.currentCut",
+        "kind": "none"
+      },
+      {
+        "id": "Storage.currentCommitPosition",
+        "kind": "none"
+      },
+      {
+        "id": "Operations.resolve",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.explain",
+        "kind": "compile"
+      },
+      {
+        "id": "Triples.explainPage",
+        "kind": "compile"
+      },
+      {
+        "id": "QueryExecutor.explain",
+        "kind": "compile"
+      },
+      {
+        "id": "QueryExecutor.explainPage",
+        "kind": "compile"
+      },
+      {
+        "id": "Native.selectSql",
+        "kind": "TP"
+      },
+      {
+        "id": "Native.selectWithReachability",
+        "kind": "TP"
+      },
+      {
+        "id": "Native.selectSqlWithReachability",
+        "kind": "TP"
+      },
+      {
+        "id": "Maintained.query",
+        "kind": "TP"
+      },
+      {
+        "id": "Maintained.publish",
+        "kind": "publish"
+      }
+    ],
+    "objects": {
+      "t": [
+        "assert",
+        "assertBatch",
+        "currentPosition",
+        "dependencyState",
+        "entities",
+        "entity",
+        "entityPage",
+        "explain",
+        "explainPage",
+        "get",
+        "history",
+        "match",
+        "query",
+        "queryAll",
+        "queryPage",
+        "retract",
+        "retractByPattern",
+        "transact",
+        "transaction",
+        "transactionByCommand",
+        "transactions",
+        "transactionsForEntity"
+      ],
+      "adapter": [
+        "batchInsert",
+        "claimCommand",
+        "close",
+        "commitStamp",
+        "currentCommitPosition",
+        "currentCut",
+        "dependencyState",
+        "getByEntities",
+        "getByEntity",
+        "getById",
+        "history",
+        "initialize",
+        "insert",
+        "nextCommitPosition",
+        "query",
+        "recordTime",
+        "retract",
+        "supportedValueTypes",
+        "validateConstraints",
+        "withTransaction"
+      ],
+      "executor": [
+        "execute",
+        "executePage",
+        "explain",
+        "explainPage"
+      ],
+      "native": [
+        "select",
+        "selectSql",
+        "selectSqlWithReachability",
+        "selectWithReachability"
+      ],
+      "temporal": [
+        "queryIntervals"
+      ],
+      "maintained": [
+        "publish",
+        "query"
+      ]
+    }
+  },
+  {
+    "lane": "qlever",
+    "routes": [
+      {
+        "id": "Triples.entity",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.entities",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.entityPage",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.match",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.dependencyState",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.queryAll",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.queryAll+echo",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.query",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.queryPage",
+        "kind": "T"
+      },
+      {
+        "id": "Triples.transactionsForEntity",
+        "kind": "snapshot"
+      },
+      {
+        "id": "Storage.getByEntity",
+        "kind": "TP"
+      },
+      {
+        "id": "Storage.getByEntities",
+        "kind": "TP"
+      },
+      {
+        "id": "Storage.query",
+        "kind": "TP"
+      },
+      {
+        "id": "Storage.dependencyState",
+        "kind": "TP"
+      },
+      {
+        "id": "QueryExecutor.execute",
+        "kind": "TP"
+      },
+      {
+        "id": "QueryExecutor.executePage",
+        "kind": "TP"
+      },
+      {
+        "id": "Temporal.queryIntervals",
+        "kind": "TP"
+      },
+      {
+        "id": "Native.select",
+        "kind": "TP"
+      },
+      {
+        "id": "Triples.get",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.history",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.transaction",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.transactionByCommand",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.transactions",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.currentPosition",
+        "kind": "none"
+      },
+      {
+        "id": "Storage.getById",
+        "kind": "none"
+      },
+      {
+        "id": "Storage.history",
+        "kind": "none"
+      },
+      {
+        "id": "Storage.currentCut",
+        "kind": "none"
+      },
+      {
+        "id": "Storage.currentCommitPosition",
+        "kind": "none"
+      },
+      {
+        "id": "Operations.resolve",
+        "kind": "none"
+      },
+      {
+        "id": "Triples.explain",
+        "kind": "compile"
+      },
+      {
+        "id": "Triples.explainPage",
+        "kind": "compile"
+      },
+      {
+        "id": "QueryExecutor.explain",
+        "kind": "compile"
+      },
+      {
+        "id": "QueryExecutor.explainPage",
+        "kind": "compile"
+      },
+      {
+        "id": "Native.selectWithRelations",
+        "kind": "TP"
+      }
+    ],
+    "objects": {
+      "t": [
+        "assert",
+        "assertBatch",
+        "currentPosition",
+        "dependencyState",
+        "entities",
+        "entity",
+        "entityPage",
+        "explain",
+        "explainPage",
+        "get",
+        "history",
+        "match",
+        "query",
+        "queryAll",
+        "queryPage",
+        "retract",
+        "retractByPattern",
+        "transact",
+        "transaction",
+        "transactionByCommand",
+        "transactions",
+        "transactionsForEntity"
+      ],
+      "adapter": [
+        "batchInsert",
+        "claimCommand",
+        "close",
+        "commitStamp",
+        "currentCommitPosition",
+        "currentCut",
+        "dependencyState",
+        "getByEntities",
+        "getByEntity",
+        "getById",
+        "history",
+        "initialize",
+        "insert",
+        "nextCommitPosition",
+        "query",
+        "recordTime",
+        "retract",
+        "sourceView",
+        "supportedValueTypes",
+        "withTransaction"
+      ],
+      "executor": [
+        "execute",
+        "executePage",
+        "explain",
+        "explainPage"
+      ],
+      "native": [
+        "select",
+        "selectWithRelations"
+      ],
+      "temporal": [
+        "queryIntervals"
+      ]
+    }
+  }
+]

@@ -1,0 +1,734 @@
+{
+ "format": "triplex-db-2/o-replay-expected/1",
+ "oracle": {
+  "id": "O-REPLAY",
+  "version": "0.5.0",
+  "sourceSha256": {
+   "__init__.py": "1c8a05550047bf892f96ca71eb3b203efc7359dfc3acc1d4fd9b0420386c76e0",
+   "__main__.py": "486ab6ff5cfd46ec8b633b00885efb814f6b9f61b7b2d9193ff5f6ee5868d04d",
+   "cli.py": "1492793e203e2b09d4be28f32c3800e1efadbb9098be8c6699d88a3d6b6d63f5",
+   "errors.py": "c2260e1e06af38b2ce97246d5f9ff5626484dd0dfaf4afe409ddfcd6eee634df",
+   "values.py": "67a42954b3988ff248b8ff34b2b166ed04a793665cb688b7ea768b9f37049982",
+   "exact.py": "4cfcf2c9af4b4ddf36f2218308685aff99d91416ac7f0d1dec053fb7a6e74d2a",
+   "replay.py": "e80ecf94423c6985090fd5af2f7be1d768f22c2a30dbbee2a15a75b32a71c85c",
+   "constraints.py": "9e1e9d7b1ca8046ca67520bbc4905b03ad3bd663c260a4ed0d2b6ca024a91a1d",
+   "views.py": "2ab52f5aaf2742b9e6832ff1b80fc94f5e9dad54bebb0e2d6393f1c2fc483a8e",
+   "entities.py": "e92308b6df7a0996a26fe129b9df07e058d8b0c84cff54f2690cd7c76fc871b3",
+   "scale.py": "5917ade3c099a5062c76e9814b5019439bbbcad843f0e2790213fea8c9c98abe",
+   "run.py": "5a533a3f1944f2c483e2cf0e5bfa26f4334c5fd8a04aa03828c8c053d4a2b02f",
+   "selfcheck.py": "5a298c577b50204dddf5dce6577207d0dd1e90b339b3ee3d9c3bbf2b431ed8fd",
+   "stamps.py": "3a5c37aae37b44f5c41b0e0fccba3eee658985ca3a18dc55d147e8b6ece8526d"
+  }
+ },
+ "caseId": "CX-VRT01/xtdb-compact/nested",
+ "caseSha256": "de855f621ce74974917d602e5c29b33d6c868e6c80a7a0fcfa1501187975fc56",
+ "lane": {
+  "name": "core",
+  "integerRange": [
+   "-9223372036854775808",
+   "9223372036854775807"
+  ]
+ },
+ "verdict": "PASS",
+ "divergedAtCommand": null,
+ "receiptConsistency": {
+  "status": "PASS",
+  "violations": []
+ },
+ "commandOutcomes": [
+  {
+   "command": 0,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": {
+    "outcome": "committed"
+   },
+   "verdict": "PASS"
+  },
+  {
+   "command": 1,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": {
+    "outcome": "committed"
+   },
+   "verdict": "PASS"
+  },
+  {
+   "command": 2,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": {
+    "outcome": "committed"
+   },
+   "verdict": "PASS"
+  },
+  {
+   "command": 3,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": {
+    "outcome": "committed"
+   },
+   "verdict": "PASS"
+  },
+  {
+   "command": 4,
+   "expected": {
+    "outcome": "committed"
+   },
+   "observed": {
+    "outcome": "committed"
+   },
+   "verdict": "PASS"
+  }
+ ],
+ "state": [
+  {
+   "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VRT01\",0]",
+   "lastPosition": 5,
+   "assertions": [
+    {
+     "id": "00V9ABAN000000000000000001",
+     "entityId": "subject:one",
+     "attribute": ":value",
+     "value": {
+      "type": "string",
+      "value": "first"
+     },
+     "validFrom": 1000,
+     "validTo": null,
+     "recordedAt": 1000,
+     "recordedPosition": 1,
+     "createdBy": null,
+     "entityType": "Subject",
+     "schemaVersion": 1,
+     "txId": "_tx/00GRTCFP000000000000000001",
+     "retractedAt": 1000.002,
+     "retractedPosition": 3,
+     "retractTxId": "_tx/00GRTCFP000000000000000003"
+    },
+    {
+     "id": "00V9ABAN000000000000000005",
+     "entityId": "subject:two",
+     "attribute": ":value",
+     "value": {
+      "type": "string",
+      "value": "first"
+     },
+     "validFrom": 1000,
+     "validTo": null,
+     "recordedAt": 1000.001,
+     "recordedPosition": 2,
+     "createdBy": null,
+     "entityType": "Subject",
+     "schemaVersion": 1,
+     "txId": "_tx/00GRTCFP000000000000000002",
+     "retractedAt": null,
+     "retractedPosition": null,
+     "retractTxId": null
+    },
+    {
+     "id": "00V9ABAN00000000000000000C",
+     "entityId": "nested:one",
+     "attribute": ":value",
+     "value": {
+      "type": "string",
+      "value": "first"
+     },
+     "validFrom": 800,
+     "validTo": null,
+     "recordedAt": 1000.003,
+     "recordedPosition": 4,
+     "createdBy": null,
+     "entityType": "Subject",
+     "schemaVersion": 1,
+     "txId": "_tx/00GRTCFP000000000000000004",
+     "retractedAt": 1000.003,
+     "retractedPosition": 5,
+     "retractTxId": "_tx/00GRTCFP000000000000000005"
+    }
+   ],
+   "transactions": [
+    {
+     "txId": "_tx/00GRTCFP000000000000000001",
+     "position": 1,
+     "instant": 1000,
+     "changes": [
+      {
+       "op": "assert",
+       "tripleId": "00V9ABAN000000000000000001",
+       "entityId": "subject:one",
+       "attribute": ":value",
+       "entityType": "Subject",
+       "value": {
+        "type": "string",
+        "value": "first"
+       },
+       "validFrom": 1000,
+       "recordedAt": 1000,
+       "assertionTxId": "_tx/00GRTCFP000000000000000001"
+      }
+     ],
+     "changedEntities": [
+      "subject:one"
+     ]
+    },
+    {
+     "txId": "_tx/00GRTCFP000000000000000002",
+     "position": 2,
+     "instant": 1000.001,
+     "changes": [
+      {
+       "op": "assert",
+       "tripleId": "00V9ABAN000000000000000005",
+       "entityId": "subject:two",
+       "attribute": ":value",
+       "entityType": "Subject",
+       "value": {
+        "type": "string",
+        "value": "first"
+       },
+       "validFrom": 1000,
+       "recordedAt": 1000.001,
+       "assertionTxId": "_tx/00GRTCFP000000000000000002"
+      }
+     ],
+     "changedEntities": [
+      "subject:two"
+     ]
+    },
+    {
+     "txId": "_tx/00GRTCFP000000000000000003",
+     "position": 3,
+     "instant": 1000.002,
+     "changes": [
+      {
+       "op": "retract",
+       "tripleId": "00V9ABAN000000000000000001",
+       "entityId": "subject:one",
+       "attribute": ":value",
+       "entityType": "Subject",
+       "value": {
+        "type": "string",
+        "value": "first"
+       },
+       "validFrom": 1000,
+       "recordedAt": 1000,
+       "assertionTxId": "_tx/00GRTCFP000000000000000001",
+       "retractedAt": 1000.002,
+       "retractionTxId": "_tx/00GRTCFP000000000000000003"
+      }
+     ],
+     "changedEntities": [
+      "subject:one"
+     ]
+    },
+    {
+     "txId": "_tx/00GRTCFP000000000000000004",
+     "position": 4,
+     "instant": 1000.003,
+     "changes": [
+      {
+       "op": "assert",
+       "tripleId": "00V9ABAN00000000000000000C",
+       "entityId": "nested:one",
+       "attribute": ":value",
+       "entityType": "Subject",
+       "value": {
+        "type": "string",
+        "value": "first"
+       },
+       "validFrom": 800,
+       "recordedAt": 1000.003,
+       "assertionTxId": "_tx/00GRTCFP000000000000000004"
+      }
+     ],
+     "changedEntities": [
+      "nested:one"
+     ]
+    },
+    {
+     "txId": "_tx/00GRTCFP000000000000000005",
+     "position": 5,
+     "instant": 1000.003,
+     "changes": [
+      {
+       "op": "retract",
+       "tripleId": "00V9ABAN00000000000000000C",
+       "entityId": "nested:one",
+       "attribute": ":value",
+       "entityType": "Subject",
+       "value": {
+        "type": "string",
+        "value": "first"
+       },
+       "validFrom": 800,
+       "recordedAt": 1000.003,
+       "assertionTxId": "_tx/00GRTCFP000000000000000004",
+       "retractedAt": 1000.003,
+       "retractionTxId": "_tx/00GRTCFP000000000000000005"
+      }
+     ],
+     "changedEntities": [
+      "nested:one"
+     ]
+    }
+   ]
+  }
+ ],
+ "queries": [
+  {
+   "id": "journal",
+   "kind": "journalFacts",
+   "result": {
+    "scope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VRT01\",0]",
+    "facts": [
+     {
+      "id": "journal:_tx/00GRTCFP000000000000000001:changed-entity:0",
+      "entityId": "_tx/00GRTCFP000000000000000001",
+      "attribute": ":_tx/changed-entity",
+      "value": {
+       "type": "ref",
+       "value": "subject:one"
+      },
+      "validFrom": 1000,
+      "validTo": null,
+      "recordedAt": 1000,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": "_Transaction",
+      "schemaVersion": null,
+      "txId": "_tx/00GRTCFP000000000000000001",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null,
+      "journal": true
+     },
+     {
+      "id": "journal:_tx/00GRTCFP000000000000000001:change:0",
+      "entityId": "_tx/00GRTCFP000000000000000001",
+      "attribute": ":_tx/change",
+      "value": {
+       "type": "json",
+       "value": {
+        "op": "assert",
+        "tripleId": "00V9ABAN000000000000000001",
+        "entityId": "subject:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+         "type": "string",
+         "value": "first"
+        },
+        "validFrom": 1000,
+        "assertionTxId": "_tx/00GRTCFP000000000000000001"
+       },
+       "canonical": "{\"assertionTxId\":\"_tx/00GRTCFP000000000000000001\",\"attribute\":\":value\",\"entityId\":\"subject:one\",\"entityType\":\"Subject\",\"op\":\"assert\",\"tripleId\":\"00V9ABAN000000000000000001\",\"validFrom\":1000,\"value\":{\"type\":\"string\",\"value\":\"first\"}}"
+      },
+      "validFrom": 1000,
+      "validTo": null,
+      "recordedAt": 1000,
+      "recordedPosition": 1,
+      "createdBy": null,
+      "entityType": "_Transaction",
+      "schemaVersion": null,
+      "txId": "_tx/00GRTCFP000000000000000001",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null,
+      "journal": true
+     },
+     {
+      "id": "journal:_tx/00GRTCFP000000000000000002:changed-entity:0",
+      "entityId": "_tx/00GRTCFP000000000000000002",
+      "attribute": ":_tx/changed-entity",
+      "value": {
+       "type": "ref",
+       "value": "subject:two"
+      },
+      "validFrom": 1000,
+      "validTo": null,
+      "recordedAt": 1000.001,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "_Transaction",
+      "schemaVersion": null,
+      "txId": "_tx/00GRTCFP000000000000000002",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null,
+      "journal": true
+     },
+     {
+      "id": "journal:_tx/00GRTCFP000000000000000002:change:0",
+      "entityId": "_tx/00GRTCFP000000000000000002",
+      "attribute": ":_tx/change",
+      "value": {
+       "type": "json",
+       "value": {
+        "op": "assert",
+        "tripleId": "00V9ABAN000000000000000005",
+        "entityId": "subject:two",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+         "type": "string",
+         "value": "first"
+        },
+        "validFrom": 1000,
+        "assertionTxId": "_tx/00GRTCFP000000000000000002"
+       },
+       "canonical": "{\"assertionTxId\":\"_tx/00GRTCFP000000000000000002\",\"attribute\":\":value\",\"entityId\":\"subject:two\",\"entityType\":\"Subject\",\"op\":\"assert\",\"tripleId\":\"00V9ABAN000000000000000005\",\"validFrom\":1000,\"value\":{\"type\":\"string\",\"value\":\"first\"}}"
+      },
+      "validFrom": 1000,
+      "validTo": null,
+      "recordedAt": 1000.001,
+      "recordedPosition": 2,
+      "createdBy": null,
+      "entityType": "_Transaction",
+      "schemaVersion": null,
+      "txId": "_tx/00GRTCFP000000000000000002",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null,
+      "journal": true
+     },
+     {
+      "id": "journal:_tx/00GRTCFP000000000000000003:changed-entity:0",
+      "entityId": "_tx/00GRTCFP000000000000000003",
+      "attribute": ":_tx/changed-entity",
+      "value": {
+       "type": "ref",
+       "value": "subject:one"
+      },
+      "validFrom": 900,
+      "validTo": null,
+      "recordedAt": 1000.002,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "_Transaction",
+      "schemaVersion": null,
+      "txId": "_tx/00GRTCFP000000000000000003",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null,
+      "journal": true
+     },
+     {
+      "id": "journal:_tx/00GRTCFP000000000000000003:change:0",
+      "entityId": "_tx/00GRTCFP000000000000000003",
+      "attribute": ":_tx/change",
+      "value": {
+       "type": "json",
+       "value": {
+        "op": "retract",
+        "tripleId": "00V9ABAN000000000000000001",
+        "entityId": "subject:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+         "type": "string",
+         "value": "first"
+        },
+        "validFrom": 1000,
+        "recordedAt": 1000,
+        "assertionTxId": "_tx/00GRTCFP000000000000000001",
+        "retractionTxId": "_tx/00GRTCFP000000000000000003"
+       },
+       "canonical": "{\"assertionTxId\":\"_tx/00GRTCFP000000000000000001\",\"attribute\":\":value\",\"entityId\":\"subject:one\",\"entityType\":\"Subject\",\"op\":\"retract\",\"recordedAt\":1000,\"retractionTxId\":\"_tx/00GRTCFP000000000000000003\",\"tripleId\":\"00V9ABAN000000000000000001\",\"validFrom\":1000,\"value\":{\"type\":\"string\",\"value\":\"first\"}}"
+      },
+      "validFrom": 900,
+      "validTo": null,
+      "recordedAt": 1000.002,
+      "recordedPosition": 3,
+      "createdBy": null,
+      "entityType": "_Transaction",
+      "schemaVersion": null,
+      "txId": "_tx/00GRTCFP000000000000000003",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null,
+      "journal": true
+     },
+     {
+      "id": "journal:_tx/00GRTCFP000000000000000004:changed-entity:0",
+      "entityId": "_tx/00GRTCFP000000000000000004",
+      "attribute": ":_tx/changed-entity",
+      "value": {
+       "type": "ref",
+       "value": "nested:one"
+      },
+      "validFrom": 800,
+      "validTo": null,
+      "recordedAt": 1000.003,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "_Transaction",
+      "schemaVersion": null,
+      "txId": "_tx/00GRTCFP000000000000000004",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null,
+      "journal": true
+     },
+     {
+      "id": "journal:_tx/00GRTCFP000000000000000004:change:0",
+      "entityId": "_tx/00GRTCFP000000000000000004",
+      "attribute": ":_tx/change",
+      "value": {
+       "type": "json",
+       "value": {
+        "op": "assert",
+        "tripleId": "00V9ABAN00000000000000000C",
+        "entityId": "nested:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+         "type": "string",
+         "value": "first"
+        },
+        "validFrom": 800,
+        "assertionTxId": "_tx/00GRTCFP000000000000000004"
+       },
+       "canonical": "{\"assertionTxId\":\"_tx/00GRTCFP000000000000000004\",\"attribute\":\":value\",\"entityId\":\"nested:one\",\"entityType\":\"Subject\",\"op\":\"assert\",\"tripleId\":\"00V9ABAN00000000000000000C\",\"validFrom\":800,\"value\":{\"type\":\"string\",\"value\":\"first\"}}"
+      },
+      "validFrom": 800,
+      "validTo": null,
+      "recordedAt": 1000.003,
+      "recordedPosition": 4,
+      "createdBy": null,
+      "entityType": "_Transaction",
+      "schemaVersion": null,
+      "txId": "_tx/00GRTCFP000000000000000004",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null,
+      "journal": true
+     },
+     {
+      "id": "journal:_tx/00GRTCFP000000000000000005:changed-entity:0",
+      "entityId": "_tx/00GRTCFP000000000000000005",
+      "attribute": ":_tx/changed-entity",
+      "value": {
+       "type": "ref",
+       "value": "nested:one"
+      },
+      "validFrom": 800,
+      "validTo": null,
+      "recordedAt": 1000.003,
+      "recordedPosition": 5,
+      "createdBy": null,
+      "entityType": "_Transaction",
+      "schemaVersion": null,
+      "txId": "_tx/00GRTCFP000000000000000005",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null,
+      "journal": true
+     },
+     {
+      "id": "journal:_tx/00GRTCFP000000000000000005:change:0",
+      "entityId": "_tx/00GRTCFP000000000000000005",
+      "attribute": ":_tx/change",
+      "value": {
+       "type": "json",
+       "value": {
+        "op": "retract",
+        "tripleId": "00V9ABAN00000000000000000C",
+        "entityId": "nested:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+         "type": "string",
+         "value": "first"
+        },
+        "validFrom": 800,
+        "assertionTxId": "_tx/00GRTCFP000000000000000004",
+        "retractionTxId": "_tx/00GRTCFP000000000000000005"
+       },
+       "canonical": "{\"assertionTxId\":\"_tx/00GRTCFP000000000000000004\",\"attribute\":\":value\",\"entityId\":\"nested:one\",\"entityType\":\"Subject\",\"op\":\"retract\",\"retractionTxId\":\"_tx/00GRTCFP000000000000000005\",\"tripleId\":\"00V9ABAN00000000000000000C\",\"validFrom\":800,\"value\":{\"type\":\"string\",\"value\":\"first\"}}"
+      },
+      "validFrom": 800,
+      "validTo": null,
+      "recordedAt": 1000.003,
+      "recordedPosition": 5,
+      "createdBy": null,
+      "entityType": "_Transaction",
+      "schemaVersion": null,
+      "txId": "_tx/00GRTCFP000000000000000005",
+      "retractedAt": null,
+      "retractedPosition": null,
+      "retractTxId": null,
+      "journal": true
+     }
+    ]
+   }
+  },
+  {
+   "id": "transactions",
+   "kind": "transactions",
+   "result": {
+    "transactions": [
+     {
+      "txId": "_tx/00GRTCFP000000000000000001",
+      "position": 1,
+      "instant": 1000,
+      "changes": [
+       {
+        "op": "assert",
+        "tripleId": "00V9ABAN000000000000000001",
+        "entityId": "subject:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+         "type": "string",
+         "value": "first"
+        },
+        "validFrom": 1000,
+        "recordedAt": 1000,
+        "assertionTxId": "_tx/00GRTCFP000000000000000001"
+       }
+      ],
+      "changedEntities": [
+       "subject:one"
+      ]
+     },
+     {
+      "txId": "_tx/00GRTCFP000000000000000002",
+      "position": 2,
+      "instant": 1000.001,
+      "changes": [
+       {
+        "op": "assert",
+        "tripleId": "00V9ABAN000000000000000005",
+        "entityId": "subject:two",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+         "type": "string",
+         "value": "first"
+        },
+        "validFrom": 1000,
+        "recordedAt": 1000.001,
+        "assertionTxId": "_tx/00GRTCFP000000000000000002"
+       }
+      ],
+      "changedEntities": [
+       "subject:two"
+      ]
+     },
+     {
+      "txId": "_tx/00GRTCFP000000000000000003",
+      "position": 3,
+      "instant": 1000.002,
+      "changes": [
+       {
+        "op": "retract",
+        "tripleId": "00V9ABAN000000000000000001",
+        "entityId": "subject:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+         "type": "string",
+         "value": "first"
+        },
+        "validFrom": 1000,
+        "recordedAt": 1000,
+        "assertionTxId": "_tx/00GRTCFP000000000000000001",
+        "retractedAt": 1000.002,
+        "retractionTxId": "_tx/00GRTCFP000000000000000003"
+       }
+      ],
+      "changedEntities": [
+       "subject:one"
+      ]
+     },
+     {
+      "txId": "_tx/00GRTCFP000000000000000004",
+      "position": 4,
+      "instant": 1000.003,
+      "changes": [
+       {
+        "op": "assert",
+        "tripleId": "00V9ABAN00000000000000000C",
+        "entityId": "nested:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+         "type": "string",
+         "value": "first"
+        },
+        "validFrom": 800,
+        "recordedAt": 1000.003,
+        "assertionTxId": "_tx/00GRTCFP000000000000000004"
+       }
+      ],
+      "changedEntities": [
+       "nested:one"
+      ]
+     },
+     {
+      "txId": "_tx/00GRTCFP000000000000000005",
+      "position": 5,
+      "instant": 1000.003,
+      "changes": [
+       {
+        "op": "retract",
+        "tripleId": "00V9ABAN00000000000000000C",
+        "entityId": "nested:one",
+        "attribute": ":value",
+        "entityType": "Subject",
+        "value": {
+         "type": "string",
+         "value": "first"
+        },
+        "validFrom": 800,
+        "recordedAt": 1000.003,
+        "assertionTxId": "_tx/00GRTCFP000000000000000004",
+        "retractedAt": 1000.003,
+        "retractionTxId": "_tx/00GRTCFP000000000000000005"
+       }
+      ],
+      "changedEntities": [
+       "nested:one"
+      ]
+     }
+    ],
+    "next": 5
+   }
+  }
+ ],
+ "rulesInEffect": {
+  "attributeSyntax": "any",
+  "createdByDefault": "null",
+  "datetimeRange": null,
+  "emptyIntervalRejected": true,
+  "journalChangeOrder": "operation-order",
+  "reservedNamespaces": null,
+  "retractNonLive": "transaction-conflict",
+  "retractPatternEmptyRejected": true,
+  "retractPatternSeesStaged": true,
+  "typeMembership": "valid-at-instant",
+  "validFromDefault": "transaction-instant"
+ },
+ "reservedNamespaces": {
+  "attributePrefixes": [
+   ":triplex/",
+   ":_tx/"
+  ],
+  "entityIdPrefixes": [
+   "_triplex/"
+  ],
+  "entityTypePrefixes": [
+   "triplex."
+  ],
+  "entityTypes": [
+   "_Transaction"
+  ]
+ }
+}

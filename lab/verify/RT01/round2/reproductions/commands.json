@@ -1,0 +1,46 @@
+{
+  "before": {
+    "probe": "6b929d0d59eb5609baaf10dde9af2ba4fe7115957f6acb292b48f0182d24475b",
+    "public-routes": "5b45a2615a0e1c25455e1e2f07f59aae42ab75a20180cd87cd274efb91125f7c",
+    "journal-single": "408b3f44102e4d71ef4368bad184f1b65fd665550097627dbef2bdd094b4c240"
+  },
+  "commands": [
+    {
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "lab/verify/RT01/round2/probe.ts",
+        "lab/verify/RT01/round2/reproductions/"
+      ],
+      "started": "2026-11-09T04:27:13.816Z",
+      "ended": "2026-11-09T04:27:47.463Z",
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "lab/verify/RT01/round2/public-routes.ts",
+        "lab/verify/RT01/round2/reproductions/"
+      ],
+      "started": "2026-11-09T04:27:47.463Z",
+      "ended": "2026-11-09T04:27:48.034Z",
+      "exit": 0
+    },
+    {
+      "command": [
+        "node",
+        "--import",
+        "tsx",
+        "lab/verify/RT01/round2/journal-single.ts",
+        "lab/verify/RT01/round2/reproductions/"
+      ],
+      "started": "2026-11-09T04:27:48.034Z",
+      "ended": "2026-11-09T04:27:48.448Z",
+      "exit": 0
+    }
+  ],
+  "checkedReproductions": 32
+}

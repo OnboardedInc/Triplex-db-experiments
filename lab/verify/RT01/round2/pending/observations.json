@@ -1,0 +1,2768 @@
+[
+  {
+    "lane": "qlever",
+    "route": "Native.select",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.3123329999999,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.4692920000002,
+    "cuts": 181,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Native.select",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2000.1637910000004,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2000.5592919999995,
+    "cuts": 180,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Native.selectWithRelations",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.0912919999996,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.2201249999998,
+    "cuts": 181,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Native.selectWithRelations",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.1654999999996,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.4096249999998,
+    "cuts": 181,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "QueryExecutor.execute",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "DatalogValidationError"
+    },
+    "observed": {
+      "tag": "DatalogValidationError",
+      "sameObject": false,
+      "message": "QLever historical Datalog inside a pending transaction is not yet qualified"
+    },
+    "elapsedMs": 0.08558399999992616,
+    "cuts": 1,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "QueryExecutor.execute",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "DatalogValidationError"
+    },
+    "observed": {
+      "tag": "DatalogValidationError",
+      "sameObject": false,
+      "message": "QLever historical Datalog inside a pending transaction is not yet qualified"
+    },
+    "elapsedMs": 0.17670799999996234,
+    "cuts": 1,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "QueryExecutor.executePage",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "DatalogValidationError"
+    },
+    "observed": {
+      "tag": "DatalogValidationError",
+      "sameObject": false,
+      "message": "QLever historical Datalog inside a pending transaction is not yet qualified"
+    },
+    "elapsedMs": 0.10362499999973807,
+    "cuts": 1,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "QueryExecutor.executePage",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "DatalogValidationError"
+    },
+    "observed": {
+      "tag": "DatalogValidationError",
+      "sameObject": false,
+      "message": "QLever historical Datalog inside a pending transaction is not yet qualified"
+    },
+    "elapsedMs": 0.13524999999981446,
+    "cuts": 1,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Storage.dependencyState",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.3210000000004,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.352542,
+    "cuts": 182,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Storage.dependencyState",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.3227499999998,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.4222920000002,
+    "cuts": 182,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Storage.getByEntities",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": {}
+    },
+    "elapsedMs": 0.17616700000007768,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Storage.getByEntities",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": {}
+    },
+    "elapsedMs": 0.048959000000195374,
+    "cuts": 1,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Storage.getByEntity",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 0.16608300000007148,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Storage.getByEntity",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 0.06337499999972351,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Storage.query",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 0.04608300000018062,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Storage.query",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 0.04508299999997689,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Temporal.queryIntervals",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2000.7077079999995,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2000.7735840000005,
+    "cuts": 180,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Temporal.queryIntervals",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2000.7633330000003,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.2027079999998,
+    "cuts": 180,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.dependencyState",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2000.99125,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.4602910000003,
+    "cuts": 176,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.dependencyState",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2000.965459,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.5517499999999,
+    "cuts": 176,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.entities",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": [
+        []
+      ]
+    },
+    "elapsedMs": 2.6787910000000466,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.entities",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 2.4641249999999673,
+    "cuts": 1,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.entity",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 2.69991600000003,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.entity",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 2.9453750000000127,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.entityPage",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.1277919999998,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2003.629417,
+    "cuts": 177,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.entityPage",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.134083,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2003.6258329999998,
+    "cuts": 177,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.match",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 0.5563329999999951,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.match",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 0.45158399999996846,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.query",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2000.10675,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2000.2544999999996,
+    "cuts": 182,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.query",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2000.278042,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2000.7370830000004,
+    "cuts": 182,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.queryAll",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "DatalogValidationError"
+    },
+    "observed": {
+      "tag": "DatalogValidationError",
+      "sameObject": false,
+      "message": "QLever historical Datalog inside a pending transaction is not yet qualified"
+    },
+    "elapsedMs": 3.988540999999998,
+    "cuts": 1,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.queryAll",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "DatalogValidationError"
+    },
+    "observed": {
+      "tag": "DatalogValidationError",
+      "sameObject": false,
+      "message": "QLever historical Datalog inside a pending transaction is not yet qualified"
+    },
+    "elapsedMs": 1.200207999999975,
+    "cuts": 1,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.queryAll+echo",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2000.146458,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2000.2717500000003,
+    "cuts": 176,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.queryAll+echo",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2000.0930839999999,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2000.2718750000001,
+    "cuts": 176,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.queryPage",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.1126669999999,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.2055,
+    "cuts": 182,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "qlever",
+    "route": "Triples.queryPage",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.1026669999997,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.323375,
+    "cuts": 182,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Maintained.publish",
+    "kind": "publish",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1999.6952500000002,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2002.741,
+    "cuts": 175,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Maintained.publish",
+    "kind": "publish",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1999.670292,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2002.8200829999998,
+    "cuts": 175,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Maintained.query",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1999.6489170000002,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2002.818125,
+    "cuts": 175,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Maintained.query",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1999.6138339999998,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2003.0839580000002,
+    "cuts": 175,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Native.select",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.0902919999999,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2004.331333,
+    "cuts": 175,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Native.select",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.734917,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2005.596,
+    "cuts": 175,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Native.selectSql",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1997.947208,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2002.014792,
+    "cuts": 174,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Native.selectSql",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1997.7826670000002,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2002.0064160000002,
+    "cuts": 174,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Native.selectSqlWithReachability",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1999.584875,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2003.064208,
+    "cuts": 175,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Native.selectSqlWithReachability",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1998.1002090000002,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.609458,
+    "cuts": 174,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Native.selectWithReachability",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1998.0664590000001,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.6024590000002,
+    "cuts": 174,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Native.selectWithReachability",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1997.9822920000001,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2001.610334,
+    "cuts": 174,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "QueryExecutor.execute",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": {
+        "results": []
+      }
+    },
+    "elapsedMs": 15.555957999999976,
+    "cuts": 1,
+    "answers": 2,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "QueryExecutor.execute",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": {
+        "results": []
+      }
+    },
+    "elapsedMs": 15.631124999999997,
+    "cuts": 1,
+    "answers": 2,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "QueryExecutor.executePage",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": {
+        "results": []
+      }
+    },
+    "elapsedMs": 15.525915999999995,
+    "cuts": 1,
+    "answers": 2,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "QueryExecutor.executePage",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": {
+        "results": []
+      }
+    },
+    "elapsedMs": 15.543874999999957,
+    "cuts": 1,
+    "answers": 2,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Storage.dependencyState",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2001.214041,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2013.11125,
+    "cuts": 174,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Storage.dependencyState",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1999.98425,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2011.9495420000003,
+    "cuts": 174,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Storage.getByEntities",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": {}
+    },
+    "elapsedMs": 11.941082999999992,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Storage.getByEntities",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": {}
+    },
+    "elapsedMs": 8.038374999999974,
+    "cuts": 1,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Storage.getByEntity",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 11.952249999999992,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Storage.getByEntity",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 11.815666000000022,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Storage.query",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 11.951542000000018,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Storage.query",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 11.96550000000002,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Temporal.queryIntervals",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1995.72125,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2009.9975000000002,
+    "cuts": 174,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Temporal.queryIntervals",
+    "kind": "TP",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1995.396042,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2009.844583,
+    "cuts": 174,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.dependencyState",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1998.8564159999999,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2009.3957090000001,
+    "cuts": 174,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.dependencyState",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 1997.995125,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2008.8931659999998,
+    "cuts": 174,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.entities",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": [
+        []
+      ]
+    },
+    "elapsedMs": 10.778624999999977,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.entities",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 2.424541999999974,
+    "cuts": 1,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.entity",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 10.712625000000003,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.entity",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 11.207333000000006,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.entityPage",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2015.9458750000001,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2018.7097910000002,
+    "cuts": 176,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.entityPage",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2014.6092500000002,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2017.42325,
+    "cuts": 176,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.match",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 10.757000000000005,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.match",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": []
+    },
+    "elapsedMs": 10.665625000000034,
+    "cuts": 1,
+    "answers": 1,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.query",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2011.3055829999998,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2019.1085830000002,
+    "cuts": 176,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.query",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2011.710958,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2018.940375,
+    "cuts": 176,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.queryAll",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": {
+        "results": []
+      }
+    },
+    "elapsedMs": 16.123333000000002,
+    "cuts": 1,
+    "answers": 2,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.queryAll",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "success": {
+        "results": []
+      }
+    },
+    "elapsedMs": 16.327375000000018,
+    "cuts": 1,
+    "answers": 2,
+    "writes": 0,
+    "checks": {
+      "tagMatches": false,
+      "metadataMatches": false,
+      "deadlineMatches": false,
+      "identityMatches": true,
+      "noPrematureAnswer": false
+    },
+    "matches": false
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.queryAll+echo",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2011.8687909999999,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2018.7335,
+    "cuts": 176,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.queryAll+echo",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2011.3573749999998,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2018.277708,
+    "cuts": 176,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.queryPage",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": false,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2011.2445420000001,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2019.3796670000002,
+    "cuts": 175,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  },
+  {
+    "lane": "xtdb",
+    "route": "Triples.queryPage",
+    "kind": "T",
+    "mode": "pending-near",
+    "scopeHead": 1,
+    "emptyInput": true,
+    "basis": {
+      "validAt": 1000,
+      "recordedAt": 1000.001
+    },
+    "expected": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt"
+    },
+    "observed": {
+      "tag": "BasisNotAvailable",
+      "axis": "recordedAt",
+      "required": 1000.001,
+      "observed": 1000,
+      "waitedMs": 2011.2005,
+      "sameObject": false,
+      "message": "Record-time watermark has not reached the requested cut"
+    },
+    "elapsedMs": 2019.4011249999999,
+    "cuts": 176,
+    "answers": 0,
+    "writes": 0,
+    "checks": {
+      "tagMatches": true,
+      "metadataMatches": true,
+      "deadlineMatches": true,
+      "identityMatches": true,
+      "noPrematureAnswer": true
+    },
+    "matches": true
+  }
+]

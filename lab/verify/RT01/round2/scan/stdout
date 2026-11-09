@@ -1,0 +1,377 @@
+{
+  "kind": "offline-emitted-a0-scope-scan-model",
+  "engineIO": false,
+  "baselineCommit": "59e07afb7a25dfb22bca60f8d769b74651aa835a",
+  "baselineSourceSha256": "5a9b4d63a8754e974c4a270610880f3c5199a525354255ff6bf0b9c9a2d6a58e",
+  "capturedGuards": {
+    "a0": "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ? AND (SELECT COALESCE(MAX(stamp), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'",
+    "compact": "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1) = $2 AND (SELECT COALESCE(MAX(stamp), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1) = $3, 'triplex-cas-conflict'"
+  },
+  "baselineGuards": {
+    "a0": "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) = ?, 'triplex-cas-conflict'",
+    "compact": "ASSERT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = $1) = $2, 'triplex-cas-conflict'"
+  },
+  "limitation": "JS sequential scans, not XTDB planning or historical-version visibility; no latency qualification. QLever has exact marker CAS and no added MAX scope scan.",
+  "measurements": [
+    {
+      "encoding": "a0",
+      "storedScopeVersions": 0,
+      "expectedCut": {
+        "position": 0,
+        "stamp": 0
+      },
+      "iterationsPerArm": 1000,
+      "pairs": [
+        {
+          "pair": 0,
+          "baselineMs": 0.00018033399999995935,
+          "rt01Ms": 0.0001914579999999546
+        },
+        {
+          "pair": 1,
+          "baselineMs": 0.00005695800000000873,
+          "rt01Ms": 0.00008474999999998544
+        },
+        {
+          "pair": 2,
+          "baselineMs": 0.000056375000000002726,
+          "rt01Ms": 0.00008370800000000144
+        },
+        {
+          "pair": 3,
+          "baselineMs": 0.00005733300000002828,
+          "rt01Ms": 0.00008245799999997416
+        },
+        {
+          "pair": 4,
+          "baselineMs": 0.00005716599999999516,
+          "rt01Ms": 0.00008416600000003882
+        },
+        {
+          "pair": 5,
+          "baselineMs": 0.00006200000000001182,
+          "rt01Ms": 0.00008379100000001927
+        }
+      ],
+      "baselineRowVisitsPerGuard": 0,
+      "rt01RowVisitsPerGuard": 0,
+      "baselineMedianMs": 0.00005733300000002828,
+      "rt01MedianMs": 0.00008416600000003882
+    },
+    {
+      "encoding": "a0",
+      "storedScopeVersions": 100,
+      "expectedCut": {
+        "position": 100,
+        "stamp": 1000099
+      },
+      "iterationsPerArm": 1000,
+      "pairs": [
+        {
+          "pair": 0,
+          "baselineMs": 0.0004934999999999832,
+          "rt01Ms": 0.0007239160000000311
+        },
+        {
+          "pair": 1,
+          "baselineMs": 0.0004897090000000048,
+          "rt01Ms": 0.0007213750000000232
+        },
+        {
+          "pair": 2,
+          "baselineMs": 0.0004908339999999498,
+          "rt01Ms": 0.0006618330000000014
+        },
+        {
+          "pair": 3,
+          "baselineMs": 0.0004279999999999973,
+          "rt01Ms": 0.0006361670000000004
+        },
+        {
+          "pair": 4,
+          "baselineMs": 0.00042670900000001664,
+          "rt01Ms": 0.0006212090000000216
+        },
+        {
+          "pair": 5,
+          "baselineMs": 0.0004263329999999996,
+          "rt01Ms": 0.000615916000000027
+        }
+      ],
+      "baselineRowVisitsPerGuard": 100,
+      "rt01RowVisitsPerGuard": 200,
+      "baselineMedianMs": 0.0004897090000000048,
+      "rt01MedianMs": 0.0006618330000000014
+    },
+    {
+      "encoding": "a0",
+      "storedScopeVersions": 10000,
+      "expectedCut": {
+        "position": 10000,
+        "stamp": 1009999
+      },
+      "iterationsPerArm": 100,
+      "pairs": [
+        {
+          "pair": 0,
+          "baselineMs": 0.04171625000000006,
+          "rt01Ms": 0.05920875000000023
+        },
+        {
+          "pair": 1,
+          "baselineMs": 0.04721333000000016,
+          "rt01Ms": 0.06619459000000007
+        },
+        {
+          "pair": 2,
+          "baselineMs": 0.04189875000000029,
+          "rt01Ms": 0.0589666699999998
+        },
+        {
+          "pair": 3,
+          "baselineMs": 0.04196167000000003,
+          "rt01Ms": 0.05928125000000023
+        },
+        {
+          "pair": 4,
+          "baselineMs": 0.04189416999999992,
+          "rt01Ms": 0.058759999999999764
+        },
+        {
+          "pair": 5,
+          "baselineMs": 0.0415462500000001,
+          "rt01Ms": 0.058770830000000274
+        }
+      ],
+      "baselineRowVisitsPerGuard": 10000,
+      "rt01RowVisitsPerGuard": 20000,
+      "baselineMedianMs": 0.04189875000000029,
+      "rt01MedianMs": 0.05920875000000023
+    },
+    {
+      "encoding": "a0",
+      "storedScopeVersions": 100000,
+      "expectedCut": {
+        "position": 100000,
+        "stamp": 1099999
+      },
+      "iterationsPerArm": 10,
+      "pairs": [
+        {
+          "pair": 0,
+          "baselineMs": 0.4158584000000019,
+          "rt01Ms": 0.5965750000000014
+        },
+        {
+          "pair": 1,
+          "baselineMs": 0.4156833000000006,
+          "rt01Ms": 0.5862375000000043
+        },
+        {
+          "pair": 2,
+          "baselineMs": 0.4160459000000003,
+          "rt01Ms": 0.6018000000000029
+        },
+        {
+          "pair": 3,
+          "baselineMs": 0.4164666999999895,
+          "rt01Ms": 0.5861958999999957
+        },
+        {
+          "pair": 4,
+          "baselineMs": 0.43802500000000466,
+          "rt01Ms": 0.5924416999999949
+        },
+        {
+          "pair": 5,
+          "baselineMs": 0.41770420000000286,
+          "rt01Ms": 0.5897041999999942
+        }
+      ],
+      "baselineRowVisitsPerGuard": 100000,
+      "rt01RowVisitsPerGuard": 200000,
+      "baselineMedianMs": 0.4164666999999895,
+      "rt01MedianMs": 0.5924416999999949
+    },
+    {
+      "encoding": "compact",
+      "storedScopeVersions": 0,
+      "expectedCut": {
+        "position": 0,
+        "stamp": 0
+      },
+      "iterationsPerArm": 1000,
+      "pairs": [
+        {
+          "pair": 0,
+          "baselineMs": 0.00011674999999991087,
+          "rt01Ms": 0.0001520420000000513
+        },
+        {
+          "pair": 1,
+          "baselineMs": 0.00008279099999992923,
+          "rt01Ms": 0.00014599999999995817
+        },
+        {
+          "pair": 2,
+          "baselineMs": 0.00008304200000009133,
+          "rt01Ms": 0.00014579199999991487
+        },
+        {
+          "pair": 3,
+          "baselineMs": 0.00008283299999993687,
+          "rt01Ms": 0.00014674999999999728
+        },
+        {
+          "pair": 4,
+          "baselineMs": 0.00008279200000004039,
+          "rt01Ms": 0.00013695900000004714
+        },
+        {
+          "pair": 5,
+          "baselineMs": 0.0000665000000000191,
+          "rt01Ms": 0.00009354199999995672
+        }
+      ],
+      "baselineRowVisitsPerGuard": 0,
+      "rt01RowVisitsPerGuard": 0,
+      "baselineMedianMs": 0.00008283299999993687,
+      "rt01MedianMs": 0.00014599999999995817
+    },
+    {
+      "encoding": "compact",
+      "storedScopeVersions": 100,
+      "expectedCut": {
+        "position": 100,
+        "stamp": 1000099
+      },
+      "iterationsPerArm": 1000,
+      "pairs": [
+        {
+          "pair": 0,
+          "baselineMs": 0.0005107919999999239,
+          "rt01Ms": 0.000650957999999946
+        },
+        {
+          "pair": 1,
+          "baselineMs": 0.0004268329999999878,
+          "rt01Ms": 0.0006239579999999023
+        },
+        {
+          "pair": 2,
+          "baselineMs": 0.0004267919999999776,
+          "rt01Ms": 0.0006166249999999991
+        },
+        {
+          "pair": 3,
+          "baselineMs": 0.0004316670000000613,
+          "rt01Ms": 0.0006251250000000255
+        },
+        {
+          "pair": 4,
+          "baselineMs": 0.0004291249999999991,
+          "rt01Ms": 0.0006257920000000467
+        },
+        {
+          "pair": 5,
+          "baselineMs": 0.00042687499999999545,
+          "rt01Ms": 0.0006169999999999618
+        }
+      ],
+      "baselineRowVisitsPerGuard": 100,
+      "rt01RowVisitsPerGuard": 200,
+      "baselineMedianMs": 0.0004291249999999991,
+      "rt01MedianMs": 0.0006251250000000255
+    },
+    {
+      "encoding": "compact",
+      "storedScopeVersions": 10000,
+      "expectedCut": {
+        "position": 10000,
+        "stamp": 1009999
+      },
+      "iterationsPerArm": 100,
+      "pairs": [
+        {
+          "pair": 0,
+          "baselineMs": 0.04166500000000042,
+          "rt01Ms": 0.0584370899999999
+        },
+        {
+          "pair": 1,
+          "baselineMs": 0.041670839999999314,
+          "rt01Ms": 0.05859249999999974
+        },
+        {
+          "pair": 2,
+          "baselineMs": 0.04174750000000017,
+          "rt01Ms": 0.058627500000000055
+        },
+        {
+          "pair": 3,
+          "baselineMs": 0.041897920000000116,
+          "rt01Ms": 0.05882249999999999
+        },
+        {
+          "pair": 4,
+          "baselineMs": 0.04185124999999971,
+          "rt01Ms": 0.05862917000000038
+        },
+        {
+          "pair": 5,
+          "baselineMs": 0.041551249999999984,
+          "rt01Ms": 0.0644850000000008
+        }
+      ],
+      "baselineRowVisitsPerGuard": 10000,
+      "rt01RowVisitsPerGuard": 20000,
+      "baselineMedianMs": 0.04174750000000017,
+      "rt01MedianMs": 0.05862917000000038
+    },
+    {
+      "encoding": "compact",
+      "storedScopeVersions": 100000,
+      "expectedCut": {
+        "position": 100000,
+        "stamp": 1099999
+      },
+      "iterationsPerArm": 10,
+      "pairs": [
+        {
+          "pair": 0,
+          "baselineMs": 0.41409170000000584,
+          "rt01Ms": 0.5901124999999979
+        },
+        {
+          "pair": 1,
+          "baselineMs": 0.4151625000000081,
+          "rt01Ms": 0.5906124999999974
+        },
+        {
+          "pair": 2,
+          "baselineMs": 0.4154332999999951,
+          "rt01Ms": 0.5870415999999977
+        },
+        {
+          "pair": 3,
+          "baselineMs": 0.415570799999989,
+          "rt01Ms": 0.5878667000000064
+        },
+        {
+          "pair": 4,
+          "baselineMs": 0.41569580000000317,
+          "rt01Ms": 0.5896792000000005
+        },
+        {
+          "pair": 5,
+          "baselineMs": 0.41577499999999645,
+          "rt01Ms": 0.5864417000000003
+        }
+      ],
+      "baselineRowVisitsPerGuard": 100000,
+      "rt01RowVisitsPerGuard": 200000,
+      "baselineMedianMs": 0.415570799999989,
+      "rt01MedianMs": 0.5896792000000005
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+{
+  "format": "triplex-db-2/o-replay-case/1",
+  "caseId": "CX-VRT01/xtdb/storage",
+  "defaultScope": "[\"triplex-scope-v1\",\"test\",\"test\",\"CX-VRT01\",0]",
+  "adapter": {
+    "recordTime": "decided",
+    "clockDriven": true,
+    "schemaVersion": 1
+  },
+  "commands": [
+    {
+      "clock": 1000,
+      "operations": [
+        {
+          "op": "assert",
+          "ref": "one",
+          "entityId": "subject:one",
+          "attribute": ":value",
+          "value": {
+            "type": "string",
+            "value": "first"
+          },
+          "entityType": "Subject"
+        }
+      ]
+    }
+  ],
+  "receipts": [
+    {
+      "command": 0,
+      "outcome": "committed",
+      "txId": "_tx/00GRTCFP000000000000000001",
+      "position": 1,
+      "instant": 1000,
+      "stagedAt": 1000,
+      "assertionIds": [
+        "00V9ABAN000000000000000001"
+      ]
+    }
+  ],
+  "queries": [
+    {
+      "id": "future",
+      "kind": "entityTriples",
+      "entityId": "subject:one",
+      "readStart": 1,
+      "cut": {
+        "recordedAt": 1000.001,
+        "validAt": 1000
+      }
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/round2/oracle-compare.py", line 15, in <module>
+    lane=p.name.replace('-observed.json','');actual=load(p); oracle=load(attempt/(lane+'.case.oracle.json')); nested=load(attempt/(lane+'-nested.case.oracle.json'))
+                                                                                                                     ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/round2/oracle-compare.py", line 6, in load
+    def load(p):return json.loads(p.read_text())
+                                  ~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 787, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 771, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-rt01/lab/verify/RT01/round2/reproductions/journal-single-nested.case.oracle.json'

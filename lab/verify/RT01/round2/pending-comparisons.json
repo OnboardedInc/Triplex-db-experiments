@@ -1,0 +1,132 @@
+{
+  "binding": {
+    "product": "2ade6e755cc2877e36569da6f8f44ece22229cf0",
+    "records": {
+      "packages": "17eb9e60abb60ad89c634c677b42aef3dc8b4cdb861e6cdc182e81b07591ae22",
+      "reproductions": "9741f14ff50aa6a5e3629cfd65ca12f793d5d826aee663e86fb14e72615c8841",
+      "matrix": "80ab7e19623becb3bac2de440117097ce6e9d21c1fc13c88356027520346455d",
+      "pending": "9b1965873b1b9a1a75c5b08716e16e33f869f3acb1a046dbd4cc6119bf780369",
+      "pending-proof": "5087ab589c541dba1c836af01e9e94bbe18184dbd640f8ccaaeb5fbfabbf58ce"
+    },
+    "oracleCommit": "fed510ecf5137873d5dab1ad192f0e54f8ed0955",
+    "bindingsSha256": "0dd9795202878058f1e16824f48cc4db684e45e108e47855c46d2315212d34a8"
+  },
+  "results": [
+    {
+      "case": "qlever-a0.case.json",
+      "caseSha256": "9c296443ec31eeca387184b03b99036766f93275c98937c32b6e0937ec390baa",
+      "oracleExit": 0,
+      "receiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "expectedBefore": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observedBefore": {
+        "rows": []
+      },
+      "beforeMatches": false,
+      "expectedAfterIds": [
+        "00V9ABAN000000000000000005"
+      ],
+      "observedAfterIds": [
+        "00V9ABAN000000000000000005"
+      ],
+      "afterMatches": true
+    },
+    {
+      "case": "qlever-compact.case.json",
+      "caseSha256": "3b79afb4ec323e5030179244d4e1761d3650b5dd1799f39522fe9ef2c60a77c8",
+      "oracleExit": 0,
+      "receiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "expectedBefore": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observedBefore": {
+        "rows": []
+      },
+      "beforeMatches": false,
+      "expectedAfterIds": [
+        "00V9ABAN000000000000000005"
+      ],
+      "observedAfterIds": [
+        "00V9ABAN000000000000000005"
+      ],
+      "afterMatches": true
+    },
+    {
+      "case": "xtdb-a0.case.json",
+      "caseSha256": "a2c7db602860eca8bb3d4053bddadea56cdc5720f6a336f30f4b066ee3c02ca2",
+      "oracleExit": 0,
+      "receiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "expectedBefore": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observedBefore": {
+        "rows": []
+      },
+      "beforeMatches": false,
+      "expectedAfterIds": [
+        "00V9ABAN000000000000000005"
+      ],
+      "observedAfterIds": [
+        "00V9ABAN000000000000000005"
+      ],
+      "afterMatches": true
+    },
+    {
+      "case": "xtdb-compact.case.json",
+      "caseSha256": "b60dd7f8057f1bc7c33bb914d64841a68ca9333e255a7a9f4ff56d20eaa44c1e",
+      "oracleExit": 0,
+      "receiptConsistency": {
+        "status": "PASS",
+        "violations": []
+      },
+      "expectedBefore": {
+        "error": "E-BASIS-NOT-AVAILABLE",
+        "_tag": "BasisNotAvailable",
+        "reason": "basis-not-reached",
+        "phase": "execution",
+        "message": "record cut was not published at read start",
+        "axis": "recordedAt",
+        "rule": "R-CUT-6"
+      },
+      "observedBefore": {
+        "rows": []
+      },
+      "beforeMatches": false,
+      "expectedAfterIds": [
+        "00V9ABAN000000000000000005"
+      ],
+      "observedAfterIds": [
+        "00V9ABAN000000000000000005"
+      ],
+      "afterMatches": true
+    }
+  ]
+}
