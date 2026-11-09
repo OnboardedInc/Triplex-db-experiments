@@ -43,3 +43,11 @@ Q93's granting boundary is a normative contract requirement on the future K01 dr
 ## Validation status
 
 Initial contract tests: 18/18; new JS GS/policy tests: 3/3. Fresh required evaluator, mutations and XTDB/Datomic G0 results will be appended after the atomic source merge is committed. No result in this section claims independent acceptance.
+
+### Initial controls and resource preflight
+
+The first mutation attempt ran 494 active controls and caught 486. Six older controls edited seed-rule assignments that Q93 now overrides; they now target the effective amended rule/consumer. The two retirement-revival controls used `{}`, which raised a missing-field error during rendering rather than the required CONTRACT INVALID. They now restore the complete historical rule and require rejection at Q93. No contract guard or assertion was weakened to address these harness defects. The raw first attempt remains `negtest-initial.txt`; a fresh full mutation attempt follows.
+
+The unmodified historical 0.3.11 reviewer suite was also run: 34 test methods pass; its one pre-DA00 method produces 153 subtest failures because it requires a null Datomic image for every obligation. That premise is explicitly replaced by this version's authorized Q61i image pin. Its source/assertions remain unchanged; this is not reported as a passing gate. The new image/projection tests check the actual accepted pin and verify that a deliberately missing image still blocks. Five real-payload reviewer regressions pass.
+
+Heavy admissions are held whenever host free disk is below 5 GiB. Two evaluator/G0 preflight attempts refused before starting any heavy job. Removed only disposable cloud-provisioning/workerd dependency copies from this worktree's node_modules; the pinned lockfile and owned store are retained for offline restoration. Cleanup inventories/free-space readings are retained in `owned-cache-cleanup*.json`; APFS sharing and concurrent writes mean logical deleted sizes are not claimed as physical reclaimed space. Root/cloud gates are not claimed. No source, oracle evidence, engine volume or other worktree was cleaned.

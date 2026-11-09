@@ -444,9 +444,17 @@ tests['Q94 GS blocker removed'] = [('        out.append("gs-diagnostic-before-0.
 tests['Q94 GS admission allowed'] = [('    if any(o["id"].startswith("GS.") for o in claimed):', '    if False:')]
 tests['Q61i Datomic image unpinned'] = [("{'image': 'tx2-datomic:1.0.7745-da00', 'imageId': 'sha256:34fb9db10a278ff5614e7ac59788a2456329c75d098871ce1831465e243f2dcf'}", '{"image": None, "imageId": None}')]
 tests['Q45a testkit identity reverted'] = [("'cb89a55ced5426b8fa0af3523fbbeb73870e61e3622ebb42e8a78c3e67da8d28'", "'6001458f13ca711e9679d6b8e6fe3b746ea60f4e9deb5be08b2484b17ad87988'")]
-tests['Q45a pin review omitted'] = [('    if PIN_CHANGES_0313 != audit["pins"]', '    if {} != audit["pins"]')]
+tests['Q45a pin review omitted'] = [('def checks_0313():', 'PIN_CHANGES_0313 = {}\n\ndef checks_0313():')]
 tests["Q45a testkit case projection drift"] = [("def checks_0313():", "CS[\"CS-U44\"][\"pinnedSourceFiles\"][0][\"sha256\"] = \"bad\"\n\ndef checks_0313():")]
 tests["Q45a testkit oracle projection drift"] = [("def checks_0313():", "ORACLES[\"O-TESTKIT\"][\"files\"] = []\n\ndef checks_0313():")]
+tests['Q74b rule weakened'] = tests['Q74b literal weakened']
+tests['Q74c rule weakened'] = tests['Q74c literal weakened']
+tests['Q74d rule weakened'] = tests['Q74d literal weakened']
+tests['Q83a consumer dropped'] = [("def checks_0313():", "SEED_RULES.pop('Q83a', None)\n\ndef checks_0313():")]
+tests['Q83b consumer dropped'] = [("def checks_0313():", "SEED_RULES.pop('Q83b', None)\n\ndef checks_0313():")]
+tests['Q83c consumer dropped'] = [("def checks_0313():", "SEED_RULES.pop('Q83c', None)\n\ndef checks_0313():")]
+tests['Q83d revived'] = [("def checks_0313():", 'SEED_RULES[\'Q83d\'] = {\'topic\': \'settle evidence after fast compaction\', \'rule\': "Settle evidence does not require observing L0 tries: compaction may merge them before the first poll. Settled means the new block\'s tx_id and latest_processed_msg_id equal the node gauges, xt.trie_stats covers that block at whatever level it now sits, compactor jobs 0, and the file listing and trie digest are unchanged over three readings 5 s apart.", \'basis\': \'K01 round 2 (G3 blocked by fast compaction)\'}\n\ndef checks_0313():')]
+tests['Q83e revived'] = [("def checks_0313():", 'SEED_RULES[\'Q83e\'] = {\'topic\': \'three frontiers\', \'rule\': "Settle evidence records three values separately and never equates them: (a) the block-cut frontier F, the immutable block\'s latest_processed_msg_id; (b) the settled replay frontier M, the processed watcher after maintenance drains (lag 0, jobs 0, tries stable, over the Q83d polls); (c) the stable application transaction T. F < M is accepted only when every source message in (F, M] is read from the stopped log tail and is a maintenance message (TriesAdded, compactor output), never an application transaction; T is unchanged across the window. The final stopped log tails and the reference and clone resume are bound to M. Exact reference/clone equality and the two-start catalog checks stay. This replaces the part of Q83d that refused every F < M.", \'basis\': \'XTDB c6c1962: BlockCutter.kt:235, 280-295; SourceMessage.kt:139-147; Compactor.kt:150-152; SourceLogProcessor.kt:142, 199-211; Database.kt:375-387\'}\n\ndef checks_0313():')]
 run, caught, missed, retired = 0, 0, [], []
 for name, pairs in tests.items():
     if any(src.count(a) < 1 for a, _ in pairs):
