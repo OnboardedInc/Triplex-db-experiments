@@ -6,19 +6,23 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { test } from "node:test";
 import { memoryComposition } from "../lib/memory.ts";
-const testkitUrl = new URL("../../../packages/testkit/dist/index.js", import.meta.url).href;
+const testkitUrl =
+  process.env["TX2_RQ01_HARNESS_URL"] ??
+  new URL("../../../packages/testkit/dist/index.js", import.meta.url).href;
 const api: any = await import(testkitUrl);
 if (!api.runRouteEquivalence)
   throw new Error("G6 requires EXP-RQ01 built testkit; this is a stacked commit");
 
 function fixture() {
   const base = api.makeOfflineRouteFixture("xtdb");
-  let comp = memoryComposition("xtdb", randomUUID()),
+  let instant = 0;
+  let comp = memoryComposition("xtdb", randomUUID(), 0, () => instant),
     history: any,
     ids = new Map<string, string>(),
     source: any[] = [];
   let assertionSequence = 0;
   const append = async (commit: any) => {
+    instant = commit.instant;
     while ((await comp.currentPosition()) < commit.position - 1) {
       const r = await comp.transact([], {});
       assert.ok(r.ok);
@@ -48,6 +52,7 @@ function fixture() {
   const route = {
     id: "sweep-page",
     contract: "snapshot",
+    retention: { kind: "complete", plan: () => [] },
     refusals: ["BasisNotAvailable"],
     force: () => {},
     eligible: (request: any, h: any) =>
@@ -63,8 +68,48 @@ function fixture() {
           position: request.basis.recordedPosition,
           validAt: request.basis.validAt,
         });
-        const returned = new Set(result.rows.map((r) => r.id));
-        const rows = source.filter((r) => returned.has(ids.get(r.id)!));
+        const originals = new Map(source.map((r) => [ids.get(r.id), r]));
+        const rows = result.rows
+          .filter((r) => !request.entityId || r.entityId === request.entityId)
+          .map((r: any) => {
+            const original: any = originals.get(r.id);
+            if (!original) throw new Error("unbound row ID");
+            const packed: any = {
+              value_string: null,
+              value_number: null,
+              value_boolean: null,
+              value_datetime: null,
+              value_json: null,
+            };
+            const col: any = {
+              string: "value_string",
+              ref: "value_string",
+              integer: "value_string",
+              number: "value_number",
+              boolean: "value_boolean",
+              datetime: "value_datetime",
+              json: "value_json",
+            };
+            packed[col[r.value.type]] =
+              r.value.type === "json"
+                ? JSON.stringify(r.value.value)
+                : r.value.type === "boolean"
+                  ? Number(r.value.value)
+                  : r.value.value;
+            return {
+              ...original,
+              entity_id: r.entityId,
+              attribute: r.attribute,
+              value_type: r.value.type,
+              ...packed,
+              recorded_position: r.position,
+              recorded_at: r.recordedAt,
+              valid_from: r.validFrom,
+              valid_to: r.validTo ?? null,
+              retracted_position: r.retractedPosition ?? null,
+              retracted_at: r.retractedAt ?? null,
+            };
+          });
         return {
           rows: api.snapshotRouteRows(rows, request, api.routeHead(history)),
           taken: "sweep-page",
@@ -83,7 +128,7 @@ function fixture() {
     reset: async (h: any) => {
       history = h;
       source = api.foldRouteHistory(h);
-      comp = memoryComposition("xtdb", randomUUID());
+      comp = memoryComposition("xtdb", randomUUID(), 0, () => instant);
       ids = new Map();
       assertionSequence = 0;
       for (const c of h.commits) await append(c);
@@ -91,7 +136,25 @@ function fixture() {
     },
     append: async (c: any) => {
       await append(c);
-      history = { ...history, commits: [...history.commits, c] };
+      history = {
+        ...history,
+        commits: [...history.commits, c],
+        ...(history.attempts && c.receipt
+          ? {
+              attempts: [
+                ...history.attempts,
+                {
+                  id: c.receipt.attemptId,
+                  status: "committed",
+                  position: c.position,
+                  stagedAt: c.instant,
+                  stagedOrder: Math.max(...history.attempts.map((a: any) => a.stagedOrder)) + 1,
+                  decidedOrder: Math.max(...history.attempts.map((a: any) => a.decidedOrder)) + 1,
+                },
+              ],
+            }
+          : {}),
+      };
       source = api.foldRouteHistory(history);
       await base.append(c);
     },
@@ -116,4 +179,39 @@ for (const seed of [1, 42, 890])
       scope: { shapes: ["P", "T", "TP"] },
     });
     assert.deepEqual(result.violations, []);
+  });
+
+for (const mutation of ["wrong-value", "fail-open"])
+  test(`G6 rejects sweep ${mutation}`, async () => {
+    const original = fixture(),
+      routes = original.routes.map((route: any) =>
+        route.id !== "sweep-page"
+          ? route
+          : {
+              ...route,
+              read: async (request: any) => {
+                const answer = await route.read(request);
+                if (mutation === "fail-open") return { ...answer, eligible: false, rows: [] };
+                return {
+                  ...answer,
+                  rows: answer.rows.map((row: any, i: number) =>
+                    i === 0 ? { ...row, value_string: "changed-observed-value" } : row,
+                  ),
+                };
+              },
+            },
+      );
+    const history = api.generateRouteHistory(42);
+    const result = await api.runRouteEquivalence({
+      fixture: { ...original, routes },
+      history,
+      requests: api.generateRouteBases(history).filter((r: any) => api.routeShape(r) === "P"),
+      scope: { shapes: ["P"] },
+    });
+    assert.ok(
+      result.violations.some(
+        (v: any) =>
+          v.route === "sweep-page" && v.rule === (mutation === "fail-open" ? "HE-6" : "HE-1"),
+      ),
+    );
   });
