@@ -1,0 +1,62 @@
+[
+  {
+    "path": "lab/bench/driver.ts",
+    "oldSha256": "2c5ee868e2c1f77e902aed8e8ca471991014f6deea3a1b2333f8662973c60490",
+    "newSha256": "7f8cdd821903856c0c0be99a2e7da957931332999396bec1b7ba21863daac9b9"
+  },
+  {
+    "path": "lab/bench/lib/g0.ts",
+    "oldSha256": "66acc9151fecab9f4d4ca0ba9c9afe8b15b1519083262c97b44fc5406b4620d5",
+    "newSha256": "7286d1976c19c71cdbd694fd835eb8d42111ae060fd6d636196a8c8195bdd7be"
+  },
+  {
+    "path": "lab/bench/lib/g0-xtdb.ts",
+    "oldSha256": "3f8f3e3afaca46cb480102a25dfb527b20931e596f948c5cdd30da329ce189f2",
+    "newSha256": "21560713bea2d4b9eb74a4b75e29f0a022249b3d6a21ef0e865cb60eb35aca67"
+  },
+  {
+    "path": "lab/bench/lib/g0-values.ts",
+    "oldSha256": null,
+    "newSha256": "9cb5a8c63497588f05de78b621ab9307ec55655d6182b1a4ed2a0e8393f35b22"
+  },
+  {
+    "path": "lab/bench/lib/g0-wire.ts",
+    "oldSha256": null,
+    "newSha256": "9d281c1cd1c35fb2ea46895f2be27af50eab919ffc194270d18563c3529fc110"
+  },
+  {
+    "path": "lab/bench/lib/g0-normalize.ts",
+    "oldSha256": null,
+    "newSha256": "f5da7b79b9f22ddea23cfc756d50662116089ae5af8b2f3b23f6388602927376"
+  },
+  {
+    "path": "lab/bench/xtdb-seed.ts",
+    "oldSha256": "e03d9f3f4017677c200f7ebcc5983cb1cfe9dc75f6302327babe83cc3a2bc6a2",
+    "newSha256": "ecd495ac64309b2898e9a421fd1b50269212bf76de796e367c90d8edb9c9540c"
+  },
+  {
+    "path": "lab/bench/test/g0-values.test.ts",
+    "oldSha256": null,
+    "newSha256": "0b87079fe684f95caaaf8cd7392a65862f416ec38dee97be86543021aeb2d2b6"
+  },
+  {
+    "path": "lab/bench/test/g0-e1.test.ts",
+    "oldSha256": null,
+    "newSha256": "9355bcdaaa0a23c6a07681435dd3938c7f60b0ceb77c5482b64d080f287b0c81"
+  },
+  {
+    "path": "lab/verify/K01/g0-review.test.mjs",
+    "oldSha256": "c4acb57c2b45aa7c2fe3e3ae46c89f1d70857631b5356b187d83a2caf23ee9f2",
+    "newSha256": "62dcdd5982fd95b80147ab1c607f67725cf3c8928ccc4eb33e1e4311e56c1e5a"
+  },
+  {
+    "path": "lab/verify/K01/columns-review.test.mjs",
+    "oldSha256": null,
+    "newSha256": "42cea17e9b6e8ab37b57fb9e2ee94eae6f38e5925a7b434987c3f68abbe32407"
+  },
+  {
+    "path": "lab/verify/K01/run-round9.mjs",
+    "oldSha256": null,
+    "newSha256": "d224bca98126e1b854bbddee78ea8bc588d0411e9d72c2ffe37b9fde54881f4c"
+  }
+]

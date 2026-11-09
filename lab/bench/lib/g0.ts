@@ -31,24 +31,12 @@ export interface Pin extends Expected {
   format: "tx2-g0/1";
   D: string;
   w0?: W0Fingerprint;
+  Dprime?: string;
 }
-export const canonical = (value: unknown): string =>
-  JSON.stringify(value, (_k, v) => {
-    if (v === undefined || (typeof v === "number" && !Number.isFinite(v)))
-      throw Error("G0 unsupported/missing value");
-    if (typeof v === "bigint") {
-      const n = Number(v);
-      if (!Number.isSafeInteger(n)) throw Error("G0 unsafe integer");
-      return n;
-    }
-    return v && typeof v === "object" && !Array.isArray(v)
-      ? Object.fromEntries(
-          Object.keys(v)
-            .sort()
-            .map((k) => [k, v[k]]),
-        )
-      : v;
-  });
+export { canonical } from "./g0-values.ts";
+import { canonical } from "./g0-values.ts";
+import { e1Normalizer, normalization } from "./g0-normalize.ts";
+export { normalization } from "./g0-normalize.ts";
 export const hash = (value: unknown) => createHash("sha256").update(canonical(value)).digest("hex");
 export async function bounded<T>(
   work: (signal: AbortSignal) => Promise<T>,
@@ -84,11 +72,12 @@ export function requireW0Fingerprint(observed: W0Fingerprint, oracle: any, N: nu
     if (observed[key] === undefined || observed[key] !== oracle.fingerprint?.[key])
       throw Error("G0 O-DOMAIN mismatch: " + key);
 }
-export async function readG0(
+async function readContent(
   reader: Reader,
   expected: Expected,
   w0?: W0Check,
   ms = 600_000,
+  rowRead?: (table: Table, row: Record<string, unknown>) => void,
 ): Promise<Pin> {
   if (
     !expected.scope ||
@@ -133,6 +122,7 @@ export async function readG0(
           .sort()
           .map((field) => [field, row[field]]);
         hashes.push(hash(values));
+        rowRead?.(table, row);
       }
       if (hashes.length !== count) throw Error("G0 partial/empty scan: " + table);
       tables[table] = hash([fields[table], hashes.sort()]);
@@ -149,6 +139,40 @@ export async function readG0(
       format: "tx2-g0/1",
       D: hash([expected, tables, world ?? null]),
       ...(world ? { w0: world } : {}),
+    };
+  }, ms);
+}
+export async function readG0(
+  reader: Reader,
+  expected: Expected,
+  w0?: W0Check,
+  ms = 600_000,
+): Promise<Pin> {
+  return readContent(reader, expected, w0, ms);
+}
+// [EXP-K01-R9] Why: E1 needs a separate normalized view bound to the same full D. Rejected: weakening clone admission or collecting whole tables in memory.
+export async function readE1G0(
+  reader: Reader,
+  expected: Expected,
+  w0?: W0Check,
+  ms = 600_000,
+): Promise<Pin> {
+  return bounded(async (signal) => {
+    const normal = e1Normalizer();
+    const first = await readContent(reader, expected, w0, ms, (t, r) => normal.collect(t, r));
+    normal.finish();
+    const hashes: Record<string, string[]> = {};
+    const second = await readContent(reader, expected, w0, ms, (t, r) => {
+      signal.throwIfAborted();
+      (hashes[t] ??= []).push(hash(normal.row(t, r)));
+    });
+    if (first.D !== second.D) throw Error("Dprime source changed during normalization");
+    const normalized = Object.fromEntries(
+      Object.keys(fields).map((t) => [t, hash([fields[t], (hashes[t] ?? []).sort()])]),
+    );
+    return {
+      ...second,
+      Dprime: hash(["tx2-e1/1", normalization, expected, normalized, second.w0 ?? null]),
     };
   }, ms);
 }

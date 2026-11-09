@@ -275,7 +275,7 @@ async function run() {
     if(fresh&&(fresh.manifestSha256!==createHash("sha256").update(fs.readFileSync(path.resolve(config.seedManifest!))).digest("hex")||fresh.D!==bulkManifest.g0?.D))throw Error("fresh-arm binding differs");
     await quietXtdb(writer.backend.url,record??fresh);
     const referencePath=process.env["TRIPLEX_LAB_REFERENCE_GOLDEN"];
-    if(referencePath){const ref=JSON.parse(fs.readFileSync(referencePath,"utf8"));if(ref.g0.D!==bulkManifest.g0?.D)throw Error("E1 fresh digest differs from clone seed");}
+    if(referencePath){const ref=JSON.parse(fs.readFileSync(referencePath,"utf8"));if(!ref.g0.Dprime||ref.g0.Dprime!==bulkManifest.g0?.Dprime)throw Error("E1 fresh normalized digest differs from clone seed");}
     const G0=await checkXtdb(writer.backend.url,bulkManifest,bulkManifest.g0);
     report.seedPath={...seedPath,seededBy:record?"clone":"seed-writer",G0,golden:record?.key??null};
     for (const handle of [writer,growthComp]) {

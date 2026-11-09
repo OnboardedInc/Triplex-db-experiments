@@ -1,0 +1,11 @@
+--- reviewer
++++ builder
+@@ -66,7 +66,7 @@
+     if (url.endsWith('/packages/core/dist/runtime/index.js')) return { DatabaseScope: { test: scope => scope } };
+     throw Error('unexpected import: ' + url);
+   };
+-  const open = vm.runInNewContext(javascript + ';openG0', { path, pathToFileURL, fields, bounded, fixtureImport, AbortSignal, Object, Number, String });
++  const open = vm.runInNewContext(javascript + ';openG0', { path, pathToFileURL, fields, bounded, fixtureImport, AbortSignal, Object, Number, String, openWire:async()=>({scan:(sql,params,signal)=>client.query(sql,params,undefined,{signal,timeoutMs:600000}),close:async()=>{}}) });
+   const handle = await open('offline-measured-endpoint');
+   return { tables, calls, handle };
+ }

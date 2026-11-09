@@ -8,7 +8,7 @@ import { test, after } from 'node:test';
 import { pathToFileURL } from 'node:url';
 import { admitG0, readG0, bounded, fields } from '../../bench/lib/g0.ts';
 const root = path.resolve(import.meta.dirname, '../../..');
-const out = path.resolve(process.env.TX2_K01_COLUMNS_OUT ?? path.join(import.meta.dirname, 'evidence/review-round7/columns'));
+const out = process.env.TX2_K01_COLUMNS_OUT ?? '/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VK01/round8/attempt-1/columns';
 const sources = Object.fromEntries(fs.readdirSync(path.join(root, 'packages/xtdb/src'), { recursive: true }).filter(f => f.endsWith('.ts')).map(f => [f, fs.readFileSync(path.join(root, 'packages/xtdb/src', f), 'utf8')]));
 const assertion = [.../export const assertionColumns = \[([\s\S]*?)\] as const/.exec(sources['codecs.ts'])[1].matchAll(/"([a-z_]+)"/g)].map(m => m[1]);
 const declarations = {};
@@ -66,7 +66,7 @@ async function fixture() {
     if (url.endsWith('/packages/core/dist/runtime/index.js')) return { DatabaseScope: { test: scope => scope } };
     throw Error('unexpected import: ' + url);
   };
-  const open = vm.runInNewContext(javascript + ';openG0', { path, pathToFileURL, fields, bounded, fixtureImport, AbortSignal, Object, Number, String });
+  const open = vm.runInNewContext(javascript + ';openG0', { path, pathToFileURL, fields, bounded, fixtureImport, AbortSignal, Object, Number, String, openWire:async()=>({scan:(sql,params,signal)=>client.query(sql,params,undefined,{signal,timeoutMs:600000}),close:async()=>{}}) });
   const handle = await open('offline-measured-endpoint');
   return { tables, calls, handle };
 }
