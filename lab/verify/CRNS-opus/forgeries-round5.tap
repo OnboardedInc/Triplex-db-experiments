@@ -1,0 +1,110 @@
+TAP version 13
+# Subtest: F0 round 5 baseline: P3 and P3+P2 RECOMPUTED with met
+ok 1 - F0 round 5 baseline: P3 and P3+P2 RECOMPUTED with met
+  ---
+  duration_ms: 40.988
+  type: 'test'
+  ...
+# Subtest: Q103d-v P3: reads parked to ~98 ms inside every 100 ms bin
+not ok 2 - Q103d-v P3: reads parked to ~98 ms inside every 100 ms bin # TODO accepted within Q103d: volume equals the frozen floor; only sub-100 ms shaping remains
+  ---
+  duration_ms: 16.609291
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round5.test.mjs:155:50'
+  failureType: 'testCodeFailure'
+  error: |-
+    RECOMPUTED [] p99=97.9
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round5.test.mjs:159:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: Q103d-v P3+P2: reads parked to ~98 ms inside every 100 ms bin
+not ok 3 - Q103d-v P3+P2: reads parked to ~98 ms inside every 100 ms bin # TODO accepted within Q103d: volume equals the frozen floor; only sub-100 ms shaping remains
+  ---
+  duration_ms: 13.2465
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round5.test.mjs:155:50'
+  failureType: 'testCodeFailure'
+  error: |-
+    RECOMPUTED [] p99=97.9
+    + actual - expected
+    
+    + 'RECOMPUTED'
+    - 'REFUSED'
+         ^
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: 'REFUSED'
+  actual: 'RECOMPUTED'
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/crns/lab/verify/CRNS-opus/forgeries-round5.test.mjs:159:10)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: CT-v cgroup-gone naming the parent cgroup (/fixture) is refused CRASH-TARGET-MISMATCH
+ok 4 - CT-v cgroup-gone naming the parent cgroup (/fixture) is refused CRASH-TARGET-MISMATCH
+  ---
+  duration_ms: 16.575459
+  type: 'test'
+  ...
+# Subtest: CT-v cgroup-gone naming the child cgroup (/fixture/consumer/worker) is refused CRASH-TARGET-MISMATCH
+ok 5 - CT-v cgroup-gone naming the child cgroup (/fixture/consumer/worker) is refused CRASH-TARGET-MISMATCH
+  ---
+  duration_ms: 15.422125
+  type: 'test'
+  ...
+# Subtest: CT-v cgroup-gone naming the trailing slash cgroup (/fixture/consumer/) is refused CRASH-TARGET-MISMATCH
+ok 6 - CT-v cgroup-gone naming the trailing slash cgroup (/fixture/consumer/) is refused CRASH-TARGET-MISMATCH
+  ---
+  duration_ms: 9.542041
+  type: 'test'
+  ...
+# Subtest: Q103e control: exactly one of the pair commits, the other gets a typed conflict: RECOMPUTED with met
+ok 7 - Q103e control: exactly one of the pair commits, the other gets a typed conflict: RECOMPUTED with met
+  ---
+  duration_ms: 11.370042
+  type: 'test'
+  ...
+# Subtest: Q103e-v neither member of the race pair commits (both told CAS-LOST) is refused RACE-OUTCOME-INVALID
+ok 8 - Q103e-v neither member of the race pair commits (both told CAS-LOST) is refused RACE-OUTCOME-INVALID
+  ---
+  duration_ms: 9.230375
+  type: 'test'
+  ...
+# Subtest: Q103e-v both members of the race pair commit is refused RACE-OUTCOME-INVALID
+ok 9 - Q103e-v both members of the race pair commit is refused RACE-OUTCOME-INVALID
+  ---
+  duration_ms: 11.488833
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 2
+# duration_ms 252.312416

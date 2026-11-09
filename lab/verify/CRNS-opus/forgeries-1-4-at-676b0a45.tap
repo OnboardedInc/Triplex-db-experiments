@@ -1,0 +1,364 @@
+TAP version 13
+# Subtest: C0 round 2 baseline is RECOMPUTED with resume and met
+ok 1 - C0 round 2 baseline is RECOMPUTED with resume and met
+  ---
+  duration_ms: 27.142917
+  type: 'test'
+  ...
+# Subtest: V-O7 crash companion whose 9 witnesses crash at t=0 (before any traffic) and all cite one 1-transaction range is refused
+ok 2 - V-O7 crash companion whose 9 witnesses crash at t=0 (before any traffic) and all cite one 1-transaction range is refused
+  ---
+  duration_ms: 19.129042
+  type: 'test'
+  ...
+# Subtest: V-O6 P3 only: 4 reader loops whose every answer is wrong satisfy "lag with readers running"
+ok 3 - V-O6 P3 only: 4 reader loops whose every answer is wrong satisfy "lag with readers running"
+  ---
+  duration_ms: 13.936
+  type: 'test'
+  ...
+# Subtest: V-O6c P3 only: publication deferred past window end is invisible when the lag minimum is below the in-window count
+ok 4 - V-O6c P3 only: publication deferred past window end is invisible when the lag minimum is below the in-window count
+  ---
+  duration_ms: 12.639041
+  type: 'test'
+  ...
+# Subtest: V-O6c control: same deferral with lag minimum = commit count is refused LAG-SAMPLES-SHORT
+ok 5 - V-O6c control: same deferral with lag minimum = commit count is refused LAG-SAMPLES-SHORT
+  ---
+  duration_ms: 37.498709
+  type: 'test'
+  ...
+# Subtest: V-O2 an oracle-invalid command (kind invalid) that the candidate commits and ACKs is refused
+ok 6 - V-O2 an oracle-invalid command (kind invalid) that the candidate commits and ACKs is refused
+  ---
+  duration_ms: 37.485125
+  type: 'test'
+  ...
+# Subtest: V-O2b P2: a command published before it was offered (pre-applied frozen trace) gets ~0 ms latency and is refused
+ok 7 - V-O2b P2: a command published before it was offered (pre-applied frozen trace) gets ~0 ms latency and is refused
+  ---
+  duration_ms: 21.634
+  type: 'test'
+  ...
+# Subtest: V-O3 a kind=duplicate retry answered with a typed error (unique eventId) is refused IDEMPOTENCY-RECEIPT-MISMATCH
+ok 8 - V-O3 a kind=duplicate retry answered with a typed error (unique eventId) is refused IDEMPOTENCY-RECEIPT-MISMATCH
+  ---
+  duration_ms: 8.638584
+  type: 'test'
+  ...
+# Subtest: V-O1 a duplicate signal offered under a fresh commandId commits twice (same subject, same attribute) and is refused
+ok 9 - V-O1 a duplicate signal offered under a fresh commandId commits twice (same subject, same attribute) and is refused
+  ---
+  duration_ms: 7.801167
+  type: 'test'
+  ...
+# Subtest: V-O4 duplicate effect under a whitespace-variant consumer label is refused CONSUMER-IDENTITY-MISMATCH
+ok 10 - V-O4 duplicate effect under a whitespace-variant consumer label is refused CONSUMER-IDENTITY-MISMATCH
+  ---
+  duration_ms: 9.424209
+  type: 'test'
+  ...
+# Subtest: V-O5/O17 two in-flight commands for one subject commit in reverse of their offer order
+ok 11 - V-O5/O17 two in-flight commands for one subject commit in reverse of their offer order
+  ---
+  duration_ms: 11.059625
+  type: 'test'
+  ...
+# Subtest: V-O10 a decimal-string basis against coordinate-object positions gives the oracle an empty prefix
+ok 12 - V-O10 a decimal-string basis against coordinate-object positions gives the oracle an empty prefix
+  ---
+  duration_ms: 12.889625
+  type: 'test'
+  ...
+# Subtest: V-O13 depth-10 pulls answered with the depth-1 answer are refused P4-HISTORY-ANSWER-MISMATCH
+ok 13 - V-O13 depth-10 pulls answered with the depth-1 answer are refused P4-HISTORY-ANSWER-MISMATCH
+  ---
+  duration_ms: 13.489125
+  type: 'test'
+  ...
+# Subtest: V-O29 P1: zero-reader writer p99 slowed to 48 ms lets 60 ms at 256 and 1024 readers pass
+ok 14 - V-O29 P1: zero-reader writer p99 slowed to 48 ms lets 60 ms at 256 and 1024 readers pass
+  ---
+  duration_ms: 148.345583
+  type: 'test'
+  ...
+# Subtest: V-O14 P5: baseline writer slowed to 49 ms lets 73 ms during the sweep pass
+ok 15 - V-O14 P5: baseline writer slowed to 49 ms lets 73 ms during the sweep pass
+  ---
+  duration_ms: 1.363958
+  type: 'test'
+  ...
+# Subtest: NF2 a crash-only bundle evaluated as a primary returns RECOMPUTED with lag null
+ok 16 - NF2 a crash-only bundle evaluated as a primary returns RECOMPUTED with lag null
+  ---
+  duration_ms: 8.149667
+  type: 'test'
+  ...
+# Subtest: D0 round 3 baseline: P3 and P3+P2 RECOMPUTED with met
+ok 17 - D0 round 3 baseline: P3 and P3+P2 RECOMPUTED with met
+  ---
+  duration_ms: 48.738375
+  type: 'test'
+  ...
+# Subtest: W-H1 P3: 4 loops that each complete one correct read per second, 900 ms per read, count as "readers running"
+ok 18 - W-H1 P3: 4 loops that each complete one correct read per second, 900 ms per read, count as "readers running"
+  ---
+  duration_ms: 13.927375
+  type: 'test'
+  ...
+# Subtest: W-H1 P3+P2: 4 loops that each complete one correct read per second, 900 ms per read, count as "readers running"
+ok 19 - W-H1 P3+P2: 4 loops that each complete one correct read per second, 900 ms per read, count as "readers running"
+  ---
+  duration_ms: 17.528084
+  type: 'test'
+  ...
+# Subtest: W-H2 a planned crash injection whose witness is absent (e.g. recovery failed) is refused
+ok 20 - W-H2 a planned crash injection whose witness is absent (e.g. recovery failed) is refused
+  ---
+  duration_ms: 11.4965
+  type: 'test'
+  ...
+# Subtest: W-H3 RESIDUAL: publication revealed exactly at send (L = sentAtNs) with 0.2 ms ACK passes; only trace secrecy prevents pre-application
+ok 21 - W-H3 RESIDUAL: publication revealed exactly at send (L = sentAtNs) with 0.2 ms ACK passes; only trace secrecy prevents pre-application
+  ---
+  duration_ms: 12.7435
+  type: 'test'
+  ...
+# Subtest: W-H4 control: c0 visible before c1 is offered, c1 committed anyway: INVALID-COMMAND-PUBLISHED
+ok 22 - W-H4 control: c0 visible before c1 is offered, c1 committed anyway: INVALID-COMMAND-PUBLISHED
+  ---
+  duration_ms: 9.914459
+  type: 'test'
+  ...
+# Subtest: W-H4 c0 committed first in source order but its visibility held until 3 ms after c1 is offered: the invalid c1 commit passes
+ok 23 - W-H4 c0 committed first in source order but its visibility held until 3 ms after c1 is offered: the invalid c1 commit passes
+  ---
+  duration_ms: 13.455333
+  type: 'test'
+  ...
+# Subtest: E0 round 4 baseline: P3 and P3+P2 RECOMPUTED with met
+ok 24 - E0 round 4 baseline: P3 and P3+P2 RECOMPUTED with met
+  ---
+  duration_ms: 48.721125
+  type: 'test'
+  ...
+# Subtest: W-H1r4 P3: parked reads keep 4 loops "running" while the store is idle ~96% of the window
+ok 25 - W-H1r4 P3: parked reads keep 4 loops "running" while the store is idle ~96% of the window
+  ---
+  duration_ms: 27.79075
+  type: 'test'
+  ...
+# Subtest: W-H1r4 P3+P2: parked reads keep 4 loops "running" while the store is idle ~96% of the window
+ok 26 - W-H1r4 P3+P2: parked reads keep 4 loops "running" while the store is idle ~96% of the window
+  ---
+  duration_ms: 17.309416
+  type: 'test'
+  ...
+# Subtest: W-H2r4 every planned injection witnessed, but each cgroup-gone event names a sidecar cgroup, not the consumer
+ok 27 - W-H2r4 every planned injection witnessed, but each cgroup-gone event names a sidecar cgroup, not the consumer
+  ---
+  duration_ms: 12.528291
+  type: 'test'
+  ...
+# Subtest: W-H4r4 c1 (valid only once c0 exists, different subject) committed before c0 in source order is refused
+ok 28 - W-H4r4 c1 (valid only once c0 exists, different subject) committed before c0 in source order is refused
+  ---
+  duration_ms: 10.243166
+  type: 'test'
+  ...
+# Subtest: W-H4r4 control: same causal oracle, c0 committed before c1: RECOMPUTED with met
+ok 29 - W-H4r4 control: same causal oracle, c0 committed before c1: RECOMPUTED with met
+  ---
+  duration_ms: 12.333625
+  type: 'test'
+  ...
+# Subtest: B0 baseline world is RECOMPUTED for P3 and P3+P2 (fixture sanity)
+ok 30 - B0 baseline world is RECOMPUTED for P3 and P3+P2 (fixture sanity)
+  ---
+  duration_ms: 45.726709
+  type: 'test'
+  ...
+# Subtest: B1 removing WAL/CR/resume floors refuses
+ok 31 - B1 removing WAL/CR/resume floors refuses
+  ---
+  duration_ms: 26.889709
+  type: 'test'
+  ...
+# Subtest: R1 truncated chunk chain is refused
+ok 32 - R1 truncated chunk chain is refused
+  ---
+  duration_ms: 4.795208
+  type: 'test'
+  ...
+# Subtest: R2 receipt to a different tx on retry is refused (IDEMPOTENCY-RECEIPT-MISMATCH)
+ok 33 - R2 receipt to a different tx on retry is refused (IDEMPOTENCY-RECEIPT-MISMATCH)
+  ---
+  duration_ms: 10.843875
+  type: 'test'
+  ...
+# Subtest: R3 ACK before source bracket L is refused when P2 is requested
+ok 34 - R3 ACK before source bracket L is refused when P2 is requested
+  ---
+  duration_ms: 11.32625
+  type: 'test'
+  ...
+# Subtest: R4 duplicate effect row with identical key is refused
+ok 35 - R4 duplicate effect row with identical key is refused
+  ---
+  duration_ms: 14.93725
+  type: 'test'
+  ...
+# Subtest: O1 P2/P3: the same command committed twice in the source (retry not idempotent) is refused
+ok 36 - O1 P2/P3: the same command committed twice in the source (retry not idempotent) is refused
+  ---
+  duration_ms: 8.182875
+  type: 'test'
+  ...
+# Subtest: O2 P2: typed error ACKed in 1 ms while the command commits 400 ms later is refused
+ok 37 - O2 P2: typed error ACKed in 1 ms while the command commits 400 ms later is refused
+  ---
+  duration_ms: 6.864
+  type: 'test'
+  ...
+# Subtest: O3 P2: a duplicate retry answered with a typed error instead of the original receipt is refused
+ok 38 - O3 P2: a duplicate retry answered with a typed error instead of the original receipt is refused
+  ---
+  duration_ms: 8.899709
+  type: 'test'
+  ...
+# Subtest: O4 P3: a second visible effect for the same (position, subject) under a different epoch label is refused
+ok 39 - O4 P3: a second visible effect for the same (position, subject) under a different epoch label is refused
+  ---
+  duration_ms: 6.273542
+  type: 'test'
+  ...
+# Subtest: O4 P3: a second visible effect for the same (position, subject) under a different consumer label is refused
+ok 40 - O4 P3: a second visible effect for the same (position, subject) under a different consumer label is refused
+  ---
+  duration_ms: 22.154167
+  type: 'test'
+  ...
+# Subtest: O5 P3: source entry order (offset) contradicting cursor order (position) is refused
+ok 41 - O5 P3: source entry order (offset) contradicting cursor order (position) is refused
+  ---
+  duration_ms: 13.506208
+  type: 'test'
+  ...
+# Subtest: O5b P3: a position whose coordinates disagree with its entry (offset 0 entry, position offset 999) is refused
+ok 42 - O5b P3: a position whose coordinates disagree with its entry (offset 0 entry, position offset 999) is refused
+  ---
+  duration_ms: 48.056416
+  type: 'test'
+  ...
+# Subtest: O6a P3 only: candidate typed-rejects 2 of 3 valid commands, tiny feed passes P3
+ok 43 - O6a P3 only: candidate typed-rejects 2 of 3 valid commands, tiny feed passes P3
+  ---
+  duration_ms: 7.35125
+  type: 'test'
+  ...
+# Subtest: O6b P3 only: ACK before publication (lag start moved late by hiding the commit from the source store) is refused
+ok 44 - O6b P3 only: ACK before publication (lag start moved late by hiding the commit from the source store) is refused
+  ---
+  duration_ms: 8.494542
+  type: 'test'
+  ...
+# Subtest: O7 P3: a RECOMPUTED result carries resume-from-checkpoint evidence
+ok 45 - O7 P3: a RECOMPUTED result carries resume-from-checkpoint evidence
+  ---
+  duration_ms: 12.537875
+  type: 'test'
+  ...
+# Subtest: O8 P3: fault witnesses that each replay one arbitrary entry (not from the checkpoint) are refused as FAULT-WITNESS-INVALID
+ok 46 - O8 P3: fault witnesses that each replay one arbitrary entry (not from the checkpoint) are refused as FAULT-WITNESS-INVALID
+  ---
+  duration_ms: 8.365292
+  type: 'test'
+  ...
+# Subtest: O9 P3: a commit published after window end that never reaches the consumer durable record is refused
+ok 47 - O9 P3: a commit published after window end that never reaches the consumer durable record is refused
+  ---
+  duration_ms: 6.98575
+  type: 'test'
+  ...
+# Subtest: O12 P3: lag "with 256 readers" accepted while reads[] is empty and readers[] only claims loop ids
+ok 48 - O12 P3: lag "with 256 readers" accepted while reads[] is empty and readers[] only claims loop ids
+  ---
+  duration_ms: 6.16075
+  type: 'test'
+  ...
+# Subtest: O16 oracle "prefix" stops at the position being evaluated
+ok 49 - O16 oracle "prefix" stops at the position being evaluated
+  ---
+  duration_ms: 24.25425
+  type: 'test'
+  ...
+# Subtest: O17 P2/P3: committed change subject differing from the offered command subject is refused
+ok 50 - O17 P2/P3: committed change subject differing from the offered command subject is refused
+  ---
+  duration_ms: 18.897625
+  type: 'test'
+  ...
+# Subtest: O18/O25 broker-frame/2: self-made CRC frames whose bytes are unrelated to the entries bypass verifySource and are refused
+ok 51 - O18/O25 broker-frame/2: self-made CRC frames whose bytes are unrelated to the entries bypass verifySource and are refused
+  ---
+  duration_ms: 51.221833
+  type: 'test'
+  ...
+# Subtest: O22 P2: ACK inside a 150 ms wide publication bracket is accepted as merely undecided
+ok 52 - O22 P2: ACK inside a 150 ms wide publication bracket is accepted as merely undecided
+  ---
+  duration_ms: 5.397875
+  type: 'test'
+  ...
+# Subtest: L0 ladder fixture sanity: met
+ok 53 - L0 ladder fixture sanity: met
+  ---
+  duration_ms: 126.477417
+  type: 'test'
+  ...
+# Subtest: O10 P1: a hops-6 read answered with the hops-3 answer is a violation
+ok 54 - O10 P1: a hops-6 read answered with the hops-3 answer is a violation
+  ---
+  duration_ms: 85.491833
+  type: 'test'
+  ...
+# Subtest: O11 P1: a "1024-reader" window whose reads all come from one loop is refused
+ok 55 - O11 P1: a "1024-reader" window whose reads all come from one loop is refused
+  ---
+  duration_ms: 5.931333
+  type: 'test'
+  ...
+# Subtest: O24 P1: recovery window matched although neither the 1024 window nor the recovery window has an id
+ok 56 - O24 P1: recovery window matched although neither the 1024 window nor the recovery window has an id
+  ---
+  duration_ms: 13.76775
+  type: 'test'
+  ...
+# Subtest: O29a P1: writer p99 at 256 readers of 120 ms passes because the zero-reader baseline was slowed to 100 ms
+ok 57 - O29a P1: writer p99 at 256 readers of 120 ms passes because the zero-reader baseline was slowed to 100 ms
+  ---
+  duration_ms: 78.494917
+  type: 'test'
+  ...
+# Subtest: O13 P4: history-flatness pulls without any answer check are refused
+ok 58 - O13 P4: history-flatness pulls without any answer check are refused
+  ---
+  duration_ms: 18.479666
+  type: 'test'
+  ...
+# Subtest: O14 P5: the "during sweep" traffic segment may be a byte copy of the baseline
+ok 59 - O14 P5: the "during sweep" traffic segment may be a byte copy of the baseline
+  ---
+  duration_ms: 11.694875
+  type: 'test'
+  ...
+1..59
+# tests 59
+# suites 0
+# pass 59
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 867.605125
