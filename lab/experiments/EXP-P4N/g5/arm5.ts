@@ -298,7 +298,7 @@ try {
     const c0 = process.cpuUsage(),
       w0 = performance.now(),
       t0 = await arm.threadCpu();
-    await arm.broker.prefillCurrent(roots, 8);
+    const pf = await arm.broker.prefillCurrent(roots, 8);
     const t1 = (await arm.threadCpu())!;
     const c1 = process.cpuUsage(c0);
     let workers = 0;
@@ -306,6 +306,8 @@ try {
       workers += t1[k]!.user + t1[k]!.system - t0![k]!.user - t0![k]!.system;
     prefill = {
       roots: roots.length,
+      passes: pf.passes,
+      complete: pf.complete,
       wallMs: performance.now() - w0,
       processCpuUs: c1.user + c1.system,
       namedWorkersCpuUs: workers,

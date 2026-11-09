@@ -628,19 +628,37 @@ export class HostLog {
    * [EXP-P4N] Why: a prefill is the ordinary read-through path run once per root at the head (no separate writer of documents, so it
    * cannot disagree with what a pull would have stored). Rejected: a bulk owner walk with its own SQL (a second encoder to qualify).
    */
-  async prefillCurrent(roots: readonly string[], concurrency = 8): Promise<{ pulls: number }> {
+  async prefillCurrent(
+    roots: readonly string[],
+    concurrency = 8,
+  ): Promise<{ pulls: number; passes: number; complete: boolean }> {
     const head = (await this.pool[0]!.request<{ position: number }>("marker")).position;
-    let next = 0;
-    await Promise.all(
-      Array.from({ length: concurrency }, async () => {
-        for (;;) {
-          const i = next++;
-          if (i >= roots.length) return;
-          await this.wholePull(head, [roots[i]!]);
-        }
-      }),
-    );
-    return { pulls: roots.length };
+    const pass = async (width: number) => {
+      let next = 0;
+      await Promise.all(
+        Array.from({ length: width }, async () => {
+          for (;;) {
+            const i = next++;
+            if (i >= roots.length) return;
+            await this.wholePull(head, [roots[i]!]);
+          }
+        }),
+      );
+    };
+    // [EXP-P4N-R2] Why: fills use busy_timeout 0 and skip on BUSY, so concurrent readers lose some fills (28% of owner documents on the first
+    // pass of 10,000 roots at width 8). Passes repeat, at width 2 after the first, until a pass finds no document absent or stale (hits are
+    // cheap), at most 8. Rejected: a blocking fill (a reader would wait on another reader's write) and a single pass (leaves holes that every
+    // later pull pays for).
+    let passes = 0,
+      complete = false;
+    while (passes < 8 && !complete) {
+      const before = await this.docStats();
+      await pass(passes === 0 ? concurrency : 2);
+      passes++;
+      const after = await this.docStats();
+      complete = after.absent! - before.absent! + (after.stale! - before.stale!) === 0;
+    }
+    return { pulls: roots.length, passes, complete };
   }
   async pull(basis: H1Basis, selection: Selection): Promise<PinnedPull> {
     // [CX-INT-Q] Why: Q89b requires refusal before position retirement drops rows needed at T.

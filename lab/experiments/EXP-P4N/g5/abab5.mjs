@@ -29,6 +29,7 @@ const flagsOf = (arm) =>
     .split("@")[0]
     .split("+")
     .slice(1)
+    .filter((l) => !["docp", "docc", "w", "sweep"].includes(l))
     .map((l) => {
       if (!flags[l]) throw Error("unknown lever " + l);
       return flags[l];
