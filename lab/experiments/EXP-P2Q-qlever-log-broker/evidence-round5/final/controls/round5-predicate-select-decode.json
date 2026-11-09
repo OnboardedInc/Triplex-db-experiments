@@ -1,7 +1,0 @@
-{
-  "expected": false,
-  "observed": false,
-  "elapsedMs": 0.0009999999999763531,
-  "name": "TypeError",
-  "message": "QLever did not return a SPARQL SELECT result"
-}

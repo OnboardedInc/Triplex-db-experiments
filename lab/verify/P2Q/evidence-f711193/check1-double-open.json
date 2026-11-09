@@ -1,8 +1,0 @@
-{
-  "second": "refused: Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/runs/broker/V-P2Q/c1-lock-bf9906a7-8b46-4da4-b37e-12bf4b390fcf is a",
-  "viaLink": "refused: Error: Broker log /Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/runs/broker/V-P2Q/c1-lock-bf9906a7-8b46-4da4-b37e-12bf4b390fcf is a",
-  "survived": {
-    "a1": true,
-    "a2": true
-  }
-}

@@ -1,6 +1,0 @@
-{
-  "reviewerHead": "1317b0cbacd22cb19994d785a923bb1c22c5b10e",
-  "reviewerSha256": "204b1f3369ee424e827bde6ad2a01ff3997e0d2a8b60864f93e2580cf3784e69",
-  "builderSha256": "3827742c0e607cb1afa0a8f25546e4d907cd21eb7e14ade57401cfb389ff1833",
-  "adaptation": "AST audit expects exact Map.get instead of exact regex.test; all message tripwires, bounded/protected assertions and original EHOSTDOWN/ENETDOWN actual-client tests unchanged."
-}

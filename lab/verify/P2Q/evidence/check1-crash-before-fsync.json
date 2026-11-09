@@ -1,7 +1,0 @@
-{
-  "clientError": "outcome-unknown",
-  "frameReplayed": true,
-  "resend": "CommandAlreadyCommittedError",
-  "resendTx": "_tx/01M6W5WQXNM78TK5F3P0G92Y76",
-  "replayedTx": "_tx/01M6W5WQXNM78TK5F3P0G92Y76"
-}

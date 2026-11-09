@@ -50,7 +50,8 @@ export interface QleverRuntimeOptions {
 const brokerFromEnvironment = (): QleverRuntimeOptions["broker"] => {
   const requested = process.env["QLEVER_COMMIT_PATH"];
   if (requested === undefined || requested === "" || requested === "marker") return undefined;
-  if (requested !== "broker") throw new TypeError("Unknown QLEVER_COMMIT_PATH; choose marker or broker");
+  if (requested !== "broker")
+    throw new TypeError("Unknown QLEVER_COMMIT_PATH; choose marker or broker");
   const root = process.env["QLEVER_BROKER_DIR"];
   if (!root) throw new TypeError("QLEVER_COMMIT_PATH=broker requires QLEVER_BROKER_DIR");
   return (scopeKey, replica) =>
@@ -99,12 +100,21 @@ export const makeQleverRuntime = (
     Effect.gen(function* () {
       const client = yield* Connection;
       const runtime = yield* TripleStoreRuntime;
-      if (!openBroker) return makeQleverStorageAdapter(client, runtime.scope, { ...adapterOptions, ...(commitEncoding === undefined ? {} : { commitEncoding }) });
+      if (!openBroker)
+        return makeQleverStorageAdapter(client, runtime.scope, {
+          ...adapterOptions,
+          ...(commitEncoding === undefined ? {} : { commitEncoding }),
+        });
       const broker = yield* Effect.acquireRelease(
         Effect.tryPromise({
           try: () => openBroker(runtime.scope, client),
           catch: (cause) =>
-            new MigrationError({ version: 1, name: "qlever-broker", message: "Cannot open the QLever host broker", cause }),
+            new MigrationError({
+              version: 1,
+              name: "qlever-broker",
+              message: "Cannot open the QLever host broker",
+              cause,
+            }),
         }),
         (opened) => Effect.promise(() => opened.close()).pipe(Effect.ignore),
       );
@@ -200,10 +210,25 @@ export {
   type BasisGate,
 } from "./broker/BrokerStorageAdapter.js";
 export { makeFreshConnectionClient } from "./broker/http.js";
-export { HostLog, BrokerLogError, readWatermark, readFramesFrom, segmentStart, type LogFrame, type Watermark } from "./broker/log.js";
+export {
+  HostLog,
+  BrokerLogError,
+  H1BasisUnsupported,
+  type H1Basis,
+  readWatermark,
+  readFramesFrom,
+  segmentStart,
+  type LogFrame,
+  type Watermark,
+} from "./broker/log.js";
 export { FrameKind, scanSegment, encodeFrame, encodeSegmentHeader } from "./broker/frame.js";
 export { crc32c } from "./broker/crc32c.js";
 export { ORDINALS, packPosition, lsnOf, ordinalOf, lastPositionOf } from "./broker/position.js";
-export { decodeCommitGroup, encodeCommitGroup, type CommitGroupPayload, type FrameMember } from "./broker/frames.js";
+export {
+  decodeCommitGroup,
+  encodeCommitGroup,
+  type CommitGroupPayload,
+  type FrameMember,
+} from "./broker/frames.js";
 export { buildPublication, markerQuery, type ReplicaMarker } from "./broker/sparql.js";
 export * from "./broker/feed.js";

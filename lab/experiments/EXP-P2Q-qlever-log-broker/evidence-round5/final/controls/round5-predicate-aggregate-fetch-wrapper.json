@@ -1,8 +1,0 @@
-{
-  "expected": false,
-  "observed": false,
-  "elapsedMs": 0.0023749999999722604,
-  "boundary": "message text is no longer transport identity; .errors is not a cause edge",
-  "name": "TypeError",
-  "message": "fetch failed"
-}

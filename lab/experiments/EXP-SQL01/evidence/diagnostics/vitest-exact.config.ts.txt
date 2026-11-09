@@ -1,3 +1,0 @@
-import {defineConfig} from 'vitest/config';
-import {workspaceAliases} from '/Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/vitest.workspace-aliases.ts';
-export default defineConfig({resolve:{alias:workspaceAliases()},test:{root:import.meta.dirname,include:['exact.test.ts'],testTimeout:180000,maxWorkers:1}});

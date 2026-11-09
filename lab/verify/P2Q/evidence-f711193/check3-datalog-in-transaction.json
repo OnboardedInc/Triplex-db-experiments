@@ -1,9 +1,0 @@
-{
-  "sourceK": 2048,
-  "whileBehind": "ReadError:basis-not-available",
-  "arrivalsWhileBehind": [],
-  "afterPublication": "ReadError:",
-  "arrivalsAfter": [
-    3071
-  ]
-}

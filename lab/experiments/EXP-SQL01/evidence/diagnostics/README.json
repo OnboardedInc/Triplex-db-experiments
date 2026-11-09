@@ -1,9 +1,0 @@
-{
-  "purpose": "150 repeated schedules after retained 30/40 package failure; far/near/exact scripts and surviving raw rows",
-  "sourceHead": "e5f6ae9",
-  "notes": [
-    "50 far-time schedules and 50 near-time schedules use a shared results filename; retained results are from the near-time run",
-    "50 exact package-case schedules each retain their own JSON",
-    "Raw stream fixtures are in runs and were not deleted"
-  ]
-}

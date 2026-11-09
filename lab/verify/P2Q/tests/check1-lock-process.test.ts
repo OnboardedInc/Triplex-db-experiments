@@ -25,8 +25,8 @@ const perlChildOf = (pid: number): number | undefined => {
     return undefined;
   }
 };
-const holder = (dir: string, mode: string, tag: string, detached = false) => {
-  const child = spawn(TSX, [SCRIPT, dir, mode, tag], {
+const holder = (dir: string, mode: string, tag: string, detached = false, script = SCRIPT) => {
+  const child = spawn(TSX, [script, dir, mode, tag], {
     stdio: ["ignore", "pipe", "pipe"],
     detached,
   });
@@ -94,6 +94,55 @@ const recover = async (dir: string, acked: { tag: string; lsn: number }[]) => {
 };
 
 describe("kernel flock across processes", () => {
+  it("N8 variation: the package's source fixture starts and persists frames through tsx", async () => {
+    const dir = freshDir("package-src-fixture");
+    const a = holder(dir, "hold", "SRC", false, path.join(REPO, "packages/qlever/test/fixtures/lock-holder.ts"));
+    const opened = await a.until((e) => e.event === "opened" || e.event === "refused");
+    try {
+      expect(opened?.event).toBe("opened");
+      expect(await a.until((e) => e.event === "acked")).toBeDefined();
+    } finally {
+      if (opened?.pid) killQuiet(opened.pid);
+      if (a.child.pid) killQuiet(a.child.pid);
+      if (opened?.pid) await waitGone(opened.pid);
+    }
+    const recovery = await recover(dir, a.acked());
+    writeJson("round3-package-source-fixture.json", { opened, acked: a.acked().length, recovery });
+    expect(recovery.lost).toBe(0);
+    expect(recovery.outcome).toMatch(/^opened:/);
+  }, 60_000);
+
+  it("round3: group SIGTERM during drain and helper SIGHUP preserve exclusion", async () => {
+    const dir = freshDir("lock-term-hup");
+    const a = holder(dir, "graceful-term", "A", true);
+    const opened = await a.until((e) => e.event === "opened");
+    let b: ReturnType<typeof holder> | undefined;
+    try {
+      expect(opened).toBeDefined();
+      await a.until((e) => e.event === "acked");
+      const perl = perlChildOf(opened.pid)!;
+      expect(perl).toBeGreaterThan(0);
+      const before = a.acked().length;
+      process.kill(perl, "SIGHUP");
+      process.kill(-a.child.pid!, "SIGTERM");
+      await sleep(250);
+      expect(alive(perl)).toBe(true);
+      b = holder(dir, "hold", "B");
+      const second = await b.until((e) => e.event === "opened" || e.event === "refused");
+      expect(second?.event).toBe("refused");
+      expect(a.acked().length).toBeGreaterThan(before);
+      expect(await waitGone(opened.pid, 6_000)).toBeGreaterThanOrEqual(0);
+      expect(await waitGone(perl)).toBeGreaterThanOrEqual(0);
+      const recovery = await recover(dir, a.acked());
+      writeJson("round3-lock-term-hup.json", { second, acked: a.acked().length, recovery });
+      expect(recovery.lost).toBe(0);
+      expect(recovery.outcome).toMatch(/^opened:/);
+    } finally {
+      if (opened?.pid) killQuiet(opened.pid);
+      if (b?.child.pid) killQuiet(b.child.pid);
+    }
+  }, 60_000);
+
   it("SIGKILL of the holder: the perl child exits and the stream can be reopened", async () => {
     const dir = freshDir("lock-kill");
     const a = holder(dir, "hold", "A");

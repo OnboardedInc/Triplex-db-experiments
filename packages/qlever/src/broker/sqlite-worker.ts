@@ -152,6 +152,9 @@ const rows = (table,selection,extra='',args=[]) => {
  return q('SELECT row FROM '+table+(where.length?' WHERE '+where.join(' AND '):'')).all(...vals).map(r=>JSON.parse(r.row));
 };
 const pull = a => {
+ // [CX-INT-Q] Why: Q89b covers H1 itself, including direct worker requests.
+ // Rejected: an eligible:false empty answer (Q89c requires typed refusal at the RPC boundary).
+ if(a.recordedAt!==undefined)throw Error('H1_RECORD_TIME_UNSUPPORTED');
  const m=marker(), b=a.basis;
  if(!Number.isSafeInteger(b)||b<0)throw Error('Invalid basis');
  if(b<m.h || b>m.lsn*1024+1023)return {snapshot:m,basis:b,eligible:false,rows:[]};

@@ -1,9 +1,0 @@
-{
-  "outcome": "failed:WriteError:outcome-unknown",
-  "laterCommand": "failed:WriteError:outcome-unknown",
-  "escapedUnhandledRejections": [],
-  "watermarkBefore": 2,
-  "watermarkOnDiskAfter": 2,
-  "frameInLog": true,
-  "resend": "CommandAlreadyCommittedError"
-}

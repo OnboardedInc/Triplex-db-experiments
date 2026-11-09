@@ -1,8 +1,0 @@
-{
-  "future": 5125,
-  "first": "ReadError:basis-not-reached",
-  "waitedMs": 201,
-  "covered": true,
-  "second": 4,
-  "oracle": 4
-}

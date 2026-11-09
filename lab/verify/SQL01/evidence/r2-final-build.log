@@ -1,8 +1,0 @@
-[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 55757 "CX-VSQL01-r2-final-review", pid 2651 "CX-G03-r3-smoke", pid 55758 "CX-VSQL01-r2-final-kill50"
-[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 69596 "CX-VSQL01-r2-final-live", pid 2651 "CX-G03-r3-smoke", pid 55760 "CX-VSQL01-r2-final-unit"
-[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 69596 "CX-VSQL01-r2-final-live", pid 2651 "CX-G03-r3-smoke", pid 55759 "CX-VSQL01-r2-final-semantic"
-[lab] heavy: waiting for one of 4 slots; held by pid 28597 "orch-q87", pid 69596 "CX-VSQL01-r2-final-live", pid 2651 "CX-G03-r3-smoke", pid 55759 "CX-VSQL01-r2-final-semantic"
-[lab] heavy: waiting for one of 4 slots; held by pid 12218 "DA01-r2-image", pid 2537 "CX-OBS01-R2-x05", pid 2651 "CX-G03-r3-smoke", pid 55759 "CX-VSQL01-r2-final-semantic"
-[ERROR] Unknown option: 'store-dir'
-Did you mean 'stream'? Use "--config.unknown=value" to force an unknown option.
-For help, run: pnpm help run

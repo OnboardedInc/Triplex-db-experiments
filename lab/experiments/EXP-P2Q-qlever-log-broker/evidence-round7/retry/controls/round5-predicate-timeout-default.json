@@ -1,7 +1,0 @@
-{
-  "expected": true,
-  "observed": true,
-  "elapsedMs": 0.0019999999999527063,
-  "name": "TimeoutError",
-  "message": "The operation was aborted due to timeout"
-}

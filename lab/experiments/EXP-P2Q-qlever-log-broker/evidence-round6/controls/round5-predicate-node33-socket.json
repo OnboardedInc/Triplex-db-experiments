@@ -1,8 +1,0 @@
-{
-  "expected": false,
-  "observed": false,
-  "elapsedMs": 0.010833999999988464,
-  "boundary": "beyond documented bound",
-  "name": "TypeError",
-  "message": "terminated"
-}

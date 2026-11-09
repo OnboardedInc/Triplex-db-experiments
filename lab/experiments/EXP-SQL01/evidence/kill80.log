@@ -1,2 +1,0 @@
-[lab] heavy: waiting for one of 4 slots; held by pid 12030 "CX-X02-Q79e-G0", pid 10808 "CX-VO05-2-builder-gates", pid 12627 "CX-X02-Q79e-live", pid 13688 "G0-xtdb-20261108T223050Z-fdac21 typecheck"
-{"kills":80,"acknowledged":474,"lost":0,"root":"/Users/sam/projects/triplex-db-2/.claude/worktrees/sql01/runs/broker/EXP-SQL01/kill-168c7de7-2c04-41e0-866b-8d271c55f8b2"}

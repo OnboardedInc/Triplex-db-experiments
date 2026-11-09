@@ -1,8 +1,0 @@
-{
-  "reviewerWorktree": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f",
-  "reviewerHead": "716bd6e9c20eec170f6c4194de3fa22ae567176b",
-  "source": "/Users/sam/projects/triplex-db-2/.claude/worktrees/agent-aea2afc01cf3f010f/lab/verify/P2Q/tests/round4.test.ts",
-  "copy": "lab/verify/P2Q/tests/round4.test.ts",
-  "sha256": "27cfcf7c2e3a894e19bd8d3683c984dcb9062eb1635aaf6659e5620058350298",
-  "byteIdentical": true
-}

@@ -706,7 +706,7 @@ export class HostBroker {
   // [EXP-SQL01] Why: each pull owns one short readonly snapshot; explicit basis survives later commits.
   // Rejected: retaining a read transaction for a sweep (starves checkpoints, R25 section 2).
   pullAt(
-    basis: number,
+    basis: import("./log.js").H1Basis,
     selection: { readonly entities?: readonly string[]; readonly id?: string },
   ) {
     return this.log.pull(basis, selection);
@@ -898,12 +898,19 @@ export class HostBroker {
     let paced = false;
     let real = await this.probeReplica(surface, notBefore, paced);
     await awaitSnapshotBasis({
-      required: b, observed: real.position, waitMs: deadlineMs, started,
-      replica: this.replicaName, surface,
+      required: b,
+      observed: real.position,
+      waitMs: deadlineMs,
+      started,
+      replica: this.replicaName,
+      surface,
       pause: async (remaining) => {
         notBefore = performance.now();
         paced = true;
-        if (this.replicaMarker.position < b && await this.waitPublished(b, Math.min(remaining, 100))) {
+        if (
+          this.replicaMarker.position < b &&
+          (await this.waitPublished(b, Math.min(remaining, 100)))
+        ) {
           notBefore = this.lastPublishedAt;
           paced = false;
         }
@@ -919,19 +926,26 @@ export class HostBroker {
   /** Wait for the resolved prefix using the same Q89c policy as replica and pinned reads. */
   async awaitResolved(b: number, deadlineMs: number, surface: BasisSurface): Promise<void> {
     await awaitSnapshotBasis({
-      required: b, observed: lastPositionOf(this.durableLsn), waitMs: deadlineMs,
-      replica: "the broker's resolved prefix", surface,
+      required: b,
+      observed: lastPositionOf(this.durableLsn),
+      waitMs: deadlineMs,
+      replica: "the broker's resolved prefix",
+      surface,
       refuse: () => Boolean(this.failed),
       refresh: () => lastPositionOf(this.durableLsn),
-      pause: (remaining) => new Promise<void>((resolve) => {
-        const waiter = { position: b, resolve };
-        this.durableWaiters.push(waiter);
-        setTimeout(() => {
-          const i = this.durableWaiters.indexOf(waiter);
-          if (i !== -1) this.durableWaiters.splice(i, 1);
-          resolve();
-        }, Math.min(remaining, 100));
-      }),
+      pause: (remaining) =>
+        new Promise<void>((resolve) => {
+          const waiter = { position: b, resolve };
+          this.durableWaiters.push(waiter);
+          setTimeout(
+            () => {
+              const i = this.durableWaiters.indexOf(waiter);
+              if (i !== -1) this.durableWaiters.splice(i, 1);
+              resolve();
+            },
+            Math.min(remaining, 100),
+          );
+        }),
     });
   }
 

@@ -1,7 +1,0 @@
-{
-  "expected": true,
-  "observed": true,
-  "elapsedMs": 0.008874999999989086,
-  "name": "AbortError",
-  "message": "This operation was aborted"
-}

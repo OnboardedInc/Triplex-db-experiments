@@ -142,7 +142,11 @@ export const makeQleverStorageAdapter = (
   ): Effect.Effect<readonly TripleRow[], ReadError> =>
     Effect.gen(function* () {
       const state = yield* current;
-      if (state === undefined && basis?.recordedPosition !== undefined && basis.recordedPosition > observedPosition) {
+      if (
+        state === undefined &&
+        basis?.recordedPosition !== undefined &&
+        basis.recordedPosition > observedPosition
+      ) {
         const published = yield* position();
         if (basis.recordedPosition > published)
           return yield* Effect.fail(

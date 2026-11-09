@@ -105,7 +105,7 @@ interface State {
 const Transactions = Context.Reference<ReadonlyMap<symbol, State>>(
   "triplex/qlever/broker-transactions",
   {
-  defaultValue: () => new Map(),
+    defaultValue: () => new Map(),
   },
 );
 
@@ -252,8 +252,8 @@ export const makeQleverBrokerStorageAdapter = (
         refresh: () => sourceK,
         waitMs: basisWaitMs,
         surface,
-      replica: "the transaction snapshot",
-    });
+        replica: "the transaction snapshot",
+      });
     return b;
   };
 
@@ -585,7 +585,9 @@ export const makeQleverBrokerStorageAdapter = (
           // that would be discarded.
           const cached = broker.replicaPosition();
           if (cached < b) {
-            const touched = await broker.overlayAsync(cached, {}, (row) => wanted.has(row.attribute));
+            const touched = await broker.overlayAsync(cached, {}, (row) =>
+              wanted.has(row.attribute),
+            );
             if (touched === undefined || touched.length > 0)
               await broker.awaitReplica(
                 b,
@@ -601,7 +603,9 @@ export const makeQleverBrokerStorageAdapter = (
             const exact =
               observed >= b ||
               (await (async () => {
-                const touched = await broker.overlayAsync(observed, {}, (row) => wanted.has(row.attribute));
+                const touched = await broker.overlayAsync(observed, {}, (row) =>
+                  wanted.has(row.attribute),
+                );
                 return touched !== undefined && touched.length === 0;
               })());
             if (exact)
@@ -662,24 +666,64 @@ export const makeQleverBrokerStorageAdapter = (
   };
   const implicit = () => undefined;
   const explicit = (_first: unknown, basis?: ResolvedTemporalBasis) => basis;
-  const reads = readConstructor.snapshot({
-    getById: { run: (id: string) => Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null), basis: implicit, rawHistory: false },
-    getByEntity: { run: (entityId: string, basis?: ResolvedTemporalBasis) => queryRows({ entityId }, basis), basis: explicit, rawHistory: false },
-    getByEntities: {
-      run: (ids: readonly string[], basis?: ResolvedTemporalBasis) => Effect.map(
-        queryRows({}, basis, false, undefined, [...new Set(ids)]),
-        (rows) => new Map([...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)]))),
-      basis: explicit, rawHistory: false,
+  const reads = readConstructor.snapshot(
+    {
+      getById: {
+        run: (id: string) =>
+          Effect.map(queryRows({}, undefined, false, id), (rows) => rows[0] ?? null),
+        basis: implicit,
+        rawHistory: false,
+      },
+      getByEntity: {
+        run: (entityId: string, basis?: ResolvedTemporalBasis) => queryRows({ entityId }, basis),
+        basis: explicit,
+        rawHistory: false,
+      },
+      getByEntities: {
+        run: (ids: readonly string[], basis?: ResolvedTemporalBasis) =>
+          Effect.map(
+            queryRows({}, basis, false, undefined, [...new Set(ids)]),
+            (rows) =>
+              new Map(
+                [...new Set(ids)].map((id) => [id, rows.filter((row) => row.entity_id === id)]),
+              ),
+          ),
+        basis: explicit,
+        rawHistory: false,
+      },
+      query: {
+        run: (pattern: QueryPattern, basis?: ResolvedTemporalBasis) => queryRows(pattern, basis),
+        basis: explicit,
+        rawHistory: false,
+      },
+      history: {
+        run: (entityId: string) => queryRows({ entityId }, undefined, true),
+        basis: implicit,
+        rawHistory: true,
+      },
+      dependencyState: { run: dependencyState, basis: explicit, rawHistory: false },
     },
-    query: { run: (pattern: QueryPattern, basis?: ResolvedTemporalBasis) => queryRows(pattern, basis), basis: explicit, rawHistory: false },
-    history: { run: (entityId: string) => queryRows({ entityId }, undefined, true), basis: implicit, rawHistory: true },
-    dependencyState: { run: dependencyState, basis: explicit, rawHistory: false },
-  }, snapshotReadPolicy);
-  reads satisfies Omit<QleverBrokerStorageAdapterService,
-    "broker" | "routes" | "resolveQueryBasis" | "sourceView" |
-    "supportedValueTypes" | "snapshotReadPolicy" | "validateConstraints" | "withTransaction" |
-    "nextCommitPosition" | "currentCommitPosition" | "claimCommand" | "insert" | "batchInsert" |
-    "retract" | "initialize" | "close">;
+    snapshotReadPolicy,
+  );
+  reads satisfies Omit<
+    QleverBrokerStorageAdapterService,
+    | "broker"
+    | "routes"
+    | "resolveQueryBasis"
+    | "sourceView"
+    | "supportedValueTypes"
+    | "snapshotReadPolicy"
+    | "validateConstraints"
+    | "withTransaction"
+    | "nextCommitPosition"
+    | "currentCommitPosition"
+    | "claimCommand"
+    | "insert"
+    | "batchInsert"
+    | "retract"
+    | "initialize"
+    | "close"
+  >;
   return exactReadService<QleverBrokerStorageAdapterService>()({
     ...reads,
     snapshotReadPolicy,
@@ -786,4 +830,4 @@ export const makeQleverBrokerStorageAdapter = (
       }),
     close: () => Effect.void,
   } satisfies QleverBrokerStorageAdapterService);
-  };
+};

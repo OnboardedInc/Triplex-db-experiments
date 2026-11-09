@@ -10,6 +10,17 @@ import type { TripleRow } from "@triplex-build/triplex/runtime";
 import { FrameKind, encodeFrame, encodeSegmentHeader, segmentSeed } from "./frame.js";
 import { decodeCommitGroup } from "./frames.js";
 import { sqliteWorker } from "./sqlite-worker.js";
+import { ReadError } from "@triplex-build/triplex/runtime";
+
+export type H1Basis = number | { readonly recordedPosition: number; readonly recordedAt?: number };
+export class H1BasisUnsupported extends ReadError {
+  readonly reason = "h1-record-time-unsupported" as const;
+  constructor() {
+    super({
+      message: "H1 retires by position and cannot answer a record-time basis; route to source",
+    });
+  }
+}
 
 export class BrokerLogError extends Error {
   readonly _tag = "BrokerLogError";
@@ -137,7 +148,12 @@ class Connection {
       this.worker.once("exit", onExit);
       port1.once("message", (data: { result: T; error?: string }) => {
         cleanup();
-        if (data.error) reject(new BrokerLogError(data.error));
+        if (data.error)
+          reject(
+            data.error.includes("H1_RECORD_TIME_UNSUPPORTED")
+              ? new H1BasisUnsupported()
+              : new BrokerLogError(data.error),
+          );
         else resolve(data.result);
       });
       this.worker.postMessage({ op, args, response: port2 }, [port2]);
@@ -432,9 +448,17 @@ export class HostLog {
   recent(after: number, selection: Selection) {
     return this.pool[0]!.sync<TripleRow[]>("recent", { after, selection });
   }
-  async pull(basis: number, selection: Selection): Promise<PinnedPull> {
+  async pull(basis: H1Basis, selection: Selection): Promise<PinnedPull> {
+    // [CX-INT-Q] Why: Q89b requires refusal before position retirement drops rows needed at T.
+    // Rejected: post-filtering H1 rows by timestamp (cannot restore discarded assertions).
+    const position = typeof basis === "number" ? basis : basis.recordedPosition;
+    const recordedAt = typeof basis === "number" ? undefined : basis.recordedAt;
     if (this.closed) throw new BrokerLogError("Broker log is closed");
-    return this.pool[this.readerIndex++ % this.pool.length]!.request("pull", { basis, selection });
+    return this.pool[this.readerIndex++ % this.pool.length]!.request("pull", {
+      basis: position,
+      recordedAt,
+      selection,
+    });
   }
   checkpoint() {
     return this.checkpointer.request<CheckpointStatus>("checkpoint");

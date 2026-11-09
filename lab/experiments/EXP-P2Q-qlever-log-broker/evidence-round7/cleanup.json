@@ -1,9 +1,0 @@
-{
-  "checkedAt": 1794183486.5673878,
-  "ownActiveTestHeavyOrLockProcesses": [],
-  "engineLifecycleActions": [],
-  "exclusiveEngineSlotsTaken": 0,
-  "retainedBrokerState": "runs/broker/CX-P2Q-R7-{first,final,retry}",
-  "liveEndpoint": "http://127.0.0.1:7070",
-  "newLiveFixtureGraphCleanup": "brokers closed before DROP SILENT GRAPH of fixture-owned unique scopes; original HTTP matrix graphs retained"
-}
