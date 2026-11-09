@@ -1880,3 +1880,11 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **For Sam:** does a broker-sourced feed count as lane X meeting P3 (Q98j, R39 open question 2)?
 - **Started:** EXP-FD01 (feed contract, host consumer store, conformance suite) on main. Next: EXP-DI01 (dependency-index consumer),
   EXP-P3M (lag from the publication instant with 256 readers), EXP-DF01 (Datomic log route).
+
+## 2026-11-09 05:03Z: P2Q accepted after eleven review rounds; lane Q integration starts
+- **V-P2Q round 11 ACCEPT (default-off):** offline and live matrices, 80 extension controls, 104 full-byte comparisons. The eleven rounds ran
+  from response truncation through nested causes, transport code sets derived from sources, typed refusals, snapshot masking, and finally a
+  read surface built from one wrapped table with a private marker, so a read that skips the shared checks cannot be written.
+- **CX-INT-Q** merges P2Q and SQL01 onto int/P2Q-SQL01, applies Q89b to H1's pull predicate, and lists pin changes. Contract 0.3.14 then
+  re-pins it together with GS12F and QNODELAY. That unblocks lane Q's P5 sweep, EXP-QH1 (P4 from H1), QLever generations phase 2 and P3's
+  lane Q window.
