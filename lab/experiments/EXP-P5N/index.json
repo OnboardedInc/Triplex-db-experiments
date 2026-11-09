@@ -1,0 +1,13 @@
+{
+  "format": "EXP-P5N-round1-index/1",
+  "evidenceDir": "/Users/sam/Claude/Projects/triplex-db-2/evidence/P5N-R1",
+  "manifest": "SHA256SUMS (paths relative to evidenceDir; the retained 10k and 1k seed clones are not hashed, they are APFS clones of work-P5B-R3 and never opened read-write)",
+  "runs": {
+    "base-w1-a, base-w4-a": "step 1 instrumented baseline (10k, owner-routed reads, load 10 to 15)",
+    "d1-w1, d2-w1, d4-w1, d7-w1, d8-w1": "step 2: one W1 run after each CPU fix",
+    "s3-w1, s3-w248, s3-fp-w4, s3-1k, s3-ckpt": "step 3: direct reads, pipelined publisher, workers 1 2 4 8; s3-fp-w4 carries G-FP before and after; s3-1k feeds the fit; s3-ckpt records checkpoint events",
+    "rec": "G-REC: real SIGKILL of the sweep controller at three points",
+    "lat": "sweep ratio, stopped after 6 rounds (5 pairs, 1 A/A); lat-aa-analysis.json is the p5n-aa.mjs verdict",
+    "*-failed-*": "runs that stopped on a harness error, kept: close timeout masked by finally (s3-wsweep-failed-close), G-JNL API (…-g-jnl-api), reverse match scan (…-failed-reverse), counts basis (…-failed-counts), child done message (rec-failed-done-message)"
+  }
+}
