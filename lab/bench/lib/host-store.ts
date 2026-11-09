@@ -371,7 +371,11 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
       await writeTail;
       assertBound();
       try {
-        const r: any = await managed.runPromise(T.transactionByCommand(id));
+        // [EXP-P5B-R3] Why: core's transactionByCommand is a pattern query on the command-id attribute, which no H1 index serves, so a miss scanned every journal row
+        // (12 s at 1k, 442k facts; once per outbox page and per trace event). The broker's claim table is the lost-ACK authority (R13) and is a primary-key lookup.
+        // Rejected: the core pattern query (O(store) per call) and caching misses (a lost ACK must see the claim written by the first attempt).
+        const claim = await broker.claimAsync(id);
+        const r: any = claim ? await managed.runPromise(T.transaction(claim.txId)) : null;
         return {
           ok: true,
           value: r

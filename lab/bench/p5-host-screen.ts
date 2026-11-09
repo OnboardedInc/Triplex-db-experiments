@@ -14,6 +14,7 @@ import { generateTrace } from "./lib/trace.ts";
 import { applyW0Trace, percentile, waitUntil } from "./lib/w0-traffic.ts";
 import { runW0Sweep, subjectList } from "./lib/sweep.ts";
 import { readW0Fingerprint } from "./lib/w0-fingerprint.ts";
+import { publishRecords } from "./lib/w0-outbox.ts";
 import { loadW0Pins } from "./lib/evaluate.ts";
 import { Rng, seedOf } from "./lib/rng.ts";
 import {
@@ -39,6 +40,10 @@ const ROUNDS = Number(opt("rounds", "4")),
   WARM_S = Number(opt("warm-s", "20")),
   LAT_WORKERS = Number(opt("lat-workers", "4")),
   READERS = Number(opt("readers", "4")),
+  // [EXP-P5B-R3] Why: one mapped writer commits about 55 commands/s (one frame per command, an fsync each), the frozen burst offers about 55/s, so the no-sweep arm is already saturated.
+  // DILATE stretches the offer schedule by this factor (the commands and their valid times are unchanged): a named screening series, never the frozen trace. Rejected: concurrent
+  // writers (the position map needs acknowledgements in order) and dropping the burst (about 1 command/s gives no p99).
+  DILATE = Number(opt("dilate", "2")),
   FLOOR = 5 * 1024 ** 3;
 fs.mkdirSync(outDir, { recursive: false });
 const b0 = JSON.parse(fs.readFileSync(path.join(seedDir, "receipt.json"), "utf8"));
@@ -82,7 +87,7 @@ const report: any = {
   mapSha256: mapSha,
   sources: before,
   runtime: { node: process.version, platform: process.platform, arch: process.arch },
-  params: { ROUNDS, WINDOW_S, WARM_S, LAT_WORKERS, READERS },
+  params: { ROUNDS, WINDOW_S, WARM_S, LAT_WORKERS, READERS, DILATE },
   activation: {},
   latency: { rounds: [] },
 };
@@ -149,6 +154,37 @@ async function activationArm(name: string, W: number) {
       coverage = new Set<string>();
     let publishMs = 0,
       walMax = 0;
+    // Publication stage split: the outbox reads each subject's prior state (pull), claims, then commits one frame per page.
+    const stage = { pullMs: 0, pulls: 0, transactMs: 0, transacts: 0, claimMs: 0 };
+    const timed = {
+      ...comp,
+      pull: async (...a: Parameters<typeof comp.pull>) => {
+        const t = performance.now();
+        try {
+          return await comp.pull(...a);
+        } finally {
+          stage.pullMs += performance.now() - t;
+          stage.pulls++;
+        }
+      },
+      transact: async (...a: Parameters<typeof comp.transact>) => {
+        const t = performance.now();
+        try {
+          return await comp.transact(...a);
+        } finally {
+          stage.transactMs += performance.now() - t;
+          stage.transacts++;
+        }
+      },
+      transactionByCommand: async (...a: Parameters<typeof comp.transactionByCommand>) => {
+        const t = performance.now();
+        try {
+          return await comp.transactionByCommand(...a);
+        } finally {
+          stage.claimMs += performance.now() - t;
+        }
+      },
+    } as typeof comp;
     const walTimer = setInterval(() => (walMax = Math.max(walMax, walBytes(dst))), 100);
     const started = performance.now();
     const sweep = await runW0Sweep({
@@ -165,7 +201,7 @@ async function activationArm(name: string, W: number) {
       readThroughOwner: true,
       onPage: async (records) => {
         const t = performance.now();
-        const actual = await comp.publishOutbox(records.map((r: any) => r.record));
+        const actual = await publishRecords(timed, records.map((r: any) => r.record));
         publishMs += performance.now() - t;
         for (const r of records) {
           if (coverage.has(r.subject)) throw Error("G4 duplicate evaluation");
@@ -208,6 +244,7 @@ async function activationArm(name: string, W: number) {
       wallMs,
       subjectsPerS: N / (wallMs / 1000),
       publishMsTotal: publishMs,
+      publishStage: stage,
       activationCommitMs,
       pages: m.length,
       pageTransactionMs: { p50: tx[Math.floor(tx.length / 2)], p99: tx[Math.ceil(tx.length * 0.99) - 1], max: tx.at(-1) },
@@ -232,10 +269,11 @@ async function latencyArm(name: string, withSweep: boolean, seed: string, oldCut
     { h, dst } = arm,
     comp = h.comp;
   const live = { ...comp, sweepPage: (s: readonly string[], b: any) => h.livePage(s, b) } as typeof comp;
-  const OFFSET_S = 100,
-    total = WARM_S + WINDOW_S;
-  const events = generateTrace({ seed, subjects: N, durationS: OFFSET_S + total }).filter(
-    (e) => e.atMs >= OFFSET_S * 1000 && e.atMs < (OFFSET_S + total) * 1000,
+  const total = WARM_S + WINDOW_S,
+    // The first burst starts at trace second 120; align it with the end of the warm-up in schedule time.
+    OFFSET_S = 120 - WARM_S / DILATE;
+  const events = generateTrace({ seed, subjects: N, durationS: OFFSET_S + total / DILATE }).filter(
+    (e) => e.atMs >= OFFSET_S * 1000 && e.atMs < (OFFSET_S + total / DILATE) * 1000,
   );
   const commits: { rel: number; lat: number; queue: number }[] = [],
     reads: { rel: number; ms: number }[] = [],
@@ -272,7 +310,7 @@ async function latencyArm(name: string, withSweep: boolean, seed: string, oldCut
   };
   const writer = (async () => {
     for (const e of events) {
-      const at = startAt + (e.atMs - OFFSET_S * 1000);
+      const at = startAt + (e.atMs - OFFSET_S * 1000) * DILATE;
       await waitUntil(at);
       if (failed) break;
       void submit(e, at).catch((x) => (failed = x));
@@ -288,7 +326,7 @@ async function latencyArm(name: string, withSweep: boolean, seed: string, oldCut
         const t = performance.now();
         await h.livePage([W0.placementId(subject)], {
           position: await comp.currentPosition(),
-          validAt: V_W0 + OFFSET_S * 1000 + Math.floor(rel(t)),
+          validAt: V_W0 + OFFSET_S * 1000 + Math.floor(rel(t) / DILATE),
         });
         reads.push({ rel: rel(t), ms: performance.now() - t });
         await new Promise<void>((r) => setImmediate(r));
@@ -300,7 +338,9 @@ async function latencyArm(name: string, withSweep: boolean, seed: string, oldCut
     await waitUntil(startAt + WARM_S * 1000);
     for (let k = 0; performance.now() < endAt && !failed; k++) {
       const release = k % 2 ? "R1" : "R2";
-      const validAt = V_W0 + OFFSET_S * 1000 + Math.floor(rel(performance.now()));
+      // The W0 kernel accepts whole-second instants only (a fractional millisecond fails W0.E_BASIS).
+      const validAt =
+        V_W0 + Math.floor((OFFSET_S * 1000 + rel(performance.now()) / DILATE) / 1000) * 1000;
       const t0 = performance.now();
       const act = await comp.transact(
         [{ op: "assert", entityId: "p5:tenant", attribute: "p5/activation", value: { type: "string", value: release }, validFrom: validAt }],
@@ -381,7 +421,7 @@ const ratio = (a?: number, b?: number) => (a !== undefined && b ? a / b : null);
 try {
   await loadW0Pins();
   if (!flag("skip-act")) {
-    for (const W of [1, 4]) {
+    for (const W of opt("act-workers", "1,4").split(",").map(Number)) {
       if (free() < FLOOR + 1024 ** 3) throw Error("RESOURCE-ABORT: host disk below 5 GiB plus margin");
       report.activation["W" + W] = await activationArm("act-W" + W, W);
       save();
