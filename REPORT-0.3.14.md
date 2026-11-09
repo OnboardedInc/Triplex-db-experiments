@@ -26,3 +26,13 @@ INT-Q applies Q89b early: H1 refuses record-time bases typed and the adapter rou
 - This report will assess actual semantic summaries, zero unexpected skips/failures and current-source evidence before recording final builder gate results. Independent reviewer promotion remains separate.
 
 Bulky fresh output belongs at /Users/sam/Claude/Projects/triplex-db-2/evidence/CX-A01-0314/. Commit only small indexes/manifests and audit preimages. Original failures remain. Not done: live G1+, performance/target-scale acceptance, root pnpm check, packing, external backend integration, deploy or publish. No engine lifecycle operation or slot is needed for offline G0.
+
+## Retained first attempts and source correction
+
+The first mutation run caught 518/519 executed controls (607 catalog, 88 retired anchors). Removing the new pin map reached a KeyError in the inherited 0.3.13 check rather than CONTRACT INVALID; its current-pin lookup now tolerates a missing key so ordinary validation reports the refusal. A dedicated regression requires both old and new validators to return the pin errors. No mutation expectation was relaxed.
+
+The first evaluator began on a temporary assembly head and refused uncommitted contract bytes (76/108). A second began on a317c52b, but overlapped the required guard correction and correctly detected the source change (99/108). These are retained orchestration failures, not accepted evaluator results. Final runs begin only after the corrected source commit and no source edits overlap them.
+
+First XTDB G0 G0-xtdb-20261109T055225Z-148ffe executed 1,223 tests successfully but refused three unexpected live GS12F skips. The imported GS12F files add three named live value-boundary cases on each of XTDB and QLever; their suite guards require XTDB_INTEGRATION/QLEVER_INTEGRATION. Added precisely those six expected offline skips. No live case is relabeled as executed; no assertion, timeout or gate condition changed. Prior skip sets are preserved. Its FAIL receipt, raw/object/build bytes and checksums remain retained. The final retry cites this attempt with --previous.
+
+Task-owned disposable alchemy, distilled cloud and workerd node_modules copies were removed after verifying they are unused by these six-package offline gates. The owned store, lock and install receipt remain. Disk capacity was remeasured; logical deletion is not claimed as physical reclaimed bytes. No external dependency cache, source, evidence, engine or unrelated worktree was removed.

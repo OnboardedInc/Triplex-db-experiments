@@ -40,7 +40,7 @@
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/pending-authority.md": "42f0ba89780694d876c7cb41d912a31ede858d8ef11a0ef5a916e58872c7339e",
     "lab/experiments/EXP-A01-acceptance-contract/evidence-0.3.14/packages__testkit__src__index.ts.diff": "41929c2d3f25f64c0d8980f9b4fd74316c93553de357d1dc1ebc7c8cdf07a2db",
     "lab/verify/P2X2/VERIFY.md": "462456077e50a4a6a4027deb2f1e55f36361b69751323ff0f37dddee2943a159",
-    "lab/acceptance/build_contract.py": "54046f4d1562973b24904c28044ba91f6da2718071c87651af627befd7a8f6e7"
+    "lab/acceptance/build_contract.py": "6f533cc044d3620dafdd4e96b57a7fd5b71bd8179abb7ca93daeaf1af7c87639"
   },
   "artifacts": {
     "oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9",
@@ -3970,7 +3970,7 @@
       ],
       "answer": "canonical JSON {bound, unboundAssignments, imagesPinned, variant} for one composition-identity case {composition}, run from the authority's files (RULINGS Q59e, Q64c, Q65a)",
       "sha256": {
-        "lab/acceptance/build_contract.py": "54046f4d1562973b24904c28044ba91f6da2718071c87651af627befd7a8f6e7",
+        "lab/acceptance/build_contract.py": "6f533cc044d3620dafdd4e96b57a7fd5b71bd8179abb7ca93daeaf1af7c87639",
         "lab/acceptance/oracle-contract.json": "82b3b4e0e774553a38ab4750abb6fc61b2d89431aeb3002f7692d3124fa80fb9"
       }
     },
@@ -31318,5 +31318,5 @@
       ]
     }
   ],
-  "transitiveContractSha256": "eb1d0d4968020621c30e9d058a7f260ad6828068e159bf231b18e662b8f5f0f2"
+  "transitiveContractSha256": "266e66f537cd27f462a01f6bf18c9ee7be3f3915bc5bdb61c03554a41d55a718"
 }

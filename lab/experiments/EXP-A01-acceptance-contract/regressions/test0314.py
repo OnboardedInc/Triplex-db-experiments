@@ -37,6 +37,13 @@ class Contract0314(old.Contract0313):
         r=D['rulingReview0314'];self.assertEqual(r,A['nativeReview']);self.assertEqual(r['commit'],'4155fda7')
         self.assertEqual(hashlib.sha256((R/r['record']).read_bytes()).hexdigest(),r['sha256'])
         self.assertIn('ACCEPT for D1',(R/r['record']).read_text())
+    def test_missing_pin_fails_with_validation_errors(self):
+        pins=C['PIN_CHANGES_0314'];saved=dict(pins)
+        try:
+            pins.clear()
+            self.assertIn('Q45a: all reviewed testkit source pin projections required',C['checks_0313']())
+            self.assertIn('Q45a: reviewed repins required',C['checks_0314']())
+        finally:pins.update(saved)
     def test_no_q89_compilation(self):
         self.assertFalse(any(r['id'].startswith('Q89') for r in D['rulings']))
         self.assertIn('Q89b',D['pendingRulings']['ids'])

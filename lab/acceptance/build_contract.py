@@ -6271,7 +6271,7 @@ def checks_0313():
         IMAGE_PINS["datomic"] = saved_image
     if PIN_CHANGES_0313 != audit["pins"] or IMAGE_PINS.get("datomic") != audit["pins"]["datomic"]["new"]:
         errors.append("Q45a/Q61i: reviewed Datomic image repin required")
-    p = dict(audit["pins"]["testkit"], sha256=PIN_CHANGES_0314["packages/testkit/src/index.ts"]["sha256"])
+    p = dict(audit["pins"]["testkit"], sha256=PIN_CHANGES_0314.get("packages/testkit/src/index.ts", {}).get("sha256"))
     if sha_file(p["path"]) != p["sha256"] or [{"path": f, "sha256": sha_file(f)} for f in ORACLES["O-TESTKIT"]["files"] if ORACLES["O-TESTKIT"]["status"] == "EXISTS"] != [{"path": p["path"], "sha256": p["sha256"]}] or CS["CS-U44"]["pinnedSourceFiles"] != [{"path": p["path"], "sha256": p["sha256"]}]:
         errors.append("Q45a: all reviewed testkit source pin projections required")
     held = {"Q78e", "Q86g", "Q94a"} | {k for k in pending_ruling_ids() if k.startswith(("Q89", "Q90", "Q92", "Q95"))}
