@@ -1,0 +1,1018 @@
+[
+  {
+    "exitCode": 1,
+    "proof": {
+      "pass": false,
+      "reasons": [
+        "compile dump exited with status 1"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": false,
+          "reason": "compile dump exited with status 1"
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [],
+      "monotonicCalls": 0,
+      "helperCalls": {},
+      "forbidden": [],
+      "unparsedCalls": [],
+      "compiledSha256": "312003cfe0bb0ff14ef8a68ccbe69948d88b2ba1c50fb76920440b5d1b38b8da",
+      "compiledBytes": 2156,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    },
+    "w0": {
+      "pass": false,
+      "reasons": [
+        "clock: compile dump exited with status 1"
+      ],
+      "checks": {
+        "clock": {
+          "pass": false,
+          "reasons": [
+            "compile dump exited with status 1"
+          ],
+          "flags": [
+            "-d",
+            "all"
+          ],
+          "version": "bpftrace v0.20.2",
+          "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+          "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+          "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+          "processes": {
+            "version": {
+              "ok": true
+            },
+            "hash": {
+              "ok": true
+            },
+            "btf": {
+              "ok": true
+            },
+            "compile": {
+              "ok": false,
+              "reason": "compile dump exited with status 1"
+            }
+          },
+          "sourceMonotonicSites": 15,
+          "sourceProbes": 15,
+          "sourceHelperNeeds": [
+            "bpf_get_current_cgroup_id",
+            "bpf_get_current_pid_tgid",
+            "bpf_get_smp_processor_id",
+            "bpf_ktime_get_ns",
+            "bpf_map_delete_elem",
+            "bpf_map_lookup_elem",
+            "bpf_map_update_elem",
+            "bpf_perf_event_output",
+            "bpf_probe_read",
+            "bpf_probe_read_kernel",
+            "bpf_ringbuf_discard",
+            "bpf_ringbuf_output",
+            "bpf_ringbuf_reserve",
+            "bpf_ringbuf_submit"
+          ],
+          "allowList": [
+            "bpf_ktime_get_ns",
+            "bpf_map_lookup_elem",
+            "bpf_map_update_elem",
+            "bpf_map_delete_elem",
+            "bpf_get_smp_processor_id",
+            "bpf_get_current_pid_tgid",
+            "bpf_get_current_cgroup_id",
+            "bpf_perf_event_output",
+            "bpf_ringbuf_output",
+            "bpf_ringbuf_reserve",
+            "bpf_ringbuf_submit",
+            "bpf_ringbuf_discard",
+            "bpf_probe_read_kernel",
+            "bpf_probe_read"
+          ],
+          "helperIds": {
+            "bpf_ktime_get_ns": 5,
+            "bpf_jiffies64": 118,
+            "bpf_ktime_get_boot_ns": 125,
+            "bpf_ktime_get_coarse_ns": 160,
+            "bpf_ktime_get_tai_ns": 208,
+            "bpf_map_lookup_elem": 1,
+            "bpf_map_update_elem": 2,
+            "bpf_map_delete_elem": 3,
+            "bpf_get_smp_processor_id": 8,
+            "bpf_get_current_pid_tgid": 14,
+            "bpf_get_current_cgroup_id": 80,
+            "bpf_perf_event_output": 25,
+            "bpf_ringbuf_output": 130,
+            "bpf_ringbuf_reserve": 131,
+            "bpf_ringbuf_submit": 132,
+            "bpf_ringbuf_discard": 133,
+            "bpf_probe_read_kernel": 113,
+            "bpf_probe_read": 4
+          },
+          "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+          "btfBytes": 1004,
+          "btfEnum": "ENUM",
+          "referenceNote": [],
+          "sections": [],
+          "monotonicCalls": 0,
+          "helperCalls": {},
+          "forbidden": [],
+          "unparsedCalls": [],
+          "compiledSha256": "312003cfe0bb0ff14ef8a68ccbe69948d88b2ba1c50fb76920440b5d1b38b8da",
+          "compiledBytes": 2156,
+          "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+        },
+        "clockTransport": {
+          "pass": true,
+          "status": "INCONCLUSIVE",
+          "reasons": [],
+          "detail": {
+            "status": "INCONCLUSIVE",
+            "pass": false,
+            "reasons": [
+              "clock identity not established by observation: separation of CLOCK_BOOTTIME from CLOCK_MONOTONIC (-1 ns) is not larger than the measured uncertainty (100900000 ns)"
+            ],
+            "toleranceNs": 100000000,
+            "slackNs": 1000000,
+            "samples": 20,
+            "minHopNs": 100000,
+            "maxHopNs": 100000,
+            "probeBootMinusMonotonicNs": 0,
+            "separationNs": -1,
+            "uncertaintyNs": 100900000,
+            "readBracketNs": 1
+          }
+        },
+        "perf": {
+          "pass": true,
+          "paranoid": 4,
+          "reasons": []
+        },
+        "memory": {
+          "pass": true,
+          "reasons": [],
+          "peakBytes": 94371840,
+          "oomKills": 0,
+          "capBytes": 268435456,
+          "headroomFraction": 0.8
+        },
+        "ext4": {
+          "pass": true,
+          "reasons": []
+        },
+        "mapKeys": {
+          "pass": true,
+          "configured": 65536,
+          "floor": 16384,
+          "reasons": []
+        },
+        "attach": {
+          "pass": true,
+          "reasons": []
+        }
+      },
+      "clockIdentity": {
+        "provenBy": "compiled program",
+        "program": false,
+        "observational": "INCONCLUSIVE"
+      }
+    }
+  },
+  {
+    "exitCode": 2,
+    "proof": {
+      "pass": false,
+      "reasons": [
+        "compile dump exited with status 2"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": false,
+          "reason": "compile dump exited with status 2"
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [],
+      "monotonicCalls": 0,
+      "helperCalls": {},
+      "forbidden": [],
+      "unparsedCalls": [],
+      "compiledSha256": "312003cfe0bb0ff14ef8a68ccbe69948d88b2ba1c50fb76920440b5d1b38b8da",
+      "compiledBytes": 2156,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    },
+    "w0": {
+      "pass": false,
+      "reasons": [
+        "clock: compile dump exited with status 2"
+      ],
+      "checks": {
+        "clock": {
+          "pass": false,
+          "reasons": [
+            "compile dump exited with status 2"
+          ],
+          "flags": [
+            "-d",
+            "all"
+          ],
+          "version": "bpftrace v0.20.2",
+          "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+          "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+          "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+          "processes": {
+            "version": {
+              "ok": true
+            },
+            "hash": {
+              "ok": true
+            },
+            "btf": {
+              "ok": true
+            },
+            "compile": {
+              "ok": false,
+              "reason": "compile dump exited with status 2"
+            }
+          },
+          "sourceMonotonicSites": 15,
+          "sourceProbes": 15,
+          "sourceHelperNeeds": [
+            "bpf_get_current_cgroup_id",
+            "bpf_get_current_pid_tgid",
+            "bpf_get_smp_processor_id",
+            "bpf_ktime_get_ns",
+            "bpf_map_delete_elem",
+            "bpf_map_lookup_elem",
+            "bpf_map_update_elem",
+            "bpf_perf_event_output",
+            "bpf_probe_read",
+            "bpf_probe_read_kernel",
+            "bpf_ringbuf_discard",
+            "bpf_ringbuf_output",
+            "bpf_ringbuf_reserve",
+            "bpf_ringbuf_submit"
+          ],
+          "allowList": [
+            "bpf_ktime_get_ns",
+            "bpf_map_lookup_elem",
+            "bpf_map_update_elem",
+            "bpf_map_delete_elem",
+            "bpf_get_smp_processor_id",
+            "bpf_get_current_pid_tgid",
+            "bpf_get_current_cgroup_id",
+            "bpf_perf_event_output",
+            "bpf_ringbuf_output",
+            "bpf_ringbuf_reserve",
+            "bpf_ringbuf_submit",
+            "bpf_ringbuf_discard",
+            "bpf_probe_read_kernel",
+            "bpf_probe_read"
+          ],
+          "helperIds": {
+            "bpf_ktime_get_ns": 5,
+            "bpf_jiffies64": 118,
+            "bpf_ktime_get_boot_ns": 125,
+            "bpf_ktime_get_coarse_ns": 160,
+            "bpf_ktime_get_tai_ns": 208,
+            "bpf_map_lookup_elem": 1,
+            "bpf_map_update_elem": 2,
+            "bpf_map_delete_elem": 3,
+            "bpf_get_smp_processor_id": 8,
+            "bpf_get_current_pid_tgid": 14,
+            "bpf_get_current_cgroup_id": 80,
+            "bpf_perf_event_output": 25,
+            "bpf_ringbuf_output": 130,
+            "bpf_ringbuf_reserve": 131,
+            "bpf_ringbuf_submit": 132,
+            "bpf_ringbuf_discard": 133,
+            "bpf_probe_read_kernel": 113,
+            "bpf_probe_read": 4
+          },
+          "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+          "btfBytes": 1004,
+          "btfEnum": "ENUM",
+          "referenceNote": [],
+          "sections": [],
+          "monotonicCalls": 0,
+          "helperCalls": {},
+          "forbidden": [],
+          "unparsedCalls": [],
+          "compiledSha256": "312003cfe0bb0ff14ef8a68ccbe69948d88b2ba1c50fb76920440b5d1b38b8da",
+          "compiledBytes": 2156,
+          "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+        },
+        "clockTransport": {
+          "pass": true,
+          "status": "INCONCLUSIVE",
+          "reasons": [],
+          "detail": {
+            "status": "INCONCLUSIVE",
+            "pass": false,
+            "reasons": [
+              "clock identity not established by observation: separation of CLOCK_BOOTTIME from CLOCK_MONOTONIC (-1 ns) is not larger than the measured uncertainty (100900000 ns)"
+            ],
+            "toleranceNs": 100000000,
+            "slackNs": 1000000,
+            "samples": 20,
+            "minHopNs": 100000,
+            "maxHopNs": 100000,
+            "probeBootMinusMonotonicNs": 0,
+            "separationNs": -1,
+            "uncertaintyNs": 100900000,
+            "readBracketNs": 1
+          }
+        },
+        "perf": {
+          "pass": true,
+          "paranoid": 4,
+          "reasons": []
+        },
+        "memory": {
+          "pass": true,
+          "reasons": [],
+          "peakBytes": 94371840,
+          "oomKills": 0,
+          "capBytes": 268435456,
+          "headroomFraction": 0.8
+        },
+        "ext4": {
+          "pass": true,
+          "reasons": []
+        },
+        "mapKeys": {
+          "pass": true,
+          "configured": 65536,
+          "floor": 16384,
+          "reasons": []
+        },
+        "attach": {
+          "pass": true,
+          "reasons": []
+        }
+      },
+      "clockIdentity": {
+        "provenBy": "compiled program",
+        "program": false,
+        "observational": "INCONCLUSIVE"
+      }
+    }
+  },
+  {
+    "exitCode": null,
+    "proof": {
+      "pass": false,
+      "reasons": [
+        "compile dump exit status is missing"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": false,
+          "reason": "compile dump exit status is missing"
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [],
+      "monotonicCalls": 0,
+      "helperCalls": {},
+      "forbidden": [],
+      "unparsedCalls": [],
+      "compiledSha256": "312003cfe0bb0ff14ef8a68ccbe69948d88b2ba1c50fb76920440b5d1b38b8da",
+      "compiledBytes": 2156,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    },
+    "w0": {
+      "pass": false,
+      "reasons": [
+        "clock: compile dump exit status is missing"
+      ],
+      "checks": {
+        "clock": {
+          "pass": false,
+          "reasons": [
+            "compile dump exit status is missing"
+          ],
+          "flags": [
+            "-d",
+            "all"
+          ],
+          "version": "bpftrace v0.20.2",
+          "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+          "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+          "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+          "processes": {
+            "version": {
+              "ok": true
+            },
+            "hash": {
+              "ok": true
+            },
+            "btf": {
+              "ok": true
+            },
+            "compile": {
+              "ok": false,
+              "reason": "compile dump exit status is missing"
+            }
+          },
+          "sourceMonotonicSites": 15,
+          "sourceProbes": 15,
+          "sourceHelperNeeds": [
+            "bpf_get_current_cgroup_id",
+            "bpf_get_current_pid_tgid",
+            "bpf_get_smp_processor_id",
+            "bpf_ktime_get_ns",
+            "bpf_map_delete_elem",
+            "bpf_map_lookup_elem",
+            "bpf_map_update_elem",
+            "bpf_perf_event_output",
+            "bpf_probe_read",
+            "bpf_probe_read_kernel",
+            "bpf_ringbuf_discard",
+            "bpf_ringbuf_output",
+            "bpf_ringbuf_reserve",
+            "bpf_ringbuf_submit"
+          ],
+          "allowList": [
+            "bpf_ktime_get_ns",
+            "bpf_map_lookup_elem",
+            "bpf_map_update_elem",
+            "bpf_map_delete_elem",
+            "bpf_get_smp_processor_id",
+            "bpf_get_current_pid_tgid",
+            "bpf_get_current_cgroup_id",
+            "bpf_perf_event_output",
+            "bpf_ringbuf_output",
+            "bpf_ringbuf_reserve",
+            "bpf_ringbuf_submit",
+            "bpf_ringbuf_discard",
+            "bpf_probe_read_kernel",
+            "bpf_probe_read"
+          ],
+          "helperIds": {
+            "bpf_ktime_get_ns": 5,
+            "bpf_jiffies64": 118,
+            "bpf_ktime_get_boot_ns": 125,
+            "bpf_ktime_get_coarse_ns": 160,
+            "bpf_ktime_get_tai_ns": 208,
+            "bpf_map_lookup_elem": 1,
+            "bpf_map_update_elem": 2,
+            "bpf_map_delete_elem": 3,
+            "bpf_get_smp_processor_id": 8,
+            "bpf_get_current_pid_tgid": 14,
+            "bpf_get_current_cgroup_id": 80,
+            "bpf_perf_event_output": 25,
+            "bpf_ringbuf_output": 130,
+            "bpf_ringbuf_reserve": 131,
+            "bpf_ringbuf_submit": 132,
+            "bpf_ringbuf_discard": 133,
+            "bpf_probe_read_kernel": 113,
+            "bpf_probe_read": 4
+          },
+          "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+          "btfBytes": 1004,
+          "btfEnum": "ENUM",
+          "referenceNote": [],
+          "sections": [],
+          "monotonicCalls": 0,
+          "helperCalls": {},
+          "forbidden": [],
+          "unparsedCalls": [],
+          "compiledSha256": "312003cfe0bb0ff14ef8a68ccbe69948d88b2ba1c50fb76920440b5d1b38b8da",
+          "compiledBytes": 2156,
+          "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+        },
+        "clockTransport": {
+          "pass": true,
+          "status": "INCONCLUSIVE",
+          "reasons": [],
+          "detail": {
+            "status": "INCONCLUSIVE",
+            "pass": false,
+            "reasons": [
+              "clock identity not established by observation: separation of CLOCK_BOOTTIME from CLOCK_MONOTONIC (-1 ns) is not larger than the measured uncertainty (100900000 ns)"
+            ],
+            "toleranceNs": 100000000,
+            "slackNs": 1000000,
+            "samples": 20,
+            "minHopNs": 100000,
+            "maxHopNs": 100000,
+            "probeBootMinusMonotonicNs": 0,
+            "separationNs": -1,
+            "uncertaintyNs": 100900000,
+            "readBracketNs": 1
+          }
+        },
+        "perf": {
+          "pass": true,
+          "paranoid": 4,
+          "reasons": []
+        },
+        "memory": {
+          "pass": true,
+          "reasons": [],
+          "peakBytes": 94371840,
+          "oomKills": 0,
+          "capBytes": 268435456,
+          "headroomFraction": 0.8
+        },
+        "ext4": {
+          "pass": true,
+          "reasons": []
+        },
+        "mapKeys": {
+          "pass": true,
+          "configured": 65536,
+          "floor": 16384,
+          "reasons": []
+        },
+        "attach": {
+          "pass": true,
+          "reasons": []
+        }
+      },
+      "clockIdentity": {
+        "provenBy": "compiled program",
+        "program": false,
+        "observational": "INCONCLUSIVE"
+      }
+    }
+  },
+  {
+    "exitCode": null,
+    "proof": {
+      "pass": false,
+      "reasons": [
+        "compile dump exit status is missing"
+      ],
+      "flags": [
+        "-d",
+        "all"
+      ],
+      "version": "bpftrace v0.20.2",
+      "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+      "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+      "processes": {
+        "version": {
+          "ok": true
+        },
+        "hash": {
+          "ok": true
+        },
+        "btf": {
+          "ok": true
+        },
+        "compile": {
+          "ok": false,
+          "reason": "compile dump exit status is missing"
+        }
+      },
+      "sourceMonotonicSites": 15,
+      "sourceProbes": 15,
+      "sourceHelperNeeds": [
+        "bpf_get_current_cgroup_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_smp_processor_id",
+        "bpf_ktime_get_ns",
+        "bpf_map_delete_elem",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_perf_event_output",
+        "bpf_probe_read",
+        "bpf_probe_read_kernel",
+        "bpf_ringbuf_discard",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit"
+      ],
+      "allowList": [
+        "bpf_ktime_get_ns",
+        "bpf_map_lookup_elem",
+        "bpf_map_update_elem",
+        "bpf_map_delete_elem",
+        "bpf_get_smp_processor_id",
+        "bpf_get_current_pid_tgid",
+        "bpf_get_current_cgroup_id",
+        "bpf_perf_event_output",
+        "bpf_ringbuf_output",
+        "bpf_ringbuf_reserve",
+        "bpf_ringbuf_submit",
+        "bpf_ringbuf_discard",
+        "bpf_probe_read_kernel",
+        "bpf_probe_read"
+      ],
+      "helperIds": {
+        "bpf_ktime_get_ns": 5,
+        "bpf_jiffies64": 118,
+        "bpf_ktime_get_boot_ns": 125,
+        "bpf_ktime_get_coarse_ns": 160,
+        "bpf_ktime_get_tai_ns": 208,
+        "bpf_map_lookup_elem": 1,
+        "bpf_map_update_elem": 2,
+        "bpf_map_delete_elem": 3,
+        "bpf_get_smp_processor_id": 8,
+        "bpf_get_current_pid_tgid": 14,
+        "bpf_get_current_cgroup_id": 80,
+        "bpf_perf_event_output": 25,
+        "bpf_ringbuf_output": 130,
+        "bpf_ringbuf_reserve": 131,
+        "bpf_ringbuf_submit": 132,
+        "bpf_ringbuf_discard": 133,
+        "bpf_probe_read_kernel": 113,
+        "bpf_probe_read": 4
+      },
+      "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+      "btfBytes": 1004,
+      "btfEnum": "ENUM",
+      "referenceNote": [],
+      "sections": [],
+      "monotonicCalls": 0,
+      "helperCalls": {},
+      "forbidden": [],
+      "unparsedCalls": [],
+      "compiledSha256": "312003cfe0bb0ff14ef8a68ccbe69948d88b2ba1c50fb76920440b5d1b38b8da",
+      "compiledBytes": 2156,
+      "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+    },
+    "w0": {
+      "pass": false,
+      "reasons": [
+        "clock: compile dump exit status is missing"
+      ],
+      "checks": {
+        "clock": {
+          "pass": false,
+          "reasons": [
+            "compile dump exit status is missing"
+          ],
+          "flags": [
+            "-d",
+            "all"
+          ],
+          "version": "bpftrace v0.20.2",
+          "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+          "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+          "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+          "processes": {
+            "version": {
+              "ok": true
+            },
+            "hash": {
+              "ok": true
+            },
+            "btf": {
+              "ok": true
+            },
+            "compile": {
+              "ok": false,
+              "reason": "compile dump exit status is missing"
+            }
+          },
+          "sourceMonotonicSites": 15,
+          "sourceProbes": 15,
+          "sourceHelperNeeds": [
+            "bpf_get_current_cgroup_id",
+            "bpf_get_current_pid_tgid",
+            "bpf_get_smp_processor_id",
+            "bpf_ktime_get_ns",
+            "bpf_map_delete_elem",
+            "bpf_map_lookup_elem",
+            "bpf_map_update_elem",
+            "bpf_perf_event_output",
+            "bpf_probe_read",
+            "bpf_probe_read_kernel",
+            "bpf_ringbuf_discard",
+            "bpf_ringbuf_output",
+            "bpf_ringbuf_reserve",
+            "bpf_ringbuf_submit"
+          ],
+          "allowList": [
+            "bpf_ktime_get_ns",
+            "bpf_map_lookup_elem",
+            "bpf_map_update_elem",
+            "bpf_map_delete_elem",
+            "bpf_get_smp_processor_id",
+            "bpf_get_current_pid_tgid",
+            "bpf_get_current_cgroup_id",
+            "bpf_perf_event_output",
+            "bpf_ringbuf_output",
+            "bpf_ringbuf_reserve",
+            "bpf_ringbuf_submit",
+            "bpf_ringbuf_discard",
+            "bpf_probe_read_kernel",
+            "bpf_probe_read"
+          ],
+          "helperIds": {
+            "bpf_ktime_get_ns": 5,
+            "bpf_jiffies64": 118,
+            "bpf_ktime_get_boot_ns": 125,
+            "bpf_ktime_get_coarse_ns": 160,
+            "bpf_ktime_get_tai_ns": 208,
+            "bpf_map_lookup_elem": 1,
+            "bpf_map_update_elem": 2,
+            "bpf_map_delete_elem": 3,
+            "bpf_get_smp_processor_id": 8,
+            "bpf_get_current_pid_tgid": 14,
+            "bpf_get_current_cgroup_id": 80,
+            "bpf_perf_event_output": 25,
+            "bpf_ringbuf_output": 130,
+            "bpf_ringbuf_reserve": 131,
+            "bpf_ringbuf_submit": 132,
+            "bpf_ringbuf_discard": 133,
+            "bpf_probe_read_kernel": 113,
+            "bpf_probe_read": 4
+          },
+          "btfSha256": "b6539b9e28517f3f5cab0cb5e360b1d412fc97637965354ba74d94bfc68365ed",
+          "btfBytes": 1004,
+          "btfEnum": "ENUM",
+          "referenceNote": [],
+          "sections": [],
+          "monotonicCalls": 0,
+          "helperCalls": {},
+          "forbidden": [],
+          "unparsedCalls": [],
+          "compiledSha256": "312003cfe0bb0ff14ef8a68ccbe69948d88b2ba1c50fb76920440b5d1b38b8da",
+          "compiledBytes": 2156,
+          "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+        },
+        "clockTransport": {
+          "pass": true,
+          "status": "INCONCLUSIVE",
+          "reasons": [],
+          "detail": {
+            "status": "INCONCLUSIVE",
+            "pass": false,
+            "reasons": [
+              "clock identity not established by observation: separation of CLOCK_BOOTTIME from CLOCK_MONOTONIC (-1 ns) is not larger than the measured uncertainty (100900000 ns)"
+            ],
+            "toleranceNs": 100000000,
+            "slackNs": 1000000,
+            "samples": 20,
+            "minHopNs": 100000,
+            "maxHopNs": 100000,
+            "probeBootMinusMonotonicNs": 0,
+            "separationNs": -1,
+            "uncertaintyNs": 100900000,
+            "readBracketNs": 1
+          }
+        },
+        "perf": {
+          "pass": true,
+          "paranoid": 4,
+          "reasons": []
+        },
+        "memory": {
+          "pass": true,
+          "reasons": [],
+          "peakBytes": 94371840,
+          "oomKills": 0,
+          "capBytes": 268435456,
+          "headroomFraction": 0.8
+        },
+        "ext4": {
+          "pass": true,
+          "reasons": []
+        },
+        "mapKeys": {
+          "pass": true,
+          "configured": 65536,
+          "floor": 16384,
+          "reasons": []
+        },
+        "attach": {
+          "pass": true,
+          "reasons": []
+        }
+      },
+      "clockIdentity": {
+        "provenBy": "compiled program",
+        "program": false,
+        "observational": "INCONCLUSIVE"
+      }
+    }
+  }
+]

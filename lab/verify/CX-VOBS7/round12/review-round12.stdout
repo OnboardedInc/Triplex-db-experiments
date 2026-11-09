@@ -1,0 +1,194 @@
+TAP version 13
+# Subtest: control: complete source-bound constructed proof passes and every failed command refuses W0
+ok 1 - control: complete source-bound constructed proof passes and every failed command refuses W0
+  ---
+  duration_ms: 28.381792
+  type: 'test'
+  ...
+# Subtest: A2: an unparsed call to a forbidden clock in another stage must refuse
+not ok 2 - A2: an unparsed call to a forbidden clock in another stage must refuse
+  ---
+  duration_ms: 1.99125
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:38:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    proof ignores the forbidden call when a comment makes its whole-line parser return UNPARSED
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:42:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+# Subtest: A2: an unknown call line after a blank within a section must refuse
+not ok 3 - A2: an unknown call line after a blank within a section must refuse
+  ---
+  duration_ms: 1.55975
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:46:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    blank-line section boundary silently discards an unparsed clock call
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:49:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: A2: an early exit does not prove that the last probe was dumped completely
+not ok 4 - A2: an early exit does not prove that the last probe was dumped completely
+  ---
+  duration_ms: 3.1755
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:53:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    proof accepts a proper prefix ending at an early return
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:60:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: BTF: all helper ids must be unambiguous, including a clock name outside the required set
+not ok 5 - BTF: all helper ids must be unambiguous, including a clock name outside the required set
+  ---
+  duration_ms: 3.108083
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:64:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    required-only collision check accepts an ambiguous numeric helper identity
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:68:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: BTF: a second empty bpf_func_id enum still makes the enum ambiguous
+not ok 6 - BTF: a second empty bpf_func_id enum still makes the enum ambiguous
+  ---
+  duration_ms: 5.476125
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:72:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    the second named enum is silently filtered out
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:75:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: BTF: invalid reserved header flags and type-info bits must refuse
+not ok 7 - BTF: invalid reserved header flags and type-info bits must refuse
+  ---
+  duration_ms: 3.211042
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:79:1'
+  failureType: 'testCodeFailure'
+  error: 'malformed BTF was accepted as clock-proof evidence'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: true
+  actual: false
+  operator: '=='
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:83:41)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: A2: raw helper bytes cannot masquerade as the final exit
+not ok 8 - A2: raw helper bytes cannot masquerade as the final exit
+  ---
+  duration_ms: 1.483458
+  type: 'test'
+  location: '/Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:86:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    raw instruction is a call, but textual exit is accepted as completeness
+    
+    true !== false
+    
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected: false
+  actual: true
+  operator: 'strictEqual'
+  stack: |-
+    TestContext.<anonymous> (file:///Users/sam/projects/triplex-db-2/.claude/worktrees/obs01/lab/verify/CX-VOBS7/review_round12.mjs:89:9)
+    Test.runInAsyncScope (node:async_hooks:214:14)
+    Test.run (node:internal/test_runner/test:1047:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:744:18)
+    Test.postRun (node:internal/test_runner/test:1173:19)
+    Test.run (node:internal/test_runner/test:1101:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+1..8
+# tests 8
+# suites 0
+# pass 1
+# fail 7
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 113.161666

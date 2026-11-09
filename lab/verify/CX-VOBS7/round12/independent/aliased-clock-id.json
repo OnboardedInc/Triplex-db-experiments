@@ -1,0 +1,593 @@
+{
+  "provenance": "CONSTRUCTED, offline only; W0 engine facts are stand-ins",
+  "derived": {
+    "ok": true,
+    "reasons": [],
+    "btfSha256": "3389c1e634055ed18c9429e11a01493732fca461b0142353597e95b5753ee651",
+    "btfBytes": 1043,
+    "typeCount": 9,
+    "enumKind": "ENUM",
+    "ids": {
+      "bpf_unspec": 0,
+      "bpf_ktime_get_realtime_ns": 5,
+      "bpf_map_lookup_elem": 1,
+      "bpf_map_update_elem": 2,
+      "bpf_map_delete_elem": 3,
+      "bpf_probe_read": 4,
+      "bpf_ktime_get_ns": 5,
+      "bpf_get_smp_processor_id": 8,
+      "bpf_get_current_pid_tgid": 14,
+      "bpf_perf_event_output": 25,
+      "bpf_get_current_cgroup_id": 80,
+      "bpf_probe_read_kernel": 113,
+      "bpf_jiffies64": 118,
+      "bpf_ktime_get_boot_ns": 125,
+      "bpf_ringbuf_output": 130,
+      "bpf_ringbuf_reserve": 131,
+      "bpf_ringbuf_submit": 132,
+      "bpf_ringbuf_discard": 133,
+      "bpf_ktime_get_coarse_ns": 160,
+      "bpf_ktime_get_tai_ns": 208,
+      "bpf_get_current_comm": 16,
+      "bpf_timer_start": 170,
+      "bpf_get_prandom_u32": 7
+    },
+    "missing": []
+  },
+  "text": "Disassembly of section s_probe_1:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_2:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_3:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_4:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_5:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_6:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_7:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_8:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_9:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_10:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_11:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_12:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_13:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_14:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n\nDisassembly of section s_probe_15:\n  0:\tb7 01 00 00 00 00 00 00\tr1 = 0\n  1:\t85 00 00 00 01 00 00 00\tcall 1\n  2:\t85 00 00 00 05 00 00 00\tcall 5\n  3:\t85 00 00 00 08 00 00 00\tcall 8\n  4:\t95 00 00 00 00 00 00 00\texit\n",
+  "btfBase64": "n+sBABgAAAAAAAAAdAEAAHQBAACHAgAAAQAAAAAAAAEEAAAAIAAAAAAAAAAAAAACAQAAAAUAAAACAAAEEAAAAAoAAAABAAAAAAAAABIAAAABAAAAAAAAAAAAAAAAAAADAAAAAAAAAAAAAAAAAAAAABkAAAAYAAAGBAAAACUAAAAAAAAANQAAAAUAAABUAAAAAQAAAG0AAAACAAAAhgAAAAMAAACfAAAABAAAALMAAAAFAAAAyQAAAAgAAADnAAAADgAAAAUBAAAZAAAAIAEAAFAAAAA/AQAAcQAAAFoBAAB2AAAAbQEAAH0AAACIAQAAggAAAKABAACDAAAAuQEAAIQAAADRAQAAhQAAAOoBAACgAAAABwIAANAAAAAhAgAAEAAAADsCAACqAAAAUAIAAAcAAABpAgAA5wMAAAAAAAACAAANAAAAAAAAAAABAAAAAAAAAAEAAAB7AgAAAAAACAEAAAB/AgAAAAAADgEAAAABAAAAgQIAAAEAAA8AAAAAAQAAAAAAAAAEAAAAAGludABmaWxlAGZfaW5vZGUAZl9wYXRoAGJwZl9mdW5jX2lkAEJQRl9GVU5DX3Vuc3BlYwBCUEZfRlVOQ19rdGltZV9nZXRfcmVhbHRpbWVfbnMAQlBGX0ZVTkNfbWFwX2xvb2t1cF9lbGVtAEJQRl9GVU5DX21hcF91cGRhdGVfZWxlbQBCUEZfRlVOQ19tYXBfZGVsZXRlX2VsZW0AQlBGX0ZVTkNfcHJvYmVfcmVhZABCUEZfRlVOQ19rdGltZV9nZXRfbnMAQlBGX0ZVTkNfZ2V0X3NtcF9wcm9jZXNzb3JfaWQAQlBGX0ZVTkNfZ2V0X2N1cnJlbnRfcGlkX3RnaWQAQlBGX0ZVTkNfcGVyZl9ldmVudF9vdXRwdXQAQlBGX0ZVTkNfZ2V0X2N1cnJlbnRfY2dyb3VwX2lkAEJQRl9GVU5DX3Byb2JlX3JlYWRfa2VybmVsAEJQRl9GVU5DX2ppZmZpZXM2NABCUEZfRlVOQ19rdGltZV9nZXRfYm9vdF9ucwBCUEZfRlVOQ19yaW5nYnVmX291dHB1dABCUEZfRlVOQ19yaW5nYnVmX3Jlc2VydmUAQlBGX0ZVTkNfcmluZ2J1Zl9zdWJtaXQAQlBGX0ZVTkNfcmluZ2J1Zl9kaXNjYXJkAEJQRl9GVU5DX2t0aW1lX2dldF9jb2Fyc2VfbnMAQlBGX0ZVTkNfa3RpbWVfZ2V0X3RhaV9ucwBCUEZfRlVOQ19nZXRfY3VycmVudF9jb21tAEJQRl9GVU5DX3RpbWVyX3N0YXJ0AEJQRl9GVU5DX2dldF9wcmFuZG9tX3UzMgBfX0JQRl9GVU5DX01BWF9JRAB1NjQAeAAuZGF0YQA=",
+  "proof": {
+    "pass": true,
+    "reasons": [],
+    "flags": [
+      "-d",
+      "all"
+    ],
+    "version": "bpftrace v0.20.2",
+    "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+    "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+    "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+    "processes": {
+      "version": {
+        "ok": true
+      },
+      "hash": {
+        "ok": true
+      },
+      "btf": {
+        "ok": true
+      },
+      "compile": {
+        "ok": true
+      }
+    },
+    "sourceMonotonicSites": 15,
+    "sourceProbes": 15,
+    "sourceHelperNeeds": [
+      "bpf_get_current_cgroup_id",
+      "bpf_get_current_pid_tgid",
+      "bpf_get_smp_processor_id",
+      "bpf_ktime_get_ns",
+      "bpf_map_delete_elem",
+      "bpf_map_lookup_elem",
+      "bpf_map_update_elem",
+      "bpf_perf_event_output",
+      "bpf_probe_read",
+      "bpf_probe_read_kernel",
+      "bpf_ringbuf_discard",
+      "bpf_ringbuf_output",
+      "bpf_ringbuf_reserve",
+      "bpf_ringbuf_submit"
+    ],
+    "allowList": [
+      "bpf_ktime_get_ns",
+      "bpf_map_lookup_elem",
+      "bpf_map_update_elem",
+      "bpf_map_delete_elem",
+      "bpf_get_smp_processor_id",
+      "bpf_get_current_pid_tgid",
+      "bpf_get_current_cgroup_id",
+      "bpf_perf_event_output",
+      "bpf_ringbuf_output",
+      "bpf_ringbuf_reserve",
+      "bpf_ringbuf_submit",
+      "bpf_ringbuf_discard",
+      "bpf_probe_read_kernel",
+      "bpf_probe_read"
+    ],
+    "helperIds": {
+      "bpf_ktime_get_ns": 5,
+      "bpf_jiffies64": 118,
+      "bpf_ktime_get_boot_ns": 125,
+      "bpf_ktime_get_coarse_ns": 160,
+      "bpf_ktime_get_tai_ns": 208,
+      "bpf_map_lookup_elem": 1,
+      "bpf_map_update_elem": 2,
+      "bpf_map_delete_elem": 3,
+      "bpf_get_smp_processor_id": 8,
+      "bpf_get_current_pid_tgid": 14,
+      "bpf_get_current_cgroup_id": 80,
+      "bpf_perf_event_output": 25,
+      "bpf_ringbuf_output": 130,
+      "bpf_ringbuf_reserve": 131,
+      "bpf_ringbuf_submit": 132,
+      "bpf_ringbuf_discard": 133,
+      "bpf_probe_read_kernel": 113,
+      "bpf_probe_read": 4
+    },
+    "btfSha256": "3389c1e634055ed18c9429e11a01493732fca461b0142353597e95b5753ee651",
+    "btfBytes": 1043,
+    "btfEnum": "ENUM",
+    "referenceNote": [],
+    "sections": [
+      {
+        "name": "s_probe_1",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_2",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_3",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_4",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_5",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_6",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_7",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_8",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_9",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_10",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_11",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_12",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_13",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_14",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      },
+      {
+        "name": "s_probe_15",
+        "instructions": 5,
+        "complete": true,
+        "calls": {
+          "bpf_map_lookup_elem": 1,
+          "bpf_ktime_get_ns": 1,
+          "bpf_get_smp_processor_id": 1
+        }
+      }
+    ],
+    "monotonicCalls": 15,
+    "helperCalls": {
+      "bpf_map_lookup_elem": 15,
+      "bpf_ktime_get_ns": 15,
+      "bpf_get_smp_processor_id": 15
+    },
+    "forbidden": [],
+    "unparsedCalls": [],
+    "compiledSha256": "f62b1597f16d83c14a4fcc8e99232ec5c0a9750482d6e3d6bf64dfe0d44aed57",
+    "compiledBytes": 3200,
+    "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+  },
+  "w0": {
+    "pass": true,
+    "reasons": [],
+    "checks": {
+      "clock": {
+        "pass": true,
+        "reasons": [],
+        "flags": [
+          "-d",
+          "all"
+        ],
+        "version": "bpftrace v0.20.2",
+        "sourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+        "expectedSourceSha256": "e68cd5cbbfd61cd09503357e6a99961ed61f5b9490c76931911d29f1d089b248",
+        "representation": "dis: the per-probe BPF bytecode disassembly, the last form bpftrace produces for the program it loads. The LLVM IR stages come before the optimiser and the BPF backend; the verifier log is kernel output that exists only after a load and is cut at the log buffer size.",
+        "processes": {
+          "version": {
+            "ok": true
+          },
+          "hash": {
+            "ok": true
+          },
+          "btf": {
+            "ok": true
+          },
+          "compile": {
+            "ok": true
+          }
+        },
+        "sourceMonotonicSites": 15,
+        "sourceProbes": 15,
+        "sourceHelperNeeds": [
+          "bpf_get_current_cgroup_id",
+          "bpf_get_current_pid_tgid",
+          "bpf_get_smp_processor_id",
+          "bpf_ktime_get_ns",
+          "bpf_map_delete_elem",
+          "bpf_map_lookup_elem",
+          "bpf_map_update_elem",
+          "bpf_perf_event_output",
+          "bpf_probe_read",
+          "bpf_probe_read_kernel",
+          "bpf_ringbuf_discard",
+          "bpf_ringbuf_output",
+          "bpf_ringbuf_reserve",
+          "bpf_ringbuf_submit"
+        ],
+        "allowList": [
+          "bpf_ktime_get_ns",
+          "bpf_map_lookup_elem",
+          "bpf_map_update_elem",
+          "bpf_map_delete_elem",
+          "bpf_get_smp_processor_id",
+          "bpf_get_current_pid_tgid",
+          "bpf_get_current_cgroup_id",
+          "bpf_perf_event_output",
+          "bpf_ringbuf_output",
+          "bpf_ringbuf_reserve",
+          "bpf_ringbuf_submit",
+          "bpf_ringbuf_discard",
+          "bpf_probe_read_kernel",
+          "bpf_probe_read"
+        ],
+        "helperIds": {
+          "bpf_ktime_get_ns": 5,
+          "bpf_jiffies64": 118,
+          "bpf_ktime_get_boot_ns": 125,
+          "bpf_ktime_get_coarse_ns": 160,
+          "bpf_ktime_get_tai_ns": 208,
+          "bpf_map_lookup_elem": 1,
+          "bpf_map_update_elem": 2,
+          "bpf_map_delete_elem": 3,
+          "bpf_get_smp_processor_id": 8,
+          "bpf_get_current_pid_tgid": 14,
+          "bpf_get_current_cgroup_id": 80,
+          "bpf_perf_event_output": 25,
+          "bpf_ringbuf_output": 130,
+          "bpf_ringbuf_reserve": 131,
+          "bpf_ringbuf_submit": 132,
+          "bpf_ringbuf_discard": 133,
+          "bpf_probe_read_kernel": 113,
+          "bpf_probe_read": 4
+        },
+        "btfSha256": "3389c1e634055ed18c9429e11a01493732fca461b0142353597e95b5753ee651",
+        "btfBytes": 1043,
+        "btfEnum": "ENUM",
+        "referenceNote": [],
+        "sections": [
+          {
+            "name": "s_probe_1",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_2",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_3",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_4",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_5",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_6",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_7",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_8",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_9",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_10",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_11",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_12",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_13",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_14",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          },
+          {
+            "name": "s_probe_15",
+            "instructions": 5,
+            "complete": true,
+            "calls": {
+              "bpf_map_lookup_elem": 1,
+              "bpf_ktime_get_ns": 1,
+              "bpf_get_smp_processor_id": 1
+            }
+          }
+        ],
+        "monotonicCalls": 15,
+        "helperCalls": {
+          "bpf_map_lookup_elem": 15,
+          "bpf_ktime_get_ns": 15,
+          "bpf_get_smp_processor_id": 15
+        },
+        "forbidden": [],
+        "unparsedCalls": [],
+        "compiledSha256": "f62b1597f16d83c14a4fcc8e99232ec5c0a9750482d6e3d6bf64dfe0d44aed57",
+        "compiledBytes": 3200,
+        "claim": "every time read in the compiled program is the bpf_ktime_get_ns helper (CLOCK_MONOTONIC); proven from the program, not by observation"
+      },
+      "clockTransport": {
+        "pass": true,
+        "status": "INCONCLUSIVE",
+        "reasons": [],
+        "detail": {
+          "status": "INCONCLUSIVE",
+          "pass": false,
+          "reasons": [
+            "clock identity not established by observation: separation of CLOCK_BOOTTIME from CLOCK_MONOTONIC (-1 ns) is not larger than the measured uncertainty (100900000 ns)"
+          ],
+          "toleranceNs": 100000000,
+          "slackNs": 1000000,
+          "samples": 20,
+          "minHopNs": 100000,
+          "maxHopNs": 100000,
+          "probeBootMinusMonotonicNs": 0,
+          "separationNs": -1,
+          "uncertaintyNs": 100900000,
+          "readBracketNs": 1
+        }
+      },
+      "perf": {
+        "pass": true,
+        "paranoid": 4,
+        "reasons": []
+      },
+      "memory": {
+        "pass": true,
+        "reasons": [],
+        "peakBytes": 94371840,
+        "oomKills": 0,
+        "capBytes": 268435456,
+        "headroomFraction": 0.8
+      },
+      "ext4": {
+        "pass": true,
+        "reasons": []
+      },
+      "mapKeys": {
+        "pass": true,
+        "configured": 65536,
+        "floor": 16384,
+        "reasons": []
+      },
+      "attach": {
+        "pass": true,
+        "reasons": []
+      }
+    },
+    "clockIdentity": {
+      "provenBy": "compiled program",
+      "program": true,
+      "observational": "INCONCLUSIVE"
+    }
+  },
+  "expected": "refuse: helper id 5 has two names, including a forbidden clock; enum order must not decide its identity"
+}
