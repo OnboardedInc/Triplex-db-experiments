@@ -2148,3 +2148,11 @@ Where each priority stands, from evidence so far (research probes and baselines;
   - **Lane D:** DF01 accepted offline (22 tests, 247 assertions); its live run on datomic-dev follows RT01's G6.
 - **Open question that shapes P4:** R45 measured 2.4-2.9 us of warm SQLite CPU per row, so a 447-fact W0 pull costs about 1.1 ms, about 900 pulls/s per core against the 1,100 bar, in either layout. EXP-QH1 waits on this.
 - **Research dispatched (Opus 5.5 high):** R46, P4 per-core throughput from H1: where the per-row cost goes, and the options (a materialized per-subject current document maintained at commit, one-statement reach fetch, raw bytes without decoding, clustering, reader pools), each with its effect on P2 commit latency, bytes per fact, P1 exactness and route equivalence.
+
+## 2026-11-09: CRNS Opus round 3: all earlier forgeries refused with the right code; three high variants remain
+
+- **Rounds 1 and 2:** 29 of 29 and 13 of 13 refused, each with the code for the forged property (46 of 46 tests). Test pins now come from an independently frozen trace, with two small gaps.
+- **Still accepted (high):** readers that answer correctly but take 900 ms per read still count as load (the read p99 bar applies only when P1 is requested); a planned crash with no witness drops out silently (witnesses are checked against the plan, not the plan against the witnesses); validity judged on what the candidate made visible before the offer.
+- **Contract items, recorded as pending rulings Q103a-c:** the frozen trace is secret from the candidate (pre-applying it is otherwise indistinguishable from a fast engine); crash runs are indistinguishable from main runs; calibration records never come from the candidate under test.
+- **The reviewer's verdict:** acceptable for offline P2 and P3 arithmetic once the three highs are fixed, but not for NS PASS until the production decoders, oracles and calibration registry are qualified components rather than test stand-ins.
+- **Lesson:** each round closes the planted cases and their nearest variants; the remaining attacks move from "forge a value" to "control what is observable" (timing, visibility, which run is which), which only the run's architecture (R44's boundary, Q103) can close.
