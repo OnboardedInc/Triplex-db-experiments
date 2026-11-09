@@ -2,7 +2,7 @@
  * [EXP-FD01] Why: Q98b makes affected subjects and the checkpoint one host SQLite transaction.
  * Rejected: the earlier independently fsynced JSONL effect/checkpoint journals (X3 crash window).
  * This legacy driver remains an A0-control with direct-subject DIAGNOSTIC affected sets and
- * receipt-clock lag; EXP-DI01 and EXP-P3M own the domain affected set and publication-clock upgrades.
+ * publication clocks must be supplied by a source observer; EXP-DI01 and EXP-P3M own lane integration.
  */
 import { createRequire } from "node:module";
 import path from "node:path";
@@ -11,6 +11,18 @@ import { hash2 } from "./rng.ts";
 import { accountOf, subjectOf } from "./world.ts";
 // Load the host package through its public self-reference, as the bench is not a workspace package.
 const hostRequire = createRequire(new URL("../../../packages/host/package.json", import.meta.url));
+const coreRequire = createRequire(new URL("../../../packages/core/package.json", import.meta.url));
+const { publicationLagMs } = coreRequire("@triplex-build/triplex/feed");
+interface FeedPosition {
+  source: string;
+  stream: string;
+  epoch: string;
+  position: string;
+}
+interface FeedInstant extends FeedPosition {
+  clock: string;
+  atMonoMs: number;
+}
 const { SqliteConsumerStore, journalChangeFeed } = hostRequire("@triplex-build/triplex-host/feed");
 
 export type CrashPoint = "before-effect" | "after-effect" | "after-checkpoint";
@@ -51,6 +63,8 @@ export class FeedConsumer {
   private readonly source: string;
   private store: InstanceType<typeof SqliteConsumerStore>;
   private readonly now: () => number;
+  private readonly publicationOf: (key: FeedPosition) => FeedInstant | undefined;
+  private readonly clock: string;
   private readonly commitOf: (position: number) => CommitInfo | undefined;
   private readonly open: () => Promise<CompositionHandle>;
   private readonly log: (line: string) => void;
@@ -69,7 +83,8 @@ export class FeedConsumer {
   checkpoint: number;
   private lifeMax = 0;
   readonly firstSeen = new Map<number, { txId: string; digest: string; at: number }>();
-  readonly lags: { at: number; lagMs: number; lagFromAckMs: number }[] = [];
+  readonly lags: { at: number; lagMs: number; lagFromAckMs: number | null; position: number }[] =
+    [];
   readonly pendingLag = new Map<number, number>();
   private readonly durableKnown = new Set<number>();
   private lastStamp = new Map<number, number>();
@@ -95,6 +110,8 @@ export class FeedConsumer {
     epoch: string;
     startAfter: number;
     now: () => number;
+    publicationOf?: (key: FeedPosition) => FeedInstant | undefined;
+    clock?: string;
     commitOf: (p: number) => CommitInfo | undefined;
     open: () => Promise<CompositionHandle>;
     log: (l: string) => void;
@@ -104,6 +121,8 @@ export class FeedConsumer {
     this.epoch = opts.epoch;
     this.now = opts.now;
     this.commitOf = opts.commitOf;
+    this.publicationOf = opts.publicationOf ?? (() => undefined);
+    this.clock = opts.clock ?? "host-monotonic";
     this.open = opts.open;
     this.log = opts.log;
     this.crashes = opts.crashes.map((c) => ({ ...c, done: false }));
@@ -266,6 +285,15 @@ export class FeedConsumer {
       const adapter = journalChangeFeed(this.source, this.source, "0", async () => page);
       const previous = this.store.checkpoint(this.name);
       const delivery = await adapter.poll(previous);
+      // [EXP-FD01-R2] Why: the source observer must supply a publication instant for EVERY position.
+      // Rejected: using receipt.instant, decided stamp or ACK arrival when publication is absent (QA F2).
+      const publications = new Map<number, FeedInstant>();
+      for (const [position] of affected) {
+        const key = this.publicationKey(position);
+        const publication = this.publicationOf(key);
+        publicationLagMs(publication, { ...key, clock: this.clock, atMonoMs: this.now() });
+        publications.set(position, publication!);
+      }
       this.store.apply(
         this.name,
         previous,
@@ -286,13 +314,17 @@ export class FeedConsumer {
         if (this.durableKnown.has(position)) continue; // lag is taken at the first durable record of a position
         this.durableKnown.add(position);
         const info = this.commitOf(position);
-        if (info)
-          this.lags.push({
-            at: info.ackAt,
-            lagMs: Math.max(0, durableAt - info.instant),
-            lagFromAckMs: Math.max(0, durableAt - info.ackAt),
-          });
-        else {
+        this.lags.push({
+          at: publications.get(position)!.atMonoMs,
+          position,
+          lagMs: publicationLagMs(publications.get(position), {
+            ...this.publicationKey(position),
+            clock: this.clock,
+            atMonoMs: durableAt,
+          }),
+          lagFromAckMs: info ? Math.max(0, durableAt - info.ackAt) : null,
+        });
+        if (!info) {
           this.pendingLag.set(position, durableAt);
           this.counts.seenBeforeAck++;
         }
@@ -313,12 +345,14 @@ export class FeedConsumer {
     if (durableAt === undefined) return;
     this.pendingLag.delete(position);
     const info = this.commitOf(position)!;
-    this.lags.push({
-      at: info.ackAt,
-      lagMs: Math.max(0, durableAt - info.instant),
-      lagFromAckMs: 0,
-    });
+    const sample = this.lags.find((row) => row.position === position);
+    if (sample) sample.lagFromAckMs = Math.max(0, durableAt - info.ackAt);
   }
+  /** Immutable source key used by the source observer's per-position publication map. */
+  publicationKey(position: number): FeedPosition {
+    return { source: this.source, stream: this.source, epoch: "0", position: String(position) };
+  }
+
   stop() {
     this.stopping = true;
   }

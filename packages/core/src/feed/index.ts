@@ -169,3 +169,42 @@ export function feedBytes(entry: FeedEntry): string {
 export function assertFeedCursor(source: string, cursor: FeedCursor): void {
   if (cursor.source !== source) throw new Error("Feed cursor source mismatch");
 }
+
+export interface FeedPosition {
+  readonly source: string;
+  readonly stream: string;
+  readonly epoch: string;
+  readonly position: string;
+}
+/** Source publication and durable knowledge must use the same host monotonic clock domain. */
+export interface FeedInstant extends FeedPosition {
+  readonly clock: string;
+  readonly atMonoMs: number;
+}
+export function feedPositionKey(p: FeedPosition): string {
+  identity(p.source);
+  identity(p.stream);
+  natural(p.epoch);
+  natural(p.position);
+  return JSON.stringify([p.source, p.stream, p.epoch, p.position]);
+}
+// [EXP-FD01-R2] Why: Q98c/d starts lag at publication, never at decided record time or ACK.
+// Rejected: accepting a caller's lag number without its source-bound publication observation (QA F2).
+export function publicationLagMs(publication: FeedInstant | undefined, known: FeedInstant): number {
+  if (!publication) throw new Error("Missing source publication instant");
+  if (
+    feedPositionKey(publication) !== feedPositionKey(known) ||
+    typeof publication.clock !== "string" ||
+    !publication.clock ||
+    publication.clock !== known.clock
+  )
+    throw new Error("Publication clock/source/position mismatch");
+  if (
+    !Number.isFinite(publication.atMonoMs) ||
+    !Number.isFinite(known.atMonoMs) ||
+    publication.atMonoMs < 0 ||
+    known.atMonoMs < publication.atMonoMs
+  )
+    throw new Error("Invalid publication interval");
+  return known.atMonoMs - publication.atMonoMs;
+}

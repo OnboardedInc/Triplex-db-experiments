@@ -66,6 +66,7 @@ for (const [name, cwd, cmd, args] of steps) {
     cwd: path.join(root, cwd),
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
+    env: { ...process.env, FD01_CRASH_EVIDENCE: path.join(attempt, "crash-observations.json") },
   });
   const raw = out.stdout + "\n" + out.stderr;
   fs.writeFileSync(path.join(attempt, name + ".log"), raw);

@@ -59,3 +59,35 @@ written, not copied from oracle output. Fixture adapters are not a qualification
 enumerated final source prefix and O-REPLAY identities, never expectations inferred from the delivered stream.
 The unkeyed split control must duplicate after every after-effect crash or the trial is void. The gap mutation
 first audits the unmutated feed, drops a commit resolution and requires the audit to reject it.
+
+## Round 2: atomicity and publication clocks
+
+QA `verify/FD01` at `fd8f670` showed that keyed replay hid a two-transaction consumer. The store itself
+is unchanged; conformance now requires `ConsumerSnapshot` observations **before replay** and independent
+complete before/after expectations. `runFeedCrashConformance(run, {before, after})` checks 500 keyed
+stops (100 each at the three application hooks and immediately before/after actual SQLite COMMIT),
+300 unkeyed split controls and 100 keyed split controls. The keyed split is the reviewer's exact
+in-memory `COMMIT; BEGIN IMMEDIATE` mutation. The child intercepts actual COMMIT execution, including
+compound statements, so a split inserted after the after-effect application hook is exposed. A
+candidate's partial effects/affected/checkpoint state fails before replay even if replay would deduplicate.
+The explicit keyed-split negative arm must be rejected; a non-duplicating unkeyed control remains void.
+
+`publicationLagMs(publication, known)` computes the interval from two source/stream/epoch/position-bound
+host-monotonic observations sharing a clock ID. No stamp or ACK is an input. `auditFeedLag` requires
+one durable-known observation for every committed position, requires its publication observation,
+and compares each reported lag with the computed interval. Missing, duplicate, foreign and mismatched
+observations fail. The QA fixture (publication 100, durable 400, decided stamp 399) must yield 300 ms;
+a stamp-derived claim of 1 ms fails.
+
+The NS A0 consumer now requires a `publicationOf(key)` source-observer callback and exposes
+`publicationKey(position)` for indexing those independent observations. Missing publication data fails
+before advancing the checkpoint; record time and ACK arrival are never substituted. Samples are bucketed
+at publication time. ACK diagnostics remain separate and nullable until ACK observation. **The legacy NS
+driver has no source observer integrated yet and now refuses those P3 samples**; P3M must supply the actual
+lane publication map. This is deliberate refusal, not a new live-lane or 256-reader result.
+
+Unmodified reviewer probes and their `fd8f670` hashes live in `round2/reviewer-probes/`. Their original
+relative paths assume `lab/verify/FD01`; the adapted `round2/source-hook.mjs`, `mutant-hook.mjs`,
+`check-mutant.mjs` and `clock-probe.mjs` run here. The original mutator is imported verbatim by the crash
+child and the adapted mutation runner. The runner requires the specific before-replay atomicity failure;
+an import error or arbitrary nonzero test exit cannot count as rejecting the mutation.

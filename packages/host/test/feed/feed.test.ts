@@ -24,6 +24,8 @@ import {
   auditResume,
   requireGapMutationCaught,
   runFeedCrashConformance,
+  auditFeedLag,
+  auditConsumerAtomicity,
 } from "@triplex-build/triplex-testkit/feed";
 
 const dirs: string[] = [];
@@ -470,55 +472,134 @@ describe("FD01 identity-only feed", () => {
       }),
     );
   });
+  it("rejects keyed split durable state before replay, including the reviewer's otherwise recoverable state", () => {
+    const before = { effects: [], affected: [], checkpoint: null };
+    const after = { effects: affected, affected, checkpoint: page.cursor };
+    expect(() =>
+      auditConsumerAtomicity({ ...after, checkpoint: null }, { before, after }, "after-commit"),
+    ).toThrow("Nonatomic consumer state before replay");
+    expect(() => auditConsumerAtomicity(before, { before, after }, "before-commit")).not.toThrow();
+    expect(() => auditConsumerAtomicity(after, { before, after }, "after-commit")).not.toThrow();
+  });
+  it("requires per-position publication clocks and rejects the reviewer's 1ms claim for a 300ms interval", () => {
+    const position = {
+      source: page.cursor.source,
+      stream: "s",
+      epoch: "1",
+      position: "1",
+      clock: "host-monotonic",
+    };
+    const published = { ...position, atMonoMs: 100 };
+    const known = { ...position, atMonoMs: 400, lagMs: 300 };
+    expect(auditFeedLag([page], [published], [known])).toEqual([300]);
+    expect(() => auditFeedLag([page], [published], [{ ...known, lagMs: 1 }])).toThrow(
+      "Lag differs",
+    );
+    expect(() => auditFeedLag([page], [], [known])).toThrow("Missing source publication");
+    expect(() => auditFeedLag([page], [{ ...published, source: "other" }], [known])).toThrow(
+      "foreign",
+    );
+    expect(() => auditFeedLag([page], [published], [{ ...known, clock: "record-clock" }])).toThrow(
+      "clock/source/position",
+    );
+  });
   it("recovers 100 actual process stops at each hook for keyed atomic and unkeyed split arms", async () => {
     const dir = temp();
     const input = path.join(dir, "input.json");
     fs.writeFileSync(input, JSON.stringify({ page, affected }));
     const child = fileURLToPath(new URL("./crash-child.mjs", import.meta.url));
-    const result = await runFeedCrashConformance(async (point, attempt, arm) => {
-      const file = path.join(dir, `${arm}-${point}-${attempt}.db`);
-      const crashed = spawnSync(process.execPath, [child, file, input, arm, point], {
-        encoding: "utf8",
-      });
-      if (crashed.status !== 77) throw Error(`Child failed ${crashed.status}: ${crashed.stderr}`);
-      const resumed = spawnSync(process.execPath, [child, file, input, arm, "resume"], {
-        encoding: "utf8",
-      });
-      if (resumed.status !== 0) throw Error(`Resume failed ${resumed.status}: ${resumed.stderr}`);
-      let effects: readonly AffectedSubject[];
-      let checkpointMatches: boolean;
-      let affectedMatches: boolean;
-      if (arm === "keyed-atomic") {
-        const store = new SqliteConsumerStore(file);
-        effects = store.effects("c");
-        checkpointMatches = JSON.stringify(store.checkpoint("c")) === JSON.stringify(page.cursor);
-        affectedMatches = store.affected("c").length === affected.length;
-        store.close();
-      } else {
-        const db = new DatabaseSync(file);
-        effects = db
-          .prepare("SELECT epoch,position,subject FROM effects")
-          .all() as unknown as AffectedSubject[];
-        checkpointMatches =
-          db.prepare("SELECT token FROM checkpoint").get()!["token"] === page.cursor.token;
-        affectedMatches = affected.every((a) =>
-          effects.some((e) => JSON.stringify(e) === JSON.stringify(a)),
-        );
-        db.close();
-      }
-      const unique = new Set(effects.map((a) => JSON.stringify(a)));
-      const gaps = affected.filter((a) => !unique.has(JSON.stringify(a))).length;
-      return {
-        crashed: true,
-        gaps,
-        duplicateEffects: effects.length - unique.size,
-        affectedMatches,
-        checkpointMatches,
-        resumeBytesMatch:
-          feedBytes(JSON.parse(fs.readFileSync(input, "utf8")).page.entries[0]) ===
-          feedBytes(entry),
-      };
+    const before = { effects: [], affected: [], checkpoint: null };
+    const after = { effects: affected, affected, checkpoint: page.cursor };
+    const observations: unknown[] = [];
+    const result = await runFeedCrashConformance(
+      async (point, attempt, arm) => {
+        const file = path.join(dir, `${arm}-${point}-${attempt}.db`);
+        const crashed = spawnSync(process.execPath, [child, file, input, arm, point], {
+          encoding: "utf8",
+        });
+        if (crashed.status !== 77) throw Error(`Child failed ${crashed.status}: ${crashed.stderr}`);
+        let beforeReplay;
+        if (arm !== "unkeyed-split") {
+          const store = new SqliteConsumerStore(file);
+          beforeReplay = {
+            effects: store.effects("c"),
+            affected: store.affected("c"),
+            checkpoint: store.checkpoint("c"),
+          };
+          store.close();
+        } else {
+          const db = new DatabaseSync(file);
+          const effects = db
+            .prepare("SELECT epoch,position,subject FROM effects")
+            .all() as unknown as AffectedSubject[];
+          const checkpoint = db.prepare("SELECT token FROM checkpoint").get();
+          beforeReplay = {
+            effects,
+            affected: effects,
+            checkpoint: checkpoint
+              ? { source: page.cursor.source, token: String(checkpoint["token"]) }
+              : null,
+          };
+          db.close();
+        }
+        observations.push({
+          point,
+          attempt,
+          arm,
+          exit: crashed.status,
+          beforeReplay,
+          trace: JSON.parse(fs.readFileSync(`${file}.${point}.trace.json`, "utf8")),
+        });
+        if (process.env["FD01_CRASH_EVIDENCE"])
+          fs.writeFileSync(process.env["FD01_CRASH_EVIDENCE"]!, JSON.stringify(observations));
+        if (arm === "keyed-atomic") auditConsumerAtomicity(beforeReplay, { before, after }, point);
+        const resumed = spawnSync(process.execPath, [child, file, input, arm, "resume"], {
+          encoding: "utf8",
+        });
+        if (resumed.status !== 0) throw Error(`Resume failed ${resumed.status}: ${resumed.stderr}`);
+        let effects: readonly AffectedSubject[];
+        let checkpointMatches: boolean;
+        let affectedMatches: boolean;
+        if (arm !== "unkeyed-split") {
+          const store = new SqliteConsumerStore(file);
+          effects = store.effects("c");
+          checkpointMatches = JSON.stringify(store.checkpoint("c")) === JSON.stringify(page.cursor);
+          affectedMatches = store.affected("c").length === affected.length;
+          store.close();
+        } else {
+          const db = new DatabaseSync(file);
+          effects = db
+            .prepare("SELECT epoch,position,subject FROM effects")
+            .all() as unknown as AffectedSubject[];
+          checkpointMatches =
+            db.prepare("SELECT token FROM checkpoint").get()!["token"] === page.cursor.token;
+          affectedMatches = affected.every((a) =>
+            effects.some((e) => JSON.stringify(e) === JSON.stringify(a)),
+          );
+          db.close();
+        }
+        const unique = new Set(effects.map((a) => JSON.stringify(a)));
+        const gaps = affected.filter((a) => !unique.has(JSON.stringify(a))).length;
+        return {
+          crashed: true,
+          beforeReplay,
+          gaps,
+          duplicateEffects: effects.length - unique.size,
+          affectedMatches,
+          checkpointMatches,
+          resumeBytesMatch:
+            feedBytes(JSON.parse(fs.readFileSync(input, "utf8")).page.entries[0]) ===
+            feedBytes(entry),
+        };
+      },
+      { before, after },
+    );
+    expect(result).toEqual({
+      keyedCrashes: 500,
+      controlCrashes: 300,
+      splitCrashes: 100,
+      splitAtomicityRejections: 100,
+      controlDuplicates: 200,
     });
-    expect(result).toEqual({ keyedCrashes: 300, controlCrashes: 300, controlDuplicates: 200 });
-  }, 180_000);
+  }, 300_000);
 });

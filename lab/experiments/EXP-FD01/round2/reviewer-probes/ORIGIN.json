@@ -1,0 +1,46 @@
+{
+  "commit": "fd8f670cd534b7efa34c39cef1fea5606264ee27",
+  "files": [
+    {
+      "path": "clock-probe.mjs",
+      "reviewedPath": "lab/verify/FD01/clock-probe.mjs",
+      "sha256": "c2a894c499f0c46ad0221d297f54a0ff60546f75ac62112e1b3cd59074c32a87"
+    },
+    {
+      "path": "duplicate-probe.mjs",
+      "reviewedPath": "lab/verify/FD01/duplicate-probe.mjs",
+      "sha256": "6e31e1e22953fbbb2092427901b69838204c8cbf76a4bb268d771656d291beaa"
+    },
+    {
+      "path": "mutant-hook.mjs",
+      "reviewedPath": "lab/verify/FD01/mutant-hook.mjs",
+      "sha256": "7159feaa064d68157eb2641ef422747c695048040b0462b2b37b03851eebc402"
+    },
+    {
+      "path": "mutate.mjs",
+      "reviewedPath": "lab/verify/FD01/mutate.mjs",
+      "sha256": "1e564fcecdf6b03856c2051c248b43e0edc9f7851ba24b9d28f2cd0e8d864025"
+    },
+    {
+      "path": "probe.mjs",
+      "reviewedPath": "lab/verify/FD01/probe.mjs",
+      "sha256": "f8abbf65b31f0cbb60a4e7721cd2e2d4a2d80c6d879da4b359f13895cbc3b256"
+    },
+    {
+      "path": "source-hook.mjs",
+      "reviewedPath": "lab/verify/FD01/source-hook.mjs",
+      "sha256": "32ae466bcff1eb7e73ce88bb0c8827eff732ed2aa280bb7a9245679bfaeda04e"
+    },
+    {
+      "path": "split-child.mjs",
+      "reviewedPath": "lab/verify/FD01/split-child.mjs",
+      "sha256": "4afa629ba8fc21a2ef9de34d98f603b50e8e4d070f4388cfe0445a7d8ade9f43"
+    },
+    {
+      "path": "trace.mjs",
+      "reviewedPath": "lab/verify/FD01/trace.mjs",
+      "sha256": "f59e15c5d8a0b29bf98ce0ee2ad2f7e1bb21f6f436e4e65ba9787c4c7d9881bf"
+    }
+  ],
+  "usage": "Unmodified QA probes retained for comparison. Original relative paths assume lab/verify/FD01; adapted hooks and new conformance tests run in round2."
+}

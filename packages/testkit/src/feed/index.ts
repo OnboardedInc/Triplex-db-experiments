@@ -1,5 +1,10 @@
 import {
   feedBytes,
+  feedPositionKey,
+  publicationLagMs,
+  type FeedInstant,
+  type FeedCursor,
+  type AffectedSubject,
   type FeedEntry,
   type FeedPage,
   type FeedCrashPoint,
@@ -101,27 +106,64 @@ export function requireGapMutationCaught(
   }
   if (!caught) throw new Error("M-FEED-GAP survived");
 }
+export interface ConsumerSnapshot {
+  readonly effects: readonly AffectedSubject[];
+  readonly affected: readonly AffectedSubject[];
+  readonly checkpoint: FeedCursor | null;
+}
+const snapshotBytes = (s: ConsumerSnapshot) =>
+  JSON.stringify({
+    effects: s.effects.map((a) => JSON.stringify([a.epoch, a.position, a.subject])).sort(),
+    affected: s.affected.map((a) => JSON.stringify([a.epoch, a.position, a.subject])).sort(),
+    checkpoint: s.checkpoint === null ? null : [s.checkpoint.source, s.checkpoint.token],
+  });
+export type FeedCrashScenario = FeedCrashPoint | "before-commit" | "after-commit";
 export interface CrashObservation {
   readonly crashed: boolean;
+  /** Read from the reopened file BEFORE recovery/replay, never inferred from final state. */
+  readonly beforeReplay: ConsumerSnapshot;
   readonly gaps: number;
   readonly duplicateEffects: number;
   readonly affectedMatches: boolean;
   readonly checkpointMatches: boolean;
   readonly resumeBytesMatch: boolean;
 }
-/** Harness must stop a real process at the requested hook and reopen the SAME host file. */
+// [EXP-FD01-R2] Why: keyed replay can hide two commits. Require the old/new durable state at the stop itself.
+// Rejected: using only recovered duplicate/gap counters (QA's keyed-split mutant passed all original tests).
+export function auditConsumerAtomicity(
+  observed: ConsumerSnapshot,
+  expected: { readonly before: ConsumerSnapshot; readonly after: ConsumerSnapshot },
+  point: FeedCrashScenario,
+): void {
+  const target =
+    point === "after-commit" || point === "after-checkpoint" ? expected.after : expected.before;
+  if (!observed || snapshotBytes(observed) !== snapshotBytes(target))
+    throw new Error(`Nonatomic consumer state before replay: ${point}`);
+}
+/** Driver intercepts real COMMIT execution, stops the child, reads durable state, THEN invokes replay. */
 export async function runFeedCrashConformance(
   run: (
-    point: FeedCrashPoint,
+    point: FeedCrashScenario,
     attempt: number,
-    arm: "keyed-atomic" | "unkeyed-split",
+    arm: "keyed-atomic" | "unkeyed-split" | "keyed-split",
   ) => Promise<CrashObservation>,
+  expected: { readonly before: ConsumerSnapshot; readonly after: ConsumerSnapshot },
 ) {
-  const points: readonly FeedCrashPoint[] = ["before-effect", "after-effect", "after-checkpoint"];
+  if (!expected || snapshotBytes(expected.before) === snapshotBytes(expected.after))
+    throw new Error("Void atomicity expectation");
+  const points: readonly FeedCrashScenario[] = [
+    "after-commit",
+    "before-commit",
+    "before-effect",
+    "after-effect",
+    "after-checkpoint",
+  ];
   let controlDuplicates = 0;
+  let splitAtomicityRejections = 0;
   for (const point of points) {
     for (let attempt = 0; attempt < 100; attempt++) {
       const keyed = await run(point, attempt, "keyed-atomic");
+      auditConsumerAtomicity(keyed.beforeReplay, expected, point);
       if (
         !keyed.crashed ||
         keyed.gaps ||
@@ -131,6 +173,28 @@ export async function runFeedCrashConformance(
         !keyed.resumeBytesMatch
       )
         throw new Error(`Keyed crash failed: ${point}/${attempt}`);
+      if (point === "before-commit" || point === "after-commit") {
+        if (point === "before-commit") continue;
+        const split = await run(point, attempt, "keyed-split");
+        if (
+          !split.crashed ||
+          split.gaps ||
+          split.duplicateEffects ||
+          !split.affectedMatches ||
+          !split.checkpointMatches ||
+          !split.resumeBytesMatch
+        )
+          throw new Error("Void keyed-split control");
+        let rejected = false;
+        try {
+          auditConsumerAtomicity(split.beforeReplay, expected, point);
+        } catch {
+          rejected = true;
+        }
+        if (!rejected) throw new Error("Keyed split commit survived atomicity audit");
+        splitAtomicityRejections++;
+        continue;
+      }
       const control = await run(point, attempt, "unkeyed-split");
       if (
         !control.crashed ||
@@ -145,5 +209,58 @@ export async function runFeedCrashConformance(
       controlDuplicates += control.duplicateEffects;
     }
   }
-  return { keyedCrashes: 300, controlCrashes: 300, controlDuplicates };
+  return {
+    keyedCrashes: 500,
+    controlCrashes: 300,
+    splitCrashes: 100,
+    splitAtomicityRejections,
+    controlDuplicates,
+  };
+}
+
+/** Compare every committed position's reported lag with independent source publication and durable-known observations. */
+export function auditFeedLag(
+  pages: readonly FeedPage[],
+  publications: readonly FeedInstant[],
+  known: readonly (FeedInstant & { readonly lagMs: number })[],
+): readonly number[] {
+  const positions = new Set(
+    pages.flatMap((p) =>
+      p.entries.flatMap((e) =>
+        e.kind === "commit"
+          ? e.transactions.flatMap((t) =>
+              t.positions.map((position) =>
+                feedPositionKey({
+                  source: p.cursor.source,
+                  stream: e.stream,
+                  epoch: e.epoch,
+                  position,
+                }),
+              ),
+            )
+          : [],
+      ),
+    ),
+  );
+  if (!positions.size) throw new Error("Void publication lag audit");
+  const index = (rows: readonly FeedInstant[]) => {
+    const result = new Map<string, FeedInstant>();
+    for (const row of rows) {
+      const key = feedPositionKey(row);
+      if (!positions.has(key) || result.has(key))
+        throw new Error("Duplicate or foreign lag observation");
+      result.set(key, row);
+    }
+    return result;
+  };
+  const published = index(publications);
+  const completed = index(known);
+  if (completed.size !== positions.size) throw new Error("Missing durable-known observation");
+  return [...positions].map((key) => {
+    const observation = completed.get(key)! as FeedInstant & { readonly lagMs: number };
+    const lag = publicationLagMs(published.get(key), observation);
+    if (!Number.isFinite(observation.lagMs) || observation.lagMs !== lag)
+      throw new Error("Lag differs from source publication interval");
+    return lag;
+  });
 }

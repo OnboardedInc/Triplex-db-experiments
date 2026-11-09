@@ -454,6 +454,8 @@ async function run() {
   // ---------------------------------------------------------------- feed consumer (P3)
   const lvl = (config.levelS ?? PROFILES[profile].levelS) * 1000;
   const crashPlan: { at: number; point: CrashPoint }[] = (["before-effect", "after-effect", "after-checkpoint"] as CrashPoint[]).map((point, k) => ({ point, at: traceStart + (k + 1.5) * lvl }));
+  // [EXP-FD01-R2] Why: no source publication observer is integrated here yet. Missing instants now refuse P3 samples.
+  // Rejected: manufacturing a publication time from ackOf.instant or ACK arrival (Q98c/d; QA F2).
   feed = new FeedConsumer({
     dir: rawDir, epoch: `${scopeName}#0`, startAfter: seed.lastPosition, now,
     commitOf: (p) => { const a = ackOf.get(p); return a ? { instant: a.instant, ackAt: a.at, subject: a.subject, subjects: a.subjects ?? [a.subject], stamp: a.stamp, correction: a.correction, correctionValidFrom: a.correctionValidFrom } : undefined; },
@@ -877,7 +879,7 @@ function analyse(ctx: { phases: any[]; traceStart: number; replay: any; maintena
   // ---------------- P3
   const f = feed!;
   const lagAll = new Histogram(), lagAck = new Histogram();
-  for (const l of lagRows) { lagAll.recordMs(l.lagMs); lagAck.recordMs(l.lagFromAckMs); }
+  for (const l of lagRows) { lagAll.recordMs(l.lagMs); if (l.lagFromAckMs !== null) lagAck.recordMs(l.lagFromAckMs); }
   // A gap is a position the consumer passed (at or below its final checkpoint) without delivering it. Positions
   // acknowledged after the consumer stopped are reported separately, never as gaps.
   let gaps = 0;

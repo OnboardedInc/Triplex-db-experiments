@@ -209,6 +209,7 @@ test("feed consumer: durable checkpoints, three crash points, keyed effects neve
   const handle: any = { feedPage: async (after: number, limit: number) => { const page = txs.filter((x) => x.position > after).slice(0, Math.min(limit, 4)); return { transactions: page, next: page.at(-1)?.position }; }, close: async () => {} };
   const consumer = new FeedConsumer({
     dir, epoch: "e0", startAfter: 0, now: () => (t += 1),
+    publicationOf: (key) => ({ ...key, clock: "host-monotonic", atMonoMs: 0 }),
     commitOf: (p) => ({ instant: 0, ackAt: 0, subject: (p - 1) % 5, subjects: [(p - 1) % 5], stamp: Math.floor((p - 1) / 5) + 1, correction: false, correctionValidFrom: null }),
     open: async () => handle, log: () => {},
     crashes: [{ at: 5, point: "before-effect" }, { at: 15, point: "after-effect" }, { at: 30, point: "after-checkpoint" }],
@@ -227,4 +228,31 @@ test("feed consumer: durable checkpoints, three crash points, keyed effects neve
   assert.equal(replay.exact, true);
   consumer.close();
   fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test("feed lag uses source publication 100 to durable knowledge 400, never record stamp 399", async () => {
+  for (const missing of [false, true]) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "fd01-r2-clock-"));
+    let consumer: FeedConsumer;
+    const handle: any = { feedPage: async () => {
+      consumer.stop();
+      return { next: 1, transactions: [{ position: 1, txId: "tx1", changes: [{ op: "assert", tripleId: "a1", entityId: "pl:00000000", attribute: ":a", validFrom: 0 }] }] };
+    }, close: async () => {} };
+    consumer = new FeedConsumer({ dir, epoch: "1", startAfter: 0, now: () => 400,
+      publicationOf: (key) => missing ? undefined : { ...key, clock: "host-monotonic", atMonoMs: 100 },
+      commitOf: () => ({ instant: 399, ackAt: 101, subject: 0, subjects: [0], stamp: 399000, correction: false, correctionValidFrom: null }),
+      open: async () => handle, log: () => {}, crashes: [],
+    });
+    try {
+      if (missing) {
+        await assert.rejects(consumer.run(), /Missing source publication instant/);
+        assert.equal(consumer.lags.length, 0);
+        assert.equal(consumer.checkpoint, 0);
+      } else {
+        await consumer.run();
+        assert.equal(consumer.lags[0]?.lagMs, 300);
+        assert.notEqual(consumer.lags[0]?.lagMs, 1);
+      }
+    } finally { consumer.close(); fs.rmSync(dir, { recursive: true, force: true }); }
+  }
 });
