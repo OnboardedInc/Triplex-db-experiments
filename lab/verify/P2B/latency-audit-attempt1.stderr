@@ -1,0 +1,4 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 41884 "CX-HS01-evaluator", pid 35047 "CX-A01-040-G0-datomic", pid 38225 "CX-VP2B-bound-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 41884 "CX-HS01-evaluator", pid 35047 "CX-A01-040-G0-datomic", pid 38225 "CX-VP2B-bound-gates"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 41884 "CX-HS01-evaluator", pid 35047 "CX-A01-040-G0-datomic", pid 65878 "CX-HS01-10k-readback"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 41884 "CX-HS01-evaluator", pid 35047 "CX-A01-040-G0-datomic", pid 65878 "CX-HS01-10k-readback"

@@ -1,0 +1,84 @@
+{
+  "scope": "Three final 256-reader diagnostic cells only; no latency rerun or full archive audit",
+  "matrixSha256": "b0c1f35e8a8aa4ce50e20592f981902e48f945969c9d7156640f5e3cc540ddc5",
+  "results": [
+    {
+      "attempt": "r3-step5-fullsync-corrected-40-worker-256-5479dd57-2576-4e98-af9b-77857e20f370",
+      "repeat": 1,
+      "reportSha256": "d6f52cad918fc512ebdadddb5eaac880a36aadea3c2609e64afdb6b14e862ea7",
+      "rawSha256": "4a5b3e5188f4137af0a8d05eb6c8f9a7e228eac68fb377665d4b4ab0987bd9a6",
+      "bands": [
+        {
+          "facts": 10,
+          "n": 1000,
+          "p50": 13.804125,
+          "p99": 92.875041
+        },
+        {
+          "facts": 20,
+          "n": 1000,
+          "p50": 14.358416,
+          "p99": 93.603083
+        },
+        {
+          "facts": 40,
+          "n": 1000,
+          "p50": 15.819958,
+          "p99": 89.916166
+        }
+      ]
+    },
+    {
+      "attempt": "r3-step5-fullsync-corrected-40-worker-256-071562bd-be80-4de8-92aa-8b771dfd306c",
+      "repeat": 2,
+      "reportSha256": "3c13dd192f32c8cd88be85555680e13a193df250571fed4e6624db925598eecb",
+      "rawSha256": "24c84de7e15146963381b4b4d6f001fe9c7815a0b8772b8eb0e489f4400c4464",
+      "bands": [
+        {
+          "facts": 10,
+          "n": 1000,
+          "p50": 11.344416,
+          "p99": 100.518583
+        },
+        {
+          "facts": 20,
+          "n": 1000,
+          "p50": 11.491041,
+          "p99": 84.488208
+        },
+        {
+          "facts": 40,
+          "n": 1000,
+          "p50": 13.703875,
+          "p99": 90.971
+        }
+      ]
+    },
+    {
+      "attempt": "r3-step5-fullsync-corrected-40-worker-256-7367d33c-b4ed-46a9-b150-f65e5a49ae17",
+      "repeat": 3,
+      "reportSha256": "00c92bb32ba238da7556ce1521e5c65bd18cab6f9fff0c720579f7cec3a260fc",
+      "rawSha256": "cf061321f1a87e6be99073fc293bc8cb9db4aaa5ddf6e9481a1347f48244c7fa",
+      "bands": [
+        {
+          "facts": 10,
+          "n": 1000,
+          "p50": 8.920084,
+          "p99": 81.616084
+        },
+        {
+          "facts": 20,
+          "n": 1000,
+          "p50": 9.8505,
+          "p99": 68.246292
+        },
+        {
+          "facts": 40,
+          "n": 1000,
+          "p50": 11.875209,
+          "p99": 90.670167
+        }
+      ]
+    }
+  ]
+}

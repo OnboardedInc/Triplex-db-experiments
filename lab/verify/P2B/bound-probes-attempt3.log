@@ -1,0 +1,2 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 89974 "CX-G03-R5-1k", pid 88978 "CX-HS01-route-retry", pid 90521 "CX-A01-040-merge3"
+{"out":"/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VP2B/gates-775e31ed-d251-4c80-b325-742b646ae5fe","command":0,"status":1}

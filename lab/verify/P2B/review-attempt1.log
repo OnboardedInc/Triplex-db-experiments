@@ -1,0 +1,9 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 45205 "CX-HS01-seed-10000", pid 9973 "CX-A01-040-G0-xtdb", pid 27342 "CX-A01-040-reader-check"
+
+ RUN  v5.0.4 /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-p2b
+
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  05:48:43
+   Duration  8.31s (tests 91%, transform 5%, import 3%)

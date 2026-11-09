@@ -1,0 +1,22 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 45205 "CX-HS01-seed-10000", pid 78131 "CX-A01-040-static", pid 76985 "CX-A01-040-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 45205 "CX-HS01-seed-10000", pid 9973 "CX-A01-040-G0-xtdb", pid 76985 "CX-A01-040-evaluator"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 45205 "CX-HS01-seed-10000", pid 9973 "CX-A01-040-G0-xtdb", pid 76985 "CX-A01-040-evaluator"
+failed to load config from /Users/sam/projects/triplex-db-2/.claude/worktrees/verify-p2b/lab/verify/P2B/vitest.config.mjs
+
+⎯⎯⎯⎯⎯⎯⎯ Startup Error ⎯⎯⎯⎯⎯⎯⎯⎯
+Error: EPERM: operation not permitted, mkdir '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-p2b/node_modules/.vite-temp'
+    at async Object.mkdir (node:internal/fs/promises:858:10)
+    at async loadConfigFromBundledFile (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:37153:4)
+    at async bundleAndLoadConfigFile (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:37015:21)
+    at async loadConfigFromFile (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:36975:42)
+    at async resolveConfig (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0/node_modules/vite/dist/node/chunks/node.js:36581:22)
+    at async resolveConfig (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/index.B8VfM7Mf.js:9241:25)
+    at async createVitest (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cli-api.Bx28WXzL.js:13377:17)
+    at async prepareVitest (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cli-api.Bx28WXzL.js:13772:14)
+    at async startVitest (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cli-api.Bx28WXzL.js:13690:14)
+    at async start (file:///Users/sam/projects/triplex-db-2/node_modules/.pnpm/vitest@5.0.4_@types+node@25.9.1_vite@8.2.2_@types+node@25.9.1_esbuild@0.28.2_jiti@2.7.0_tsx@4.19.0_yaml@2.9.0_/node_modules/vitest/dist/chunks/cac.DTXWs6Ni.js:2368:15) {
+  errno: -1,
+  code: 'EPERM',
+  syscall: 'mkdir',
+  path: '/Users/sam/projects/triplex-db-2/.claude/worktrees/verify-p2b/node_modules/.vite-temp'
+}

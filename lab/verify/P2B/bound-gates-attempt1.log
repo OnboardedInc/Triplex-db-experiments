@@ -1,0 +1,6 @@
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 34406 "CX-HS01-pack", pid 35047 "CX-A01-040-G0-datomic", pid 28088 "CX-G03-R5-smoke6"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 41884 "CX-HS01-evaluator", pid 35047 "CX-A01-040-G0-datomic", pid 28088 "CX-G03-R5-smoke6"
+[lab] heavy: waiting for one of 4 slots; held by pid 70711 "CX-DI01-trace-r11", pid 41884 "CX-HS01-evaluator", pid 35047 "CX-A01-040-G0-datomic", pid 28088 "CX-G03-R5-smoke6"
+{"out":"/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VP2B/gates-58ae2302-c2be-43cb-82d4-1be18e713e42","command":0,"status":0}
+{"out":"/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VP2B/gates-58ae2302-c2be-43cb-82d4-1be18e713e42","command":1,"status":0}
+{"out":"/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VP2B/gates-58ae2302-c2be-43cb-82d4-1be18e713e42","command":2,"status":0}
