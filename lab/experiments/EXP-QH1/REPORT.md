@@ -376,3 +376,61 @@ None this round. Paths changed (none referenced by `lab/acceptance`): `packages/
 4. `--verify` regenerates the contract; it is not a semantic verdict. The evaluator count comes from the `node --test` summary (108 of 108).
 5. ABAB: emits medians and ratios only; answers of both arms compared by full-field digest on the fixed warm-up roots of each process.
 6. `R4-SHA256SUMS` is computed from the retained files after the last run; the store clone and the dist trees are excluded (bound by hash above).
+
+---
+
+# Round 5: pullPosition on the three in-scope native adapters (CX-VQH1 round 4 F1)
+
+**Result: F1's remaining part is fixed on XTDB, Datomic and the non-broker QLever adapter; every requested gate passes on the committed tree. No acceptance, promotion or P4 claim.** Builder Claude Sonnet 5.5 (high), branch `exp/QH1-h1-pulls`, base `febcd098`. Product commit `7c5253dc` (gates ran on it; later commits touch only this report, `pin-changes.json` and the manifest). Evidence (out of git): `/Users/sam/Claude/Projects/triplex-db-2/evidence/QH1-R5/`, manifest `R5-SHA256SUMS`, index `R5-evidence-index.json`.
+
+## What changed
+
+`StorageAdapter.pullPosition()` (added in round 4) is now implemented by the three remaining in-scope adapters. Each reads one native commit position when the pull starts; `TriplesLive.reach` puts it into the basis of the direct attempt and of every fallback level; each adapter already turned a basis position into an exact cut.
+
+| Adapter | Position read once | How each level honors it | In a transaction |
+| --- | --- | --- | --- |
+| XTDB (`XtdbStorageAdapter.ts`) | `tx_meta.position` (`committedPosition()`) | `recorded_position <= ?` and `retracted_position > ?` in the level's SQL (`cutConditions`) | none offered (reads already use `min(sourceK, ...)` and see staged rows) |
+| Datomic (`DatomicStorageAdapter.ts`) | gateway `basis` position (`client.basis`) | sent as `basis.recordedPosition`; the gateway answers from `at-position` (`d/as-of` the first physical transaction covering it) on a request-time db that `await-position` guarantees is not behind it | none offered (the held handle fixes the value and staged rows stay visible) |
+| QLever, non-broker (`QleverStorageAdapter.ts`) | meta `position` (`position()`, which also updates `observedPosition`, so no extra guard read) | `recorded_position_order <= k` and the retraction bound in each SPARQL level | none offered |
+
+The Datomic "basis t" of the brief is the logical commit position here: that is what the gateway cuts by (`at-position`), and it stays exact for same-instant commits. A held gateway snapshot handle for the whole pull was rejected (a handle pins gateway state and must be released on every failure path; the position needs no state). `withCurrentPull` exists only on the broker adapter (round 4); these three adapters have no equivalent context, so that part of the semantics does not apply to them. No lock anywhere; writers are never blocked.
+
+## Tests
+
+`lab/verify/QH1/round5-native.test.ts` (5 tests) is the reviewer's `round4-review.test.ts` ported. The two broker controls (capture once before a direct attempt that reads, a writer commits and the attempt declines; an unpinned `withCurrentPull` keeps its first cut) are kept unchanged and pass. The three native reproductions (XTDB, Datomic, non-broker QLever, offline two-commit native-response fixtures, both commits `recordedAt` 1000, `T.reach(root, { validAt: 2000, recordedAt: 1000 })`) now use each adapter's own hook instead of a test-side one and require the **whole old graph** (`root -> target`, `target = 1`) with exactly one position capture and every native level request carrying the cut 1. In the same test, per adapter: a pull after the commit returns the empty new graph; `pullPosition` is `undefined` inside `withTransaction`; and the same fixture with the hook removed still returns the mixed closure (`target = 2`) with no cut on any request, so the fixture rejects an adapter that supplies no position (sensitivity control).
+
+Pre-fix check: with the three adapter sources of `febcd098` restored, the three native tests fail (`gates/prefix-lab.log`); they fail at the first assertion (`pullPosition` is not defined), not at the mixed value; the mixed value without a hook is shown by the in-test no-hook control. These are offline fixtures, not live engines.
+
+## Gates (on `7c5253dc`, one at a time through `heavy.mjs`, offline: `XTDB_INTEGRATION=0 DATOMIC_INTEGRATION=0 QLEVER_INTEGRATION=0`)
+
+| Gate | Result |
+| --- | --- |
+| core suite | 859 passed (60 files) |
+| qlever suite | 257 passed, 29 expected skips |
+| xtdb suite | 65 passed, 90 expected skips (live-engine tests) |
+| datomic suite | 119 passed, 16 expected skips (live gateway tests); first run failed to resolve `@triplex-build/triplex-testkit` because its dist was not built in this worktree, passed after `pnpm run build` there (`datomic-suite2`) |
+| QH1 suite (`oreplay`, `codec`, `domain`, `route`, `public`, `real`, `h1decode`, `workercache`, `reach-cut`, `round5-native`) | 29 passed, 10 files |
+| INT-Q `h1-read-routes` | 1 passed |
+| 4 mutants | all four exit 1, semantic rejection, no timing |
+| `build_contract.py --verify` (own step) | PASS, second regeneration byte-identical, `lab/acceptance/` unchanged |
+| evaluator `claim.test.mjs` + `claim-round2.test.mjs` | 108 passed, 0 failed |
+| typecheck | core (three projects), qlever, xtdb, datomic, testkit, host, http, w0, sql, sqlite, postgres, cloudflare, duckdb, foundationdb all pass |
+| static | `oxlint --deny-warnings` on the touched files shows only the two `no-constant-condition` warnings that exist at `febcd098` (`while (true)` in the XTDB and QLever adapters); the new test is oxfmt-formatted |
+
+## Divergences and what did not run
+
+- No fresh 100,000-pull replay, CPU ABAB or P2 diagnostic this round: the brief did not ask for them, and nothing on the broker, H1 or core path changed since round 4 (`TriplesLive.ts`, `BrokerStorageAdapter.ts` and the H1 code are byte-identical to `365fe188`; the round 4 receipts stand for them).
+- No live XTDB, Datomic or QLever engine and no public-write execution on the native adapters: the reproductions are the reviewer's offline native-response fixtures. The XTDB `recorded_position` predicate, the Datomic `at-position` and the QLever position filter were read in source and exercised by the existing offline suites; not run against engines.
+- Datomic costs one extra gateway `basis` request per fallback pull (a pull answered by `getReachTriples` on the broker is unaffected); XTDB and non-broker QLever cost one extra position query. Not measured.
+- The four standalone adapters (SQLite, Postgres, DuckDB, Cloudflare) are out of scope per `lab/SCOPE.md` and still have no hook.
+
+## Pins moved (rule 9b; the contract is unchanged, the contract builder re-pins)
+
+`packages/xtdb/src/XtdbStorageAdapter.ts`, referenced by `lab/acceptance/build_contract.py` and `lab/acceptance/obligations.json`: old sha256 `9eeed8e4e096b9245350780ccbfc99cff562a82d9097d6633a9d77b6b0dc5377` (base `2f7b42d6`), new `6ea85e9b771d16eee7f74a41f985568ff08851b9757b60f6f950010779d6a1f7`. `packages/core/src/store/Triples.ts` is unchanged since round 3 (old `7e5bd8c3...`, new `da3515b5...`, still to re-pin). Also changed, not referenced by `lab/acceptance`: `packages/datomic/src/DatomicStorageAdapter.ts` (`fdbfad67...` to `a6225eec...`) and `packages/qlever/src/QleverStorageAdapter.ts` (`99cee6e3...` to `10b2788a...`); all hashes are in `pin-changes.json`.
+
+## PASS / verdict / receipt audit (rule 9a) for round 5
+
+1. `round5-native.test.ts` native cases: content = exact closure (entity and value per triple) for the pinned pull, exact number of position captures, and the cut value of every native request; the post-commit pull, the transaction result and the no-hook control are separate assertions. Freshness = new fixture state per variant per test. Binding = the real adapters (`makeXtdbStorageAdapter`, `makeDatomicStorageAdapter`, `makeQleverStorageAdapter`) and the real `TriplesLive.reach`; the fixture parses the position predicate the adapter generated (XTDB SQL, QLever SPARQL) or the basis it sent (Datomic) to choose the snapshot, it does not return a cut-independent answer. Offline fixtures only; green results do not claim live-engine behavior.
+2. Mutants, `--verify`, evaluator, suites: unchanged logic; counts come from the terminal summaries in `gates-final/*.log`, not from exit codes alone. `--verify` is regeneration, not a semantic verdict.
+3. `pin-audit.mjs`: compares against the base commit and records old and new hashes; grants no authority.
+4. `R5-SHA256SUMS` is computed from the retained files after the last run.
