@@ -1,0 +1,28 @@
+Independent list written before reading R44 4.4, REPORT.md or claim-ns.test.mjs (2026-11-09).
+O1 P2/P3 duplicate commit: same commandId in two source txs; original ACK lost, retry receipt names 2nd tx. No uniqueness check.
+O2 P2 fast typedError then async commit: error ACK time counted as latency; command publishes later; nothing refuses.
+O3 P2 retry gets typedError instead of original receipt: only receipt-vs-receipt compared.
+O4 P3 visible duplicate effect via distinct epoch/consumer label on the same (position, subject).
+O5 P3 source position order disagrees with offset order; never checked; positions not tied to entry stream/epoch/offset.
+O6 P3-only run skips progress, ACK-before-publication, RYOW: candidate rejects nearly all commands or delays source visibility.
+O7 P3 resume: faults=[] gives RECOMPUTED with no resume evidence; any bundle with faults is always TIMING-UNJUDGED.
+O8 P3 fault replay: one byte-exact replayed entry suffices; no completeness from checkpoint; digest may be candidate-computed.
+O9 P3 lag/gap exclusion: positions with source L outside [start,end) need no consumer bracket and contribute no lag.
+O10 P1 read memo keyed only by subject/shape/requestedBasis; reads differing in hops/facts/query share one expected hash.
+O11 P1 ladder level is a self-declared label; reads in a "256" or "1024" window are not bound to that many loops.
+O12 P1/E8 readers loops not cross-checked against reads[] loop ids or read rate.
+O13 P4 historyPulls answers never checked (no answer hash); bytesRead per pull unverified origin.
+O14 P5 sweepTraffic.sweep segment not required to overlap [sweep.startNs, sweep.endNs]; 64 readers not checked.
+O15 P5 activation basis not bound to a source activation commit or release hash; sweep end not bracketed by output durability.
+O16 Oracles receive the full entries list labelled "prefix", including entries after the position or basis.
+O17 Source content never compared with the offered command (offers carry no content digest); broker path skips verifySource.
+O18 Broker CRC chain is self-consistent data, not authentication; entries never decoded from or compared to frame bytes.
+O19 WAL hex is decorative: transactions not derived from tailedWalHex/finalWalHex.
+O20 crossChecks=[] vacuous (E11 optional).
+O21 Small n: no minimum sample counts (P2 one offer per band, P3 one in-window position).
+O22 ACK inside a wide source bracket is only counted (ackUndecided); no bound on bracket width or undecided share.
+O23 Duplicated observer records (offers, reads) inflate samples and goodput; no event ids.
+O24 Ladder recovery: id/recoveryOf both undefined matches any 256 window.
+O25 Storage kind not pinned by trusted; a payload saying broker-frame/2 bypasses verifySource.
+O26 Multiple consumer labels can split one affected set; consumer identity not pinned.
+O27 P4 largest-bucket provisional p99 50 ms not enforced; P1 hot-set and straddle mix not checked.
