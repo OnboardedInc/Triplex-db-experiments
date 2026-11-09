@@ -159,3 +159,6 @@ residents at every check-in; recreate qlever-dev fresh when its delta grows.
   round 2 re-pins the INT-XCJ workload files. P2Q round 7 fix (Q89c) running.
 - Queued: EXP-RT01 round A (core, testkit, harness, both A0s) from main after RQ01 merges (Q90g). Running: CX-O06 (O-REPLAY 0.5.0).
 - Pending Sam: Q86g (VM H1/H2), Q78e tenant isolation (lane D), Q89g public commit pin (A/B/C; R33 recommends C).
+- INT-XCJ complete at b916d5d: X02, C8, J01 (default-off) integrated; G0 1,168/1,168, evaluator 108/108, C8 and J01 live tests proven
+  (except the QLever C8 closure timeout, under CX-C8-R4). Main gets it in one step after contract 0.3.12 re-pins the two workload files
+  (0.3.12 round 3 merges int/X02-C8-J01) and C8-R4 reports.
