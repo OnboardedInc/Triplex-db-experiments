@@ -13,6 +13,8 @@ This is a builder integration, not a promotion. New H1 product code emits no PAS
 | Unchanged acceptance/build_contract.py --verify | Recomputes/validates contract projections and requires byte equality with every committed generated contract document. | Uses current exact source pins and inputs, emits transitive/output hashes; source-bound command receipt. | Contract unchanged; no repin authority taken. |
 | Historical evidence relocation / SHA256SUMS | Copy bytes and independently reread destination SHA-256 before removing worktree copy; paths and hashes retained in five bounded manifests. | Current source bytes at relocation time, original relative path, unique CX-INT-Q durable root. | Byte-preservation statement only; historical PASS receipts stay historical. |
 
+`seal-evidence.py` creates no semantic verdict: every copy is hashed from the original and independently reread at the destination; exact relative paths, sizes and hashes are retained. It performs no deletion or engine/process lifecycle change. Final process inspection found no task fixture processes. Original fixture bytes remain in place.
+
 ## Imported historical result emitters (not executed or adopted for fresh qualification)
 
 These executable sources arrive in the accepted branches. They remain historical investigation tools, not a new path to promotion. Their exact paths are listed so review can distinguish them from the fresh INT-Q runner.

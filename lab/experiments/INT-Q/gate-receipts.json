@@ -1,0 +1,123 @@
+[
+  {
+    "label": "package",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/package-71a5cec6-dca9-4161-9025-6792a865ac2a/receipt.json",
+    "sha256": "d54aa83d085d15fef38da371073e4e518bfcf5f454fc1f2230b4b06ce94f97cf",
+    "head": "3d92e82bc852cec65fa9eb3acf30ebe64cce965d",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": false
+  },
+  {
+    "label": "p2q-final",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/p2q-final-b0895461-917f-401c-a3e1-23c27d3b52fd/receipt.json",
+    "sha256": "0e61a068a501835f0fad99d6b63da42e0bbcc73a46abc60df8c710e2a461d5ce",
+    "head": "7c9a38e2cb26387ece52141dcbbf01580f7987ce",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true
+  },
+  {
+    "label": "p2q-storage",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/p2q-storage-1c04f44c-92b3-4eda-bacd-1c08384bbecb/receipt.json",
+    "sha256": "91214fcc4a5ecc1d436f5f9d90d795f4ba2fa887b83f8ec5fc6e347ad00fad90",
+    "head": "7c9a38e2cb26387ece52141dcbbf01580f7987ce",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true
+  },
+  {
+    "label": "sql01-q89i",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/sql01-q89i-619916b4-53b9-46a3-bb8f-b9f9579fd1bf/receipt.json",
+    "sha256": "0b41426f6a4066519ff48bc7fa6eeb08826ab49688c23bf602795f8facedb4dc",
+    "head": "973d5e8683f93f3404e0823e2bf19fbe912928ad",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true
+  },
+  {
+    "label": "route-harness",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/route-harness-c0550040-530c-47d5-b947-b9bcf9a908d2/receipt.json",
+    "sha256": "42755442af00f3014e23984f9bc7a5b75995d0f7066c817b8002c720ddaf2417",
+    "head": "7c9a38e2cb26387ece52141dcbbf01580f7987ce",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true
+  },
+  {
+    "label": "g0-qlever-final",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/g0-qlever-final-01f5f896-4503-41cc-9e55-6a0fc48d88d9/receipt.json",
+    "sha256": "4b7db23e7a67a4f01235ee235c9d67d179980b46740776b5de2139b23fa036d9",
+    "head": "7c9a38e2cb26387ece52141dcbbf01580f7987ce",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true
+  },
+  {
+    "label": "g0-xtdb",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/g0-xtdb-a5a42eec-fe44-4074-b0d7-1f7c338f2096/receipt.json",
+    "sha256": "d8f74d136ce1a0c51c35073e386b1f051fb109596ab56a571fddb50e7def03ed",
+    "head": "973d5e8683f93f3404e0823e2bf19fbe912928ad",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true
+  },
+  {
+    "label": "evaluator-final",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/evaluator-final-21a868ef-7134-4ef8-a884-7f4813446e14/receipt.json",
+    "sha256": "712d1342ee280c364fe28a5418b60a3466b64022b4523cb0af51a59fa31cef9e",
+    "head": "7c9a38e2cb26387ece52141dcbbf01580f7987ce",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true
+  },
+  {
+    "label": "qlever-live",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/qlever-live-7e8fc628-5cf0-4a3b-871b-5c9e33e3c376/receipt.json",
+    "sha256": "a191840ccd8ad0a5ec35bd719ae50062808efd8b6c81e62e750386da5b9e9348",
+    "head": "7c9a38e2cb26387ece52141dcbbf01580f7987ce",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true
+  },
+  {
+    "label": "pack-final",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/pack-final-9fbe5f6a-c52b-41c4-bcc4-5e72410b9b2d/receipt.json",
+    "sha256": "62d2a49722d31281b012da2a6f5223b3abb963071736db247d48e5b46a380e1c",
+    "head": "973d5e8683f93f3404e0823e2bf19fbe912928ad",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true
+  },
+  {
+    "label": "contract-final",
+    "receipt": "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-INT-Q/contract-final-1eed5fd4-70a2-4209-8bfa-ad82277e8ee5/receipt.json",
+    "sha256": "e655e5e258ad4d6c1f03367097c9712d493cc0522f3ef9cbd1c9b652b3e7eda6",
+    "head": "973d5e8683f93f3404e0823e2bf19fbe912928ad",
+    "result": {
+      "code": 0,
+      "signal": null
+    },
+    "sourceStillMatches": true
+  }
+]
