@@ -1692,3 +1692,13 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - 403 tests, zero failures; 22 probes; 341 legacy verdicts unchanged per lane; every surviving wrong variant (staging-time stamps,
   ties, non-monotone stamps, journal instants, answers above the watermark, Q70E/H/I/K/L) is caught. Built from R33 section 4.3 alone, so the
   oracle never saw the product change it will judge. It waits to be pinned with RT01 in contract 0.4.0.
+
+## 2026-11-09 01:27Z: hourly pass: usage 5%; R37 audits golden-scenario readiness on all three lanes
+- **Since the last pass:** contract 0.3.12, X02, C8 and J01 on main; O-REPLAY 0.5.0 accepted; K01 rebuilt around one admission check
+  (Q93, 73 tests instead of 262) and in review; G03's 33 fixtures migrated (108/108); RQ01 harness in its third review; lane D's :f/live
+  guard fixed and in review; P5 round A fingerprints match O-DOMAIN at 1k and 10k.
+- **Gap noticed:** the 20 golden scenarios are part of done, but only XTDB has GS receipts, all from shared residents. **R37 (Opus high)**
+  maps all 20 scenarios against the three lanes, finds what each needs beyond the P1-P5 work, orders the shortest path, and says which
+  existing receipts survive Q91a and Q93a.
+- **Patterns this hour:** two more cases where one check that grants and many that only refuse beat many checks that each can grant
+  (K01 via R36; G03 now asked to list its grant paths). The 30-of-40 class has now appeared on two lanes; RQ01 becomes the gate once it merges.
