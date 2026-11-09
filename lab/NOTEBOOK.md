@@ -2136,3 +2136,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **P4 warning for EXP-QH1:** a 447-fact pull costs about 1.1 ms of SQLite CPU in either layout, so 1,100 pulls/s per core is at risk regardless of layout.
 - **DF01 round 3 (4c72ed27):** one bounded post-deadline read; 19 tests, conformance 4/4, G0 1,279; in review.
 - **Lesson:** my first explanation of the store size (from table sizes alone) was wrong on its main cause; reading the code that writes the table found it. Diagnose from the writer, not from the shape of the data.
+
+## 2026-11-09 09:42Z: hourly pass (NORTH-STAR reread first): usage 8%; store size and P4 throughput are now the lane Q/X priorities
+
+- **Learnings since 08:40Z:**
+  - **On main:** contract 0.3.14 (1de3e640) and the lab pack gate (3d9dca59); evaluator 108/108 on each committed tree.
+  - **R45:** the host store is 5,656 B per fact (journal rows embed each fact again; recent_rows is a full second copy; frames never purged); EXP-HS01 targets about 259 B. My first explanation from table sizes alone was wrong; the code that writes the table gave the cause.
+  - **Disk is the binding constraint on live work.** Archived, analyzed evidence is compressed in place (P5B's 11.8 GB store to 372 MB, P2X2's dependency copies); free space went from 6.7 to 18 GiB, and RT01's G6 is running again.
+  - **Isolation belongs at the filesystem, not in-process:** NSR spent three rounds patching loader tricks inside one process; round 4 makes the driver's filesystem hold only its closed artifact.
+  - **The PASS-granting evaluator keeps improving under two reviewers:** CRNS round 3 passes 257 tests; both reviewers re-reviewing.
+  - **Lane D:** DF01 accepted offline (22 tests, 247 assertions); its live run on datomic-dev follows RT01's G6.
+- **Open question that shapes P4:** R45 measured 2.4-2.9 us of warm SQLite CPU per row, so a 447-fact W0 pull costs about 1.1 ms, about 900 pulls/s per core against the 1,100 bar, in either layout. EXP-QH1 waits on this.
+- **Research dispatched (Opus 5.5 high):** R46, P4 per-core throughput from H1: where the per-row cost goes, and the options (a materialized per-subject current document maintained at commit, one-statement reach fetch, raw bytes without decoding, clustering, reader pools), each with its effect on P2 commit latency, bytes per fact, P1 exactness and route equivalence.
