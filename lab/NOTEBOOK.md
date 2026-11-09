@@ -2182,3 +2182,17 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **RT01 live round 4 (54e59314):** G2 passed again; G6 stopped before any sample because M01's noise recorder spawns `top`, which is setuid and the Codex sandbox refuses it. Timing unjudged, not failed. Round 5 moves the recorder to non-setuid counters (os.loadavg, vm_stat, sysctl) at its source in M01, then reruns G6 under Q104a. **Lesson:** a measurement tool must be exercised offline in the same sandbox it will run in; M01's report had noted the permission need and the runbook did not carry it.
 - **Disk:** compressed the large databases in INT-Q, VINTQ and DI01's superseded attempts (final-r2 to r8, two lag dirs), each verified by hash, originals' hashes kept; host free went from 11 to 19 GiB.
 - **CRNS round 5 (676b0a45):** Q103d, Q103e and the pinned crash target implemented; 292 tests and 59 reviewer assertions pass; the Opus reviewer does a final scoped check. After that CR-NS joins the contract 0.4.0 queue.
+
+## 2026-11-09 10:50Z: hourly pass (NORTH-STAR reread first): usage 10%; contract 0.4.0 started; lane D live
+
+- **Learnings since 09:42Z:**
+  - **Lane D's feed passed live on Datomic dev** (DF01 attempt 002, DIAGNOSTIC-PASS) after a fixture fix; offline fakes must apply the peer's input checks.
+  - **The PASS-granting evaluator converged:** the Opus reviewer accepts CR-NS for offline P2 and P3 arithmetic after four rounds; round 5 closes the last items (parked reads, crash target, race pairs); final scoped check running.
+  - **R46:** H1 can reach P4's 1,100 pulls per core with compact rows clustered by owner, one worker op per pull and SQLite-built answers (1,140-1,720 per CPU second). SQLite's JSON functions lose double precision unless formatted with %!.17g (Q105b): Sam's "no silent precision loss" applies to every serialized path.
+  - **Isolation by filesystem worked:** NSR accepted once the driver's layout held only its artifact under Node's permission model.
+  - **Statistics:** a one-pair A/A band failed RT01's compact p99 spuriously; Q104a requires repeated A/A rounds and tail-sized samples. RT01's marker-row fix removed the real A0 regression.
+  - **Sandbox:** a measurement tool that spawns a setuid binary (`top`) fails inside Codex; tools must be exercised in the sandbox they run in.
+  - **Disk:** compressing analyzed evidence keeps the slot runs going (now 19 GiB free).
+- **Action:** contract 0.4.0 started (CX-A01-040) with NSR+P3M+FD01, DF01, QNODELAY, M01, CHECKJS; compiles Q98a-i, Q101a, Q104a. RT01 with Q89/Q90 joins in a later round once its G6 completes; CRNS, HS01, P2B, DI01 and G03 follow as they are accepted.
+- **Long runners:** DI01 has made about ten "final" attempts over 228 minutes; P2B is on its last step after 223 minutes. Both are still writing. If DI01's report shows the attempts were churn, its next brief caps final attempts.
+- **Research this hour:** none new; R45 and R46 just landed and their builders (HS01, then QH1) are the follow-up.
