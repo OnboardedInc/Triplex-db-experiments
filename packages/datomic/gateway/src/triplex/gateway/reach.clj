@@ -1,6 +1,6 @@
 (ns triplex.gateway.reach
   (:require [datomic.api :as d])
-  (:import [java.util ArrayDeque HashSet] [java.util.concurrent ConcurrentHashMap]))
+  (:import [java.util ArrayDeque ArrayList HashSet LinkedHashMap Map$Entry] [java.util.concurrent ConcurrentHashMap]))
 (set! *warn-on-reflection* true)
 
 ;; [DX-B2-N1] Why: immutable datoms and cached numeric identifiers keep the reach path at index cost.
@@ -15,7 +15,8 @@
   (.append out \" ) out)
 (def ^ConcurrentHashMap ids (ConcurrentHashMap.))
 (def ^ConcurrentHashMap configs (ConcurrentHashMap.))
-(defn forget! [name] (.remove ids name) (.remove configs name))
+(declare sessions)
+(defn forget! [name] (.remove ids name) (.remove configs name) (.remove ^ConcurrentHashMap sessions name))
 (defn decline! [reason] (throw (ex-info reason {:declined reason})))
 (defn config [name db]
   (or (.get configs name)
@@ -44,7 +45,7 @@
         (cond (= a (:position cfg)) (aset header 0 (long (.v datom)))
               (= a (:version cfg)) (aset header 1 (long (.v datom)))
               (= a (:irregular cfg)) (when (.v datom) (aset header 2 1)))))
-    (when-not (= 1 (aget header 1)) (decline! "rows-version"))
+    (when-not (= 2 (aget header 1)) (decline! "rows-version"))
     (when (= 1 (aget header 2)) (decline! "irregular"))
     (let [head (aget header 0)
           pt (when (and (some? p) (not= p head))
@@ -58,48 +59,113 @@
       [(if (= t (d/basis-t db)) db (d/as-of db t)) (or p head) t])))
 (defn bits [^String text ^long start]
   (Double/longBitsToDouble (Long/parseUnsignedLong text (int start) (int (+ start 16)) 16)))
+ ;; [DX-B2-N2] Why: a session remembers only immutable entity revisions; concurrent references may retry full.
+;; Rejected: a cache keyed only by entity (historical cuts need their own revision).
+(def ^ConcurrentHashMap sessions (ConcurrentHashMap.))
+(def session-entry-limit
+  (min 1000000 (Long/parseLong (or (System/getenv "TX2_REACH_SESSION_ENTRIES") "1000000"))))
+(defn session-map [name session]
+  (when session
+    (when-not (and (string? session) (<= 1 (.length ^String session) 64)) (decline! "session"))
+    (let [^LinkedHashMap lru (or (.get sessions name)
+                                (let [m (LinkedHashMap. 64 0.75 true)] (or (.putIfAbsent sessions name m) m)))]
+      (locking lru
+        (or (.get lru session)
+            (let [m (ConcurrentHashMap.)]
+              (when (>= (.size lru) 64)
+                (let [it (.iterator (.keySet lru))] (.next it) (.remove it)))
+              (.put lru session m) m))))))
+(defn read-entity [name db cfg id valid ^longs counts]
+  (let [valid (double valid) eid (entity-id db name id) texts (ArrayList.) refs (ArrayList.) rev (long-array 1)
+        row-a (long (:row cfg)) overflow-a (long (:overflow cfg)) rev-a (long (:rev cfg))]
+    (when eid
+      (let [it (.iterator ^Iterable (d/datoms db :eavt eid))]
+        (while (.hasNext it)
+          (let [^datomic.Datom datom (.next it) a (.a datom)]
+            (cond
+              (= a overflow-a) (when (.v datom) (decline! "row-overflow"))
+              (= a rev-a) (aset rev 0 (long (.v datom)))
+              (= a row-a)
+              (let [^String text (.v datom)
+                    start (+ 5 (Integer/parseInt text 1 5 16))
+                    from (bits text start) end (+ start 16)
+                    to (when-not (= \- (.charAt text (int end))) (bits text end))
+                    ref-start (+ end 20) ref-size (Integer/parseInt text (int (+ end 16)) (int ref-start) 16)]
+                (aset counts 0 (inc (aget counts 0)))
+                (when (> (aget counts 0) 100000) (decline! "row-budget"))
+                (.add texts text)
+                (when (and (pos? ref-size) (<= from valid) (or (nil? to) (> (double to) valid)))
+                  (.add refs (.substring text (int ref-start) (int (+ ref-start ref-size)))))))))))
+    (when (and (pos? (.size texts)) (zero? (aget rev 0))) (decline! "missing-revision"))
+    [eid (if (.isEmpty texts) 0 (aget rev 0)) texts refs]))
+(defn append-strings! [^StringBuilder out ^Iterable values]
+  (.append out \[)
+  (let [it (.iterator values) n (long-array 1)]
+    (while (.hasNext it)
+      (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
+      (append-string! out (.next it))))
+  (.append out \]))
 (defn response [name current input]
   (try
     (let [[db position t] (select-db name current (get input "basis"))
-          cfg (config name current) row-a (long (:row cfg)) overflow-a (long (:overflow cfg))
-          valid (double (get-in input ["basis" "validAt"]))
-          root (get input "root") queue (ArrayDeque.) seen (HashSet.) out (StringBuilder. 65536)
-          counts (long-array 2)]
-      (.add queue root) (.add seen root)
-      (.append out "{\"position\":") (.append out (long position))
-      (.append out ",\"t\":\"") (.append out (long t)) (.append out "\",\"rows\":[")
-      (while (not (.isEmpty queue))
-        (let [id (.remove queue)]
-          (when-let [eid (entity-id db name id)]
-            (let [it (.iterator ^Iterable (d/datoms db :eavt eid))]
+          cfg (config name current) valid (double (get-in input ["basis" "validAt"]))
+          roots (get input "roots") entities (LinkedHashMap.) closures (ArrayList.) counts (long-array 1)
+          ^ConcurrentHashMap remembered (session-map name (get input "session")) out (StringBuilder. 65536)]
+      (when-not (and (vector? roots) (<= 1 (count roots) 5000)) (decline! "roots"))
+      (doseq [root roots]
+        (when-not (string? root) (decline! "root"))
+        (let [queue (ArrayDeque.) seen (HashSet.) order (ArrayList.)]
+          (.add queue root) (.add seen root)
+          (while (not (.isEmpty queue))
+            (let [id (.remove queue)
+                  entry (or (.get entities id)
+                            (let [value (read-entity name db cfg id valid counts)]
+                              (.put entities id value)
+                              (when (> (.size entities) 5000) (decline! "entity-budget")) value))
+                  ^ArrayList refs (nth entry 3) it (.iterator refs)]
+              (.add order id)
               (while (.hasNext it)
-                (let [^datomic.Datom datom (.next it) a (.a datom)]
-                  (when (and (= a overflow-a) (.v datom)) (decline! "row-overflow"))
-                  (when (= a row-a)
-                    (let [^String text (.v datom)
-                          start (+ 5 (Integer/parseInt text 1 5 16))
-                          from (bits text start) end (+ start 16)
-                          to (when-not (= \- (.charAt text (int end))) (bits text end))
-                          ref-start (+ end 20) ref-size (Integer/parseInt text (int (+ end 16)) (int ref-start) 16)]
-                      (aset counts 1 (inc (aget counts 1)))
-                      (when (> (aget counts 1) 100000) (decline! "row-budget"))
-                      (when (and (<= from valid) (or (nil? to) (> (double to) valid)))
-                        (when (>= (aget counts 0) 100000) (decline! "row-budget"))
-                        (when (pos? (aget counts 0)) (.append out \,))
-                        (.append out text (int (+ ref-start ref-size)) (.length text))
-                        (aset counts 0 (inc (aget counts 0)))
-                        (when (pos? ref-size)
-                          (let [ref (.substring text (int ref-start) (int (+ ref-start ref-size)))]
-                            (when (.add seen ref)
-                              (when (> (.size seen) 5000) (decline! "entity-budget"))
-                              (.add queue ref)))))))))))))
-      (.append out "],\"entities\":") (.append out (.size seen))
-      (.append out ",\"visited\":[")
-      (let [it (.iterator seen) counts (long-array 1)]
-        (while (.hasNext it)
-          (when (pos? (aget counts 0)) (.append out \,)) (aset counts 0 1)
-          (append-string! out (.next it))))
-      (.append out "]}")
-      (.toString out))
+                (let [ref (.next it)] (when (.add seen ref) (.add queue ref))))))
+          (.add closures [root order])))
+      (locking (or remembered out)
+      (let [new-count (long-array 1) reset (and remembered
+            (do (let [it (.iterator (.values entities))]
+                  (while (.hasNext it)
+                    (let [eid (nth (.next it) 0)]
+                      (when (and eid (not (.containsKey remembered eid)))
+                        (aset new-count 0 (inc (aget new-count 0)))))))
+                (> (+ (.size remembered) (aget new-count 0)) session-entry-limit)))
+            full (or reset (true? (get input "full")))]
+        (when reset (.clear remembered))
+        (.append out "{\"position\":") (.append out (long position))
+        (.append out ",\"t\":\"") (.append out (long t))
+        (.append out "\",\"reset\":") (.append out (boolean reset)) (.append out ",\"entities\":[")
+        (let [it (.iterator (.entrySet entities)) n (long-array 1)]
+          (while (.hasNext it)
+            (let [^Map$Entry item (.next it) id (.getKey item) entry (.getValue item)
+                  eid (nth entry 0) rev (long (nth entry 1)) ^ArrayList texts (nth entry 2)
+                  inline (or (nil? remembered) full (nil? eid) (not= rev (.get remembered eid)))]
+              (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
+              (.append out \[) (append-string! out id) (.append out \,) (.append out rev)
+              (when inline
+                (.append out ",[")
+                (let [rows (.iterator texts) n (long-array 1)]
+                  (while (.hasNext rows)
+                    (let [^String text (.next rows) start (+ 5 (Integer/parseInt text 1 5 16))
+                          ref-start (+ start 36) ref-size (Integer/parseInt text (int (+ start 32)) (int ref-start) 16)]
+                      (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
+                      (.append out text (int (+ ref-start ref-size)) (.length text)))))
+                (.append out \])
+                ;; Overflow pages are entirely inline and leave the bounded map empty.
+                (when (and remembered eid (<= (.size entities) session-entry-limit)) (.put remembered eid rev)))
+              (.append out \]))))
+        (.append out "],\"closures\":[")
+        (let [it (.iterator closures) n (long-array 1)]
+          (while (.hasNext it)
+            (let [entry (.next it)]
+              (when (pos? (aget n 0)) (.append out \,)) (aset n 0 1)
+              (.append out \[) (append-string! out (nth entry 0)) (.append out \,)
+              (append-strings! out (nth entry 1)) (.append out \]))))
+        (.append out "]}") (.toString out))))
     (catch clojure.lang.ExceptionInfo e
       (if-let [reason (:declined (ex-data e))] (str "{\"declined\":\"" reason "\"}") (throw e)))))

@@ -86,10 +86,13 @@
                           [:db/add (str "e:" (:entity_id row)) :triplex.entity/row-overflow true]
                           [:db/add (str "e:" (:entity_id row)) :triplex.entity/row text]))))
           (let [eid (d/entid db [:triplex.entity/id (:entity_id row)]) text (row-datom db eid (row-prefix (:id row)))]
-            (when (and (= 1 (:triplex.scope/rows-version (d/entity db scope)))
+            (when (and (= 2 (:triplex.scope/rows-version (d/entity db scope)))
                        (not (:triplex.entity/row-overflow (d/entity db eid))) (nil? text))
               (codec/invalid "Missing live row datom"))
             (when text (.add out [:db/retract eid :triplex.entity/row text]))))))
+    ;; [DX-B2-N2] Why: retractions change the complete row set too. Rejected: assertion-only revisions (stale cache hits).
+    (doseq [entity (distinct (map :entity_id rows))]
+      (.add out [:db/add (or (d/entid db [:triplex.entity/id entity]) (str "e:" entity)) :triplex.entity/rev position]))
     (when (pos? (.size times))
       (let [first-time (double (.get times 0)) maximum (volatile! (double (or prior first-time)))]
         (doseq [time times]

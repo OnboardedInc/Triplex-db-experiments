@@ -29,7 +29,7 @@
   (try
     @(d/transact (connection uri)
        [{:db/id (d/tempid :db.part/user) :triplex.scope/bootstrap "singleton"}
-        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/rows-version 1 :triplex.scope/schema-hash schema/schema-hash}])
+        {:triplex.scope/key scope :triplex.scope/position 0 :triplex.scope/rows-version 2 :triplex.scope/schema-hash schema/schema-hash}])
     (catch Exception e
       (let [current (sync-db uri)]
         (assert-scope current scope)
@@ -94,7 +94,7 @@
       (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/begin" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)]
         (timed start (response 200 (storage/begin-command! name (sync-db (db-uri name)) input))))
-      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/reach" uri))
+      (and (= :post request-method) (re-matches #"/v2/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(reach|reach-many)" uri))
       (let [name (nth (clojure.string/split uri #"/") 3) input (request-json body) start (System/nanoTime)
             conn (connection (db-uri name))
             db (storage/await-position (d/db conn) (get-in input ["basis" "recordedPosition"])
@@ -103,7 +103,7 @@
                                    (deref (d/sync conn (Long/parseLong ^String t)) remaining :triplex.gateway.storage/timeout)
                                    (d/db conn))))]
         (timed start {:status 200 :headers {"Content-Type" "application/json; charset=utf-8"}
-         :body (reach/response name db input)}))
+         :body (reach/response name db (if (.endsWith ^String uri "reach-many") input (assoc input "roots" [(get input "root")])) )}))
       (re-matches #"/v1/db/(?:s-[0-9a-f]{32}|s2-[A-Za-z0-9_-]+)/(snapshot|release|transact|read|q|claim|operation/[^/]+)" uri)
       (let [[_ _ _ name action id] (clojure.string/split uri #"/") db-uri (db-uri name)
             input (when (= request-method :post) (request-json body))

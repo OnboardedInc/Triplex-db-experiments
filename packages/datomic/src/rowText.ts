@@ -1,4 +1,4 @@
-import type { TripleRow } from "@triplex-build/triplex/runtime";
+import { decodeValueColumns, storedValueDomain, ValueDomains, type TripleRow } from "@triplex-build/triplex/runtime";
 import { assertionColumns } from "./rows.js";
 import { decodeRow, encodeRow } from "./protocol.js";
 
@@ -45,7 +45,7 @@ export function encodeRowText(row: TripleRow): string {
     JSON.stringify(rowTextColumns.map((c) => (Object.is(row[c], -0) ? "-0" : row[c])))
   );
 }
-export function decodeRowTextArray(values: unknown): TripleRow {
+export function decodeRowTextColumns(values: unknown): TripleRow {
   if (!Array.isArray(values) || values.length !== rowTextColumns.length)
     throw new TypeError("Invalid row text columns");
   const row: Record<string, unknown> = {
@@ -66,7 +66,16 @@ export function decodeRowTextArray(values: unknown): TripleRow {
   });
   for (const c of ["recorded_position", "schema_version"])
     if (!Number.isSafeInteger(row[c])) throw new RangeError(`Unsafe ${c}`);
-  return decodeRow(encodeRow(row as unknown as TripleRow));
+  for (const c of ["id", "entity_id", "attribute", "value_type"])
+    if (typeof row[c] !== "string") throw new TypeError(`Missing ${c}`);
+  for (const c of ["recorded_at", "valid_from"])
+    if (typeof row[c] !== "number") throw new TypeError(`Missing ${c}`);
+  return row as unknown as TripleRow;
+}
+export function decodeRowTextArray(values: unknown): TripleRow {
+  const row = decodeRowTextColumns(values);
+  decodeValueColumns(row, storedValueDomain(ValueDomains.datomic, row.attribute));
+  return row;
 }
 export function decodeRowText(text: string): TripleRow {
   if (text[0] !== "1") throw new TypeError("Unknown row text version");
