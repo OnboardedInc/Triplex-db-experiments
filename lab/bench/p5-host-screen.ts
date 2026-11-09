@@ -8,6 +8,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
+import os from "node:os";
 import { performance } from "node:perf_hooks";
 import { openMappedHost } from "./lib/host-store.ts";
 import { generateTrace } from "./lib/trace.ts";
@@ -197,6 +198,7 @@ async function activationArm(name: string, W: number) {
     const hs0 = { ...h.hstats },
       elu0 = performance.eventLoopUtilization();
     const walTimer = setInterval(() => (walMax = Math.max(walMax, walBytes(dst))), 100);
+    const load0 = os.loadavg();
     const started = performance.now();
     const sweep = await runW0Sweep({
       comp,
@@ -261,6 +263,7 @@ async function activationArm(name: string, W: number) {
     const timeline = m.map((x: any) => ({ page: x.page, ...x.tl }));
     fs.writeFileSync(path.join(outDir, `timeline-${name}.json`), JSON.stringify(timeline));
     return {
+      load: { start: load0, end: os.loadavg(), freeMemBytes: os.freemem() },
       instrument: {
         // Per-commit time split from the writer thread (ms, summed over the sweep's commits) and per-commit percentiles. Columns of `per`: lsn, prepare, beginWait, frame+dict, member, factRows, factMs, journalRows, journalMs, marker, commit(COMMIT+fsync), total.
         writer: {
