@@ -299,8 +299,9 @@ const handle = (op,a) => {
    // [EXP-P5B] Why: SQLite limits bind variables; W0 ballast BFS frontiers exceed 32k at 64 subjects.
    // Rejected: one unbounded IN list (fails the largest W0 bucket).
    for(let offset=0;offset<frontier.length;offset+=500) {
+    // [EXP-P5B-R3] Why: a transaction entity's journal rows (the :_tx/position value channel) are reachable through the sweep route like any entity; HS01 moved them out of facts. Rejected: facts and history only (host-map test: journal page lost its position channel).
     const selection={entities:frontier.slice(offset,offset+500)};
-    const level=rows('facts',selection,'pos<=?',[b]).concat(rows('history',selection,'rpos>? AND pos<=?',[b,b]));
+    const level=rows('facts',selection,'pos<=?',[b]).concat(rows('journal',selection,'pos<=?',[b]),rows('history',selection,'rpos>? AND pos<=?',[b,b]));
     for(const row of level) {
      if(a.validAt!==undefined && !(row.valid_from<=a.validAt && (row.valid_to===null || row.valid_to>a.validAt)))continue;
      // [EXP-P5B] Why: Q89i requires the exact old-cut row bytes after later retirement. Rejected: leaking future retraction fields.
