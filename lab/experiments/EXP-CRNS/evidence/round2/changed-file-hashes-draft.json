@@ -1,0 +1,32 @@
+[
+  {
+    "path": "lab/bin/claim.mjs",
+    "oldSha256": "6806dcd852657e15d8b83c9138c42bc25d48afd46f3f51f884ebb04f787d9a30",
+    "newSha256": "0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892",
+    "oldHashOccurrencesInContract": []
+  },
+  {
+    "path": "lab/bin/test/claim-ns.test.mjs",
+    "oldSha256": "40f583e292e628f1f8e36f75bece9ec8b609285c1e2208c0aa317faacd1fcd16",
+    "newSha256": "217a372caf2e214bbbade173412d43961bb1ea66f6fa23eaad29ebe564681869",
+    "oldHashOccurrencesInContract": []
+  },
+  {
+    "path": "lab/experiments/EXP-CRNS/REPORT.md",
+    "oldSha256": "2482eecf345b04c5ee1c9752c4d377a2de2b53bc221f6454f98768f0225f5002",
+    "newSha256": "2d6525b2128401a67040ec1db97ac87bec11e4295b6055b957209a38fe2e7cea",
+    "oldHashOccurrencesInContract": []
+  },
+  {
+    "path": "lab/experiments/EXP-CRNS/SCHEMA.md",
+    "oldSha256": "f7fe81e7d6bc3df983283eddc7ff9bc8c4c7bab27e4be97715609cddc20c11d2",
+    "newSha256": "980e74bc4936824195296a9e2f3b89ebf7b1fe4941a2c9c800ad6c503fdb3d16",
+    "oldHashOccurrencesInContract": []
+  },
+  {
+    "path": "lab/research/R44-ns-run-execution.md",
+    "oldSha256": "53764d9fcc8abd3f6d53f13afe0cbd6942f6e04ab839880bd9a60b4ff4ed7821",
+    "newSha256": "a16caf95dececb7bb57e308c1824d05244c17bb90c963851e1365982a3b76a73",
+    "oldHashOccurrencesInContract": []
+  }
+]

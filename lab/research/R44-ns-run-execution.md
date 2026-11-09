@@ -303,6 +303,18 @@ moves into EXP-NSR (section 8).
 
 ## 4. Decision 3: the CR-NS recompute in claim.mjs
 
+> **B5 round 2 design amendment (CX-CRNS, 2026-11-09; proposed for amended rulings, no acceptance authority):**
+> Independent reviews of B5 found incomplete evidence floors and three design gaps in this section. The implementation now uses
+> a full semantic request key (including hops and every query parameter), permits each logical command to commit only once,
+> binds full command content and identity changes separately to the frozen trace, and requires a separately authenticated,
+> re-evaluated crash companion before a primary lag run can satisfy the composite P3 bar. Crash runs judge counts/resume only;
+> lag stays unjudged there. Missing raw evidence, decoder output, CR coverage, measured readers, pinned sample minima or
+> identity bindings refuses a bar. These changes strengthen the proposed design; they do not change any target or ruling.
+> The complete finding-to-fix table, proposed Q98/Q100 amendments, mandatory adapter fields and audit are in
+> [EXP-CRNS round 2](../experiments/EXP-CRNS/REPORT.md#round-2-independent-review-fixes-cx-crns) and its
+> [normalized schema](../experiments/EXP-CRNS/SCHEMA.md#round-2-mandatory-evidence-floors-supersedes-conflicting-round-1-text-above).
+
+
 ### 4.1 Retained raw events (every one written by a trusted process)
 
 | Id | Event stream | Writer and kind | Fields |
@@ -346,7 +358,7 @@ Let `Prefix` be E3's LSNs from the run's first trace LSN to the final published 
 | Priority | Inputs | Recompute |
 | --- | --- | --- |
 | P2 | E1, E3, E4 | Latency per command = `ackAtNs - scheduledAtNs`, commands censored at their censor time (Q60d); p50 and p99 per band (5 to 10 and 11 to 25 against 10 and 50 ms; 26 to 50 against 100 ms). Accounting: every E1 command has a receipt, typed error or typed conflict (UNACCOUNTED = 0). Progress: every oracle-valid command published (O1 decides which rejections and conflicts are justified, Q31a). Queue: offered minus published at each instant, published from E4's U, at most 2 s of the steady rate; drain within 60 s after each burst. RYOW: for each ACK the driver issues the pull at the returned position immediately and compares with O1 at that position. Duplicates and lost-ACK retries: receipt bytes equal the original's. ACK order: `ackAtNs >= L(p)` for every ACK (a smaller value is ACK-BEFORE-PUBLICATION); cases with `L <= ack < U` are reported as undecided, not as passes of OBS-ACK-ORDER |
-| P1 | E2, E1, E8, E10, O1 | Correctness: every read's answer hash is checked against O1 at the driver-recorded requested basis through a key map (subject, shape, basis); when unique keys exceed the cap (proposed 2 million per run), all split reads plus a seeded sample are evaluated and the receipt states the share (Q100p); any violation fails NS-P1-VIOLATIONS-MAX. Goodput: correct completed reads per second per level. Read p99 at 256 from E2 latencies. Writer ratio: P2's p99 at each level divided by the zero-reader baseline's p99 on the same trace segment and burst phase. Maintenance event in window from observer EI. 1,024 stress and recovery from the ladder's E9 windows |
+| P1 | E2, E1, E8, E10, O1 | Correctness: every read's answer hash is checked against O1 at the driver-recorded requested basis through a full semantic request key (subject, shape, basis, hops and every other query parameter; B5 round 2 amendment above); when unique keys exceed the cap (proposed 2 million per run), all split reads plus a seeded sample are evaluated and the receipt states the share (Q100p); any violation fails NS-P1-VIOLATIONS-MAX. Goodput: correct completed reads per second per level. Read p99 at 256 from E2 latencies. Writer ratio: P2's p99 at each level divided by the zero-reader baseline's p99 on the same trace segment and burst phase. Maintenance event in window from observer EI. 1,024 stress and recovery from the ladder's E9 windows |
 | P4 | E2 (single pull loop), observer cgroup `cpu.stat` and `io.stat` of the serving container, EI scan counters | p50 and p99 over the frozen weighted bucket mix and per bucket; pulls per second per core with cores = the serving container's cpuset size (Q67g), CPU-seconds-based figure beside it; history flatness on the matched 1,000-subject sample at depths 1, 3 and 10 (p99 and bytes read at depth 10 at most 1.1x depth 1) |
 | P5 | E1, E2, sweep events from the driver, observer DR of the outbox, O-DOMAIN `reconcile` and `publish` | basis from the activation receipt (Q92a); coverage hash equals the subject-list hash; every output and outbox item equals O-DOMAIN's; wall time from the driver's sweep start and end; live read p99 and writer p99 against the matched no-sweep segments (1.5x); post-capture mutations reflected at the captured basis only |
 

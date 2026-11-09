@@ -1,0 +1,39 @@
+{
+  "format": "crns-verification/2",
+  "checkedAt": "2026-11-09T08:23:12.469153+00:00",
+  "implementationCommit": "31e22e3c97e03ff79d2344fc749ae1b21817b329",
+  "command": [
+    "node",
+    "lab/bin/heavy.mjs",
+    "--label",
+    "CX-CRNS-r2-final",
+    "--",
+    "node",
+    "--test",
+    "lab/bin/test/claim.test.mjs",
+    "lab/bin/test/claim-round2.test.mjs",
+    "lab/bin/test/claim-ns.test.mjs",
+    "lab/bin/test/claim-ns-round2.test.mjs",
+    "lab/verify/CRNS/review.test.mjs",
+    "lab/verify/CRNS-opus/forgeries.test.mjs"
+  ],
+  "exitCode": 0,
+  "tests": 213,
+  "passed": 213,
+  "failed": 0,
+  "skipped": 0,
+  "todo": 0,
+  "sourceFiles": {
+    "lab/bin/claim.mjs": "0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892",
+    "lab/bin/test/claim-ns.test.mjs": "217a372caf2e214bbbade173412d43961bb1ea66f6fa23eaad29ebe564681869",
+    "lab/bin/test/claim-ns-round2.test.mjs": "cbb4a522717fa5bbe81eb6a27109521940a9549461627314475339a3fbe9a770",
+    "lab/bin/test/ns-round2-fixture.mjs": "b5173e02261a93a50efda8ea122daa60d245c95319f50ba7f607c85f26aaba95",
+    "lab/verify/CRNS/fixture.mjs": "80ee433b7490622f6c6a07c0e25fd0ef98b7192b8fd00d2ab2e405e2392ae67a",
+    "lab/verify/CRNS/review.test.mjs": "07903473de647100f3a7859a79828bbfd59aa3e78e79e56b9ba7bc4f2adb6182",
+    "lab/verify/CRNS-opus/forgeries.test.mjs": "f79bc327c3f0df72e2faf5ef1c4f3a15163981bd21ee6c5c340bae5dd381aa8d"
+  },
+  "log": "evidence/round2/final-attempt1.tap",
+  "logSha256": "6d5d0a105bd2959e2d22e41eafd8d76eb8a348ddc2e6c8d92444ff72c303b835",
+  "reviewPreservationCommit": "255bf136",
+  "scope": "offline builder verification; no NS acceptance PASS"
+}

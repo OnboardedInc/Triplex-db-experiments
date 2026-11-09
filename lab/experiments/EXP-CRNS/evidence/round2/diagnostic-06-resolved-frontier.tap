@@ -1,0 +1,106 @@
+TAP version 13
+# Subtest: R01/O27 positive P1 has main segment, hot-set and straddle evidence; removing any floor refuses
+ok 1 - R01/O27 positive P1 has main segment, hot-set and straddle evidence; removing any floor refuses
+  ---
+  duration_ms: 219.679959
+  type: 'test'
+  ...
+# Subtest: O19 source-normalized consumer rows must equal a new decode of retained WAL bytes
+ok 2 - O19 source-normalized consumer rows must equal a new decode of retained WAL bytes
+  ---
+  duration_ms: 7.823834
+  type: 'test'
+  ...
+# Subtest: R06/O20 each committed position needs source and consumer CR records
+ok 3 - R06/O20 each committed position needs source and consumer CR records
+  ---
+  duration_ms: 27.7335
+  type: 'test'
+  ...
+# Subtest: O21 sample minima come from trusted frozen schedule; no missing P3/P2 floor can pass
+ok 4 - O21 sample minima come from trusted frozen schedule; no missing P3/P2 floor can pass
+  ---
+  duration_ms: 32.470292
+  type: 'test'
+  ...
+# Subtest: O23 repeated offer or read event id refuses on P3-only too
+ok 5 - O23 repeated offer or read event id refuses on P3-only too
+  ---
+  duration_ms: 28.170333
+  type: 'test'
+  ...
+# Subtest: O26 fixed consumer/epoch identities cannot split the correct affected set
+ok 6 - O26 fixed consumer/epoch identities cannot split the correct affected set
+  ---
+  duration_ms: 6.930709
+  type: 'test'
+  ...
+# Subtest: O28 every pinned role must record its clock domain; omitted or duplicated roles refuse
+ok 7 - O28 every pinned role must record its clock domain; omitted or duplicated roles refuse
+  ---
+  duration_ms: 13.101333
+  type: 'test'
+  ...
+# Subtest: O18/O25 broker storage never bypasses the evaluator source decoder or source storage pin
+ok 8 - O18/O25 broker storage never bypasses the evaluator source decoder or source storage pin
+  ---
+  duration_ms: 21.626167
+  type: 'test'
+  ...
+# Subtest: O17 a consistently rewritten source+delivery+WAL still mismatches the frozen command digest
+ok 9 - O17 a consistently rewritten source+delivery+WAL still mismatches the frozen command digest
+  ---
+  duration_ms: 18.343708
+  type: 'test'
+  ...
+# Subtest: lost ACK is resolved by a later original receipt without copying a receipt onto the original attempt
+ok 10 - lost ACK is resolved by a later original receipt without copying a receipt onto the original attempt
+  ---
+  duration_ms: 33.506833
+  type: 'test'
+  ...
+# Subtest: O29 P4 baseline and P5 baseline have absolute latency floors as well as ratios
+ok 11 - O29 P4 baseline and P5 baseline have absolute latency floors as well as ratios
+  ---
+  duration_ms: 10.484833
+  type: 'test'
+  ...
+# Subtest: O13 history correctness refuses a wrong answer even with matching latency and independent IO counters
+ok 12 - O13 history correctness refuses a wrong answer even with matching latency and independent IO counters
+  ---
+  duration_ms: 106.68375
+  type: 'test'
+  ...
+# Subtest: O27 largest P4 bucket bar is pinned and enforced
+ok 13 - O27 largest P4 bucket bar is pinned and enforced
+  ---
+  duration_ms: 77.867
+  type: 'test'
+  ...
+# Subtest: O15 activation position, release hash and output durability are required before sweep arithmetic
+ok 14 - O15 activation position, release hash and output durability are required before sweep arithmetic
+  ---
+  duration_ms: 726.899292
+  type: 'test'
+  ...
+# Subtest: O17 full command digests, distinct from identity-only change digests, must match retained decoded command bytes
+ok 15 - O17 full command digests, distinct from identity-only change digests, must match retained decoded command bytes
+  ---
+  duration_ms: 17.587084
+  type: 'test'
+  ...
+# Subtest: R02 resolved abort/seal frontiers are legal; only mapped prefix checkpoints may advance
+ok 16 - R02 resolved abort/seal frontiers are legal; only mapped prefix checkpoints may advance
+  ---
+  duration_ms: 27.066417
+  type: 'test'
+  ...
+1..16
+# tests 16
+# suites 0
+# pass 16
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1512.307417

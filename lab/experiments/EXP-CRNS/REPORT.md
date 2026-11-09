@@ -190,3 +190,45 @@ that produce a successful recomputation without their output. No live engine/dur
 Round 2 final validation and changed evaluator hash will be recorded after committing the implementation (Q75a requires that).
 
 Round 2 changed evaluator path: `lab/bin/claim.mjs`, old SHA256 `6806dcd852657e15d8b83c9138c42bc25d48afd46f3f51f884ebb04f787d9a30`, new SHA256 `0ac41f01b4e2dbdd04db64654eb47310ea07346aaf90aada65a7ae829299f892`. No old evaluator content-hash pin occurs in the current obligations/load-contract; no acceptance file was edited. The contract builder must pin the reviewed final evaluator and mandatory adapters before use.
+
+R44 section 4 now carries an explicitly proposed B5 round 2 design amendment note and the P1 request-key correction. Original evidence/history is preserved; no acceptance ruling or target was changed.
+
+
+## Round 2 final validation
+
+Implementation commit: `31e22e3c97e03ff79d2344fc749ae1b21817b329`; the final report/evidence/design-note commit leaves evaluator
+and test bytes unchanged. Before the run, evaluatorIntegrity reported no problems at that exact commit.
+
+Command (through the canonical heavy-job limiter, host free space checked above 5GiB):
+
+```sh
+node lab/bin/heavy.mjs --label CX-CRNS-r2-final -- node --test \
+  lab/bin/test/claim.test.mjs lab/bin/test/claim-round2.test.mjs \
+  lab/bin/test/claim-ns.test.mjs lab/bin/test/claim-ns-round2.test.mjs \
+  lab/verify/CRNS/review.test.mjs lab/verify/CRNS-opus/forgeries.test.mjs
+```
+
+**Exit 0: 213/213 passed; zero failed, cancelled, skipped or todo; execution 230.279 seconds** (heavy-slot waiting is retained in
+the log). This contains the unchanged 108 original evaluator-suite tests, all 37 original CR-NS tests with stronger positive
+fixtures, the 22 copied Codex-review tests, all 30 now-required Opus tests, and 16 additional round 2 regressions. Thus the original
+145 test cases remain covered. Exact TAP and source-bound receipt: `evidence/round2/final-attempt1.tap`, `evidence/round2/verification.json`.
+
+Incremental failures were fixture/schema transition failures and are retained in `attempt1-focused.tap` and
+`diagnostic-*.tap`; subsequent focused attempts progressively passed 89, 104 and finally 105 tests before the source-bound full
+run. No failed attempt was overwritten. Original Opus review/TAP remain historical. No reviewer verdict is relabelled ACCEPT.
+
+Syntax checks, `git diff --check`, unchanged `lab/acceptance/`, and evaluator hash readback passed. All single evidence files are
+under 1MB and the complete retained evidence is under 5MB. The root SHA256SUMS is refreshed for current report/schema/evidence;
+`SHA256SUMS.round1-at-2f299bfa` is the immutable historical manifest for that old commit, not a claim about today's report bytes.
+
+Result: every R01–R06 and O1–O29 finding is mapped above to code and a required test; the lost-ACK false refusal is also corrected.
+The implementation is ready for a separate independent round 2 review. No acceptance cell was closed, no engine/VM/box/live
+workload was run, no production normalizer/oracle/collector was qualified, and no acceptance contract was edited. Production
+adapter qualification, amended rulings/pins and confirmation of the P4 largest-bucket threshold remain with their owners.
+
+
+Final receipt audit addition (rule 9a): `evidence/round2/verification.json` records only the observed exit-0 full run, exact terminal
+213/213/0/0/0 counts, fresh attempt log hash and current tested source hashes at implementation commit 31e22e3c. Its command is the
+actual heavy-limited command above. Freshness is this new round2/final-attempt1 output, not the retained historical/reviewer TAP;
+binding is the exact implementation/test hashes and explicit offline/no-acceptance scope. SHA256SUMS readback checks the committed
+artifacts; it is an integrity manifest, not an NS verdict or independent reviewer receipt.
