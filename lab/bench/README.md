@@ -5,7 +5,7 @@ measurement semantics of `lab/TARGETS.md` v2 (sections 1.1, 2.1, 4.1; RULINGS Q1
 one bound receipt.
 
 ```sh
-node lab/bin/gate.mjs NS --lane xtdb|qlever --rung 10k [--slot s1] [--ns-profile smoke|screening|acceptance] \
+node lab/bin/gate.mjs NS --lane xtdb|qlever|datomic --rung 10k [--slot s1] [--ns-profile smoke|screening|acceptance] \
   [--zero-readers [--match-duration-s S]] [--baseline RUN-ID] [--composition public] [--exp EXP-NNN]
 node --test lab/bench/test/bench.test.ts        # unit tests (also run by G0)
 ```
@@ -194,3 +194,40 @@ Its offline fixture runs 256 closed loops; it does not enable a real lane provid
 The original driver remains the A0 journal control.
 
 Paired R22 GREEN can survive hard-rule exclusions; it never substitutes for Q100k single-arm timing GREEN. See the runbook for Q100l single-arm NS capacity and the unresolved three-median preflight sample count. New duet evidence uses gradingVersion 2 to retain hard-rule history; historical evidence retains its original recomputation shape.
+
+## Datomic SQL development stack (DX-H1)
+
+Use the already-local images; no pulls or installs are performed by the stack scripts:
+
+```sh
+bash lab/experiments/EXP-DX1/stack/up.sh tx2-dxh1-example
+TX2_ENGINE_CONTAINER=tx2-dxh1-example-pg,tx2-dxh1-example-tx,tx2-dxh1-example-gw-w,tx2-dxh1-example-gw-r \
+  TX2_ENGINE_CPUS=2 bash lab/experiments/EXP-DX1/h1/run.sh public
+TX2_ENGINE_CONTAINER=tx2-dxh1-example-pg,tx2-dxh1-example-tx,tx2-dxh1-example-gw-w,tx2-dxh1-example-gw-r \
+  TX2_ENGINE_CPUS=2 bash lab/experiments/EXP-DX1/h1/run.sh reach
+bash lab/experiments/EXP-DX1/stack/down.sh tx2-dxh1-example
+```
+
+The wrapper takes the lab heavy token and measurement lock, limits each hold to under 15 minutes,
+and writes to durable evidence under `/Users/sam/Claude/Projects/triplex-db-2/evidence/DX-H1/runs/`.
+It defaults to 400 subjects and 20-second development levels; additional driver flags override these.
+Use a fresh stack prefix for a fresh database. Volumes are retained unless `down.sh --volumes` is requested.
+
+`DATOMIC_URL` serves writers and feed readers. Reader and sweep worker w selects
+`DATOMIC_READ_URLS.split(",")[w % n]`, falling back to `DATOMIC_URL`.
+The default cpusets put Postgres, transactor and write gateway on CPU 6, and the read gateway on CPU 7.
+`TX2_ENGINE_CPUS` counts distinct assigned CPUs (2 here), rather than summing overlapping cpusets.
+`engineSamples` and phase `engine.containers` expose individual container CPU as well as the total.
+
+The `reach` composition calls `Triples.reach` once (twice at the public service boundary for a split read,
+including the root pre-read), with a root equality check at the pinned cut. Its `roundTrips` counts
+public service calls; an adapter may still implement reach through multiple requests.
+`httpRequests.main` and `httpRequests.workers` count actual HTTP requests initiated inside each transact,
+pull, sweepPull and feedPage, including failed attempts. Divide requests by operations for requests per call;
+`failed` counts thrown exceptions, while typed transact failures remain in the driver's writer accounting.
+These are client requests, not a server access-log proof that a response was served.
+`reach` enables XTDB admissionQueue; Datomic enables it only if the built public runtime declaration exposes it.
+
+Datomic P1 maintenance reports **not observed** until an indexing-job hook exists.
+P3 source-publication timing and P5 evaluation/publication remain explicit seams in this legacy driver.
+Development runs are diagnostic, including a `DONE` run; they cannot close acceptance obligations.
