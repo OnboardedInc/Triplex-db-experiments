@@ -1,0 +1,102 @@
+{
+  "review": "CX-VG03-56",
+  "sourceCommit": "95b0593cbea843217d03bd7cbe943519fd2e1346",
+  "scope": "trusted offline reproductions; no engine or qualification",
+  "results": [
+    {
+      "name": "F1 modified final DR and period accepted",
+      "reproduced": true,
+      "pollBytesUnchanged": true,
+      "keyUnchanged": true,
+      "acceptedFinal": {
+        "consumer": {
+          "marker": 123,
+          "entries": [
+            [
+              123,
+              "fabricated-final-effect",
+              999
+            ]
+          ]
+        }
+      },
+      "acceptedPeriods": [
+        1
+      ]
+    },
+    {
+      "name": "F1 failed consumer becomes accepted fixture consistency",
+      "reproduced": true,
+      "onlyFinalReadbackChanged": true,
+      "qualification": false
+    },
+    {
+      "name": "HR semantic mutation",
+      "refused": true
+    },
+    {
+      "name": "F2 hook exception seals clean end",
+      "reproduced": true,
+      "end": {
+        "kind": "end",
+        "data": {
+          "error": null
+        },
+        "domain": {
+          "bootId": "7a064e31-8ca0-47a5-926f-d2de8d786302",
+          "primitive": "CLOCK_MONOTONIC",
+          "offsets": {
+            "monotonic": [
+              "0",
+              "0"
+            ],
+            "boottime": [
+              "0",
+              "0"
+            ]
+          }
+        }
+      },
+      "handshakesAcceptedByRealInjector": 3,
+      "actualDriverRowsPassCheckSmoke": true,
+      "sourceSha256": "b7fda0b06a410976d12261614a989c2f4a7549bd42be3afdc9f1a44c1eec3abe",
+      "stubbedDependencies": true,
+      "realHookedPage": true,
+      "coordinatorExitGuard": "manual inspection: ns-run.mjs:115-131 records result.status but never rejects it"
+    },
+    {
+      "name": "missing proof",
+      "refused": true,
+      "witnesses": 0
+    },
+    {
+      "name": "wrong target",
+      "refused": true,
+      "witnesses": 0
+    },
+    {
+      "name": "NS.P3 broker target",
+      "refused": true
+    },
+    {
+      "name": "added capability",
+      "refused": true
+    },
+    {
+      "name": "foreign mount driver-output",
+      "refused": true
+    },
+    {
+      "name": "foreign mount consumer-state",
+      "refused": true
+    },
+    {
+      "name": "foreign mount frozen-trace",
+      "refused": true
+    },
+    {
+      "name": "foreign mount run-key",
+      "refused": true
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "at": "2026-11-09T12:16:47.802Z",
+  "diskFreeBytes": 4722110464,
+  "boxedMinimumBytes": 10737418240,
+  "heavyMinimumBytes": 5368709120,
+  "dockerHost": "unix:///Users/sam/.colima/triplex2/docker.sock",
+  "configuredDockerContext": "default"
+}
