@@ -5,6 +5,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { createInterface } from "node:readline";
+import { once } from "node:events";
+import { createGzip, createGunzip } from "node:zlib";
 import { Effect, Layer, ManagedRuntime } from "effect";
 import * as core from "../../../packages/core/dist/index.js";
 import * as rt from "../../../packages/core/dist/runtime/index.js";
@@ -486,7 +488,9 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
       if (!seedFile) throw Error("mapped seed not frozen");
       let expected = 1;
       for await (const line of createInterface({
-        input: fs.createReadStream(path.join(path.dirname(seedFile), "seed.ndjson")),
+        input: fs
+          .createReadStream(path.join(path.dirname(seedFile), "seed.ndjson.gz"))
+          .pipe(createGunzip()),
         crlfDelay: Infinity,
       })) {
         const c = JSON.parse(line),
@@ -520,7 +524,12 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
     const R = W0.rung(N),
       latest = new Map<string, string>(),
       pending: W0Command[] = [];
-    const log = fs.openSync(path.join(output, "seed.ndjson"), "wx");
+    // [EXP-P5B-R3] Why: the driver's seed intent was 2.4 GB at 10k (24 GB projected at 100k) and counted against the 5 GiB floor; gzip level 1 keeps the same bytes (the hash is over the uncompressed lines) at about a tenth.
+    // Rejected: dropping the intent log (the O-REPLAY stream and the map's command witnesses read it) and leaving it raw (it would be the largest 100k file).
+    const gzip = createGzip({ level: 1 }),
+      logFile = fs.createWriteStream(path.join(output, "seed.ndjson.gz"), { flags: "wx" }),
+      logDone = once(logFile, "close");
+    gzip.pipe(logFile);
     let groups = 0,
       assertions = 0,
       retractions = 0;
@@ -553,7 +562,7 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
         assertions += c.operations.filter((o) => o.op === "assert").length;
         retractions += c.operations.filter((o) => o.op === "retract").length;
         const line = canonical(c) + "\n";
-        fs.writeSync(log, line);
+        if (!gzip.write(line)) await once(gzip, "drain");
         logHash.update(line);
       }
       groups++;
@@ -577,7 +586,8 @@ export async function openMappedHost(dir: string, scope: string, options: Mapped
       }
       await flush();
     } finally {
-      fs.closeSync(log);
+      gzip.end();
+      await logDone;
     }
     if (map.size !== W0.populationBasis(R).tx) throw Error("seed reference coverage incomplete");
     map.sealSeed();

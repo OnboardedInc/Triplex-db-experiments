@@ -167,7 +167,7 @@ try {
       // Closed store: the WAL is checkpointed on close, so page_count x page_size is the stored layout (HS01 G9 definition).
       receipt.bytes = {
         ...storeBytes(path.join(out, "store"), receipt.seed.assertions),
-        seedIntentBytes: fs.statSync(path.join(out, "seed.ndjson")).size,
+        seedIntentBytes: fs.statSync(path.join(out, "seed.ndjson.gz")).size,
         positionMapBytes: fs.statSync(path.join(out, "position-map.json")).size,
       };
     }
