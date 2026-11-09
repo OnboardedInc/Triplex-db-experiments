@@ -2340,3 +2340,19 @@ Where each priority stands, from evidence so far (research probes and baselines;
 - **Next:** an Opus planner writes EXP-P4N (budget 909 us per pull; compare shrinking the text, a materialized answer cache, R46's
   per-subject document, a binary encoding), including how to measure absolute pulls per CPU-second credibly. CX-VQH1 reviews rounds 2-3.
 - **Lesson:** a cache only pays when the working set repeats; measure the miss rate of the real access pattern before building one.
+
+## 2026-11-09: evening: Sam chose option C; the witness image is built; reviews found a snapshot bug
+
+- **Sam's decisions:** Q107-S = option C on every lane (journal change and changed-entity triples stay stored and queryable; misses
+  caused by their cost are reported as misses with a TODO). triplex2 VM to 8 CPU / 20 GiB / 100 GiB after the live witness window. Sam
+  freed host disk: 48 GiB free now.
+- **bpftrace image built** (06f62235, v0.20.2, all pinned .deb hashes OK). Finding: 0.20.2's -d is an argument-less dry run, not the
+  `-d all` our code assumed. Lesson: check a tool's flags against the exact pinned version's own --help before writing code against it;
+  docs for other versions mislead.
+- **QH1 review:** Triples.reach's level-by-level fallback read the current head per level, so a commit mid-pull could return a graph
+  that never existed. Lesson: every path that answers one logical read, including fallbacks, must pin one snapshot at the start; fast
+  paths are usually right and fallbacks are where the snapshot slips.
+- **P5 at 10k on the HS01 store:** 92.7 s with 1 worker, 33.9 s with 4; about 340-400 s extrapolated at 100k against 100 s. An Opus
+  planner writes EXP-P5N under option C (journal triples kept).
+- **P4:** EXP-P4N round 1 is building the shrunken tuple text and cheap levers with a CPU-time harness (round 3's wall-clock calibration
+  did not track per-pull CPU).
