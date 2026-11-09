@@ -1,0 +1,14 @@
+{
+  "classification": "retained-byte and source-identity manifest; no semantic or performance PASS",
+  "startedAt": "2026-11-09T07:22:59.838Z",
+  "endedAt": "2026-11-09T07:23:00.146Z",
+  "head": "49a701188c1be4ed31a49677c1bd8b4a2d1c1591",
+  "candidate": "9b1a9a59ad223fd0fb3e8ff0de4d0d15fed4dafc",
+  "durableFiles": 1204,
+  "sourcePreimagesVerified": 1037,
+  "skippedSymlinks": [
+    "/Users/sam/Claude/Projects/triplex-db-2/evidence/CX-VQNODELAY/round5/attempt1/source/node_modules"
+  ],
+  "manifestSha256": "b1f065480b50370b13df0c577f215b82baed45073cde553dc23114680fee18b1",
+  "builderManifestPreviouslyVerified": 2093
+}
