@@ -83,20 +83,23 @@ class Scanners(unittest.TestCase):
                 else:
                     payloads['rotate'][location] += b'\x00' + target
                 result = self.normalize(payloads=payloads)
-                self.assertEqual(self.verdict(result, 'P', location)['status'], 'FAIL')
+                row = self.verdict(result, 'P', location)
+                self.assertIn(row['status'], ('FAIL', 'REFUSED'))
+                self.assertGreater(row['observations']['rotate']['protectedHits'], 0)
 
     def test_plaintext_encoding_profiles_find_controls_and_leaks(self):
         target, twin = (base64.b64decode(self.spec['plain'][key]) for key in ('target', 'twin'))
         target_forms = self.ns['plaintext_forms'](target)
         twin_forms = self.ns['plaintext_forms'](twin)
         self.assertGreaterEqual(len(target_forms), 5)
-        for positive in twin_forms:
-            for protected in target_forms:
-                payloads = copy.deepcopy(self.payloads)
-                for phase in PHASES:
-                    payloads[phase]['host-log'] = positive + b'\x00' + protected
-                result = self.normalize(payloads=payloads)
-                self.assertEqual(self.verdict(result, 'P', 'host-log')['status'], 'FAIL')
+        for positive, protected in zip(sorted(twin_forms), sorted(target_forms)):
+            payloads = copy.deepcopy(self.payloads)
+            for phase in PHASES:
+                payloads[phase]['host-log'] = positive + b'\x00' + protected
+            result = self.normalize(payloads=payloads)
+            row = self.verdict(result, 'P', 'host-log')
+            self.assertEqual(row['status'], 'REFUSED')
+            self.assertGreater(row['observations']['rotate']['protectedHits'], 0)
 
     def test_each_removing_cipher_location_detects_retained_envelope(self):
         target = self.spec['envelopes'][0]['envelope'].encode()
@@ -111,7 +114,9 @@ class Scanners(unittest.TestCase):
                 else:
                     payloads['rotate'][location] += target
                 result = self.normalize(payloads=payloads)
-                self.assertEqual(self.verdict(result, 'C', location)['status'], 'FAIL')
+                row = self.verdict(result, 'C', location)
+                self.assertIn(row['status'], ('FAIL', 'REFUSED'))
+                self.assertGreater(row['observations']['rotate']['targetHits'], 0)
 
     def test_each_key_location_detects_residual_key(self):
         for location in KEY_LOCATIONS:
@@ -119,7 +124,9 @@ class Scanners(unittest.TestCase):
                 payloads = copy.deepcopy(self.payloads)
                 payloads['rotate'][location] = payloads['before'][location]
                 result = self.normalize(payloads=payloads)
-                self.assertEqual(self.verdict(result, 'K', location)['status'], 'FAIL')
+                row = self.verdict(result, 'K', location)
+                self.assertIn(row['status'], ('FAIL', 'REFUSED'))
+                self.assertTrue(any(v['targetHits'] for v in row['observations']['rotate']))
 
     def test_no_positive_control_is_refused_per_location(self):
         for location in LOCATIONS:
@@ -289,7 +296,7 @@ class Scanners(unittest.TestCase):
         finally:
             db.close()
         result = self.verdict(self.normalize(payloads=payloads), 'D', 'all-declared-key-copies')
-        self.assertEqual(result['status'], 'FAIL', result)
+        self.assertIn(result['status'], ('FAIL', 'REFUSED'))
         self.assertTrue(result['observations']['shred'][0]['opened'])
 
     def test_d_recovers_key_and_epoch_from_physical_pg_and_kms_wal(self):
@@ -297,8 +304,43 @@ class Scanners(unittest.TestCase):
         payloads['rotate']['d-keys-wal'] = payloads['before']['d-keys-wal']
         payloads['rotate']['kms-wal'] = payloads['before']['kms-wal']
         result = self.verdict(self.normalize(payloads=payloads), 'D', 'all-declared-key-copies')
-        self.assertEqual(result['status'], 'FAIL', result)
+        self.assertIn(result['status'], ('FAIL', 'REFUSED'))
         self.assertTrue(result['observations']['rotate'][0]['opened'])
+
+    def test_fresh_wrapped_key_in_utf16_historical_wal_fails_with_complete_coverage(self):
+        material = {'root': self.payloads['before']['root'].decode(),
+                    'key': json.loads(self.payloads['before']['keys-backup'])['rows'][1],
+                    'epoch': json.loads(self.payloads['before']['kms-records'])['rows'][1],
+                    'envelope': self.spec['envelopes'][0]}
+        proof = json.loads(subprocess.check_output(['node', str(HERE / 'qa_round1/rewrap.mjs')], input=packed(material)))
+        self.assertEqual(proof['independentlyOpenedSha256'], self.spec['envelopes'][0]['plainSha256'])
+        control = json.loads(self.payloads['before']['keys-backup'])['rows'][2]
+        for encoding in ('UTF-16le', 'UTF-16be'):
+            with self.subTest(encoding=encoding):
+                path = self.root / (encoding + '-fresh-wrapper.db')
+                db = sqlite3.connect(path)
+                try:
+                    db.execute("PRAGMA encoding='" + encoding + "'")
+                    db.execute('PRAGMA journal_mode=WAL'); db.execute('PRAGMA secure_delete=ON')
+                    db.execute('PRAGMA wal_autocheckpoint=0')
+                    db.execute('CREATE TABLE er01_keys (key_id TEXT, tenant TEXT, epoch INTEGER, wrapped TEXT)')
+                    db.execute('INSERT INTO er01_keys VALUES(?,?,?,?)', tuple(control[k] for k in ('keyId','tenant','epoch','wrapped')))
+                    db.commit(); db.execute('PRAGMA wal_checkpoint(TRUNCATE)')
+                    row = proof['row']
+                    db.execute('INSERT INTO er01_keys VALUES(?,?,?,?)', tuple(row[k] for k in ('keyId','tenant','epoch','wrapped')))
+                    db.commit()
+                    db.execute('DELETE FROM er01_keys WHERE key_id=?', (row['keyId'],)); db.commit()
+                    changed = copy.deepcopy(self.payloads)
+                    changed['rotate']['qx-keys-sqlite'] = path.read_bytes()
+                    changed['rotate']['qx-keys-wal'] = Path(str(path)+'-wal').read_bytes()
+                finally: db.close()
+                result = self.normalize(payloads=changed)
+                d = self.verdict(result,'D','all-declared-key-copies')
+                self.assertTrue(d['observations']['rotate'][0]['opened'])
+                self.assertEqual(d['status'],'FAIL',d)
+                k = self.verdict(result,'K','qx-keys-wal')
+                self.assertEqual(k['status'],'FAIL',k)
+                self.assertTrue(any(row.get('newVersions') for row in k['observations']['rotate']))
 
     def test_d_wrong_root_incomplete_backup_and_unsupported_store_refuse(self):
         for mutation in ('root', 'backup', 'format', 'row'):

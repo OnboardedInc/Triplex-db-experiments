@@ -152,6 +152,46 @@ def sqlite_files(path, values, key_rows=None):
         db.close()
 
 
+
+def fixture_record_file(values):
+    out = bytearray(b'ER01REC2\x00' + struct.pack('<I', len(values)))
+    for value in values:
+        try:
+            value.decode('utf8'); kind = 0
+        except UnicodeError:
+            kind = 1
+        out.extend(bytes([kind]) + struct.pack('<I', len(value)) + value)
+    return bytes(out)
+
+
+def toast_fixture(values):
+    pages, declarations = [], []
+    page = bytearray(8192); upper = 8192; pointers = []
+    def finish():
+        struct.pack_into('<HHHH', page, 12, 24 + 4 * len(pointers), upper, 8192, 8196)
+        for index, pointer in enumerate(pointers): struct.pack_into('<I', page, 24 + index * 4, pointer)
+        pages.append(bytes(page))
+    for index, value in enumerate(values):
+        oid = index + 100
+        declarations.append({'id': oid, 'rawSize': len(value), 'externalSize': len(value), 'compression': 'none'})
+        parts = [value[i:i + 1996] for i in range(0, len(value), 1996)] or [b'']
+        for sequence, data in enumerate(parts):
+            tup = bytearray(24)
+            struct.pack_into('<HHB', tup, 18, 3, 2, 24)
+            tup.extend(struct.pack('<Ii', oid, sequence))
+            head = bytes([((len(data) + 1) << 1) | 1]) if len(data) + 1 <= 127 else struct.pack('<I', (len(data) + 4) << 2)
+            tup.extend(head + data)
+            candidate = (upper - len(tup)) & ~7
+            if candidate < 24 + 4 * (len(pointers) + 1):
+                finish(); page = bytearray(8192); upper = 8192; pointers = []
+                candidate = (upper - len(tup)) & ~7
+            upper = candidate
+            page[upper:upper + len(tup)] = tup
+            pointers.append(upper | (1 << 15) | (len(tup) << 17))
+    finish()
+    return b''.join(pages), declarations
+
+
 def make_fixture(directory, include_unscannable=False):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=False)
@@ -196,22 +236,14 @@ def make_fixture(directory, include_unscannable=False):
             elif kind in ('sqlite', 'wal'):
                 pair = sqlite_files(directory / 'build' / phase / location / 'data.db', values)
                 parts.append(pair[1 if kind == 'wal' else 0])
-            elif kind == 'pg':
-                # Raw-page fixture, not a fabricated claim to native Datomic/Postgres serialization.
-                page = bytearray(16384)
-                header = b'ER01-S RAW PG PAGE BYTE FIXTURE\x00'
-                page[:len(header)] = header
-                data = b'\x00'.join(values)
-                page[8180:8180 + len(data)] = data
-                parts.append(bytes(page))
             else:
-                parts.append(b'\x00'.join(values))
+                parts.append(fixture_record_file(values))
         if kind == 'vocab':
             for part in parts[0]:
                 add(location + ':' + part, location, path + '.' + part, 'qlever-fsst-squared-le64/0.6',
                     [item[part] for item in parts], part=part)
         else:
-            add(location, location, path, 'bytes', parts)
+            add(location, location, path, 'bytes' if kind in ('sqlite', 'wal') else 'erasure-fixture-records/2', parts)
 
     key_rows = {p: material['keys'] if p == 'before' else material['keys'][2:] for p in PHASES}
     sqlite_pairs = {phase: sqlite_files(directory / 'build' / phase / 'vault' / 'keys.db', [], key_rows[phase])
@@ -232,11 +264,21 @@ def make_fixture(directory, include_unscannable=False):
                                     [base64.b64decode(row['wrapped']) for row in epochs])
                 content = pair[1 if location.endswith('wal') else 0]
             else:
-                content = b'PG RAW HEAP/TOAST/WAL FIXTURE\x00' + b'\x00'.join(base64.b64decode(row['wrapped']) for row in key_rows[phase])
+                values = [base64.b64decode(row['wrapped']) for row in key_rows[phase]]
+                if location == 'd-keys-toast':
+                    content, _ = toast_fixture(values)
+                else:
+                    content = fixture_record_file(values)
             parts.append(content)
         extra = {'decryptRole': role} if role else {}
         if codec == 'sqlite-keyset/1':
             extra['walFileId'] = 'qx-keys-wal'
+        if location == 'd-keys-toast':
+            codec = 'postgres-toast/16-le8192'
+            # Each phase's surviving value ids/sizes are bound separately; removal can change the list.
+            extra['toastValuesByPhase'] = {p: toast_fixture([base64.b64decode(row['wrapped']) for row in key_rows[p]])[1] for p in PHASES}
+        elif location in ('d-keys-heap', 'd-keys-wal'):
+            codec = 'erasure-fixture-records/2'
         add(location, location, path, codec, parts, **extra)
     add('root', 'root', 'outside-data/root.key', 'root-hex/1', [material['root'].encode()] * 3, decryptRole='root')
     if include_unscannable:

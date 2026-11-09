@@ -1,0 +1,116 @@
+"""Native-format and coverage regressions, independent of nominal fixture PASS tests."""
+import base64
+import copy
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import sqlite3
+import struct
+import tempfile
+import unittest
+
+from compile import compile_normalizer
+from fixtures import make_fixture, make_frames, packed, toast_fixture, vocabulary
+from fsst import qlever_vocabulary
+from formats import (byte_partition, fixture_records, lz4_decode, pglz_decode,
+                     postgres_toast, sqlite_database, sqlite_record, sqlite_wal)
+
+
+class Formats(unittest.TestCase):
+    def test_partition_is_complete_and_disjoint(self):
+        result = byte_partition(b'123456789', [(1,3),(2,5),(8,9)], ['unknown'])
+        self.assertEqual(result['parsedRanges'], [[1,5],[8,9]])
+        self.assertEqual([(v['start'],v['end']) for v in result['unparsedRanges']],[(0,1),(5,8)])
+        self.assertEqual(result['parsedBytes']+result['unparsedBytes'],9)
+
+    def test_sqlite_overflow_text_and_blob_every_database_encoding(self):
+        for encoding in ('UTF-8','UTF-16le','UTF-16be'):
+            with self.subTest(encoding=encoding), tempfile.TemporaryDirectory() as tmp:
+                p=Path(tmp)/'test.db';db=sqlite3.connect(p)
+                try:
+                    db.execute('PRAGMA page_size=512');db.execute("PRAGMA encoding='"+encoding+"'")
+                    db.execute('CREATE TABLE controls (padding BLOB,value TEXT,tail BLOB)')
+                    target='native-\u2603-secret-'+('x'*1500)
+                    db.execute('INSERT INTO controls VALUES (?,?,?)',(bytes(29),target,bytes(700)));db.commit()
+                    self.assertEqual(db.execute('SELECT value FROM controls').fetchone()[0],target)
+                    raw=p.read_bytes();blobs,rows,coverage=sqlite_database(raw)
+                    self.assertIn(target.encode(),blobs);self.assertTrue(coverage['overflowPages'])
+                    self.assertEqual(coverage['unparsedBytes'],0,coverage)
+                finally: db.close()
+
+    def test_sqlite_freelist_residuals_refuse_absence(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p=Path(tmp)/'test.db';db=sqlite3.connect(p)
+            try:
+                db.execute('PRAGMA page_size=512');db.execute('PRAGMA secure_delete=OFF')
+                db.execute('CREATE TABLE control(value BLOB)')
+                db.execute('INSERT INTO control VALUES (?)',(b'retained-secret'*300,));db.commit()
+                db.execute('DELETE FROM control');db.commit()
+                _,_,coverage=sqlite_database(p.read_bytes())
+                self.assertTrue(coverage['freelistPages']);self.assertGreater(coverage['unparsedBytes'],0)
+            finally: db.close()
+
+    def test_wal_committed_utf16_and_checksum_or_truncation(self):
+        for encoding in ('UTF-8','UTF-16le','UTF-16be'):
+            with self.subTest(encoding=encoding), tempfile.TemporaryDirectory() as tmp:
+                p=Path(tmp)/'test.db';db=sqlite3.connect(p)
+                try:
+                    db.execute("PRAGMA encoding='"+encoding+"'");db.execute('PRAGMA journal_mode=WAL')
+                    db.execute('PRAGMA wal_autocheckpoint=0');db.execute('PRAGMA secure_delete=ON');db.execute('CREATE TABLE er01_keys(key_id,tenant,epoch,wrapped)')
+                    db.execute('INSERT INTO er01_keys VALUES(?,?,?,?)',('b'*32,'fixture-tenant',2,base64.b64encode(bytes([1])*60).decode()))
+                    db.commit();db.execute('PRAGMA wal_checkpoint(TRUNCATE)')
+                    row=('a'*32,'fixture-tenant',2,base64.b64encode(bytes(range(60))).decode())
+                    db.execute('INSERT INTO er01_keys VALUES(?,?,?,?)',row);db.commit()
+                    db.execute('DELETE FROM er01_keys WHERE key_id=?',(row[0],));db.commit()
+                    main,wal=p.read_bytes(),Path(str(p)+'-wal').read_bytes()
+                    _,rows,coverage=sqlite_wal(wal,main)
+                    self.assertIn(list(row),rows)
+                    self.assertEqual(coverage['unparsedBytes'],0,coverage)
+                    self.assertTrue(coverage['historicalCellPointerRanges'])
+                    for bad in (wal[:-1],wal[:40]+bytes([wal[40]^1])+wal[41:]):
+                        with self.assertRaises(ValueError): sqlite_wal(bad,main)
+                finally: db.close()
+
+    def test_native_toast_plain_pglz_lz4_and_missing_chunks(self):
+        value=b'toast-fragment-secret-'*10
+        prefix=b'toast-fragment-secret-'
+        tokens=[(False,bytes([byte])) for byte in prefix]
+        length=len(value)-len(prefix)
+        tokens.append((True,bytes([15,len(prefix),length-18])))
+        chunks=[]
+        for index in range(0,len(tokens),8):
+            group=tokens[index:index+8]
+            chunks.append(bytes([sum((1<<bit) for bit,item in enumerate(group) if item[0])])+b''.join(item[1] for item in group))
+        pglz=b''.join(chunks)
+        match_length=len(value)-len(prefix)-5
+        lz4=b'\xff'+bytes([len(prefix)-15])+prefix+len(prefix).to_bytes(2,'little')+bytes([match_length-19])+b'\x50'+value[-5:]
+        for method,stream in (('none',value),('pglz',struct.pack('<I',len(value))+pglz),('lz4',struct.pack('<I',len(value)|(1<<30))+lz4)):
+            with self.subTest(method=method):
+                raw,decl=toast_fixture([stream]);decl[0].update(rawSize=len(value),compression=method)
+                blobs,_,coverage=postgres_toast(raw,decl)
+                self.assertIn(value,blobs);self.assertEqual(coverage['unparsedBytes'],0)
+                broken=bytearray(raw);struct.pack_into('<I',broken,24,0)
+                try:
+                    _,_,bad_coverage=postgres_toast(bytes(broken),decl)
+                    self.assertGreater(bad_coverage['unparsedBytes'],0)
+                except ValueError: pass
+        self.assertEqual(pglz_decode(b'\x02a\x02\x01',6),b'aaaaaa')
+        self.assertEqual(lz4_decode(b'\x11a\x01\x00',6),b'aaaaaa')
+
+    def test_toast_stock_chunk_boundary_reassembles_hidden_needle(self):
+        needle=b'cross-chunk-secret-00000000000000'
+        value=b'x'*1980+needle+b'y'*1000
+        raw,decl=toast_fixture([value])
+        self.assertNotIn(needle,raw)
+        blobs,_,coverage=postgres_toast(raw,decl)
+        self.assertIn(value,blobs);self.assertEqual(coverage['unparsedBytes'],0)
+        self.assertTrue(any(needle in blob for blob in blobs))
+
+    def test_fixture_record_tail_is_unparsed(self):
+        from fixtures import fixture_record_file
+        _,_,report=fixture_records(fixture_record_file([b'control'])+b'compressed-or-other-record')
+        self.assertGreater(report['unparsedBytes'],0)
+
+
+if __name__=='__main__':unittest.main(verbosity=2)

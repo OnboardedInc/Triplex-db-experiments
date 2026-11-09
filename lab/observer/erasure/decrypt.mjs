@@ -16,16 +16,16 @@ function tryOpen(key, box, aad) {
 export function decryptEvidence(input) {
   const roots = input.roots.map(value => Buffer.from(value, 'hex'));
   if (!roots.length || roots.some(key => key.length !== 32)) throw new Error('invalid root key inventory');
-  const epochs = [];
+  const epochs = [], issues = [];
   for (const row of input.epochs) {
     let opened = false;
     for (const root of roots) {
       const value = tryOpen(root, row.wrapped, JSON.stringify([row.tenant, row.epoch]));
       if (value?.length === 32) { epochs.push({ ...row, value }); opened = true; }
     }
-    if (!opened) throw new Error('epoch copy does not authenticate with supplied roots');
+    if (!opened && !row.candidateOnly) issues.push('epoch copy does not authenticate with supplied roots');
   }
-  return input.envelopes.map(item => {
+  const envelopes = input.envelopes.map(item => {
     if (!item.envelope.startsWith('txe1.')) throw new Error('unsupported envelope');
     const bytes = Buffer.from(item.envelope.slice(5), 'base64url');
     if (bytes.length < 76 || (bytes.length - 44) % 32 !== 0) throw new Error('invalid txe1 padded size');
@@ -51,6 +51,7 @@ export function decryptEvidence(input) {
     }
     return { assertionId: item.context[3], opened: digests.length > 0, digests };
   });
+  return { envelopes, issues };
 }
 if (process.argv[1] === undefined || process.argv[1] === '-') {
   let input = ''; for await (const chunk of process.stdin) input += chunk;
