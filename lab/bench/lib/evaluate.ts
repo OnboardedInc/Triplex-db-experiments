@@ -26,14 +26,34 @@ export class SeamNotImplemented extends Error {
 
 /** Stub release until W0 defines one; its hash is bound in the receipt. */
 export function stubRelease(): Release {
-  const definition = { id: "R-stub-v0", note: "placeholder until the W0 reference kernel (EXP-D01) defines releases", requirementsChanged: 3 };
-  return { id: definition.id, sha256: createHash("sha256").update(JSON.stringify(definition)).digest("hex"), definition };
+  const definition = {
+    id: "R-stub-v0",
+    note: "placeholder until the W0 reference kernel (EXP-D01) defines releases",
+    requirementsChanged: 3,
+  };
+  return {
+    id: definition.id,
+    sha256: createHash("sha256").update(JSON.stringify(definition)).digest("hex"),
+    definition,
+  };
 }
 
-export const EVALUATE_SEAM = { status: "fail-closed", owner: "EXP-D01 (W0 reference kernel, O-DOMAIN)", reason: "evaluate(subjectWorld, release) is not implemented" } as const;
-export const PUBLISH_SEAM = { status: "fail-closed", owner: "outbox path (TARGETS section 3 atomic outbox and work items)", reason: "publish(evaluations) through the outbox is not implemented" } as const;
+export const EVALUATE_SEAM = {
+  status: "fail-closed",
+  owner: "EXP-D01 (W0 reference kernel, O-DOMAIN)",
+  reason: "evaluate(subjectWorld, release) is not implemented",
+} as const;
+export const PUBLISH_SEAM = {
+  status: "fail-closed",
+  owner: "outbox path (TARGETS section 3 atomic outbox and work items)",
+  reason: "publish(evaluations) through the outbox is not implemented",
+} as const;
 
-export function evaluate(_subject: number, _world: readonly PulledTriple[], _release: Release): Evaluation {
+export function evaluate(
+  _subject: number,
+  _world: readonly PulledTriple[],
+  _release: Release,
+): Evaluation {
   throw new SeamNotImplemented(EVALUATE_SEAM.reason);
 }
 export async function publish(_evaluations: readonly Evaluation[]): Promise<never> {
@@ -109,4 +129,23 @@ export async function publishW0(
   if (!pins?.contractSha256 || !pins.w0Version || !pins.domainVersion)
     throw new SeamNotImplemented("missing W0 or O-DOMAIN pin");
   return comp.publishOutbox(records);
+}
+
+// [EXP-P5-R3] Why: semantic traffic/reference answers require the accepted independent replay bytes. Rejected: calling an unbound Python implementation and treating its exit code as correctness.
+export async function loadReplayPin() {
+  const fs = await import("node:fs");
+  const c = JSON.parse(
+    fs.readFileSync(new URL("../../acceptance/obligations.json", import.meta.url), "utf8"),
+  );
+  const pin = c.oraclePins?.["O-REPLAY"];
+  if (!pin?.sha256 || !pin.acceptReceipt)
+    throw new SeamNotImplemented("missing accepted O-REPLAY pin");
+  for (const [file, want] of Object.entries(pin.sha256))
+    if (
+      createHash("sha256")
+        .update(fs.readFileSync(new URL(file, new URL("../../../", import.meta.url))))
+        .digest("hex") !== want
+    )
+      throw new SeamNotImplemented("O-REPLAY pin mismatch: " + file);
+  return { version: pin.oracleVersion, commit: pin.commit, sha256: pin.sha256 };
 }

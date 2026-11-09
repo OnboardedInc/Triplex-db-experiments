@@ -49,3 +49,23 @@ node lab/bin/heavy.mjs --label CX-P5A-G6 -- node --experimental-strip-types --te
 ```
 
 This registers the actual memory composition's `sweepPage` as `sweep-page` alongside RQ01 source routes, exercises sparse P positions, T/TP refusal, future P, later retirement masking and the harness maintenance model. It is an offline fixture; it cannot qualify real purge leases, checkpoint gates, XTDB compaction, Datomic indexing or generation switches. Those live cases must be implemented on each corresponding lane. Its default RQ01 reference is diagnostic; an independently supplied O-REPLAY reference is still needed for qualification.
+
+## Round-2 offline additions
+
+Round 2 implements the memory traffic path and real controller-process recovery; the older missing-work list above is the round-1 state. Native A1 traffic, engine maintenance/counters and acceptance remain separate work. See the appended round-2 report.
+
+```sh
+node lab/bin/heavy.mjs --label CX-P5A-R2-tests -- node --experimental-strip-types --test lab/bench/test/bench.test.ts lab/bench/test/p5.test.ts lab/bench/test/p5-round2.test.ts
+node lab/bin/heavy.mjs --label CX-P5A-R2-G6 -- node lab/bench/run-rq01-stack.mjs d5cd32e6
+node lab/bin/heavy.mjs --label CX-P5A-R2-memory -- node --max-old-space-size=4096 --experimental-strip-types lab/bench/round2.ts --seed-receipt runs/P5/a0-1k-final/receipt.json --rounds 8 --duration-s 65 --output runs/P5/r2-1k-new/receipt.json
+node lab/bin/heavy.mjs --label CX-P5A-R2-10k -- node --max-old-space-size=6144 --experimental-strip-types lab/bench/round2.ts --seed-receipt runs/P5/a0-10k-01/receipt.json --g4-only --output runs/P5/r2-10k-new/receipt.json
+node lab/bin/heavy.mjs --label CX-P5A-R2-audit -- node --experimental-strip-types lab/bench/audit-traffic.ts runs/P5/r2-1k-new/receipt.json runs/P5/r2-1k-new/raw-audit.json
+```
+
+Use fresh output directories and check >=5 GiB host free before each heavy admission. The restore supports `seed.ndjson.gz` when the original has been losslessly retained with a verified decompression manifest. Restoring bytes, their hash, or the prior receipt status never grants admission: each measuring copy must pass the fresh shared W0 content gate.
+
+## Round-3 admission correction
+
+The earlier standalone A1 G0 command is historical and is **not sufficient for admission**. A snapshot-only W0 fingerprint no longer grants. The measuring process must use K01's full-content pre-freeze `Pin` through `g0.ts`, with the W0 callback underneath it. The compatibility W0 entry accepts `--g0-pin`, but its fresh-scope seeding flow is not a completed K01 clone/resume CLI; do not treat it as a runnable clone qualification recipe. K01 must supply and bind the existing cloned scope/endpoint and full D before an A1 run. No native run was performed in round 3.
+
+Offline round 3 adds independent O-REPLAY world checks for every live answer and sweep record, O-DOMAIN reconcile/publish comparison, 1% positive output-changing retroactive witnesses, receipt-folded G9 counts, and matched-window burst containment. Its G6 runner supplies an explicit accepted O-REPLAY reference; the older default-reference warning above describes the previous round. Full native traffic, maintenance, per-stage resource attribution, bytes per fact and production acceptance remain outstanding.

@@ -67,7 +67,12 @@ export interface Assignments {
   readonly history: { lane: Lane; role: string };
   readonly analytics: { lane: Lane; role: string };
   /** Replication edges between layers (feed consumer source hash, translation generation); none in one-engine compositions. */
-  readonly replicationEdges: readonly { from: string; to: string; consumerSourceSha256: string | null; generation: string | null }[];
+  readonly replicationEdges: readonly {
+    from: string;
+    to: string;
+    consumerSourceSha256: string | null;
+    generation: string | null;
+  }[];
 }
 
 export interface CompositionHandle {
@@ -75,7 +80,7 @@ export interface CompositionHandle {
   sweepPage(
     subjects: readonly string[],
     basis: import("./w0-world.ts").PositionBasis,
-    between?:()=>Promise<void>,
+    between?: () => Promise<void>,
   ): Promise<{
     rows: readonly import("./w0-world.ts").WorldRow[];
     position: number;
@@ -86,8 +91,16 @@ export interface CompositionHandle {
   pinBasis?(position: number, owner: string): Promise<{ release(): Promise<void> }>;
   publishOutbox(
     records: readonly import("../../../packages/w0/dist/index.js").EvaluationRecord[],
-  ): Promise<{ deliveries: readonly any[]; retry: boolean }>;
-  storeCounts(): Promise<Record<string, number>>;
+  ): Promise<{
+    deliveries: readonly any[];
+    retry: boolean;
+    receipt?: Receipt;
+    operations?: readonly any[];
+    meta?: Record<string, unknown>;
+  }>;
+  g0Reader?(logicalScope?: string): import("./g0.ts").Reader;
+  commandLog?(): readonly any[];
+  storeCounts(signal?: AbortSignal): Promise<Record<string, number>>;
 
   readonly name: string;
   readonly assignments: Assignments;
@@ -114,19 +127,35 @@ function failureOf(exit: any): StoreFailure {
   const failure = exit?.cause?.failures?.[0];
   const error = failure?.error ?? failure?.defect ?? exit?.cause;
   // A defect (Die) has no typed tag: name it by its constructor so receipts say what failed.
-  const tag = error?._tag ?? (failure?._tag === "Die" ? `Defect:${error?.name ?? error?.constructor?.name ?? "Unknown"}` : failure?._tag);
+  const tag =
+    error?._tag ??
+    (failure?._tag === "Die"
+      ? `Defect:${error?.name ?? error?.constructor?.name ?? "Unknown"}`
+      : failure?._tag);
   return { ok: false, tag: String(tag ?? "Unknown"), error };
 }
 
-async function publicComposition(lane: Lane, scope: string, variant: "public" | "public-queued" = "public"): Promise<CompositionHandle> {
-  const h: TriplesHandle = await openTriples(lane, scope, variant === "public-queued" ? { admissionQueue: true } : undefined);
+async function publicComposition(
+  lane: Lane,
+  scope: string,
+  variant: "public" | "public-queued" = "public",
+): Promise<CompositionHandle> {
+  const h: TriplesHandle = await openTriples(
+    lane,
+    scope,
+    variant === "public-queued" ? { admissionQueue: true } : undefined,
+  );
   const T = h.triples;
   const E = (id: string) => core.EntityId.make(id);
   const outcome = async <A>(effect: any): Promise<Outcome<A>> => {
     const exit = await h.runExit(effect);
     return exit._tag === "Success" ? { ok: true, value: exit.value as A } : failureOf(exit);
   };
-  const pull = async (root: string, basis: Basis, between?: () => Promise<void>): Promise<PullResult> => {
+  const pull = async (
+    root: string,
+    basis: Basis,
+    between?: () => Promise<void>,
+  ): Promise<PullResult> => {
     const seen = new Set<string>([root]);
     let frontier = [root];
     const triples: PulledTriple[] = [];
@@ -148,9 +177,20 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     }
     // One-engine composition: the source of truth's own query surface is the only index, eligible for
     // every basis it has published, so no wait and no fallback are possible here.
-    return { triples, entities: seen.size, roundTrips, depth: roundTrips - 1, route: "source", language, waitedMs: 0 };
+    return {
+      triples,
+      entities: seen.size,
+      roundTrips,
+      depth: roundTrips - 1,
+      route: "source",
+      language,
+      waitedMs: 0,
+    };
   };
-  const one = { lane, role: `triplex public Triples service on one engine slot${variant === "public-queued" && lane === "xtdb" ? " (XTDB adapter admissionQueue: true)" : ""}` };
+  const one = {
+    lane,
+    role: `triplex public Triples service on one engine slot${variant === "public-queued" && lane === "xtdb" ? " (XTDB adapter admissionQueue: true)" : ""}`,
+  };
   const language = lane === "xtdb" ? "triplex-entities(xtdb-sql)" : lane === "datomic" ? "triplex-entities(datomic-datalog)" : "triplex-entities(sparql)";
   const sweep = await (await import("./w0-public.ts")).publicSweep(lane, h);
   const handle: CompositionHandle = {
@@ -164,7 +204,12 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     watermarks: async () => ({ source: await h.run(T.currentPosition()) }),
     // Triplex exposes one dense position per scope; every transact is its own engine transaction, so
     // offset = position and ordinal = 0. Epoch 0: the scope has had no epoch change.
-    coordinate: (position) => ({ stream: `triplex-journal:${scope}`, epoch: 0, offset: position, ordinal: 0 }),
+    coordinate: (position) => ({
+      stream: `triplex-journal:${scope}`,
+      epoch: 0,
+      offset: position,
+      ordinal: 0,
+    }),
     backend: h.backend,
     transact: (operations, meta) => outcome<Receipt>(T.transact(operations, meta)),
     transactionByCommand: (id) => outcome(T.transactionByCommand(id)),
@@ -172,22 +217,38 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
     sweepPull: pull,
     feedPage: (after, limit) => h.run(T.transactions({ after, limit })),
     currentPosition: () => h.run(T.currentPosition()),
-    close: async () => { await sweep.close(); await h.close(); },
+    close: async () => {
+      await sweep.close();
+      await h.close();
+    },
   };
   return handle;
 }
 
-export const COMPOSITIONS: Record<string, (lane: Lane, scope: string) => Promise<CompositionHandle>> = {
+export const COMPOSITIONS: Record<
+  string,
+  (lane: Lane, scope: string) => Promise<CompositionHandle>
+> = {
   /** In-process reference store (lib/memory.ts): diagnostic only, readers run in-thread. */
-  memory: async (lane, scope) => (await import("./memory.ts")).memoryComposition(lane, scope, Number(process.env["TX2_MEMORY_SERVICE_MS"] ?? "1")),
+  memory: async (lane, scope) =>
+    (await import("./memory.ts")).memoryComposition(
+      lane,
+      scope,
+      Number(process.env["TX2_MEMORY_SERVICE_MS"] ?? "1"),
+    ),
   public: (lane, scope) => publicComposition(lane, scope, "public"),
   /** Same surfaces; on XTDB the adapter queues writes in process (admissionQueue) instead of racing the scope position CAS. */
   "public-queued": (lane, scope) => publicComposition(lane, scope, "public-queued"),
 };
 
-export async function openComposition(name: string, lane: Lane, scope: string): Promise<CompositionHandle> {
+export async function openComposition(
+  name: string,
+  lane: Lane,
+  scope: string,
+): Promise<CompositionHandle> {
   const factory = COMPOSITIONS[name];
-  if (!factory) throw new Error(`unknown composition ${name}; known: ${Object.keys(COMPOSITIONS).join(", ")}`);
+  if (!factory)
+    throw new Error(`unknown composition ${name}; known: ${Object.keys(COMPOSITIONS).join(", ")}`);
   return factory(lane, scope);
 }
 

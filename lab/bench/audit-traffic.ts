@@ -49,8 +49,20 @@ for (const r of report.traffic.rounds) {
       writes = load(arm.rawWrites),
       reads = load(arm.rawReads),
       events = writes.map((x) => x.event);
+    if (
+      !arm.semantic?.counts ||
+      encode(arm.semantic.counts.end) !== encode(arm.semantic.counts.expected) ||
+      arm.semantic.witnesses?.length !== Math.ceil(report.N / 100) ||
+      arm.semantic.negativeWitnesses?.length !== Math.ceil(report.N / 100) ||
+      !arm.admission?.admission?.D
+    )
+      throw Error("semantic/count/full-content admission evidence missing");
+    if (reads.some((x) => !x.expectedDigest || x.digest !== x.expectedDigest))
+      throw Error("live answer differs from independently checked digest");
     if (encode(events) !== encode(expected))
       throw new Error(`round ${r.round} ${name} changed/missing trace events`);
+    if (arm.trace.sha256 !== hash(JSON.stringify(events)))
+      throw new Error("trace SHA-256 differs from raw events");
     const readValues = reads.filter((x) => x.startedAtMs <= ms).map((x) => x.latencyMs),
       commitValues = writes
         .filter((x) => x.scheduledAtMs <= ms)

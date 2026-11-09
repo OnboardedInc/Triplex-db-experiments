@@ -7,7 +7,16 @@ import {
 } from "./w0-world.ts";
 
 export async function publicSweep(lane: Lane, handle: TriplesHandle) {
-  if (lane !== "xtdb") return portableSweep(handle);
+  if (lane !== "xtdb")
+    return {
+      page: async (): Promise<never> => {
+        throw new BasisNotAvailable("round A qualifies XTDB only");
+      },
+      counts: async (): Promise<never> => {
+        throw new Error("unqualified store counts");
+      },
+      close: async () => {},
+    };
   const api = await import("../../../packages/xtdb/dist/index.js");
   const client = api.makeXtdbClient(handle.backend.url);
   let requested: PositionBasis | undefined,
@@ -68,7 +77,7 @@ export async function publicSweep(lane: Lane, handle: TriplesHandle) {
             }
           frontier = next;
         }
-        return { rows, reportedBasis: { ...b }, position: observed, epoch: String(handle.scope), roundTrips };
+        return { rows, position: observed, epoch: String(handle.scope), roundTrips };
       } catch (e: any) {
         if (e?._tag === "BasisNotAvailable" || String(e).includes("explicit available P"))
           throw new BasisNotAvailable("future or unavailable P");
@@ -77,11 +86,15 @@ export async function publicSweep(lane: Lane, handle: TriplesHandle) {
         requested = undefined;
       }
     },
-    counts: async () => {
+    counts: async (signal?: AbortSignal) => {
+      signal?.throwIfAborted();
       const r = await client.query(
         "SELECT (SELECT COALESCE(MAX(position), 0) FROM tx_meta FOR ALL VALID_TIME WHERE scope_key = ?) AS position, COUNT(*) AS assertions, COUNT(retracted_position) AS retired FROM tx_assertions FOR ALL VALID_TIME WHERE scope_key = ?",
         [handle.scope, handle.scope],
+        undefined,
+        { signal },
       );
+      signal?.throwIfAborted();
       return {
         position: Number(r[0]?.position),
         assertions: Number(r[0]?.assertions),
@@ -106,54 +119,4 @@ function decode(r: any) {
   if (!["string", "ref"].includes(r.value_type))
     throw new TypeError("unsupported W0 stored value " + r.value_type);
   return { type: r.value_type, value: raw };
-}
-
-// [EXP-W02-R2] Why: the D/Q adapters already expose exact recordedPosition reads through their public StorageAdapter service. Rejected: sending an internal position to Triples.entities, whose public TemporalBasis only accepts instants.
-export function portableSweep(handle: TriplesHandle) {
-  const storage = handle.storage;
-  if (!storage) throw Error("lane does not expose its public storage service");
-  return {
-    page: async (subjects: readonly string[], basis: PositionBasis) => {
-      const head = Number(await handle.run(storage.currentCommitPosition()));
-      if (!Number.isSafeInteger(head) || head < 0) throw new BasisNotAvailable("invalid source head");
-      requirePosition(basis, head);
-      const seen = new Set(subjects), rows: WorldRow[] = [];
-      let frontier = [...subjects], roundTrips = 0;
-      while (frontier.length) {
-        const page = await handle.run<ReadonlyMap<string, readonly any[]>>(storage.getByEntities(frontier, { recordedPosition: basis.position, validAt: basis.validAt }));
-        frontier = []; roundTrips++;
-        for (const body of page.values()) for (const r of body) {
-          if (!Number.isSafeInteger(Number(r.recorded_position)) || Number(r.recorded_position) < 1 || Number(r.recorded_position) > basis.position || (r.retracted_position != null && Number(r.retracted_position) <= basis.position)) throw new BasisNotAvailable("lane returned rows outside requested position");
-          const value = decode(r);
-          rows.push({ id: r.id, entityId: r.entity_id, attribute: r.attribute, value, position: Number(r.recorded_position), validFrom: Number(r.valid_from), ...(r.valid_to == null ? {} : { validTo: Number(r.valid_to) }) });
-          if (value.type === "ref" && !seen.has(value.value)) { seen.add(value.value); frontier.push(value.value); }
-        }
-      }
-      return { rows, reportedBasis: { ...basis }, position: head, epoch: String(handle.scope), roundTrips };
-    },
-    counts: async () => {
-      const position = Number(await handle.run(storage.currentCommitPosition()));
-      const entities = new Set<string>();
-      let after = 0;
-      while (after < position) {
-        const page: any = await handle.run(handle.triples.transactions({ after, limit: 1000 }));
-        const txs = page.transactions.filter((t: any) => t.position <= position);
-        if (!txs.length) throw Error("store count enumeration has a feed gap");
-        for (const tx of txs) for (const c of tx.changes) entities.add(c.entityId);
-        const next = txs.at(-1).position;
-        if (next <= after) throw Error("nonprogressing count feed");
-        after = next;
-      }
-      let assertions = 0, retired = 0;
-      for (const entity of entities) {
-        const history = await handle.run<readonly any[]>(storage.history(entity));
-        if (history.some(r => Number(r.recorded_position) > position)) throw Error("history escaped count snapshot");
-        assertions += history.length;
-        retired += history.filter(r => r.retracted_position != null).length;
-      }
-      if (Number(await handle.run(storage.currentCommitPosition())) !== position) throw Error("store changed during count enumeration");
-      return { position, assertions, retired };
-    },
-    close: async () => {},
-  };
 }

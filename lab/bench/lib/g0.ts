@@ -1,26 +1,8 @@
 // [EXP-K01-R7] Why: Q93 gives admission only to a fresh in-process content read against a pre-freeze pin. Rejected: transported process booleans, diagnostic equality and owner certificates.
+import { performance } from "node:perf_hooks";
 import { createHash } from "node:crypto";
-export const fields = {
-  tx_assertions: [
-    "entity_id",
-    "attribute",
-    "value_type",
-    "value_string",
-    "value_number",
-    "value_boolean",
-    "value_datetime",
-    "value_json",
-    "valid_from",
-    "valid_to",
-    "recorded_position",
-    "retracted_position",
-    "entity_type",
-    "schema_version",
-  ],
-  tx_claims: ["command_id", "position"],
-  tx_attempts: ["position"],
-  tx_meta: ["scope_key", "position"],
-} as const;
+import { storedFields } from "./g0-schema.ts";
+export const fields = storedFields;
 export type Table = keyof typeof fields;
 export type Counts = Record<Table, number>;
 export interface Reader {
@@ -50,24 +32,12 @@ export interface Pin extends Expected {
   format: "tx2-g0/1";
   D: string;
   w0?: W0Fingerprint;
+  Dprime?: string;
 }
-export const canonical = (value: unknown): string =>
-  JSON.stringify(value, (_k, v) => {
-    if (v === undefined || (typeof v === "number" && !Number.isFinite(v)))
-      throw Error("G0 unsupported/missing value");
-    if (typeof v === "bigint") {
-      const n = Number(v);
-      if (!Number.isSafeInteger(n)) throw Error("G0 unsafe integer");
-      return n;
-    }
-    return v && typeof v === "object" && !Array.isArray(v)
-      ? Object.fromEntries(
-          Object.keys(v)
-            .sort()
-            .map((k) => [k, v[k]]),
-        )
-      : v;
-  });
+export { canonical } from "./g0-values.ts";
+import { canonical } from "./g0-values.ts";
+import { e1Normalizer, normalization } from "./g0-normalize.ts";
+export { normalization } from "./g0-normalize.ts";
 export const hash = (value: unknown) => createHash("sha256").update(canonical(value)).digest("hex");
 export async function bounded<T>(
   work: (signal: AbortSignal) => Promise<T>,
@@ -77,7 +47,9 @@ export async function bounded<T>(
   const controller = new AbortController();
   let timer: ReturnType<typeof setTimeout>;
   try {
-    return await Promise.race([
+    const deadline = performance.now() + ms;
+    // [EXP-P5-R3] Why: CPU work can starve timeout timers; elapsed monotonic time must also refuse a late grant. Rejected: timer-only races (review regression).
+    const result = await Promise.race([
       work(controller.signal),
       new Promise<never>((_, reject) => {
         timer = setTimeout(() => {
@@ -86,6 +58,9 @@ export async function bounded<T>(
         }, ms);
       }),
     ]);
+    if (controller.signal.aborted || performance.now() >= deadline)
+      throw Error("G0 read deadline exceeded");
+    return result;
   } finally {
     clearTimeout(timer!);
   }
@@ -103,11 +78,12 @@ export function requireW0Fingerprint(observed: W0Fingerprint, oracle: any, N: nu
     if (observed[key] === undefined || observed[key] !== oracle.fingerprint?.[key])
       throw Error("G0 O-DOMAIN mismatch: " + key);
 }
-export async function readG0(
+async function readContent(
   reader: Reader,
   expected: Expected,
   w0?: W0Check,
   ms = 600_000,
+  rowRead?: (table: Table, row: Record<string, unknown>) => void,
 ): Promise<Pin> {
   if (
     !expected.scope ||
@@ -129,24 +105,35 @@ export async function readG0(
     await checkScopes();
     const tables: Record<string, string> = {};
     for (const table of Object.keys(fields) as Table[]) {
-      const want = expected.counts[table];
-      if (!Number.isSafeInteger(want) || want < 1)
-        throw Error("G0 missing/invalid independent count");
       const count = await reader.count(table, expected.scope, signal);
-      if (count !== want) throw Error("G0 count mismatch: " + table);
+      if (!Number.isSafeInteger(count) || count < 0) throw Error("G0 invalid independent count");
+      const want = expected.counts[table];
+      const core = ["tx_assertions", "tx_claims", "tx_attempts", "tx_meta"].includes(table);
+      if (
+        (core || want !== undefined) &&
+        (!Number.isSafeInteger(want) || want < (core ? 1 : 0) || count !== want)
+      )
+        throw Error("G0 count mismatch: " + table);
+      // [EXP-K01-R8] Why: auxiliary tables have no N01 closed form; their independently counted complete contents are pinned in D. Rejected: skipping side tables or deriving core expected counts from the scan.
       // [EXP-K01-R7] Why: sort row hashes, preserving multiplicity, to stream pages without retaining full rows. Rejected: a sum/XOR digest (duplicates cancel) or a subject sample (misses changed history).
       const hashes: string[] = [];
       for await (const row of reader.scan(table, expected.scope, signal)) {
-        if (signal.aborted || hashes.length >= want) throw Error("G0 extra rows or expired read");
-        const values = fields[table].map((field) => {
+        if (signal.aborted || hashes.length >= count) throw Error("G0 extra rows or expired read");
+        for (const field of fields[table]) {
           if (!Object.hasOwn(row, field) || row[field] === undefined)
             throw Error("G0 missing field: " + field);
-          return row[field];
-        });
+        }
+        // [EXP-K01-R8] Why: hash column names and all returned values as well as requiring the declared schema. Rejected: missing schemaless/dynamic side-table bindings that SELECT * returns.
+        const values = Object.keys(row)
+          .sort()
+          .map((field) => [field, row[field]]);
         hashes.push(hash(values));
+        rowRead?.(table, row);
       }
+      if ((await reader.count(table, expected.scope, signal)) !== count)
+        throw Error("G0 end count changed: " + table);
       if (hashes.length !== count) throw Error("G0 partial/empty scan: " + table);
-      tables[table] = hash(hashes.sort());
+      tables[table] = hash([fields[table], hashes.sort()]);
     }
     await checkScopes();
     let world: W0Fingerprint | undefined;
@@ -160,6 +147,40 @@ export async function readG0(
       format: "tx2-g0/1",
       D: hash([expected, tables, world ?? null]),
       ...(world ? { w0: world } : {}),
+    };
+  }, ms);
+}
+export async function readG0(
+  reader: Reader,
+  expected: Expected,
+  w0?: W0Check,
+  ms = 600_000,
+): Promise<Pin> {
+  return readContent(reader, expected, w0, ms);
+}
+// [EXP-K01-R9] Why: E1 needs a separate normalized view bound to the same full D. Rejected: weakening clone admission or collecting whole tables in memory.
+export async function readE1G0(
+  reader: Reader,
+  expected: Expected,
+  w0?: W0Check,
+  ms = 600_000,
+): Promise<Pin> {
+  return bounded(async (signal) => {
+    const normal = e1Normalizer();
+    const first = await readContent(reader, expected, w0, ms, (t, r) => normal.collect(t, r));
+    normal.finish();
+    const hashes: Record<string, string[]> = {};
+    const second = await readContent(reader, expected, w0, ms, (t, r) => {
+      signal.throwIfAborted();
+      (hashes[t] ??= []).push(hash(normal.row(t, r)));
+    });
+    if (first.D !== second.D) throw Error("Dprime source changed during normalization");
+    const normalized = Object.fromEntries(
+      Object.keys(fields).map((t) => [t, hash([fields[t], (hashes[t] ?? []).sort()])]),
+    );
+    return {
+      ...second,
+      Dprime: hash(["tx2-e1/1", normalization, expected, normalized, second.w0 ?? null]),
     };
   }, ms);
 }

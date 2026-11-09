@@ -70,6 +70,7 @@ export interface SweepOptions {
   afterCheckpoint?: (page: number) => Promise<void>;
   controller?: Controller;
   beforePublish?: () => Promise<void>;
+  signal?: AbortSignal;
 }
 export async function runW0Sweep(o: SweepOptions) {
   if (
@@ -106,6 +107,7 @@ export async function runW0Sweep(o: SweepOptions) {
   const remaining = Array.from({ length: Math.ceil(o.subjects.length / 64) }, (_, i) => i).filter(
     (i) => !published.includes(i),
   );
+  let cancelled = false;
   let completed = 0,
     index = 0;
   const metrics: any[] = [];
@@ -121,6 +123,7 @@ export async function runW0Sweep(o: SweepOptions) {
         threads.push(worker);
         let resolve: ((v: any) => void) | undefined, reject: ((e: any) => void) | undefined;
         worker.on("error", (e) => reject?.(e));
+        o.signal?.addEventListener("abort", () => reject?.(o.signal!.reason), { once: true });
         worker.on("exit", (code) => {
           if (code) reject?.(new Error("worker exited " + code));
         });
@@ -142,9 +145,15 @@ export async function runW0Sweep(o: SweepOptions) {
           index < remaining.length &&
           (o.stopAfterPages === undefined || completed < o.stopAfterPages)
         ) {
-          while (o.controller && (o.controller.limit === 0 || workerIndex >= o.controller.limit))
+          while (
+            !cancelled &&
+            index < remaining.length &&
+            o.controller &&
+            (o.controller.limit === 0 || workerIndex >= o.controller.limit)
+          )
             await new Promise((r) => setTimeout(r, 10));
-          if (index >= remaining.length) break;
+          o.signal?.throwIfAborted();
+          if (cancelled || index >= remaining.length) break;
           const pageIndex = remaining[index++]!,
             subjects = o.subjects.slice(pageIndex * 64, (pageIndex + 1) * 64);
           const page: any = await new Promise((res, rej) => {
@@ -207,6 +216,7 @@ export async function runW0Sweep(o: SweepOptions) {
       controller: CONTROLLER,
     };
   } finally {
+    cancelled = true;
     await Promise.all(threads.map((w) => w.terminate()));
     await pin?.release();
   }
