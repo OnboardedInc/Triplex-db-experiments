@@ -15,11 +15,14 @@ for (const signal of ["SIGINT", "SIGTERM"])
   });
 // [DX-H2] Why: the driver rotates bounded leases between seed ACKs; cap the whole command at the task time box.
 // Rejected: one unbounded measurement lease across seeding.
+const maxWallS = Number(process.env.DXH2_MAX_WALL_S ?? "10800");
+if (!Number.isSafeInteger(maxWallS) || maxWallS < 60 || maxWallS > 604800)
+  throw Error("invalid DXH2_MAX_WALL_S");
 const timer = setTimeout(() => {
   timedOut = true;
   child?.kill("SIGTERM");
   setTimeout(() => child?.kill("SIGKILL"), 3000).unref();
-}, 10800_000);
+}, maxWallS * 1000);
 try {
   for (const selected of composition === "both" ? ["public", "reach"] : [composition]) {
     const id = selected + "-" + Date.now();
@@ -69,6 +72,21 @@ try {
       child.on("exit", (code) => resolve(code ?? 1));
     });
     fs.closeSync(log);
+    fs.writeFileSync(
+      path.join(destination, "exit.json"),
+      JSON.stringify(
+        {
+          code,
+          signal: child.signalCode,
+          outerTimeout: timedOut,
+          finishedAt: new Date().toISOString(),
+          classification: "DIAGNOSTIC",
+          semanticAcceptance: false,
+        },
+        null,
+        2,
+      ) + "\n",
+    );
     process.stderr.write("Evidence: " + destination + "\n");
     process.exitCode = Math.max(process.exitCode ?? 0, code);
     if (timedOut) break;

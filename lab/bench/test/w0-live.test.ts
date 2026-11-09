@@ -28,6 +28,7 @@ test("paired traffic uses identical offer-time prefix and retains ACKs after its
     [
       { kind: "read", started: 1010, ms: 5 },
       { kind: "commit", scheduled: 1050, started: 1200, ms: 10 },
+      { kind: "write", scheduled: 1050, ack: 1250 },
     ]
       .map((r) => JSON.stringify(r))
       .join("\n"),
@@ -38,6 +39,8 @@ test("paired traffic uses identical offer-time prefix and retains ACKs after its
       { kind: "read", started: 2010, ms: 10 },
       { kind: "read", started: 2150, ms: 999 },
       { kind: "commit", scheduled: 2050, started: 2250, ms: 20 },
+      { kind: "write", scheduled: 2050, ack: 2450 },
+      { kind: "write", scheduled: 2150, ack: 9999 },
       { kind: "commit", scheduled: 2150, started: 2250, ms: 999 },
     ]
       .map((r) => JSON.stringify(r))
@@ -50,5 +53,9 @@ test("paired traffic uses identical offer-time prefix and retains ACKs after its
   assert.equal(result.read.p99Ratio, 2);
   assert.equal(result.commit.p99Ratio, 2);
   assert.equal(result.commit.sweep.count, 1);
+  assert.equal(result.commit.baseline.p99, 200);
+  assert.equal(result.commit.sweep.p99, 400);
+  assert.equal(result.commitService.baseline.p99, 10);
+  assert.equal(result.commitService.sweep.p99, 20);
   assert.equal(result.classification, "DIAGNOSTIC");
 });

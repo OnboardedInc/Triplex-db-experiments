@@ -84,6 +84,7 @@ export interface CompositionHandle {
     epoch: string;
     roundTrips: number;
   }>;
+  w0Attributes?(subject: string, attributes: readonly string[], basis: import("./w0-world.ts").PositionBasis): Promise<readonly import("./w0-world.ts").WorldRow[]>;
   pinBasis?(position: number, owner: string): Promise<{ release(): Promise<void> }>;
   publishOutbox(
     records: readonly import("../../../packages/w0/dist/index.js").EvaluationRecord[],
@@ -180,6 +181,7 @@ async function publicComposition(lane: Lane, scope: string, variant: "public" | 
   const handle: CompositionHandle = {
     scopeName: scope,
     sweepPage: sweep.page,
+    ...(journal ? { w0Attributes: (subject: string, attrs: readonly string[], basis: import("./w0-world.ts").PositionBasis) => import("./w0-public.ts").then(m => m.rootAttributeRows(h, subject, attrs, basis)) } : {}),
     storeCounts: sweep.counts,
     publishOutbox: (records) =>
       import("./w0-outbox.ts").then((m) => m.publishRecords(handle, records)),

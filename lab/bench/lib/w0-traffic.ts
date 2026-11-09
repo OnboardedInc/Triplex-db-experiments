@@ -96,8 +96,20 @@ export async function applyW0Trace(comp: CompositionHandle, event: TraceEvent) {
     ([e, a]) => e === W0.placementId(event.subject) && !["answers", "decisions"].includes(a),
   );
   const basis = { position: await comp.currentPosition(), validAt: V_W0 + Math.floor(event.atMs) };
-  const current = await comp.sweepPage([W0.placementId(event.subject)], basis);
-  const retire = current.rows.filter((r) =>
+  const root = W0.placementId(event.subject);
+  // [DX-H2] Why: select the exact scalar preconditions through the public adapter; graph reads are unrelated to this write.
+  // Rejected: changing the frozen commands or dropping retirements to make the queue drain.
+  const current =
+    scalar.length === 0
+      ? []
+      : comp.w0Attributes
+        ? await comp.w0Attributes(
+            root,
+            scalar.map(([, a]) => a),
+            basis,
+          )
+        : (await comp.sweepPage([root], basis)).rows;
+  const retire = current.filter((r) =>
     scalar.some(([e, a]) => e === r.entityId && a === r.attribute),
   );
   const result = await comp.transact(

@@ -70,6 +70,7 @@ export async function runW0Driver(argv: string[]) {
     "lab/bench/lib/sweep.ts",
     "lab/bench/lib/sweep-worker.ts",
     "lab/bench/lib/w0-trace.ts",
+    "lab/bench/lib/w0-traffic.ts",
     "lab/bench/lib/composition.ts",
     "lab/bench/lib/memory.ts",
     "lab/bench/lib/w0-public.ts",
@@ -254,6 +255,7 @@ export async function runW0Driver(argv: string[]) {
       published = new Map<string, any>();
     const activationPage = async (records: readonly any[], page: number) => {
       const verifyStart = performance.now();
+      fs.writeFileSync(path.join(dir, `activation-${page}.json`), canonical(records));
       const original = JSON.parse(fs.readFileSync(path.join(dir, `preview-${page}.json`), "utf8"));
       for (let i = 0; i < records.length; i++) {
         const r = records[i]!;
@@ -335,6 +337,7 @@ export async function runW0Driver(argv: string[]) {
       cursor,
       workers,
       activations,
+      metricsFile: path.join(dir, "activation-pages.ndjson"),
       onPage: (records, page) => {
         const queued = performance.now();
         const task = publicationChain.then(async () => {
@@ -394,6 +397,7 @@ export async function runW0Driver(argv: string[]) {
       const f = await comp.feedPage(position, lane === "datomic" ? 100 : 1000);
       if (!f.transactions.length) break;
       for (const tx of f.transactions) {
+        fs.appendFileSync(path.join(dir, "stored-journal.ndjson"), canonical(tx) + "\n");
         position = tx.position;
         for (const c of tx.changes) {
           if (c.op === "assert") assertions++;

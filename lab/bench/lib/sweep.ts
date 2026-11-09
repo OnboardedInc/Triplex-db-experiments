@@ -62,6 +62,7 @@ export interface SweepOptions {
   basis: PositionBasis;
   sweepId: string;
   cursor: string;
+  metricsFile?: string;
   workers: number;
   release?: string;
   activations?: readonly W0.Activation[];
@@ -213,6 +214,16 @@ export async function runW0Sweep(o: SweepOptions) {
             position: page.position,
             epoch: page.epoch,
           });
+          if (o.metricsFile)
+            fs.appendFileSync(
+              o.metricsFile,
+              JSON.stringify({
+                sweepId: o.sweepId,
+                scope: o.scope,
+                basis: o.basis,
+                ...metrics.at(-1),
+              }) + "\n",
+            );
           completed++;
         }
       }),

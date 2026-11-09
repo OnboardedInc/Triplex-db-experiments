@@ -152,7 +152,8 @@ export async function startW0Live(o: {
         endedAtMs: end,
         windowMs: end - start,
         read: summary(reads),
-        commit: summary(commits.map((c) => ({ ...c, started: c.scheduled }))),
+        commitService: summary(commits.map((c) => ({ ...c, started: c.scheduled }))),
+        commit: summary(writes.map((w) => ({ started: w.scheduled, ms: w.ack - w.scheduled }))),
         offered: offered.length,
         acknowledged: writes.length,
         duplicates: writes.filter((w) => w.duplicate).length,
@@ -183,7 +184,7 @@ export function matchW0Live(baseline: any, sweep: any) {
   )
     throw Error("live traffic generator binding mismatch");
   const ms = Math.min(baseline.windowMs, sweep.windowMs);
-  const summary = (arm: any, kind: "read" | "commit") => {
+  const summary = (arm: any, kind: "read" | "commit" | "commitService") => {
     const samples = fs
       .readFileSync(arm.raw, "utf8")
       .split("\n")
@@ -191,11 +192,11 @@ export function matchW0Live(baseline: any, sweep: any) {
       .map((line) => JSON.parse(line))
       .filter(
         (r) =>
-          r.kind === kind &&
-          (kind === "commit" ? r.scheduled : r.started) >= arm.startedAtMs &&
-          (kind === "commit" ? r.scheduled : r.started) < arm.startedAtMs + ms,
+          r.kind === (kind === "commit" ? "write" : kind === "commitService" ? "commit" : "read") &&
+          (kind !== "read" ? r.scheduled : r.started) >= arm.startedAtMs &&
+          (kind !== "read" ? r.scheduled : r.started) < arm.startedAtMs + ms,
       )
-      .map((r) => r.ms);
+      .map((r) => (kind === "commit" ? r.ack - r.scheduled : r.ms));
     return {
       count: samples.length,
       p50: samples.length ? percentile(samples, 0.5) : null,
@@ -208,7 +209,7 @@ export function matchW0Live(baseline: any, sweep: any) {
     classification: "DIAGNOSTIC",
     reason: "Sequential windows on an evolving store; no clone/A-A calibration",
   };
-  for (const kind of ["read", "commit"] as const) {
+  for (const kind of ["read", "commit", "commitService"] as const) {
     const b = summary(baseline, kind),
       s = summary(sweep, kind);
     result[kind] = {

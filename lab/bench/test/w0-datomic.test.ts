@@ -9,7 +9,7 @@ import { openTriples } from "../lib/triplex.ts";
 import { openComposition } from "../lib/composition.ts";
 import { seedW0 } from "../lib/w0-seed.ts";
 import { datomicW0Sweep } from "../lib/w0-datomic-reader.ts";
-import { portableSweep } from "../lib/w0-public.ts";
+import { rootAttributeRows, portableSweep } from "../lib/w0-public.ts";
 import { subjectList } from "../lib/sweep.ts";
 import { V_W0, canonical, worldOf } from "../lib/w0-world.ts";
 
@@ -92,6 +92,37 @@ test(
     );
     try {
       const seed = await seedW0(comp, 50, path.join(dir, "seed.ndjson"));
+      const root = subjectList(50)[0],
+        oldBasis = { position: seed.basis.tx, validAt: V_W0 };
+      const prior = (await comp.sweepPage([root], oldBasis)).rows.find(
+        (r) => r.entityId === root && r.attribute === "weeklyMinutes",
+      )!;
+      const changed = await comp.transact(
+        [
+          { op: "retract", id: prior.id },
+          {
+            op: "assert",
+            entityId: root,
+            attribute: "weeklyMinutes",
+            value: { type: "integer", value: String(Number(prior.value.value) + 1) },
+            validFrom: V_W0,
+          },
+        ],
+        { commandId: "root-attribute-witness" },
+      );
+      assert.equal(changed.ok, true);
+      const attrs = ["weeklyMinutes", "bgcStatus", "everifySubmitResult"];
+      for (const position of [seed.basis.tx, await comp.currentPosition()])
+        for (const subject of subjectList(50).slice(0, 10)) {
+          const basis = { position, validAt: V_W0 };
+          const expected = (await comp.sweepPage([subject], basis)).rows.filter(
+            (r) => r.entityId === subject && attrs.includes(r.attribute),
+          );
+          const actual = await comp.w0Attributes!(subject, attrs, basis);
+          const sorted = (rows: readonly any[]) =>
+            canonical(rows.map((r: any) => canonical(r)).sort());
+          assert.equal(sorted(actual), sorted(expected));
+        }
       for (const id of [
         "p5:seed:1",
         "p5:seed:" + Math.floor(seed.basis.tx / 2),
@@ -118,3 +149,15 @@ test(
     }
   },
 );
+
+test("root scalar preconditions refuse malformed source heads and unavailable positions", async () => {
+  for (const head of [NaN, -1, 1.5, 4]) {
+    const handle: any = {
+      run: async (x: unknown) => x,
+      storage: { currentCommitPosition: () => head, query: () => [] },
+    };
+    await assert.rejects(
+      rootAttributeRows(handle, "s", ["weeklyMinutes"], { position: 5, validAt: V_W0 }),
+    );
+  }
+});

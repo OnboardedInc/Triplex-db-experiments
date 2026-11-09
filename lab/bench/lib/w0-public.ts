@@ -226,3 +226,50 @@ export function portableSweep(
     close: async () => {},
   };
 }
+
+// [DX-H2] Why: a trace command replaces root scalars, not its reachable answer/document graph.
+// Rejected: portableSweep for this precondition read (growing ballast made the no-sweep queue miss its lease).
+export async function rootAttributeRows(
+  handle: TriplesHandle,
+  subject: string,
+  attributes: readonly string[],
+  basis: PositionBasis,
+): Promise<WorldRow[]> {
+  const storage = handle.storage;
+  if (!storage) throw Error("missing public storage service");
+  const head = Number(await handle.run(storage.currentCommitPosition()));
+  if (!Number.isSafeInteger(head) || head < 0) throw new BasisNotAvailable("invalid source head");
+  requirePosition(basis, head);
+  const pages = await Promise.all(
+    [...new Set(attributes)].map((attribute) =>
+      handle.run<readonly any[]>(
+        storage.query(
+          { entityId: subject, attribute },
+          { recordedPosition: basis.position, validAt: basis.validAt },
+        ),
+      ),
+    ),
+  );
+  return pages.flat().map((r) => {
+    if (
+      r.entity_id !== subject ||
+      !attributes.includes(r.attribute) ||
+      !Number.isSafeInteger(Number(r.recorded_position)) ||
+      Number(r.recorded_position) < 1 ||
+      Number(r.recorded_position) > basis.position ||
+      (r.retracted_position != null && Number(r.retracted_position) <= basis.position) ||
+      Number(r.valid_from) > basis.validAt ||
+      (r.valid_to != null && Number(r.valid_to) <= basis.validAt)
+    )
+      throw new BasisNotAvailable("root attribute read escaped requested cut");
+    return {
+      id: r.id,
+      entityId: r.entity_id,
+      attribute: r.attribute,
+      value: decode(r),
+      position: Number(r.recorded_position),
+      validFrom: Number(r.valid_from),
+      ...(r.valid_to == null ? {} : { validTo: Number(r.valid_to) }),
+    };
+  });
+}
