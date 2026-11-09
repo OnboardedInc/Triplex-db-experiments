@@ -1,4 +1,4 @@
-import { constructReadDispatch } from "@triplex-build/triplex/runtime";
+import { createReadConstructor } from "@triplex-build/triplex/runtime";
 import { awaitSnapshotBasis } from "../broker/snapshot.js";
 import { Effect } from "effect";
 import type { TypeExpr } from "@triplex-build/triplex/config";
@@ -68,6 +68,9 @@ const declaredRow = (type: TypeExpr.TypeExpr, row: SparqlBinding): unknown => {
     ]),
   );
 };
+
+const readConstructor = createReadConstructor();
+export const isQleverNativeRead = readConstructor.isRead;
 
 export interface QleverNativeQueryOptions {
   readonly maxResponseBytes?: number;
@@ -293,7 +296,7 @@ export const makeQleverNativeQueries = (
           : new ReadError({ message: "Invalid QLever native query contract or result", cause }),
       ),
     );
-  return constructReadDispatch(
+  return readConstructor.dispatch(
     {
       select: (
         contract: NativeQueryContract,

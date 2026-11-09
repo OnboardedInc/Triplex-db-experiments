@@ -1,0 +1,47 @@
+{
+  "base": "1096fb8639903395593954e44be6872118fe4c68",
+  "paths": [
+    {
+      "path": ".changeset/p2q-exact-journal-snapshot.md",
+      "oldSha256": "c368c65b7cc38abf2274a638d2ea890043eebeb59863eb569d03b7ff99aa48f2",
+      "newSha256": "ac19726120b339ddd9a3e435e32f48c24fd0c289e9ae9615fa57b125c8cdfe54",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/core/src/runtime/index.ts",
+      "oldSha256": "43e7da589442d594e128ec75b964e1b59d3683b84623daaef74522b927291a21",
+      "newSha256": "fedb8d56ef726a9cbc523b205887b52c410a455126ef284605160950bfd3c492",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/core/src/storage/ReadSurface.ts",
+      "oldSha256": "d68a7992b9a741739f07678bbf10c733011d40656c4c7a32b500446d13a4074b",
+      "newSha256": "bb2ac28a0f479bb370179cbb155ee1ad0a5848b56fb23116584d9b9d14c23982",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/core/src/store/TriplesLive.ts",
+      "oldSha256": "a273e025184be8e09590c413c336b743272892e8140c0884e737e162952d4434",
+      "newSha256": "1c2394b8b2c0f70afaf169ad033b89e1c5f396c28dbcc9668f3e4cdfd6e95764",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/qlever/src/QleverQueryExecutor.ts",
+      "oldSha256": "dcee80f98c217e1fdb4d164e6125555811e5957a4e475287e305403f48d49460",
+      "newSha256": "b55c3f17898e6add0bd2959b7e9ceb3634f4e375f02ef983c044ad4f2c6a5ac0",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/qlever/src/broker/BrokerStorageAdapter.ts",
+      "oldSha256": "3e3d52b3bbcc05e98885b0396e070c29c6532c2e5452e80ad13bea91a23cc1ac",
+      "newSha256": "bbacbc760aa519147a71fb44172bab9efa1bda320f615362b9c78c784849b344",
+      "acceptanceReferences": []
+    },
+    {
+      "path": "packages/qlever/src/native/NativeQueries.ts",
+      "oldSha256": "f33a0a0eab0294ec57ebb484eb13b9d21de6f6ba6c85db2062295f7c63804860",
+      "newSha256": "dbd744e87f541efdea3b0b9da4b787e1cf2c99192b35e928039676676342438d",
+      "acceptanceReferences": []
+    }
+  ]
+}

@@ -19,7 +19,7 @@ import {
   type QueryOptions,
   type PagedQueryOptions,
 } from "./Triples.js";
-import { constructSnapshotReads, exactReadService } from "../storage/ReadSurface.js";
+import { createReadConstructor, exactReadService } from "../storage/ReadSurface.js";
 import { StorageAdapter } from "../storage/StorageAdapter.js";
 import { QueryExecutor } from "../storage/QueryExecutor.js";
 import type {
@@ -138,6 +138,9 @@ const rowToTriple = (row: TripleRow): Triple => {
 // =============================================================================
 // Triples Layer using StorageAdapter + QueryExecutor
 // =============================================================================
+
+const readConstructor = createReadConstructor();
+export const isTriplesRead = readConstructor.isRead;
 
 const makeTriplesServices = Effect.gen(function* () {
     const adapter = yield* StorageAdapter;
@@ -775,7 +778,7 @@ const makeTriplesServices = Effect.gen(function* () {
       );
 
   const implicit = () => undefined;
-  const reads = constructSnapshotReads({
+  const reads = readConstructor.snapshot({
     get: { run: get, basis: implicit, rawHistory: false },
     entity: { run: entity, basis: implicit, rawHistory: false },
     entities: { run: entities, basis: implicit, rawHistory: false },

@@ -66,7 +66,9 @@ export {
   constructSnapshotReads,
   constructReadDispatch,
   constructReadSurface,
-  isConstructedRead,
+  createReadConstructor,
   exactReadService,
   type SnapshotReadPolicy,
 } from "../storage/ReadSurface.js";
+
+export { isTriplesRead } from "../store/TriplesLive.js";
