@@ -8,7 +8,8 @@
 // usage: node summary5.mjs <dir> <refArm> <quiet.json>
 import fs from "node:fs";
 import path from "node:path";
-const [dir, refArm, quietFile] = process.argv.slice(2);
+const [dir, refArm, quietFile, sensitivityArg] = process.argv.slice(2);
+const SENS = Number(sensitivityArg ?? 1.25);
 if (!dir || !refArm || !quietFile) throw Error("usage: summary5.mjs dir refArm quiet.json");
 const quiet = JSON.parse(fs.readFileSync(quietFile, "utf8"));
 const quietUs = quiet.quietUs;
@@ -24,9 +25,15 @@ const labels = [...new Set(runs.map((r) => r.arm))];
 const rounds = [...new Set(runs.map((r) => r.round))].sort((a, b) => a - b);
 const byArm = (arm) =>
   Object.fromEntries(runs.filter((r) => r.arm === arm).map((r) => [r.round, r]));
-const eligible = (s) => Math.max(s.probeBefore.totalUs, s.probeAfter.totalUs) <= THRESH * quietUs;
+const worst = (s) => Math.max(s.probeBefore.totalUs, s.probeAfter.totalUs);
+const eligible = (s) => worst(s) <= THRESH * quietUs;
+// Sensitivity only (NOT the brief's rule): the same grading at a looser threshold, reported beside the strict one so a reader can see how much
+// the strict rule's few eligible segments leave out. Never a verdict.
+const loose = (s) => worst(s) <= SENS * quietUs;
 const batchesOf = (run, onlyEligible) =>
-  run.segments.filter((s) => !onlyEligible || eligible(s)).flatMap((s) => s.batches);
+  run.segments
+    .filter((s) => !onlyEligible || (onlyEligible === "loose" ? loose(s) : eligible(s)))
+    .flatMap((s) => s.batches);
 const sumCpu = (bs) => bs.reduce((a, b) => a + b.totalUs, 0);
 const sumPulls = (bs) => bs.reduce((a, b) => a + b.pulls, 0);
 let seed = 20261109;
@@ -86,6 +93,8 @@ for (const arm of labels) {
     eligibleShare: +(segs.filter(eligible).length / segs.length).toFixed(3),
     loadedAllSegments: estimate(per, rs, false),
     eligibleOnly: estimate(per, rs, true),
+    looseSegments: segs.filter(loose).length,
+    sensitivityOnly: { threshold: SENS, note: "diagnostic only, not the brief's +10% rule", estimate: estimate(per, rs, "loose") },
     mainUs: f("mainUsPerPull"),
     workersUs: f("workersUsPerPull"),
     otherUs: f("otherUsPerPull"),
@@ -156,7 +165,7 @@ for (const arm of labels) {
       bootstrap95OfMeanRatio: ci(draws),
     };
   };
-  out.paired[arm] = { allSegments: ratioSet(false), eligibleOnly: ratioSet(true) };
+  out.paired[arm] = { allSegments: ratioSet(false), eligibleOnly: ratioSet(true), sensitivityOnly: ratioSet("loose") };
 }
 for (const r of rounds) {
   const rr = runs.filter((x) => x.round === r);
