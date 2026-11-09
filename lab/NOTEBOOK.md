@@ -1764,3 +1764,15 @@ Where each priority stands, from evidence so far (research probes and baselines;
   on Sam, not on research. Next research candidates once a slot frees: lane X's single-writer composition (R37: A0 commit bars measure
   queueing), and QLever generations phase 2 design once QG1 phase 1 numbers exist.
 - **Scale window:** open, QG1 holds the only exclusive slot's turn.
+
+## 2026-11-09 03:11Z: disk fell to 5.9 GiB; 38 finished worktrees removed (15 GiB free now)
+- **Cause:** 59 agent worktrees held 93 GB (each a full checkout with node_modules). Heavy jobs refuse below 5 GiB, and G03's round 4 hit
+  that floor repeatedly.
+- **Done:** for 38 worktrees whose work is finished (merged, verdict recorded, or a paused old agent with a handoff), every untracked and
+  ignored file except node_modules, dist and caches (2.8 GB) was archived compressed (410 MB) to
+  /Users/sam/Claude/Projects/triplex-db-2/worktree-archive/ with INDEX.txt (worktree, branch, head, file count); then git worktree remove.
+  All branches and commits stay. Nine worktrees locked by this session's agent tool were left alone.
+- **Rule from now on:** when an experiment's branch merges or its verdict is recorded, its builder and reviewer worktrees are archived and
+  removed in the same orchestrator step.
+- **Also:** P5 round A review FIX-FIRST (G0 history coverage, traffic oracle checks, end counts, burst windows); the reviewer picked K01's
+  g0.ts as the one admission module, with P5's W0 reader under it, so P5 round 3 adopts it. GS12F round 3 (one bounds table) is in review.
