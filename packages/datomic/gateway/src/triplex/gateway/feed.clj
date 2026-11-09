@@ -12,28 +12,48 @@
     (when (> n maximum) (codec/invalid "Log request exceeds budget")) n))
 (defn required [v]
   (when (nil? v) (codec/invalid "Incomplete feed identity annotation")) v)
-(defn fact-change [db tx eid op]
-  (let [f (d/entity db eid)
-        position (or (get f (if (= op "assert") :f/position :f/retracted-position)) (:triplex.tx/position tx))]
-    {:op op :entity (required (:triplex.entity/id (:f/subject f)))
-     :attribute (required (:triplex.attr/key (:f/attr f))) :assertionId (required (:f/id f))
-     :validFrom (required (:f/valid-from f)) :validTo (:f/valid-to f) :position (str (required position))}))
+(defn fact-position [f tx op]
+  (or (get f (if (= op "assert") :f/position :f/retracted-position)) (:triplex.tx/position tx)))
+(defn fact-change [f tx op]
+  {:op op :entity (required (:triplex.entity/id (:f/subject f)))
+   :attribute (required (:triplex.attr/key (:f/attr f))) :assertionId (required (:f/id f))
+   :validFrom (required (:f/valid-from f)) :validTo (:f/valid-to f) :position (str (required (fact-position f tx op)))})
+;; [EXP-DF01-R4] Why: a Datomic feed change is an application change (R47 3, Q107c). A journal fact is decided by the fact's stored
+;; entity type (:f/entity-type, the schema attribute written from the row's entity_type) being "_Transaction" and its subject being the
+;; fact's own transaction id: the same predicate as isJournalRow in the broker feed and the P2X feed, so the three feeds agree. Core
+;; reserves the "_Transaction" type, so a user write cannot carry it. The subject id and the attribute key are never inspected for a
+;; "_tx" prefix, so a user attribute or entity id that starts with "_tx" is still a change.
+;; The row's own tx id is rebuilt as storage/raw-row does: :f/tx-id when it differs from the annotation, else the asserting
+;; transaction's annotation id, nothing when :f/null-tx-id is set.
+;; Rejected: a ":_tx/" or "_tx/" string prefix test (a user attribute could share it); filtering by attribute key (same flaw);
+;; dropping the journal facts before positions and txIds are computed (a retract-only or empty member would lose its position and id,
+;; which the broker keeps by reading them from the journal rows).
+(defn fact-tx-id [f]
+  (when-not (:f/null-tx-id f)
+    (or (:f/tx-id f) (not-empty (:triplex.tx/id (:f/asserted-in f))))))
+(defn journal-fact? [f]
+  (and (= "_Transaction" (:f/entity-type f))
+       (some? (:triplex.entity/id (:f/subject f)))
+       (= (:triplex.entity/id (:f/subject f)) (fact-tx-id f))))
 (defn project [db {:keys [t data]}]
   (let [cut (d/as-of db t) tx (d/entity cut (d/t->tx t)) p (:triplex.tx/position tx)]
     (if (nil? p)
       {:t (str t) :kind "skipped" :reason "non-triplex"}
       (let [assert-attr (d/entid cut :f/asserted-in) retract-attr (d/entid cut :f/retracted-in) erase-attr (d/entid cut :f/erased-in)
-            changes (->> data
-                         (keep (fn [datom]
-                                 (when (:added datom)
-                                   (cond (= (:a datom) erase-attr) (throw (ex-info "Erasure sequence annotation requires ER01-D" {:status 409 :code "FeedErasureUnsupported"}))
-                                         (= (:a datom) assert-attr) (fact-change cut tx (:e datom) "assert")
-                                         (= (:a datom) retract-attr) (fact-change cut tx (:e datom) "retract")))))
+            facts (->> data
+                       (keep (fn [datom]
+                               (when (:added datom)
+                                 (let [op (cond (= (:a datom) erase-attr) (throw (ex-info "Erasure sequence annotation requires ER01-D" {:status 409 :code "FeedErasureUnsupported"}))
+                                                (= (:a datom) assert-attr) "assert"
+                                                (= (:a datom) retract-attr) "retract")]
+                                   (when op (let [f (d/entity cut (:e datom))] {:op op :f f :journal (journal-fact? f)}))))))
+                       vec)
+            changes (->> facts (remove :journal) (map (fn [{:keys [f op]}] (fact-change f tx op)))
                          (sort-by (juxt #(bigint (:position %)) :assertionId :op)) vec)
-            positions (->> (conj (mapv :position changes) (str p)) distinct (sort-by bigint) vec)
+            ;; Positions and ids come from every fact of the member, journal facts included (see R4 note above).
+            positions (->> (conj (mapv (fn [{:keys [f op]}] (str (required (fact-position f tx op)))) facts) (str p)) distinct (sort-by bigint) vec)
             txids (->> (concat [(:triplex.tx/id tx)]
-                               (map (fn [c] (let [f (d/entity cut [:f/id (:assertionId c)])]
-                                              (if (= "assert" (:op c)) (:f/tx-id f) (:f/retract-tx-id f)))) changes))
+                               (map (fn [{:keys [f op]}] (if (= "assert" op) (:f/tx-id f) (:f/retract-tx-id f))) facts))
                        (remove nil?) distinct sort vec)
             commands (sort (d/q '[:find [?id ...] :in $ ?tx :where [?c :triplex.claim/tx ?tx] [?c :triplex.claim/command-id ?id]] cut (d/t->tx t)))
             stamp (required (:triplex.tx/recorded-at tx))]

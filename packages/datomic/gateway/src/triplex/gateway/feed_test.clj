@@ -1,6 +1,7 @@
 (ns triplex.gateway.feed-test
   (:require [clojure.test :refer :all] [clojure.data.json :as json] [datomic.api :as d]
-            [triplex.gateway.feed :as feed] [triplex.gateway.main :as main] [triplex.gateway.feed-live]))
+            [triplex.gateway.feed :as feed] [triplex.gateway.main :as main] [triplex.gateway.storage :as storage]
+            [triplex.gateway.feed-live]))
 
 ;; [EXP-DF01] Why: replay fixed identity datoms with deliberately different value bytes after excision.
 ;; Rejected: mocking projected JSON alone (would never execute the gateway's identity selection).
@@ -182,3 +183,123 @@
               (is (= (if (= cut 105) ["105"] []) (mapv :t (:rows page))))
               (is (= (if (= cut 105) "106" "105") (:nextT page))))))
       (is (empty? @feed/wakeups))))))
+
+;; [EXP-DF01-R4] Why: R47-c / Q107c. A Datomic feed change is an application change; journal facts (type "_Transaction", subject = the
+;; fact's own tx id) are excluded exactly as the broker feed and P2X exclude them. Position, id, stamp and skipped listing are unchanged.
+;; Rejected: asserting against a mocked projection only (it would not run the schema attribute :f/entity-type that decides exclusion);
+;; the real-peer test below runs datomic:mem:// through storage/commit! and feed/log-page.
+(deftest journal-predicate
+  (let [journal {:f/entity-type "_Transaction" :f/subject {:triplex.entity/id "_tx/t1"} :f/asserted-in {:triplex.tx/id "_tx/t1"}}]
+    (is (true? (feed/journal-fact? journal)))
+    (is (true? (feed/journal-fact? (assoc journal :f/tx-id "_tx/t1" :f/asserted-in {:triplex.tx/id "other"}))) "an explicit row tx id wins")
+    ;; user attribute / entity that merely starts with _tx: type decides, never the prefix
+    (is (not (feed/journal-fact? {:f/entity-type "Order" :f/subject {:triplex.entity/id "_tx/t1"} :f/attr {:triplex.attr/key ":_tx/change"}
+                                  :f/asserted-in {:triplex.tx/id "_tx/t1"}})))
+    (is (not (feed/journal-fact? {:f/subject {:triplex.entity/id "_tx/t1"} :f/attr {:triplex.attr/key "_txNote"} :f/asserted-in {:triplex.tx/id "_tx/t1"}})))
+    ;; the broker predicate also needs entity id = tx id, and a null tx id never matches
+    (is (not (feed/journal-fact? (assoc journal :f/subject {:triplex.entity/id "_tx/other"}))))
+    (is (not (feed/journal-fact? (assoc journal :f/null-tx-id true))))
+    (is (not (feed/journal-fact? {:f/entity-type "_Transaction" :f/asserted-in {:triplex.tx/id ""}})))))
+
+(def journal-tx {:triplex.tx/position 8 :triplex.tx/id "_tx/t8" :triplex.tx/operation-id "op8" :triplex.tx/recorded-at 8000.0})
+(defn mk-fact [id subject attr extra]
+  (merge {:f/id id :f/subject {:triplex.entity/id subject} :f/attr {:triplex.attr/key attr} :f/valid-from 0.0
+          :f/asserted-in journal-tx} extra))
+(deftest journal-facts-are-not-changes-fake-peer
+  (let [facts {1 (mk-fact "user-1" "order-1" "status" {:f/entity-type "Order"})
+               2 (mk-fact "user-2" "order-1" "_txNote" {:f/entity-type "Order"})
+               3 (mk-fact "j-pos" "_tx/t8" ":_tx/position" {:f/entity-type "_Transaction"})
+               4 (mk-fact "j-chg" "_tx/t8" ":_tx/change" {:f/entity-type "_Transaction" :f/position 5})
+               5 (mk-fact "old-1" "order-0" "status" {:f/entity-type "Order" :f/retracted-position 8 :f/retract-tx-id "_tx/t8" :f/tx-id "_tx/t2"})}
+        data (fn [& es] [{:t 200 :data (mapv (fn [[e a]] {:e e :a a :added true}) es)}])
+        page (fn [& es]
+               (with-redefs [d/entity (fn [_ id] (if (= id 200) journal-tx (get facts id {}))) d/as-of (fn [db _] db) d/t->tx (fn [^long x] x)
+                             d/entid (fn [_ id] id) d/q (fn [& _] []) ]
+                 (feed/project {} (first (apply data es)))))]
+    (let [row (page [1 :f/asserted-in] [2 :f/asserted-in] [3 :f/asserted-in] [4 :f/asserted-in] [5 :f/retracted-in])
+          tx (:transaction row)]
+      (is (= "commit" (:kind row)))
+      (is (= [["retract" "old-1"] ["assert" "user-1"] ["assert" "user-2"]] (mapv (juxt :op :assertionId) (:changes tx)))
+          "only application changes; the _txNote user attribute survives")
+      (is (= ["_txNote" "status" "status"] (sort (map :attribute (:changes tx)))))
+      (is (= ["5" "8"] (:positions tx)) "a journal fact's own position is still a transaction position")
+      (is (= ["_tx/t8"] (:txIds tx)))
+      (is (= {:stamp "8000" :stampStatus "decided"} (select-keys tx [:stamp :stampStatus]))))
+    (let [tx (:transaction (page [3 :f/asserted-in] [4 :f/asserted-in]))]
+      (is (= [] (:changes tx)) "a journal-only commit has no application change but is still a commit")
+      (is (= ["5" "8"] (:positions tx))))
+    (let [tx (:transaction (page [5 :f/retracted-in] [3 :f/asserted-in]))]
+      (is (= [["retract" "old-1"]] (mapv (juxt :op :assertionId) (:changes tx))))
+      (is (= ["8"] (:positions tx)) "a retract-only commit keeps its position")
+      (is (= ["_tx/t8"] (:txIds tx))))
+    (with-redefs [d/entity (fn [_ id] (if (= id 200) (dissoc journal-tx :triplex.tx/position) (get facts id {}))) d/as-of (fn [db _] db) d/t->tx (fn [^long x] x) d/entid (fn [_ id] id)]
+      (is (= {:t "200" :kind "skipped" :reason "non-triplex"} (feed/project {} {:t 200 :data [{:e 3 :a :f/asserted-in :added true}]}))
+          "the skipped listing is unchanged"))))
+
+(defn row-of [m] (merge {:schema_version 1 :valid_from 0.0 :recorded_at 1000.0} m))
+(defn wire [rows] (mapv storage/wire-row rows))
+(deftest journal-facts-are-not-changes-real-peer
+  (let [base "datomic:mem://" scope "[\"triplex-scope-v1\",\"test\",\"tenant\",\"df01-r4\",1]"
+        name (:db (main/create-scope! base scope)) uri (str base name) conn (main/connection uri)
+        journal (fn [tx pos & more]
+                  (map-indexed (fn [i [attr kind k v]]
+                                 (row-of (merge {:id (str tx "-j" i) :entity_id tx :attribute attr :value_type kind :entity_type "_Transaction"
+                                                 :recorded_position pos :tx_id tx} {k v})))
+                               (concat [[":_tx/position" "number" :value_number (double pos)]
+                                        [":_tx/changed-entity" "ref" :value_string "order-1"]
+                                        [":_tx/change" "json" :value_json "{\"op\":\"assert\"}"]] more)))
+        commit! (fn [source position op rows new-ids claims]
+                  (storage/commit! conn (main/sync-db uri)
+                                   {"sourceK" source "position" position "operationId" op "rows" (wire rows) "newIds" new-ids "claims" claims}))
+        ids (fn [rows] (mapv :id rows))]
+    (try
+      ;; 1. a Triplex transaction: three application facts (one with a _tx-prefixed attribute, one on a _tx/-prefixed entity) plus journal
+      (let [app [(row-of {:id "u1" :entity_id "order-1" :attribute "status" :value_type "string" :value_string "open" :entity_type "Order"
+                          :recorded_position 1 :tx_id "_tx/t1"})
+                 (row-of {:id "u2" :entity_id "order-1" :attribute "_txNote" :value_type "string" :value_string "n" :entity_type "Order"
+                          :recorded_position 1 :tx_id "_tx/t1"})
+                 (row-of {:id "u3" :entity_id "_tx/custom" :attribute "label" :value_type "string" :value_string "l" :entity_type "Label"
+                          :recorded_position 1 :tx_id "_tx/t1"})
+                 (row-of {:id "u4" :entity_id "order-1" :attribute ":_tx/change" :value_type "string" :value_string "user" :entity_type "Order"
+                          :recorded_position 1 :tx_id "_tx/t1"})]
+            rows (concat app (journal "_tx/t1" 1 [":_tx/command-id" "string" :value_string "cmd-1"]))]
+        (commit! 0 1 "op1" rows (ids rows) [{"commandId" "cmd-1" "txId" "_tx/t1" "timestamp" 1000.0}]))
+      ;; 2. a retract-only application commit (the journal rows are fresh, the application fact is only retracted)
+      (let [retract (row-of {:id "u1" :entity_id "order-1" :attribute "status" :value_type "string" :value_string "open" :entity_type "Order"
+                             :recorded_position 1 :tx_id "_tx/t1" :retracted_at 2000.0 :retracted_position 2 :retract_tx_id "_tx/t2"})
+            jr (map #(assoc % :recorded_at 2000.0) (journal "_tx/t2" 2))]
+        (commit! 1 2 "op2" (concat [retract] jr) (ids jr) []))
+      ;; 3. a commit with no application change at all
+      (let [jr (map #(assoc % :recorded_at 3000.0) (journal "_tx/t3" 3))]
+        (commit! 2 3 "op3" jr (ids jr) []))
+      ;; 4. a member group: the journal rows carry the earlier position 3 inside the commit at position 5
+      (let [jr (map #(assoc % :recorded_at 5000.0) (journal "_tx/t5" 4))
+            app (row-of {:id "u5" :entity_id "order-2" :attribute "status" :value_type "string" :value_string "new" :entity_type "Order"
+                         :recorded_position 5 :recorded_at 5000.0 :tx_id "_tx/t5"})]
+        (commit! 3 5 "op5" (concat [app] jr) (ids (concat [app] jr)) []))
+      (let [page (feed/log-page conn {"fromT" "0"})
+            commits (filter #(= "commit" (:kind %)) (:rows page))
+            skipped (filter #(= "skipped" (:kind %)) (:rows page))
+            summary (fn [row] (let [t (:transaction row)]
+                                {:positions (:positions t) :txIds (:txIds t) :commandIds (:commandIds t) :stamp (:stamp t)
+                                 :changes (mapv (juxt :op :entity :attribute :assertionId :position) (:changes t))}))]
+        (is (= 4 (count commits)))
+        (is (pos? (count skipped)) "scope and schema transactions are still listed as skipped")
+        (is (every? #(= "non-triplex" (:reason %)) skipped))
+        (is (= {:positions ["1"] :txIds ["_tx/t1"] :commandIds ["cmd-1"] :stamp "1000"
+                :changes [["assert" "order-1" "status" "u1" "1"] ["assert" "order-1" "_txNote" "u2" "1"]
+                          ["assert" "_tx/custom" "label" "u3" "1"] ["assert" "order-1" ":_tx/change" "u4" "1"]]}
+               (summary (nth commits 0)))
+            "only application changes; user attributes and entities that start with _tx are kept")
+        (is (not-any? #(.startsWith ^String (:assertionId %) "_tx/") (mapcat #(get-in % [:transaction :changes]) commits)))
+        (is (= {:positions ["2"] :txIds ["_tx/t2"] :commandIds [] :stamp "2000"
+                :changes [["retract" "order-1" "status" "u1" "2"]]}
+               (summary (nth commits 1)))
+            "a retract-only commit keeps its position, id and stamp")
+        (is (= {:positions ["3"] :txIds ["_tx/t3"] :commandIds [] :stamp "3000" :changes []} (summary (nth commits 2))))
+        (is (= {:positions ["4" "5"] :txIds ["_tx/t5"] :commandIds [] :stamp "5000"
+                :changes [["assert" "order-2" "status" "u5" "5"]]}
+               (summary (nth commits 3)))
+            "a journal fact's own position still appears in positions")
+        (is (= page (feed/log-page conn {"fromT" "0"})) "reading the feed again is byte-identical"))
+      (finally (main/delete-scope! base scope)))))
